@@ -1,0 +1,4 @@
+cloudpickle
+gitpython
+sqlalchemy
+flask
