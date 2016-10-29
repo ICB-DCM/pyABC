@@ -1,0 +1,136 @@
+Model Selection
+===============
+
+
+Quickstart
+----------
+
+Here is a small example on how to do Bayesian model selection.
+
+
+.. code-block:: python
+   :linenos:
+
+        from abcsmc import ABCSMC, RV, Distribution, Kernel
+
+        # Define a gaussian model
+        sigma = .5
+
+        # "y" is the result key
+        def model(args):
+            return {"y": st.norm(args['x'], sigma).rvs()}
+
+
+        # We define two models, but they are identical so far
+        models = [model, model]
+
+        # The prior over the model classes is uniform
+        model_prior = RV("randint", 0, 2)
+
+        # However, our models' priors are not the same. Their mean differs.
+        mu_x_1, mu_x_2 = 0, 1
+        parameter_given_model_prior_distribution = [
+            Distribution(x=RV("norm", mu_x_1, sigma)),
+            Distribution(x=RV("norm", mu_x_2, sigma))
+        ]
+
+        # Particles are perturbed in a Gaussian fashion
+        parameter_perturbation_kernels = [
+            lambda t, stat: Kernel(stat['cov']) for _ in range(2)
+        ]
+
+        # We plug all the ABC setup together.
+        # We use "y" in the distance function as this
+        # was the result key defined for the model
+        nr_particles = 400
+        abc = ABCSMC(models, model_prior,
+                     ModelPerturbationKernel(2, probability_to_stay=.7),
+                     parameter_given_model_prior_distribution,
+                     parameter_perturbation_kernels,
+                     PercentileDistanceFunction(measures_to_use=["y"]),
+                     MedianEpsilon(.2), nr_particles,
+                     max_nr_allowed_sample_attempts_per_particle=2000)
+
+        # Finally we add meta data such as model
+        # names and define where to store the results
+        model_names = ["m1", "m2"]
+        options = {'db_path': "/tmp/abc.db"}
+        # y_observed is the important piece here: our actual observation.
+        y_observed = 1
+        abc.set_data({"y": y_observed}, 0, {}, options, model_names)
+
+        # We run the ABC with 3 populations max
+        minimum_epsilon = .05
+        nr_populations = 3
+        nr_samples_per_particles = [1] * nr_populations
+        history = abc.run(nr_samples_per_particles, minimum_epsilon)
+
+        # Evaluate the model probabililties
+        p1, p2 = history.get_model_probabilities(-1)
+
+        # Model 2 should have a higher probability.
+        print(p1, p2)
+
+
+You should see something similar to
+
+.. parsed-literal::
+
+        0.260431915631 0.739568084369
+
+
+Step by step explanation
+------------------------
+
+Defining a model
+~~~~~~~~~~~~~~~~
+
+To do model selection, we need first some models. A model is just a callable which takes a single dict as input
+and returns a single dict as output. The keys of the input dictionary are the parameters of the model, the output
+keys denote the summary statistics.
+In the above example, the model is defined in line 7. The ``dict`` is passed as ``args`` and has the parameter ``x``
+which denote in the above example the mean of the Gaussian. It returns the observed summary statistics ``y``, which
+is just the sampled value.
+
+For model selection we usually have more than one model. These are assembled in a list, as in line 12. We
+require a Bayesian prior over the models, as defined in line 15 and a prior over the models' parameters as defined
+in line 19. This concludes the model definition.
+
+Configuring the ABCSMC
+~~~~~~~~~~~~~~~~~~~~~~
+
+Having the models defined, we can plug togetehr the ``ABCSMC`` class. Additionally, we need a model perturbation kernel
+as defined in line 34 which governs with which probability to jump from one model class to another. Moreover,
+we need a distance function (line 37), to measure the distance of obtained samples and a strategy for adjusting the
+epsilon threshold (line 38).
+
+
+Setting the observed data
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Actually measured data can no be passed to the ABCSMC. In line 46, we have the actually observed (measured) data.
+This is set in lie 47 via the ``set_data`` method. Additional meta information such as model names is also passed.
+Moreover we have to set the output database.
+
+Running the ABC
+~~~~~~~~~~~~~~~
+
+In line 53 we run the ``ABCSMC`` specifying the maximum number of populations and the epsilon value at which to terminate.
+Whatever is reached first terminates the ABC run. The result is a :class:`History <abcsmc.History>` object which
+can, for example be queried for the posterior probabilities.
+
+
+More sophisticated analysis - The ABC loader
+--------------------------------------------
+
+Usually you want to look at the ABC results stored in the database, rather than query the :class:`History <abcsmc.History>` object itself.
+To do so you can use the :class:`ABCLoader <abcsmc.ABCLoader>` class.
+
+
+ABC loader example
+~~~~~~~~~~~~~~~~~~
+
+Check the example below for some common :class:`ABCLoader <abcsmc.ABCLoader>` usage patterns.
+The followin was run just during an ABC run. So you'll see intermediate results.
+
+.. include:: ABCLoader/abc_quick_plots.rst
