@@ -1,7 +1,7 @@
-PYABC
-=====
+Parameters
+==========
 
-.. automodule:: pyabc.smc
+.. automodule:: pyabc.parameters
    :members:
    :special-members: __call__
    :show-inheritance:

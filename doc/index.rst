@@ -23,6 +23,11 @@ API reference
    :maxdepth: 2
 
    abcsmc_api
+   epsilon_api
+   distance_api
+   datastore_api
+   parameters_api
+   random_variables_api
    license
 
 
