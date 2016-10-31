@@ -232,7 +232,7 @@ class ABCSMC:
                                t0: int,
                                current_eps: float):
         """
-        This is where the actual stuff happens.
+        This is where the actual model evaluation happens.
 
         Parameters
         ----------
