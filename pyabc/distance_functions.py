@@ -290,3 +290,16 @@ class AcceptAllDistance(DistanceFunction):
             measured point
         """
         return -1
+
+
+class IdentityFakeDistance(DistanceFunction):
+    """
+    A fake distance function, which just passes
+    the summary statistics on. This class assumes, that
+    the model already returns the distance. This can be useful
+    in cases where simulatin can be stopped early when
+    during the simulation some condition is reached which
+    makes it impossible to accept the particle.
+    """
+    def __call__(self, x, y):
+        return x

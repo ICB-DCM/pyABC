@@ -6,13 +6,19 @@ Main ABC algorithm
 import datetime
 import sys
 import time
-from typing import List, Callable, Iterable
+from typing import List, Callable, Iterable, Any, TypeVar
+
+model_output = TypeVar("model_output")
 
 from .parameters import Parameter
 from .random_variables import RV, ModelPerturbationKernel, Distribution, Kernel
 from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
 from .storage import History
+
+
+def identity(x):
+    return x
 
 
 class ABCSMC:
@@ -25,11 +31,25 @@ class ABCSMC:
     Parameters
     ----------
 
-    models: List[Callable[[Parameter], dict]]
-       Calling ``models[m](par)`` returns the calculated summary statistics
+    models: List[Callable[[Parameter], model_output]]
+       Calling ``models[m](par)`` returns the raw model output
        of model ``m`` with the corresponding parameters ``par``.
+       This raw output is then passed to summary_statistics.
+       calculated summary statistics. Per default, the model is
+       assumed to already return the calculated summary statistcs.
+       The default summary_statistics function is therefore
+       just the identity.
 
        Each callable represents thus one single model.
+
+    summary_statistics: Callable[[model_output], dict]
+        A function which takes the raw model output as returned by
+        any ot the models and calculates the corresponding summary
+        statistics. Note that the default value is just the identity
+        function. I.e. the model is assumed to already calculate
+        the summary statistics. However, in a model selection setting
+        it can make sense to have the model produce some kind or raw output
+        and then take the same summary statistics function for all the models.
 
     model_prior_distribution: RV
         A random variable giving the prior weights of the model classes.
@@ -97,7 +117,7 @@ class ABCSMC:
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
     def __init__(self,
-                 models: List[Callable[[Parameter], dict]],
+                 models: List[Callable[[Parameter], model_output]],
                  model_prior_distribution: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
@@ -108,7 +128,8 @@ class ABCSMC:
                  mapper=map,
                  debug: bool =False,
                  max_nr_allowed_sample_attempts_per_particle: int =500,
-                 min_nr_particles_per_population: int =1):
+                 min_nr_particles_per_population: int =1,
+                 summary_statistics: Callable[[model_output], dict]=identity):
 
         # sanity checks
         self.models = list(models)
@@ -123,6 +144,7 @@ class ABCSMC:
         self.adaptive_parameter_perturbation_kernels = adaptive_parameter_perturbation_kernels
         self.distance_function = distance_function
         self.eps = eps
+        self.summary_statistics = summary_statistics
         self.nr_particles = nr_particles
         self.mapper = mapper
         self.debug = debug
@@ -280,7 +302,8 @@ class ABCSMC:
                           .format(theta_s=theta_s, n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
                     return None
                 start_time = time.time()
-                x_s = self.models[m_ss](theta_ss)  # the actual simulation
+                model_raw_output = self.models[m_ss](theta_ss)  # the actual simulation
+                x_s = self.summary_statistics(model_raw_output)
                 end_time = time.time()
                 duration = end_time - start_time
                 if self.debug:
