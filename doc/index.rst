@@ -12,6 +12,7 @@ This part of the documentaiton guides you step by step through the usage of this
 
 
    model_selection
+   parallel
 
 
 
@@ -28,6 +29,7 @@ API reference
    datastore_api
    parameters_api
    random_variables_api
+   parallel_api.rst
    license
 
 

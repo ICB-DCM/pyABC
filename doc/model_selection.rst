@@ -11,7 +11,7 @@ Here is a small example on how to do Bayesian model selection.
 .. code-block:: python
    :linenos:
 
-        from abcsmc import ABCSMC, RV, Distribution, Kernel
+        from pyabc import ABCSMC, RV, Distribution, Kernel
 
         # Define a gaussian model
         sigma = .5
