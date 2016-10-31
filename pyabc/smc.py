@@ -233,6 +233,7 @@ class ABCSMC:
                                current_eps: float):
         """
         This is where the actual model evaluation happens.
+        The core ABCSMC algorithm is also implemented here.
 
         Parameters
         ----------
