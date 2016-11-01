@@ -150,7 +150,7 @@ class ABCSMC:
         self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
-        self.history = None #History
+        self.history = None  # History
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
