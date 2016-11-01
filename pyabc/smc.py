@@ -273,7 +273,7 @@ class ABCSMC:
         """
         simulation_counter = 0
         while True:  # find valid theta_ss and (corresponding b) according to data x_0
-            m_ss, theta_s, theta_ss = self.generate_valid_proposal(parameter_perturbation_kernels, t)
+            m_ss, theta_ss = self.generate_valid_proposal(parameter_perturbation_kernels, t)
             # from here, theta_ss is valid according to the prior
             distance_list = []
             summary_statistics_list = []
@@ -282,8 +282,8 @@ class ABCSMC:
                 simulation_counter += 1
                 # stop builder if it takes too long
                 if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
-                    print("Max nr of samples (={n_max}) for particle theta_s={theta_s} reached."
-                          .format(theta_s=theta_s, n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
+                    print("Max nr of samples (={n_max}) for particle reached."
+                          .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
                     return None
                 start_time = time.time()
                 model_raw_output = self.models[m_ss](theta_ss)  # the actual simulation
@@ -291,9 +291,9 @@ class ABCSMC:
                 end_time = time.time()
                 duration = end_time - start_time
                 if self.debug:
-                    print("Sampled model={}-{}, delta_time={}s, end_time={}, theta_s={}, theta_ss={}"
+                    print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
                           .format(m_ss, self.history.model_names[m_ss], duration, end_time,
-                                  theta_s, theta_ss))
+                                  theta_ss))
                 distance = self.distance_function(x_s, self.x_0)
                 if distance <= current_eps:
                     distance_list.append(distance)
@@ -338,7 +338,7 @@ class ABCSMC:
                                              * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
                 break
 
-        return m_ss, theta_s, theta_ss
+        return m_ss, theta_ss
 
     def run(self, nr_samples_per_particle: List[int], minimum_epsilon: float) -> History:
         """
