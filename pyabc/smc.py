@@ -2,7 +2,7 @@
 Main ABC algorithm
 ------------------
 """
-
+from .modelresults import result_factory
 import datetime
 import sys
 import time
@@ -286,17 +286,17 @@ class ABCSMC:
                           .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
                     return None
                 start_time = time.time()
-                model_raw_output = self.models[m_ss](theta_ss)  # the actual simulation
-                x_s = self.summary_statistics(model_raw_output)
+                result = result_factory(self.models[m_ss](theta_ss))  # the actual simulation
+                x_s = result.to_summary_statistics(self.summary_statistics)  # this is considered part of the model generation time
                 end_time = time.time()
                 duration = end_time - start_time
                 if self.debug:
                     print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
                           .format(m_ss, self.history.model_names[m_ss], duration, end_time,
                                   theta_ss))
-                distance = self.distance_function(x_s, self.x_0)
-                if distance <= current_eps:
-                    distance_list.append(distance)
+                distance = x_s.to_distance(lambda x: self.distance_function(x, self.x_0))
+                if distance.accepted(current_eps):
+                    distance_list.append(float(distance))
                     summary_statistics_list.append(x_s)
             if len(distance_list) > 0:
                 break

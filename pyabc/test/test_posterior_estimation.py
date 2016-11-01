@@ -100,6 +100,32 @@ class TestABCFast(TestABC):
         binomial_n = 5
 
         def model(args):
+            return {"result": st.binom(binomial_n, args.theta).rvs()}
+
+        models = [model for _ in range(2)]
+        model_prior = RV("randint", 0, 2)
+        nr_particles = 800
+        parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
+        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
+                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
+
+        model_names = ["m1", "m2"]
+        options = {'db_path': self.db}
+        abc.set_data({"result": 2}, 0, {}, options, model_names)
+
+        minimum_epsilon = .2
+        nr_samples_per_particles = [1] * 3
+        history = abc.run(nr_samples_per_particles, minimum_epsilon)
+        p1, p2 = history.get_model_probabilities()
+        self.assertLess(abs(p1 - .5) + abs(p2 - .5), .08)
+
+    def test_all_in_one_model(self):
+        self.fail()
+        binomial_n = 5
+
+        def model(args):
             return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
         models = [model for _ in range(2)]

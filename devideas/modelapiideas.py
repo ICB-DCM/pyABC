@@ -61,3 +61,4 @@ def model6(x, y, z):
         if k > y:
             return False, k
     return x * y
+
