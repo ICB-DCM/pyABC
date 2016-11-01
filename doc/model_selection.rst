@@ -11,7 +11,9 @@ Here is a small example on how to do Bayesian model selection.
 .. code-block:: python
    :linenos:
 
-        from pyabc import ABCSMC, RV, Distribution, Kernel, ModelPerturbationKernel, PercentileDistanceFunction, MedianEpsilon
+        from pyabc import (ABCSMC, RV, Distribution, Kernel,
+                           ModelPerturbationKernel, PercentileDistanceFunction,
+                           MedianEpsilon)
         import scipy.stats as st
 
 
