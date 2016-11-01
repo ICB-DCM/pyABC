@@ -336,9 +336,7 @@ class ABCSMC:
                     theta_ss = None
             if theta_ss is not None and (self.model_prior_distribution.pmf(m_ss)
                                              * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
-                break
-
-        return m_ss, theta_ss
+                return m_ss, theta_ss
 
     def run(self, nr_samples_per_particle: List[int], minimum_epsilon: float) -> History:
         """
