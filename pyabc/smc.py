@@ -17,6 +17,12 @@ from .epsilon import Epsilon
 from .storage import History
 
 
+class Info:
+    def __init__(self, epsilon, sum_stat):
+        self.epsilon = epsilon
+        self.sum_stat = sum_stat
+
+
 def identity(x):
     return x
 
@@ -117,7 +123,7 @@ class ABCSMC:
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
     def __init__(self,
-                 models: List[Callable[[Parameter], model_output]],
+                 models: List[Callable[[Parameter, Info], model_output]],
                  model_prior_distribution: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
@@ -286,7 +292,7 @@ class ABCSMC:
                           .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
                     return None
                 start_time = time.time()
-                result = result_factory(self.models[m_ss](theta_ss))  # the actual simulation
+                result = result_factory(self.models[m_ss](theta_ss, Info(current_eps, self.x_0)))  # the actual simulation
                 x_s = result.to_summary_statistics(self.summary_statistics)  # this is considered part of the model generation time
                 end_time = time.time()
                 duration = end_time - start_time

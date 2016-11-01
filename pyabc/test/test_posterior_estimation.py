@@ -67,7 +67,7 @@ class TestABCFast(TestABC):
 
     def test_empty_population(self):
         def make_model(theta):
-            def model(args):
+            def model(args, info):
                 return {"result": 1 if random.random() > theta else 0}
 
             return model
@@ -99,7 +99,7 @@ class TestABCFast(TestABC):
     def test_beta_binomial_two_identical_models(self):
         binomial_n = 5
 
-        def model(args):
+        def model(args, info):
             return {"result": st.binom(binomial_n, args.theta).rvs()}
 
         models = [model for _ in range(2)]
@@ -125,7 +125,7 @@ class TestABCFast(TestABC):
         self.fail()
         binomial_n = 5
 
-        def model(args):
+        def model(args, info):
             return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
         models = [model for _ in range(2)]
@@ -151,7 +151,7 @@ class TestABCFast(TestABC):
     def test_beta_binomial_different_priors(self):
         binomial_n = 5
 
-        def model(args):
+        def model(args, info):
             return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
         models = [model for _ in range(2)]
@@ -192,7 +192,7 @@ class TestABCFast(TestABC):
     def test_beta_binomial_different_priors_initial_epsilon_from_sample(self):
         binomial_n = 5
 
-        def model(args):
+        def model(args, info):
             return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
         models = [model for _ in range(2)]
