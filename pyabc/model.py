@@ -1,4 +1,16 @@
+"""
+Models
+======
+
+Models afor ABCSMC
+"""
+
+
 class ModelResult:
+    """
+    Result of a model evaluation.
+    Allows to flexibly return everything from summary_statistics to accepted/rejected.
+    """
     def __init__(self, sum_stats=None, distance=None, accepted=None):
         self.sum_stats = sum_stats if sum_stats is not None else {}
         self.distance = distance
