@@ -92,6 +92,16 @@ class ABCSMC:
         This mapper is used for particle sampling.
         It can be a distributed mapper such as the :class:`parallel.sge.SGE` class.
 
+    ## DR START
+    map_wrapper:
+        In some cases, a mapper implementation will require initialization to run properly,
+        e.g. database connection, grid setup, etc... The map_wrapper is an object that encapsulates
+        this information.  The default map_wrapper will simply call the callable mapper at the right
+        place; a more involved map_wrapper will help the mapper-function to distribute function calls
+        accross a distributed infrastructure.
+    ## DR End
+
+
     debug: bool
         Whether to output additional debug information
 
@@ -145,10 +155,10 @@ class ABCSMC:
         ## DR START
         #self.mapper = mapper
         if map_wrapper is None:
-            self.mapper = MapWrapperDefault(mapper)
+            self.map_wrapper = MapWrapperDefault(mapper)
         else:
-            self.mapper = map_wrapper
-            self.mapper.set_map_fun(mapper)
+            self.map_wrapper = map_wrapper
+            self.map_wrapper.set_map_fun(mapper)
         ## DR END
 
 
@@ -254,7 +264,7 @@ class ABCSMC:
                 return model_result.sum_stats
             if self.debug:
                 print('sample from prior')
-            self._points_sampled_from_prior = list(self.mapper.wrap_map(sample, list(range(self.nr_particles))))
+            self._points_sampled_from_prior = list(self.map_wrapper.wrap_map(sample, list(range(self.nr_particles))))
             if self.debug:
                 print('sample from prior done')
         if self.debug:
@@ -385,12 +395,12 @@ class ABCSMC:
             if self.debug:
                 print('now submitting population', t)
             new_particle_population = list(
-                    self.mapper.wrap_map(lambda _: self._sample_single_particle(parameter_perturbation_kernels,
-                                                                    nr_samples_per_particle,
-                                                                    t,
-                                                                    t0,
-                                                                    current_eps),
-                                [None] * self.nr_particles))
+                    self.map_wrapper.wrap_map(lambda _: self._sample_single_particle(parameter_perturbation_kernels,
+                                                                                     nr_samples_per_particle,
+                                                                                     t,
+                                                                                     t0,
+                                                                                     current_eps),
+                                              [None] * self.nr_particles))
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
             if self.debug:

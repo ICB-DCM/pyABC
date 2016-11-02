@@ -2,6 +2,8 @@
 
 class MapWrapperDefault():
     """
+        This is the basic map_wrapper implementation required for code compatibility reasons.
+        There should be no need do initialize this on the user-level.
     """
     def __init__(self,map_fun=map):
         self.map_fun = map_fun;
@@ -18,6 +20,7 @@ class MapWrapperDefault():
 
 class MapWrapperDistribDemo(map):
     """
+        This implementation of the map wrapper demonstrates the idea behind the map_wrapper object.
     """
     def __init__(self, map_fun=map, test_string=""):
         self.map_fun = map_fun;
@@ -36,4 +39,5 @@ class MapWrapperDistribDemo(map):
         print("Once I'd have decided that my results are sufficient, I'd return them as a list")
         print("However, I'm a poor imitation and still only do a simple map() call and return the result")
         print("Now I'm depressed. Are you happy?")
-        return self.map_fun(lambdafun, args)
+        result = self.map_fun(lambdafun, args)
+        return result
