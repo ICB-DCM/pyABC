@@ -1,24 +1,4 @@
-
-
-class MapWrapperDefault():
-    """
-        This is the basic map_wrapper implementation required for code compatibility reasons.
-        There should be no need do initialize this on the user-level.
-    """
-    def __init__(self,map_fun=map):
-        self.map_fun = map_fun;
-
-    def set_map_fun(self,map_fun):
-        self.map_fun = map_fun;
-
-    def wrap_map(self,lambdafun, args):
-        # sanity checks
-        return self.map_fun(lambdafun, args)
-
-
-
-
-class MapWrapperDistribDemo(map):
+class MapWrapperMultiThreadWithDB(map):
     """
         This implementation of the map wrapper demonstrates the idea behind the map_wrapper object.
     """
@@ -43,4 +23,21 @@ class MapWrapperDistribDemo(map):
         result = self.map_fun(lambdafun, args)
         return result
 
+    # def __get_next_sample_from_db(self, projID, genID):
+    #   return(epsilon, m_ss, t_ss)
+    #
+    #
+    # def __put_sample_in_db(self, projID, genID, particleID, m_ss, t_ss, eps):
+    #
+    #
+    #
+    # def __update_sample_status(self, projID, genID, particleID, status):
 
+
+    # def __run_eval_set(self, lambdafun):
+    # while true:
+    #   (eps, m_ss, t_ss) = self.__get_next_sample_from_db(self)
+    #   lambdafun(parameters)
+    #   __update_sample_status(self, projID, genID, particleID, status)
+    #
+    #
