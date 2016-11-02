@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+import warnings
 from typing import List, Union, Tuple
 
 import git
@@ -9,31 +10,13 @@ import scipy as sp
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-import warnings
-from .random_variables import MultivariateMultiTypeNormalDistribution, NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution
+
 from . import weighted_statistics
+from .random_variables import (MultivariateMultiTypeNormalDistribution,
+                               NonEmptyMultivariateMultiTypeNormalDistribution,
+                               EmptyMultivariateMultiTypeNormalDistribution)
 
 Base = declarative_base()
-
-
-class ValidParticle:
-    def __init__(self, parameter, weight, distance_list, summary_statistics_list):
-        self.parameter = parameter
-        self.weight = weight
-        self.distance_list = distance_list
-        self.summary_statistics_list = summary_statistics_list
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-
-    def __eq__(self, other):
-        for key in ["parameter", "weight", "distance_list", "summary_statistics_list"]:
-            if self[key] != other[key]:
-                return False
-        return True
 
 
 class ABCSMC(Base):
@@ -400,12 +383,12 @@ class History:
         sample: Union[Parameter, None]
             Returns None if population t,m is empty, otherwise a sample Parameter from it
         """
-        weight_point = [(point['weight'], point['parameter']) for point in self.store[t][m]]
-        if len(weight_point) == 0:
+        weighted_parameters = [(particle.weight, particle.parameter) for particle in self.store[t][m]]
+        if len(weighted_parameters) == 0:
             return None
-        if len(weight_point) == 1:
+        if len(weighted_parameters) == 1:
             warnings.warn("History sample warning: Only one particle in model m={m} at t={t}".format(t=t, m=m))
-        weights, parameters = zip(*weight_point)
+        weights, parameters = zip(*weighted_parameters)
         nr = sp.random.choice(len(parameters), p=weights)
         selected_parameter = parameters[nr]
         return selected_parameter

@@ -11,11 +11,11 @@ from typing import List, Callable, Iterable, Any, TypeVar
 model_output = TypeVar("model_output")
 
 from .model import Model
-from .parameters import Parameter
+from .parameters import Parameter, ValidParticle
 from .random_variables import RV, ModelPerturbationKernel, Distribution, Kernel
 from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
-from .storage import History, ValidParticle
+from .storage import History
 
 
 def identity(x):
