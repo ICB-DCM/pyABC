@@ -9,11 +9,25 @@ import scipy as sp
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-
+import warnings
 from .random_variables import MultivariateMultiTypeNormalDistribution, NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution
 from . import weighted_statistics
 
 Base = declarative_base()
+
+
+class ValidParticle:
+    def __init__(self, parameter, weight, distance_list, summary_statistics_list):
+        self.parameter = parameter
+        self.weight = weight
+        self.distance_list = distance_list
+        self.summary_statistics_list = summary_statistics_list
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
 
 
 class ABCSMC(Base):
@@ -272,11 +286,8 @@ class History:
             print("Hist append:", population)
         self._close_session()
 
-    def _append(self, t, m, parameter, weight, distance_list, nr_simulations, summary_statistics_list):
-        self.store[t][m].append({'parameter': parameter,
-                                 'weight': weight,
-                                 'distance_list': distance_list,
-                                 'summary_statistics_list': summary_statistics_list})  # summary statistics are only recorded for analysis purposes
+    def _append(self, t, m, nr_simulations, valid_particle):
+        self.store[t][m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
         self.nr_simulations[t] += nr_simulations
 
     def _extend_store(self, t):
@@ -331,13 +342,13 @@ class History:
         """
         population = self.store[t]
 
-        model_total_weights = [sum(particle['weight'] for particle in model)
+        model_total_weights = [sum(particle.weight for particle in model)
                                for model in self.store[t]]
 
         # normalize within each model
         for model_total_weight, model in zip(model_total_weights, population):
             for particle in model:
-                particle['weight'] /= model_total_weight
+                particle.weight /= model_total_weight
 
         population_total_weight = sum(model_total_weights)
         model_probabilities = [w / population_total_weight for w in model_total_weights]
@@ -381,17 +392,17 @@ class History:
         Returns
         -------
         sample: Union[Parameter, None]
-            Returns None if population t,m is empty, otherwise a sample Parametet from it
+            Returns None if population t,m is empty, otherwise a sample Parameter from it
         """
         weight_point = [(point['weight'], point['parameter']) for point in self.store[t][m]]
         if len(weight_point) == 0:
             return None
         if len(weight_point) == 1:
-            print("History sample warning: Only one particle in model m={m} at t={t}"
-                  .format(t=t, m=m))
+            warnings.warn("History sample warning: Only one particle in model m={m} at t={t}".format(t=t, m=m))
         weights, parameters = zip(*weight_point)
         nr = sp.random.choice(len(parameters), p=weights)
-        return parameters[nr]
+        selected_parameter = parameters[nr]
+        return selected_parameter
 
     def get_distribution(self, t: int, m: int, parameter: str) -> Tuple[np.ndarray]:
         """

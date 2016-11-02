@@ -15,7 +15,7 @@ from .parameters import Parameter
 from .random_variables import RV, ModelPerturbationKernel, Distribution, Kernel
 from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
-from .storage import History
+from .storage import History, ValidParticle
 
 
 def identity(x):
@@ -151,7 +151,7 @@ class ABCSMC:
         self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
-        self.history = None  # History
+        self.history = None  # type: History
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
@@ -320,7 +320,8 @@ class ABCSMC:
                       / normalization)
         if self.debug:
             print('.', end='')
-        return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
+        valid_particle = ValidParticle(theta_ss, weight, distance_list, summary_statistics_list)
+        return m_ss, simulation_counter, valid_particle
 
     def generate_valid_proposal(self, parameter_perturbation_kernels, t):
         while True:  # find m_s and theta_ss, valid according to prior
