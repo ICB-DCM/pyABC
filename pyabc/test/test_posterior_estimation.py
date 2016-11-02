@@ -1,6 +1,6 @@
 import unittest
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
-                    MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction)
+                   MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult)
 import random
 import os
 import scipy.stats as st
@@ -45,6 +45,7 @@ class TestABCFast(TestABC):
         model1 = make_model(theta1)
         model2 = make_model(theta2)
         models = [model1, model2]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 1500
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
@@ -77,6 +78,7 @@ class TestABCFast(TestABC):
         model1 = make_model(theta1)
         model2 = make_model(theta2)
         models = [model1, model2]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 1500
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
@@ -99,10 +101,38 @@ class TestABCFast(TestABC):
     def test_beta_binomial_two_identical_models(self):
         binomial_n = 5
 
-        def model(args):
-            return {"result": st.binom(binomial_n, args['theta']).rvs()}
+        def model_fun(args):
+            return {"result": st.binom(binomial_n, args.theta).rvs()}
 
-        models = [model for _ in range(2)]
+        models = [model_fun for _ in range(2)]
+        models = list(map(SimpleModel, models))
+        model_prior = RV("randint", 0, 2)
+        nr_particles = 800
+        parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
+        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
+                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
+
+        model_names = ["m1", "m2"]
+        options = {'db_path': self.db}
+        abc.set_data({"result": 2}, 0, {}, options, model_names)
+
+        minimum_epsilon = .2
+        nr_samples_per_particles = [1] * 3
+        history = abc.run(nr_samples_per_particles, minimum_epsilon)
+        p1, p2 = history.get_model_probabilities()
+        self.assertLess(abs(p1 - .5) + abs(p2 - .5), .08)
+
+    def test_all_in_one_model(self):
+        class AllInOneModel(Model):
+            def summary_statistics(self, pars, sum_stats_calculator) -> ModelResult:
+                return ModelResult(sum_stats={"result": 1})
+
+            def accept(self, pars, sum_stats_calculator, distance_calculator, eps) -> ModelResult:
+                return ModelResult(accepted=True)
+
+        models = [AllInOneModel() for _ in range(2)]
         model_prior = RV("randint", 0, 2)
         nr_particles = 800
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
@@ -129,6 +159,7 @@ class TestABCFast(TestABC):
             return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
         models = [model for _ in range(2)]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 800
         a1, b1 = 1, 1
@@ -170,6 +201,7 @@ class TestABCFast(TestABC):
             return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
         models = [model for _ in range(2)]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 500
         a1, b1 = 1, 1
@@ -208,6 +240,7 @@ class TestABCFast(TestABC):
             return {"result": sp.rand() * args['u']}
 
         models = [model]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_particles = 250
         parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0, 1))]
@@ -240,7 +273,7 @@ class TestABCFast(TestABC):
         self.assertLess(max_distribution_difference, 0.08)
 
 
-
+@unittest.skip("To slow. Don'r run always.")
 class TestABCSlow(TestABC):
     def test_gaussian_single_population(self):
         sigma_prior = 1
@@ -251,6 +284,7 @@ class TestABCSlow(TestABC):
             return {"y": st.norm(args['x'], sigma_ground_truth).rvs()}
 
         models = [model]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_particles = 600
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_prior))]
@@ -294,6 +328,7 @@ class TestABCSlow(TestABC):
             return {"y": st.norm(args['x'], sigma_y).rvs()}
 
         models = [model]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_particles = 600
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
@@ -337,6 +372,7 @@ class TestABCSlow(TestABC):
             return {"y": st.norm(args['x'], sigma_y).rvs()}
 
         models = [model, model]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 500
         mu_x_1, mu_x_2 = 0, 1
@@ -379,6 +415,7 @@ class TestABCSlow(TestABC):
 
         # We define two models, but they are identical so far
         models = [model, model]
+        models = list(map(SimpleModel, models))
 
         # The prior over the model classes is uniform
         model_prior = RV("randint", 0, 2)

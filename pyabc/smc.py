@@ -10,6 +10,7 @@ from typing import List, Callable, Iterable, Any, TypeVar
 
 model_output = TypeVar("model_output")
 
+from .model import Model
 from .parameters import Parameter
 from .random_variables import RV, ModelPerturbationKernel, Distribution, Kernel
 from .distance_functions import DistanceFunction
@@ -117,7 +118,7 @@ class ABCSMC:
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
     def __init__(self,
-                 models: List[Callable[[Parameter], model_output]],
+                 models: List[Model],
                  model_prior_distribution: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
@@ -237,8 +238,8 @@ class ABCSMC:
             def sample(_):
                 m = self.model_prior_distribution.rvs()
                 par = self.parameter_given_model_prior_distribution[m].rvs()
-                x = self.models[m](par)
-                return x
+                model_result = self.models[m].summary_statistics(par, self.summary_statistics)
+                return model_result.sum_stats
             if self.debug:
                 print('sample from prior')
             self._points_sampled_from_prior = list(self.mapper(sample, list(range(self.nr_particles))))
@@ -286,18 +287,18 @@ class ABCSMC:
                           .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
                     return None
                 start_time = time.time()
-                model_raw_output = self.models[m_ss](theta_ss)  # the actual simulation
-                x_s = self.summary_statistics(model_raw_output)
+                model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
+                                                        lambda x: self.distance_function(x, self.x_0), current_eps)
+                if model_result.accepted:
+                    distance_list.append(model_result.distance)
+                    summary_statistics_list.append(model_result.sum_stats)
+
                 end_time = time.time()
                 duration = end_time - start_time
                 if self.debug:
                     print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
                           .format(m_ss, self.history.model_names[m_ss], duration, end_time,
                                   theta_ss))
-                distance = self.distance_function(x_s, self.x_0)
-                if distance <= current_eps:
-                    distance_list.append(distance)
-                    summary_statistics_list.append(x_s)
             if len(distance_list) > 0:
                 break
 
