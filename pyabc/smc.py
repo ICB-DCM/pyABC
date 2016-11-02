@@ -151,16 +151,7 @@ class ABCSMC:
             raise Exception("Nr of models has to be equal to the number of parameter prior distributions has to be equal"
                             " to the number of parameter perturbation kernels")
 
-        ## DR START
-        #self.mapper = mapper
-        if map_wrapper is None:
-            self.map_wrapper = MapWrapperDefault(mapper)
-        else:
-            self.map_wrapper = map_wrapper
-            self.map_wrapper.set_map_fun(mapper)
-        ## DR END
-
-
+        # DR START
         self.model_prior_distribution = model_prior_distribution
         self.model_perturbation_kernel = model_perturbation_kernel
         self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
@@ -176,6 +167,13 @@ class ABCSMC:
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
+        if map_wrapper is None:
+            self.map_wrapper = MapWrapperDefault(mapper)
+        else:
+            self.map_wrapper = map_wrapper
+            self.map_wrapper.set_map_fun(mapper)
+
+        # DR END
 
     def do_not_stop_when_only_single_model_alive(self):
         """

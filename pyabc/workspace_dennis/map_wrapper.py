@@ -1,3 +1,5 @@
+from typing import List
+from .parameters import Parameter
 
 
 class MapWrapperDefault():
@@ -14,6 +16,14 @@ class MapWrapperDefault():
     def wrap_map(self,lambdafun, args):
         # sanity checks
         return self.map_fun(lambdafun, args)
+
+
+
+
+
+
+
+
 
 
 
