@@ -51,9 +51,8 @@ class TestNoSideEffects(unittest.TestCase):
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), nr_particles,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"y": y_observed}, 0, {}, options, model_names)
+        abc.set_data({"y": y_observed}, 0, {}, options)
 
         abc._points_sampled_from_prior = None
         set_seeds()
@@ -86,9 +85,8 @@ class TestNoSideEffects(unittest.TestCase):
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), nr_particles,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"y": y_observed}, 0, {}, options, model_names)
+        abc.set_data({"y": y_observed}, 0, {}, options)
 
         results = []
         for k in range(2):

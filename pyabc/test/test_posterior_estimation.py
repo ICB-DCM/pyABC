@@ -54,9 +54,8 @@ class TestABCFast(TestABC):
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"result": 0}, 0, {}, options, model_names)
+        abc.set_data({"result": 0}, 0, {}, options)
 
         minimum_epsilon = .2
         nr_samples_per_particles = [1] * 3
@@ -87,9 +86,8 @@ class TestABCFast(TestABC):
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0), nr_particles)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"result": 0}, 0, {}, options, model_names)
+        abc.set_data({"result": 0}, 0, {}, options)
 
         minimum_epsilon = -1
         nr_samples_per_particles = [1] * 3
@@ -114,9 +112,8 @@ class TestABCFast(TestABC):
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"result": 2}, 0, {}, options, model_names)
+        abc.set_data({"result": 2}, 0, {}, options)
 
         minimum_epsilon = .2
         nr_samples_per_particles = [1] * 3
@@ -141,9 +138,8 @@ class TestABCFast(TestABC):
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"result": 2}, 0, {}, options, model_names)
+        abc.set_data({"result": 2}, 0, {}, options)
 
         minimum_epsilon = .2
         nr_samples_per_particles = [1] * 3
@@ -171,10 +167,9 @@ class TestABCFast(TestABC):
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
         n1 = 2
-        abc.set_data({"result": n1}, 0, {}, options, model_names)
+        abc.set_data({"result": n1}, 0, {}, options)
 
         minimum_epsilon = .2
         nr_samples_per_particles = [1] * 3
@@ -213,10 +208,9 @@ class TestABCFast(TestABC):
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(median_multiplier=.9), nr_particles)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
         n1 = 2
-        abc.set_data({"result": n1}, 0, {}, options, model_names)
+        abc.set_data({"result": n1}, 0, {}, options)
 
         minimum_epsilon = -1
         nr_samples_per_particles = [1] * 5
@@ -250,10 +244,9 @@ class TestABCFast(TestABC):
                      PercentileDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.2), nr_particles,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
-        model_names = ["m1"]
         options = {'db_path': self.db}
         d_observed = .5
-        abc.set_data({"result": d_observed}, 0, {}, options, model_names)
+        abc.set_data({"result": d_observed}, 0, {}, options)
         abc.do_not_stop_when_only_single_model_alive()
 
         minimum_epsilon = -1
@@ -294,9 +287,8 @@ class TestABCSlow(TestABC):
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.1), nr_particles,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
-        model_names = ["m1"]
         options = {'db_path': self.db}
-        abc.set_data({"y": observed_data}, 0, {}, options, model_names)
+        abc.set_data({"y": observed_data}, 0, {}, options)
 
         minimum_epsilon = -1
         nr_populations = 1
@@ -338,9 +330,8 @@ class TestABCSlow(TestABC):
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), nr_particles,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
-        model_names = ["m1"]
         options = {'db_path': self.db}
-        abc.set_data({"y": y_observed}, 0, {}, options, model_names)
+        abc.set_data({"y": y_observed}, 0, {}, options)
 
         minimum_epsilon = -1
         nr_populations = 3
@@ -384,9 +375,8 @@ class TestABCSlow(TestABC):
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.02), nr_particles,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
-        abc.set_data({"y": y_observed}, 0, {}, options, model_names)
+        abc.set_data({"y": y_observed}, 0, {}, options)
 
         minimum_epsilon = -1
         nr_populations = 1
@@ -436,11 +426,10 @@ class TestABCSlow(TestABC):
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
         # Finally we add meta data such as model names and define where to store the results
-        model_names = ["m1", "m2"]
         options = {'db_path': self.db}
         # y_observed is the important piece here: our actual observation.
         y_observed = 1
-        abc.set_data({"y": y_observed}, 0, {}, options, model_names)
+        abc.set_data({"y": y_observed}, 0, {}, options)
 
         # We run the ABC with 3 populations max
         minimum_epsilon = .05

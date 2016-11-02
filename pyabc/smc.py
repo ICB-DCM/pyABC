@@ -169,8 +169,7 @@ class ABCSMC:
     def set_data(self, observed_summary_statistics: dict,
                  ground_truth_model: int,
                  ground_truth_parameter: dict,
-                 abc_options: dict,
-                 model_names: Iterable[str]):
+                 abc_options: dict):
         """
         Set the data to be fitted.
 
@@ -207,7 +206,8 @@ class ABCSMC:
         """
         # initialize
         self.x_0 = observed_summary_statistics
-        self.history = History(abc_options['db_path'], len(self.models), list(model_names),
+        model_names = [model.name for model in self.models]
+        self.history = History(abc_options['db_path'], len(self.models), model_names,
                                self.min_nr_particles_per_population)
 
         # initialize distance function and epsilon
