@@ -324,19 +324,22 @@ class ABCSMC:
         return m_ss, simulation_counter, valid_particle
 
     def generate_valid_proposal(self, parameter_perturbation_kernels, t):
+        # first generation
+        if t == 0:  # sample from prior
+            m_ss = self.model_prior_distribution.rvs()
+            theta_ss = self.parameter_given_model_prior_distribution[m_ss].rvs()
+            return m_ss, theta_ss
+
+        # later generation
         while True:  # find m_s and theta_ss, valid according to prior
-            if t == 0:  # sample from prior
-                m_ss = self.model_prior_distribution.rvs()
-                theta_ss = self.parameter_given_model_prior_distribution[m_ss].rvs()
-            else:
-                m_s = self.history.sample_from_models(t - 1)
-                m_ss = self.model_perturbation_kernel.rvs(m_s)
-                theta_s = self.history.sample_from_population(t - 1, m_ss)
-                if theta_s is not None:  # theta_s is None if the population m_s has died out
-                    theta_ss = parameter_perturbation_kernels[m_ss].rvs(theta_s)
-                else:
-                    theta_ss = None
-            if theta_ss is not None and (self.model_prior_distribution.pmf(m_ss)
+            m_s = self.history.sample_from_models(t - 1)
+            m_ss = self.model_perturbation_kernel.rvs(m_s)
+            theta_s = self.history.sample_from_population(t - 1, m_ss)
+            if theta_s is None: # theta_s is None if the population m_s has died out
+                continue
+            theta_ss = parameter_perturbation_kernels[m_ss].rvs(theta_s)
+
+            if (self.model_prior_distribution.pmf(m_ss)
                                              * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
