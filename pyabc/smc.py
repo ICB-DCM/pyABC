@@ -335,7 +335,10 @@ class ABCSMC:
             m_s = self.history.sample_from_models(t - 1)
             m_ss = self.model_perturbation_kernel.rvs(m_s)
             theta_s = self.history.sample_from_population(t - 1, m_ss)
-            if theta_s is None: # theta_s is None if the population m_s has died out
+            # theta_s is None if the population m_ss has died out.
+            # This can happen since the model_perturbation_kernel can return
+            # a model nr which has died out.
+            if theta_s is None:
                 continue
             theta_ss = parameter_perturbation_kernels[m_ss].rvs(theta_s)
 
