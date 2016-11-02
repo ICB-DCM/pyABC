@@ -17,6 +17,10 @@ class Model:
       * accept
 
     are to be overwritten.
+
+    Every model has to have a working summary_statistics implementation
+    and a working accept implementation. The summary_statistics method
+    is necessary to initialize distance functions are epsilons.
     """
     def __init__(self, name="model"):
         self.name = name
