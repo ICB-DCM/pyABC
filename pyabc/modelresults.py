@@ -1,6 +1,6 @@
 from collections import UserDict
 import numbers
-
+from typing import Any, TypeVar
 
 class Result:
     def __init__(self, data):
@@ -54,3 +54,32 @@ class Rejected(Result):
 class Accepted(Result):
     def accepted(self, eps):
         return True
+
+
+class Model:
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return "<{} {}>".format(self.__class__.__name__, self.name)
+
+    def sample(self, pars) -> Any:
+        raise NotImplementedError()
+
+    def summary_statistics(self, pars, sum_stats) -> dict:
+        return sum_stats(self.sample(pars))
+
+    def distance(self, pars, distance, sum_stats) -> float:
+        return distance(self.summary_statistics(pars, sum_stats))
+
+    def accept(self, pars, eps, distance, sum_stats) -> bool:
+        return self.distance(pars, distance, sum_stats) <= eps
+
+
+class SimpleModel(Model):
+    def __init__(self, name, sample_function):
+        super().__init__(name)
+        self.sample_function = sample_function
+
+    def sample(self, pars):
+        return self.sample_function(pars)
