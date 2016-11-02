@@ -19,7 +19,11 @@ class ParticlePerturber(ABC):
         pass
 
 
-class NonsensePerturber(ParticlePerturber):
+class IndependentNormalPerturber(ParticlePerturber):
+    """
+    Pretty stupid but should in principle be more ore less functional
+    """
+
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
         Fit the perturberer
@@ -35,7 +39,9 @@ class NonsensePerturber(ParticlePerturber):
         """
         self.X = X
         self.w = w
+        self.std = X.std()
 
     def rvs(self) -> pd.Series:
         sample = self.X.sample(weights=self.w).iloc[0]
-        return sample
+        perturbed = sample + self.std * np.random.randn(len(self.std))
+        return perturbed
