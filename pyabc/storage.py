@@ -29,6 +29,12 @@ class ValidParticle:
     def __setitem__(self, key, value):
         setattr(self, key, value)
 
+    def __eq__(self, other):
+        for key in ["parameter", "weight", "distance_list", "summary_statistics_list"]:
+            if self[key] != other[key]:
+                return False
+        return True
+
 
 class ABCSMC(Base):
     __tablename__ = 'abc_smc'
