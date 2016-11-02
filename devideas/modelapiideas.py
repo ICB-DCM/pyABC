@@ -1,4 +1,4 @@
-from pyabc.modelresults import Accepted, Rejected, RawOutput, SummaryStatistics, Distance
+from pyabc.model import Accepted, Rejected, RawOutput, SummaryStatistics, Distance
 
 
 def model(pars, info):
