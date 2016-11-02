@@ -334,10 +334,10 @@ class ABCSMC:
                 print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
                       .format(m_ss, self.history.model_names[m_ss], duration, end_time,
                               theta_ss))
-            distance = self.distance_function(x_s, self.x_0)
-            if distance <= current_eps:
-                distance_list.append(distance)
-                summary_statistics_list.append(x_s)
+#            distance = self.distance_function(x_s, self.x_0)
+#            if distance <= current_eps:
+#                distance_list.append(distance)
+#                summary_statistics_list.append(x_s)
 
         if self.debug:
             print('.', end='')

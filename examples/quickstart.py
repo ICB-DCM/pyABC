@@ -1,8 +1,6 @@
 from pyabc import ABCSMC, RV, Distribution, Kernel, ModelPerturbationKernel, PercentileDistanceFunction, MedianEpsilon
 import scipy.stats as st
 
-
-
 # Define a gaussian model
 sigma = .5
 

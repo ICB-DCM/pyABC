@@ -1,5 +1,5 @@
 from typing import List
-from .parameters import Parameter
+from pyabc.parameters import Parameter
 
 
 class MapWrapperDefault():
