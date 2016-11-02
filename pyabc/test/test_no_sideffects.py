@@ -1,6 +1,6 @@
 import unittest
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
-                    MedianEpsilon, Kernel,  PercentileDistanceFunction)
+                    MedianEpsilon, Kernel,  PercentileDistanceFunction, SimpleModel)
 import random
 import scipy.stats as st
 import scipy as sp
@@ -39,6 +39,7 @@ class TestNoSideEffects(unittest.TestCase):
             return {"y": st.norm(args['x'], sigma_y).rvs()}
 
         models = [model, model]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 400
         mu_x_1, mu_x_2 = 0, 1
@@ -73,6 +74,7 @@ class TestNoSideEffects(unittest.TestCase):
             return {"y": st.norm(args['x'], sigma_y).rvs()}
 
         models = [model, model]
+        models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_particles = 400
         mu_x_1, mu_x_2 = 0, 1
