@@ -7,6 +7,7 @@ import datetime
 import sys
 import time
 from typing import List, Callable, Iterable, Any, TypeVar
+from pyabc.workspace_dennis.map_wrapper import MapWrapperDefault
 
 model_output = TypeVar("model_output")
 
@@ -127,6 +128,7 @@ class ABCSMC:
                  eps: Epsilon,
                  nr_particles: int,
                  mapper=map,
+                 map_wrapper=None,
                  debug: bool =False,
                  max_nr_allowed_sample_attempts_per_particle: int =500,
                  min_nr_particles_per_population: int =1,
@@ -139,6 +141,17 @@ class ABCSMC:
                 == len(adaptive_parameter_perturbation_kernels)):
             raise Exception("Nr of models has to be equal to the number of parameter prior distributions has to be equal"
                             " to the number of parameter perturbation kernels")
+
+        ## DR START
+        #self.mapper = mapper
+        if map_wrapper is None:
+            self.mapper = MapWrapperDefault(mapper)
+        else:
+            self.mapper = map_wrapper
+            self.mapper.set_map_fun(mapper)
+        ## DR END
+
+
         self.model_prior_distribution = model_prior_distribution
         self.model_perturbation_kernel = model_perturbation_kernel
         self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
@@ -147,7 +160,6 @@ class ABCSMC:
         self.eps = eps
         self.summary_statistics = summary_statistics
         self.nr_particles = nr_particles
-        self.mapper = mapper
         self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
@@ -242,7 +254,7 @@ class ABCSMC:
                 return model_result.sum_stats
             if self.debug:
                 print('sample from prior')
-            self._points_sampled_from_prior = list(self.mapper(sample, list(range(self.nr_particles))))
+            self._points_sampled_from_prior = list(self.mapper.wrap_map(sample, list(range(self.nr_particles))))
             if self.debug:
                 print('sample from prior done')
         if self.debug:
@@ -373,7 +385,7 @@ class ABCSMC:
             if self.debug:
                 print('now submitting population', t)
             new_particle_population = list(
-                    self.mapper(lambda _: self._sample_single_particle(parameter_perturbation_kernels,
+                    self.mapper.wrap_map(lambda _: self._sample_single_particle(parameter_perturbation_kernels,
                                                                     nr_samples_per_particle,
                                                                     t,
                                                                     t0,
