@@ -252,7 +252,7 @@ class ABCSMC:
                                nr_samples_per_particle: int,
                                t: int,
                                t0: int,
-                               current_eps: float):
+                               current_eps: float) -> (int, Parameter, float, List[float], int, List[dict]):
         """
         This is where the actual model evaluation happens.
         The core ABCSMC algorithm is also implemented here.
