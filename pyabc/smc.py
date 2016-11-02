@@ -172,7 +172,7 @@ class ABCSMC:
         self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
-        self.history = None #History
+        self.history = None  # History
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
@@ -274,7 +274,7 @@ class ABCSMC:
                                nr_samples_per_particle: int,
                                t: int,
                                t0: int,
-                               current_eps: float):
+                               current_eps: float) -> (int, Parameter, float, List[float], int, List[dict]):
         """
         This is where the actual model evaluation happens.
         The core ABCSMC algorithm is also implemented here.
@@ -294,24 +294,8 @@ class ABCSMC:
 
         """
         simulation_counter = 0
-        theta_s, theta_ss = "initial", "initial"
         while True:  # find valid theta_ss and (corresponding b) according to data x_0
-            while True:  # find m_s and theta_ss, valid according to prior
-                if t == 0:  # sample from prior
-                    m_ss = self.model_prior_distribution.rvs()
-                    theta_ss = self.parameter_given_model_prior_distribution[m_ss].rvs()
-                else:
-                    m_s = self.history.sample_from_models(t-1)
-                    m_ss = self.model_perturbation_kernel.rvs(m_s)
-                    theta_s = self.history.sample_from_population(t-1, m_ss)
-                    if theta_s is not None:   # theta_s is None if the population m_s has died out
-                        theta_ss = parameter_perturbation_kernels[m_ss].rvs(theta_s)
-                    else:
-                        theta_ss = None
-                if theta_ss is not None and (self.model_prior_distribution.pmf(m_ss)
-                                             * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
-                    break
-
+            m_ss, theta_ss = self.generate_valid_proposal(parameter_perturbation_kernels, t)
             # from here, theta_ss is valid according to the prior
             distance_list = []
             summary_statistics_list = []
@@ -320,8 +304,8 @@ class ABCSMC:
                 simulation_counter += 1
                 # stop builder if it takes too long
                 if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
-                    print("Max nr of samples (={n_max}) for particle theta_s={theta_s} reached."
-                          .format(theta_s=theta_s, n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
+                    print("Max nr of samples (={n_max}) for particle reached."
+                          .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
                     return None
                 start_time = time.time()
                 model_raw_output = self.models[m_ss](theta_ss)  # the actual simulation
@@ -329,9 +313,9 @@ class ABCSMC:
                 end_time = time.time()
                 duration = end_time - start_time
                 if self.debug:
-                    print("Sampled model={}-{}, delta_time={}s, end_time={}, theta_s={}, theta_ss={}"
+                    print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
                           .format(m_ss, self.history.model_names[m_ss], duration, end_time,
-                                  theta_s, theta_ss))
+                                  theta_ss))
                 distance = self.distance_function(x_s, self.x_0)
                 if distance <= current_eps:
                     distance_list.append(distance)
@@ -358,6 +342,23 @@ class ABCSMC:
         if self.debug:
             print('.', end='')
         return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
+
+    def generate_valid_proposal(self, parameter_perturbation_kernels, t):
+        while True:  # find m_s and theta_ss, valid according to prior
+            if t == 0:  # sample from prior
+                m_ss = self.model_prior_distribution.rvs()
+                theta_ss = self.parameter_given_model_prior_distribution[m_ss].rvs()
+            else:
+                m_s = self.history.sample_from_models(t - 1)
+                m_ss = self.model_perturbation_kernel.rvs(m_s)
+                theta_s = self.history.sample_from_population(t - 1, m_ss)
+                if theta_s is not None:  # theta_s is None if the population m_s has died out
+                    theta_ss = parameter_perturbation_kernels[m_ss].rvs(theta_s)
+                else:
+                    theta_ss = None
+            if theta_ss is not None and (self.model_prior_distribution.pmf(m_ss)
+                                             * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
+                return m_ss, theta_ss
 
     def run(self, nr_samples_per_particle: List[int], minimum_epsilon: float) -> History:
         """

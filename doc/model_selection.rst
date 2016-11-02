@@ -11,7 +11,11 @@ Here is a small example on how to do Bayesian model selection.
 .. code-block:: python
    :linenos:
 
-        from pyabc import ABCSMC, RV, Distribution, Kernel
+        from pyabc import (ABCSMC, RV, Distribution, Kernel,
+                           ModelPerturbationKernel, PercentileDistanceFunction,
+                           MedianEpsilon)
+        import scipy.stats as st
+
 
         # Define a gaussian model
         sigma = .5
@@ -54,7 +58,7 @@ Here is a small example on how to do Bayesian model selection.
         # Finally we add meta data such as model
         # names and define where to store the results
         model_names = ["m1", "m2"]
-        options = {'db_path': "/tmp/abc.db"}
+        options = {'db_path': "sqlite:////tmp/abc.db"}
         # y_observed is the important piece here: our actual observation.
         y_observed = 1
         abc.set_data({"y": y_observed}, 0, {}, options, model_names)
