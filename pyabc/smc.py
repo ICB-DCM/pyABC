@@ -294,36 +294,60 @@ class ABCSMC:
         -------
 
         """
-        simulation_counter = 0
         while True:  # find valid theta_ss and (corresponding b) according to data x_0
             m_ss, theta_ss = self.generate_valid_proposal(parameter_perturbation_kernels, t)
-            # from here, theta_ss is valid according to the prior
-            distance_list = []
-            summary_statistics_list = []
-            for __ in range(nr_samples_per_particle[t-t0]):
-                ##### MODEL SIMULATION - THIS IS THE EXPENSIVE PART ######
-                simulation_counter += 1
-                # stop builder if it takes too long
-                if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
-                    print("Max nr of samples (={n_max}) for particle reached."
-                          .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
-                    return None
-                start_time = time.time()
-                model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
-                                                        lambda x: self.distance_function(x, self.x_0), current_eps)
-                if model_result.accepted:
-                    distance_list.append(model_result.distance)
-                    summary_statistics_list.append(model_result.sum_stats)
-
-                end_time = time.time()
-                duration = end_time - start_time
-                if self.debug:
-                    print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
-                          .format(m_ss, self.history.model_names[m_ss], duration, end_time,
-                                  theta_ss))
+            eval_res = self.evaluate_proposal(m_ss, theta_ss, parameter_perturbation_kernels,
+                                             nr_samples_per_particle, t, t0, current_eps)
+            distance_list = eval_res['distance_list']
+            simulation_counter = eval_res['simulation_counter']
+            summary_statistics_list = eval_res['summary_statistics_list']
             if len(distance_list) > 0:
                 break
+        weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, parameter_perturbation_kernels,
+                                           nr_samples_per_particle, t, t0)
+        return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
 
+    def evaluate_proposal(self, m_ss, theta_ss, parameter_perturbation_kernels,
+                          nr_samples_per_particle, t, t0, current_eps):
+        # from here, theta_ss is valid according to the prior
+        simulation_counter = 0
+        distance_list = []
+        summary_statistics_list = []
+        for __ in range(nr_samples_per_particle[t-t0]):
+            ##### MODEL SIMULATION - THIS IS THE EXPENSIVE PART ######
+            simulation_counter += 1
+            # stop builder if it takes too long
+            if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
+                print("Max nr of samples (={n_max}) for particle reached."
+                      .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
+                return None
+            start_time = time.time()
+#            model_raw_output = self.models[m_ss](theta_ss)  # the actual simulation
+#            x_s = self.summary_statistics(model_raw_output)
+            model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
+                                                    lambda x: self.distance_function(x, self.x_0), current_eps)
+            if model_result.accepted:
+                distance_list.append(model_result.distance)
+                summary_statistics_list.append(model_result.sum_stats)
+
+            end_time = time.time()
+            duration = end_time - start_time
+            if self.debug:
+                print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
+                      .format(m_ss, self.history.model_names[m_ss], duration, end_time,
+                              theta_ss))
+            distance = self.distance_function(x_s, self.x_0)
+            if distance <= current_eps:
+                distance_list.append(distance)
+                summary_statistics_list.append(x_s)
+
+        if self.debug:
+            print('.', end='')
+        return {'distance_list': distance_list, 'simulation_counter': simulation_counter,
+                'summary_statistics_list': summary_statistics_list}
+
+    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, parameter_perturbation_kernels,
+                             nr_samples_per_particle, t, t0):
         if t == 0:
             weight = len(distance_list) / nr_samples_per_particle[t-t0]
         else:
@@ -340,9 +364,7 @@ class ABCSMC:
                       * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss)
                       * len(distance_list) / nr_samples_per_particle[t-t0]
                       / normalization)
-        if self.debug:
-            print('.', end='')
-        return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
+        return weight
 
     def generate_valid_proposal(self, parameter_perturbation_kernels, t):
         while True:  # find m_s and theta_ss, valid according to prior
