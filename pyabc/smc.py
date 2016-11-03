@@ -307,7 +307,7 @@ class ABCSMC:
                                  for j in range(len(self.models)))
                              * sum(particle['weight']  # this is already conditioned on m,
                                                        # so do not divide by P_{t-1}(m_{t-1} = m_t^{(i)}) = P_{t-1}(m_t^{(i)})
-                                   * parameter_perturbation_kernels[m_ss].pdf(theta_ss, particle['parameter'])
+                                   * parameter_perturbation_kernels[m_ss].pdf(theta_ss, particle['parameter']) # TODO check how to implement the PDF in the particleperturber
                                    for particle in self.history.store[t-1][m_ss])
                             )
             if normalization == 0:
