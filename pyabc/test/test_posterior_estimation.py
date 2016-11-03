@@ -333,7 +333,7 @@ class TestABCSlow(TestABC):
         abc.set_data({"y": y_observed}, 0, {}, options)
 
         minimum_epsilon = -1
-        nr_populations = 3
+        nr_populations = 4
         nr_samples_per_particles = [1] * nr_populations
         abc.do_not_stop_when_only_single_model_alive()
         history = abc.run(nr_samples_per_particles, minimum_epsilon)
