@@ -25,7 +25,9 @@ class TestABC(unittest.TestCase):
 
     def clean_db(self):
         try:
-            os.remove(self.db_file_location)
+            pass
+            # TODO remove this
+            #os.remove(self.db_file_location)
         except FileNotFoundError:
             pass
 
@@ -197,6 +199,9 @@ class TestABCFast(TestABC):
 
         models = [model for _ in range(2)]
         models = list(map(SimpleModel, models))
+        # TODO remove this
+        for k, model in enumerate(models):
+            model.name += "_" + str(k) + "_old"
         model_prior = RV("randint", 0, 2)
         nr_particles = 500
         a1, b1 = 1, 1
