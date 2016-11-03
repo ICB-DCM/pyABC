@@ -194,7 +194,7 @@ class TestABCFast(TestABC):
         binomial_n = 5
 
         def model(args):
-            return {"result": st.binom(binomial_n, args['theta']).rvs()}
+            return {"result": st.binom(binomial_n, args.theta).rvs()}
 
         models = [model for _ in range(2)]
         models = list(map(SimpleModel, models))

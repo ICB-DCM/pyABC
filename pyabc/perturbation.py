@@ -87,11 +87,12 @@ class MultivariateNormalPerturber(ParticlePerturber):
         self.X = X
         self.X_arr = X.as_matrix()
         self.w = w
-
+        print("sumw", w.sum())
         cov = np.cov(self.X_arr, aweights=w, rowvar=False)
         if len(cov.shape) == 0:
             cov = cov.reshape((1,1))
         self.cov = cov
+        print(cov)
 
     def rvs(self):
         if self.no_parameters:
