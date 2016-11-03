@@ -13,7 +13,7 @@ import numpy as np
 # Possible options include
 # 1. Have a specific perturber for no particles
 # 2. Explicitly hande that case in each concrete perturber implementation
-# 3. Make a metaclass which takes care of the no parameters case
+# 3. Make a metaclass which takes care of the no parameters case. This metaclass could also check if w is sane
 
 class ParticlePerturber(ABC):
     @abstractmethod
@@ -86,25 +86,23 @@ class MultivariateNormalPerturber(ParticlePerturber):
 
         self.X = X
         self.X_arr = X.as_matrix()
-        self.w = w
-        print("sumw", w.sum())
+        self.w = w  # TODO assert that w is normalized? use metaclass?
+        assert np.isclose(w.sum(), 1)
         cov = np.cov(self.X_arr, aweights=w, rowvar=False)
         if len(cov.shape) == 0:
             cov = cov.reshape((1,1))
         self.cov = cov
-        print(cov)
 
     def rvs(self):
-        if self.no_parameters:
+        if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return pd.Series()
         sample = self.X.sample(weights=self.w).iloc[0]
         perturbed = sample + np.random.multivariate_normal(np.zeros(self.cov.shape[0]), self.cov)
         return perturbed
 
     def pdf(self, x: pd.Series):
-        if self.no_parameters:
+        if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return 1
         import scipy.stats as st
-        pdf = st.multivariate_normal(cov=self.cov).pdf
-        dens = sum(w * pdf(x) for w, x in zip(self.w, self.X_arr))
+        dens = sum(w * st.multivariate_normal(mean=support, cov=self.cov).pdf(x) for w, support in zip(self.w, self.X_arr))
         return float(dens)
