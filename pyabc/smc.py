@@ -304,18 +304,16 @@ class ABCSMC:
         if t == 0:
             weight = len(distance_list) / nr_samples_per_particle[t-t0]
         else:
-            normalization = (sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
+            model_factor = sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
                                  for j in range(len(self.models)))
-                             * sum(particle['weight']  # this is already conditioned on m,
-                                                       # so do not divide by P_{t-1}(m_{t-1} = m_t^{(i)}) = P_{t-1}(m_t^{(i)})
-                                   * parameter_perturbation_kernels[m_ss].pdf(theta_ss, particle['parameter']) # TODO check how to implement the PDF in the particleperturber
-                                   for particle in self.history.store[t-1][m_ss])
-                            )
+            particle_factor = self.perturbers[m_ss].pdf(pd.Series(dict(theta_ss)))
+            normalization = model_factor * particle_factor
             if normalization == 0:
                 print('normalization is zero!')
+            fraction_accepted_runs_for_single_parameter = len(distance_list) / nr_samples_per_particle[t-t0]  # reflects stochasticity of the model
             weight = (self.model_prior_distribution.pmf(m_ss)
                       * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss)
-                      * len(distance_list) / nr_samples_per_particle[t-t0]
+                      * fraction_accepted_runs_for_single_parameter
                       / normalization)
         if self.debug:
             print('.', end='')
@@ -405,9 +403,8 @@ class ABCSMC:
             if t > 0:
                 particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
             else:
-                particles_df = pd.DataFrame(self.sample_from_prior())
-                weights = sp.ones(len(particles_df))
-                weights /= len(weights)
+                # if t == 0, then particles are not perturbed. no perturber fitting necessary
+                continue
             if len(particles_df) > 0:
                 self.perturbers[m].fit(particles_df, weights)
             else:

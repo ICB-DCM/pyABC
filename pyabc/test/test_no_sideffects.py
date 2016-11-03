@@ -79,7 +79,7 @@ class TestNoSideEffects(unittest.TestCase):
         mu_x_1, mu_x_2 = 0, 1
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma_x)),
                                                     Distribution(x=RV("norm", mu_x_2, sigma_x))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [None for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), nr_particles,
@@ -91,9 +91,7 @@ class TestNoSideEffects(unittest.TestCase):
         results = []
         for k in range(2):
             set_seeds()
-            statistics = abc.history.get_statistics(-1)
-            parameter_perturbation_kernels = abc._make_parameter_perturbation_kernels(statistics, 1)
-            results.append(abc._sample_single_particle(parameter_perturbation_kernels, [4]*10, 0, 0, .2))
+            results.append(abc._sample_single_particle([4]*10, 0, 0, .2))
 
         self.assertEqual(results[0], results[1])
 
