@@ -22,7 +22,8 @@ class TestABC(unittest.TestCase):
     def setUp(self):
         self.db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest_db.db")
         self.db = "sqlite:///" + self.db_file_location
-        self.clean_db()
+        # TODO remove this
+        #self.clean_db()
 
     def clean_db(self):
         try:
@@ -31,7 +32,9 @@ class TestABC(unittest.TestCase):
             pass
 
     def tearDown(self):
-        self.clean_db()
+        pass
+        # TODO remove this
+        #self.clean_db()
 
 
 class TestABCFast(TestABC):
@@ -198,6 +201,10 @@ class TestABCFast(TestABC):
 
         models = [model for _ in range(2)]
         models = list(map(SimpleModel, models))
+        # TODO remove this
+        for k, model in enumerate(models):
+            model.name += "_" + str(k) + "_new"
+
         model_prior = RV("randint", 0, 2)
         nr_particles = 500
         a1, b1 = 1, 1
