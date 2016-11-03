@@ -266,7 +266,6 @@ class TestABCFast(TestABC):
         self.assertLess(max_distribution_difference, 0.08)
 
 
-@unittest.skip("To slow. Don'r run always.")
 class TestABCSlow(TestABC):
     def test_gaussian_single_population(self):
         sigma_prior = 1
