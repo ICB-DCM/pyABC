@@ -1,8 +1,18 @@
 from typing import List
 from pyabc.parameters import Parameter
+from abc import ABCMeta, abstractmethod
 
+class MapWrapper():
+    @abstractmethod
+    def wrap_map_sample_from_population(self, abc_context,parameter_perturbation_kernels,
+                                        nr_samples_per_particle, t, t0, current_eps):
+        pass
 
-class MapWrapperDefault():
+    @abstractmethod
+    def wrap_map_sample_from_prior(self, abc_context) -> List[dict]:
+        pass
+
+class MapWrapperDefault(MapWrapper):
     """
         This is the basic map_wrapper implementation required for code compatibility reasons.
         There should be no need do initialize this on the user-level.
@@ -22,40 +32,38 @@ class MapWrapperDefault():
         """
         if abc_context._points_sampled_from_prior is None:
             # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
-            def sample(_):
-                m = abc_context.model_prior_distribution.rvs()
-                par = abc_context.parameter_given_model_prior_distribution[m].rvs()
-                model_result = abc_context.models[m].summary_statistics(par, abc_context.summary_statistics)
-                return model_result.sum_stats
-            if abc_context.debug:
-                print('sample from prior')
-            abc_context._points_sampled_from_prior = list(self.map_fun(sample,
-                                                          list(range(abc_context.nr_particles)))
-                                                         )
-            if abc_context.debug:
-                print('sample from prior done')
-        if abc_context.debug:
-            print('return sample from prior')
-
+            abc_context._points_sampled_from_prior = list(self.map_fun(
+                                                            lambda _: self.sample_particle_from_prior(
+                                                                abc_context),
+                                                            list(range(abc_context.nr_particles))
+                                                                       )
+                                                          )
         return abc_context._points_sampled_from_prior
 
-    def wrap_map_sample_from_population(self, abc_context,parameter_perturbation_kernels,
+    def wrap_map_sample_from_population(self, abc_context, parameter_perturbation_kernels,
                                         nr_samples_per_particle, t, t0, current_eps):
-        pop_samples = self.map_fun(
-                                  lambda _: self.sample_single_particle(abc_context,
-                                                                        parameter_perturbation_kernels,
-                                                                        nr_samples_per_particle,
-                                                                        t,
-                                                                        t0,
-                                                                        current_eps),
+        pop_samples = list(
+                            self.map_fun(
+                                  lambda _: self.sample_particle_from_pertubation(
+                                                abc_context, parameter_perturbation_kernels, nr_samples_per_particle,
+                                                t, t0, current_eps),
                                   [None] * abc_context.nr_particles)
+                          )
         return pop_samples
 
-    def sample_single_particle(self, abc_context,parameter_perturbation_kernels,
-                               nr_samples_per_particle: int,
-                               t: int,
-                               t0: int,
-                               current_eps: float) -> (int, Parameter, float, List[float], int, List[dict]):
+    #@staticmethod
+    def sample_particle_from_prior(self, abc_context):
+        m = abc_context.model_prior_distribution.rvs()
+        par = abc_context.parameter_given_model_prior_distribution[m].rvs()
+        model_result = abc_context.models[m].summary_statistics(par, abc_context.summary_statistics)
+        return model_result.sum_stats
+
+    #@staticmethod
+    def sample_particle_from_pertubation(self, abc_context, parameter_perturbation_kernels,
+                                           nr_samples_per_particle: int,
+                                           t: int,
+                                           t0: int,
+                                           current_eps: float) -> (int, Parameter, float, List[float], int, List[dict]):
         """
         This is where the actual model evaluation happens.
 
