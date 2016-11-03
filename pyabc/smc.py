@@ -7,7 +7,7 @@ import datetime
 import sys
 import time
 from typing import List, Callable, Iterable, Any, TypeVar
-
+import pandas as pd
 model_output = TypeVar("model_output")
 
 from .model import Model
@@ -17,6 +17,7 @@ from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
 from .storage import History
 from .perturbation import ParticlePerturber
+import scipy as sp
 
 
 def identity(x):
@@ -372,7 +373,7 @@ class ABCSMC:
             current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
             if self.debug:
                 print('t:', t, 'eps:', current_eps)
-            self.fit_perturbers()
+            self.fit_perturbers(t)
             if self.debug:
                 print('now submitting population', t)
             new_particle_population = list(
@@ -399,9 +400,14 @@ class ABCSMC:
                                           zip(self.perturbers, statistics)]
         return parameter_perturbation_kernels
 
-    def fit_perturbers(self):
+    def fit_perturbers(self, t):
         for m in range(self.history.nr_models):
-            particles_df, weights = self.history.weighted_particles_dataframes(-1, m)
+            if t > 0:
+                particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
+            else:
+                particles_df = pd.DataFrame(self.sample_from_prior())
+                weights = sp.ones(len(particles_df))
+                weights /= len(weights)
             if len(particles_df) > 0:
                 self.perturbers[m].fit(particles_df, weights)
             else:

@@ -10,12 +10,12 @@ import scipy as sp
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-
+import pandas as pd
 from . import weighted_statistics
 from .random_variables import (MultivariateMultiTypeNormalDistribution,
                                NonEmptyMultivariateMultiTypeNormalDistribution,
                                EmptyMultivariateMultiTypeNormalDistribution)
-
+from .parameters import ValidParticle
 Base = declarative_base()
 
 
@@ -133,7 +133,7 @@ class History:
 
     """
     def __init__(self, db_path: str, nr_models: int, model_names: List[str], min_nr_particles_per_population: int, debug=False):
-        self.store = []
+        self.store = [] # type: List[List[List[ValidParticle]]]
         self.model_probabilities = []
         self.nr_models = nr_models
         self.nr_simulations = []
@@ -144,6 +144,12 @@ class History:
         self._engine = None
         self.min_nr_particles_per_population = min_nr_particles_per_population
         self.debug = debug
+
+    def weighted_particles_dataframe(self, t, m):
+        population = self.store[t][m]
+        weights = sp.array([particle.weight for particle in population])
+        parameters = pd.DataFrame([dict(particle.parameter) for particle in population])
+        return parameters, weights
 
     def store_initial_data(self, ground_truth_model: int, options,
                            observed_summary_statistics: dict,
@@ -275,7 +281,7 @@ class History:
             print("Hist append:", population)
         self._close_session()
 
-    def _append(self, t, m, nr_simulations, valid_particle):
+    def _append(self, t, m, nr_simulations, valid_particle: ValidParticle):
         self.store[t][m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
         self.nr_simulations[t] += nr_simulations
 

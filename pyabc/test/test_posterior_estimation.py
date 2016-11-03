@@ -1,6 +1,7 @@
 import unittest
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
-                   MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult)
+                   MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult,
+                   IndependentNormalPerturber)
 import random
 import os
 import scipy.stats as st
@@ -162,7 +163,7 @@ class TestABCFast(TestABC):
         a2, b2 = 10, 1
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
                                                     Distribution(theta=RV("beta", a2, b2))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [IndependentNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
@@ -266,7 +267,6 @@ class TestABCFast(TestABC):
         self.assertLess(max_distribution_difference, 0.08)
 
 
-@unittest.skip("To slow. Don'r run always.")
 class TestABCSlow(TestABC):
     def test_gaussian_single_population(self):
         sigma_prior = 1
@@ -324,7 +324,7 @@ class TestABCSlow(TestABC):
         model_prior = RV("randint", 0, 1)
         nr_particles = 600
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov'])]
+        parameter_perturbation_kernels = [IndependentNormalPerturber()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), nr_particles,
