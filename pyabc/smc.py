@@ -228,7 +228,8 @@ class ABCSMC:
                                self.min_nr_particles_per_population)
 
         # initialize distance function and epsilon
-        sample_from_prior = self.map_wrapper.wrap_map_sample_from_prior(self)
+        sample_from_prior = self.initialize_prior()
+
         self.distance_function.initialize(sample_from_prior)
 
         def distance_to_ground_truth_function(x):
@@ -239,6 +240,24 @@ class ABCSMC:
                                         observed_summary_statistics, ground_truth_parameter,
                                         self.distance_function.to_json(),
                                         self.eps.to_json())
+
+    def initialize_prior(self):
+        if self._points_sampled_from_prior is None:
+            def sample_one():
+                m = self.model_prior_distribution.rvs()
+                par = self.parameter_given_model_prior_distribution[m].rvs()
+                return m, par
+
+            def simulate_one(para):
+                (m, par) = para
+                model_result = self.models[m].summary_statistics(par, self.summary_statistics)
+                return model_result.sum_stats
+
+            sample_from_prior = self.map_wrapper.sample_until_n_accepted(sample_one, simulate_one, lambda x: True,
+                                                                         self.nr_particles)
+        else:
+            sample_from_prior = self._points_sampled_from_prior
+        return sample_from_prior
 
     def evaluate_proposal(self, m_ss, theta_ss, nr_samples_per_particle, t, t0, current_eps):
         # from here, theta_ss is valid according to the prior
@@ -342,10 +361,13 @@ class ABCSMC:
             parameter_perturbation_kernels = self._make_parameter_perturbation_kernels(statistics, t)
             if self.debug:
                 print('now submitting population', t)
-            new_particle_population = list(
-                self.map_wrapper.wrap_map_sample_from_population(self, parameter_perturbation_kernels,
-                                                                 nr_samples_per_particle, t, t0, current_eps)
-                                        )
+
+            sample_one = self.get_current_sample_function(parameter_perturbation_kernels, t)
+            sim_one = self.get_current_sim_function(parameter_perturbation_kernels,
+                                                    nr_samples_per_particle, t, t0, current_eps)
+            accept_one = self.get_current_accept_function()
+            new_particle_population = self.map_wrapper.sample_until_n_accepted(sample_one, sim_one,
+                                                                               accept_one, self.nr_particles)
 
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
@@ -367,3 +389,39 @@ class ABCSMC:
                                           for apk, stat in
                                           zip(self.adaptive_parameter_perturbation_kernels, statistics)]
         return parameter_perturbation_kernels
+
+# DR: Ugly code ahead
+    def get_current_sample_function(self, parameter_perturbation_kernels, t):
+        def sample_one():
+            return self.generate_valid_proposal(parameter_perturbation_kernels, t)
+        return sample_one
+
+    def get_current_sim_function(self, parameter_perturbation_kernels,nr_samples_per_particle, t, t0, current_eps):
+        def lambda_evaluate_proposal(m_ss, theta_ss):
+            return self.evaluate_proposal(m_ss, theta_ss,
+                                          nr_samples_per_particle,
+                                          t, t0, current_eps)
+
+        def lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss):
+            return self.calc_proposal_weight(distance_list, m_ss, theta_ss,
+                                             parameter_perturbation_kernels,
+                                             nr_samples_per_particle, t, t0)
+
+        def sim_one(paras):
+            (m_ss, theta_ss) = paras
+            eval_res = lambda_evaluate_proposal(m_ss, theta_ss)
+            distance_list = eval_res['distance_list']
+            simulation_counter = eval_res['simulation_counter']
+            summary_statistics_list = eval_res['summary_statistics_list']
+            if len(distance_list) > 0:
+                weight = lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss)
+            else:
+                weight = 0
+            return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
+        return sim_one
+
+    def get_current_accept_function(self):
+        def accept_one(sim_result):
+            (m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list) = sim_result
+            return len(distance_list) > 0
+        return accept_one

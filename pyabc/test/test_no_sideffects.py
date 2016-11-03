@@ -57,11 +57,11 @@ class TestNoSideEffects(unittest.TestCase):
 
         abc._points_sampled_from_prior = None
         set_seeds()
-        result1 = abc.map_wrapper.wrap_map_sample_from_prior(abc)
+        result1 = abc.initialize_prior()
 
         abc._points_sampled_from_prior = None
         set_seeds()
-        result2 = abc.map_wrapper.wrap_map_sample_from_prior(abc)
+        result2 = abc.initialize_prior()
 
         self.assertEqual(result1, result2)
 
@@ -95,7 +95,36 @@ class TestNoSideEffects(unittest.TestCase):
             set_seeds()
             statistics = abc.history.get_statistics(-1)
             parameter_perturbation_kernels = abc._make_parameter_perturbation_kernels(statistics, 1)
-            results.append(abc.map_wrapper.sample_particle_from_pertubation(abc,parameter_perturbation_kernels, [4]*10, 0, 0, .2))
+
+            def sample_one(): return abc.generate_valid_proposal(parameter_perturbation_kernels, 0)
+
+            def lambda_evaluate_proposal(m_ss, theta_ss): return abc.evaluate_proposal(m_ss, theta_ss,
+                                                                                       [4] * 10, 0, 0, .2)
+
+            def lambda_calc_propsal_weigth(distance_list, m_ss, theta_ss):
+                                                        return abc.calc_proposal_weight(distance_list, m_ss, theta_ss,
+                                                                                        parameter_perturbation_kernels,
+                                                                                        [4] * 10, 0, 0)
+
+            def sim_one(paras):
+                (m_ss, theta_ss) = paras
+                eval_res = lambda_evaluate_proposal(m_ss, theta_ss)
+                distance_list = eval_res['distance_list']
+                simulation_counter = eval_res['simulation_counter']
+                summary_statistics_list = eval_res['summary_statistics_list']
+                if len(distance_list) > 0:
+                    weight = lambda_calc_propsal_weigth(distance_list, m_ss, theta_ss)
+                else:
+                    weight = 0
+                return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
+
+            def accept_one(sim_result):
+                (m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list) = sim_result
+                return len(distance_list) > 0
+
+            new_particle = abc.map_wrapper.sample_until_n_accepted(sample_one, sim_one, accept_one, 1)
+            results.append(new_particle)
+            #results.append(abc.map_wrapper.sample_particle_from_pertubation(abc, parameter_perturbation_kernels, [4]*10, 0, 0, .2))
 
         self.assertEqual(results[0], results[1])
 
