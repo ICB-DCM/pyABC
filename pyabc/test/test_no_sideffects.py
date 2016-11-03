@@ -57,11 +57,11 @@ class TestNoSideEffects(unittest.TestCase):
 
         abc._points_sampled_from_prior = None
         set_seeds()
-        result1 = abc.sample_from_prior()
+        result1 = abc.map_wrapper.wrap_map_sample_from_prior(abc)
 
         abc._points_sampled_from_prior = None
         set_seeds()
-        result2 = abc.sample_from_prior()
+        result2 = abc.map_wrapper.wrap_map_sample_from_prior(abc)
 
         self.assertEqual(result1, result2)
 
@@ -95,7 +95,7 @@ class TestNoSideEffects(unittest.TestCase):
             set_seeds()
             statistics = abc.history.get_statistics(-1)
             parameter_perturbation_kernels = abc._make_parameter_perturbation_kernels(statistics, 1)
-            results.append(abc._sample_single_particle(parameter_perturbation_kernels, [4]*10, 0, 0, .2))
+            results.append(abc.map_wrapper.sample_single_particle(abc,parameter_perturbation_kernels, [4]*10, 0, 0, .2))
 
         self.assertEqual(results[0], results[1])
 

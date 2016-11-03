@@ -10,7 +10,6 @@ import scipy.interpolate
 import tempfile
 
 
-
 def mean_and_std(values, weights):
     mean = (values * weights).sum()
     std = sp.sqrt(((values - mean)**2 * weights).sum())
@@ -98,7 +97,7 @@ class TestABCFast(TestABC):
         expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
         self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
 
-    def   test_beta_binomial_two_identical_models(self):
+    def test_beta_binomial_two_identical_models(self):
         binomial_n = 5
 
         def model_fun(args):
