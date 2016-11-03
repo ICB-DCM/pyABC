@@ -15,6 +15,7 @@ Here is a small example on how to do Bayesian model selection.
                            ModelPerturbationKernel, PercentileDistanceFunction,
                            MedianEpsilon)
         import scipy.stats as st
+        from parallel import SGE, sge_available
 
 
         # Define a gaussian model
@@ -47,12 +48,19 @@ Here is a small example on how to do Bayesian model selection.
         # We use "y" in the distance function as this
         # was the result key defined for the model
         nr_particles = 400
+        if sge_available():
+            sge = SGE(memory="5G")
+            mapper = sge.map
+        else:
+            mapper = map
+
         abc = ABCSMC(models, model_prior,
                      ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution,
                      parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]),
                      MedianEpsilon(.2), nr_particles,
+                     mapper=mapper,
                      max_nr_allowed_sample_attempts_per_particle=2000)
 
         # Finally we add meta data such as model
