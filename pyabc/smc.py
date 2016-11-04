@@ -7,16 +7,17 @@ import datetime
 import sys
 import time
 from typing import List, Callable, TypeVar
-import pandas as pd
-from pyabc.workspace_dennis.sampler import MappingSampler
 
-from .model import Model
-from .parameters import ValidParticle
-from .random_variables import RV, ModelPerturbationKernel, Distribution
+import pandas as pd
+
+from parallel.sampler import MappingSampler
 from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
-from .storage import History
+from .model import Model
+from .parameters import ValidParticle
 from .perturbation import ParticlePerturber
+from .random_variables import RV, ModelPerturbationKernel, Distribution
+from .storage import History
 
 model_output = TypeVar("model_output")
 
@@ -392,12 +393,6 @@ class ABCSMC:
                 break
         self.history.done()
         return self.history
-
-    def _make_parameter_perturbation_kernels(self, statistics, t):
-        parameter_perturbation_kernels = [perturber(t, stat) if stat is not None else None
-                                          for perturber, stat in
-                                          zip(self.perturbers, statistics)]
-        return parameter_perturbation_kernels
 
     def fit_perturbers(self, t):
         for m in range(self.history.nr_models):

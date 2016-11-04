@@ -1,6 +1,7 @@
-from pyabc import ABCSMC, RV, Distribution, Kernel, ModelPerturbationKernel, PercentileDistanceFunction, MedianEpsilon
-from pyabc.workspace_dennis.sampler import MapWrapperDistribDemo
 import scipy.stats as st
+
+from parallel.sampler import MapWrapperDistribDemo
+from pyabc import ABCSMC, RV, Distribution, Kernel, ModelPerturbationKernel, PercentileDistanceFunction, MedianEpsilon
 
 # Define a gaussian model
 sigma = .5

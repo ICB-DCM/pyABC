@@ -91,8 +91,6 @@ class TestNoSideEffects(unittest.TestCase):
         results = []
         for k in range(2):
             set_seeds()
-            statistics = abc.history.get_statistics(-1)
-            parameter_perturbation_kernels = abc._make_parameter_perturbation_kernels(statistics, 1)
 
             def sample_one(): return abc.generate_valid_proposal(0)
 
@@ -121,7 +119,6 @@ class TestNoSideEffects(unittest.TestCase):
 
             new_particle = abc.sampler.sample_until_n_accepted(sample_one, sim_one, accept_one, 1)
             results.append(new_particle)
-            #results.append(abc.sampler.sample_particle_from_pertubation(abc, parameter_perturbation_kernels, [4]*10, 0, 0, .2))
 
         self.assertEqual(results[0], results[1])
 

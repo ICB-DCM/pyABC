@@ -12,8 +12,8 @@ class MappingSampler(Sampler):
     This is the basic sampler implementation required for code compatibility reasons.
     There should be no need do initialize this on the user-level.
     """
-    def __init__(self, map_fun=map):
-        self.map = map_fun
+    def __init__(self, map=map):
+        self.map = map
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         def map_function(_):
