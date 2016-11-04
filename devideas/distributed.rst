@@ -21,7 +21,7 @@ Thoughts
   * need to kill the worker
 * https://wiki.cebitec.uni-bielefeld.de/bibiserv-1.25.2/index.php/BiBiGrid
 * kill all workers with qdel?
-
+* don't forget acceptance rate
 
 Minimal requirements
 ====================
