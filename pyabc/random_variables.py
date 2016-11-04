@@ -352,6 +352,8 @@ class NonEmptyMultivariateMultiTypeNormalDistribution:
     def __init__(self, covariance_matrix: np.ndarray, parameter_names: List[str],
                  parameter_types: list,
                  zero_covariance_substitutes=1e-4):
+        import warnings
+        warnings.warn("Deprecated: NonEmptyMultivariateMultiTypeNormalDistribution")
         # check parameter lengths
         if not (covariance_matrix.shape[0]
                 == covariance_matrix.shape[1]

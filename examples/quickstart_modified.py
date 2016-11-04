@@ -1,5 +1,5 @@
 from pyabc import ABCSMC, RV, Distribution, Kernel, ModelPerturbationKernel, PercentileDistanceFunction, MedianEpsilon
-from pyabc.workspace_dennis.map_wrapper import MapWrapperDistribDemo
+from pyabc.workspace_dennis.sampler import MapWrapperDistribDemo
 import scipy.stats as st
 
 # Define a gaussian model
@@ -43,7 +43,7 @@ abc = ABCSMC(models, model_prior,
              PercentileDistanceFunction(measures_to_use=["y"]),
              MedianEpsilon(.2), nr_particles,
              max_nr_allowed_sample_attempts_per_particle=2000,
-             mapper=map, map_wrapper=my_distributed_mapper)
+             mapper=map, sampler=my_distributed_mapper)
 
 # Finally we add meta data such as model
 # names and define where to store the results

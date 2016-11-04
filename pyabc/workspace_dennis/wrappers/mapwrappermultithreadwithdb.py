@@ -1,6 +1,6 @@
 class MapWrapperMultiThreadWithDB(map):
     """
-        This implementation of the map wrapper demonstrates the idea behind the map_wrapper object.
+        This implementation of the map wrapper demonstrates the idea behind the sampler object.
     """
     def __init__(self, map_fun=map, test_string=""):
         self.map_fun = map_fun;
