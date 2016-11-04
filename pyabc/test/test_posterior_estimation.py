@@ -1,6 +1,6 @@
 import unittest
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
-                   MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult,
+                   MedianEpsilon, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalPerturber)
 import random
 import os
@@ -9,7 +9,6 @@ from scipy.special import gamma, binom
 import scipy as sp
 import scipy.interpolate
 import tempfile
-
 
 
 def mean_and_std(values, weights):
