@@ -300,8 +300,7 @@ class ABCSMC:
         return {'distance_list': distance_list, 'simulation_counter': simulation_counter,
                 'summary_statistics_list': summary_statistics_list}
 
-    def calc_proposal_weight(self, distance_list, m_ss, theta_ss,
-                             nr_samples_per_particle, t, t0):
+    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, nr_samples_per_particle, t, t0):
         if t == 0:
             weight = len(distance_list) / nr_samples_per_particle[t-t0]
         else:
