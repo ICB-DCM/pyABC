@@ -1,4 +1,5 @@
 from collections import UserDict
+from typing import List
 
 
 class ParameterStructure(UserDict):
@@ -72,3 +73,24 @@ class Parameter(ParameterStructure):
         Copy the parameter.
         """
         return Parameter(**self)
+
+
+class ValidParticle:
+    def __init__(self, parameter: Parameter, weight: float, distance_list: List[float],
+                 summary_statistics_list: List[dict]):
+        self.parameter = parameter
+        self.weight = weight
+        self.distance_list = distance_list
+        self.summary_statistics_list = summary_statistics_list
+
+    def __getitem__(self, item):
+        return getattr(self, item)
+
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
+    def __eq__(self, other):
+        for key in ["parameter", "weight", "distance_list", "summary_statistics_list"]:
+            if self[key] != other[key]:
+                return False
+        return True

@@ -7,15 +7,17 @@ import datetime
 import sys
 import time
 from typing import List, Callable, Iterable, Any, TypeVar
-
+import pandas as pd
 model_output = TypeVar("model_output")
 
 from .model import Model
-from .parameters import Parameter
+from .parameters import Parameter, ValidParticle
 from .random_variables import RV, ModelPerturbationKernel, Distribution, Kernel
 from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
-from .storage import History, ValidParticle
+from .storage import History
+from .perturbation import ParticlePerturber
+import scipy as sp
 
 
 def identity(x):
@@ -65,7 +67,7 @@ class ABCSMC:
         A list of prior distributions for the models' parameters.
         Each list entry is the prior distribution for the corresponding model.
 
-    adaptive_parameter_perturbation_kernels: List[Callable[[int, dict], Kernel]]
+    perturbers: List[Callable[[int, dict], Kernel]]
         A list of functions mapping ``(t, stat) -> Kernel``, where
 
             * ``t`` is the population nr
@@ -122,7 +124,7 @@ class ABCSMC:
                  model_prior_distribution: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
-                 adaptive_parameter_perturbation_kernels: List[Callable[[int, dict], Kernel]],
+                 perturbers: List[ParticlePerturber],
                  distance_function: DistanceFunction,
                  eps: Epsilon,
                  nr_particles: int,
@@ -136,13 +138,13 @@ class ABCSMC:
         self.models = list(models)
         if not (len(self.models)
                 == len(parameter_given_model_prior_distribution)
-                == len(adaptive_parameter_perturbation_kernels)):
+                == len(perturbers)):
             raise Exception("Nr of models has to be equal to the number of parameter prior distributions has to be equal"
                             " to the number of parameter perturbation kernels")
         self.model_prior_distribution = model_prior_distribution
         self.model_perturbation_kernel = model_perturbation_kernel
         self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
-        self.adaptive_parameter_perturbation_kernels = adaptive_parameter_perturbation_kernels
+        self.perturbers = perturbers
         self.distance_function = distance_function
         self.eps = eps
         self.summary_statistics = summary_statistics
@@ -249,11 +251,8 @@ class ABCSMC:
             print('return sample from prior')
         return self._points_sampled_from_prior
 
-    def _sample_single_particle(self, parameter_perturbation_kernels,
-                               nr_samples_per_particle: int,
-                               t: int,
-                               t0: int,
-                               current_eps: float) -> (int, Parameter, float, List[float], int, List[dict]):
+    def _sample_single_particle(self, nr_samples_per_particle: int, t: int, t0: int, current_eps: float)\
+                                 -> (int, Parameter, float, List[float], int, List[dict]):
         """
         This is where the actual model evaluation happens.
         The core ABCSMC algorithm is also implemented here.
@@ -274,7 +273,7 @@ class ABCSMC:
         """
         simulation_counter = 0
         while True:  # find valid theta_ss and (corresponding b) according to data x_0
-            m_ss, theta_ss = self.generate_valid_proposal(parameter_perturbation_kernels, t)
+            m_ss, theta_ss = self.generate_valid_proposal(t)
             # from here, theta_ss is valid according to the prior
             distance_list = []
             summary_statistics_list = []
@@ -305,25 +304,23 @@ class ABCSMC:
         if t == 0:
             weight = len(distance_list) / nr_samples_per_particle[t-t0]
         else:
-            normalization = (sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
+            model_factor = sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
                                  for j in range(len(self.models)))
-                             * sum(particle['weight']  # this is already conditioned on m,
-                                                       # so do not divide by P_{t-1}(m_{t-1} = m_t^{(i)}) = P_{t-1}(m_t^{(i)})
-                                   * parameter_perturbation_kernels[m_ss].pdf(theta_ss, particle['parameter'])
-                                   for particle in self.history.store[t-1][m_ss])
-                            )
+            particle_factor = self.perturbers[m_ss].pdf(pd.Series(dict(theta_ss)))
+            normalization = model_factor * particle_factor
             if normalization == 0:
                 print('normalization is zero!')
+            fraction_accepted_runs_for_single_parameter = len(distance_list) / nr_samples_per_particle[t-t0]  # reflects stochasticity of the model
             weight = (self.model_prior_distribution.pmf(m_ss)
                       * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss)
-                      * len(distance_list) / nr_samples_per_particle[t-t0]
+                      * fraction_accepted_runs_for_single_parameter
                       / normalization)
         if self.debug:
             print('.', end='')
         valid_particle = ValidParticle(theta_ss, weight, distance_list, summary_statistics_list)
         return m_ss, simulation_counter, valid_particle
 
-    def generate_valid_proposal(self, parameter_perturbation_kernels, t):
+    def generate_valid_proposal(self, t):
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior_distribution.rvs()
@@ -334,13 +331,12 @@ class ABCSMC:
         while True:  # find m_s and theta_ss, valid according to prior
             m_s = self.history.sample_from_models(t - 1)
             m_ss = self.model_perturbation_kernel.rvs(m_s)
-            theta_s = self.history.sample_from_population(t - 1, m_ss)
             # theta_s is None if the population m_ss has died out.
             # This can happen since the model_perturbation_kernel can return
             # a model nr which has died out.
-            if theta_s is None:
+            if self.history.model_probabilities[t-1][m_ss] == 0:
                 continue
-            theta_ss = parameter_perturbation_kernels[m_ss].rvs(theta_s)
+            theta_ss = self.perturbers[m_ss].rvs()
 
             if (self.model_prior_distribution.pmf(m_ss)
                                              * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
@@ -375,16 +371,11 @@ class ABCSMC:
             current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
             if self.debug:
                 print('t:', t, 'eps:', current_eps)
-            statistics = self.history.get_statistics(t-1)
-            parameter_perturbation_kernels = self._make_parameter_perturbation_kernels(statistics, t)
+            self.fit_perturbers(t)
             if self.debug:
                 print('now submitting population', t)
             new_particle_population = list(
-                    self.mapper(lambda _: self._sample_single_particle(parameter_perturbation_kernels,
-                                                                    nr_samples_per_particle,
-                                                                    t,
-                                                                    t0,
-                                                                    current_eps),
+                    self.mapper(lambda _: self._sample_single_particle(nr_samples_per_particle, t, t0, current_eps),
                                 [None] * self.nr_particles))
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
@@ -402,7 +393,19 @@ class ABCSMC:
         return self.history
 
     def _make_parameter_perturbation_kernels(self, statistics, t):
-        parameter_perturbation_kernels = [apk(t, stat) if stat is not None else None
-                                          for apk, stat in
-                                          zip(self.adaptive_parameter_perturbation_kernels, statistics)]
+        parameter_perturbation_kernels = [perturber(t, stat) if stat is not None else None
+                                          for perturber, stat in
+                                          zip(self.perturbers, statistics)]
         return parameter_perturbation_kernels
+
+    def fit_perturbers(self, t):
+        for m in range(self.history.nr_models):
+            if t > 0:
+                particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
+            else:
+                # if t == 0, then particles are not perturbed. no perturber fitting necessary
+                continue
+            if len(particles_df) > 0:
+                self.perturbers[m].fit(particles_df, weights)
+            else:
+                self.perturbers[m] = None

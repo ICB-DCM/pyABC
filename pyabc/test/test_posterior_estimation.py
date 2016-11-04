@@ -1,6 +1,7 @@
 import unittest
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
-                   MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult)
+                   MedianEpsilon, Kernel, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult,
+                   MultivariateNormalPerturber)
 import random
 import os
 import scipy.stats as st
@@ -25,9 +26,7 @@ class TestABC(unittest.TestCase):
 
     def clean_db(self):
         try:
-            pass
-            # TODO remove this
-            #os.remove(self.db_file_location)
+            os.remove(self.db_file_location)
         except FileNotFoundError:
             pass
 
@@ -51,7 +50,7 @@ class TestABCFast(TestABC):
         model_prior = RV("randint", 0, 2)
         nr_particles = 1500
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
@@ -83,7 +82,7 @@ class TestABCFast(TestABC):
         model_prior = RV("randint", 0, 2)
         nr_particles = 1500
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0), nr_particles)
@@ -109,7 +108,7 @@ class TestABCFast(TestABC):
         model_prior = RV("randint", 0, 2)
         nr_particles = 800
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
@@ -135,7 +134,7 @@ class TestABCFast(TestABC):
         model_prior = RV("randint", 0, 2)
         nr_particles = 800
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
@@ -164,7 +163,7 @@ class TestABCFast(TestABC):
         a2, b2 = 10, 1
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
                                                     Distribution(theta=RV("beta", a2, b2))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), nr_particles)
@@ -195,20 +194,17 @@ class TestABCFast(TestABC):
         binomial_n = 5
 
         def model(args):
-            return {"result": st.binom(binomial_n, args['theta']).rvs()}
+            return {"result": st.binom(binomial_n, args.theta).rvs()}
 
         models = [model for _ in range(2)]
         models = list(map(SimpleModel, models))
-        # TODO remove this
-        for k, model in enumerate(models):
-            model.name += "_" + str(k) + "_old"
         model_prior = RV("randint", 0, 2)
         nr_particles = 500
         a1, b1 = 1, 1
         a2, b2 = 10, 1
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
                                                     Distribution(theta=RV("beta", a2, b2))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(median_multiplier=.9), nr_particles)
@@ -243,7 +239,7 @@ class TestABCFast(TestABC):
         model_prior = RV("randint", 0, 1)
         nr_particles = 250
         parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0, 1))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov'])]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.2), nr_particles,
@@ -285,7 +281,7 @@ class TestABCSlow(TestABC):
         model_prior = RV("randint", 0, 1)
         nr_particles = 600
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_prior))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov'])]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.1), nr_particles,
@@ -328,7 +324,7 @@ class TestABCSlow(TestABC):
         model_prior = RV("randint", 0, 1)
         nr_particles = 600
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov'])]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), nr_particles,
@@ -373,7 +369,7 @@ class TestABCSlow(TestABC):
         mu_x_1, mu_x_2 = 0, 1
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma_x)),
                                                     Distribution(x=RV("norm", mu_x_2, sigma_x))]
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.02), nr_particles,
@@ -420,7 +416,7 @@ class TestABCSlow(TestABC):
                                                     Distribution(x=RV("norm", mu_x_2, sigma))]
 
         # Particles are perturbed in a Gaussian fashion
-        parameter_perturbation_kernels = [lambda t, stat: Kernel(stat['cov']) for _ in range(2)]
+        parameter_perturbation_kernels = [MultivariateNormalPerturber() for _ in range(2)]
 
         # We plug all the ABC setup together
         nr_particles = 400

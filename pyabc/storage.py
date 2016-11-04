@@ -1,6 +1,7 @@
 import datetime
 import os
 import sys
+import warnings
 from typing import List, Union, Tuple
 
 import git
@@ -9,31 +10,13 @@ import scipy as sp
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-import warnings
-from .random_variables import MultivariateMultiTypeNormalDistribution, NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution
+import pandas as pd
 from . import weighted_statistics
-
+from .random_variables import (MultivariateMultiTypeNormalDistribution,
+                               NonEmptyMultivariateMultiTypeNormalDistribution,
+                               EmptyMultivariateMultiTypeNormalDistribution)
+from .parameters import ValidParticle
 Base = declarative_base()
-
-
-class ValidParticle:
-    def __init__(self, parameter, weight, distance_list, summary_statistics_list):
-        self.parameter = parameter
-        self.weight = weight
-        self.distance_list = distance_list
-        self.summary_statistics_list = summary_statistics_list
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-
-    def __eq__(self, other):
-        for key in ["parameter", "weight", "distance_list", "summary_statistics_list"]:
-            if self[key] != other[key]:
-                return False
-        return True
 
 
 class ABCSMC(Base):
@@ -150,7 +133,7 @@ class History:
 
     """
     def __init__(self, db_path: str, nr_models: int, model_names: List[str], min_nr_particles_per_population: int, debug=False):
-        self.store = []
+        self.store = [] # type: List[List[List[ValidParticle]]]
         self.model_probabilities = []
         self.nr_models = nr_models
         self.nr_simulations = []
@@ -161,6 +144,12 @@ class History:
         self._engine = None
         self.min_nr_particles_per_population = min_nr_particles_per_population
         self.debug = debug
+
+    def weighted_particles_dataframe(self, t, m):
+        population = self.store[t][m]
+        weights = sp.array([particle.weight for particle in population])
+        parameters = pd.DataFrame([dict(particle.parameter) for particle in population])
+        return parameters, weights
 
     def store_initial_data(self, ground_truth_model: int, options,
                            observed_summary_statistics: dict,
@@ -292,7 +281,7 @@ class History:
             print("Hist append:", population)
         self._close_session()
 
-    def _append(self, t, m, nr_simulations, valid_particle):
+    def _append(self, t, m, nr_simulations, valid_particle: ValidParticle):
         self.store[t][m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
         self.nr_simulations[t] += nr_simulations
 
@@ -400,12 +389,12 @@ class History:
         sample: Union[Parameter, None]
             Returns None if population t,m is empty, otherwise a sample Parameter from it
         """
-        weight_point = [(point['weight'], point['parameter']) for point in self.store[t][m]]
-        if len(weight_point) == 0:
+        weighted_parameters = [(particle.weight, particle.parameter) for particle in self.store[t][m]]
+        if len(weighted_parameters) == 0:
             return None
-        if len(weight_point) == 1:
+        if len(weighted_parameters) == 1:
             warnings.warn("History sample warning: Only one particle in model m={m} at t={t}".format(t=t, m=m))
-        weights, parameters = zip(*weight_point)
+        weights, parameters = zip(*weighted_parameters)
         nr = sp.random.choice(len(parameters), p=weights)
         selected_parameter = parameters[nr]
         return selected_parameter
