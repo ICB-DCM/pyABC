@@ -8,6 +8,8 @@ import sys
 import time
 from typing import List, Callable, Iterable, Any, TypeVar
 import pandas as pd
+from pyabc.workspace_dennis.map_wrapper import MapWrapperDefault
+
 model_output = TypeVar("model_output")
 
 from .model import Model
@@ -93,6 +95,13 @@ class ABCSMC:
         This mapper is used for particle sampling.
         It can be a distributed mapper such as the :class:`parallel.sge.SGE` class.
 
+    map_wrapper:
+        In some cases, a mapper implementation will require initialization to run properly,
+        e.g. database connection, grid setup, etc... The map_wrapper is an object that encapsulates
+        this information.  The default map_wrapper will simply call the callable mapper at the right
+        place; a more involved map_wrapper will help the mapper-function to distribute function calls
+        accross a distributed infrastructure.
+
     debug: bool
         Whether to output additional debug information
 
@@ -128,7 +137,7 @@ class ABCSMC:
                  distance_function: DistanceFunction,
                  eps: Epsilon,
                  nr_particles: int,
-                 mapper=map,
+                 map_wrapper=None,
                  debug: bool =False,
                  max_nr_allowed_sample_attempts_per_particle: int =500,
                  min_nr_particles_per_population: int =1,
@@ -149,7 +158,6 @@ class ABCSMC:
         self.eps = eps
         self.summary_statistics = summary_statistics
         self.nr_particles = nr_particles
-        self.mapper = mapper
         self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
@@ -157,6 +165,10 @@ class ABCSMC:
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
+        if map_wrapper is None:
+            self.map_wrapper = MapWrapperDefault(map)
+        else:
+            self.map_wrapper = map_wrapper
 
     def do_not_stop_when_only_single_model_alive(self):
         """
@@ -213,7 +225,8 @@ class ABCSMC:
                                self.min_nr_particles_per_population)
 
         # initialize distance function and epsilon
-        sample_from_prior = self.sample_from_prior()
+        sample_from_prior = self.initialize_prior()
+
         self.distance_function.initialize(sample_from_prior)
 
         def distance_to_ground_truth_function(x):
@@ -225,7 +238,7 @@ class ABCSMC:
                                         self.distance_function.to_json(),
                                         self.eps.to_json())
 
-    def sample_from_prior(self) -> List[dict]:
+    def initialize_prior(self):
         """
         Only sample from prior and return results without changing
         the history of the Epsilon. This can be used to get initial samples
@@ -236,71 +249,59 @@ class ABCSMC:
             The sample is cached.
         """
         if self._points_sampled_from_prior is None:
-            # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
-            def sample(_):
+            def sample_one():
                 m = self.model_prior_distribution.rvs()
                 par = self.parameter_given_model_prior_distribution[m].rvs()
+                return m, par
+
+            def simulate_one(para):
+                (m, par) = para
                 model_result = self.models[m].summary_statistics(par, self.summary_statistics)
                 return model_result.sum_stats
-            if self.debug:
-                print('sample from prior')
-            self._points_sampled_from_prior = list(self.mapper(sample, list(range(self.nr_particles))))
-            if self.debug:
-                print('sample from prior done')
-        if self.debug:
-            print('return sample from prior')
-        return self._points_sampled_from_prior
 
-    def _sample_single_particle(self, nr_samples_per_particle: int, t: int, t0: int, current_eps: float)\
-                                 -> (int, Parameter, float, List[float], int, List[dict]):
+            sample_from_prior = self.map_wrapper.sample_until_n_accepted(sample_one, simulate_one, lambda x: True,
+                                                                         self.nr_particles)
+        else:
+            sample_from_prior = self._points_sampled_from_prior
+        return sample_from_prior
+
+    def evaluate_proposal(self, m_ss, theta_ss, nr_samples_per_particle, t, t0, current_eps):
         """
         This is where the actual model evaluation happens.
-        The core ABCSMC algorithm is also implemented here.
-
-        Parameters
-        ----------
-        parameter_perturbation_kernels
-        nr_samples_per_particle
-        t: int
-            population number
-        t0: int
-            initial population
-        current_eps
-
-        Returns
-        -------
-
         """
+        # from here, theta_ss is valid according to the prior
         simulation_counter = 0
-        while True:  # find valid theta_ss and (corresponding b) according to data x_0
-            m_ss, theta_ss = self.generate_valid_proposal(t)
-            # from here, theta_ss is valid according to the prior
-            distance_list = []
-            summary_statistics_list = []
-            for __ in range(nr_samples_per_particle[t-t0]):
-                ##### MODEL SIMULATION - THIS IS THE EXPENSIVE PART ######
-                simulation_counter += 1
-                # stop builder if it takes too long
-                if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
-                    print("Max nr of samples (={n_max}) for particle reached."
-                          .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
-                    return None
-                start_time = time.time()
-                model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
-                                                        lambda x: self.distance_function(x, self.x_0), current_eps)
-                if model_result.accepted:
-                    distance_list.append(model_result.distance)
-                    summary_statistics_list.append(model_result.sum_stats)
+        distance_list = []
+        summary_statistics_list = []
+        for __ in range(nr_samples_per_particle[t-t0]):
+            ##### MODEL SIMULATION - THIS IS THE EXPENSIVE PART ######
+            simulation_counter += 1
+            # stop builder if it takes too long
+            if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
+                print("Max nr of samples (={n_max}) for particle reached."
+                      .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
+                return None
+            start_time = time.time()
+            model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
+                                                    lambda x: self.distance_function(x, self.x_0), current_eps)
+            if model_result.accepted:
+                distance_list.append(model_result.distance)
+                summary_statistics_list.append(model_result.sum_stats)
 
-                end_time = time.time()
-                duration = end_time - start_time
-                if self.debug:
-                    print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
-                          .format(m_ss, self.history.model_names[m_ss], duration, end_time,
-                                  theta_ss))
-            if len(distance_list) > 0:
-                break
+            end_time = time.time()
+            duration = end_time - start_time
+            if self.debug:
+                print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
+                      .format(m_ss, self.history.model_names[m_ss], duration, end_time,
+                              theta_ss))
 
+        if self.debug:
+            print('.', end='')
+        return {'distance_list': distance_list, 'simulation_counter': simulation_counter,
+                'summary_statistics_list': summary_statistics_list}
+
+    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, parameter_perturbation_kernels,
+                             nr_samples_per_particle, t, t0):
         if t == 0:
             weight = len(distance_list) / nr_samples_per_particle[t-t0]
         else:
@@ -315,10 +316,7 @@ class ABCSMC:
                       * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
                       / normalization)
-        if self.debug:
-            print('.', end='')
-        valid_particle = ValidParticle(theta_ss, weight, distance_list, summary_statistics_list)
-        return m_ss, simulation_counter, valid_particle
+        return weight
 
     def generate_valid_proposal(self, t):
         # first generation
@@ -374,9 +372,14 @@ class ABCSMC:
             self.fit_perturbers(t)
             if self.debug:
                 print('now submitting population', t)
-            new_particle_population = list(
-                    self.mapper(lambda _: self._sample_single_particle(nr_samples_per_particle, t, t0, current_eps),
-                                [None] * self.nr_particles))
+
+            sample_one = self.get_current_sample_function(parameter_perturbation_kernels, t)
+            sim_one = self.get_current_sim_function(parameter_perturbation_kernels,
+                                                    nr_samples_per_particle, t, t0, current_eps)
+            accept_one = self.get_current_accept_function()
+            new_particle_population = self.map_wrapper.sample_until_n_accepted(sample_one, sim_one,
+                                                                               accept_one, self.nr_particles)
+
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
             if self.debug:
@@ -409,3 +412,38 @@ class ABCSMC:
                 self.perturbers[m].fit(particles_df, weights)
             else:
                 self.perturbers[m] = None
+
+    def get_current_sample_function(self, parameter_perturbation_kernels, t):
+        def sample_one():
+            return self.generate_valid_proposal(parameter_perturbation_kernels, t)
+        return sample_one
+
+    def get_current_sim_function(self, parameter_perturbation_kernels,nr_samples_per_particle, t, t0, current_eps):
+        def lambda_evaluate_proposal(m_ss, theta_ss):
+            return self.evaluate_proposal(m_ss, theta_ss,
+                                          nr_samples_per_particle,
+                                          t, t0, current_eps)
+
+        def lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss):
+            return self.calc_proposal_weight(distance_list, m_ss, theta_ss,
+                                             parameter_perturbation_kernels,
+                                             nr_samples_per_particle, t, t0)
+
+        def sim_one(paras):
+            (m_ss, theta_ss) = paras
+            eval_res = lambda_evaluate_proposal(m_ss, theta_ss)
+            distance_list = eval_res['distance_list']
+            simulation_counter = eval_res['simulation_counter']
+            summary_statistics_list = eval_res['summary_statistics_list']
+            if len(distance_list) > 0:
+                weight = lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss)
+            else:
+                weight = 0
+            return m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list
+        return sim_one
+
+    def get_current_accept_function(self):
+        def accept_one(sim_result):
+            (m_ss, theta_ss, weight, distance_list, simulation_counter, summary_statistics_list) = sim_result
+            return len(distance_list) > 0
+        return accept_one
