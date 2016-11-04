@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-import numpy as np
-import random
+
 
 
 class Sampler(ABC):
@@ -18,10 +17,13 @@ class MappingSampler(Sampler):
         self.map = map
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        np.random.seed()
-        random.seed()
-
         def map_function(_):
+
+            import numpy as np
+            import random
+            np.random.seed()
+            random.seed()
+
             while True:
                 new_param = sample_one()
                 new_sim = simulate_one(new_param)
