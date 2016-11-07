@@ -31,6 +31,7 @@ In Progress
 - **DR, EK** Static worker pools?
     - so... let's try centralized generation by a master and distribution by celery.
       seems to strike the best balance between simplicity and re-using established tools.
+    - target up to 100 jobs per second
 
 
 Review
