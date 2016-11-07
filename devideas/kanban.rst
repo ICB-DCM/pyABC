@@ -21,12 +21,16 @@ Backlog
 - Good performance for small evaluation times
 - Good performance for large evaluation times
 - Hardware failure
+- static workers
+    - Assume 10s per simulation on a single core. assume cluster of 1000 cores. So about 100 samples per second overall.
 
 
 In Progress
 -----------
 
 - **DR, EK** Static worker pools?
+    - so... let's try centralized generation by a master and distribution by celery.
+      seems to strike the best balance between simplicity and re-using established tools.
 
 
 Review
