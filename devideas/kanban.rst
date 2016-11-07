@@ -10,7 +10,7 @@ Items are sorted in decreasing order of importance. The top most is the most imp
 Backlog
 -------
 
-- Refactor ``pyabc.storage.History`` and ``pyabc.loader.ABCLoader``.
+- Refactor ``pyabc.storage.History`` and ``pyabc.loader.ABCLoader``
     - Both deal with databas access. They sould be a single clas
     - Remove connectomics specific stuff from ``ABCLoader``
     - Remove things like covariance calculation from ``History``
