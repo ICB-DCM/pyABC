@@ -17,6 +17,10 @@ Backlog
     - Make sure that ``History.append_population`` stores to database.
       The current double implementation of local cache and database is weird.
 - Adaptive population size
+- Good performance for heterogeneous evaluation times
+- Good performance for small evaluation times
+- Good performance for large evaluation times
+- Hardware failure
 
 
 In Progress
