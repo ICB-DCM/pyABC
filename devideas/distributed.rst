@@ -1,3 +1,24 @@
+Approaches
+==========
+
+We discussed 3 approaches:
+
+
+Database driven approach. Central orchestration by master
+---------------------------------------------------------
+
+
+
+
+Decentralized, distributed, self-organizing workers
+---------------------------------------------------
+
+
+Task queue
+----------
+
+
+
 Thoughts
 ========
 

@@ -16,23 +16,23 @@ Backlog
     - Remove things like covariance calculation from ``History``
     - Make sure that ``History.append_population`` stores to database.
       The current double implementation of local cache and database is weird.
-- Adaptive population size
 - Good performance for heterogeneous evaluation times
 - Good performance for small evaluation times
 - Good performance for large evaluation times
 - Hardware failure
-- static workers
-    - Assume 10s per simulation on a single core. assume cluster of 1000 cores. So about 100 samples per second overall.
+
 
 
 In Progress
 -----------
 
-- **DR, EK** Static worker pools?
+- **DR** Static worker pools?
     - so... let's try centralized generation by a master and distribution by celery.
       seems to strike the best balance between simplicity and re-using established tools.
     - target up to 100 jobs per second
-
+    - Assume 10s per simulation on a single core. assume cluster of 1000 cores.
+       So about 100 samples per second overall.
+- **EK** adaptive population size
 
 Review
 ------
