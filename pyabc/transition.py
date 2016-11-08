@@ -7,7 +7,8 @@ Perturbation strategies.
 from abc import ABC, abstractmethod
 import pandas as pd
 import numpy as np
-
+import scipy.stats as st
+import copy
 
 # TODO decide what to do if no parameters there, i.e. if len(X.columns) == 0
 # Possible options include
@@ -15,7 +16,7 @@ import numpy as np
 # 2. Explicitly hande that case in each concrete perturber implementation
 # 3. Make a metaclass which takes care of the no parameters case. This metaclass could also check if w is sane
 
-class ParticlePerturber(ABC):
+class Transition(ABC):
     @abstractmethod
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
@@ -61,14 +62,14 @@ class ParticlePerturber(ABC):
         """
 
 
-class MultivariateNormalPerturber(ParticlePerturber):
+class MultivariateNormalTransition(Transition):
     """
-    Pretty stupid but should in principle be more ore less functional
+    Pretty stupid but should in principle be functional
     """
 
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
-        Fit the perturberer
+        Fit the transition kernel
 
         Parameters
         ----------
@@ -101,8 +102,31 @@ class MultivariateNormalPerturber(ParticlePerturber):
         return perturbed
 
     def pdf(self, x: pd.Series):
+        x = x[self.X.columns]
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return 1
         import scipy.stats as st
         dens = sum(w * st.multivariate_normal(mean=support, cov=self.cov).pdf(x) for w, support in zip(self.w, self.X_arr))
         return float(dens)
+
+
+def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
+    """
+    Calculate mean coefficient of variation of the KDE.
+    """
+    transition = copy.copy(transition)
+    nr_cross_val = 6
+    n_samples = len(X)
+    uniform_weights = np.ones(n_samples) / n_samples
+
+    density_values = []
+    for k in range(nr_cross_val):
+        bootstrapped_points = X.sample(n_samples, replace=True, weights=w)
+        transition.fit(bootstrapped_points, uniform_weights)
+        density_values.append([transition.pdf(row) for index, row in X.iterrows()])
+
+    density_values = np.array(density_values)
+    variation = st.variation(density_values, 0)
+    mean_variation = (variation * w).sum()
+
+    return float(mean_variation)

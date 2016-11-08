@@ -15,7 +15,7 @@ from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
 from .model import Model
 from .parameters import ValidParticle
-from .perturbation import ParticlePerturber
+from .transition import Transition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 
@@ -133,7 +133,7 @@ class ABCSMC:
                  model_prior_distribution: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
-                 perturbers: List[ParticlePerturber],
+                 perturbers: List[Transition],
                  distance_function: DistanceFunction,
                  eps: Epsilon,
                  nr_particles: int,

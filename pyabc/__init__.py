@@ -29,7 +29,7 @@ from .loader import SQLDataStore, ABCLoader
 from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult
-from .perturbation import MultivariateNormalPerturber
+from .transition import MultivariateNormalTransition
 
 __all__ = [
     "ABCSMC",
