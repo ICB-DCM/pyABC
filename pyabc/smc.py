@@ -402,6 +402,8 @@ class ABCSMC:
                 continue
             if len(particles_df) > 0:
                 self.perturbers[m].fit(particles_df, weights)
+                print("m=", m)
+                self.perturbers[m].cv()
             else:
                 self.perturbers[m] = None
 

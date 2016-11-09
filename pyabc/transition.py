@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import scipy.stats as st
 import copy
+from typing import Union
 
 # TODO decide what to do if no parameters there, i.e. if len(X.columns) == 0
 # Possible options include
@@ -45,7 +46,7 @@ class Transition(ABC):
         """
 
     @abstractmethod
-    def pdf(self, x: pd.Series) -> float:
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> float:
         """
         Evaluate the probability density function (PDF) at x.
 
@@ -93,6 +94,13 @@ class MultivariateNormalTransition(Transition):
         if len(cov.shape) == 0:
             cov = cov.reshape((1,1))
         self.cov = cov
+        import scipy.stats as st
+        if not self.no_parameters:
+            self.normal = st.multivariate_normal(cov=self.cov)
+
+    def cv(self):
+        if not self.no_parameters:
+            return variance(self.__class__(), self.X, self.w)
 
     def rvs(self):
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
@@ -101,20 +109,32 @@ class MultivariateNormalTransition(Transition):
         perturbed = sample + np.random.multivariate_normal(np.zeros(self.cov.shape[0]), self.cov)
         return perturbed
 
-    def pdf(self, x: pd.Series):
-        x = x[self.X.columns]
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]):
+        x = np.array(x[self.X.columns])
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return 1
-        import scipy.stats as st
-        dens = sum(w * st.multivariate_normal(mean=support, cov=self.cov).pdf(x) for w, support in zip(self.w, self.X_arr))
+        dens = (self.normal.pdf(x - self.X_arr) * self.w).sum()
         return float(dens)
 
 
+def timeit(f):
+    def g(*args):
+        import time
+        start = time.time()
+        res = f(*args)
+        end = time.time()
+        print(end - start, "s for ", f.__name__, " = ", res)
+        return res
+    return g
+
+
+@timeit
 def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     """
     Calculate mean coefficient of variation of the KDE.
     """
-    transition = copy.copy(transition)
+    transition_cp = copy.copy(transition)
+    transition_cp.varprinted = True
     nr_cross_val = 6
     n_samples = len(X)
     uniform_weights = np.ones(n_samples) / n_samples
@@ -122,11 +142,10 @@ def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     density_values = []
     for k in range(nr_cross_val):
         bootstrapped_points = X.sample(n_samples, replace=True, weights=w)
-        transition.fit(bootstrapped_points, uniform_weights)
-        density_values.append([transition.pdf(row) for index, row in X.iterrows()])
+        transition_cp.fit(bootstrapped_points, uniform_weights)
+        density_values.append(transition_cp.pdf(X))
 
     density_values = np.array(density_values)
     variation = st.variation(density_values, 0)
     mean_variation = (variation * w).sum()
-
     return float(mean_variation)

@@ -10,17 +10,17 @@ def data(n):
 
 
 def test_variance_estimate():
-    np.random.seed(42)
     var_list = []
-    for n in [10, 50, 100]:
+    for n in [10, 100, 1000]:
         m = MultivariateNormalTransition()
         df, w = data(n)
-        var = variance(m, df, w)
+        m.fit(df ,w)
+        var = m.cv()
         var_list.append(var)
 
-    print(var_list)
-    for higher, lower in zip(var_list[:-1], var_list[1:]):
-        assert higher >= lower
+    assert var_list[0] >= var_list[1]
+    assert var_list[1] >= var_list[2]
+
 
 
 def test_variance_no_side_effect():

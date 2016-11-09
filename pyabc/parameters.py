@@ -66,7 +66,17 @@ class Parameter(ParameterStructure):
         """
         Convenience for dot notation access.
         """
-        return self[item]
+        try:
+            return self[item]
+        except KeyError:
+            raise AttributeError
+
+    def __getstate__(self):
+        return dict(self)
+
+    def __setstate__(self, state):
+        self.data = state
+
 
     def copy(self) -> "Parameter":
         """

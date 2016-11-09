@@ -15,6 +15,7 @@ def set_seeds():
     np.random.seed(42)
 
 
+@unittest.skip("RNG is seeded in each map step. So sideffectr are exoected.")
 class TestNoSideEffects(unittest.TestCase):
     def setUp(self):
         self.db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest_db.db")
