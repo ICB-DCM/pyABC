@@ -110,11 +110,14 @@ class MultivariateNormalTransition(Transition):
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
-        x = np.array(x[self.X.columns])
+        x = x[self.X.columns]
+        x = np.array(x)
+        if len(x.shape) == 1:
+            x = x[None,:]
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return 1
-        dens = (self.normal.pdf(x - self.X_arr) * self.w).sum()
-        return float(dens)
+        dens = np.array([(self.normal.pdf(xs - self.X_arr) * self.w).sum() for xs in x])
+        return dens if dens.size != 1 else float(dens)
 
 
 def timeit(f):
