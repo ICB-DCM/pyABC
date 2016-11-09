@@ -110,11 +110,28 @@ class MultivariateNormalTransition(Transition):
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
-        x = np.array(x[self.X.columns])
+        x = np.array(x[self.X.columns]).reshape(-1, x.shape[-1])
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return 1
-        dens = (self.normal.pdf(x - self.X_arr) * self.w).sum()
-        return float(dens)
+        dens = np.array([(self.normal.pdf(test_point - self.X_arr) * self.w).sum() for test_point in x])
+        return dens
+
+
+from scipy.optimize import curve_fit
+def fitpowerlaw(x, y):
+    x = np.array(x)
+    y = np.array(y)
+
+    def f(x, a, b):
+        return a * x ** (-b)
+
+    popt, cov = curve_fit(f, x, y, p0=[.5, 1 / 5])
+
+    return popt, lambda x: f(x, *popt)
+
+
+def finverse(y, a, b):
+    return (a / y) ** (1 / b)
 
 
 def timeit(f):
@@ -136,16 +153,21 @@ def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     transition_cp = copy.copy(transition)
     transition_cp.varprinted = True
     nr_cross_val = 6
-    n_samples = len(X)
-    uniform_weights = np.ones(n_samples) / n_samples
 
-    density_values = []
-    for k in range(nr_cross_val):
-        bootstrapped_points = X.sample(n_samples, replace=True, weights=w)
-        transition_cp.fit(bootstrapped_points, uniform_weights)
-        density_values.append(transition_cp.pdf(X))
+    n_samples_list = np.array(list(range(8, len(X), len(X)//10)))
+    cvs = np.zeros(len(n_samples_list))
+    for ind, n_samples in enumerate(n_samples_list):
+        uniform_weights = np.ones(n_samples) / n_samples
 
-    density_values = np.array(density_values)
-    variation = st.variation(density_values, 0)
-    mean_variation = (variation * w).sum()
-    return float(mean_variation)
+        density_values = []
+        for k in range(nr_cross_val):
+            bootstrapped_points = X.sample(n_samples, replace=True, weights=w)
+            transition_cp.fit(bootstrapped_points, uniform_weights)
+            density_values.append(transition_cp.pdf(X))
+
+        density_values = np.array(density_values)
+        variation = st.variation(density_values, 0)
+        mean_variation = (variation * w).sum()
+        cvs[ind] = mean_variation
+
+    return cvs[-1]

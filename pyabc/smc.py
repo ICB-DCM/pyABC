@@ -153,7 +153,7 @@ class ABCSMC:
         self.model_prior_distribution = model_prior_distribution
         self.model_perturbation_kernel = model_perturbation_kernel
         self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
-        self.perturbers = perturbers
+        self.perturbers = perturbers  # type: List[Transition]
         self.distance_function = distance_function
         self.eps = eps
         self.summary_statistics = summary_statistics

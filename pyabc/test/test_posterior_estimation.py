@@ -228,15 +228,6 @@ class TestABCFast(TestABC):
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
 
-        import time
-        import cloudpickle as pickle
-        start = time.time()
-        s = pickle.dumps(abc)
-        l = pickle.loads(s)
-        print("picle unpickle time", time.time() - start)
-
-
-
         self.assertLess(abs(p1 - p1_expected) + abs(p2 - p2_expected), .08)
 
     def test_continuous_non_gaussian(self):
