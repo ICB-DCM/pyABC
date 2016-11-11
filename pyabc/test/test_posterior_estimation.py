@@ -9,7 +9,7 @@ from scipy.special import gamma, binom
 import scipy as sp
 import scipy.interpolate
 import tempfile
-from pyabc.populationsize import ConstantSize, AdaptiveSize
+from pyabc.populationstrategy import ConstantPopulationStrategy, AdaptivePopulationStrategy
 
 def mean_and_std(values, weights):
     mean = (values * weights).sum()
@@ -47,7 +47,7 @@ class TestABCFast(TestABC):
         models = [model1, model2]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = ConstantSize(1500, 1)
+        population_size = ConstantPopulationStrategy(1500, 1)
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
@@ -77,7 +77,7 @@ class TestABCFast(TestABC):
         models = [model1, model2]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = ConstantSize(1500, 3)
+        population_size = ConstantPopulationStrategy(1500, 3)
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
@@ -107,7 +107,7 @@ class TestABCFast(TestABC):
         models = [model1, model2]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = AdaptiveSize(1500, 3)
+        population_size = AdaptivePopulationStrategy(1500, 3)
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
@@ -132,7 +132,7 @@ class TestABCFast(TestABC):
         models = [model_fun for _ in range(2)]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = ConstantSize(800, 3)
+        population_size = ConstantPopulationStrategy(800, 3)
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
@@ -159,7 +159,7 @@ class TestABCFast(TestABC):
 
         models = [AllInOneModel() for _ in range(2)]
         model_prior = RV("randint", 0, 2)
-        population_size = ConstantSize(800, 3)
+        population_size = ConstantPopulationStrategy(800, 3)
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
@@ -184,7 +184,7 @@ class TestABCFast(TestABC):
         models = [model for _ in range(2)]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = ConstantSize(800, 3)
+        population_size = ConstantPopulationStrategy(800, 3)
         a1, b1 = 1, 1
         a2, b2 = 10, 1
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
@@ -224,7 +224,7 @@ class TestABCFast(TestABC):
         models = [model for _ in range(2)]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = ConstantSize(800, 5)
+        population_size = ConstantPopulationStrategy(800, 5)
         a1, b1 = 1, 1
         a2, b2 = 10, 1
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
@@ -262,7 +262,7 @@ class TestABCFast(TestABC):
         models = [model]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
-        population_size = ConstantSize(250, 2)
+        population_size = ConstantPopulationStrategy(250, 2)
         parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0, 1))]
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
@@ -303,7 +303,7 @@ class TestABCSlow(TestABC):
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_populations = 1
-        population_size = ConstantSize(600, nr_populations)
+        population_size = ConstantPopulationStrategy(600, nr_populations)
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_prior))]
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
@@ -346,7 +346,7 @@ class TestABCSlow(TestABC):
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_populations = 4
-        population_size = ConstantSize(600, nr_populations)
+        population_size = ConstantPopulationStrategy(600, nr_populations)
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
@@ -389,7 +389,7 @@ class TestABCSlow(TestABC):
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_populations = 4
-        population_size = AdaptiveSize(600, nr_populations)
+        population_size = AdaptivePopulationStrategy(600, nr_populations)
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
@@ -431,7 +431,7 @@ class TestABCSlow(TestABC):
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         nr_populations = 1
-        population_size = ConstantSize(500, 1)
+        population_size = ConstantPopulationStrategy(500, 1)
         mu_x_1, mu_x_2 = 0, 1
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma_x)),
                                                     Distribution(x=RV("norm", mu_x_2, sigma_x))]
@@ -484,7 +484,7 @@ class TestABCSlow(TestABC):
 
         # We plug all the ABC setup together
         nr_populations = 3
-        population_size = ConstantSize(400, 3)
+        population_size = ConstantPopulationStrategy(400, 3)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
@@ -539,7 +539,7 @@ class TestABCSlow(TestABC):
 
         # We plug all the ABC setup together
         nr_populations = 3
-        population_size = AdaptiveSize(400, 3)
+        population_size = AdaptivePopulationStrategy(400, 3)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
@@ -579,7 +579,7 @@ class TestABCAdaptive(TestABC):
         models = [model_fun for _ in range(2)]
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
-        population_size = AdaptiveSize(800, 3)
+        population_size = AdaptivePopulationStrategy(800, 3)
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
@@ -606,7 +606,7 @@ class TestABCAdaptive(TestABC):
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 1)
         nr_populations = 4
-        population_size = AdaptiveSize(600, nr_populations)
+        population_size = AdaptivePopulationStrategy(600, nr_populations)
         parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
@@ -660,7 +660,7 @@ class TestABCAdaptive(TestABC):
 
         # We plug all the ABC setup together
         nr_populations = 3
-        population_size = AdaptiveSize(400, 3)
+        population_size = AdaptivePopulationStrategy(400, 3)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)

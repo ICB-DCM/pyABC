@@ -8,6 +8,8 @@ import sys
 import time
 from typing import List, Callable, TypeVar
 
+import logging
+abclogger = logging.getLogger("ABC")
 import pandas as pd
 
 from parallel.sampler import MappingSampler
@@ -18,7 +20,7 @@ from .parameters import ValidParticle
 from .transition import Transition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
-from .populationsize import ConstantSize
+from .populationstrategy import PopulationStrategy
 
 model_output = TypeVar("model_output")
 
@@ -70,7 +72,7 @@ class ABCSMC:
         A list of prior distributions for the models' parameters.
         Each list entry is the prior distribution for the corresponding model.
 
-    perturbers: List[Callable[[int, dict], Kernel]]
+    transitions: List[Callable[[int, dict], Kernel]]
         A list of functions mapping ``(t, stat) -> Kernel``, where
 
             * ``t`` is the population nr
@@ -106,21 +108,6 @@ class ABCSMC:
     debug: bool
         Whether to output additional debug information
 
-    max_nr_allowed_sample_attempts_per_particle: int
-        The maximum number of sample attempts allowed for each particle.
-        If this number is reached, the sampling for a particle is stopped.
-        Hence, a population may return with less particles than started.
-        This is an approximation to the ABCSMC algorithm which ensures, that
-        the algorithm terminates.
-
-    min_nr_particles_per_population: int
-        Minimum number of samples which have to be accepted for a population.
-        If this number is not reached, the algorithm stops.
-        This option, together with the ``max_nr_allowed_sample_attempts_per_particle``
-        ensures that the algorithm terminates.
-
-        More precisely, this parameter determines to which extend an approximation to the
-        ABCSMC algorithm is allowed.
 
 
     .. [#toni-stumpf] Toni, Tina, and Michael P. H. Stumpf.
@@ -134,36 +121,32 @@ class ABCSMC:
                  model_prior_distribution: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
-                 perturbers: List[Transition],
+                 transitions: List[Transition],
                  distance_function: DistanceFunction,
                  eps: Epsilon,
-                 population_strategy: ConstantSize,
+                 population_strategy: PopulationStrategy,
                  sampler=None,
-                 debug: bool =False,
                  summary_statistics: Callable[[model_output], dict]=identity):
 
         # sanity checks
         self.models = list(models)
         if not (len(self.models)
                 == len(parameter_given_model_prior_distribution)
-                == len(perturbers)):
+                == len(transitions)):
             raise Exception("Nr of models has to be equal to the number of parameter prior distributions has to be equal"
                             " to the number of parameter perturbation kernels")
         self.model_prior_distribution = model_prior_distribution
         self.model_perturbation_kernel = model_perturbation_kernel
         self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
-        self.perturbers = perturbers  # type: List[Transition]
+        self.transitions = transitions  # type: List[Transition]
         self.distance_function = distance_function
         self.eps = eps
         self.summary_statistics = summary_statistics
-        self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
         self.history = None  # type: History
         self._points_sampled_from_prior = None
         self.population_strategy = population_strategy
-        self.max_population_size = 2000
-        self.mean_cv = .05
         if sampler is None:
             self.sampler = MappingSampler(map)
         else:
@@ -289,13 +272,7 @@ class ABCSMC:
 
             end_time = time.time()
             duration = end_time - start_time
-            if self.debug:
-                print("Sampled model={}-{}, delta_time={}s, end_time={},  theta_ss={}"
-                      .format(m_ss, self.history.model_names[m_ss], duration, end_time,
-                              theta_ss))
 
-        if self.debug:
-            print('.', end='')
         return {'distance_list': distance_list, 'simulation_counter': simulation_counter,
                 'summary_statistics_list': summary_statistics_list}
 
@@ -305,7 +282,7 @@ class ABCSMC:
         else:
             model_factor = sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
                                  for j in range(len(self.models)))
-            particle_factor = self.perturbers[m_ss].pdf(pd.Series(dict(theta_ss)))
+            particle_factor = self.transitions[m_ss].pdf(pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
             if normalization == 0:
                 print('normalization is zero!')
@@ -332,7 +309,7 @@ class ABCSMC:
             # a model nr which has died out.
             if self.history.model_probabilities[t-1][m_ss] == 0:
                 continue
-            theta_ss = self.perturbers[m_ss].rvs()
+            theta_ss = self.transitions[m_ss].rvs()
 
             if (self.model_prior_distribution.pmf(m_ss)
                                              * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
@@ -357,11 +334,9 @@ class ABCSMC:
         # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
         for t in range(t0, t0+self.population_strategy.nr_populations):
             current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
-            if self.debug:
-                print('t:', t, 'eps:', current_eps)
-            self.fit_perturbers(t)
-            if self.debug:
-                print('now submitting population', t)
+            abclogger.debug('t:' +  str(t) +  ' eps:' + str(current_eps))
+            self.fit_transitions(t)
+            abclogger.debug('now submitting population ' +  str(t))
 
             sample_one = self.get_current_sample_function(t)
             sim_one = self.get_current_sim_function(t, t0, current_eps)
@@ -372,12 +347,10 @@ class ABCSMC:
 
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
-            if self.debug:
-                print('population', t, 'done')
+            abclogger.debug('population ' + str(t) + ' done')
             new_particle_population_non_empty = self.history.append_population(t, current_eps, new_particle_population)
-            if self.debug:
-                print('\ntotal nr simulations up to t =', t, 'is', self.history.total_nr_simulations)
-                sys.stdout.flush()
+            abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
+
             if (not new_particle_population_non_empty or
                 (current_eps <= minimum_epsilon) or
                 (self.stop_if_only_single_model_alive and self.history.nr_of_models_alive() <= 1)):
@@ -385,7 +358,7 @@ class ABCSMC:
         self.history.done()
         return self.history
 
-    def fit_perturbers(self, t):
+    def fit_transitions(self, t):
         for m in range(self.history.nr_models):
             if t > 0:
                 particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
@@ -393,11 +366,11 @@ class ABCSMC:
                 # if t == 0, then particles are not perturbed. no perturber fitting necessary
                 continue
             if len(particles_df) > 0:
-                self.perturbers[m].fit(particles_df, weights)
+                self.transitions[m].fit(particles_df, weights)
             else:
-                self.perturbers[m] = None
+                self.transitions[m] = None
 
-        self.population_strategy.adapt_population_size(self.perturbers, self.history.model_probabilities)
+        self.population_strategy.adapt_population_size(self.transitions, self.history.model_probabilities)
 
     def get_current_sample_function(self, t):
         def sample_one():

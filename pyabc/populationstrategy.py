@@ -4,7 +4,24 @@ import logging
 adaptation_logger = logging.getLogger("Adaptation")
 
 
-class Size:
+class PopulationStrategy:
+    """
+    max_nr_allowed_sample_attempts_per_particle: int
+        The maximum number of sample attempts allowed for each particle.
+        If this number is reached, the sampling for a particle is stopped.
+        Hence, a population may return with less particles than started.
+        This is an approximation to the ABCSMC algorithm which ensures, that
+        the algorithm terminates.
+
+    min_nr_particles_per_population: int
+        Minimum number of samples which have to be accepted for a population.
+        If this number is not reached, the algorithm stops.
+        This option, together with the ``max_nr_allowed_sample_attempts_per_particle``
+        ensures that the algorithm terminates.
+
+        More precisely, this parameter determines to which extend an approximation to the
+        ABCSMC algorithm is allowed.
+    """
     def __init__(self, nr_particles, nr_populations, nr_samples_per_parameter=1):
         self.nr_particles = nr_particles
         self.nr_populations = nr_populations
@@ -20,22 +37,22 @@ class Size:
         raise NotImplementedError
 
 
-class ConstantSize(Size):
+class ConstantPopulationStrategy(PopulationStrategy):
     def adapt_population_size(self, perturbers, model_weights):
         pass
 
 
-class AdaptiveSize(Size):  # TODO rename ConstantSize. This inheritance is weird
+class AdaptivePopulationStrategy(PopulationStrategy):  # TODO rename ConstantPopulationStrategy. This inheritance is weird
     def __init__(self, nr_particles, nr_populations, nr_samples_per_parameter=1, mean_cv=0.05, max_population_size=None):
         super().__init__(nr_particles, nr_populations, nr_samples_per_parameter)
         self.max_population_size = max_population_size if max_population_size is not None else nr_particles * 2
         self.mean_cv = mean_cv
 
-    def adapt_population_size(self, perturbers, model_weights):
+    def adapt_population_size(self, transitions, model_weights):
         nr_required_samples = []
-        for pert in perturbers:
+        for trans in transitions:
             try:
-                nr_required_samples.append(pert.cv(cv=self.mean_cv))
+                nr_required_samples.append(trans.cv(cv=self.mean_cv))
             except CVNotPossibleException:
                 pass
 

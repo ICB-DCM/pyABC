@@ -195,4 +195,6 @@ def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
         variation = st.variation(density_values, 0)
         mean_variation = (variation * w).sum()
         cvs[ind] = mean_variation
+
+    popt, f, finv = fitpowerlaw(n_samples_list, cvs)
     return finv, cvs
