@@ -18,6 +18,7 @@ from scipy.optimize import curve_fit
 # 2. Explicitly hande that case in each concrete perturber implementation
 # 3. Make a metaclass which takes care of the no parameters case. This metaclass could also check if w is sane
 
+
 class Transition(ABC):
     @abstractmethod
     def fit(self, X: pd.DataFrame, w: np.ndarray):
@@ -63,7 +64,9 @@ class Transition(ABC):
             Probability density at .
         """
 
-class CVNotPossibleException(Exception): pass
+
+class CVNotPossibleException(Exception):
+    pass
 
 
 class MultivariateNormalTransition(Transition):
@@ -112,6 +115,8 @@ class MultivariateNormalTransition(Transition):
                     raise CVNotPossibleException
                 return variance(self.__class__(), self.X, self.w)
         else:
+            if not hasattr(self, "X") or not hasattr(self, "w"):
+                raise CVNotPossibleException
             return variance_list(self.__class__(), self.X, self.w)[0](cv)
 
     def rvs(self):
