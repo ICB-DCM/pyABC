@@ -11,7 +11,7 @@ def data(n):
 
 def test_variance_estimate():
     var_list = []
-    for n in [10, 100, 1000]:
+    for n in [50, 100, 200]:
         m = MultivariateNormalTransition()
         df, w = data(n)
         m.fit(df ,w)
@@ -25,7 +25,7 @@ def test_variance_estimate():
 
 def test_variance_no_side_effect():
     m = MultivariateNormalTransition()
-    df, w = data(10)
+    df, w = data(60)
     m.fit(df, w)
     # very intrusive test. touches intermals of m. not very nice.
     X_orig_id = id(m.X)

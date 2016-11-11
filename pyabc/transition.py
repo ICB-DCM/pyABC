@@ -10,6 +10,7 @@ import numpy as np
 import scipy.stats as st
 import copy
 from typing import Union
+from scipy.optimize import curve_fit
 
 # TODO decide what to do if no parameters there, i.e. if len(X.columns) == 0
 # Possible options include
@@ -84,6 +85,7 @@ class MultivariateNormalTransition(Transition):
         if len(X.columns) == 0:
             self.no_parameters = True
         else:
+            print("pert", X)
             self.no_parameters = False
 
         self.X = X
@@ -93,31 +95,44 @@ class MultivariateNormalTransition(Transition):
         cov = np.cov(self.X_arr, aweights=w, rowvar=False)
         if len(cov.shape) == 0:
             cov = cov.reshape((1,1))
-        self.cov = cov
+        self.cov = cov * scott_rule_of_thumb(len(X) / (1 + w.var()), cov.shape[0])
         import scipy.stats as st
         if not self.no_parameters:
             self.normal = st.multivariate_normal(cov=self.cov)
 
-    def cv(self):
-        if not self.no_parameters:
-            return variance(self.__class__(), self.X, self.w)
+    def cv(self, cv=None):
+        if cv is None:
+            if not self.no_parameters:
+                return variance(self.__class__(), self.X, self.w)
+        else:
+            return variance_list(self.__class__(), self.X, self.w)[0](cv)
 
     def rvs(self):
-        if self.no_parameters:  # TODO better no parameter handling. metaclass?
+        if not hasattr(self, "no_parameters") or self.no_parameters:  # TODO better no parameter handling. metaclass?
             return pd.Series()
         sample = self.X.sample(weights=self.w).iloc[0]
         perturbed = sample + np.random.multivariate_normal(np.zeros(self.cov.shape[0]), self.cov)
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
-        x = np.array(x[self.X.columns]).reshape(-1, x.shape[-1])
+        x = x[self.X.columns]
+        x = np.array(x)
+        if len(x.shape) == 1:
+            x = x[None,:]
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return 1
-        dens = np.array([(self.normal.pdf(test_point - self.X_arr) * self.w).sum() for test_point in x])
-        return dens
+        dens = np.array([(self.normal.pdf(xs - self.X_arr) * self.w).sum() for xs in x])
+        return dens if dens.size != 1 else float(dens)
 
 
-from scipy.optimize import curve_fit
+def scott_rule_of_thumb(n_samples, dimension):
+    return n_samples ** (-1. / (dimension + 4))
+
+
+def silverman_rule_of_thumb(n_samples, dimension):
+    return (n_samples * (dimension + 2) / 4.) ** (-1. / (dimension + 4))
+
+
 def fitpowerlaw(x, y):
     x = np.array(x)
     y = np.array(y)
@@ -127,7 +142,7 @@ def fitpowerlaw(x, y):
 
     popt, cov = curve_fit(f, x, y, p0=[.5, 1 / 5])
 
-    return popt, lambda x: f(x, *popt)
+    return popt, lambda x: f(x, *popt), lambda y: finverse(y, *popt)
 
 
 def finverse(y, a, b):
@@ -145,16 +160,22 @@ def timeit(f):
     return g
 
 
-@timeit
 def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
+    # TODO: This does lots of unnecessary calculation
+    # Is for testing for the moment
+    return variance_list(transition, X, w)[-1][-1]
+
+
+def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     """
     Calculate mean coefficient of variation of the KDE.
     """
     transition_cp = copy.copy(transition)
     transition_cp.varprinted = True
-    nr_cross_val = 6
+    nr_cross_val = 10
+    n_subsample_points = 30
 
-    n_samples_list = np.array(list(range(8, len(X), len(X)//10)))
+    n_samples_list = np.array(list(range(8, len(X), len(X)//n_subsample_points)))
     cvs = np.zeros(len(n_samples_list))
     for ind, n_samples in enumerate(n_samples_list):
         uniform_weights = np.ones(n_samples) / n_samples
@@ -170,4 +191,18 @@ def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
         mean_variation = (variation * w).sum()
         cvs[ind] = mean_variation
 
-    return cvs[-1]
+    import matplotlib.pyplot as plt
+    import time
+
+    fig, ax = plt.subplots()
+    import seaborn as sns
+    ax.set_xlabel("Nr bootstrapped samples")
+    ax.set_ylabel("Mean KDE PDF coefficient of variation")
+    ax.plot(n_samples_list, cvs)
+    popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+    pltpoints = np.linspace(n_samples_list[0], n_samples_list[-1])
+    ax.plot(pltpoints, f(pltpoints))
+    ax.set_title(str(popt) + " " + str(X.columns))
+    fig.savefig("/home/emmanuel/tmp/" + str(id(transition)) + " " + str(time.time()) + " " + ".png")
+    print("popt", popt, "id", id(transition))
+    return finv, cvs

@@ -165,6 +165,7 @@ class ABCSMC:
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
+        self.mean_cv = .05
         if sampler is None:
             self.sampler = MappingSampler(map)
         else:
@@ -394,18 +395,23 @@ class ABCSMC:
         return self.history
 
     def fit_perturbers(self, t):
+        pprob = []
         for m in range(self.history.nr_models):
             if t > 0:
                 particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
             else:
                 # if t == 0, then particles are not perturbed. no perturber fitting necessary
                 continue
-            if len(particles_df) > 0:
+            if len(particles_df) > 0 and len(particles_df.columns) > 0:
+                print(particles_df)
                 self.perturbers[m].fit(particles_df, weights)
-                print("m=", m)
-                self.perturbers[m].cv()
-            else:
-                self.perturbers[m] = None
+                pprob.append(self.perturbers[m].cv(cv=.1))
+
+        if len(pprob) > 0:
+            print("Old nr particles:", self.nr_particles)
+            self.nr_particles = int(sum(pprob))
+            print("New nr particles:", self.nr_particles)
+
 
     def get_current_sample_function(self, t):
         def sample_one():
