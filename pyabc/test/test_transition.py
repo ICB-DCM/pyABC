@@ -22,15 +22,45 @@ def test_variance_estimate():
     assert var_list[1] >= var_list[2]
 
 
-
 def test_variance_no_side_effect():
     m = MultivariateNormalTransition()
     df, w = data(60)
     m.fit(df, w)
-    # very intrusive test. touches intermals of m. not very nice.
+    # very intrusive test. touches internals of m. not very nice.
     X_orig_id = id(m.X)
     var = variance(m, df, w)
     assert id(m.X) == X_orig_id
+
+
+def test_particles_no_parameters():
+    df = pd.DataFrame(index=[0, 1, 2, 3])
+    assert len(df) == 4
+    w = np.array([1, 1, 1, 1]) / 4
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
+
+
+def test_empty():
+    df = pd.DataFrame()
+    w = np.array([])
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
+
+
+def test_single_particle():
+    df, w = data(1)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
+
+
+def test_two_particles():
+    df, w = data(2)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
 
 
 def test_argument_order():

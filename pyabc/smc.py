@@ -165,6 +165,7 @@ class ABCSMC:
         self._points_sampled_from_prior = None
         self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
         self.min_nr_particles_per_population = min_nr_particles_per_population
+        self.max_population_size = 2000
         self.mean_cv = .05
         if sampler is None:
             self.sampler = MappingSampler(map)
@@ -402,14 +403,16 @@ class ABCSMC:
             else:
                 # if t == 0, then particles are not perturbed. no perturber fitting necessary
                 continue
-            if len(particles_df) > 0 and len(particles_df.columns) > 0:
-                print(particles_df)
+            if len(particles_df) > 0:
                 self.perturbers[m].fit(particles_df, weights)
-                pprob.append(self.perturbers[m].cv(cv=.1))
+                if len(particles_df.columns) > 0:
+                    pprob.append(self.perturbers[m].cv(cv=self.mean_cv))
+            else:
+                self.perturbers[m] = None
 
         if len(pprob) > 0:
             print("Old nr particles:", self.nr_particles)
-            self.nr_particles = int(sum(pprob))
+            self.nr_particles = min(int(sum(pprob)), self.max_population_size)
             print("New nr particles:", self.nr_particles)
 
 

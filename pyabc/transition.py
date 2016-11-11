@@ -84,21 +84,24 @@ class MultivariateNormalTransition(Transition):
         """
         if len(X.columns) == 0:
             self.no_parameters = True
-        else:
-            print("pert", X)
-            self.no_parameters = False
+            return
+        self.no_parameters = False
 
         self.X = X
         self.X_arr = X.as_matrix()
         self.w = w  # TODO assert that w is normalized? use metaclass?
         assert np.isclose(w.sum(), 1)
-        cov = np.cov(self.X_arr, aweights=w, rowvar=False)
+        if len(X) > 1:
+            cov = np.cov(self.X_arr, aweights=w, rowvar=False)
+        else:
+            cov_diag = self.X_arr[0]
+            cov = np.diag(cov_diag)
         if len(cov.shape) == 0:
             cov = cov.reshape((1,1))
         self.cov = cov * scott_rule_of_thumb(len(X) / (1 + w.var()), cov.shape[0])
         import scipy.stats as st
         if not self.no_parameters:
-            self.normal = st.multivariate_normal(cov=self.cov)
+            self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def cv(self, cv=None):
         if cv is None:
@@ -108,19 +111,19 @@ class MultivariateNormalTransition(Transition):
             return variance_list(self.__class__(), self.X, self.w)[0](cv)
 
     def rvs(self):
-        if not hasattr(self, "no_parameters") or self.no_parameters:  # TODO better no parameter handling. metaclass?
+        if self.no_parameters:  # TODO better no parameter handling. metaclass?
             return pd.Series()
         sample = self.X.sample(weights=self.w).iloc[0]
         perturbed = sample + np.random.multivariate_normal(np.zeros(self.cov.shape[0]), self.cov)
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
+        if self.no_parameters:  # TODO better no parameter handling. metaclass?
+            return 1
         x = x[self.X.columns]
         x = np.array(x)
         if len(x.shape) == 1:
             x = x[None,:]
-        if self.no_parameters:  # TODO better no parameter handling. metaclass?
-            return 1
         dens = np.array([(self.normal.pdf(xs - self.X_arr) * self.w).sum() for xs in x])
         return dens if dens.size != 1 else float(dens)
 
@@ -170,12 +173,18 @@ def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     """
     Calculate mean coefficient of variation of the KDE.
     """
+    if len(X) == 1:
+        return lambda x: 1, np.array([0])
+
     transition_cp = copy.copy(transition)
     transition_cp.varprinted = True
     nr_cross_val = 10
-    n_subsample_points = 30
 
-    n_samples_list = np.array(list(range(8, len(X), len(X)//n_subsample_points)))
+    # TODO make this always work. Does not work foll app nr samples
+    start = max(len(X)//2, 1)
+    stop = len(X)
+    step = max(len(X)//30, 1)
+    n_samples_list = list(range(start, stop, step)) + [len(X)]
     cvs = np.zeros(len(n_samples_list))
     for ind, n_samples in enumerate(n_samples_list):
         uniform_weights = np.ones(n_samples) / n_samples

@@ -33,6 +33,7 @@ In Progress
     - Assume 10s per simulation on a single core. assume cluster of 1000 cores.
        So about 100 samples per second overall.
 - **EK** adaptive population size
+    - max nr particles limit
 
 Review
 ------
