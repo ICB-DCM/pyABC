@@ -10,6 +10,7 @@ Items are sorted in decreasing order of importance. The top most is the most imp
 Backlog
 -------
 
+- Benchmarks for adaptive population sizes. Show that this helps.
 - Refactor ``pyabc.storage.History`` and ``pyabc.loader.ABCLoader``
     - Both deal with databas access. They sould be a single clas
     - Remove connectomics specific stuff from ``ABCLoader``
@@ -33,7 +34,7 @@ In Progress
     - Assume 10s per simulation on a single core. assume cluster of 1000 cores.
       So about 100 samples per second overall.
 - **EK** adaptive population size
-    - max nr particles limit
+    - ✓ max nr particles limit
     - deal with corner cases of no particles, 1 particle, 2 particles
     - deal with particles with no parameters (for model selection with models without paramters)
 

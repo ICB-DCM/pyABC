@@ -93,36 +93,6 @@ class TestABCFast(TestABC):
         expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
         self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
 
-    def test_empty_population_adaptive(self):
-        def make_model(theta):
-            def model(args):
-                return {"result": 1 if random.random() > theta else 0}
-
-            return model
-
-        theta1 = .2
-        theta2 = .6
-        model1 = make_model(theta1)
-        model2 = make_model(theta2)
-        models = [model1, model2]
-        models = list(map(SimpleModel, models))
-        model_prior = RV("randint", 0, 2)
-        population_size = AdaptivePopulationStrategy(1500, 3)
-        parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-        parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0), population_size)
-
-        options = {'db_path': self.db}
-        abc.set_data({"result": 0}, 0, {}, options)
-
-        minimum_epsilon = -1
-        history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
-        expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
-        self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
-
     def test_beta_binomial_two_identical_models(self):
         binomial_n = 5
 
@@ -376,49 +346,6 @@ class TestABCSlow(TestABC):
         self.assertLess(abs(mean_emp - mu_x_given_y), .07)
         self.assertLess(abs(std_emp - sigma_x_given_y), .12)
 
-
-    def test_gaussian_multiple_populations_adpative_population_size(self):
-        sigma_x = 1
-        sigma_y = .5
-        y_observed = 2
-
-        def model(args):
-            return {"y": st.norm(args['x'], sigma_y).rvs()}
-
-        models = [model]
-        models = list(map(SimpleModel, models))
-        model_prior = RV("randint", 0, 1)
-        nr_populations = 4
-        population_size = AdaptivePopulationStrategy(600, nr_populations)
-        parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
-        parameter_perturbation_kernels = [MultivariateNormalTransition()]
-        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
-                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
-
-        options = {'db_path': self.db}
-        abc.set_data({"y": y_observed}, 0, {}, options)
-
-        minimum_epsilon = -1
-
-        abc.do_not_stop_when_only_single_model_alive()
-        history = abc.run(minimum_epsilon)
-        posterior_x, posterior_weight = history.get_results_distribution(0, "x")
-        sort_indices = sp.argsort(posterior_x)
-        f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
-                                              sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
-
-        sigma_x_given_y = 1 / sp.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
-        mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
-        expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
-        x = sp.linspace(-8, 8)
-        max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
-        self.assertLess(max_distribution_difference, 0.052)
-        self.assertEqual(history.t, nr_populations)
-        mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
-        self.assertLess(abs(mean_emp - mu_x_given_y), .07)
-        self.assertLess(abs(std_emp - sigma_x_given_y), .12)
-
     def test_two_competing_gaussians_single_population(self):
         sigma_x = .5
         sigma_y = .5
@@ -514,62 +441,37 @@ class TestABCSlow(TestABC):
         self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
 
 
-    def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(self):
-        # Define a gaussian model
-        sigma = .5
-
-        def model(args):
-            return {"y": st.norm(args['x'], sigma).rvs()}
-
-
-        # We define two models, but they are identical so far
-        models = [model, model]
-        models = list(map(SimpleModel, models))
-
-        # The prior over the model classes is uniform
-        model_prior = RV("randint", 0, 2)
-
-        # However, our models' priors are not the same. Their mean differs.
-        mu_x_1, mu_x_2 = 0, 1
-        parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma)),
-                                                    Distribution(x=RV("norm", mu_x_2, sigma))]
-
-        # Particles are perturbed in a Gaussian fashion
-        parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-
-        # We plug all the ABC setup together
-        nr_populations = 3
-        population_size = AdaptivePopulationStrategy(400, 3)
-        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
-                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
-
-        # Finally we add meta data such as model names and define where to store the results
-        options = {'db_path': self.db}
-        # y_observed is the important piece here: our actual observation.
-        y_observed = 1
-        abc.set_data({"y": y_observed}, 0, {}, options)
-
-        # We run the ABC with 3 populations max
-        minimum_epsilon = .05
-        history = abc.run(minimum_epsilon)
-
-        # Evaluate the model probabililties
-        p1_emp, p2_emp = history.get_model_probabilities(-1)
-        print(p1_emp, p2_emp)
-
-        def p_y_given_model(mu_x_model):
-            return st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
-
-        p1_expected_unnormalized = p_y_given_model(mu_x_1)
-        p2_expected_unnormalized = p_y_given_model(mu_x_2)
-        p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
-        p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
-        self.assertEqual(history.t, nr_populations)
-        self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
-
-
 class TestABCAdaptive(TestABC):
+    def test_empty_population_adaptive(self):
+        def make_model(theta):
+            def model(args):
+                return {"result": 1 if random.random() > theta else 0}
+
+            return model
+
+        theta1 = .2
+        theta2 = .6
+        model1 = make_model(theta1)
+        model2 = make_model(theta2)
+        models = [model1, model2]
+        models = list(map(SimpleModel, models))
+        model_prior = RV("randint", 0, 2)
+        population_size = AdaptivePopulationStrategy(1500, 3)
+        parameter_given_model_prior_distribution = [Distribution(), Distribution()]
+        parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
+        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
+                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0), population_size)
+
+        options = {'db_path': self.db}
+        abc.set_data({"result": 0}, 0, {}, options)
+
+        minimum_epsilon = -1
+        history = abc.run(minimum_epsilon)
+        p1, p2 = history.get_model_probabilities()
+        expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
+        self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
+
     def test_beta_binomial_two_identical_models_adaptive(self):
         binomial_n = 5
 
