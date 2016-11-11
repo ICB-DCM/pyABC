@@ -63,6 +63,8 @@ class Transition(ABC):
             Probability density at .
         """
 
+class CVNotPossibleException(Exception): pass
+
 
 class MultivariateNormalTransition(Transition):
     """
@@ -104,6 +106,8 @@ class MultivariateNormalTransition(Transition):
             self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def cv(self, cv=None):
+        if not hasattr(self, "X") or not hasattr(self, "w"):
+            raise CVNotPossibleException
         if cv is None:
             if not self.no_parameters:
                 return variance(self.__class__(), self.X, self.w)
@@ -152,17 +156,6 @@ def finverse(y, a, b):
     return (a / y) ** (1 / b)
 
 
-def timeit(f):
-    def g(*args):
-        import time
-        start = time.time()
-        res = f(*args)
-        end = time.time()
-        print(end - start, "s for ", f.__name__, " = ", res)
-        return res
-    return g
-
-
 def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     # TODO: This does lots of unnecessary calculation
     # Is for testing for the moment
@@ -173,24 +166,27 @@ def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     """
     Calculate mean coefficient of variation of the KDE.
     """
+    NR_CROSS_VAL = 10
+    START_FACTOR = 3
+    NR_STEPS = 30
+
     if len(X) == 1:
         return lambda x: 1, np.array([0])
 
     transition_cp = copy.copy(transition)
     transition_cp.varprinted = True
-    nr_cross_val = 10
 
     # TODO make this always work. Does not work foll app nr samples
-    start = max(len(X)//2, 1)
+    start = max(len(X)//START_FACTOR, 1)
     stop = len(X)
-    step = max(len(X)//30, 1)
+    step = max(len(X)//NR_STEPS, 1)
     n_samples_list = list(range(start, stop, step)) + [len(X)]
     cvs = np.zeros(len(n_samples_list))
     for ind, n_samples in enumerate(n_samples_list):
         uniform_weights = np.ones(n_samples) / n_samples
 
         density_values = []
-        for k in range(nr_cross_val):
+        for k in range(NR_CROSS_VAL):
             bootstrapped_points = X.sample(n_samples, replace=True, weights=w)
             transition_cp.fit(bootstrapped_points, uniform_weights)
             density_values.append(transition_cp.pdf(X))
@@ -212,6 +208,6 @@ def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     pltpoints = np.linspace(n_samples_list[0], n_samples_list[-1])
     ax.plot(pltpoints, f(pltpoints))
     ax.set_title(str(popt) + " " + str(X.columns))
-    fig.savefig("/home/emmanuel/tmp/" + str(id(transition)) + " " + str(time.time()) + " " + ".png")
+    fig.savefig("/home/emmanuel/tmp/" + str(time.time()) + " " + str(id(transition)) + " " + ".png")
     print("popt", popt, "id", id(transition))
     return finv, cvs

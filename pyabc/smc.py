@@ -18,6 +18,7 @@ from .parameters import ValidParticle
 from .transition import Transition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
+from .populationsize import ConstantSize
 
 model_output = TypeVar("model_output")
 
@@ -136,11 +137,9 @@ class ABCSMC:
                  perturbers: List[Transition],
                  distance_function: DistanceFunction,
                  eps: Epsilon,
-                 nr_particles: int,
+                 population_strategy: ConstantSize,
                  sampler=None,
                  debug: bool =False,
-                 max_nr_allowed_sample_attempts_per_particle: int =500,
-                 min_nr_particles_per_population: int =1,
                  summary_statistics: Callable[[model_output], dict]=identity):
 
         # sanity checks
@@ -157,14 +156,12 @@ class ABCSMC:
         self.distance_function = distance_function
         self.eps = eps
         self.summary_statistics = summary_statistics
-        self.nr_particles = nr_particles
         self.debug = debug
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
         self.history = None  # type: History
         self._points_sampled_from_prior = None
-        self.max_nr_allowed_sample_attempts_per_particle = max_nr_allowed_sample_attempts_per_particle
-        self.min_nr_particles_per_population = min_nr_particles_per_population
+        self.population_strategy = population_strategy
         self.max_population_size = 2000
         self.mean_cv = .05
         if sampler is None:
@@ -224,7 +221,7 @@ class ABCSMC:
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
         self.history = History(abc_options['db_path'], len(self.models), model_names,
-                               self.min_nr_particles_per_population)
+                               self.population_strategy.min_nr_particles())
 
         # initialize distance function and epsilon
         sample_from_prior = self.prior_sample()
@@ -262,12 +259,12 @@ class ABCSMC:
                 return model_result.sum_stats
 
             sample_from_prior = self.sampler.sample_until_n_accepted(sample_one, simulate_one, lambda x: True,
-                                                                     self.nr_particles)
+                                                                     self.population_strategy.nr_particles)
         else:
             sample_from_prior = self._points_sampled_from_prior
         return sample_from_prior
 
-    def evaluate_proposal(self, m_ss, theta_ss, nr_samples_per_particle, t, t0, current_eps):
+    def evaluate_proposal(self, m_ss, theta_ss, current_eps):
         """
         This is where the actual model evaluation happens.
         """
@@ -275,13 +272,13 @@ class ABCSMC:
         simulation_counter = 0
         distance_list = []
         summary_statistics_list = []
-        for __ in range(nr_samples_per_particle[t-t0]):
+        for __ in range(self.population_strategy.nr_samples_per_parameter):
             ##### MODEL SIMULATION - THIS IS THE EXPENSIVE PART ######
             simulation_counter += 1
             # stop builder if it takes too long
-            if simulation_counter > self.max_nr_allowed_sample_attempts_per_particle:
+            if simulation_counter > self.population_strategy.max_nr_allowed_sample_attempts_per_particle():
                 print("Max nr of samples (={n_max}) for particle reached."
-                      .format(n_max=self.max_nr_allowed_sample_attempts_per_particle), file=sys.stderr)
+                      .format(n_max=self.population_strategy.max_nr_allowed_sample_attempts_per_particle()), file=sys.stderr)
                 return None
             start_time = time.time()
             model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
@@ -302,9 +299,9 @@ class ABCSMC:
         return {'distance_list': distance_list, 'simulation_counter': simulation_counter,
                 'summary_statistics_list': summary_statistics_list}
 
-    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, nr_samples_per_particle, t, t0):
+    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, t):
         if t == 0:
-            weight = len(distance_list) / nr_samples_per_particle[t-t0]
+            weight = len(distance_list) / self.population_strategy.nr_samples_per_parameter
         else:
             model_factor = sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
                                  for j in range(len(self.models)))
@@ -312,7 +309,7 @@ class ABCSMC:
             normalization = model_factor * particle_factor
             if normalization == 0:
                 print('normalization is zero!')
-            fraction_accepted_runs_for_single_parameter = len(distance_list) / nr_samples_per_particle[t-t0]  # reflects stochasticity of the model
+            fraction_accepted_runs_for_single_parameter = len(distance_list) / self.population_strategy.nr_samples_per_parameter  # reflects stochasticity of the model
             weight = (self.model_prior_distribution.pmf(m_ss)
                       * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
@@ -341,7 +338,7 @@ class ABCSMC:
                                              * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
-    def run(self, nr_samples_per_particle: List[int], minimum_epsilon: float) -> History:
+    def run(self, minimum_epsilon: float) -> History:
         """
         Run the ABCSMC model selection. This method can be called many times. It makes another
         step continuing where it has stopped before.
@@ -352,21 +349,13 @@ class ABCSMC:
         Parameters
         ----------
 
-        nr_samples_per_particle: List[int]
-            The length of the list determines the maximal number of populations.
-
-            The entries of the list the number of iterated simulations
-            in the notation from Toni et al 2009 these are the :math:`B_t`.
-            Usually, the entries are all ones, e.g. in most cases you'll have:
-            ``nr_samples_per_particle = [1] * nr_populations``.
-
         minimum_epsilon: float
             Stop if epsilon is smaller than minimum epsilon specified here.
         """
         t0 = self.history.t
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
-        for t in range(t0, t0+len(nr_samples_per_particle)):
+        for t in range(t0, t0+self.population_strategy.nr_populations):
             current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
             if self.debug:
                 print('t:', t, 'eps:', current_eps)
@@ -375,10 +364,11 @@ class ABCSMC:
                 print('now submitting population', t)
 
             sample_one = self.get_current_sample_function(t)
-            sim_one = self.get_current_sim_function(nr_samples_per_particle, t, t0, current_eps)
+            sim_one = self.get_current_sim_function(t, t0, current_eps)
             accept_one = self.get_current_accept_function()
             new_particle_population = self.sampler.sample_until_n_accepted(sample_one, sim_one,
-                                                                           accept_one, self.nr_particles)
+                                                                           accept_one,
+                                                                           self.population_strategy.nr_particles)
 
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
@@ -396,7 +386,6 @@ class ABCSMC:
         return self.history
 
     def fit_perturbers(self, t):
-        pprob = []
         for m in range(self.history.nr_models):
             if t > 0:
                 particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
@@ -405,15 +394,10 @@ class ABCSMC:
                 continue
             if len(particles_df) > 0:
                 self.perturbers[m].fit(particles_df, weights)
-                if len(particles_df.columns) > 0:
-                    pprob.append(self.perturbers[m].cv(cv=self.mean_cv))
             else:
                 self.perturbers[m] = None
 
-        if len(pprob) > 0:
-            print("Old nr particles:", self.nr_particles)
-            self.nr_particles = min(int(sum(pprob)), self.max_population_size)
-            print("New nr particles:", self.nr_particles)
+        self.population_strategy.adapt_population_size(self.perturbers, self.history.model_probabilities)
 
 
     def get_current_sample_function(self, t):
@@ -421,15 +405,12 @@ class ABCSMC:
             return self.generate_valid_proposal(t)
         return sample_one
 
-    def get_current_sim_function(self, nr_samples_per_particle, t, t0, current_eps):
+    def get_current_sim_function(self, t, t0, current_eps):
         def lambda_evaluate_proposal(m_ss, theta_ss):
-            return self.evaluate_proposal(m_ss, theta_ss,
-                                          nr_samples_per_particle,
-                                          t, t0, current_eps)
+            return self.evaluate_proposal(m_ss, theta_ss, current_eps)
 
         def lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss):
-            return self.calc_proposal_weight(distance_list, m_ss, theta_ss,
-                                             nr_samples_per_particle, t, t0)
+            return self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
 
         def sim_one(paras):
             (m_ss, theta_ss) = paras
