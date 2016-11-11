@@ -145,7 +145,7 @@ class MedianEpsilon(Epsilon):
         it is given as a number.
     """
 
-    def __init__(self, initial_epsilon: Union[str, int]='from_sample', median_multiplier: float =1):
+    def __init__(self, initial_epsilon: Union[str, int, float]='from_sample', median_multiplier: float =1):
         eps_logger.debug("init medianepsilon initial_epsilon={}, median_multiplier={}".format(initial_epsilon, median_multiplier))
         super().__init__()
         self._initial_epsilon = initial_epsilon

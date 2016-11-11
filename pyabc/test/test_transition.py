@@ -11,7 +11,7 @@ def data(n):
 
 def test_variance_estimate():
     var_list = []
-    for n in [10, 100, 1000]:
+    for n in [50, 100, 200]:
         m = MultivariateNormalTransition()
         df, w = data(n)
         m.fit(df ,w)
@@ -22,15 +22,45 @@ def test_variance_estimate():
     assert var_list[1] >= var_list[2]
 
 
-
 def test_variance_no_side_effect():
     m = MultivariateNormalTransition()
-    df, w = data(10)
+    df, w = data(60)
     m.fit(df, w)
-    # very intrusive test. touches intermals of m. not very nice.
+    # very intrusive test. touches internals of m. not very nice.
     X_orig_id = id(m.X)
     var = variance(m, df, w)
     assert id(m.X) == X_orig_id
+
+
+def test_particles_no_parameters():
+    df = pd.DataFrame(index=[0, 1, 2, 3])
+    assert len(df) == 4
+    w = np.array([1, 1, 1, 1]) / 4
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
+
+
+def test_empty():
+    df = pd.DataFrame()
+    w = np.array([])
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
+
+
+def test_single_particle():
+    df, w = data(1)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
+
+
+def test_two_particles():
+    df, w = data(2)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.cv()
 
 
 def test_argument_order():
@@ -45,4 +75,5 @@ def test_argument_order():
     test = df.iloc[0]
     reversed = test[::-1]
     assert (np.array(test) != np.array(reversed)).all()   # works b/c of even nr of parameters
+    print("pdftest", m.pdf(test))
     assert m.pdf(test) == m.pdf(reversed)
