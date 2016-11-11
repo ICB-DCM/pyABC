@@ -106,10 +106,10 @@ class MultivariateNormalTransition(Transition):
             self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def cv(self, cv=None):
-        if not hasattr(self, "X") or not hasattr(self, "w"):
-            raise CVNotPossibleException
         if cv is None:
             if not self.no_parameters:
+                if not hasattr(self, "X") or not hasattr(self, "w"):
+                    raise CVNotPossibleException
                 return variance(self.__class__(), self.X, self.w)
         else:
             return variance_list(self.__class__(), self.X, self.w)[0](cv)
