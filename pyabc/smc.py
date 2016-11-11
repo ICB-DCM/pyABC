@@ -399,7 +399,6 @@ class ABCSMC:
 
         self.population_strategy.adapt_population_size(self.perturbers, self.history.model_probabilities)
 
-
     def get_current_sample_function(self, t):
         def sample_one():
             return self.generate_valid_proposal(t)
