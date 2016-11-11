@@ -281,9 +281,8 @@ class History:
             print("Hist append:", population)
         self._close_session()
 
-    def _append(self, t, m, nr_simulations, valid_particle: ValidParticle):
+    def _append(self, t, m,valid_particle: ValidParticle):
         self.store[t][m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
-        self.nr_simulations[t] += nr_simulations
 
     def _extend_store(self, t):
         while len(self.store) < t+1:
@@ -291,7 +290,7 @@ class History:
             self.model_probabilities.append(None)
             self.nr_simulations.append(0)
 
-    def append_population(self, t: int, current_epsilon: float, particle_population: list):
+    def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int):
         """
         Append population to database.
 
@@ -324,10 +323,12 @@ class History:
                     print("ABC History warning: Empty particle.", file=sys.stderr)
             self._normalize(t)
             self._save_to_population_db(t, current_epsilon)
+            self.nr_simulations[t] = nr_simulations
             return True
         else:
             print("ABC History warning: Not enough particles in population: Found {f}, required {r}."
                   .format(f=nr_particles_in_this_population, r=self.min_nr_particles_per_population), file=sys.stderr)
+            self.nr_simulations[t] = nr_simulations
             return False
 
     def _normalize(self, t):

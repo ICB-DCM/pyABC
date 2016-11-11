@@ -48,7 +48,7 @@ class Transition(ABC):
         """
 
     @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> float:
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at x.
 
@@ -63,6 +63,13 @@ class Transition(ABC):
         density: float
             Probability density at .
         """
+    @abstractmethod
+    def mean_coefficient_of_variation(self) -> float:
+        pass
+
+    @abstractmethod
+    def required_nr_samples(self, coefficient_of_variation: float) -> int:
+        pass
 
 
 class CVNotPossibleException(Exception):
@@ -108,16 +115,16 @@ class MultivariateNormalTransition(Transition):
         if not self.no_parameters:
             self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
-    def cv(self, cv=None):
-        if cv is None:
-            if not self.no_parameters:
-                if not hasattr(self, "X") or not hasattr(self, "w"):
-                    raise CVNotPossibleException
-                return variance(self.__class__(), self.X, self.w)
-        else:
+    def required_nr_samples(self, coefficient_of_variation):
+        if not hasattr(self, "X") or not hasattr(self, "w"):
+            raise CVNotPossibleException
+        return variance_list(self.__class__(), self.X, self.w)[0](coefficient_of_variation)
+
+    def mean_coefficient_of_variation(self):
+        if not self.no_parameters:
             if not hasattr(self, "X") or not hasattr(self, "w"):
                 raise CVNotPossibleException
-            return variance_list(self.__class__(), self.X, self.w)[0](cv)
+            return variance(self.__class__(), self.X, self.w)
 
     def rvs(self):
         if self.no_parameters:  # TODO better no parameter handling. metaclass?
@@ -181,7 +188,6 @@ def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
     transition_cp = copy.copy(transition)
     transition_cp.varprinted = True
 
-    # TODO make this always work. Does not work foll app nr samples
     start = max(len(X)//START_FACTOR, 1)
     stop = len(X)
     step = max(len(X)//NR_STEPS, 1)

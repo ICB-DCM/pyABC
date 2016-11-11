@@ -1,6 +1,7 @@
-from pyabc.transition import variance, MultivariateNormalTransition
+from pyabc.transition import variance, MultivariateNormalTransition, CVNotPossibleException
 import pandas as pd
 import numpy as np
+import pytest
 
 
 def data(n):
@@ -15,7 +16,7 @@ def test_variance_estimate():
         m = MultivariateNormalTransition()
         df, w = data(n)
         m.fit(df ,w)
-        var = m.cv()
+        var = m.mean_coefficient_of_variation()
         var_list.append(var)
 
     assert var_list[0] >= var_list[1]
@@ -38,7 +39,8 @@ def test_particles_no_parameters():
     w = np.array([1, 1, 1, 1]) / 4
     m = MultivariateNormalTransition()
     m.fit(df, w)
-    m.cv()
+    with pytest.raises(CVNotPossibleException):
+        m.required_nr_samples(.1)
 
 
 def test_empty():
@@ -46,21 +48,22 @@ def test_empty():
     w = np.array([])
     m = MultivariateNormalTransition()
     m.fit(df, w)
-    m.cv()
+    with pytest.raises(CVNotPossibleException):
+        m.required_nr_samples(.1)
 
 
 def test_single_particle():
     df, w = data(1)
     m = MultivariateNormalTransition()
     m.fit(df, w)
-    m.cv()
+    m.required_nr_samples(.1)
 
 
 def test_two_particles():
     df, w = data(2)
     m = MultivariateNormalTransition()
     m.fit(df, w)
-    m.cv()
+    m.required_nr_samples(.1)
 
 
 def test_argument_order():

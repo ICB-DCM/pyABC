@@ -252,29 +252,16 @@ class ABCSMC:
         This is where the actual model evaluation happens.
         """
         # from here, theta_ss is valid according to the prior
-        simulation_counter = 0
         distance_list = []
         summary_statistics_list = []
-        for __ in range(self.population_strategy.nr_samples_per_parameter):
-            ##### MODEL SIMULATION - THIS IS THE EXPENSIVE PART ######
-            simulation_counter += 1
-            # stop builder if it takes too long
-            if simulation_counter > self.population_strategy.max_nr_allowed_sample_attempts_per_particle():
-                print("Max nr of samples (={n_max}) for particle reached."
-                      .format(n_max=self.population_strategy.max_nr_allowed_sample_attempts_per_particle()), file=sys.stderr)
-                return None
-            start_time = time.time()
+        for _ in range(self.population_strategy.nr_samples_per_parameter):
             model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
                                                     lambda x: self.distance_function(x, self.x_0), current_eps)
             if model_result.accepted:
                 distance_list.append(model_result.distance)
                 summary_statistics_list.append(model_result.sum_stats)
 
-            end_time = time.time()
-            duration = end_time - start_time
-
-        return {'distance_list': distance_list, 'simulation_counter': simulation_counter,
-                'summary_statistics_list': summary_statistics_list}
+        return distance_list, summary_statistics_list
 
     def calc_proposal_weight(self, distance_list, m_ss, theta_ss, t):
         if t == 0:
@@ -334,12 +321,12 @@ class ABCSMC:
         # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
         for t in range(t0, t0+self.population_strategy.nr_populations):
             current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
-            abclogger.debug('t:' +  str(t) +  ' eps:' + str(current_eps))
+            abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
             self.fit_transitions(t)
-            abclogger.debug('now submitting population ' +  str(t))
+            abclogger.debug('now submitting population ' + str(t))
 
-            sample_one = self.get_current_sample_function(t)
-            sim_one = self.get_current_sim_function(t, t0, current_eps)
+            sample_one = lambda: self.generate_valid_proposal(t)
+            sim_one = self.get_current_sim_function(t, current_eps)
             accept_one = self.get_current_accept_function()
             new_particle_population = self.sampler.sample_until_n_accepted(sample_one, sim_one,
                                                                            accept_one,
@@ -348,7 +335,8 @@ class ABCSMC:
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
-            new_particle_population_non_empty = self.history.append_population(t, current_eps, new_particle_population)
+            new_particle_population_non_empty = self.history.append_population(t, current_eps,
+                                                                               new_particle_population, self.sampler.nr_evaluations_)
             abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
 
             if (not new_particle_population_non_empty or
@@ -359,47 +347,30 @@ class ABCSMC:
         return self.history
 
     def fit_transitions(self, t):
+        if t == 0:  # we need a particle population to do the fitting
+            return
+
         for m in range(self.history.nr_models):
-            if t > 0:
-                particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
-            else:
-                # if t == 0, then particles are not perturbed. no perturber fitting necessary
-                continue
-            if len(particles_df) > 0:
-                self.transitions[m].fit(particles_df, weights)
-            else:
-                self.transitions[m] = None
+            particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
+            self.transitions[m].fit(particles_df, weights)
 
         self.population_strategy.adapt_population_size(self.transitions, self.history.model_probabilities)
 
-    def get_current_sample_function(self, t):
-        def sample_one():
-            return self.generate_valid_proposal(t)
-        return sample_one
-
-    def get_current_sim_function(self, t, t0, current_eps):
-        def lambda_evaluate_proposal(m_ss, theta_ss):
-            return self.evaluate_proposal(m_ss, theta_ss, current_eps)
-
-        def lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss):
-            return self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
-
+    def get_current_sim_function(self, t, eps):
         def sim_one(paras):
-            (m_ss, theta_ss) = paras
-            eval_res = lambda_evaluate_proposal(m_ss, theta_ss)
-            distance_list = eval_res['distance_list']
-            simulation_counter = eval_res['simulation_counter']
-            summary_statistics_list = eval_res['summary_statistics_list']
+            m_ss, theta_ss = paras
+            distance_list, summary_statistics_list = self.evaluate_proposal(m_ss, theta_ss, eps)
             if len(distance_list) > 0:
-                weight = lambda_calc_proposal_weigth(distance_list, m_ss, theta_ss)
+                weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
             else:
                 weight = 0
             valid_particle = ValidParticle(theta_ss, weight, distance_list, summary_statistics_list)
-            return m_ss, simulation_counter, valid_particle
+            return m_ss, valid_particle
         return sim_one
 
     def get_current_accept_function(self):
         def accept_one(sim_result):
-            m_ss, simulation_counter, valid_particle = sim_result
-            return len(valid_particle.distance_list) > 0
+            m_ss, valid_particle = sim_result
+            accepted = len(valid_particle.distance_list) > 0
+            return accepted
         return accept_one

@@ -52,7 +52,7 @@ class AdaptivePopulationStrategy(PopulationStrategy):  # TODO rename ConstantPop
         nr_required_samples = []
         for trans in transitions:
             try:
-                nr_required_samples.append(trans.cv(cv=self.mean_cv))
+                nr_required_samples.append(trans.required_nr_samples(coefficient_of_variation=self.mean_cv))
             except CVNotPossibleException:
                 pass
 
