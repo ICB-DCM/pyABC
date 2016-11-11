@@ -328,7 +328,6 @@ class History:
         else:
             print("ABC History warning: Not enough particles in population: Found {f}, required {r}."
                   .format(f=nr_particles_in_this_population, r=self.min_nr_particles_per_population), file=sys.stderr)
-            self.nr_simulations[t] = nr_simulations
             return False
 
     def _normalize(self, t):

@@ -78,5 +78,4 @@ def test_argument_order():
     test = df.iloc[0]
     reversed = test[::-1]
     assert (np.array(test) != np.array(reversed)).all()   # works b/c of even nr of parameters
-    print("pdftest", m.pdf(test))
     assert m.pdf(test) == m.pdf(reversed)
