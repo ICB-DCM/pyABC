@@ -17,7 +17,7 @@ from .distance_functions import DistanceFunction
 from .epsilon import Epsilon
 from .model import Model
 from .parameters import ValidParticle
-from .transition import Transition
+from pyabc.transition.transition import Transition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy

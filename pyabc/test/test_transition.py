@@ -1,4 +1,6 @@
-from pyabc.transition import variance, MultivariateNormalTransition, NotEnoughParticles
+from pyabc.transition import NotEnoughParticles
+from pyabc.transition.multivariatenormal import variance
+from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
 import pytest

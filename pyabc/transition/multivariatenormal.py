@@ -1,118 +1,13 @@
-"""
-Perturbation
-============
-
-Perturbation strategies.
-"""
-from abc import ABCMeta, abstractmethod
-import pandas as pd
-import numpy as np
-import scipy.stats as st
 import copy
 from typing import Union
+
+import numpy as np
+import pandas as pd
+from scipy import stats as st
 from scipy.optimize import curve_fit
 
-# TODO decide what to do if no parameters there, i.e. if len(X.columns) == 0
-# Possible options include
-# 1. Have a specific perturber for no particles
-# 2. Explicitly hande that case in each concrete perturber implementation
-# 3. Make a metaclass which takes care of the no parameters case. This metaclass could also check if w is sane
-
-
-def fit_wrap(self, X, w):
-    if len(X.columns) == 0:
-        self.no_parameters = True
-        return
-    self.no_parameters = False
-    if w.size > 0:
-        assert np.isclose(w.sum(), 1)
-    self.fit_old(X, w)
-
-
-def pdf_wrap(self, x):
-    if self.no_parameters:
-        return 1
-    return self.pdf_old(x)
-
-
-def rvs_wrap(self):
-    if self.no_parameters:  # TODO better no parameter handling. metaclass?
-        return pd.Series()
-    return self.rvs_old()
-
-
-class TransitionMeta(ABCMeta):
-    """
-    This metaclass handles the special case of no parameters.
-    Transition classes do not have to check for it anymore
-    """
-    def __init__(cls, name, bases, attrs):
-        ABCMeta.__init__(cls, name, bases, attrs)
-        cls.fit_old = cls.fit
-        cls.fit = fit_wrap
-
-        cls.pdf_old = cls.pdf
-        cls.pdf = pdf_wrap
-
-        cls.rvs_old = cls.rvs
-        cls.rvs = rvs_wrap
-
-
-class Transition(metaclass=TransitionMeta):
-    @abstractmethod
-    def fit(self, X: pd.DataFrame, w: np.ndarray):
-        """
-        Fit the perturber to the sampled data.
-        Concrete implementations might do something like fitting a KDE.
-
-        Parameters
-        ----------
-        X: pd.DataFrame
-            The parameters.
-        w: array
-            The corresponding weights
-        """
-
-    @abstractmethod
-    def rvs(self) -> pd.Series:
-        """
-        Random variable sample (rvs).
-
-        Sample from the fitted distribution.
-
-        Returns
-        -------
-        sample: pd.Series
-            A sample from the fitted model
-        """
-
-    @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
-        """
-        Evaluate the probability density function (PDF) at x.
-
-        Parameters
-        ----------
-        x: pd.Series
-            Parameter
-
-        Returns
-        -------
-
-        density: float
-            Probability density at .
-        """
-    @abstractmethod
-    def mean_coefficient_of_variation(self) -> float:
-        pass
-
-    @abstractmethod
-    def required_nr_samples(self, coefficient_of_variation: float) -> int:
-        pass
-
-
-class NotEnoughParticles(Exception):
-    pass
+from .exceptions import NotEnoughParticles
+from .transition import Transition
 
 
 class MultivariateNormalTransition(Transition):
