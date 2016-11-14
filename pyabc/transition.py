@@ -4,7 +4,7 @@ Perturbation
 
 Perturbation strategies.
 """
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 import pandas as pd
 import numpy as np
 import scipy.stats as st
@@ -19,7 +19,46 @@ from scipy.optimize import curve_fit
 # 3. Make a metaclass which takes care of the no parameters case. This metaclass could also check if w is sane
 
 
-class Transition(ABC):
+def fit_wrap(self, X, w):
+    if len(X.columns) == 0:
+        self.no_parameters = True
+        return
+    self.no_parameters = False
+    if w.size > 0:
+        assert np.isclose(w.sum(), 1)
+    self.fit_old(X, w)
+
+
+def pdf_wrap(self, x):
+    if self.no_parameters:
+        return 1
+    return self.pdf_old(x)
+
+
+def rvs_wrap(self):
+    if self.no_parameters:  # TODO better no parameter handling. metaclass?
+        return pd.Series()
+    return self.rvs_old()
+
+
+class TransitionMeta(ABCMeta):
+    """
+    This metaclass handles the special case of no parameters.
+    Transition classes do not have to check for it anymore
+    """
+    def __init__(cls, name, bases, attrs):
+        ABCMeta.__init__(cls, name, bases, attrs)
+        cls.fit_old = cls.fit
+        cls.fit = fit_wrap
+
+        cls.pdf_old = cls.pdf
+        cls.pdf = pdf_wrap
+
+        cls.rvs_old = cls.rvs
+        cls.rvs = rvs_wrap
+
+
+class Transition(metaclass=TransitionMeta):
     @abstractmethod
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
@@ -72,7 +111,7 @@ class Transition(ABC):
         pass
 
 
-class CVNotPossibleException(Exception):
+class NotEnoughParticles(Exception):
     pass
 
 
@@ -94,15 +133,12 @@ class MultivariateNormalTransition(Transition):
 
         It holds that len(X) == len(w).
         """
-        if len(X.columns) == 0:
-            self.no_parameters = True
-            return
-        self.no_parameters = False
+        if len(X) == 0:
+            raise NotEnoughParticles("Fitting not possible.")
 
         self.X = X
         self.X_arr = X.as_matrix()
-        self.w = w  # TODO assert that w is normalized? use metaclass?
-        assert np.isclose(w.sum(), 1)
+        self.w = w
         if len(X) > 1:
             cov = np.cov(self.X_arr, aweights=w, rowvar=False)
         else:
@@ -117,25 +153,21 @@ class MultivariateNormalTransition(Transition):
 
     def required_nr_samples(self, coefficient_of_variation):
         if not hasattr(self, "X") or not hasattr(self, "w"):
-            raise CVNotPossibleException
+            raise NotEnoughParticles
         return variance_list(self.__class__(), self.X, self.w)[0](coefficient_of_variation)
 
     def mean_coefficient_of_variation(self):
         if not self.no_parameters:
             if not hasattr(self, "X") or not hasattr(self, "w"):
-                raise CVNotPossibleException
+                raise NotEnoughParticles
             return variance(self.__class__(), self.X, self.w)
 
     def rvs(self):
-        if self.no_parameters:  # TODO better no parameter handling. metaclass?
-            return pd.Series()
         sample = self.X.sample(weights=self.w).iloc[0]
         perturbed = sample + np.random.multivariate_normal(np.zeros(self.cov.shape[0]), self.cov)
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
-        if self.no_parameters:  # TODO better no parameter handling. metaclass?
-            return 1
         x = x[self.X.columns]
         x = np.array(x)
         if len(x.shape) == 1:

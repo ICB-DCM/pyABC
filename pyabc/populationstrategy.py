@@ -1,4 +1,4 @@
-from .transition import CVNotPossibleException
+from .transition import NotEnoughParticles
 import logging
 
 adaptation_logger = logging.getLogger("Adaptation")
@@ -42,7 +42,7 @@ class ConstantPopulationStrategy(PopulationStrategy):
         pass
 
 
-class AdaptivePopulationStrategy(PopulationStrategy):  # TODO rename ConstantPopulationStrategy. This inheritance is weird
+class AdaptivePopulationStrategy(PopulationStrategy):
     def __init__(self, nr_particles, nr_populations, nr_samples_per_parameter=1, mean_cv=0.05, max_population_size=None):
         super().__init__(nr_particles, nr_populations, nr_samples_per_parameter)
         self.max_population_size = max_population_size if max_population_size is not None else nr_particles * 2
@@ -53,7 +53,7 @@ class AdaptivePopulationStrategy(PopulationStrategy):  # TODO rename ConstantPop
         for trans in transitions:
             try:
                 nr_required_samples.append(trans.required_nr_samples(coefficient_of_variation=self.mean_cv))
-            except CVNotPossibleException:
+            except NotEnoughParticles:
                 pass
 
         if len(nr_required_samples) > 0:
