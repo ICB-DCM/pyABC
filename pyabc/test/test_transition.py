@@ -1,5 +1,4 @@
 from pyabc.transition import NotEnoughParticles
-from pyabc.transition.multivariatenormal import variance
 from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
@@ -31,7 +30,7 @@ def test_variance_no_side_effect():
     m.fit(df, w)
     # very intrusive test. touches internals of m. not very nice.
     X_orig_id = id(m.X)
-    var = variance(m, df, w)
+    var = m.mean_coefficient_of_variation()
     assert id(m.X) == X_orig_id
 
 

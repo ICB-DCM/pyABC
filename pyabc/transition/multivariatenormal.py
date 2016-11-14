@@ -52,10 +52,11 @@ class MultivariateNormalTransition(Transition):
         return variance_list(self.__class__(), self.X, self.w)[0](coefficient_of_variation)
 
     def mean_coefficient_of_variation(self):
+        # TODO: This does lots of unnecessary calculation
         if not self.no_parameters:
             if not hasattr(self, "X") or not hasattr(self, "w"):
                 raise NotEnoughParticles
-            return variance(self.__class__(), self.X, self.w)
+            return variance_list(self, self.X, self.w)[-1][-1]
 
     def rvs(self):
         sample = self.X.sample(weights=self.w).iloc[0]
@@ -93,12 +94,6 @@ def fitpowerlaw(x, y):
 
 def finverse(y, a, b):
     return (a / y) ** (1 / b)
-
-
-def variance(transition: Transition, X: pd.DataFrame, w: np.ndarray):
-    # TODO: This does lots of unnecessary calculation
-    # Is for testing for the moment
-    return variance_list(transition, X, w)[-1][-1]
 
 
 def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
