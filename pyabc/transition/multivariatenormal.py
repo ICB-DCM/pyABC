@@ -14,6 +14,9 @@ class MultivariateNormalTransition(Transition):
     """
     Pretty stupid but should in principle be functional
     """
+    NR_CROSS_VAL = 10
+    START_FACTOR = 3
+    NR_STEPS = 30
 
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
@@ -49,14 +52,7 @@ class MultivariateNormalTransition(Transition):
     def required_nr_samples(self, coefficient_of_variation):
         if not hasattr(self, "X") or not hasattr(self, "w"):
             raise NotEnoughParticles
-        return variance_list(self.__class__(), self.X, self.w)[0](coefficient_of_variation)
-
-    def mean_coefficient_of_variation(self):
-        # TODO: This does lots of unnecessary calculation
-        if not self.no_parameters:
-            if not hasattr(self, "X") or not hasattr(self, "w"):
-                raise NotEnoughParticles
-            return variance_list(self, self.X, self.w)[-1][-1]
+        return self.variance_list()[0](coefficient_of_variation)
 
     def rvs(self):
         sample = self.X.sample(weights=self.w).iloc[0]
@@ -70,6 +66,45 @@ class MultivariateNormalTransition(Transition):
             x = x[None,:]
         dens = np.array([(self.normal.pdf(xs - self.X_arr) * self.w).sum() for xs in x])
         return dens if dens.size != 1 else float(dens)
+
+    def mean_coefficient_of_variation(self, n_samples=None):
+        if not self.no_parameters:
+            if not hasattr(self, "X") or not hasattr(self, "w"):
+                raise NotEnoughParticles
+
+        if n_samples is None:
+            n_samples = len(self.X)
+
+        self_cp = copy.copy(self)
+        uniform_weights = np.ones(n_samples) / n_samples
+
+        density_values = []
+        for k in range(self_cp.NR_CROSS_VAL):
+            bootstrapped_points = self.X.sample(n_samples, replace=True, weights=self.w)
+            self_cp.fit(bootstrapped_points, uniform_weights)
+            density_values.append(self_cp.pdf(self.X))
+
+        density_values = np.array(density_values)
+        variation = st.variation(density_values, 0)
+        mean_variation = (variation * self.w).sum()
+        return mean_variation
+
+    def variance_list(self):
+        """
+        Calculate mean coefficient of variation of the KDE.
+        """
+        if len(self.X) == 1:
+            return lambda x: 1, [0]
+
+        start = max(len(self.X) // self.START_FACTOR, 1)
+        stop = len(self.X)
+        step = max(len(self.X) // self.NR_STEPS, 1)
+
+        n_samples_list = list(range(start, stop, step)) + [len(self.X)]
+        cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
+
+        popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+        return finv, cvs
 
 
 def scott_rule_of_thumb(n_samples, dimension):
@@ -96,38 +131,6 @@ def finverse(y, a, b):
     return (a / y) ** (1 / b)
 
 
-def variance_list(transition: Transition, X: pd.DataFrame, w: np.ndarray):
-    """
-    Calculate mean coefficient of variation of the KDE.
-    """
-    NR_CROSS_VAL = 10
-    START_FACTOR = 3
-    NR_STEPS = 30
 
-    if len(X) == 1:
-        return lambda x: 1, np.array([0])
 
-    transition_cp = copy.copy(transition)
-    transition_cp.varprinted = True
 
-    start = max(len(X)//START_FACTOR, 1)
-    stop = len(X)
-    step = max(len(X)//NR_STEPS, 1)
-    n_samples_list = list(range(start, stop, step)) + [len(X)]
-    cvs = np.zeros(len(n_samples_list))
-    for ind, n_samples in enumerate(n_samples_list):
-        uniform_weights = np.ones(n_samples) / n_samples
-
-        density_values = []
-        for k in range(NR_CROSS_VAL):
-            bootstrapped_points = X.sample(n_samples, replace=True, weights=w)
-            transition_cp.fit(bootstrapped_points, uniform_weights)
-            density_values.append(transition_cp.pdf(X))
-
-        density_values = np.array(density_values)
-        variation = st.variation(density_values, 0)
-        mean_variation = (variation * w).sum()
-        cvs[ind] = mean_variation
-
-    popt, f, finv = fitpowerlaw(n_samples_list, cvs)
-    return finv, cvs

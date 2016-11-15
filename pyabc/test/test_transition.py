@@ -80,6 +80,13 @@ def test_two_particles():
     m.required_nr_samples(.1)
 
 
+def test_many_particles():
+    df, w = data(20)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.required_nr_samples(.1)
+
+
 def test_argument_order():
     """
     Dataframes passed to the transition kernels are generated from dicts.
