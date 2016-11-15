@@ -71,7 +71,9 @@ class SimpleModel(Model):
     sample_function: Callable[[Parameter], Any]
         Returns the sample to be passed to the summary statistics method
     """
-    def __init__(self, sample_function, name="simple_model"):
+    def __init__(self, sample_function, name=None):
+        if name is None:
+            name = sample_function.__name__
         super().__init__(name)
         self.sample_function = sample_function
 
