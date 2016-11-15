@@ -11,6 +11,19 @@ def data(n):
     return df, w
 
 
+def data_single(n):
+    df = pd.DataFrame({"a": np.random.rand(n)})
+    w = np.ones(len(df)) / len(df)
+    return df, w
+
+
+def test_many_particles_single_par():
+    df, w = data_single(20)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.required_nr_samples(.1)
+
+
 def test_variance_estimate():
     var_list = []
     for n in [50, 100, 200]:
@@ -63,6 +76,7 @@ def test_0_particles():
         m.fit(df, w)
     with pytest.raises(NotEnoughParticles):
         m.required_nr_samples(.1)
+
 
 def test_single_particle():
     # TODO define proper behavior

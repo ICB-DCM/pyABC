@@ -66,4 +66,7 @@ def smart_cov(X_arr, w):
         cov = np.diag(np.absolute(cov_diag))
         return cov
 
-    return np.cov(X_arr, aweights=w, rowvar=False)
+    cov = np.cov(X_arr, aweights=w, rowvar=False)
+    if len(cov.shape) == 0:
+        cov = np.array([[cov]])
+    return cov

@@ -428,7 +428,6 @@ class TestABCSlow(TestABC):
 
         # Evaluate the model probabililties
         p1_emp, p2_emp = history.get_model_probabilities(-1)
-        print(p1_emp, p2_emp)
 
         def p_y_given_model(mu_x_model):
             return st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
