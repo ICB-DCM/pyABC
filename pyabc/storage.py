@@ -51,7 +51,7 @@ class Population(Base):
 
     def __repr__(self):
         return ("<Population(id={id}, abc_smc_id={abc_smc_id}, t={t}) nr_samples={nr_samples} eps={eps} population_end_time={population_end_time}>"
-                 .format(id=self.id, abc_smc_id= self.abc_smc_id, t=self.t, nr_samples=self.nr_samples,
+                 .format(id=self.id, abc_smc_id=self.abc_smc_id, t=self.t, nr_samples=self.nr_samples,
                          eps=self.epsilon, population_end_time=self.population_end_time))
 
 
@@ -371,33 +371,6 @@ class History:
         """
         return sp.random.choice(len(self.model_probabilities[t]), p=self.model_probabilities[t])
 
-    def sample_from_population(self, t: int, m: int) -> Union[Parameter, None]:
-        """
-        Sample from population.
-
-        Parameters
-        ----------
-
-        t: int
-            Population number
-
-        m: int
-            Model number
-
-        Returns
-        -------
-        sample: Union[Parameter, None]
-            Returns None if population t,m is empty, otherwise a sample Parameter from it
-        """
-        weighted_parameters = [(particle.weight, particle.parameter) for particle in self.store[t][m]]
-        if len(weighted_parameters) == 0:
-            return None
-        if len(weighted_parameters) == 1:
-            warnings.warn("History sample warning: Only one particle in model m={m} at t={t}".format(t=t, m=m))
-        weights, parameters = zip(*weighted_parameters)
-        nr = sp.random.choice(len(parameters), p=weights)
-        selected_parameter = parameters[nr]
-        return selected_parameter
 
     def get_distribution(self, t: int, m: int, parameter: str) -> Tuple[np.ndarray]:
         """
@@ -426,44 +399,6 @@ class History:
             return sp.asarray(par), sp.asarray(w)
         else:
             return sp.asarray([]), sp.asarray([])
-
-    def get_parameter_std(self, t: int, m: int) -> dict:
-        """
-        Standard deviation of the parameters in a given population.
-
-        Parameters
-        ----------
-
-        t: int
-            Population number
-
-        m: int
-            Model number
-
-        Returns
-        -------
-        std: dict
-            Dictionary with keys the parameter names and values their standard deviations.
-        """
-        points = self.store[t][m]
-        if len(points) == 0:
-            return None
-
-        parameter_names = points[0]['parameter'].keys()
-        # parameters =
-        #          point_1   point_2 .....
-        # par_1
-        # par_2
-        # ...
-        parameters = sp.zeros((len(parameter_names), len(points)))
-        weights = sp.zeros(len(points))
-        for k, key in enumerate(parameter_names):
-            for p, point in enumerate(points):
-                parameters[k, p] = point['parameter'][key]
-                weights[p] = point['weight']  # This is assigned a couple of times but I don't care.
-        means = sp.asarray([(weights*par).sum() for par in parameters])
-        std = sp.asarray([sp.sqrt(((par - mean)**2*weights).sum()) for par, mean in zip(parameters, means)])
-        return {key: val for key, val in zip(parameter_names, std)}
 
     def get_results(self):
         """
@@ -553,69 +488,43 @@ class History:
         median = weighted_statistics.weighted_median(distances, weights)
         return median
 
-    @staticmethod
-    def get_cov(particles: list) -> Union[NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution]:
-        """
-        Covariance from particles.
-
-        Parameters
-        ----------
-
-        particles: list
-            List of particles
-
-        Returns
-        -------
-
-        cov: Union[NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution]
-            The covariance representing distribution.
-        """
-        parameter_names = list(particles[0]['parameter'].keys())
-        parameter_names = sorted(parameter_names)
-        nr_parameters = len(parameter_names)
-        nr_particles = len(particles)
-        pars = sp.empty((nr_particles, nr_parameters))
-        weights = sp.empty(nr_particles)
-        parameter_types = [type(particles[0]['parameter'][k]) for k in parameter_names]
-        for nr, particle in enumerate(particles):
-            weights[nr] = particle['weight']
-            for k, name in enumerate(parameter_names):
-                pars[nr, k] = particle['parameter'][name]
-        expectation = sum(w*x for w, x in zip(weights, pars))
-        pars -= expectation
-        cov = sum(w*sp.dot(x[None].T, x[None]) for w, x in zip(weights, pars))
-        return MultivariateMultiTypeNormalDistribution(cov, parameter_names, parameter_types)
-
-    def get_statistics(self, t: int) -> dict:
-        """
-        Statistics from particle populations.
-
-        Parameters
-        ----------
-
-        t: int
-            Population number.
-
-        Returns
-        -------
-
-        stat: list
-            List of population statistics at the time t.
-            Each list entry corresponds to a model.
-            ``[{"std": ..., "nr_particles": ..., "cov": ...}, {"std": ..., "nr_particles": ..., "cov": ...}, ... ]``
-        """
-        if t < 0:
-            return [None for _ in range(self.nr_models)]
-        else:
-            return [{'std': self.get_parameter_std(t, m),
-                     'nr_particles': len(self.store[t][m]),
-                     'cov': self.get_cov(self.store[t][m])}
-                    if len(self.store[t][m]) > 0 else None
-                    for m in range(self.nr_models)]
-
     @property
     def t(self):
         """
         Current population.
         """
         return len(self.store)
+
+
+def cov(particles: list) -> Union[
+    NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution]:
+    """
+    Covariance from particles.
+
+    Parameters
+    ----------
+
+    particles: list
+        List of particles
+
+    Returns
+    -------
+
+    cov: Union[NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution]
+        The covariance representing distribution.
+    """
+    parameter_names = list(particles[0]['parameter'].keys())
+    parameter_names = sorted(parameter_names)
+    nr_parameters = len(parameter_names)
+    nr_particles = len(particles)
+    pars = sp.empty((nr_particles, nr_parameters))
+    weights = sp.empty(nr_particles)
+    parameter_types = [type(particles[0]['parameter'][k]) for k in parameter_names]
+    for nr, particle in enumerate(particles):
+        weights[nr] = particle['weight']
+        for k, name in enumerate(parameter_names):
+            pars[nr, k] = particle['parameter'][name]
+    expectation = sum(w * x for w, x in zip(weights, pars))
+    pars -= expectation
+    cov = sum(w * sp.dot(x[None].T, x[None]) for w, x in zip(weights, pars))
+    return MultivariateMultiTypeNormalDistribution(cov, parameter_names, parameter_types)
