@@ -16,6 +16,8 @@ class Transition(metaclass=TransitionMeta):
     NR_STEPS = 30
     FIRST_STEP_FACTOR = 3
     NR_BOOTSTRAP = 10
+    X = None
+    w = None
 
     @abstractmethod
     def fit(self, X: pd.DataFrame, w: np.ndarray):
@@ -61,8 +63,11 @@ class Transition(metaclass=TransitionMeta):
             Probability density at .
         """
 
-    def required_nr_samples(self, coefficient_of_variation):
-        if not hasattr(self, "X") or not hasattr(self, "w"):
+    def no_meaningful_particles(self) -> bool:
+        return len(self.X) == 0 or self.no_parameters
+
+    def required_nr_samples(self, coefficient_of_variation: float) -> int:
+        if self.no_meaningful_particles():
             raise NotEnoughParticles
 
         if len(self.X) == 1:
@@ -79,10 +84,9 @@ class Transition(metaclass=TransitionMeta):
         required_n = finv(coefficient_of_variation)
         return required_n
 
-    def mean_coefficient_of_variation(self, n_samples=None):
-        if not self.no_parameters:
-            if not hasattr(self, "X") or not hasattr(self, "w"):
-                raise NotEnoughParticles
+    def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) -> float:
+        if self.no_meaningful_particles():
+            raise NotEnoughParticles
 
         if n_samples is None:
             n_samples = len(self.X)

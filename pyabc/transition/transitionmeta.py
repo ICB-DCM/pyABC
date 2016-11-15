@@ -5,6 +5,8 @@ import pandas as pd
 
 
 def fit_wrap(self, X, w):
+    self.X = X
+    self.w = w
     if len(X.columns) == 0:
         self.no_parameters = True
         return

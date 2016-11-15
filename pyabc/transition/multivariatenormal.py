@@ -2,7 +2,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-
+import scipy.stats as st
 from .exceptions import NotEnoughParticles
 from .transition import Transition
 
@@ -12,7 +12,7 @@ def scott_rule_of_thumb(n_samples, dimension):
 
 
 def silverman_rule_of_thumb(n_samples, dimension):
-    return (n_samples * (dimension + 2) / 4.) ** (-1. / (dimension + 4))
+    return (4 / n_samples / (dimension + 2)) ** (1 / (dimension + 4))
 
 
 class MultivariateNormalTransition(Transition):
@@ -36,20 +36,12 @@ class MultivariateNormalTransition(Transition):
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
 
-        self.X = X
-        self.X_arr = X.as_matrix()
-        self.w = w
-        if len(X) > 1:
-            cov = np.cov(self.X_arr, aweights=w, rowvar=False)
-        else:
-            cov_diag = self.X_arr[0]
-            cov = np.diag(cov_diag)
-        if len(cov.shape) == 0:
-            cov = cov.reshape((1,1))
-        self.cov = cov * scott_rule_of_thumb(len(X) / (1 + w.var()), cov.shape[0])
-        import scipy.stats as st
-        if not self.no_parameters:
-            self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
+        self._X_arr = X.as_matrix()
+        cov = smart_cov(self._X_arr, w)
+        effective_sample_size = len(X) / (1 + w.var())
+        dimension = cov.shape[0]
+        self.cov = cov * silverman_rule_of_thumb(effective_sample_size, dimension)
+        self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def rvs(self):
         sample = self.X.sample(weights=self.w).iloc[0]
@@ -61,5 +53,17 @@ class MultivariateNormalTransition(Transition):
         x = np.array(x)
         if len(x.shape) == 1:
             x = x[None,:]
-        dens = np.array([(self.normal.pdf(xs - self.X_arr) * self.w).sum() for xs in x])
+        dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum() for xs in x])
         return dens if dens.size != 1 else float(dens)
+
+
+def smart_cov(X_arr, w):
+    """
+    Also returns a covariance of X_arr consists of only one single sample
+    """
+    if X_arr.shape[0] == 1:
+        cov_diag = X_arr[0]
+        cov = np.diag(np.absolute(cov_diag))
+        return cov
+
+    return np.cov(X_arr, aweights=w, rowvar=False)
