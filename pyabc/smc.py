@@ -201,8 +201,7 @@ class ABCSMC:
         # initialize
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
-        self.history = History(abc_options['db_path'], len(self.models), model_names,
-                               self.population_strategy.min_nr_particles())
+        self.history = History(abc_options['db_path'], len(self.models), model_names)
 
         # initialize distance function and epsilon
         sample_from_prior = self.prior_sample()
@@ -334,7 +333,9 @@ class ABCSMC:
                                        if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
             new_particle_population_non_empty = self.history.append_population(t, current_eps,
-                                                                               new_particle_population, self.sampler.nr_evaluations_)
+                                                                               new_particle_population,
+                                                                               self.sampler.nr_evaluations_,
+                                                                               self.population_strategy.min_nr_particles())
             abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
 
             if (not new_particle_population_non_empty or

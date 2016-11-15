@@ -130,7 +130,7 @@ class History:
         used as querying is usually done on the stored database usind the abc_loader.
 
     """
-    def __init__(self, db_path: str, nr_models: int, model_names: List[str], min_nr_particles_per_population: int, debug=False):
+    def __init__(self, db_path: str, nr_models: int, model_names: List[str], debug=False):
         self.store = [] # type: List[List[List[ValidParticle]]]
         self.model_probabilities = []
         self.nr_models = nr_models
@@ -140,7 +140,6 @@ class History:
         self.model_names = list(model_names)
         self._session = None
         self._engine = None
-        self.min_nr_particles_per_population = min_nr_particles_per_population
         self.debug = debug
 
     def weighted_particles_dataframe(self, t, m):
@@ -288,7 +287,7 @@ class History:
             self.model_probabilities.append(None)
             self.nr_simulations.append(0)
 
-    def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int):
+    def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int, min_nr_particles: int):
         """
         Append population to database.
 
@@ -312,7 +311,7 @@ class History:
         """
         particle_population = list(particle_population)
         nr_particles_in_this_population = sum(1 for p in particle_population if p is not None)
-        if nr_particles_in_this_population >= self.min_nr_particles_per_population:
+        if nr_particles_in_this_population >= min_nr_particles:
             self._extend_store(t)
             for particle in particle_population:
                 if particle:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
@@ -325,7 +324,7 @@ class History:
             return True
         else:
             print("ABC History warning: Not enough particles in population: Found {f}, required {r}."
-                  .format(f=nr_particles_in_this_population, r=self.min_nr_particles_per_population), file=sys.stderr)
+                  .format(f=nr_particles_in_this_population, r=min_nr_particles), file=sys.stderr)
             return False
 
     def _normalize(self, t):
