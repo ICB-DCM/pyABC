@@ -398,12 +398,6 @@ class History:
         else:
             return sp.asarray([]), sp.asarray([])
 
-    def get_results(self):
-        """
-        G the full last record.
-        """
-        return self.store[-1]
-
     def get_results_distribution(self, m: int, parameter: str) -> Tuple[np.ndarray]:
         """
         Returns parameter values and weights of the last population.
