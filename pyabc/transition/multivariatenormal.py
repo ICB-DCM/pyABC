@@ -4,8 +4,8 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from scipy import stats as st
-from scipy.optimize import curve_fit
 
+from .powerlaw import fitpowerlaw
 from .exceptions import NotEnoughParticles
 from .transition import Transition
 
@@ -52,7 +52,20 @@ class MultivariateNormalTransition(Transition):
     def required_nr_samples(self, coefficient_of_variation):
         if not hasattr(self, "X") or not hasattr(self, "w"):
             raise NotEnoughParticles
-        return self.variance_list()[0](coefficient_of_variation)
+
+        if len(self.X) == 1:
+            return lambda x: 1
+
+        start = max(len(self.X) // self.START_FACTOR, 1)
+        stop = len(self.X)
+        step = max(len(self.X) // self.NR_STEPS, 1)
+
+        n_samples_list = list(range(start, stop, step)) + [len(self.X)]
+        cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
+
+        popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+        required_n = finv(coefficient_of_variation)
+        return required_n
 
     def rvs(self):
         sample = self.X.sample(weights=self.w).iloc[0]
@@ -89,23 +102,6 @@ class MultivariateNormalTransition(Transition):
         mean_variation = (variation * self.w).sum()
         return mean_variation
 
-    def variance_list(self):
-        """
-        Calculate mean coefficient of variation of the KDE.
-        """
-        if len(self.X) == 1:
-            return lambda x: 1, [0]
-
-        start = max(len(self.X) // self.START_FACTOR, 1)
-        stop = len(self.X)
-        step = max(len(self.X) // self.NR_STEPS, 1)
-
-        n_samples_list = list(range(start, stop, step)) + [len(self.X)]
-        cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
-
-        popt, f, finv = fitpowerlaw(n_samples_list, cvs)
-        return finv, cvs
-
 
 def scott_rule_of_thumb(n_samples, dimension):
     return n_samples ** (-1. / (dimension + 4))
@@ -113,24 +109,5 @@ def scott_rule_of_thumb(n_samples, dimension):
 
 def silverman_rule_of_thumb(n_samples, dimension):
     return (n_samples * (dimension + 2) / 4.) ** (-1. / (dimension + 4))
-
-
-def fitpowerlaw(x, y):
-    x = np.array(x)
-    y = np.array(y)
-
-    def f(x, a, b):
-        return a * x ** (-b)
-
-    popt, cov = curve_fit(f, x, y, p0=[.5, 1 / 5])
-
-    return popt, lambda x: f(x, *popt), lambda y: finverse(y, *popt)
-
-
-def finverse(y, a, b):
-    return (a / y) ** (1 / b)
-
-
-
 
 
