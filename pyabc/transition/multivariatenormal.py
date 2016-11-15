@@ -14,8 +14,8 @@ class MultivariateNormalTransition(Transition):
     """
     Pretty stupid but should in principle be functional
     """
-    NR_CROSS_VAL = 10
-    START_FACTOR = 3
+    NR_BOOTSTRAP = 10
+    FIRST_STEP_FACTOR = 3
     NR_STEPS = 30
 
     def fit(self, X: pd.DataFrame, w: np.ndarray):
@@ -56,7 +56,7 @@ class MultivariateNormalTransition(Transition):
         if len(self.X) == 1:
             return lambda x: 1
 
-        start = max(len(self.X) // self.START_FACTOR, 1)
+        start = max(len(self.X) // self.FIRST_STEP_FACTOR, 1)
         stop = len(self.X)
         step = max(len(self.X) // self.NR_STEPS, 1)
 
@@ -92,7 +92,7 @@ class MultivariateNormalTransition(Transition):
         uniform_weights = np.ones(n_samples) / n_samples
 
         density_values = []
-        for k in range(self_cp.NR_CROSS_VAL):
+        for k in range(self.NR_BOOTSTRAP):
             bootstrapped_points = self.X.sample(n_samples, replace=True, weights=self.w)
             self_cp.fit(bootstrapped_points, uniform_weights)
             density_values.append(self_cp.pdf(self.X))
