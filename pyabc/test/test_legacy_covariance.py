@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import scipy as sp
-from pyabc.storage import cov as cov_func
-
+from pyabc.legacy_covariance import cov as cov_func
 
 
 def test_covariance_single_variable_two_samples():
