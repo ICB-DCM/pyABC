@@ -10,6 +10,8 @@ import scipy as sp
 from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy import func
+from functools import wraps
 
 from . import weighted_statistics
 from .parameters import ValidParticle
@@ -62,6 +64,9 @@ class Model(Base):
     p_model = Column(Float)
     particles = relationship("Particle")
 
+    def __repr__(self):
+        return "<Model id={} population_id={} m ={} name={} p_model={}>".format(self.id, self.population_id, self.m, self.name, self.p_model)
+
 
 class Particle(Base):
     __tablename__ = 'particles'
@@ -94,6 +99,16 @@ class SummaryStatistic(Base):
     sample_id = Column(Integer, ForeignKey('samples.id'))
     name = Column(String(200))
     value = Column(Float)
+
+
+def with_session(f):
+    @wraps(f)
+    def f_wrapper(self: "History", *args, **kwargs):
+        self._make_session()
+        res = f(self, *args, **kwargs)
+        self._close_session()
+        return res
+    return f_wrapper
 
 
 class History:
@@ -148,9 +163,11 @@ class History:
         parameters = pd.DataFrame([dict(particle.parameter) for particle in population])
         return parameters, weights
 
+    @with_session
     def store_initial_data(self, ground_truth_model: int, options,
                            observed_summary_statistics: dict,
-                           ground_truth_parameter: dict, distance_function_json_str: str,
+                           ground_truth_parameter: dict,
+                           distance_function_json_str: str,
                            eps_function_json_str: str):
         """
         Store the initial configuration data.
@@ -173,7 +190,6 @@ class History:
             the epsilon represented as json string
         """
         # store ground truth to db
-        session = self._make_session()
         try:
             git_hash = git.Repo(os.environ['PYTHONPATH']).head.commit.hexsha
         except (git.exc.NoSuchPathError, KeyError) as e:
@@ -198,12 +214,12 @@ class History:
         gt_part.samples = [sample]
         sample.summary_statistics = [SummaryStatistic(name=key, value=value)
                                      for key, value in observed_summary_statistics.items()]
-        session.add(abc_smc_simulation)
-        session.commit()
+        self._session.add(abc_smc_simulation)
+        self._session.commit()
         self.id = abc_smc_simulation.id
         if self.debug:
             print("Hist start:", abc_smc_simulation)
-        self._close_session()
+
 
     @property
     def total_nr_simulations(self):
@@ -227,26 +243,25 @@ class History:
         self._session = None
         self._engine = None
 
+    @with_session
     def done(self):
         "Close database sessions and store end time of population."
-        session = self._make_session()
-        abc_smc_simulation = (session.query(ABCSMC)
-                             .filter(ABCSMC.id == self.id)
-                             .one())
+        abc_smc_simulation = (self._session.query(ABCSMC)
+                              .filter(ABCSMC.id == self.id)
+                              .one())
         abc_smc_simulation.end_time = datetime.datetime.now()
-        session.commit()
+        self._session.commit()
         if self.debug:
             print("Hist done:", abc_smc_simulation)
-        self._close_session()
 
+    @with_session
     def _save_to_population_db(self, t, current_epsilon):
         # sqlalchemy experimental stuff and highly inefficient implementation here
         # but that is ok for testing purposes for the moment
         # prepare
-        session = self._make_session()
-        abc_smc_simulation = (session.query(ABCSMC)
-                             .filter(ABCSMC.id == self.id)
-                             .one())
+        abc_smc_simulation = (self._session.query(ABCSMC)
+                              .filter(ABCSMC.id == self.id)
+                              .one())
 
         # store the population
         population = Population(t=t, nr_samples=self.nr_simulations[t], epsilon=current_epsilon)
@@ -273,10 +288,10 @@ class History:
                     for name, value in summ_stat.items():
                         sample.summary_statistics.append(SummaryStatistic(name=name, value=value))
 
-        session.commit()
+        self._session.commit()
         if self.debug:
             print("Hist append:", population)
-        self._close_session()
+
 
     def _append(self, t, m,valid_particle: ValidParticle):
         self.store[t][m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
@@ -351,24 +366,6 @@ class History:
         if self.model_probabilities[t] is None:
             self.model_probabilities[t] = model_probabilities
 
-    def sample_from_models(self, t: int) -> int:
-        """
-        Sample from the distribution over models
-
-        Parameters
-        ----------
-
-        t: int
-            Population number.
-
-        Returns
-        -------
-        model_choise: int
-            This is m^* in the notation from Toni, Stumpf 2010.
-        """
-        return sp.random.choice(len(self.model_probabilities[t]), p=self.model_probabilities[t])
-
-
     def get_distribution(self, t: int, m: int, parameter: str) -> Tuple[np.ndarray]:
         """
         Returns parameter values and weights.
@@ -418,6 +415,7 @@ class History:
         """
         return self.get_distribution(-1, m, parameter)
 
+    @with_session
     def get_model_probabilities(self, t=-1) -> np.ndarray:
         """
         Model probabilities.
@@ -432,7 +430,24 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
-        return sp.asarray(self.model_probabilities[t])
+        if t == -1:
+            t = (self._session
+                 .query(func.max(Population.t))
+                 .filter(Population.abc_smc_id == self.id)
+                 .one()
+                 [0])
+
+        p_models = (self._session
+                    .query(Model.p_model)
+                    .join(Population)
+                    .join(ABCSMC)
+                    .filter(ABCSMC.id == self.id)
+                    .filter(Population.t == t)
+                    .order_by(Model.m)
+                    .all())
+
+        p_models_arr = sp.array([r[0] for r in p_models], dtype=float)
+        return p_models_arr
 
     def nr_of_models_alive(self, t=-1) -> int:
         """

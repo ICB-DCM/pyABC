@@ -35,8 +35,15 @@ In Progress
       So about 100 samples per second overall.
 - **EK** adaptive population size
     - ✓ max nr particles limit
-    - deal with corner cases of no particles, 1 particle, 2 particles
-    - deal with particles with no parameters (for model selection with models without paramters)
+    - ✓ deal with corner cases of no particles, 1 particle, 2 particles
+    - ✓ deal with particles with no parameters (for model selection with models without paramters)
+- **EK**n DB refactor and rethinking
+    - design choices
+        - stick with relational database.
+            - relational databases are better suited when we don't know the queries beforehand
+            - nosql databases need/should to be designed with the queries already in mind
+    - use sqlalchemy to support many different database types, e.g. sqlite, mysql, postgres, etc
+    - also this should be the least amount of work as current db backend is relational
 
 Review
 ------

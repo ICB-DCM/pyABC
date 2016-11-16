@@ -9,6 +9,7 @@ from typing import List, Callable, TypeVar
 import logging
 abclogger = logging.getLogger("ABC")
 import pandas as pd
+import scipy as sp
 
 from parallel.sampler import MappingSampler
 from .distance_functions import DistanceFunction
@@ -285,8 +286,9 @@ class ABCSMC:
             return m_ss, theta_ss
 
         # later generation
+        model_probabilities = self.history.get_model_probabilities()
         while True:  # find m_s and theta_ss, valid according to prior
-            m_s = self.history.sample_from_models(t - 1)
+            m_s = sp.random.choice(len(model_probabilities), p=model_probabilities)
             m_ss = self.model_perturbation_kernel.rvs(m_s)
             # theta_s is None if the population m_ss has died out.
             # This can happen since the model_perturbation_kernel can return
@@ -353,7 +355,7 @@ class ABCSMC:
             particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
             self.transitions[m].fit(particles_df, weights)
 
-        self.population_strategy.adapt_population_size(self.transitions, self.history.model_probabilities)
+        self.population_strategy.adapt_population_size(self.transitions, self.history.get_model_probabilities())
 
     def get_current_sim_function(self, t, eps):
         def sim_one(paras):

@@ -11,6 +11,8 @@ import scipy.interpolate
 import tempfile
 from pyabc.populationstrategy import ConstantPopulationStrategy, AdaptivePopulationStrategy
 
+REMOVE_DB = True
+
 def mean_and_std(values, weights):
     mean = (values * weights).sum()
     std = sp.sqrt(((values - mean)**2 * weights).sum())
@@ -19,13 +21,14 @@ def mean_and_std(values, weights):
 
 class TestABC(unittest.TestCase):
     def setUp(self):
-        self.db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest_db.db")
+        self.db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest.db")
         self.db = "sqlite:///" + self.db_file_location
         self.clean_db()
 
     def clean_db(self):
         try:
-            os.remove(self.db_file_location)
+            if REMOVE_DB:
+                os.remove(self.db_file_location)
         except FileNotFoundError:
             pass
 
