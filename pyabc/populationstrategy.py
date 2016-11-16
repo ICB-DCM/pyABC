@@ -43,9 +43,10 @@ class ConstantPopulationStrategy(PopulationStrategy):
 
 
 class AdaptivePopulationStrategy(PopulationStrategy):
-    def __init__(self, nr_particles, nr_populations, nr_samples_per_parameter=1, mean_cv=0.05, max_population_size=None):
+    def __init__(self, nr_particles, nr_populations, nr_samples_per_parameter=1,
+                 mean_cv=0.05, max_population_size=float("inf")):
         super().__init__(nr_particles, nr_populations, nr_samples_per_parameter)
-        self.max_population_size = max_population_size if max_population_size is not None else nr_particles * 2
+        self.max_population_size = max_population_size
         self.mean_cv = mean_cv
 
     def adapt_population_size(self, transitions, model_weights):
