@@ -77,7 +77,6 @@ class Parameter(ParameterStructure):
     def __setstate__(self, state):
         self.data = state
 
-
     def copy(self) -> "Parameter":
         """
         Copy the parameter.
