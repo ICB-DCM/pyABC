@@ -245,7 +245,7 @@ class ABCSMC:
             sample_from_prior = self._points_sampled_from_prior
         return sample_from_prior
 
-    def evaluate_proposal(self, m_ss, theta_ss, current_eps):
+    def evaluate_proposal(self, m_ss, theta_ss, current_eps, t):
         """
         This is where the actual model evaluation happens.
         """
@@ -259,7 +259,12 @@ class ABCSMC:
                 distance_list.append(model_result.distance)
                 summary_statistics_list.append(model_result.sum_stats)
 
-        return distance_list, summary_statistics_list
+        if len(distance_list) > 0:
+            weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
+        else:
+            weight = 0
+        valid_particle = ValidParticle(m_ss, theta_ss, weight, distance_list, summary_statistics_list)
+        return valid_particle
 
     def calc_proposal_weight(self, distance_list, m_ss, theta_ss, t):
         if t == 0:
@@ -324,27 +329,30 @@ class ABCSMC:
             self.fit_transitions(t)
             abclogger.debug('now submitting population ' + str(t))
 
-            sample_one = lambda: self.generate_valid_proposal(t)
-            sim_one = self.get_current_sim_function(t, current_eps)
-            accept_one = lambda particle: len(particle.distance_list) > 0
-            new_particle_population = self.sampler.sample_until_n_accepted(sample_one, sim_one,
-                                                                           accept_one,
-                                                                           self.population_strategy.nr_particles)
+            def sample_one():
+                return self.generate_valid_proposal(t)
 
-            new_particle_population = [particle for particle in new_particle_population
-                                       if not isinstance(particle, Exception)]
+            def eval_one(par):
+                return self.evaluate_proposal(*par, current_eps, t)
+
+            def accept_one(particle):
+                return len(particle.distance_list) > 0
+
+            population = self.sampler.sample_until_n_accepted(sample_one, eval_one, accept_one,
+                                                              self.population_strategy.nr_particles)
+
+            population = [particle for particle in population if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
-            nr_particles_in_this_population = sum(1 for p in new_particle_population if p is not None)
+            nr_particles_in_this_population = sum(1 for p in population if p is not None)
             enough_particles = nr_particles_in_this_population >= self.population_strategy.min_nr_particles()
             if enough_particles:
-                self.history.append_population(t, current_eps, new_particle_population, self.sampler.nr_evaluations_)
+                self.history.append_population(t, current_eps, population, self.sampler.nr_evaluations_)
             else:
                 abclogger.info("Not enough particles in population: Found {f}, required {r}."
                                .format(f=nr_particles_in_this_population, r=self.population_strategy.min_nr_particles()))
             abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
 
-            if (not enough_particles or
-                (current_eps <= minimum_epsilon) or
+            if (not enough_particles or (current_eps <= minimum_epsilon) or
                 (self.stop_if_only_single_model_alive and self.history.nr_of_models_alive() <= 1)):
                 break
         self.history.done()
@@ -359,16 +367,3 @@ class ABCSMC:
             self.transitions[m].fit(particles_df, weights)
 
         self.population_strategy.adapt_population_size(self.transitions, self.history.get_model_probabilities())
-
-    def get_current_sim_function(self, t, eps):
-        def sim_one(paras):
-            m_ss, theta_ss = paras
-            distance_list, summary_statistics_list = self.evaluate_proposal(m_ss, theta_ss, eps)
-            if len(distance_list) > 0:
-                weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
-            else:
-                weight = 0
-            valid_particle = ValidParticle(m_ss, theta_ss, weight, distance_list, summary_statistics_list)
-            return valid_particle
-        return sim_one
-
