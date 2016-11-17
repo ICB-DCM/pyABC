@@ -302,7 +302,7 @@ class TestABCSlow(TestABC):
         x = sp.linspace(-8, 8)
         max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
         self.assertLess(max_distribution_difference, 0.12)
-        self.assertEqual(history.t, nr_populations)
+        self.assertEqual(history.max_t, nr_populations-1)
         mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
         self.assertLess(abs(mean_emp - mu_x_given_y), .07)
         self.assertLess(abs(std_emp - sigma_x_given_y), .1)
@@ -344,7 +344,7 @@ class TestABCSlow(TestABC):
         x = sp.linspace(-8, 8)
         max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
         self.assertLess(max_distribution_difference, 0.052)
-        self.assertEqual(history.t, nr_populations)
+        self.assertEqual(history.max_t, nr_populations-1)
         mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
         self.assertLess(abs(mean_emp - mu_x_given_y), .07)
         self.assertLess(abs(std_emp - sigma_x_given_y), .12)
@@ -377,7 +377,7 @@ class TestABCSlow(TestABC):
         nr_populations = 1
         abc.do_not_stop_when_only_single_model_alive()
         history = abc.run(minimum_epsilon)
-        p1_emp, p2_emp = history.get_model_probabilities(-1)
+        p1_emp, p2_emp = history.get_model_probabilities()
 
         def p_y_given_model(mu_x_model):
             return st.norm(mu_x_model, sp.sqrt(sigma_y**2+sigma_x**2)).pdf(y_observed)
@@ -386,7 +386,7 @@ class TestABCSlow(TestABC):
         p2_expected_unnormalized = p_y_given_model(mu_x_2)
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
-        self.assertEqual(history.t, nr_populations)
+        self.assertEqual(history.max_t, nr_populations - 1)
         self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
 
     def test_two_competing_gaussians_multiple_population(self):
@@ -430,7 +430,7 @@ class TestABCSlow(TestABC):
         history = abc.run(minimum_epsilon)
 
         # Evaluate the model probabililties
-        p1_emp, p2_emp = history.get_model_probabilities(-1)
+        p1_emp, p2_emp = history.get_model_probabilities()
 
         def p_y_given_model(mu_x_model):
             return st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
@@ -439,7 +439,7 @@ class TestABCSlow(TestABC):
         p2_expected_unnormalized = p_y_given_model(mu_x_2)
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
-        self.assertEqual(history.t, nr_populations)
+        self.assertEqual(history.max_t, nr_populations-1)
         self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
 
 
@@ -535,7 +535,7 @@ class TestABCAdaptive(TestABC):
         x = sp.linspace(-8, 8)
         max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
         self.assertLess(max_distribution_difference, 0.052)
-        self.assertEqual(history.t, nr_populations)
+        self.assertEqual(history.max_t, nr_populations - 1)
         mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
         self.assertLess(abs(mean_emp - mu_x_given_y), .07)
         self.assertLess(abs(std_emp - sigma_x_given_y), .12)
@@ -580,7 +580,7 @@ class TestABCAdaptive(TestABC):
         history = abc.run(minimum_epsilon)
 
         # Evaluate the model probabililties
-        p1_emp, p2_emp = history.get_model_probabilities(-1)
+        p1_emp, p2_emp = history.get_model_probabilities()
         print(p1_emp, p2_emp)
 
         def p_y_given_model(mu_x_model):
@@ -590,7 +590,7 @@ class TestABCAdaptive(TestABC):
         p2_expected_unnormalized = p_y_given_model(mu_x_2)
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
-        self.assertEqual(history.t, nr_populations)
+        self.assertEqual(history.max_t, nr_populations-1)
         self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
 
 

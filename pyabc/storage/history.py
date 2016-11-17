@@ -11,7 +11,25 @@ from sqlalchemy import func
 
 from .. import weighted_statistics
 from ..parameters import ValidParticle
-from .db_model import with_session, ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
+from .db_model import ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
+from functools import wraps
+
+import logging
+history_logger = logging.getLogger("History")
+
+
+def with_session(f):
+    @wraps(f)
+    def f_wrapper(self: "History", *args, **kwargs):
+        history_logger.info('Database access through "{}"'.format(f.__name__))
+        no_session = self._session is None and self._engine is None
+        if no_session:
+            self._make_session()
+        res = f(self, *args, **kwargs)
+        if no_session:
+            self._close_session()
+        return res
+    return f_wrapper
 
 
 class History:
@@ -60,11 +78,24 @@ class History:
         self._engine = None
         self.debug = debug
 
-    def weighted_particles_dataframe(self, t, m):
-        population = self.store[t][m]
-        weights = sp.array([particle.weight for particle in population])
-        parameters = pd.DataFrame([dict(particle.parameter) for particle in population])
-        return parameters, weights
+    @with_session
+    def weighted_parameters_dataframe(self, t, m):
+        if t is None:
+            t = self.max_t
+
+        query = (self._session.query(Particle.id, Parameter.name, Parameter.value, Particle.w)
+                 .filter(Particle.id == Parameter.particle_id)
+                 .join(Model).join(Population)
+                 .filter(Model.m == m)
+                 .filter(Population.t == t)
+                 .join(ABCSMC)
+                 .filter(ABCSMC.id == self.id))
+        df = pd.read_sql_query(query.statement, self._engine)
+        pars = df.pivot("id", "name", "value").sort_index()
+        w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
+        w_arr = w.w.as_matrix()
+        assert np.isclose(w_arr.sum(), 1), "weight not close to 1, w.sum()={}".format(w_arr.su())
+        return pars, w_arr
 
     @with_session
     def store_initial_data(self, ground_truth_model: int, options,
@@ -131,6 +162,8 @@ class History:
         return nr_sim
 
     def _make_session(self):
+        # TODO: check if the session creation and closing is still necessary
+        # I think I did this funnny construction due to some pickling issues but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         engine = create_engine(self.db_path, connect_args={'timeout': 120})
@@ -196,15 +229,6 @@ class History:
         if self.debug:
             print("Hist append:", population)
 
-    def _append(self, t, valid_particle: ValidParticle):
-        self.store[t][valid_particle.m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
-
-    def _extend_store(self, t):
-        while len(self.store) < t+1:
-            self.store.append([[] for _ in range(self.nr_models)])
-            self.model_probabilities.append(None)
-            self.nr_simulations.append(0)
-
     def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int):
         """
         Append population to database.
@@ -228,17 +252,19 @@ class History:
 
         """
         particle_population = list(particle_population)
-        self._extend_store(t)
+
+        # extend store
+        while len(self.store) < t+1:
+            self.store.append([[] for _ in range(self.nr_models)])
+            self.model_probabilities.append(None)
+
         for particle in particle_population:
             if particle:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
-                self._append(t, particle)
+                self.store[t][particle.m].append(particle)
             else:
                 print("ABC History warning: Empty particle.", file=sys.stderr)
         self._normalize(t)
         self._save_to_population_db(t, current_epsilon, nr_simulations)
-        self.nr_simulations[t] = nr_simulations
-
-
 
     def _normalize(self, t):
         """
@@ -263,36 +289,10 @@ class History:
         # normalization
         if self.model_probabilities[t] is None:
             self.model_probabilities[t] = model_probabilities
-
-    def get_distribution(self, t: int, m: int, parameter: str) -> (np.ndarray, np.ndarray):
-        """
-        Returns parameter values and weights.
-
-        Parameters
-        ----------
-
-
-        t: int
-            Population number
-
-        m: int
-            Model number
-
-        parameter: str
-
-        Returns
-        -------
-        (points, weights): Tuple[np.ndarray]
-            The points and their weights.
-        """
-        points = self.store[t][m]
-        if len(points) > 0:
-            par, w = zip(*[(p['parameter'][parameter], p['weight']) for p in points])
-            return sp.asarray(par), sp.asarray(w)
         else:
-            return sp.asarray([]), sp.asarray([])
+            raise Exception("Second normalization attempt")
 
-    def get_results_distribution(self, m: int, parameter: str) -> Tuple[np.ndarray]:
+    def get_results_distribution(self, m: int, parameter: str) -> (np.ndarray, np.ndarray):
         """
         Returns parameter values and weights of the last population.
 
@@ -311,7 +311,8 @@ class History:
         results: Tuple[np.ndarray]
             results = (points, weights) with the points and the weights of the last population.
         """
-        return self.get_distribution(-1, m, parameter)
+        df, w = self.weighted_parameters_dataframe(None, m)
+        return df[parameter].as_matrix(), w
 
     @with_session
     def get_model_probabilities(self, t=None) -> np.ndarray:
@@ -328,6 +329,8 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
+        if t is not None and t < 0:
+            raise Exception("Model probabilities only for t >= 0 or t = None defined.")
         if t is None:
             t = (self._session
                  .query(func.max(Population.t))
@@ -347,7 +350,7 @@ class History:
         p_models_arr = sp.array([r[0] for r in p_models], dtype=float)
         return p_models_arr
 
-    def nr_of_models_alive(self, t=-1) -> int:
+    def nr_of_models_alive(self, t=None) -> int:
         """
         Number of models still alive.
 
@@ -358,8 +361,9 @@ class History:
 
         Returns
         -------
-        nr_alive: int
+        nr_alive: int >= 0 or None
             Number of models still alive.
+            None is for the last population
         """
         model_probs = self.get_model_probabilities(t)
         return int((model_probs > 0).sum())
@@ -379,8 +383,9 @@ class History:
         median: float
             The median of the distances.
         """
+        # TODO: decide whether to remove this here?
         models = self.store[t]
-        model_probabilities = self.model_probabilities[t]
+        model_probabilities = self.get_model_probabilities(t)
         distances = sp.asarray([dist
                                 for model in models
                                 for point in model
@@ -393,8 +398,10 @@ class History:
         return median
 
     @property
-    def t(self):
+    @with_session
+    def max_t(self):
         """
         Current population.
         """
-        return len(self.store)
+        max_t = self._session.query(func.max(Population.t)).join(ABCSMC).filter(ABCSMC.id == self.id).one()[0]
+        return max_t

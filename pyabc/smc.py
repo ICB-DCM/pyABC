@@ -245,7 +245,7 @@ class ABCSMC:
             sample_from_prior = self._points_sampled_from_prior
         return sample_from_prior
 
-    def evaluate_proposal(self, m_ss, theta_ss, current_eps, t):
+    def evaluate_proposal(self, m_ss, theta_ss, current_eps, t, model_probabilities):
         """
         This is where the actual model evaluation happens.
         """
@@ -260,17 +260,17 @@ class ABCSMC:
                 summary_statistics_list.append(model_result.sum_stats)
 
         if len(distance_list) > 0:
-            weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
+            weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
         valid_particle = ValidParticle(m_ss, theta_ss, weight, distance_list, summary_statistics_list)
         return valid_particle
 
-    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, t):
+    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, t, model_probabilities):
         if t == 0:
             weight = len(distance_list) / self.population_strategy.nr_samples_per_parameter
         else:
-            model_factor = sum(self.history.get_model_probabilities(t-1)[j] * self.model_perturbation_kernel.pmf(m_ss, j)
+            model_factor = sum(model_probabilities[j] * self.model_perturbation_kernel.pmf(m_ss, j)
                                  for j in range(len(self.models)))
             particle_factor = self.transitions[m_ss].pdf(pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
@@ -283,7 +283,7 @@ class ABCSMC:
                       / normalization)
         return weight
 
-    def generate_valid_proposal(self, t):
+    def generate_valid_proposal(self, t, model_probabilities):
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior_distribution.rvs()
@@ -291,14 +291,13 @@ class ABCSMC:
             return m_ss, theta_ss
 
         # later generation
-        model_probabilities = self.history.get_model_probabilities()
         while True:  # find m_s and theta_ss, valid according to prior
             m_s = sp.random.choice(len(model_probabilities), p=model_probabilities)
             m_ss = self.model_perturbation_kernel.rvs(m_s)
             # theta_s is None if the population m_ss has died out.
             # This can happen since the model_perturbation_kernel can return
             # a model nr which has died out.
-            if self.history.model_probabilities[t-1][m_ss] == 0:
+            if model_probabilities[m_ss] == 0:
                 continue
             theta_ss = self.transitions[m_ss].rvs()
 
@@ -320,20 +319,22 @@ class ABCSMC:
         minimum_epsilon: float
             Stop if epsilon is smaller than minimum epsilon specified here.
         """
-        t0 = self.history.t
+        t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
         for t in range(t0, t0+self.population_strategy.nr_populations):
             current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
             abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
             self.fit_transitions(t)
+            # cache model_probabilities to not to query the database so soften
+            model_probabilities = self.history.get_model_probabilities()
             abclogger.debug('now submitting population ' + str(t))
 
             def sample_one():
-                return self.generate_valid_proposal(t)
+                return self.generate_valid_proposal(t, model_probabilities)
 
             def eval_one(par):
-                return self.evaluate_proposal(*par, current_eps, t)
+                return self.evaluate_proposal(*par, current_eps, t, model_probabilities)
 
             def accept_one(particle):
                 return len(particle.distance_list) > 0
@@ -363,7 +364,7 @@ class ABCSMC:
             return
 
         for m in range(self.history.nr_models):
-            particles_df, weights = self.history.weighted_particles_dataframe(t-1, m)
+            particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles_df, weights)
 
         self.population_strategy.adapt_population_size(self.transitions, self.history.get_model_probabilities())

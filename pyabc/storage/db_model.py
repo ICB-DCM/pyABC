@@ -1,5 +1,5 @@
 import datetime
-from functools import wraps
+
 
 from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Float
 from sqlalchemy.ext.declarative import declarative_base
@@ -73,6 +73,9 @@ class Parameter(Base):
     name = Column(String(200))
     value = Column(Float)
 
+    def __repr__(self):
+        return "<{} {}={}>".format(self.__class__.__name__, self.name, self.value)
+
 
 class Sample(Base):
     __tablename__ = 'samples'
@@ -88,13 +91,3 @@ class SummaryStatistic(Base):
     sample_id = Column(Integer, ForeignKey('samples.id'))
     name = Column(String(200))
     value = Column(Float)
-
-
-def with_session(f):
-    @wraps(f)
-    def f_wrapper(self: "History", *args, **kwargs):
-        self._make_session()
-        res = f(self, *args, **kwargs)
-        self._close_session()
-        return res
-    return f_wrapper

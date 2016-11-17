@@ -12,7 +12,7 @@ def fit_wrap(self, X, w):
         return
     self.no_parameters = False
     if w.size > 0:
-        assert np.isclose(w.sum(), 1)
+        assert np.isclose(w.sum(), 1), "w not normalized Got w.sum()={}".format(w.sum())
     self.fit_old(X, w)
 
 

@@ -194,7 +194,7 @@ class ABCLoader:
             The particles of the chosen population.
         """
         df = self.particles.merge(self.parameters).merge(self.models).merge(self.populations).merge(self.abc_smc)
-        df = df[(df.model_name == model_name) & (df.t == t) & (df.abc_smc_id == abc_smc_id)]
+        df = df[(df.model_name == model_name) & (df.max_t == t) & (df.abc_smc_id == abc_smc_id)]
         df = df.pivot("particle_id", "parameter_name", "value")
         return df
 
@@ -214,9 +214,9 @@ class ABCLoader:
 
     def intermediate_results(self, min_t=0):
         raw_data = self.populations.merge(self.models)[['abc_smc_id', 't', 'model_name', 'p_model', 'epsilon', 'nr_samples']]
-        ground_truth = raw_data[raw_data.t == -1][["abc_smc_id", "model_name"]].rename(columns={"model_name": "gt_model"})
+        ground_truth = raw_data[raw_data.max_t == -1][["abc_smc_id", "model_name"]].rename(columns={"model_name": "gt_model"})
         epsilon = raw_data.groupby(["abc_smc_id", "t"])['epsilon'].first().reset_index()
-        intermediate_results = raw_data[raw_data.t >= min_t]
+        intermediate_results = raw_data[raw_data.max_t >= min_t]
         intermediate_results = intermediate_results.pivot_table(index=["abc_smc_id", "t"], columns=["model_name"],
                                                                 values=["p_model", 'nr_samples'])["p_model"].reset_index()
         intermediate_results = intermediate_results.merge(epsilon).merge(ground_truth)
@@ -260,7 +260,7 @@ class ABCLoader:
         posterior = last_models.pivot("abc_smc_id", "model_name", "p_model").reset_index()
         posterior["MAP"] = posterior[self.model_names].idxmax(axis=1)
 
-        gt = self.populations[self.populations.t == -1].merge(self.models)[["abc_smc_id", "model_name"]].rename(
+        gt = self.populations[self.populations.max_t == -1].merge(self.models)[["abc_smc_id", "model_name"]].rename(
             columns={"model_name": "gt_model_name"})
 
         results = posterior.merge(gt)
