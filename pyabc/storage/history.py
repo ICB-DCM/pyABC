@@ -67,16 +67,12 @@ class History:
 
     """
     def __init__(self, db_path: str, nr_models: int, model_names: List[str], debug=False):
-        self.store = [] # type: List[List[List[ValidParticle]]]
-        self.model_probabilities = []
         self.nr_models = nr_models
-        self.nr_simulations = []
         "Only counts the simulations which appear in particles. If a simulation terminated prematurely it is not counted."
         self.db_path = db_path
         self.model_names = list(model_names)
         self._session = None
         self._engine = None
-        self.debug = debug
 
     @with_session
     def weighted_parameters_dataframe(self, t, m):
@@ -94,7 +90,7 @@ class History:
         pars = df.pivot("id", "name", "value").sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.as_matrix()
-        assert np.isclose(w_arr.sum(), 1), "weight not close to 1, w.sum()={}".format(w_arr.su())
+        assert w_arr.size == 0 or np.isclose(w_arr.sum(), 1), "weight not close to 1, w.sum()={}".format(w_arr.sum())
         return pars, w_arr
 
     @with_session
@@ -151,8 +147,7 @@ class History:
         self._session.add(abc_smc_simulation)
         self._session.commit()
         self.id = abc_smc_simulation.id
-        if self.debug:
-            print("Hist start:", abc_smc_simulation)
+        history_logger.info("Start {}".format(abc_smc_simulation))
 
     @property
     @with_session
@@ -188,11 +183,11 @@ class History:
                               .one())
         abc_smc_simulation.end_time = datetime.datetime.now()
         self._session.commit()
-        if self.debug:
-            print("Hist done:", abc_smc_simulation)
+        history_logger.debug("Done {}".format(abc_smc_simulation))
 
     @with_session
-    def _save_to_population_db(self, t, current_epsilon, nr_simulations):
+    def _save_to_population_db(self, t: int, current_epsilon: float, nr_simulations:int,
+                               store, model_probabilities):
         # sqlalchemy experimental stuff and highly inefficient implementation here
         # but that is ok for testing purposes for the moment
         # prepare
@@ -203,10 +198,10 @@ class History:
         # store the population
         population = Population(t=t, nr_samples=nr_simulations, epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
-        for m in range(len(self.store[t])):
-            model = Model(m=m, p_model=self.model_probabilities[t][m], name=self.model_names[m])
+        for m in range(len(store)):
+            model = Model(m=m, p_model=model_probabilities[m], name=self.model_names[m])
             population.models.append(model)
-            for store_item in self.store[t][m]:
+            for store_item in store[m]:
                 weight = store_item['weight']
                 distance_list = store_item['distance_list']
                 parameter = store_item['parameter']
@@ -226,10 +221,10 @@ class History:
                         sample.summary_statistics.append(SummaryStatistic(name=name, value=value))
 
         self._session.commit()
-        if self.debug:
-            print("Hist append:", population)
+        history_logger.debug("Appended population")
 
-    def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int):
+    def append_population(self, t: int, current_epsilon: float,
+                          particle_population: List[ValidParticle], nr_simulations: int):
         """
         Append population to database.
 
@@ -251,46 +246,8 @@ class History:
             Whether enough particles were found in the population.
 
         """
-        particle_population = list(particle_population)
-
-        # extend store
-        while len(self.store) < t+1:
-            self.store.append([[] for _ in range(self.nr_models)])
-            self.model_probabilities.append(None)
-
-        for particle in particle_population:
-            if particle:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
-                self.store[t][particle.m].append(particle)
-            else:
-                print("ABC History warning: Empty particle.", file=sys.stderr)
-        self._normalize(t)
-        self._save_to_population_db(t, current_epsilon, nr_simulations)
-
-    def _normalize(self, t):
-        """
-          * Normalize particle weights according to nr of particles in a model
-          * Caclculate marginal model probabilities
-        """
-        population = self.store[t]
-
-        model_total_weights = [sum(particle.weight for particle in model)
-                               for model in self.store[t]]
-
-        # normalize within each model
-        for model_total_weight, model in zip(model_total_weights, population):
-            for particle in model:
-                particle.weight /= model_total_weight
-
-        population_total_weight = sum(model_total_weights)
-        model_probabilities = [w / population_total_weight for w in model_total_weights]
-
-        # only update model probabilities if not previously calculated
-        # otherwise all probabilities will be equal after a second
-        # normalization
-        if self.model_probabilities[t] is None:
-            self.model_probabilities[t] = model_probabilities
-        else:
-            raise Exception("Second normalization attempt")
+        store, model_probabilities = normalize(particle_population, self.nr_models)
+        self._save_to_population_db(t, current_epsilon, nr_simulations, store, model_probabilities)
 
     def get_results_distribution(self, m: int, parameter: str) -> (np.ndarray, np.ndarray):
         """
@@ -368,7 +325,8 @@ class History:
         model_probs = self.get_model_probabilities(t)
         return int((model_probs > 0).sum())
 
-    def get_complete_population_median(self, t: int) -> float:
+    @with_session
+    def get_weighted_distances(self, t: int) -> pd.DataFrame:
         """
         Median of a population's distances to the measured sample
 
@@ -383,19 +341,21 @@ class History:
         median: float
             The median of the distances.
         """
-        # TODO: decide whether to remove this here?
-        models = self.store[t]
+        if t is None:
+            t = self.max_t
+
         model_probabilities = self.get_model_probabilities(t)
-        distances = sp.asarray([dist
-                                for model in models
-                                for point in model
-                                for dist in point['distance_list']])
-        weights = sp.asarray([point['weight'] * model_weight / len(point['distance_list'])
-                              for model, model_weight in zip(models, model_probabilities)
-                              for point in model
-                              for _ in point['distance_list']])
-        median = weighted_statistics.weighted_median(distances, weights)
-        return median
+        model_probabilities_df = pd.DataFrame({"m": list(range(len(model_probabilities))),
+                                               "model_probabilities": model_probabilities})
+        query = (self._session.query(Sample.distance, Particle.w, Model.m)
+                 .join(Particle)
+                 .join(Model).join(Population).join(ABCSMC)
+                 .filter(ABCSMC.id == self.id)
+                 .filter(Population.t == t))
+        df = pd.read_sql_query(query.statement, self._engine)
+        df_weighted = df.merge(model_probabilities_df)
+        df_weighted["w"] *= df_weighted["model_probabilities"]
+        return df_weighted
 
     @property
     @with_session
@@ -405,3 +365,33 @@ class History:
         """
         max_t = self._session.query(func.max(Population.t)).join(ABCSMC).filter(ABCSMC.id == self.id).one()[0]
         return max_t
+
+
+def normalize(population: List[ValidParticle], nr_models: int):
+    """
+      * Normalize particle weights according to nr of particles in a model
+      * Caclculate marginal model probabilities
+    """
+    # TODO: This has a medium ugly side effect... maybe it is ok
+    population = list(population)
+
+    store = [[] for _ in range(nr_models)]
+
+    for particle in population:
+        if particle is not None:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
+            store[particle.m].append(particle)
+        else:
+            print("ABC History warning: Empty particle.")
+
+
+    model_total_weights = [sum(particle.weight for particle in model) for model in store]
+    population_total_weight = sum(model_total_weights)
+    model_probabilities = [w / population_total_weight for w in model_total_weights]
+
+    # normalize within each model
+    for model_total_weight, model in zip(model_total_weights, store):
+        for particle in model:
+            particle.weight /= model_total_weight
+
+    return store, model_probabilities
+
