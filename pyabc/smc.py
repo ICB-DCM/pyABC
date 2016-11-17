@@ -326,7 +326,7 @@ class ABCSMC:
 
             sample_one = lambda: self.generate_valid_proposal(t)
             sim_one = self.get_current_sim_function(t, current_eps)
-            accept_one = self.get_current_accept_function()
+            accept_one = lambda particle: len(particle.distance_list) > 0
             new_particle_population = self.sampler.sample_until_n_accepted(sample_one, sim_one,
                                                                            accept_one,
                                                                            self.population_strategy.nr_particles)
@@ -334,13 +334,16 @@ class ABCSMC:
             new_particle_population = [particle for particle in new_particle_population
                                        if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
-            new_particle_population_non_empty = self.history.append_population(t, current_eps,
-                                                                               new_particle_population,
-                                                                               self.sampler.nr_evaluations_,
-                                                                               self.population_strategy.min_nr_particles())
+            nr_particles_in_this_population = sum(1 for p in new_particle_population if p is not None)
+            enough_particles = nr_particles_in_this_population >= self.population_strategy.min_nr_particles()
+            if enough_particles:
+                self.history.append_population(t, current_eps, new_particle_population, self.sampler.nr_evaluations_)
+            else:
+                abclogger.info("Not enough particles in population: Found {f}, required {r}."
+                               .format(f=nr_particles_in_this_population, r=self.population_strategy.min_nr_particles()))
             abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
 
-            if (not new_particle_population_non_empty or
+            if (not enough_particles or
                 (current_eps <= minimum_epsilon) or
                 (self.stop_if_only_single_model_alive and self.history.nr_of_models_alive() <= 1)):
                 break
@@ -365,13 +368,7 @@ class ABCSMC:
                 weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t)
             else:
                 weight = 0
-            valid_particle = ValidParticle(theta_ss, weight, distance_list, summary_statistics_list)
-            return m_ss, valid_particle
+            valid_particle = ValidParticle(m_ss, theta_ss, weight, distance_list, summary_statistics_list)
+            return valid_particle
         return sim_one
 
-    def get_current_accept_function(self):
-        def accept_one(sim_result):
-            m_ss, valid_particle = sim_result
-            accepted = len(valid_particle.distance_list) > 0
-            return accepted
-        return accept_one

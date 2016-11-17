@@ -292,9 +292,8 @@ class History:
         if self.debug:
             print("Hist append:", population)
 
-
-    def _append(self, t, m,valid_particle: ValidParticle):
-        self.store[t][m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
+    def _append(self, t, valid_particle: ValidParticle):
+        self.store[t][valid_particle.m].append(valid_particle)  # summary statistics are only recorded for analysis purposes
 
     def _extend_store(self, t):
         while len(self.store) < t+1:
@@ -302,7 +301,7 @@ class History:
             self.model_probabilities.append(None)
             self.nr_simulations.append(0)
 
-    def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int, min_nr_particles: int):
+    def append_population(self, t: int, current_epsilon: float, particle_population: list, nr_simulations: int):
         """
         Append population to database.
 
@@ -325,22 +324,16 @@ class History:
 
         """
         particle_population = list(particle_population)
-        nr_particles_in_this_population = sum(1 for p in particle_population if p is not None)
-        if nr_particles_in_this_population >= min_nr_particles:
-            self._extend_store(t)
-            for particle in particle_population:
-                if particle:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
-                    self._append(t, *particle)
-                else:
-                    print("ABC History warning: Empty particle.", file=sys.stderr)
-            self._normalize(t)
-            self._save_to_population_db(t, current_epsilon)
-            self.nr_simulations[t] = nr_simulations
-            return True
-        else:
-            print("ABC History warning: Not enough particles in population: Found {f}, required {r}."
-                  .format(f=nr_particles_in_this_population, r=min_nr_particles), file=sys.stderr)
-            return False
+        self._extend_store(t)
+        for particle in particle_population:
+            if particle:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
+                self._append(t, particle)
+            else:
+                print("ABC History warning: Empty particle.", file=sys.stderr)
+        self._normalize(t)
+        self._save_to_population_db(t, current_epsilon)
+        self.nr_simulations[t] = nr_simulations
+
 
     def _normalize(self, t):
         """
@@ -366,7 +359,7 @@ class History:
         if self.model_probabilities[t] is None:
             self.model_probabilities[t] = model_probabilities
 
-    def get_distribution(self, t: int, m: int, parameter: str) -> Tuple[np.ndarray]:
+    def get_distribution(self, t: int, m: int, parameter: str) -> (np.ndarray, np.ndarray):
         """
         Returns parameter values and weights.
 

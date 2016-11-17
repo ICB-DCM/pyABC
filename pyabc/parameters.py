@@ -86,8 +86,9 @@ class Parameter(ParameterStructure):
 
 
 class ValidParticle:
-    def __init__(self, parameter: Parameter, weight: float, distance_list: List[float],
+    def __init__(self, m: int, parameter: Parameter, weight: float, distance_list: List[float],
                  summary_statistics_list: List[dict]):
+        self.m = m
         self.parameter = parameter
         self.weight = weight
         self.distance_list = distance_list
@@ -100,7 +101,7 @@ class ValidParticle:
         setattr(self, key, value)
 
     def __eq__(self, other):
-        for key in ["parameter", "weight", "distance_list", "summary_statistics_list"]:
+        for key in ["m", "parameter", "weight", "distance_list", "summary_statistics_list"]:
             if self[key] != other[key]:
                 return False
         return True
