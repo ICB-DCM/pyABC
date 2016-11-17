@@ -7,108 +7,11 @@ import git
 import numpy as np
 import pandas as pd
 import scipy as sp
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 from sqlalchemy import func
-from functools import wraps
 
-from . import weighted_statistics
-from .parameters import ValidParticle
-
-Base = declarative_base()
-
-
-class ABCSMC(Base):
-    __tablename__ = 'abc_smc'
-    id = Column(Integer, primary_key=True)
-    start_time = Column(DateTime)
-    end_time = Column(DateTime)
-    json_parameters = Column(String(5000))
-    distance_function = Column(String(5000))
-    epsilon_function = Column(String(5000))
-    git_hash = Column(String(120))
-    populations = relationship("Population")
-
-    def __repr__(self):
-        return ("<ABCSMC(id={id}, start_time={start_time}, end_time={end_time})>"
-                 .format(id=self.id, start_time= self.start_time, end_time=self.end_time))
-
-
-class Population(Base):
-    __tablename__ = 'populations'
-    id = Column(Integer, primary_key=True)
-    abc_smc_id = Column(Integer, ForeignKey('abc_smc.id'))
-    t = Column(Integer)
-    population_end_time = Column(DateTime)
-    nr_samples = Column(Integer)
-    epsilon = Column(Float)
-    models = relationship("Model")
-
-    def __init__(self, *args, **kwargs):
-        super(Population, self).__init__(**kwargs)
-        self.population_end_time = datetime.datetime.now()
-
-    def __repr__(self):
-        return ("<Population(id={id}, abc_smc_id={abc_smc_id}, t={t}) nr_samples={nr_samples} eps={eps} population_end_time={population_end_time}>"
-                 .format(id=self.id, abc_smc_id=self.abc_smc_id, t=self.t, nr_samples=self.nr_samples,
-                         eps=self.epsilon, population_end_time=self.population_end_time))
-
-
-class Model(Base):
-    __tablename__ = 'models'
-    id = Column(Integer, primary_key=True)
-    population_id = Column(Integer, ForeignKey('populations.id'))
-    m = Column(Integer)
-    name = Column(String(200))
-    p_model = Column(Float)
-    particles = relationship("Particle")
-
-    def __repr__(self):
-        return "<Model id={} population_id={} m ={} name={} p_model={}>".format(self.id, self.population_id, self.m, self.name, self.p_model)
-
-
-class Particle(Base):
-    __tablename__ = 'particles'
-    id = Column(Integer, primary_key=True)
-    model_id = Column(Integer, ForeignKey('models.id'))
-    w = Column(Float)
-    parameters = relationship("Parameter")
-    samples = relationship("Sample")
-
-
-class Parameter(Base):
-    __tablename__ = 'parameters'
-    id = Column(Integer, primary_key=True)
-    particle_id = Column(Integer, ForeignKey('particles.id'))
-    name = Column(String(200))
-    value = Column(Float)
-
-
-class Sample(Base):
-    __tablename__ = 'samples'
-    id = Column(Integer, primary_key=True)
-    particle_id = Column(Integer, ForeignKey('particles.id'))
-    distance = Column(Float)
-    summary_statistics = relationship("SummaryStatistic")
-
-
-class SummaryStatistic(Base):
-    __tablename__ = 'summary_statistics'
-    id = Column(Integer, primary_key=True)
-    sample_id = Column(Integer, ForeignKey('samples.id'))
-    name = Column(String(200))
-    value = Column(Float)
-
-
-def with_session(f):
-    @wraps(f)
-    def f_wrapper(self: "History", *args, **kwargs):
-        self._make_session()
-        res = f(self, *args, **kwargs)
-        self._close_session()
-        return res
-    return f_wrapper
+from .. import weighted_statistics
+from ..parameters import ValidParticle
+from .db_model import with_session, ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
 
 
 class History:
@@ -220,11 +123,12 @@ class History:
         if self.debug:
             print("Hist start:", abc_smc_simulation)
 
-
     @property
+    @with_session
     def total_nr_simulations(self):
         "Total nr of simulations/samples."
-        return sum(self.nr_simulations)
+        nr_sim = self._session.query(func.sum(Population.nr_samples)).join(ABCSMC).filter(ABCSMC.id == self.id).one()[0]
+        return nr_sim
 
     def _make_session(self):
         from sqlalchemy import create_engine
@@ -255,7 +159,7 @@ class History:
             print("Hist done:", abc_smc_simulation)
 
     @with_session
-    def _save_to_population_db(self, t, current_epsilon):
+    def _save_to_population_db(self, t, current_epsilon, nr_simulations):
         # sqlalchemy experimental stuff and highly inefficient implementation here
         # but that is ok for testing purposes for the moment
         # prepare
@@ -264,7 +168,7 @@ class History:
                               .one())
 
         # store the population
-        population = Population(t=t, nr_samples=self.nr_simulations[t], epsilon=current_epsilon)
+        population = Population(t=t, nr_samples=nr_simulations, epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
         for m in range(len(self.store[t])):
             model = Model(m=m, p_model=self.model_probabilities[t][m], name=self.model_names[m])
@@ -331,8 +235,9 @@ class History:
             else:
                 print("ABC History warning: Empty particle.", file=sys.stderr)
         self._normalize(t)
-        self._save_to_population_db(t, current_epsilon)
+        self._save_to_population_db(t, current_epsilon, nr_simulations)
         self.nr_simulations[t] = nr_simulations
+
 
 
     def _normalize(self, t):
@@ -409,21 +314,21 @@ class History:
         return self.get_distribution(-1, m, parameter)
 
     @with_session
-    def get_model_probabilities(self, t=-1) -> np.ndarray:
+    def get_model_probabilities(self, t=None) -> np.ndarray:
         """
         Model probabilities.
 
         Parameters
         ----------
-        t: int
-            Population. Defaults to -1, i.e. the last population.
+        t: int or None
+            Population. Defaults to None, i.e. the last population.
 
         Returns
         -------
         probabilities: np.ndarray
             Model probabilities
         """
-        if t == -1:
+        if t is None:
             t = (self._session
                  .query(func.max(Population.t))
                  .filter(Population.abc_smc_id == self.id)

@@ -1,8 +1,7 @@
 from pyabc import History
 import pytest
 import os
-from pyabc.storage import ValidParticle
-from pyabc.parameters import Parameter
+from pyabc.parameters import Parameter, ValidParticle
 
 
 @pytest.fixture
@@ -29,3 +28,11 @@ def test_single_particle_save_load(history: History):
 
     assert b[0] == 12
     assert wb[0] == 1
+
+
+def test_total_nr_samples(history: History):
+    particle_population = [ValidParticle(0, Parameter({"a": 23, "b": 12}), .2, [.1], [{"ss": .1}])]
+    history.append_population(0, 42, particle_population, 4234)
+    history.append_population(0, 42, particle_population, 3)
+
+    assert 4237 == history.total_nr_simulations

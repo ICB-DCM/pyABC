@@ -29,7 +29,7 @@ from .loader import SQLDataStore, ABCLoader
 from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult
-from pyabc.transition.multivariatenormal import MultivariateNormalTransition
+from .transition import MultivariateNormalTransition
 
 __all__ = [
     "ABCSMC",
@@ -56,7 +56,6 @@ __all__ = [
     "Kernel",
     "ModelPerturbationKernel",
     # random_variables end
-    "History",
     "SQLDataStore",
     "ABCLoader"
 ]
