@@ -1,0 +1,4 @@
+rule copy_figures:
+    shell:
+        "cp figures/* ~/Documents/ICBABC/figures"
+

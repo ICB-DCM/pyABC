@@ -72,3 +72,9 @@ Thumbs.db
 #documentation
 doc/_build
 
+
+# data
+data/raw
+data/figures
+
+.snakemake/*
