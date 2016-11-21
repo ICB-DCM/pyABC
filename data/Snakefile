@@ -2,6 +2,13 @@ rule copy_figures:
     shell:
         "cp figures/* ~/Documents/ICBABC/figures"
 
+rule toy_simulation:
+    output:
+        raw/toy:modes={n}.db"
+    script:
+        "producer/toy_example.py"
+        
+        
 rule modes_nr_particles_overt_t:
     input:
         "raw/toy:modes={n}.db"

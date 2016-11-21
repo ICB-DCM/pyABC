@@ -2,6 +2,8 @@ from . import plotstyle
 from . import color
 import inspect
 import matplotlib.pyplot as plt
+from collections import namedtuple
+import os
 
 
 class dummy:
@@ -9,19 +11,28 @@ class dummy:
     output = ["magicoutdummy.pdf"]
 
 
-def make():
+SnakemakeDummy = namedtuple("SnakemakeDummy", "input output")
+
+
+def tmp_file(file):
+    return os.path.join(os.path.expanduser("~/tmp"), file)
+
+
+snakemake = None
+
+
+def make(*, input="", output=""):
     """
     Inspect the stack to get the snakemake object fomr the outer frame
     """
+    global snakemake
     stack = inspect.stack()
     for s in stack:
         inside = "snakemake" in s.frame.f_locals
         if inside:
-            return s.frame.f_locals["snakemake"]
-    return dummy
-
-
-snakemake = make()
+            snakemake = s.frame.f_locals["snakemake"]
+    snakemake = SnakemakeDummy(input=[tmp_file(input)], output=[tmp_file(output)])
+    return snakemake
 
 
 def auto_input(snakemake):
@@ -54,6 +65,6 @@ def magicin(default=None):
     return auto_input(snakemake)
 
 
-
 def magicout(result):
     auto_store(snakemake, result)
+    return result

@@ -30,6 +30,7 @@ from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult
 from .transition import MultivariateNormalTransition
+from .populationstrategy import AdaptivePopulationStrategy, ConstantPopulationStrategy
 
 __all__ = [
     "ABCSMC",
