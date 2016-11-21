@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Mon Nov 21 14:29:11 2016
+Created on Mon Nov 21 15:01:26 2016
 
 @author: emmanuel
 """
+
 import style
 import pyabc
 import scipy as sp
-import matplotlib.pyplot as plt
 import pandas as pd
 
-sm = style.make(output="test.pdf",
+sm = style.make(output="test.npz",
                 input="/home/emmanuel/abc/data/raw/toy:modes=2.db",
                 wildcards=["4"])
 
@@ -30,16 +30,16 @@ TX, TY = sp.meshgrid(sp.linspace(-MAX_SIZE, MAX_SIZE, 200),
 
 TXY = sp.stack((TX, TY), axis=2)
 
-
-for t in range(history.max_t):
+fitted_kdes = []
+ts = []
+for t in range(1, history.max_t+1):
     df, w =  history.weighted_parameters_dataframe(t, 0)
     transition.fit(df, w)
     kdef = sp.array([[transition.pdf(pd.Series(theta, index=["theta1", "theta2"]))
                       for theta in pairs]
                       for pairs in TXY])
-    fig, ax = plt.subplots()
-    ax.pcolor(TX, TY, kdef);
+    fitted_kdes.append(kdef)
+    ts.append(t)
     
-    ax.set_aspect("equal")
-    ax.set_title("t={}".format(t))
-    fig.colorbar()
+import numpy as np
+np.savez(sm.output[0][:-4], fitted_kdes=fitted_kdes, TX=TX, TY=TY)

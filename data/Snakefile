@@ -15,17 +15,25 @@ rule modes_nr_particles_over_t:
     output:
         "figures/toy-particles-over-t:modes={n}.pdf"
     script:
-        "transformer/nr_particles_over_t.py"
+        "plotter/nr_particles_over_t.py"
+        
+rule kde_fit:
+    input:
+        "raw/toy:modes={n}.db"
+    output:
+        "processed/toy-fitted-kde:modes={n}.npz"
+    script:
+        "transformer/kde_fit.py"
         
         
 rule population_over_t:
     input:
-        "raw/toy:modes={n}.db"
+        "processed/toy-fitted-kde:modes={n}.npz"
     output:
         "figures/toy-whole-population:modes={n}.pdf"
     script:
-        "transformer/population_over_t.py"
-        
+        "plotter/population_over_t.py"
+
         
 rule all_figures:
     input:
