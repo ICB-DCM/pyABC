@@ -4,7 +4,7 @@ rule copy_figures:
 
 rule toy_simulation:
     output:
-        raw/toy:modes={n}.db"
+        "raw/toy:modes={n}.db"
     script:
         "producer/toy_example.py"
         

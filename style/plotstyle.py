@@ -39,7 +39,8 @@ mpl_style_pars = {
     "legend.borderpad": 0,
     "legend.borderaxespad": .5,
     "axes.formatter.useoffset": False,
-    "lines.color": "black"
+    "lines.color": "black",
+    "savefig.dpi": 300
 }
 
 

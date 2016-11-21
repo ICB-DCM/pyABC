@@ -1,9 +1,7 @@
-from . import plotstyle
-from . import color
 import inspect
-import matplotlib.pyplot as plt
 from collections import namedtuple
 import os
+from snakemake.script import Snakemake
 
 
 class dummy:
@@ -11,34 +9,49 @@ class dummy:
     output = ["magicoutdummy.pdf"]
 
 
-SnakemakeDummy = namedtuple("SnakemakeDummy", "input output")
+SnakemakeDummy = namedtuple("SnakemakeDummy", "input output wildcards")
 
 
 def tmp_file(file):
     return os.path.join(os.path.expanduser("~/tmp"), file)
 
 
-snakemake = None
+class holder:
+    snakemake = None
 
 
-def make(*, input="", output=""):
+def make(*, input="", output="", wildcards=None):
     """
     Inspect the stack to get the snakemake object fomr the outer frame
     """
-    global snakemake
     stack = inspect.stack()
     for s in stack:
         inside = "snakemake" in s.frame.f_locals
         if inside:
-            snakemake = s.frame.f_locals["snakemake"]
-    snakemake = SnakemakeDummy(input=[tmp_file(input)], output=[tmp_file(output)])
-    return snakemake
+            snm = s.frame.f_locals["snakemake"]
+            break
+    else:
+        snm = SnakemakeDummy(input=[tmp_file(input)], output=[tmp_file(output)], wildcards=wildcards)
+    holder.snakemake = snm
+    return snm
+
+if holder.snakemake is None:
+    holder.snakemake = make()
 
 
-def auto_input(snakemake):
-    return snakemake.input[0]
+def snakemakerun():
+    return isinstance(holder.snakemake, Snakemake)
 
-this_input = auto_input(snakemake)
+if snakemakerun():
+    import matplotlib as mpl
+    mpl.use("Agg", force=True)
+    mpl.interactive(False)
+
+
+def auto_input():
+    return holder.snakemake.input
+
+this_input = auto_input()
 
 
 def auto_store(snakemake, result):
@@ -54,17 +67,25 @@ def magicrun(f):
         print("RUN")
         input = this_input
         result = f(input)
-        auto_store(snakemake, result)
+        auto_store(holder.snakemake, result)
         return result
     return autoload_and_store
 
 
 def magicin(default=None):
-    if snakemake is dummy:
+    if holder.snakemake is dummy:
         return default
-    return auto_input(snakemake)
+    return auto_input(holder.snakemake)
 
 
 def magicout(result):
-    auto_store(snakemake, result)
+    auto_store(holder.snakemake, result)
     return result
+
+
+# it is important that matplotlib is imported only here
+# to set the backend to agg before that if the run
+# is within snakemake
+from . import plotstyle
+from . import color
+import matplotlib.pyplot as plt

@@ -6,7 +6,6 @@ Created on Mon Nov 21 10:52:38 2016
 @author: emmanuel
 """
 
-
 # coding: utf-8
 
 from style import make
@@ -15,19 +14,33 @@ import scipy as sp
 import pyabc
 import pandas as pd
 import parallel
-plt.rcParams['image.cmap'] = 'viridis'
 
-sm = make(output="testdb.db")
+
+#%%
+
+sm = make(output="testdb.db", wildcards=["2"])
+nr_modes = int(sm.wildcards[0])
+print("Nr modes", nr_modes)
 
 cov = sp.array([[.5, 0],
                 [0, .5]])
 
 data = sp.array([1, 1])
-data
 
+
+def square_nr_modes(theta):
+    if nr_modes == 1:
+        return theta
+    if nr_modes == 4:
+        return theta**2
+    if nr_modes == 2:
+        theta = theta.copy()
+        theta[...,0] *= theta[...,0]
+        return theta
+    raise Exception("Nr modes {} not supported".format(nr_modes))
 
 def p(x, theta):
-    return 1 / sp.pi * sp.exp(-((x-theta**2)**2).sum(axis=-1))
+    return 1 / sp.pi * sp.exp(-((x-square_nr_modes(theta))**2).sum(axis=-1))
 
 
 MAX_SIZE = 10
@@ -42,11 +55,12 @@ TXY = sp.stack((TX, TY), axis=2)
 
 density = p(TXY, sp.array([0, 0]))
 
-
+#%%
 plt.pcolor(TX, TY, density);
 plt.gca().set_aspect("equal")
-
-
+#plt.savefig("/home/emmanuel/tmp/test.pdf", bbox_inches="tight")
+plt.show()
+#%%
 def prior(theta):
     return 1/20**2 * ((-MAX_SIZE < theta) & (theta < MAX_SIZE)).all(axis=-1).astype(float)
 
@@ -59,11 +73,21 @@ def posterior(theta, data):
 plt.pcolor(TX, TY, posterior(TXY, data));
 plt.gca().set_aspect("equal")
 plt.colorbar()
+plt.title("Posterior")
 plt.show()
 
 
+
 def abc_model(args):
-    theta_squared = sp.array([args.theta1, args.theta2])**2
+    if nr_modes == 4:
+        power_1, power_2 = 2, 2
+    elif nr_modes == 2:
+        power_1, power_2 = 2, 1
+    elif nr_modes == 1:
+        power_1, power_2 = 1, 1
+    else:
+        raise Exception("Invalid nr modes")
+    theta_squared = sp.array([args.theta1**power_1, args.theta2**power_2])
     sample = sp.random.multivariate_normal(theta_squared, cov)
     return {"x": sample[0], "y": sample[1]}
 
@@ -79,8 +103,8 @@ class ABCPrior:
 
 
 model_prior = pyabc.RV("randint", 0, 1)
-population_size = pyabc.populationstrategy.AdaptivePopulationStrategy(500, 20,
-                                                                      max_population_size=10000)
+population_size = pyabc.AdaptivePopulationStrategy(500, 20,
+                                                   max_population_size=10000)
 
 
 
@@ -109,17 +133,16 @@ history = abc.run(.01)
 
 
 
-
-t = 9
-points_theta1, weights_theta_1 =  history.get_distribution(t, 0, "theta1")
-points_theta2, weights_theta_2 = history.get_distribution(t, 0, "theta2")
-hist, xedges, yedges = sp.histogram2d(points_theta1, points_theta2,
-                                      weights=weights_theta_1, bins=30);
+#%%
+points_theta, weights_theta =  history.weighted_parameters_dataframe(None, 0)
+hist, xedges, yedges = sp.histogram2d(points_theta.theta1,
+                                      points_theta.theta2,
+                                      weights=weights_theta, bins=30);
 xedges_mesh, yedges_mesh = sp.meshgrid(xedges[:-1], yedges[:-1])
 plt.pcolor(xedges_mesh, yedges_mesh, hist)
 
 
-
+#%%
 ds = pd.Series(TXY[0][0], index=["theta1", "theta2"])
 
 
@@ -133,8 +156,8 @@ plt.pcolor(TX, TY, sp.array(kde));
 plt.gca().set_aspect("equal")
 
 
-
-for t in range(1, history.t + 1):
+#%%
+for t in range(1, history.max_t + 1):
     abc.fit_transitions(t)
     kdef = sp.array([[abc.transitions[0].pdf(pd.Series(theta, index=["theta1", "theta2"]))
            for theta in pairs] for pairs in TXY])
@@ -143,3 +166,4 @@ for t in range(1, history.t + 1):
     plt.title("t={}".format(t))
     plt.savefig("/u/eklinger/tmp/pop_{}.png".format(t))
     plt.show()
+
