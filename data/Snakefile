@@ -9,10 +9,30 @@ rule toy_simulation:
         "producer/toy_example.py"
         
         
-rule modes_nr_particles_overt_t:
+rule modes_nr_particles_over_t:
     input:
         "raw/toy:modes={n}.db"
     output:
-        "figures/toy:modes={n}.pdf"
+        "figures/toy-particles-over-t:modes={n}.pdf"
     script:
-        "transformer/modes_nr_particles_overt_t.py"
+        "transformer/nr_particles_over_t.py"
+        
+        
+rule population_over_t:
+    input:
+        "raw/toy:modes={n}.db"
+    output:
+        "figures/toy-whole-population:modes={n}.pdf"
+    script:
+        "transformer/population_over_t.py"
+        
+        
+rule all_figures:
+    input:
+        expand("figures/toy-particles-over-t:modes={n}.pdf", n=[1, 2 ,4])
+        + expand("figures/toy-whole-population:modes={n}.pdf", n=[1, 2 ,4])
+
+        
+rule clean_figures:
+    shell:
+        "rm figures/*.pdf"
