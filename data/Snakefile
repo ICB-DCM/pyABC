@@ -13,7 +13,7 @@ rule modes_nr_particles_over_t:
     input:
         "raw/toy:modes={n}.db"
     output:
-        "figures/toy-particles-over-t:modes={n}.pdf"
+        "figures/toy_particles_over_t-modes_{n}.pdf"
     script:
         "plotter/nr_particles_over_t.py"
         
@@ -30,15 +30,15 @@ rule population_over_t:
     input:
         "processed/toy-fitted-kde:modes={n}.npz"
     output:
-        "figures/toy-whole-population:modes={n}.pdf"
+        "figures/toy_whole_population-modes_{n}.pdf"
     script:
         "plotter/population_over_t.py"
 
         
 rule all_figures:
     input:
-        expand("figures/toy-particles-over-t:modes={n}.pdf", n=[1, 2 ,4])
-        + expand("figures/toy-whole-population:modes={n}.pdf", n=[1, 2 ,4])
+        expand("figures/toy_particles_over_t-modes_{n}.pdf", n=[1, 2 ,4])
+        + expand("figures/toy_whole_population-modes_{n}.pdf", n=[1, 2 ,4])
 
         
 rule clean_figures:
