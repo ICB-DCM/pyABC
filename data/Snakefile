@@ -2,3 +2,10 @@ rule copy_figures:
     shell:
         "cp figures/* ~/Documents/ICBABC/figures"
 
+rule modes_nr_particles_overt_t:
+    input:
+        "raw/toy:modes={n}.db"
+    output:
+        "figures/toy:modes={n}.pdf"
+    script:
+        "transformer/modes_nr_particles_overt_t.py"

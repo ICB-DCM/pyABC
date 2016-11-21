@@ -77,4 +77,7 @@ doc/_build
 data/raw
 data/figures
 
-.snakemake/*
+
+data/.snakemake
+data/.spyderproject
+data/.spyproject
