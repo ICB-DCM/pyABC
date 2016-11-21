@@ -12,7 +12,6 @@ from style import make
 import matplotlib.pyplot as plt
 import scipy as sp
 import pyabc
-import pandas as pd
 import parallel
 
 
@@ -140,30 +139,4 @@ hist, xedges, yedges = sp.histogram2d(points_theta.theta1,
                                       weights=weights_theta, bins=30);
 xedges_mesh, yedges_mesh = sp.meshgrid(xedges[:-1], yedges[:-1])
 plt.pcolor(xedges_mesh, yedges_mesh, hist)
-
-
-#%%
-ds = pd.Series(TXY[0][0], index=["theta1", "theta2"])
-
-
-
-kde = [[abc.transitions[0].pdf(pd.Series(theta, index=["theta1", "theta2"]))
-       for theta in pairs] for pairs in TXY]
-
-
-
-plt.pcolor(TX, TY, sp.array(kde));
-plt.gca().set_aspect("equal")
-
-
-#%%
-for t in range(1, history.max_t + 1):
-    abc.fit_transitions(t)
-    kdef = sp.array([[abc.transitions[0].pdf(pd.Series(theta, index=["theta1", "theta2"]))
-           for theta in pairs] for pairs in TXY])
-    plt.pcolor(TX, TY, kdef);
-    plt.gca().set_aspect("equal")
-    plt.title("t={}".format(t))
-    plt.savefig("/u/eklinger/tmp/pop_{}.png".format(t))
-    plt.show()
 

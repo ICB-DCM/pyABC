@@ -23,10 +23,10 @@ transition = pyabc.MultivariateNormalTransition()
 
 
 MAX_SIZE = 10
+NR_PLOT_POINTS = 50
 
-
-TX, TY = sp.meshgrid(sp.linspace(-MAX_SIZE, MAX_SIZE, 200),
-                     sp.linspace(-MAX_SIZE, MAX_SIZE, 200))
+TX, TY = sp.meshgrid(sp.linspace(-MAX_SIZE, MAX_SIZE, NR_PLOT_POINTS),
+                     sp.linspace(-MAX_SIZE, MAX_SIZE, NR_PLOT_POINTS))
 
 TXY = sp.stack((TX, TY), axis=2)
 
