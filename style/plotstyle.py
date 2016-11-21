@@ -43,8 +43,6 @@ mpl_style_pars = {
 }
 
 
-
-
 sns.set_style('ticks')
 
 mpl.rcParams.update(mpl_style_pars)

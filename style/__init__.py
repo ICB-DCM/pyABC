@@ -1,10 +1,12 @@
 from . import plotstyle
+from . import color
 import inspect
+import matplotlib.pyplot as plt
 
 
 class dummy:
-    input = ["dummy in"]
-    output = ["dummy out"]
+    input = ["magic input dummy"]
+    output = ["magicoutdummy.pdf"]
 
 
 def make():
@@ -29,6 +31,9 @@ this_input = auto_input(snakemake)
 
 
 def auto_store(snakemake, result):
+    if isinstance(result, plt.Figure):
+        result.savefig(snakemake.output[0], bbox_inches="tight")
+        return
     with open(snakemake.output[0], "w") as f:
         f.write(result)
 
@@ -39,4 +44,16 @@ def magicrun(f):
         input = this_input
         result = f(input)
         auto_store(snakemake, result)
+        return result
     return autoload_and_store
+
+
+def magicin(default=None):
+    if snakemake is dummy:
+        return default
+    return auto_input(snakemake)
+
+
+
+def magicout(result):
+    auto_store(snakemake, result)
