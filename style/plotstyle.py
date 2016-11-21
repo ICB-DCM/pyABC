@@ -1,4 +1,5 @@
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import seaborn as sns
 from .size import m as m_size
 
@@ -40,10 +41,19 @@ mpl_style_pars = {
     "legend.borderaxespad": .5,
     "axes.formatter.useoffset": False,
     "lines.color": "black",
-    "savefig.dpi": 300
+    "savefig.dpi": 300,
+    "figure.dpi": 300,
 }
 
 
 sns.set_style('ticks')
 
 mpl.rcParams.update(mpl_style_pars)
+
+
+def save(self, *args, **kwargs):
+    self.savefig(*args, **kwargs, bbox_inches="tight", transparent=True)
+
+
+plt.Figure.save = save
+

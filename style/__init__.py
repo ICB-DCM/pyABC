@@ -2,6 +2,8 @@ import inspect
 from collections import namedtuple
 import os
 from snakemake.script import Snakemake
+from . import name
+from . import labelpad
 
 
 class dummy:
@@ -89,3 +91,4 @@ def magicout(result):
 from . import plotstyle
 from . import color
 import matplotlib.pyplot as plt
+from .plot import set_ticksmiddle_minor, remove_middle_tick_labels, plot, middle_ticks_minor
