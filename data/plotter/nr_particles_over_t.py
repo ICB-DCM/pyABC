@@ -6,7 +6,8 @@ import seaborn as sns
 import scipy as sp
 from scipy.stats import variation
 
-sm = make(output="test.pdf", input="/home/emmanuel/abc/data/raw/toy:modes=1.db",
+sm = make(output="test.pdf",
+          input="/home/emmanuel/abc/data/raw/toy:modes=1.db",
           wildcards=["1"])
 
 history = History("sqlite:///" + sm.input[0], 23, ["sdf"])
@@ -19,7 +20,8 @@ nr_particles = sp.array([len(history.weighted_parameters_dataframe(t, 0)[0])
 populations = history.get_all_populations()
 epsilons = populations.epsilon[1:]  # the very fist ist just 0 by definition
 
-weights = [history.weighted_parameters_dataframe(t, 0)[1] for t in range(1, history.max_t)]
+weights = [history.weighted_parameters_dataframe(t, 0)[1]
+           for t in range(1, history.max_t)]
 
 effective_samples_size = sp.array([w.size/ (1+variation(w)) for w in weights])
                 
@@ -41,7 +43,8 @@ ax1.set_ylabel(style.name.epsilon, labelpad=style.labelpad.reduced)
 ax2.scatter(sp.arange(nr_particles.size) + 1, nr_particles,
            color=sns.utils.get_color_cycle()[1], label=style.name.nr_particles)
 ax2.scatter(sp.arange(nr_particles.size) + 1, effective_samples_size,
-           color=sns.utils.get_color_cycle()[2], label=style.name.effective_samples_size)
+           color=sns.utils.get_color_cycle()[2],
+           label=style.name.effective_samples_size)
 
 ax2.set_xlabel(style.name.nr_populations)
 ax2.set_ylabel(style.name.n, labelpad=style.labelpad.reduced)
