@@ -1,3 +1,5 @@
-nr_populations = "Nr. Populations"
-nr_particles = "Nr. Particles"
+nr_populations = "Nr. populations"
+nr_particles = "Nr. particles"
 pdf = "PDF"
+effective_samples_size = "Eff. nr particles"
+n = "N"
