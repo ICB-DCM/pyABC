@@ -91,3 +91,14 @@ def test_dataframe_storage_readout():
         os.remove(path)
     except FileNotFoundError:
         pass
+
+
+def test_population_retrieval(history):
+    history.append_population(1, .23, rand_pop(0), 234)
+    history.append_population(2, .123, rand_pop(0), 345)
+    df = history.get_all_populations()
+    assert df[df.t == 1].epsilon.iloc[0] == .23
+    assert df[df.t == 2].epsilon.iloc[0] == .123
+
+    assert df[df.t == 1].nr_samples.iloc[0] == 234
+    assert df[df.t == 2].nr_samples.iloc[0] == 345

@@ -94,6 +94,14 @@ class History:
         return pars, w_arr
 
     @with_session
+    def get_all_populations(self):
+        query = (self._session.query(Population.t, Population.population_end_time,
+                                     Population.nr_samples, Population.epsilon)
+                 .filter(Population.abc_smc_id == self.id))
+        df = pd.read_sql_query(query.statement, self._engine)
+        return df
+
+    @with_session
     def store_initial_data(self, ground_truth_model: int, options,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
