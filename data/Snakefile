@@ -1,6 +1,11 @@
 rule copy_figures:
     shell:
-        "cp figures/* ~/Documents/ICBABC/figures"
+        "cp figures/* ~/Documents/ICBABC/figures; "
+        "cd ~/Documents/ICBABC; "
+        "git pull; "
+        "pdflatex main; "
+        "git add .; git commit -m figure_update; git push"
+
 
 rule toy_simulation:
     output:
