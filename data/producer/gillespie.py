@@ -55,8 +55,8 @@ def gillespie(x, c, pre, post, max_t):
     Returns
     -------
     t, X: 1d array, 2d array
-        t contains the time points
-        X contains the history of the species
+        t: contains the time points
+        X: contains the history of the species. ``X.shape == (t.size, x.size)``
     
     """
     t = 0
