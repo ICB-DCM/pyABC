@@ -6,12 +6,8 @@ Created on Wed Nov 23 13:37:53 2016
 @author: emmanuel
 
 
-
 To adjust the number of exapmles, adjust the Sankefile
 """
-
-
-
 import style
 from style import make
 import scipy as sp
@@ -37,7 +33,7 @@ for model, row  in zip([1, 2], axes):
     row[0].set_ylabel("Model " + str(model) + "\n" + "Species")
     for ax, sim in zip(row, simulations_grouped[model]):
         t, X = sim["t"], sim["X"]
-        ax.plot(t, X)
+        ax.step(t, X)
         ax.set_xlim(0, max_t)
         ax.set_xticks([0, max_t])
         max_y = 45

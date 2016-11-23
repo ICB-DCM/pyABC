@@ -60,6 +60,7 @@ rule all_figures:
     input:
         expand("figures/toy_particles_over_t-modes_{n}.pdf", n=[1, 2 ,4])
         + expand("figures/toy_whole_population-modes_{n}.pdf", n=[1, 2 ,4])
+        + ["figures/all_prey_predator_ground_truth.pdf"]
 
         
 rule clean_figures:
