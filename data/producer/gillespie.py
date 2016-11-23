@@ -32,6 +32,8 @@ def fast_random_choice(weights):
     
 def gillespie(x, c, pre, post, max_t):
     """
+    Gillespie simulation
+    
     Parameters
     ----------
     
@@ -49,6 +51,12 @@ def gillespie(x, c, pre, post, max_t):
     
     max_t: int
         up to where to simulate
+        
+    Returns
+    -------
+    t, X: 1d array, 2d array
+        t contains the time points
+        X contains the history of the species
     
     """
     t = 0
