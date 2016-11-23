@@ -62,7 +62,7 @@ def gillespie(x, c, pre, post, max_t):
         delta_t = sp.random.exponential(1 / h0)
         if not sp.isfinite(delta_t):
             break
-        reaction = fast_random_choice_cython(h_vec/h0)
+        reaction = fast_random_choice(h_vec/h0)
         #reaction = sp.random.choice(c.size, p=h_vec/h0)
         t = t + delta_t
         x = x + S[reaction]
