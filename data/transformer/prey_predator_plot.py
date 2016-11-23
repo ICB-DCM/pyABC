@@ -4,7 +4,13 @@
 Created on Wed Nov 23 13:37:53 2016
 
 @author: emmanuel
+
+
+
+To adjust the number of exapmles, adjust the Sankefile
 """
+
+
 
 import style
 from style import make
@@ -21,15 +27,12 @@ for sim in simulations:
     simulations_grouped.setdefault(int(sim["model_nr"]), []).append(sim)
     
 max_t = .1
-max_nr_examples_per_model = 5
 
-for k in range(1,3):
-    simulations_grouped[k] = simulations_grouped[k][:max_nr_examples_per_model]
 
 max_nr_seeds = max(len(simulations_grouped[1]), len(simulations_grouped[2]))
 
 fig, axes = plt.subplots(2, max_nr_seeds, sharex=True, sharey=True)
-fig.set_size_inches((style.size.m[0]*5, style.size.m[1]*2))
+fig.set_size_inches((style.size.m[0]*len(simulations_grouped[1]), style.size.m[1]*2))
 for model, row  in zip([1, 2], axes):
     row[0].set_ylabel("Model " + str(model) + "\n" + "Species")
     for ax, sim in zip(row, simulations_grouped[model]):

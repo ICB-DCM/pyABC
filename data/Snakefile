@@ -16,7 +16,7 @@ rule prey_predator_raw:
 
 rule prey_predator_example_plot:
     input:
-        expand("raw/prey_predator/model_{model_nr}/seed_{seed}.npz", model_nr=[1,2], seed=range(10))
+        expand("raw/prey_predator/model_{model_nr}/seed_{seed}.npz", model_nr=[1,2], seed=range(5))
     output:
         "figures/all_prey_predator_ground_truth.pdf"
     script:
