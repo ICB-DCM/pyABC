@@ -1,5 +1,5 @@
 import inspect
-from collections import namedtuple
+from collections import UserList
 import os
 from snakemake.script import Snakemake
 from . import name
@@ -11,7 +11,14 @@ class dummy:
     output = ["magicoutdummy.pdf"]
 
 
-SnakemakeDummy = namedtuple("SnakemakeDummy", "input output wildcards")
+class SnakemakeDummy:
+    def __init__(self, input, output, wildcards=None, **kwargs):
+        self.input = input
+        self.output =  output
+        self.wildcards = UserList(wildcards) if wildcards is not None else UserList()
+        for key, value in kwargs.items():
+            setattr(self.wildcards, key, value)
+
 
 
 def tmp_file(file):
@@ -22,7 +29,7 @@ class holder:
     snakemake = None
 
 
-def make(*, input="", output="", wildcards=None):
+def make(*, input="", output="", wildcards=None, **kwargs):
     """
     Inspect the stack to get the snakemake object fomr the outer frame
     """
@@ -33,7 +40,10 @@ def make(*, input="", output="", wildcards=None):
             snm = s.frame.f_locals["snakemake"]
             break
     else:
-        snm = SnakemakeDummy(input=[tmp_file(input)], output=[tmp_file(output)], wildcards=wildcards)
+        snm = SnakemakeDummy(input=[tmp_file(input)],
+                             output=[tmp_file(output)],
+                             wildcards=wildcards,
+                             **kwargs)
     holder.snakemake = snm
     return snm
 

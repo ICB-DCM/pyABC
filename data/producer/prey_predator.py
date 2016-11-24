@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import os
 
 sm = make(output="/home/emmanuel/tmp/raw/prey_predator/model_1/seed_1.npz",
-          wildcards=["1", "42"])
+          model_nr="2", seed="1")
 
 
 model_nr = int(sm.wildcards.model_nr)
@@ -49,7 +49,7 @@ model = model_collection[model_nr]
 t, X = gillespie(model.x0, model.c, model.pre, model.post, model.max_t)
 sp.savez(os.path.splitext(sm.output[0])[0], t=t, X=X, seed=seed, model_nr=model_nr)
 
-if False:
+if not style.snakemakerun():
     print("MAIN CALL")
     fig, axes = plt.subplots(2, 5, sharex=True, sharey=True)
     fig.set_size_inches((style.size.m[0]*5, style.size.m[1]*2))
@@ -61,7 +61,7 @@ if False:
             ax.set_xlim(0, model.max_t)
             ax.set_xticks([0, model.max_t])
             max_y = 45
-            ax.set_ylim(0, max_y)
+            ax.set_ylim(0, max_y+5)
             ax.set_yticks([0, max_y])
     
     for ax in row:

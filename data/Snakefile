@@ -5,7 +5,7 @@ rule copy_figures:
         "git pull; "
         "pdflatex main; "
         "git add .; git commit -m figure_update; git push"
-
+        
 
 rule prey_predator_raw:
     output:
@@ -61,7 +61,7 @@ rule all_figures:
         expand("figures/toy_particles_over_t-modes_{n}.pdf", n=[1, 2 ,4])
         + expand("figures/toy_whole_population-modes_{n}.pdf", n=[1, 2 ,4])
         + ["figures/all_prey_predator_ground_truth.pdf"]
-
+               
         
 rule clean_figures:
     shell:

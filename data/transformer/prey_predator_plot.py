@@ -29,6 +29,9 @@ max_nr_seeds = max(len(simulations_grouped[1]), len(simulations_grouped[2]))
 
 fig, axes = plt.subplots(2, max_nr_seeds, sharex=True, sharey=True)
 fig.set_size_inches((style.size.m[0]*len(simulations_grouped[1]), style.size.m[1]*2))
+
+max_y = max(sim["X"].max() for sim in simulations)
+
 for model, row  in zip([1, 2], axes):
     row[0].set_ylabel("Model " + str(model) + "\n" + "Species")
     for ax, sim in zip(row, simulations_grouped[model]):
@@ -36,8 +39,7 @@ for model, row  in zip([1, 2], axes):
         ax.step(t, X)
         ax.set_xlim(0, max_t)
         ax.set_xticks([0, max_t])
-        max_y = 45
-        ax.set_ylim(0, max_y)
+        ax.set_ylim(0, max_y+1)
         ax.set_yticks([0, max_y])
 
 for ax in row:

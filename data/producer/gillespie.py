@@ -68,7 +68,9 @@ def gillespie(x, c, pre, post, max_t):
         h_vec = h(x, pre, c)
         h0 = h_vec.sum()
         delta_t = sp.random.exponential(1 / h0)
-        if not sp.isfinite(delta_t):
+        if not sp.isfinite(delta_t):  # no reaction can occur any more
+            t_store.append(max_t)
+            x_store.append(x)
             break
         reaction = fast_random_choice(h_vec/h0)
         #reaction = sp.random.choice(c.size, p=h_vec/h0)
@@ -81,7 +83,7 @@ def gillespie(x, c, pre, post, max_t):
     return sp.asarray(t_store), sp.asarray(x_store)
         
     
-if __name__ == "__main__"    :
+if __name__ == "__main__":
     x = sp.array([50, 100])   # molecule numbers
     c = sp.array([1, .005, .6])  # rate constants
     pre = sp.array([[1, 0],
