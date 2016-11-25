@@ -1,6 +1,5 @@
 import datetime
 import os
-import sys
 from typing import List, Tuple
 
 import git
@@ -9,7 +8,7 @@ import pandas as pd
 import scipy as sp
 from sqlalchemy import func
 
-from .. import weighted_statistics
+
 from ..parameters import ValidParticle
 from .db_model import ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
 from functools import wraps
