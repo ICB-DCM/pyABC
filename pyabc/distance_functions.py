@@ -80,6 +80,31 @@ class DistanceFunction(ABC):
         return json.dumps(self.get_config())
 
 
+class SimpleFunctionDistance(DistanceFunction):
+    def __init__(self, function):
+        self.function = function
+
+    def __call__(self, x, y):
+        return self.function(x, y)
+
+
+def to_distance(maybe_distance_function):
+    """
+
+    Parameters
+    ----------
+    maybe_distance_function: either a callable, which takes to arguments or
+    a DistanceFunction instance
+
+    Returns
+    -------
+
+    """
+    if isinstance(maybe_distance_function, DistanceFunction):
+        return maybe_distance_function
+    return SimpleFunctionDistance(maybe_distance_function)
+
+
 class DistanceFunctionWithMeasureList(DistanceFunction):
     """
     Base class for distance functions with measure list.

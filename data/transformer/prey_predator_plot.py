@@ -28,7 +28,8 @@ max_t = .1
 max_nr_seeds = max(len(simulations_grouped[1]), len(simulations_grouped[2]))
 
 fig, axes = plt.subplots(2, max_nr_seeds, sharex=True, sharey=True)
-fig.set_size_inches((style.size.m[0]*len(simulations_grouped[1]), style.size.m[1]*2))
+fig.set_size_inches((style.size.m[0]*len(simulations_grouped[1]),
+                     style.size.m[1]*2))
 
 max_y = max(sim["X"].max() for sim in simulations)
 

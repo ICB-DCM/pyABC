@@ -49,7 +49,8 @@ model = model_collection[model_nr]
 t, X = gillespie(model.x0, model.c, model.pre, model.post, model.max_t)
 sp.savez(os.path.splitext(sm.output[0])[0], t=t, X=X, seed=seed, model_nr=model_nr)
 
-if not style.snakemakerun():
+
+if __name__ == "__main__" and not style.snakemakerun():
     print("MAIN CALL")
     fig, axes = plt.subplots(2, 5, sharex=True, sharey=True)
     fig.set_size_inches((style.size.m[0]*5, style.size.m[1]*2))

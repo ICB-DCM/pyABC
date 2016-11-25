@@ -12,7 +12,7 @@ import pandas as pd
 import scipy as sp
 
 from parallel.sampler import MappingSampler
-from .distance_functions import DistanceFunction
+from .distance_functions import DistanceFunction, to_distance
 from .epsilon import Epsilon
 from .model import Model
 from .parameters import ValidParticle
@@ -121,7 +121,7 @@ class ABCSMC:
                  model_perturbation_kernel: ModelPerturbationKernel,
                  parameter_given_model_prior_distribution: List[Distribution],
                  transitions: List[Transition],
-                 distance_function: DistanceFunction,
+                 distance_function,
                  eps: Epsilon,
                  population_strategy: PopulationStrategy,
                  sampler=None,
@@ -138,7 +138,7 @@ class ABCSMC:
         self.model_perturbation_kernel = model_perturbation_kernel
         self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
         self.transitions = transitions  # type: List[Transition]
-        self.distance_function = distance_function
+        self.distance_function = to_distance(distance_function)
         self.eps = eps
         self.summary_statistics = summary_statistics
         self.stop_if_only_single_model_alive = True
