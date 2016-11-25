@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
-
+from itertools import groupby
 
 from ..parameters import ValidParticle
 from .db_model import ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
@@ -372,6 +372,30 @@ class History:
         """
         max_t = self._session.query(func.max(Population.t)).join(ABCSMC).filter(ABCSMC.id == self.id).one()[0]
         return max_t
+
+    @with_session
+    def get_sum_stats(self, t, m):
+        if t is None:
+            t = self.max_t
+
+        particles = (self._session.query(Particle)
+
+         .join(Model).join(Population).join(ABCSMC)
+         .filter(ABCSMC.id == self.id)
+         .filter(Population.t == t)
+         .filter(Model.m == m)
+         .all())
+
+        results = []
+        weights = []
+        for particle in particles:
+            for sample in particle.samples:
+                weights.append(particle.w)
+                sum_stats = {}
+                for summary_statistics in sample.summary_statistics:
+                    sum_stats[summary_statistics.name] = summary_statistics.value
+                results.append(sum_stats)
+        return sp.array(weights), results
 
 
 def normalize(population: List[ValidParticle], nr_models: int):

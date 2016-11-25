@@ -39,6 +39,24 @@ def test_single_particle_save_load(history: History):
     assert df.b.iloc[0] == 12
 
 
+def test_sum_stats_save_load(history: History):
+    import scipy as sp
+    arr = sp.random.rand(10)
+    arr2 = sp.random.rand(10, 2)
+    particle_population = [ValidParticle(0, Parameter({"a": 23, "b": 12}), .2, [.1],
+                                         [{"ss1": .1, "ss2": arr2}]),
+                           ValidParticle(0, Parameter({"a": 23, "b": 12}), .2, [.1],
+                                         [{"ss12": .11, "ss22": arr}])
+                           ]
+    history.append_population(0, 42, particle_population, 2)
+    weights, sum_stats = history.get_sum_stats(0, 0)
+    assert (weights == 0.5).all()
+    assert sum_stats[0]["ss1"] == .1
+    assert (sum_stats[0]["ss2"] == arr2).all()
+    assert sum_stats[1]["ss12"] == .11
+    assert (sum_stats[1]["ss22"] == arr).all()
+
+
 def test_total_nr_samples(history: History):
     particle_population = [ValidParticle(0, Parameter({"a": 23, "b": 12}), .2, [.1], [{"ss": .1}])]
     history.append_population(0, 42, particle_population, 4234)

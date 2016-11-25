@@ -28,17 +28,17 @@ rate_prior = pyabc.Distribution(rate=pyabc.RV("uniform", 0, 100))
 def model_1(pars):
     rate = pars.rate
     arr = sp.rand(4)
-    return arr
+    return {"trace": arr}
 
     
 def model_2(pars):
     rate = pars.rate
     arr = sp.rand(4)
-    return arr
+    return {"trace": arr}
 
 
 def distance(x, y):
-        return ((x - y)**2).sum()
+        return ((x["trace"] - y["trace"])**2).sum()
     
 
 mapper = parallel.SGE().map if parallel.sge_available() else map
@@ -57,5 +57,5 @@ abc.stop_if_only_single_model_alive = False
 
 
 options = {'db_path': "sqlite:///" + sm.output[0]}
-abc.set_data(sp.rand(4), 0, {}, options)
+abc.set_data({"trace": sp.rand(4)}, 0, {}, options)
 history = abc.run(.01)
