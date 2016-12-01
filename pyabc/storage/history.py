@@ -364,6 +364,17 @@ class History:
         df_weighted["w"] *= df_weighted["model_probabilities"]
         return df_weighted
 
+    @with_session
+    def get_nr_particles_per_population(self):
+        query = (self._session.query(Population.t)
+                 .join(ABCSMC)
+                 .join(Model)
+                 .join(Particle)
+                 .filter(ABCSMC.id == self.id))
+        df = pd.read_sql_query(query.statement, self._engine)
+        nr_particles_per_population = df.t.value_counts().sort_index()
+        return nr_particles_per_population
+
     @property
     @with_session
     def max_t(self):
