@@ -1,15 +1,13 @@
 import datetime
 import os
-import sys
 from typing import List, Tuple
-
+import json
 import git
 import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
 
-from .. import weighted_statistics
 from ..parameters import ValidParticle
 from .db_model import ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
 from functools import wraps
@@ -106,7 +104,8 @@ class History:
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            distance_function_json_str: str,
-                           eps_function_json_str: str):
+                           eps_function_json_str: str,
+                           population_strategy_json_str: str):
         """
         Store the initial configuration data.
 
@@ -136,7 +135,8 @@ class History:
                                     start_time=datetime.datetime.now(),
                                     git_hash=git_hash,
                                     distance_function=distance_function_json_str,
-                                    epsilon_function=eps_function_json_str)
+                                    epsilon_function=eps_function_json_str,
+                                    population_strategy=population_strategy_json_str)
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abc_smc_simulation.populations.append(population)
 
@@ -365,6 +365,17 @@ class History:
         df_weighted["w"] *= df_weighted["model_probabilities"]
         return df_weighted
 
+    @with_session
+    def get_nr_particles_per_population(self):
+        query = (self._session.query(Population.t)
+                 .join(ABCSMC)
+                 .join(Model)
+                 .join(Particle)
+                 .filter(ABCSMC.id == self.id))
+        df = pd.read_sql_query(query.statement, self._engine)
+        nr_particles_per_population = df.t.value_counts().sort_index()
+        return nr_particles_per_population
+
     @property
     @with_session
     def max_t(self):
@@ -373,6 +384,35 @@ class History:
         """
         max_t = self._session.query(func.max(Population.t)).join(ABCSMC).filter(ABCSMC.id == self.id).one()[0]
         return max_t
+
+    @with_session
+    def get_sum_stats(self, t, m):
+        if t is None:
+            t = self.max_t
+
+        particles = (self._session.query(Particle)
+
+         .join(Model).join(Population).join(ABCSMC)
+         .filter(ABCSMC.id == self.id)
+         .filter(Population.t == t)
+         .filter(Model.m == m)
+         .all())
+
+        results = []
+        weights = []
+        for particle in particles:
+            for sample in particle.samples:
+                weights.append(particle.w)
+                sum_stats = {}
+                for summary_statistics in sample.summary_statistics:
+                    sum_stats[summary_statistics.name] = summary_statistics.value
+                results.append(sum_stats)
+        return sp.array(weights), results
+
+    @with_session
+    def get_population_strategy(self):
+        abc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
+        return json.loads(abc.population_strategy)
 
 
 def normalize(population: List[ValidParticle], nr_models: int):

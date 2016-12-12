@@ -1,11 +1,22 @@
 import datetime
 
-
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Float
+import sqlalchemy.types as types
+from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Float, LargeBinary
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
+from .numpy_bytes_storage import np_from_bytes, np_to_bytes
+
+
+class Numpy(types.TypeDecorator):
+    impl = LargeBinary
+
+    def process_bind_param(self, value, dialect):
+        return np_to_bytes(value)
+
+    def process_result_value(self, value, dialect):
+        return np_from_bytes(value)
 
 
 class ABCSMC(Base):
@@ -16,6 +27,7 @@ class ABCSMC(Base):
     json_parameters = Column(String(5000))
     distance_function = Column(String(5000))
     epsilon_function = Column(String(5000))
+    population_strategy = Column(String(5000))
     git_hash = Column(String(120))
     populations = relationship("Population")
 
@@ -90,4 +102,4 @@ class SummaryStatistic(Base):
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey('samples.id'))
     name = Column(String(200))
-    value = Column(Float)
+    value = Column(Numpy)

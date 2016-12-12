@@ -1,7 +1,7 @@
 import copy
 from abc import abstractmethod
 from typing import Union
-
+import logging
 import numpy as np
 import pandas as pd
 from scipy import stats as st
@@ -11,6 +11,7 @@ from .powerlaw import fitpowerlaw
 
 from .transitionmeta import TransitionMeta
 
+transition_logger = logging.getLogger("Transitions")
 
 class Transition(metaclass=TransitionMeta):
     NR_STEPS = 30
@@ -71,7 +72,7 @@ class Transition(metaclass=TransitionMeta):
             raise NotEnoughParticles
 
         if len(self.X) == 1:
-            return lambda x: 1
+            return 1
 
         start = max(len(self.X) // self.FIRST_STEP_FACTOR, 1)
         stop = len(self.X)
@@ -80,9 +81,15 @@ class Transition(metaclass=TransitionMeta):
         n_samples_list = list(range(start, stop, step)) + [len(self.X)]
         cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
 
-        popt, f, finv = fitpowerlaw(n_samples_list, cvs)
-        required_n = finv(coefficient_of_variation)
-        return required_n
+        try:
+            popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+            required_n = finv(coefficient_of_variation)
+            return required_n
+        except RuntimeError:
+            transition_logger.warning("Power law fit failed. "
+                                      "Falling back to current nr particles {}"
+                                      .format(len(self.X)))
+            return len(self.X)
 
     def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) -> float:
         if self.no_meaningful_particles():

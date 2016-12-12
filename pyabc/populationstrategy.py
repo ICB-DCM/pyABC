@@ -1,6 +1,6 @@
 from .transition import NotEnoughParticles
 import logging
-
+import json
 adaptation_logger = logging.getLogger("Adaptation")
 
 
@@ -36,6 +36,14 @@ class PopulationStrategy:
     def adapt_population_size(self, perturbers, model_weights):
         raise NotImplementedError
 
+    def get_config(self):
+        return {"name": self.__class__.__name__,
+                "nr_particles": self.nr_particles,
+                "nr_populations": self.nr_populations}
+
+    def to_json(self):
+        return json.dumps(self.get_config())
+
 
 class ConstantPopulationStrategy(PopulationStrategy):
     def adapt_population_size(self, perturbers, model_weights):
@@ -49,6 +57,11 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         self.max_population_size = max_population_size
         self.mean_cv = mean_cv
 
+    def get_config(self):
+        return {"name": self.__class__.__name__,
+                "max_population_size": self.max_population_size,
+                "mean_cv": self.mean_cv}
+
     def adapt_population_size(self, transitions, model_weights):
         nr_required_samples = []
         for trans in transitions:
@@ -59,5 +72,10 @@ class AdaptivePopulationStrategy(PopulationStrategy):
 
         if len(nr_required_samples) > 0:
             old_particles = self.nr_particles
-            self.nr_particles = min(int(sum(nr_required_samples)), self.max_population_size)
+            try:
+                aggregated_nr_particles = sum(nr_required_samples)
+                self.nr_particles = min(int(aggregated_nr_particles), self.max_population_size)
+            except TypeError:
+                print("DEBUGTYPEERROR", nr_required_samples, self.max_population_size)
+                raise
             adaptation_logger.debug("Change nr particles {} -> {}".format(old_particles, self.nr_particles))
