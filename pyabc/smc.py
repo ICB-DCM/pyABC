@@ -10,6 +10,7 @@ import logging
 abclogger = logging.getLogger("ABC")
 import pandas as pd
 import scipy as sp
+import copy as cp
 
 from parallel.sampler import MappingSampler
 from .distance_functions import DistanceFunction, to_distance
@@ -124,8 +125,8 @@ class ABCSMC:
                  distance_function,
                  eps: Epsilon,
                  population_strategy: PopulationStrategy,
-                 sampler=None,
-                 summary_statistics: Callable[[model_output], dict]=identity):
+                 summary_statistics: Callable[[model_output], dict]=identity,
+                 sampler = None):
 
         # sanity checks
         self.models = list(models)
@@ -150,6 +151,14 @@ class ABCSMC:
             self.sampler = MappingSampler(map)
         else:
             self.sampler = sampler
+
+    def __getstate__(self):
+        state_red_dict = self.__dict__.copy()
+        del state_red_dict['sampler']
+        # print(state_red_dict)
+        return state_red_dict
+
+
 
     def do_not_stop_when_only_single_model_alive(self):
         """
