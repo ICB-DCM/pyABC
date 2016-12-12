@@ -1,13 +1,12 @@
 import datetime
 import os
 from typing import List, Tuple
-
+import json
 import git
 import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
-from itertools import groupby
 
 from ..parameters import ValidParticle
 from .db_model import ABCSMC, Population, Model, Particle, Parameter, Sample, SummaryStatistic, Base
@@ -105,7 +104,8 @@ class History:
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            distance_function_json_str: str,
-                           eps_function_json_str: str):
+                           eps_function_json_str: str,
+                           population_strategy_json_str: str):
         """
         Store the initial configuration data.
 
@@ -135,7 +135,8 @@ class History:
                                     start_time=datetime.datetime.now(),
                                     git_hash=git_hash,
                                     distance_function=distance_function_json_str,
-                                    epsilon_function=eps_function_json_str)
+                                    epsilon_function=eps_function_json_str,
+                                    population_strategy=population_strategy_json_str)
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abc_smc_simulation.populations.append(population)
 
@@ -407,6 +408,11 @@ class History:
                     sum_stats[summary_statistics.name] = summary_statistics.value
                 results.append(sum_stats)
         return sp.array(weights), results
+
+    @with_session
+    def get_population_strategy(self):
+        abc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
+        return json.loads(abc.population_strategy)
 
 
 def normalize(population: List[ValidParticle], nr_models: int):

@@ -27,6 +27,7 @@ class ABCSMC(Base):
     json_parameters = Column(String(5000))
     distance_function = Column(String(5000))
     epsilon_function = Column(String(5000))
+    population_strategy = Column(String(5000))
     git_hash = Column(String(120))
     populations = relationship("Population")
 

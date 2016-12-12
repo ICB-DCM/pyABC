@@ -216,7 +216,8 @@ class ABCSMC:
         self.history.store_initial_data(ground_truth_model, abc_options,
                                         observed_summary_statistics, ground_truth_parameter,
                                         self.distance_function.to_json(),
-                                        self.eps.to_json())
+                                        self.eps.to_json(),
+                                        self.population_strategy.to_json())
 
     def prior_sample(self):
         """

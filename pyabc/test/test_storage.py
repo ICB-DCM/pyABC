@@ -12,7 +12,7 @@ def history():
     # A real file with disconnect and reconnect is closer to the real scenario
     path = os.path.join(tempfile.gettempdir(), "history_test.db")
     h = History("sqlite:///" + path, 1, ["fake_name"])
-    h.store_initial_data(0, {}, {}, {}, "", "")
+    h.store_initial_data(0, {}, {}, {}, "", "", '{"name": "pop_strategy_str_test"}')
     yield h
     try:
         os.remove(path)
@@ -77,7 +77,7 @@ def test_dataframe_storage_readout():
 
     def make_hist():
         h = History("sqlite:///" + path, 5, ["fake_name"]*5)
-        h.store_initial_data(0, {}, {}, {}, "", "")
+        h.store_initial_data(0, {}, {}, {}, "", "", "")
         return h
 
     pops = {}
@@ -120,3 +120,8 @@ def test_population_retrieval(history):
 
     assert df[df.t == 1].nr_samples.iloc[0] == 234
     assert df[df.t == 2].nr_samples.iloc[0] == 345
+
+
+def test_population_strategy_storage(history):
+    res = history.get_population_strategy()
+    assert res["name"] == "pop_strategy_str_test"
