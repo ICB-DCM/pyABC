@@ -11,7 +11,7 @@ import scipy.interpolate
 import tempfile
 from pyabc.populationstrategy import ConstantPopulationStrategy, AdaptivePopulationStrategy
 
-REMOVE_DB = False
+REMOVE_DB = True
 
 def mean_and_std(values, weights):
     mean = (values * weights).sum()

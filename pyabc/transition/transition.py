@@ -13,6 +13,7 @@ from .transitionmeta import TransitionMeta
 
 transition_logger = logging.getLogger("Transitions")
 
+
 class Transition(metaclass=TransitionMeta):
     NR_STEPS = 30
     FIRST_STEP_FACTOR = 3
@@ -81,8 +82,13 @@ class Transition(metaclass=TransitionMeta):
         n_samples_list = list(range(start, stop, step)) + [len(self.X)]
         cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
 
+        self.n_samples_list_ = n_samples_list
+        self.cvs_ = cvs
+
         try:
             popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+            self.f_ = f
+            self.popt_ = popt
             required_n = finv(coefficient_of_variation)
             return required_n
         except RuntimeError:
