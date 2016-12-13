@@ -13,10 +13,12 @@ from pyabc.populationstrategy import ConstantPopulationStrategy, AdaptivePopulat
 
 REMOVE_DB = True
 
+
 def mean_and_std(values, weights):
     mean = (values * weights).sum()
     std = sp.sqrt(((values - mean)**2 * weights).sum())
     return mean, std
+
 
 class TestABC(unittest.TestCase):
     def setUp(self):
