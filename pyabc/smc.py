@@ -12,7 +12,7 @@ import pandas as pd
 import scipy as sp
 import copy as cp
 
-from parallel.sampler import MappingSampler
+from parallel.sampler import MappingSampler, SingleCoreSampler
 from .distance_functions import DistanceFunction, to_distance
 from .epsilon import Epsilon
 from .model import Model
@@ -148,7 +148,7 @@ class ABCSMC:
         self._points_sampled_from_prior = None
         self.population_strategy = population_strategy
         if sampler is None:
-            self.sampler = MappingSampler(map)
+            self.sampler = SingleCoreSampler()
         else:
             self.sampler = sampler
 

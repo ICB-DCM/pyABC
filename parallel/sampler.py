@@ -1,11 +1,32 @@
 from abc import ABC, abstractmethod
 import dill as pickle
 import functools
-# pickle.settings['recurse']
+
+
 class Sampler(ABC):
     @abstractmethod
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         pass
+
+
+class SingleCoreSampler(Sampler):
+    def __init__(self):
+        self.nr_evaluations_ = 0
+
+    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+        nr_simulations = 0
+        results = []
+        for _ in range(n):
+            while True:
+                new_param = sample_one()
+                new_sim = simulate_one(new_param)
+                nr_simulations += 1
+                if accept_one(new_sim):
+                    break
+            results.append(new_sim)
+        self.nr_evaluations_ = nr_simulations
+        assert len(results) == n
+        return results
 
 
 class MappingSampler(Sampler):
@@ -21,13 +42,10 @@ class MappingSampler(Sampler):
     def map_function(str_sample_pickle, str_simulate_pickle, str_accept_pickle, _):
         import numpy as np
         import random
-        # sample_from_pickle = pickle.loads(self.sample_pickle)
-        # simulate_from_pickle = pickle.loads(self.simulate_pickle)
-        # accept_from_pickle = pickle.loads(self.accept_pickle)
 
-        sample_from_pickle = pickle.loads(str_sample_pickle);
-        simulate_from_pickle = pickle.loads(str_simulate_pickle);
-        accept_from_pickle = pickle.loads(str_accept_pickle);
+        sample_from_pickle = pickle.loads(str_sample_pickle)
+        simulate_from_pickle = pickle.loads(str_simulate_pickle)
+        accept_from_pickle = pickle.loads(str_accept_pickle)
 
         np.random.seed()
         random.seed()
