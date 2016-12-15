@@ -211,7 +211,7 @@ class ABCSMC:
         # initialize
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
-        self.history = History(abc_options['db_path'], len(self.models), model_names)
+        self.history = History(abc_options['db_path'])
 
         # initialize distance function and epsilon
         sample_from_prior = self.prior_sample()
@@ -222,8 +222,11 @@ class ABCSMC:
             return self.distance_function(x, self.x_0)
 
         self.eps.initialize(sample_from_prior, distance_to_ground_truth_function)
-        self.history.store_initial_data(ground_truth_model, abc_options,
-                                        observed_summary_statistics, ground_truth_parameter,
+        self.history.store_initial_data(ground_truth_model,
+                                        abc_options,
+                                        observed_summary_statistics,
+                                        ground_truth_parameter,
+                                        model_names,
                                         self.distance_function.to_json(),
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
@@ -373,7 +376,7 @@ class ABCSMC:
         if t == 0:  # we need a particle population to do the fitting
             return
 
-        for m in range(self.history.nr_models):
+        for m in self.history.alive_models(t - 1):
             particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles_df, weights)
 

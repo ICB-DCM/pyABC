@@ -54,8 +54,6 @@ class History:
         Whether to print additional debug output.
 
 
-
-
     .. warning::
 
         Most likely you will never have to instantiate the class yourself.
@@ -64,11 +62,11 @@ class History:
         used as querying is usually done on the stored database usind the abc_loader.
 
     """
-    def __init__(self, db_path: str, nr_models: int, model_names: List[str], debug=False):
-        self.nr_models = nr_models
+    DB_TIMEOUT = 120
+
+    def __init__(self, db_path: str, debug=False):
         "Only counts the simulations which appear in particles. If a simulation terminated prematurely it is not counted."
         self.db_path = db_path
-        self.model_names = list(model_names)
         self._session = None
         self._engine = None
         self.id = self._pre_calculate_id()
@@ -79,6 +77,15 @@ class History:
         if len(abcs) == 1:
             return abcs[0].id
         return None
+
+    @with_session
+    def alive_models(self, t):
+        alive = (self._session.query(Model.m)
+                 .join(Population)
+                 .join(ABCSMC)
+                 .filter(ABCSMC.id == self.id)
+                 .filter(Population.t == t)).all()
+        return sorted([a[0] for a in alive])
 
     @with_session
     def weighted_parameters_dataframe(self, t, m):
@@ -111,6 +118,7 @@ class History:
     def store_initial_data(self, ground_truth_model: int, options,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
+                           model_names: List[str],
                            distance_function_json_str: str,
                            eps_function_json_str: str,
                            population_strategy_json_str: str):
@@ -135,6 +143,7 @@ class History:
             the epsilon represented as json string
         """
         # store ground truth to db
+        self.model_names = model_names
         try:
             git_hash = git.Repo(os.environ['PYTHONPATH']).head.commit.hexsha
         except (git.exc.NoSuchPathError, KeyError) as e:
@@ -148,7 +157,7 @@ class History:
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abc_smc_simulation.populations.append(population)
 
-        model = Model(m=ground_truth_model, p_model=1, name=self.model_names[ground_truth_model])
+        model = Model(m=ground_truth_model, p_model=1, name=model_names[ground_truth_model])
         population.models.append(model)
 
         gt_part = Particle(w=1)
@@ -177,7 +186,7 @@ class History:
         # I think I did this funnny construction due to some pickling issues but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db_path, connect_args={'timeout': 120})
+        engine = create_engine(self.db_path, connect_args={'timeout': self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -203,7 +212,7 @@ class History:
 
     @with_session
     def _save_to_population_db(self, t: int, current_epsilon: float, nr_simulations:int,
-                               store, model_probabilities):
+                               store: dict, model_probabilities: dict):
         # sqlalchemy experimental stuff and highly inefficient implementation here
         # but that is ok for testing purposes for the moment
         # prepare
@@ -214,10 +223,10 @@ class History:
         # store the population
         population = Population(t=t, nr_samples=nr_simulations, epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
-        for m in range(len(store)):
+        for m, model_population in store.items():
             model = Model(m=m, p_model=model_probabilities[m], name=self.model_names[m])
             population.models.append(model)
-            for store_item in store[m]:
+            for store_item in model_population:
                 weight = store_item['weight']
                 distance_list = store_item['distance_list']
                 parameter = store_item['parameter']
@@ -262,7 +271,7 @@ class History:
             Whether enough particles were found in the population.
 
         """
-        store, model_probabilities = normalize(particle_population, self.nr_models)
+        store, model_probabilities = normalize(particle_population)
         self._save_to_population_db(t, current_epsilon, nr_simulations, store, model_probabilities)
 
     def get_results_distribution(self, m: int, parameter: str) -> (np.ndarray, np.ndarray):
@@ -423,7 +432,7 @@ class History:
         return json.loads(abc.population_strategy)
 
 
-def normalize(population: List[ValidParticle], nr_models: int):
+def normalize(population: List[ValidParticle]):
     """
       * Normalize particle weights according to nr of particles in a model
       * Caclculate marginal model probabilities
@@ -431,22 +440,24 @@ def normalize(population: List[ValidParticle], nr_models: int):
     # TODO: This has a medium ugly side effect... maybe it is ok
     population = list(population)
 
-    store = [[] for _ in range(nr_models)]
+    store = {}
 
     for particle in population:
         if particle is not None:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
-            store[particle.m].append(particle)
+            store.setdefault(particle.m, []).append(particle)
         else:
             print("ABC History warning: Empty particle.")
 
 
-    model_total_weights = [sum(particle.weight for particle in model)
-                           for model in store]
-    population_total_weight = sum(model_total_weights)
-    model_probabilities = [w / population_total_weight for w in model_total_weights]
+    model_total_weights = {m: sum(particle.weight for particle in model)
+                           for m, model in store.items()}
+    population_total_weight = sum(model_total_weights.values())
+    model_probabilities = {m: w / population_total_weight for m, w in model_total_weights.items()}
 
     # normalize within each model
-    for model_total_weight, model in zip(model_total_weights, store):
+    for m in store:
+        model_total_weight = model_total_weights[m]
+        model = store[m]
         for particle in model:
             particle.weight /= model_total_weight
 
