@@ -71,6 +71,14 @@ class History:
         self.model_names = list(model_names)
         self._session = None
         self._engine = None
+        self.id = self._pre_calculate_id()
+
+    @with_session
+    def _pre_calculate_id(self):
+        abcs = self._session.query(ABCSMC).all()
+        if len(abcs) == 1:
+            return abcs[0].id
+        return None
 
     @with_session
     def weighted_parameters_dataframe(self, t, m):
@@ -432,7 +440,8 @@ def normalize(population: List[ValidParticle], nr_models: int):
             print("ABC History warning: Empty particle.")
 
 
-    model_total_weights = [sum(particle.weight for particle in model) for model in store]
+    model_total_weights = [sum(particle.weight for particle in model)
+                           for model in store]
     population_total_weight = sum(model_total_weights)
     model_probabilities = [w / population_total_weight for w in model_total_weights]
 
