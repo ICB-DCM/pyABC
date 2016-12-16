@@ -341,7 +341,7 @@ class History:
                     .order_by(Model.m)
                     .all())
 
-        p_models_arr = sp.zeros(max(self.alive_models(t)) + 1, dtype=float)
+        p_models_arr = sp.zeros(max(max(self.alive_models(t)), len(self.model_names)) + 1, dtype=float)
         for p, m in p_models:
             p_models_arr[m] = p
         return p_models_arr
