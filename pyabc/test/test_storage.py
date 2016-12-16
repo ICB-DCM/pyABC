@@ -144,7 +144,5 @@ def test_population_strategy_storage(history):
 def test_model_probabilities(history):
     history.append_population(1, .23, rand_pop(3), 234)
     probs = history.get_model_probabilities()
-    assert probs[0] == 0
-    assert probs[1] == 0
-    assert probs[2] == 0
-    assert probs[3] == 1
+    assert probs.p[3] == 1
+    assert probs.index.tolist() == [3]

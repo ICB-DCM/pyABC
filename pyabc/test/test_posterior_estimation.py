@@ -568,7 +568,7 @@ class TestABCAdaptive(TestABC):
 
         # We plug all the ABC setup together
         nr_populations = 3
-        population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.01)
+        population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.05)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
