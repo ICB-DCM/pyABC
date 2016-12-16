@@ -11,6 +11,7 @@ Backlog
 -------
 - Manuskript (JH TODO)
 - Example application (JH TODO)
+- Standard visualizations, possibly web based (JH TODO)
 - Good performance for heterogeneous evaluation times
 - Good performance for small evaluation times
 - Good performance for large evaluation times
