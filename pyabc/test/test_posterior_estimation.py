@@ -71,9 +71,9 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = .2
         history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
         expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
-        self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
+        self.assertLess(abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2), .05)
 
     def test_empty_population(self):
         def make_model(theta):
@@ -101,9 +101,9 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = -1
         history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
         expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
-        self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
+        self.assertLess(abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2), .05)
 
     def test_beta_binomial_two_identical_models(self):
         binomial_n = 5
@@ -126,10 +126,8 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = .2
         history = abc.run( minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
-        self.assertLess(abs(p1 - .5) + abs(p2 - .5), .08)
-
-
+        mp = history.get_model_probabilities()
+        self.assertLess(abs(mp.p[0] - .5) + abs(mp.p[1] - .5), .08)
 
     def test_all_in_one_model(self):
         models = [AllInOneModel() for _ in range(2)]
@@ -146,9 +144,8 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = .2
         history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
-        self.assertLess(abs(p1 - .5) + abs(p2 - .5), .08)
-
+        mp = history.get_model_probabilities()
+        self.assertLess(abs(mp.p[0] - .5) + abs(mp.p[1] - .5), .08)
 
     def test_beta_binomial_different_priors(self):
         binomial_n = 5
@@ -175,7 +172,7 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = .2
         history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
 
         def B(a, b):
             return gamma(a) * gamma(b) / gamma(a + b)
@@ -187,7 +184,7 @@ class TestABCFast(TestABC):
         p2_expected_unnormalized = expected_p(a2, b2, n1)
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized+p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized+p2_expected_unnormalized)
-        self.assertLess(abs(p1 - p1_expected) + abs(p2 - p2_expected), .08)
+        self.assertLess(abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected), .08)
 
 
     def test_beta_binomial_different_priors_initial_epsilon_from_sample(self):
@@ -215,7 +212,7 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = -1
         history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
 
         def B(a, b):
             return gamma(a) * gamma(b) / gamma(a + b)
@@ -228,7 +225,7 @@ class TestABCFast(TestABC):
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
 
-        self.assertLess(abs(p1 - p1_expected) + abs(p2 - p2_expected), .08)
+        self.assertLess(abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected), .08)
 
     def test_continuous_non_gaussian(self):
         def model(args):
@@ -262,8 +259,7 @@ class TestABCFast(TestABC):
 
         x = sp.linspace(0.1, 1)
         max_distribution_difference = sp.absolute(f_empirical(x) - f_expected(x)).max()
-        #self.assertLess(max_distribution_difference, 0.08)
-        self.assertLess(max_distribution_difference, 0.2) # Dennis
+        self.assertLess(max_distribution_difference, 0.12)
 
 
 class TestABCSlow(TestABC):
@@ -381,7 +377,7 @@ class TestABCSlow(TestABC):
         nr_populations = 1
         abc.do_not_stop_when_only_single_model_alive()
         history = abc.run(minimum_epsilon)
-        p1_emp, p2_emp = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
 
         def p_y_given_model(mu_x_model):
             return st.norm(mu_x_model, sp.sqrt(sigma_y**2+sigma_x**2)).pdf(y_observed)
@@ -391,7 +387,7 @@ class TestABCSlow(TestABC):
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         self.assertEqual(history.max_t, nr_populations - 1)
-        self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
+        self.assertLess(abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected), .07)
 
     def test_two_competing_gaussians_multiple_population(self):
         # Define a gaussian model
@@ -434,7 +430,7 @@ class TestABCSlow(TestABC):
         history = abc.run(minimum_epsilon)
 
         # Evaluate the model probabililties
-        p1_emp, p2_emp = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
 
         def p_y_given_model(mu_x_model):
             return st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
@@ -444,7 +440,7 @@ class TestABCSlow(TestABC):
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         self.assertEqual(history.max_t, nr_populations-1)
-        self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
+        self.assertLess(abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected), .07)
 
 
 class TestABCAdaptive(TestABC):
@@ -474,10 +470,10 @@ class TestABCAdaptive(TestABC):
 
         minimum_epsilon = -1
         history = abc.run(minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
+        mp = history.get_model_probabilities()
         expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
         #self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .05)
-        self.assertLess(abs(p1 - expected_p1) + abs(p2 - expected_p2), .1)
+        self.assertLess(abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2), .1)
 
     def test_beta_binomial_two_identical_models_adaptive(self):
         binomial_n = 5
@@ -500,8 +496,8 @@ class TestABCAdaptive(TestABC):
 
         minimum_epsilon = .2
         history = abc.run( minimum_epsilon)
-        p1, p2 = history.get_model_probabilities()
-        self.assertLess(abs(p1 - .5) + abs(p2 - .5), .08)
+        mp = history.get_model_probabilities()
+        self.assertLess(abs(mp.p[0] - .5) + abs(mp.p[1] - .5), .08)
 
     def test_gaussian_multiple_populations_adpative_population_size(self):
         sigma_x = 1
@@ -539,14 +535,14 @@ class TestABCAdaptive(TestABC):
         expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
         x = sp.linspace(-8, 8)
         max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
-        # self.assertLess(max_distribution_difference, 0.052)
-        self.assertLess(max_distribution_difference, 0.5) # Dennis
+        self.assertLess(max_distribution_difference, 0.15)
+        #self.assertLess(max_distribution_difference, 0.5) # Dennis
         self.assertEqual(history.max_t, nr_populations - 1)
         mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
-        # self.assertLess(abs(mean_emp - mu_x_given_y), .07)
-        # self.assertLess(abs(std_emp - sigma_x_given_y), .12)
-        self.assertLess(abs(mean_emp - mu_x_given_y), .07*5)   # Dennis
-        self.assertLess(abs(std_emp - sigma_x_given_y), .12*5) # Dennis
+        self.assertLess(abs(mean_emp - mu_x_given_y), .07)
+        self.assertLess(abs(std_emp - sigma_x_given_y), .12)
+        #self.assertLess(abs(mean_emp - mu_x_given_y), .07*5)   # Dennis
+        #self.assertLess(abs(std_emp - sigma_x_given_y), .12*5) # Dennis
 
     def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(self):
         # Define a gaussian model
@@ -572,7 +568,7 @@ class TestABCAdaptive(TestABC):
 
         # We plug all the ABC setup together
         nr_populations = 3
-        population_size = AdaptivePopulationStrategy(400, 3)
+        population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.01)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                      PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
@@ -588,8 +584,7 @@ class TestABCAdaptive(TestABC):
         history = abc.run(minimum_epsilon)
 
         # Evaluate the model probabililties
-        p1_emp, p2_emp = history.get_model_probabilities()
-        print(p1_emp, p2_emp)
+        mp = history.get_model_probabilities()
 
         def p_y_given_model(mu_x_model):
             return st.norm(mu_x_model, sp.sqrt(sigma ** 2 + sigma ** 2)).pdf(y_observed)
@@ -599,7 +594,7 @@ class TestABCAdaptive(TestABC):
         p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
         self.assertEqual(history.max_t, nr_populations-1)
-        self.assertLess(abs(p1_emp - p1_expected) + abs(p2_emp - p2_expected), .07)
+        self.assertLess(abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected), .07)
 
 
 

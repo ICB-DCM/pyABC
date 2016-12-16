@@ -154,8 +154,8 @@ class History:
         eps_function_json_str: str
             the epsilon represented as json string
         """
-        # store ground truth to db
         self.model_names = model_names
+        # store ground truth to db
         try:
             git_hash = git.Repo(os.environ['PYTHONPATH']).head.commit.hexsha
         except (git.exc.NoSuchPathError, KeyError) as e:
@@ -236,7 +236,7 @@ class History:
         population = Population(t=t, nr_samples=nr_simulations, epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
         for m, model_population in store.items():
-            model = Model(m=m, p_model=model_probabilities[m], name=self.model_names[m])
+            model = Model(m=int(m), p_model=float(model_probabilities[m]), name=str(self.model_names[m]))
             population.models.append(model)
             for store_item in model_population:
                 weight = store_item['weight']
@@ -309,7 +309,7 @@ class History:
         return df[parameter].as_matrix(), w
 
     @with_session
-    def get_model_probabilities(self, t=None) -> np.ndarray:
+    def get_model_probabilities(self, t=None) -> pd.DataFrame:
         """
         Model probabilities.
 
@@ -341,10 +341,9 @@ class History:
                     .order_by(Model.m)
                     .all())
 
-        p_models_arr = sp.zeros(max(max(self.alive_models(t)), len(self.model_names)) + 1, dtype=float)
-        for p, m in p_models:
-            p_models_arr[m] = p
-        return p_models_arr
+        p_models_df = pd.DataFrame(p_models, columns=["p", "m"]).set_index("m")
+        p_models_df = p_models_df[p_models_df.p > 0]
+        return p_models_df
 
     def nr_of_models_alive(self, t=None) -> int:
         """
@@ -362,7 +361,7 @@ class History:
             None is for the last population
         """
         model_probs = self.get_model_probabilities(t)
-        return int((model_probs > 0).sum())
+        return int((model_probs.p > 0).sum())
 
     @with_session
     def get_weighted_distances(self, t: int) -> pd.DataFrame:
@@ -383,17 +382,16 @@ class History:
         if t is None:
             t = self.max_t
 
-        model_probabilities = self.get_model_probabilities(t)
-        model_probabilities_df = pd.DataFrame({"m": list(range(len(model_probabilities))),
-                                               "model_probabilities": model_probabilities})
         query = (self._session.query(Sample.distance, Particle.w, Model.m)
                  .join(Particle)
                  .join(Model).join(Population).join(ABCSMC)
                  .filter(ABCSMC.id == self.id)
                  .filter(Population.t == t))
         df = pd.read_sql_query(query.statement, self._engine)
-        df_weighted = df.merge(model_probabilities_df)
-        df_weighted["w"] *= df_weighted["model_probabilities"]
+
+        model_probabilities = self.get_model_probabilities(t).reset_index()
+        df_weighted = df.merge(model_probabilities)
+        df_weighted["w"] *= df_weighted["p"]
         return df_weighted
 
     @with_session
