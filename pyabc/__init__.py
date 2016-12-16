@@ -60,3 +60,13 @@ __all__ = [
     "SQLDataStore",
     "ABCLoader"
 ]
+
+
+import os
+import logging
+try:
+    loglevel = os.environ["ABC_LOG_LEVEL"]
+    numeric_loglevel = getattr(logging, loglevel.upper())
+    logging.getLogger().setLevel(numeric_loglevel)
+except KeyError:
+    pass

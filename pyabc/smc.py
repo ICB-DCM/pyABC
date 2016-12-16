@@ -10,9 +10,9 @@ import logging
 abclogger = logging.getLogger("ABC")
 import pandas as pd
 import scipy as sp
-import copy as cp
 
-from parallel.sampler import MappingSampler, SingleCoreSampler
+
+from parallel.sampler import SingleCoreSampler
 from .distance_functions import DistanceFunction, to_distance
 from .epsilon import Epsilon
 from .model import Model
@@ -21,12 +21,16 @@ from .transition import Transition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
+from .random import fast_random_choice
 
 model_output = TypeVar("model_output")
 
 
 def identity(x):
     return x
+
+
+
 
 
 class ABCSMC:
@@ -283,8 +287,8 @@ class ABCSMC:
         if t == 0:
             weight = len(distance_list) / self.population_strategy.nr_samples_per_parameter
         else:
-            model_factor = sum(model_probabilities[j] * self.model_perturbation_kernel.pmf(m_ss, j)
-                                 for j in range(len(self.models)))
+            model_factor = sum(row.p * self.model_perturbation_kernel.pmf(m_ss, m)
+                                 for m, row in model_probabilities.iterrows())
             particle_factor = self.transitions[m_ss].pdf(pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
             if normalization == 0:
@@ -296,7 +300,7 @@ class ABCSMC:
                       / normalization)
         return weight
 
-    def generate_valid_proposal(self, t, model_probabilities):
+    def generate_valid_proposal(self, t, m, p):
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior_distribution.rvs()
@@ -305,13 +309,17 @@ class ABCSMC:
 
         # later generation
         while True:  # find m_s and theta_ss, valid according to prior
-            m_s = sp.random.choice(len(model_probabilities), p=model_probabilities)
-            m_ss = self.model_perturbation_kernel.rvs(m_s)
-            # theta_s is None if the population m_ss has died out.
-            # This can happen since the model_perturbation_kernel can return
-            # a model nr which has died out.
-            if model_probabilities[m_ss] == 0:
-                continue
+            if len(m) > 1:
+                index = fast_random_choice(p)
+                m_s = m[index]
+                m_ss = self.model_perturbation_kernel.rvs(m_s)
+                # theta_s is None if the population m_ss has died out.
+                # This can happen since the model_perturbation_kernel can return
+                # a model nr which has died out.
+                if m_ss not in m:
+                    continue
+            else:
+                m_ss = m[0]
             theta_ss = self.transitions[m_ss].rvs()
 
             if (self.model_prior_distribution.pmf(m_ss)
@@ -343,8 +351,11 @@ class ABCSMC:
             model_probabilities = self.history.get_model_probabilities()
             abclogger.debug('now submitting population ' + str(t))
 
+            m = sp.array(model_probabilities.index)
+            p = sp.array(model_probabilities.p)
+
             def sample_one():
-                return self.generate_valid_proposal(t, model_probabilities)
+                return self.generate_valid_proposal(t, m, p)
 
             def eval_one(par):
                 return self.evaluate_proposal(*par, current_eps, t, model_probabilities)
