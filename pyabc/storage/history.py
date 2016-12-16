@@ -79,7 +79,19 @@ class History:
         return None
 
     @with_session
-    def alive_models(self, t):
+    def alive_models(self, t) -> List:
+        """
+
+        Parameters
+        ----------
+        t: int
+            Population nr
+
+        Returns
+        -------
+        alive: List
+            A list which contains the indices of those models which are still alive
+        """
         alive = (self._session.query(Model.m)
                  .join(Population)
                  .join(ABCSMC)
@@ -321,7 +333,7 @@ class History:
                  [0])
 
         p_models = (self._session
-                    .query(Model.p_model)
+                    .query(Model.p_model, Model.m)
                     .join(Population)
                     .join(ABCSMC)
                     .filter(ABCSMC.id == self.id)
@@ -329,7 +341,9 @@ class History:
                     .order_by(Model.m)
                     .all())
 
-        p_models_arr = sp.array([r[0] for r in p_models], dtype=float)
+        p_models_arr = sp.zeros(max(self.alive_models(t)) + 1, dtype=float)
+        for p, m in p_models:
+            p_models_arr[m] = p
         return p_models_arr
 
     def nr_of_models_alive(self, t=None) -> int:

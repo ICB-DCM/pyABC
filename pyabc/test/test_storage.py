@@ -139,3 +139,9 @@ def test_population_retrieval(history):
 def test_population_strategy_storage(history):
     res = history.get_population_strategy()
     assert res["name"] == "pop_strategy_str_test"
+
+
+def test_model_probabilities(history):
+    history.append_population(1, .23, rand_pop(3), 234)
+    probs = history.get_model_probabilities()
+    assert (probs == np.array([0, 0, 0, 1])).all()
