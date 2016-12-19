@@ -64,7 +64,8 @@ class TestABCFast(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"result": 0}, 0, {}, options)
@@ -94,7 +95,8 @@ class TestABCFast(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"result": 0}, 0, {}, options)
@@ -115,11 +117,13 @@ class TestABCFast(TestABC):
         models = list(map(SimpleModel, models))
         model_prior = RV("randint", 0, 2)
         population_size = ConstantPopulationStrategy(800, 3)
-        parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
+        parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1))
+                                                    for _ in range(2)]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"result": 2}, 0, {}, options)
@@ -133,11 +137,13 @@ class TestABCFast(TestABC):
         models = [AllInOneModel() for _ in range(2)]
         model_prior = RV("randint", 0, 2)
         population_size = ConstantPopulationStrategy(800, 3)
-        parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
+        parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1))
+                                                    for _ in range(2)]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"result": 2}, 0, {}, options)
@@ -164,7 +170,8 @@ class TestABCFast(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+                     population_size)
 
         options = {'db_path': self.db}
         n1 = 2
@@ -204,7 +211,8 @@ class TestABCFast(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(median_multiplier=.9), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]),
+                     MedianEpsilon(median_multiplier=.9), population_size)
 
         options = {'db_path': self.db}
         n1 = 2
@@ -239,7 +247,8 @@ class TestABCFast(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.2), population_size)
+                     PercentileDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.2),
+                     population_size)
 
         options = {'db_path': self.db}
         d_observed = .5
@@ -280,7 +289,8 @@ class TestABCSlow(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.1), population_size)
+                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.1),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"y": observed_data}, 0, {}, options)
@@ -323,7 +333,8 @@ class TestABCSlow(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
+                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"y": y_observed}, 0, {}, options)
@@ -368,7 +379,8 @@ class TestABCSlow(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.02), population_size)
+                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.02),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"y": y_observed}, 0, {}, options)
@@ -417,7 +429,8 @@ class TestABCSlow(TestABC):
         population_size = ConstantPopulationStrategy(400, 3)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
+                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+                     population_size)
 
         # Finally we add meta data such as model names and define where to store the results
         options = {'db_path': self.db}
@@ -463,7 +476,8 @@ class TestABCAdaptive(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"result": 0}, 0, {}, options)
@@ -489,7 +503,8 @@ class TestABCAdaptive(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1), population_size)
+                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"result": 2}, 0, {}, options)
@@ -516,7 +531,8 @@ class TestABCAdaptive(TestABC):
         parameter_perturbation_kernels = [MultivariateNormalTransition()]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
+                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+                     population_size)
 
         options = {'db_path': self.db}
         abc.set_data({"y": y_observed}, 0, {}, options)
@@ -571,7 +587,8 @@ class TestABCAdaptive(TestABC):
         population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.05)
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
                      parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2), population_size)
+                     PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+                     population_size)
 
         # Finally we add meta data such as model names and define where to store the results
         options = {'db_path': self.db}
