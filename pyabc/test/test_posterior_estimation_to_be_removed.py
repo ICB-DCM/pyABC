@@ -63,8 +63,10 @@ class TestABCFast(TestABC):
         parameter_given_model_prior_distribution = [Distribution(), Distribution()]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
         abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                     parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+                     parameter_given_model_prior_distribution,
+                     parameter_perturbation_kernels,
+                     MinMaxDistanceFunction(measures_to_use=["result"]),
+                     MedianEpsilon(.1),
                      population_size)
 
         options = {'db_path': self.db}
