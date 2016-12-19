@@ -46,38 +46,6 @@ class AllInOneModel(Model):
 
 
 class TestABCFast(TestABC):
-    def test_cookie_jar(self):
-        def make_model(theta):
-            def model(args):
-                return {"result": 1 if random.random() > theta else 0}
-            return model
-
-        theta1 = .2
-        theta2 = .6
-        model1 = make_model(theta1)
-        model2 = make_model(theta2)
-        models = [model1, model2]
-        models = list(map(SimpleModel, models))
-        model_prior = RV("randint", 0, 2)
-        population_size = ConstantPopulationStrategy(1500, 1)
-        parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-        parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-        abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                     parameter_given_model_prior_distribution,
-                     parameter_perturbation_kernels,
-                     MinMaxDistanceFunction(measures_to_use=["result"]),
-                     MedianEpsilon(.1),
-                     population_size)
-
-        options = {'db_path': self.db}
-        abc.set_data({"result": 0}, 0, {}, options)
-
-        minimum_epsilon = .2
-        history = abc.run(minimum_epsilon)
-        mp = history.get_model_probabilities()
-        expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
-        self.assertLess(abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2), .05)
-
     def test_empty_population(self):
         def make_model(theta):
             def model(args):
