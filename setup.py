@@ -9,6 +9,8 @@ from setuptools import setup, find_packages
 
 
 setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
+                "flask", "flask_bootstrap", "bokeh", "redis",
+                "dill",
                 'gitpython', 'seaborn', 'scikit-learn',
                 'matplotlib', 'sqlalchemy'],
      packages=find_packages(exclude=["IPythonNotebooks*", "figures*", "misc*", "pydokuwiki*", "scripts*", "style*", "data*"]),
@@ -20,4 +22,11 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
      platforms="all",
      url="http:/icbayes.de",
      include_package_data=True,
-     description='Massively parallel ABC for Python')
+     description='Massively parallel ABC for Python',
+      zip_safe=False,  # not zip safe b/c of Flask templates
+      entry_points={
+            'console_scripts': [
+                  'abc-server = visserver.server:run_app',
+            ]
+      },
+      )

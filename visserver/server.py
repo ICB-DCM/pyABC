@@ -21,6 +21,7 @@ app = Flask(__name__)
 Bootstrap(app)
 
 
+
 @app.route('/')
 def main():
     return render_template("index.html")
@@ -87,7 +88,6 @@ def abc_model(abc_id, model_id, t):
         plot_df = df[["CDF", parameter]].sort_values(parameter)
         plot_df_cumsum = plot_df.cumsum()
         plot_df_cumsum[parameter] = plot_df[parameter]
-        print(plot_df_cumsum)
         p = PlotScriptDiv(*components(Line(x=parameter, y="CDF", data=plot_df_cumsum)))
         p.parameter_name = parameter
         plots.append(p)
@@ -102,7 +102,13 @@ def abc_model(abc_id, model_id, t):
                            available_t=list(range(history.max_t+1)))
 
 
-if __name__ == '__main__':
-    db = os.path.expanduser(sys.argv[1])
-    history = History("sqlite:///" + db)
+db = os.path.expanduser(sys.argv[1])
+history = History("sqlite:///" + db)
+
+
+def run_app():
     app.run(debug=True)
+
+
+if __name__ == '__main__':
+    main()
