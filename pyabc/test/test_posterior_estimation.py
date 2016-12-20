@@ -12,14 +12,19 @@ from parallel.sampler import SingleCoreSampler, MappingSampler
 from scipy.special import gamma, binom
 import scipy.interpolate
 import scipy as sp
+import multiprocessing
 REMOVE_DB = True
 
 
+class MultiProcessingMappingSampler(MappingSampler):
+    def __init__(self, map=None):
+        mapper = multiprocessing.Pool().map
+        super().__init__(mapper)
 
-@pytest.fixture(params=[SingleCoreSampler])
+
+@pytest.fixture(params=[SingleCoreSampler, MappingSampler, MultiProcessingMappingSampler])
 def sampler(request):
     return request.param()
-
 
 
 @pytest.fixture
@@ -73,7 +78,6 @@ def test_cookie_jar(db_path, sampler):
     mp = history.get_model_probabilities()
     expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .05
-
 
 
 def test_empty_population(db_path, sampler):
@@ -487,7 +491,6 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < .07
 
 
-
 def test_empty_population_adaptive(db_path, sampler):
     def make_model(theta):
         def model(args):
@@ -590,8 +593,7 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
     assert history.max_t == nr_populations - 1
     mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
     assert abs(mean_emp - mu_x_given_y) < .07
-    assert abs(std_emp - sigma_x_given_y)<  .12
-
+    assert abs(std_emp - sigma_x_given_y) < .12
 
 
 def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_path, sampler):
@@ -647,5 +649,3 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
     p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
     assert history.max_t == nr_populations-1
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < .07
-
-
