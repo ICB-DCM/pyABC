@@ -99,7 +99,7 @@ def abc_model(abc_id, model_id, t):
                            plots=plots,
                            BOKEH=BOKEH,
                            t=t,
-                           available_t=list(range(history.max_t)))
+                           available_t=list(range(history.max_t+1)))
 
 
 if __name__ == '__main__':
