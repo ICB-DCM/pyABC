@@ -8,6 +8,7 @@ import json
 from pyabc import History
 from bokeh.resources import INLINE
 from bokeh.layouts import column
+from bokeh.models.widgets import Panel, Tabs
 BOKEH = INLINE
 
 
@@ -57,9 +58,9 @@ def abc_detail(abc_id):
     if len(model_probabilities) > 0:
         populations = history.get_all_populations()
         populations = populations[populations.t > 0]
-        plot = column(Line(x="t", data=model_probabilities),
-                      Line(x="t", y="nr_samples", data=populations),
-                      Line(x="t", y="epsilon", data=populations))
+        plot = Tabs(tabs=[Panel(child=Line(x="t", data=model_probabilities), title="Model probability"),
+                          Panel(child=Line(x="t", y="nr_samples", data=populations), title="Samples"),
+                          Panel(child=Line(x="t", y="epsilon", data=populations), title="Epsilon")])
         plot = PlotScriptDiv(*components(plot))
         return render_template("abc_detail.html",
                                abc_id=abc_id,
