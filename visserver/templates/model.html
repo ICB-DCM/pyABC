@@ -13,8 +13,23 @@
 
 {% block navbar_links %}
 {{ super() }}
-    <a href="{{ url_for('abc_overview') }}">Overview</a>
-    <a href="{{ url_for('abc_detail', abc_id=abc_id) }}">Run</a>
+    <li><a href="{{ url_for('abc_overview') }}">Overview</a></li>
+    <li><a href="{{ url_for('abc_detail', abc_id=abc_id) }}">Run</a></li>
+
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+      Populations <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+      {% for t in available_t %}
+         <li>
+           <a href="{{ url_for('abc_model',abc_id=abc_id, model_id=model_id, t=t) }}">t={{ t }}</a>
+         </li>
+      {% endfor %}
+    </ul>
+</li>
+
+
 {% endblock %}
 
 

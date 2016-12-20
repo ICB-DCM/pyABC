@@ -2,7 +2,23 @@
 
 {% block navbar_links %}
 {{ super() }}
-<a href="{{ url_for('abc_overview') }}">Overview</a>
+<li><a href="{{ url_for('abc_overview') }}">Overview</a></li>
+
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+      Models <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+      {% for m in model_ids %}
+         <li>
+           <a href="{{ url_for('abc_model', abc_id=abc_id, model_id=m, t='max') }}">
+              Model {{ m }}
+           </a>
+         </li>
+      {% endfor %}
+    </ul>
+</li>
+
 {% endblock %}
 
 {% block scripts %}
@@ -51,6 +67,6 @@
   {{ abc.git_hash  }}
 
   <h2>plots</h2>
-  Models: {% for m in model_ids %}<a href="{{ url_for('abc_model', abc_id=abc_id, model_id=m, t='max') }}">{{ m }}</a> {% endfor %}
+  Models:
   {{ plot.div|safe}}
 {% endblock %}
