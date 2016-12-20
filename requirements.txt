@@ -2,3 +2,4 @@ cloudpickle
 gitpython
 sqlalchemy
 flask
+flask_bootstrap

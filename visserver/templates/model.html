@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}ABC {{ abc_id }}, Model {{ model_id }}{% endblock %}
+
+{% block navbar_links %}
+{{ super() }}
+    <a href="{{ url_for("abc_id", abc_id=abc_id) }}">Run</a>
+{% endblock %}
+
+
+{% block content %}
+  <h1>ABC {{ abc_id }}, Model {{ model_id }}</h1>
+{% endblock %}

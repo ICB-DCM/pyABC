@@ -1,0 +1,11 @@
+{% extends "bootstrap/base.html" %}
+
+{% block title %}ABC Vis Server{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-fixed-top">
+    {% block navbar_links %}
+        <a href="{{ url_for("main") }}">Main</a>
+    {% endblock %}
+</div>
+{% endblock %}

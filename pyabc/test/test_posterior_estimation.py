@@ -13,7 +13,7 @@ from scipy.special import gamma, binom
 import scipy.interpolate
 import scipy as sp
 import multiprocessing
-REMOVE_DB = True
+REMOVE_DB = False
 
 
 class MultiProcessingMappingSampler(MappingSampler):
