@@ -75,6 +75,8 @@ def abc_model(abc_id, model_id, t):
         p = PlotScriptDiv(*components(Line(x=parameter, y="CDF", data=plot_df_cumsum)))
         p.parameter_name = parameter
         plots.append(p)
+    if len(plots) == 0:
+        plots.append(PlotScriptDiv("", "This model has no Parameters"))
     return render_template("model.html",
                            abc_id=abc_id,
                            model_id=model_id,
