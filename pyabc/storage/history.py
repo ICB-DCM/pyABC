@@ -121,6 +121,10 @@ class History:
         return pars, w_arr
 
     @with_session
+    def this_abc(self):
+        return self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
+
+    @with_session
     def get_all_populations(self):
         query = (self._session.query(Population.t, Population.population_end_time,
                                      Population.nr_samples, Population.epsilon)

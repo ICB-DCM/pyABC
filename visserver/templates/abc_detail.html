@@ -18,6 +18,39 @@
 
 {% block content %}
   <h1>ABC {{ abc_id }} details</h1>
+
+  <h2>General</h2>
+   <table>
+  {% for key, value in abc.json_parameters.items() %}
+       <tr><td>{{ key }}:</td><td>{{ value }}</td></tr>
+  {% endfor %}
+  </table>
+
+  <h2>Distance Function: {{ abc.distance_function["name"] }}</h2>
+  <table>
+  {% for key, value in abc.distance_function.items() %}
+       <tr><td>{{ key }}:</td><td>{{ value }}</td></tr>
+  {% endfor %}
+  </table>
+
+  <h2>Epsilon function: {{ abc.epsilon_function["name"] }}</h2>
+  <table>
+  {% for key, value in abc.epsilon_function.items() %}
+       <tr><td>{{ key }}:</td><td>{{ value }}</td></tr>
+  {% endfor %}
+  </table>
+
+  <h2>Population Strategy: {{ abc.population_strategy["name"] }}</h2>
+  <table>
+  {% for key, value in abc.population_strategy.items() %}
+       <tr><td>{{ key }}:</td><td>{{ value }}</td></tr>
+  {% endfor %}
+  </table>
+
+  <h2>Git</h2>
+  {{ abc.git_hash  }}
+
+  <h2>plots</h2>
   Models: {% for m in model_ids %}<a href="{{ url_for('abc_model', abc_id=abc_id, model_id=m, t='max') }}">{{ m }}</a> {% endfor %}
   {{ plot.div|safe}}
 {% endblock %}

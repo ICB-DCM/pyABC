@@ -4,6 +4,7 @@ import sys
 from bokeh.charts import Line
 from bokeh.embed import components
 import os
+import json
 from pyabc import History
 from bokeh.resources import INLINE
 from bokeh.layouts import column
@@ -31,9 +32,22 @@ def abc_overview():
     return render_template("abc_overview.html", runs=runs)
 
 
+class ABCInfo:
+    def __init__(self, abc):
+        self.abc = abc
+
+    def __getattr__(self, item):
+        json_str = getattr(self.abc, item).replace("'", '"')
+        try:
+            return json.loads(json_str)
+        except json.JSONDecodeError:
+            return json_str
+
+
 @app.route("/abc/<int:abc_id>")
 def abc_detail(abc_id):
     history.id = abc_id
+    abc = ABCInfo(history.this_abc())
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
     model_probabilities.columns = list(map(lambda x: "p - model {}".format(x),
@@ -50,11 +64,13 @@ def abc_detail(abc_id):
                                abc_id=abc_id,
                                plot=plot,
                                BOKEH=BOKEH,
-                               model_ids=model_ids)
+                               model_ids=model_ids,
+                               abc=abc)
     return render_template("abc_detail.html",
                            abc_id=abc_id,
                            plot=PlotScriptDiv("", "Exception: No data found."),
-                           BOKEH=BOKEH)
+                           BOKEH=BOKEH,
+                           abc=abc)
 
 
 @app.route("/abc/<int:abc_id>/model/<int:model_id>/t/<t>")
