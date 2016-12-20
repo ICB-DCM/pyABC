@@ -1,15 +1,19 @@
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import sys
-from bokeh.charts import Line, Histogram
+from bokeh.charts import Line
 from bokeh.embed import components
 import os
 from pyabc import History
-from collections import namedtuple
-from bokeh.resources import CDN
-BOKEH = CDN
+from bokeh.resources import INLINE
+BOKEH = INLINE
 
-PlotScriptDiv = namedtuple("PlotScriptDiv", "script div")
+
+class PlotScriptDiv:
+    def __init__(self, script, div):
+        self.script=script
+        self.div = div
+
 
 app = Flask(__name__)
 Bootstrap(app)
@@ -47,19 +51,31 @@ def abc_detail(abc_id):
                            BOKEH=BOKEH)
 
 
-@app.route("/abc/<int:abc_id>/model/<int:model_id>")
-def abc_model(abc_id, model_id):
+@app.route("/abc/<int:abc_id>/model/<int:model_id>/t/<t>")
+def abc_model(abc_id, model_id, t):
     history.id = abc_id
-    max_t = history.max_t
-    df, w = history.weighted_parameters_dataframe(max_t, model_id)
+    if t == "max":
+        t = history.max_t
+    else:
+        t = int(t)
+    df, w = history.weighted_parameters_dataframe(t, model_id)
     df["CDF"] = w
     plots = []
     for parameter in [col for col in df if col != "CDF"]:
         plot_df = df[["CDF", parameter]].sort_values(parameter)
         plot_df_cumsum = plot_df.cumsum()
-        plot_df_cumsum = plot_df_cumsum.set_index("CDF")
-        plots.append(PlotScriptDiv(*components(Line(plot_df_cumsum))))
-    return render_template("model.html", abc_id=abc_id, model_id=model_id)
+        plot_df_cumsum[parameter] = plot_df[parameter]
+        print(plot_df_cumsum)
+        p = PlotScriptDiv(*components(Line(x=parameter, y="CDF", data=plot_df_cumsum)))
+        p.parameter_name = parameter
+        plots.append(p)
+    return render_template("model.html",
+                           abc_id=abc_id,
+                           model_id=model_id,
+                           plots=plots,
+                           BOKEH=BOKEH,
+                           t=t,
+                           available_t=list(range(history.max_t)))
 
 
 if __name__ == '__main__':

@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block title %}ABC {{ abc_id }}, Model {{ model_id }}{% endblock %}
 
+
+{% block scripts %}
+{{ super() }}
+   {{ BOKEH.render()|safe }}
+    {% for p in plots %}
+    {{ p.script|safe }}
+    {% endfor %}
+{% endblock %}
+
+
 {% block navbar_links %}
 {{ super() }}
     <a href="{{ url_for('abc_overview') }}">Overview</a>
@@ -9,5 +19,15 @@
 
 
 {% block content %}
-  <h1>ABC {{ abc_id }}, Model {{ model_id }}</h1>
+  <h1>ABC {{ abc_id }}, Model {{ model_id }}, t={{ t }}</h1>
+
+<p>
+  t: {% for t in available_t %}<a href="{{ url_for('abc_model',abc_id=abc_id, model_id=model_id, t=t) }}">{{ t }}</a>{% endfor %}
+</p>
+
+  {% for p in plots %}
+    <h2>Parameter: {{ p.parameter_name }}</h2>
+    {{ p.div|safe }}
+
+  {% endfor %}
 {% endblock %}
