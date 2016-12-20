@@ -72,6 +72,11 @@ class History:
         self.id = self._pre_calculate_id()
 
     @with_session
+    def all_runs(self):
+        runs = self._session.query(ABCSMC).all()
+        return runs
+
+    @with_session
     def _pre_calculate_id(self):
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) == 1:
