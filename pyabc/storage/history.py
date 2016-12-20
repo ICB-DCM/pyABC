@@ -328,27 +328,22 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
-        if t is not None and t < 0:
-            raise Exception("Model probabilities only for t >= 0 or t = None defined.")
-        if t is None:
-            t = (self._session
-                 .query(func.max(Population.t))
-                 .filter(Population.abc_smc_id == self.id)
-                 .one()
-                 [0])
-
         p_models = (self._session
-                    .query(Model.p_model, Model.m)
+                    .query(Model.p_model, Model.m, Population.t)
                     .join(Population)
                     .join(ABCSMC)
                     .filter(ABCSMC.id == self.id)
-                    .filter(Population.t == t)
+                    .filter((Population.t == t if t is not None else Population.t > 0))
                     .order_by(Model.m)
                     .all())
-
-        p_models_df = pd.DataFrame(p_models, columns=["p", "m"]).set_index("m")
-        p_models_df = p_models_df[p_models_df.p > 0]
-        return p_models_df
+        # TODO this is a mess
+        if t is not None:
+            p_models_df = pd.DataFrame([p[:2] for p in p_models], columns=["p", "m"]).set_index("m")
+            p_models_df = p_models_df[p_models_df.p > 0]
+            return p_models_df
+        else:
+            p_models_df = pd.DataFrame(p_models, columns=["p", "m", "t"]).pivot("t", "m", "p").fillna(0)
+            return p_models_df
 
     def nr_of_models_alive(self, t=None) -> int:
         """

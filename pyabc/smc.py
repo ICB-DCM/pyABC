@@ -348,7 +348,7 @@ class ABCSMC:
             abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
             self.fit_transitions(t)
             # cache model_probabilities to not to query the database so soften
-            model_probabilities = self.history.get_model_probabilities()
+            model_probabilities = self.history.get_model_probabilities(self.history.max_t)
             abclogger.debug('now submitting population ' + str(t))
 
             m = sp.array(model_probabilities.index)
@@ -391,4 +391,5 @@ class ABCSMC:
             particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles_df, weights)
 
-        self.population_strategy.adapt_population_size(self.transitions, self.history.get_model_probabilities())
+        self.population_strategy.adapt_population_size(self.transitions,
+                                        self.history.get_model_probabilities(self.history.max_t))

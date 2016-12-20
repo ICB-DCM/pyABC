@@ -75,7 +75,7 @@ def test_cookie_jar(db_path, sampler):
 
 
 
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
     expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .05
 
@@ -111,7 +111,7 @@ def test_empty_population(db_path, sampler):
 
 
 
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
     expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .05
 
@@ -140,7 +140,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
     minimum_epsilon = .2
     history = abc.run( minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
     assert abs(mp.p[0] - .5) + abs(mp.p[1] - .5) < .08
 
 
@@ -170,7 +170,7 @@ def test_all_in_one_model(db_path, sampler):
 
     minimum_epsilon = .2
     history = abc.run(minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
     assert abs(mp.p[0] - .5) + abs(mp.p[1] - .5) < .08
 
 
@@ -201,7 +201,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
 
     minimum_epsilon = .2
     history = abc.run(minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
 
     def B(a, b):
         return gamma(a) * gamma(b) / gamma(a + b)
@@ -243,7 +243,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path, sam
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
 
     def B(a, b):
         return gamma(a) * gamma(b) / gamma(a + b)
@@ -422,7 +422,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler):
     nr_populations = 1
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
         return st.norm(mu_x_model, sp.sqrt(sigma_y**2+sigma_x**2)).pdf(y_observed)
@@ -478,7 +478,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     history = abc.run(minimum_epsilon)
 
     # Evaluate the model probabililties
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
         return st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
@@ -519,7 +519,7 @@ def test_empty_population_adaptive(db_path, sampler):
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
     expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .1
 
@@ -547,7 +547,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
 
     minimum_epsilon = .2
     history = abc.run( minimum_epsilon)
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
     assert abs(mp.p[0] - .5) + abs(mp.p[1] - .5) < .08
 
 
@@ -638,7 +638,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
     history = abc.run(minimum_epsilon)
 
     # Evaluate the model probabililties
-    mp = history.get_model_probabilities()
+    mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
         return st.norm(mu_x_model, sp.sqrt(sigma ** 2 + sigma ** 2)).pdf(y_observed)

@@ -66,7 +66,7 @@ class TestABCFast(TestABC):
 
         minimum_epsilon = .2
         history = abc.run(minimum_epsilon)
-        mp = history.get_model_probabilities()
+        mp = history.get_model_probabilities(history.max_t)
         # self.assertLess(abs(p1 - .5) + abs(p2 - .5), .08)
         self.assertLess(abs(mp.p[0] - .5) + abs(mp.p[1] - .5), .08*5) # Dennis
 

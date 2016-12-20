@@ -1,8 +1,22 @@
 {% extends "base.html" %}
 
+{% block navbar_links %}
+{{ super() }}
+<a href="{{ url_for("abc_overview") }}">Overview</a>
+{% endblock %}
+
+{% block scripts %}
+{{ super()}}
+{{ BOKEH.render()|safe}}
+ {{ plot.script|safe }}
+{% endblock %}
+
+
 {% block title %}ABC {{ abc_id }}{% endblock %}
 
 
+
 {% block content %}
-  <h1>ABC {{ abc_id }}</h1>
+  <h1>ABC {{ abc_id }} details</h1>
+  {{ plot.div|safe}}
 {% endblock %}

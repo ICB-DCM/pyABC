@@ -2,11 +2,20 @@ from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import sys
 import bokeh
+from bokeh.charts import Line
+from bokeh.embed import components
 import os
 from pyabc import History
+from collections import namedtuple
+from bokeh.resources import CDN
+BOKEH = CDN
+
+PlotScriptDiv = namedtuple("PlotScriptDiv", "script div")
 
 app = Flask(__name__)
 Bootstrap(app)
+
+
 
 
 @app.route('/')
@@ -22,7 +31,23 @@ def abc_overview():
 
 @app.route("/abc/<int:abc_id>")
 def abc_detail(abc_id):
-    return render_template("abc_detail.html", abc_id=abc_id)
+    history.id = abc_id
+    model_probabilities = history.get_model_probabilities()
+    model_probabilities.columns = list(map(lambda x:"Model {}".format(x),
+                                           model_probabilities.columns))
+    if len(model_probabilities) > 0:
+        plot = Line(model_probabilities)
+        plot = PlotScriptDiv(*components(plot))
+        return render_template("abc_detail.html",
+                               abc_id=abc_id,
+                               model_probabilities=model_probabilities,
+                               plot=plot,
+                               BOKEH=BOKEH)
+    return render_template("abc_detail.html",
+                           abc_id=abc_id,
+                           model_probabilities=model_probabilities,
+                           plot=PlotScriptDiv("", "Exception: No data found."),
+                           BOKEH=BOKEH)
 
 
 @app.route("/abc/<int:abc_id>/model/<int:model_id>")
