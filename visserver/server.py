@@ -6,6 +6,7 @@ from bokeh.embed import components
 import os
 from pyabc import History
 from bokeh.resources import INLINE
+from bokeh.layouts import column
 BOKEH = INLINE
 
 
@@ -35,10 +36,15 @@ def abc_detail(abc_id):
     history.id = abc_id
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
-    model_probabilities.columns = list(map(lambda x: "Model {}".format(x),
+    model_probabilities.columns = list(map(lambda x: "p - model {}".format(x),
                                            model_probabilities.columns))
+    model_probabilities = model_probabilities.reset_index()
     if len(model_probabilities) > 0:
-        plot = Line(model_probabilities)
+        populations = history.get_all_populations()
+        populations = populations[populations.t > 0]
+        plot = column(Line(x="t", data=model_probabilities),
+                      Line(x="t", y="nr_samples", data=populations),
+                      Line(x="t", y="epsilon", data=populations))
         plot = PlotScriptDiv(*components(plot))
         return render_template("abc_detail.html",
                                abc_id=abc_id,
