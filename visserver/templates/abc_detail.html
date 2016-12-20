@@ -2,7 +2,7 @@
 
 {% block navbar_links %}
 {{ super() }}
-<a href="{{ url_for("abc_overview") }}">Overview</a>
+<a href="{{ url_for('abc_overview') }}">Overview</a>
 {% endblock %}
 
 {% block scripts %}
@@ -18,5 +18,6 @@
 
 {% block content %}
   <h1>ABC {{ abc_id }} details</h1>
+  Models: {% for m in model_ids %}<a href="{{ url_for('abc_model', abc_id=abc_id, model_id=m) }}">{{ m }}</a> {% endfor %}
   {{ plot.div|safe}}
 {% endblock %}

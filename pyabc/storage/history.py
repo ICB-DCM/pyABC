@@ -41,9 +41,6 @@ class History:
     db_path: stt
         SQLAlchemy database identifier.
 
-    nr_models: int
-        Nr of models.
-
     model_names: List[str]
         List of model names.
 
