@@ -2,10 +2,14 @@
 
 
 {% block content %}
-  <h1>ABC Overview</h1>
-  <table>
-      {% for r in runs %}
-      <tr><td><a href="{{ url_for('abc_detail', abc_id=r.id) }}">{{ r }}</a></td></tr>
-      {% endfor %}
-  </table>
+<div class="container">
+    <h1>ABC Overview</h1>
+    <table>
+        {% for r in runs %}
+        <tr>
+            <td><a href="{{ url_for('abc_detail', abc_id=r.id) }}">{{ r }}</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
 {% endblock %}

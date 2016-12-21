@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
+    <h1>ABC Visualization Server</h1>
 
-<h1>ABC Visualization Server</h1>
-
-<a href="{{url_for('abc_overview')}}">ABC Run List</a>
+    <a href="{{url_for('abc_overview')}}">ABC Run List</a>
+</div>
 {% endblock %}
