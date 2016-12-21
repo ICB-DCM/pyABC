@@ -68,6 +68,24 @@ class History:
         self._engine = None
         self.id = self._pre_calculate_id()
 
+    def db_file(self):
+        f = self.db_path.split(":")[-1]
+        print(f)
+        return(f)
+
+    @property
+    def db_size(self):
+        """
+
+        Returns
+        -------
+        db_size in MB
+        """
+        try:
+            return os.path.getsize(self.db_file()) // 10**6
+        except FileNotFoundError:
+            return "Cannot calculate size"
+
     @with_session
     def all_runs(self):
         runs = self._session.query(ABCSMC).all()

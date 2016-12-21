@@ -102,6 +102,10 @@ def abc_model(abc_id, model_id, t):
                            t=t,
                            available_t=list(range(history.max_t+1)))
 
+@app.route("/info")
+def server_info():
+    return render_template("server_info.html", db_path=history.db_path, db_size=history.db_size)
+
 
 db = os.path.expanduser(sys.argv[1])
 history = History("sqlite:///" + db)

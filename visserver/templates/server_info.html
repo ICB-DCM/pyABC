@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <h1>Server Info</h1>
+    <ul>
+        <li>
+            Database is: <code>{{ db_path }}</code>
+        </li>
+        <li>
+            Database size is: {{db_size}} MB
+        </li>
+    </ul>
+</div>
+{% endblock %}
