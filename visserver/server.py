@@ -1,13 +1,14 @@
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import sys
-from bokeh.charts import Line, Scatter
+from bokeh.charts import Line, Scatter, Bar
 from bokeh.embed import components
 import os
 import json
 from pyabc import History
 from bokeh.resources import INLINE
 from bokeh.layouts import column
+from bokeh.models import Range1d
 from bokeh.models.widgets import Panel, Tabs
 BOKEH = INLINE
 
@@ -52,15 +53,18 @@ def abc_detail(abc_id):
     abc = ABCInfo(history.this_abc())
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
-    model_probabilities.columns = list(map(lambda x: "p - model {}".format(x),
+    model_probabilities.columns = list(map(lambda x: "{}".format(x),
                                            model_probabilities.columns))
     model_probabilities = model_probabilities.reset_index()
     if len(model_probabilities) > 0:
         populations = history.get_all_populations()
         populations = populations[populations.t > 0]
-        plot = Tabs(tabs=[Panel(child=Line(x="t", data=model_probabilities), title="Model probability"),
-                          Panel(child=Line(x="t", y="nr_samples", data=populations), title="Samples"),
-                          Panel(child=Line(x="t", y="epsilon", data=populations), title="Epsilon")])
+        melted = pd.melt(model_probabilities, id_vars="t", var_name="m", value_name="p")
+        prob_plot = Bar(melted, label="t", stack="m", values="p")
+        prob_plot.ylabel = "p"
+        plot = Tabs(tabs=[Panel(child=prob_plot, title="Model probability"),
+                          Panel(child=Scatter(x="t", y="nr_samples", data=populations), title="Samples"),
+                          Panel(child=Scatter(x="t", y="epsilon", data=populations), title="Epsilon")])
         plot = PlotScriptDiv(*components(plot))
         return render_template("abc_detail.html",
                                abc_id=abc_id,
@@ -103,9 +107,10 @@ def abc_model(abc_id, model_id, t):
                            t=t,
                            available_t=list(range(history.max_t+1)))
 
+
 @app.route("/info")
 def server_info():
-    return render_template("server_info.html", db_path=history.db_path, db_size=history.db_size)
+    return render_template("server_info.html", db_path=history.db_path, db_size=round(history.db_size, 2))
 
 
 db = os.path.expanduser(sys.argv[1])

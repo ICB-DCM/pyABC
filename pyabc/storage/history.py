@@ -69,7 +69,7 @@ class History:
         self.id = self._pre_calculate_id()
 
     def db_file(self):
-        f = self.db_path.split(":")[-1]
+        f = self.db_path.split(":")[-1][3:]
         print(f)
         return(f)
 
@@ -82,7 +82,7 @@ class History:
         db_size in MB
         """
         try:
-            return os.path.getsize(self.db_file()) // 10**6
+            return os.path.getsize(self.db_file()) / 10**6
         except FileNotFoundError:
             return "Cannot calculate size"
 
