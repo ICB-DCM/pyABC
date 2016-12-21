@@ -41,9 +41,18 @@
         </div>
     </div>
     <div class="row">
+        <div class="col-md-12">
+            <h2>Info</h2>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-md-6">
-            <h2>General</h2>
+            <h3>General</h3>
             <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
                 {% for key, value in abc.json_parameters.items() %}
                 <tr>
                     <td>{{ key }}:</td>
@@ -53,8 +62,12 @@
             </table>
         </div>
         <div class="col-md-6">
-            <h2>Distance Function: {{ abc.distance_function["name"] }}</h2>
+            <h3>Distance Function: {{ abc.distance_function["name"] }}</h3>
             <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
                 {% for key, value in abc.distance_function.items() %}
                 <tr>
                     <td>{{ key }}:</td>
@@ -66,8 +79,12 @@
     </div>
     <div class="row">
         <div class="col-md-6">
-            <h2>Epsilon function: {{ abc.epsilon_function["name"] }}</h2>
+            <h3>Epsilon function: {{ abc.epsilon_function["name"] }}</h3>
             <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
                 {% for key, value in abc.epsilon_function.items() %}
                 <tr>
                     <td>{{ key }}:</td>
@@ -77,8 +94,12 @@
             </table>
         </div>
         <div class="col-md-6">
-            <h2>Population Strategy: {{ abc.population_strategy["name"] }}</h2>
+            <h3>Population Strategy: {{ abc.population_strategy["name"] }}</h3>
             <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
                 {% for key, value in abc.population_strategy.items() %}
                 <tr>
                     <td>{{ key }}:</td>
@@ -90,8 +111,8 @@
     </div>
     <div class="row">
         <div class="col-md-12">
-            <h2>Git</h2>
-            {{ abc.git_hash }}
+            <h3>Git</h3>
+            Commit: <code>{{ abc.git_hash }}</code>
         </div>
     </div>
 </div>
