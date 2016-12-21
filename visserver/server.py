@@ -84,20 +84,21 @@ def abc_model(abc_id, model_id, t):
         t = int(t)
     df, w = history.weighted_parameters_dataframe(t, model_id)
     df["CDF"] = w
-    plots = []
+    tabs = []
     for parameter in [col for col in df if col != "CDF"]:
         plot_df = df[["CDF", parameter]].sort_values(parameter)
         plot_df_cumsum = plot_df.cumsum()
         plot_df_cumsum[parameter] = plot_df[parameter]
-        p = PlotScriptDiv(*components(Line(x=parameter, y="CDF", data=plot_df_cumsum)))
-        p.parameter_name = parameter
-        plots.append(p)
-    if len(plots) == 0:
-        plots.append(PlotScriptDiv("", "This model has no Parameters"))
+        p = Panel(child=Line(x=parameter, y="CDF", data=plot_df_cumsum), title=parameter)
+        tabs.append(p)
+    if len(tabs) == 0:
+        plot = PlotScriptDiv("", "This model has no Parameters")
+    else:
+        plot = PlotScriptDiv(*components(Tabs(tabs=tabs)))
     return render_template("model.html",
                            abc_id=abc_id,
                            model_id=model_id,
-                           plots=plots,
+                           plot=plot,
                            BOKEH=BOKEH,
                            t=t,
                            available_t=list(range(history.max_t+1)))

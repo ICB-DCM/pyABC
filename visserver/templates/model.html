@@ -5,9 +5,8 @@
 {% block scripts %}
 {{ super() }}
 {{ BOKEH.render()|safe }}
-{% for p in plots %}
-{{ p.script|safe }}
-{% endfor %}
+{{ plot.script|safe }}
+
 {% endblock %}
 
 
@@ -48,12 +47,8 @@
             {% endfor %}
         </ul>
 
+    <h2>Parameter</h2>
+    {{ plot.div|safe }}
 
-
-    {% for p in plots %}
-    <h2>Parameter: {{ p.parameter_name }}</h2>
-    {{ p.div|safe }}
-
-    {% endfor %}
 </div>
 {% endblock %}
