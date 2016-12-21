@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import sys
-from bokeh.charts import Line
+from bokeh.charts import Line, Scatter
 from bokeh.embed import components
 import os
 import json

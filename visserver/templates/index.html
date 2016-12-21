@@ -2,8 +2,22 @@
 
 {% block content %}
 <div class="container">
-    <h1>ABC Visualization Server</h1>
-
-    <a href="{{url_for('abc_overview')}}">ABC Run List</a>
+    <div class="jumbotron">
+        <h1>pyABC Visualization Server</h1>
+        Visualize your ABC runs
+    </div>
+    <div class="card">
+        <a href="{{url_for('abc_overview')}}">
+            <img class="card-img-top" src="{{ url_for('static', filename='abc_run_list_panel_image.svg') }}"
+                 alt="ABC Run List Image">
+        </a>
+        <div class="card-block">
+            <h2 class="card-title">ABC Run List</h2>
+            <p class="card-text">
+                Get an overview over completed and ongoing ABC runs
+            </p>
+            <a href="{{url_for('abc_overview')}}" class="btn btn-primary">Go to ABC Run List</a>
+        </div>
+    </div>
 </div>
 {% endblock %}
