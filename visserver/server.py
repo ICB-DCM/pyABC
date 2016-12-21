@@ -1,16 +1,25 @@
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import sys
+import bokeh.plotting.helpers as helpers
+helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
+                            '#e69f00',
+                            '#56b4e9',
+                            '#009e73',
+                            '#f0e442',
+                            '#0072b2',
+                            '#d55e00',
+                            '#cc79a7']
 from bokeh.charts import Line, Scatter, Bar
 from bokeh.embed import components
 import os
 import json
 from pyabc import History
 from bokeh.resources import INLINE
-from bokeh.layouts import column
-from bokeh.models import Range1d
+import pandas as pd
 from bokeh.models.widgets import Panel, Tabs
 BOKEH = INLINE
+
 
 
 class PlotScriptDiv:
@@ -21,7 +30,6 @@ class PlotScriptDiv:
 
 app = Flask(__name__)
 Bootstrap(app)
-
 
 
 @app.route('/')
