@@ -67,11 +67,15 @@ def abc_detail(abc_id):
     if len(model_probabilities) > 0:
         populations = history.get_all_populations()
         populations = populations[populations.t > 0]
+        particles = (history.get_nr_particles_per_population().reset_index()
+                     .rename(columns={"index": "t", "t": "particles"}).query("t > 0"))
+
         melted = pd.melt(model_probabilities, id_vars="t", var_name="m", value_name="p")
         prob_plot = Bar(melted, label="t", stack="m", values="p")
         prob_plot.ylabel = "p"
-        plot = Tabs(tabs=[Panel(child=prob_plot, title="Model probability"),
+        plot = Tabs(tabs=[Panel(child=prob_plot, title="Probability"),
                           Panel(child=Scatter(x="t", y="nr_samples", data=populations), title="Samples"),
+                          Panel(child=Scatter(x="t", y="particles", data=particles), title="Particles"),
                           Panel(child=Scatter(x="t", y="epsilon", data=populations), title="Epsilon")])
         plot = PlotScriptDiv(*components(plot))
         return render_template("abc_detail.html",
