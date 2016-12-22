@@ -130,7 +130,7 @@ class ABCSMC:
                  eps: Epsilon,
                  population_strategy: PopulationStrategy,
                  summary_statistics: Callable[[model_output], dict]=identity,
-                 sampler = None):
+                 sampler=None):
 
         # sanity checks
         self.models = list(models)
