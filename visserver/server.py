@@ -125,6 +125,11 @@ def server_info():
     return render_template("server_info.html", db_path=history.db_path, db_size=round(history.db_size, 2))
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
 db = os.path.expanduser(sys.argv[1])
 history = History("sqlite:///" + db)
 
