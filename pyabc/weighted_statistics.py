@@ -6,10 +6,8 @@ def weight_checked(function):
     Function decorator to check normalization of weights.
     """
     def function_with_checking(points, weights):
-        if abs(weights.sum() - 1) > 1e-5:
-            raise Exception('Weights not normalized')
-        else:
-            return function(points, weights)
+        assert abs(weights.sum() - 1) < 1e-5, ("Weights not normalized", weights.sum())
+        return function(points, weights)
     return function_with_checking
 
 
