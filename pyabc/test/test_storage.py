@@ -143,6 +143,12 @@ def test_population_strategy_storage(history):
 
 def test_model_probabilities(history):
     history.append_population(1, .23, rand_pop(3), 234)
-    probs = history.get_model_probabilities()
+    probs = history.get_model_probabilities(1)
     assert probs.p[3] == 1
     assert probs.index.tolist() == [3]
+
+
+def test_model_probabilities_all(history):
+    history.append_population(1, .23, rand_pop(3), 234)
+    probs = history.get_model_probabilities()
+    assert (probs[3].as_matrix() == np.array([1])).all()

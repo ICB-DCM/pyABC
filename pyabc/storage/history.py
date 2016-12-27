@@ -379,6 +379,8 @@ class History:
             Number of models still alive.
             None is for the last population
         """
+        if t is None:
+            t = self.max_t
         model_probs = self.get_model_probabilities(t)
         return int((model_probs.p > 0).sum())
 
