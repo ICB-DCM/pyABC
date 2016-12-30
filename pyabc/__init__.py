@@ -31,6 +31,7 @@ from .storage import History
 from .model import Model, SimpleModel, ModelResult
 from .transition import MultivariateNormalTransition
 from .populationstrategy import AdaptivePopulationStrategy, ConstantPopulationStrategy
+from .transition import GridSearchCV
 
 __all__ = [
     "ABCSMC",
@@ -58,7 +59,8 @@ __all__ = [
     "ModelPerturbationKernel",
     # random_variables end
     "SQLDataStore",
-    "ABCLoader"
+    "ABCLoader",
+    "GridSearchCV"
 ]
 
 
