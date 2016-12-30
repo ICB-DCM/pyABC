@@ -7,7 +7,7 @@ from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    MedianEpsilon, MinMaxDistanceFunction,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
-                   AdaptivePopulationStrategy)
+                   AdaptivePopulationStrategy, GridSearchCV)
 from parallel.sampler import SingleCoreSampler, MappingSampler
 from scipy.special import gamma, binom
 import scipy.interpolate
@@ -363,6 +363,52 @@ def test_gaussian_multiple_populations(db_path, sampler):
     population_size = ConstantPopulationStrategy(600, nr_populations)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
     parameter_perturbation_kernels = [MultivariateNormalTransition()]
+    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
+                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
+                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+                 population_size,
+                 sampler=sampler)
+
+    options = {'db_path': db_path}
+    abc.set_data({"y": y_observed}, 0, {}, options)
+
+    minimum_epsilon = -1
+
+    abc.do_not_stop_when_only_single_model_alive()
+    history = abc.run(minimum_epsilon)
+    posterior_x, posterior_weight = history.get_results_distribution(0, "x")
+    sort_indices = sp.argsort(posterior_x)
+    f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
+                                          sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
+
+    sigma_x_given_y = 1 / sp.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
+    mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
+    expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
+    x = sp.linspace(-8, 8)
+    max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
+    assert max_distribution_difference < 0.052
+    assert history.max_t == nr_populations-1
+    mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
+    assert abs(mean_emp - mu_x_given_y) < .07
+    assert abs(std_emp - sigma_x_given_y) < .12
+
+
+def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
+    sigma_x = 1
+    sigma_y = .5
+    y_observed = 2
+
+    def model(args):
+        return {"y": st.norm(args['x'], sigma_y).rvs()}
+
+    models = [model]
+    models = list(map(SimpleModel, models))
+    model_prior = RV("randint", 0, 1)
+    nr_populations = 4
+    population_size = ConstantPopulationStrategy(600, nr_populations)
+    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
+    parameter_perturbation_kernels = [GridSearchCV(MultivariateNormalTransition(),
+                                      {"scaling": sp.logspace(-1, 1.5, 5)})]
     abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
                  parameter_given_model_prior_distribution, parameter_perturbation_kernels,
                  PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
