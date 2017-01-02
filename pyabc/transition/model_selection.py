@@ -1,7 +1,7 @@
 from sklearn.model_selection import GridSearchCV as GridSearchCVSKL
 import logging
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger("GridSearchCV")
 
 
 class GridSearchCV(GridSearchCVSKL):

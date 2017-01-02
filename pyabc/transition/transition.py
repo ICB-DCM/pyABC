@@ -15,9 +15,9 @@ transition_logger = logging.getLogger("Transitions")
 
 
 class Transition(BaseEstimator, metaclass=TransitionMeta):
-    NR_STEPS = 30
+    NR_STEPS = 10
     FIRST_STEP_FACTOR = 3
-    NR_BOOTSTRAP = 10
+    NR_BOOTSTRAP = 5
     X = None
     w = None
 
