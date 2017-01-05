@@ -48,7 +48,7 @@ class TestABC(unittest.TestCase):
 
 
 class TestABCFast(TestABC):
-    def test_all_in_one_model(self):
+    def test_all_in_one_model_multipool(self):
         models = [AllInOneModel() for _ in range(2)]
         model_prior = RV("randint", 0, 2)
         mp_pool = multiprocessing.Pool(4)
