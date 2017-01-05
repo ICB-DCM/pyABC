@@ -17,6 +17,20 @@
 
 <li class="dropdown">
     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Model <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        {% for m in model_ids %}
+        <li>
+            <a href="{{ url_for('abc_model', abc_id=abc_id, model_id=m, t='max') }}">
+                Model {{ m }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</li>
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
         Population <span class="caret"></span>
     </a>
     <ul class="dropdown-menu">
@@ -37,15 +51,15 @@
     <h1>ABC {{ abc_id }}, Model {{ model_id }}, t={{ t }}</h1>
 
     <h2>Population</h2>
-        <ul class="pagination">
-            {% for t_ind in available_t %}
-            <li {% if t== t_ind %}class="active" {% endif %}>
-                <a href="{{ url_for('abc_model',abc_id=abc_id, model_id=model_id, t=t_ind) }}">
-                    {{ t_ind }}
-                </a>
-            </li>
-            {% endfor %}
-        </ul>
+    <ul class="pagination">
+        {% for t_ind in available_t %}
+        <li {% if t== t_ind %}class="active" {% endif %}>
+            <a href="{{ url_for('abc_model',abc_id=abc_id, model_id=model_id, t=t_ind) }}">
+                {{ t_ind }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
 
     <h2>Parameter</h2>
     {{ plot.div|safe }}

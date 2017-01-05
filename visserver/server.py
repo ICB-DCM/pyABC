@@ -101,6 +101,8 @@ def abc_model(abc_id, model_id, t):
     df, w = history.weighted_parameters_dataframe(t, model_id)
     df["CDF"] = w
     tabs = []
+
+    model_ids = history.get_model_probabilities().columns
     for parameter in [col for col in df if col != "CDF"]:
         plot_df = df[["CDF", parameter]].sort_values(parameter)
         plot_df_cumsum = plot_df.cumsum()
@@ -116,6 +118,7 @@ def abc_model(abc_id, model_id, t):
                            model_id=model_id,
                            plot=plot,
                            BOKEH=BOKEH,
+                           model_ids=model_ids,
                            t=t,
                            available_t=list(range(history.max_t+1)))
 
