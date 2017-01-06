@@ -29,7 +29,7 @@ def test_variance_estimate():
     for n in [50, 100, 200]:
         m = MultivariateNormalTransition()
         df, w = data(n)
-        m.fit(df ,w)
+        m.fit(df, w)
         var = m.mean_coefficient_of_variation()
         var_list.append(var)
 
@@ -129,3 +129,26 @@ def test_grid_search():
     df, w = data(20)
     m_grid.fit(df, w)
 
+
+def test_grid_search_two_samples():
+    """
+    Supposed to run into problems b/c nr splits > then nr_samples
+    """
+    cv = 5
+    m = MultivariateNormalTransition()
+    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv)
+    df, w = data(2)
+    m_grid.fit(df, w)
+    assert m_grid.cv == cv
+
+
+def test_grid_search_single_sample():
+    """
+    Supposed to run into problems b/c nr splits > then nr_samples
+    """
+    cv = 5
+    m = MultivariateNormalTransition()
+    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv)
+    df, w = data(1)
+    m_grid.fit(df, w)
+    assert m_grid.cv == cv
