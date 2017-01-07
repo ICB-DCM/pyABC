@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block navbar_links %}
+{{ super() }}
+<li><a href="{{ url_for('abc_overview') }}">Overview</a></li>
+
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Model <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        {% for m in model_ids %}
+        <li>
+            <a href="{{ url_for('abc_model', abc_id=abc_id, model_id=m, t='max') }}">
+                Model {{ m }}
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</li>
+
+{% endblock %}
+
+{% block scripts %}
+{{ super()}}
+{{ BOKEH.render()|safe }}
+{{ plot.script|safe }}
+{% endblock %}
+
+
+{% block title %}ABC {{ abc_id }}{% endblock %}
+
+
+{% block content %}
+<div class="container">
+    <h1>ABC {{ abc_id }} details</h1>
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Graphs</h2>
+            {{ plot.div|safe}}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Info</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <h3>General</h3>
+            <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                {% for key, value in abc.json_parameters.items() %}
+                <tr>
+                    <td>{{ key }}:</td>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h3>Distance Function: {{ abc.distance_function["name"] }}</h3>
+            <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                {% for key, value in abc.distance_function.items() %}
+                <tr>
+                    <td>{{ key }}:</td>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Epsilon function: {{ abc.epsilon_function["name"] }}</h3>
+            <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                {% for key, value in abc.epsilon_function.items() %}
+                <tr>
+                    <td>{{ key }}:</td>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h3>Population Strategy: {{ abc.population_strategy["name"] }}</h3>
+            <table class="table">
+                <tr>
+                    <th>Key</th>
+                    <th>Value</th>
+                </tr>
+                {% for key, value in abc.population_strategy.items() %}
+                <tr>
+                    <td>{{ key }}:</td>
+                    <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <h3>Git</h3>
+            Commit: <code>{{ abc.git_hash }}</code>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

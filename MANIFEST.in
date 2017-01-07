@@ -1,0 +1,3 @@
+include README.md
+recursive-include visserver/static *
+recursive-include visserver/templates *

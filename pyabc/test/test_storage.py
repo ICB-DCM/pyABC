@@ -11,8 +11,10 @@ def history():
     # Don't use memory database for testing.
     # A real file with disconnect and reconnect is closer to the real scenario
     path = os.path.join(tempfile.gettempdir(), "history_test.db")
-    h = History("sqlite:///" + path, 1, ["fake_name"])
-    h.store_initial_data(0, {}, {}, {}, "", "", '{"name": "pop_strategy_str_test"}')
+    model_names = ["fake_name_{}".format(k) for k in range(50)]
+    h = History("sqlite:///" + path, )
+    h.store_initial_data(0, {}, {}, {}, model_names,
+                         "", "", '{"name": "pop_strategy_str_test"}')
     yield h
     try:
         os.remove(path)
@@ -76,8 +78,9 @@ def test_dataframe_storage_readout():
     path = os.path.join(tempfile.gettempdir(), "history_test.db")
 
     def make_hist():
-        h = History("sqlite:///" + path, 5, ["fake_name"]*5)
-        h.store_initial_data(0, {}, {}, {}, "", "", "")
+        model_names = ["fake_name"]*5
+        h = History("sqlite:///" + path)
+        h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
         return h
 
     pops = {}
@@ -114,14 +117,38 @@ def test_dataframe_storage_readout():
 def test_population_retrieval(history):
     history.append_population(1, .23, rand_pop(0), 234)
     history.append_population(2, .123, rand_pop(0), 345)
+    history.append_population(2, .1235, rand_pop(5), 20345)
+    history.append_population(3, .12330, rand_pop(30), 30345)
     df = history.get_all_populations()
+
     assert df[df.t == 1].epsilon.iloc[0] == .23
     assert df[df.t == 2].epsilon.iloc[0] == .123
+    assert df[df.t == 2].epsilon.iloc[1] == .1235
+    assert df[df.t == 3].epsilon.iloc[0] == .12330
 
     assert df[df.t == 1].nr_samples.iloc[0] == 234
     assert df[df.t == 2].nr_samples.iloc[0] == 345
+    assert df[df.t == 2].nr_samples.iloc[1] == 20345
+    assert df[df.t == 3].nr_samples.iloc[0] == 30345
+
+    assert history.alive_models(1) == [0]
+    assert history.alive_models(2) == [0, 5]
+    assert history.alive_models(3) == [30]
 
 
 def test_population_strategy_storage(history):
     res = history.get_population_strategy()
     assert res["name"] == "pop_strategy_str_test"
+
+
+def test_model_probabilities(history):
+    history.append_population(1, .23, rand_pop(3), 234)
+    probs = history.get_model_probabilities(1)
+    assert probs.p[3] == 1
+    assert probs.index.tolist() == [3]
+
+
+def test_model_probabilities_all(history):
+    history.append_population(1, .23, rand_pop(3), 234)
+    probs = history.get_model_probabilities()
+    assert (probs[3].as_matrix() == np.array([1])).all()

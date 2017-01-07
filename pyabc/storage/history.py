@@ -41,9 +41,6 @@ class History:
     db_path: stt
         SQLAlchemy database identifier.
 
-    nr_models: int
-        Nr of models.
-
     model_names: List[str]
         List of model names.
 
@@ -54,8 +51,6 @@ class History:
         Whether to print additional debug output.
 
 
-
-
     .. warning::
 
         Most likely you will never have to instantiate the class yourself.
@@ -64,13 +59,65 @@ class History:
         used as querying is usually done on the stored database usind the abc_loader.
 
     """
-    def __init__(self, db_path: str, nr_models: int, model_names: List[str], debug=False):
-        self.nr_models = nr_models
+    DB_TIMEOUT = 120
+
+    def __init__(self, db_path: str, debug=False):
         "Only counts the simulations which appear in particles. If a simulation terminated prematurely it is not counted."
         self.db_path = db_path
-        self.model_names = list(model_names)
         self._session = None
         self._engine = None
+        self.id = self._pre_calculate_id()
+
+    def db_file(self):
+        f = self.db_path.split(":")[-1][3:]
+        print(f)
+        return(f)
+
+    @property
+    def db_size(self):
+        """
+
+        Returns
+        -------
+        db_size in MB
+        """
+        try:
+            return os.path.getsize(self.db_file()) / 10**6
+        except FileNotFoundError:
+            return "Cannot calculate size"
+
+    @with_session
+    def all_runs(self):
+        runs = self._session.query(ABCSMC).all()
+        return runs
+
+    @with_session
+    def _pre_calculate_id(self):
+        abcs = self._session.query(ABCSMC).all()
+        if len(abcs) == 1:
+            return abcs[0].id
+        return None
+
+    @with_session
+    def alive_models(self, t) -> List:
+        """
+
+        Parameters
+        ----------
+        t: int
+            Population nr
+
+        Returns
+        -------
+        alive: List
+            A list which contains the indices of those models which are still alive
+        """
+        alive = (self._session.query(Model.m)
+                 .join(Population)
+                 .join(ABCSMC)
+                 .filter(ABCSMC.id == self.id)
+                 .filter(Population.t == t)).all()
+        return sorted([a[0] for a in alive])
 
     @with_session
     def weighted_parameters_dataframe(self, t, m):
@@ -92,6 +139,10 @@ class History:
         return pars, w_arr
 
     @with_session
+    def this_abc(self):
+        return self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
+
+    @with_session
     def get_all_populations(self):
         query = (self._session.query(Population.t, Population.population_end_time,
                                      Population.nr_samples, Population.epsilon)
@@ -103,6 +154,7 @@ class History:
     def store_initial_data(self, ground_truth_model: int, options,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
+                           model_names: List[str],
                            distance_function_json_str: str,
                            eps_function_json_str: str,
                            population_strategy_json_str: str):
@@ -126,6 +178,7 @@ class History:
         eps_function_json_str: str
             the epsilon represented as json string
         """
+        self.model_names = model_names
         # store ground truth to db
         try:
             git_hash = git.Repo(os.environ['PYTHONPATH']).head.commit.hexsha
@@ -140,7 +193,7 @@ class History:
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abc_smc_simulation.populations.append(population)
 
-        model = Model(m=ground_truth_model, p_model=1, name=self.model_names[ground_truth_model])
+        model = Model(m=ground_truth_model, p_model=1, name=model_names[ground_truth_model])
         population.models.append(model)
 
         gt_part = Particle(w=1)
@@ -169,7 +222,7 @@ class History:
         # I think I did this funnny construction due to some pickling issues but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db_path, connect_args={'timeout': 120})
+        engine = create_engine(self.db_path, connect_args={'timeout': self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -195,7 +248,7 @@ class History:
 
     @with_session
     def _save_to_population_db(self, t: int, current_epsilon: float, nr_simulations:int,
-                               store, model_probabilities):
+                               store: dict, model_probabilities: dict):
         # sqlalchemy experimental stuff and highly inefficient implementation here
         # but that is ok for testing purposes for the moment
         # prepare
@@ -206,10 +259,10 @@ class History:
         # store the population
         population = Population(t=t, nr_samples=nr_simulations, epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
-        for m in range(len(store)):
-            model = Model(m=m, p_model=model_probabilities[m], name=self.model_names[m])
+        for m, model_population in store.items():
+            model = Model(m=int(m), p_model=float(model_probabilities[m]), name=str(self.model_names[m]))
             population.models.append(model)
-            for store_item in store[m]:
+            for store_item in model_population:
                 weight = store_item['weight']
                 distance_list = store_item['distance_list']
                 parameter = store_item['parameter']
@@ -254,7 +307,7 @@ class History:
             Whether enough particles were found in the population.
 
         """
-        store, model_probabilities = normalize(particle_population, self.nr_models)
+        store, model_probabilities = normalize(particle_population)
         self._save_to_population_db(t, current_epsilon, nr_simulations, store, model_probabilities)
 
     def get_results_distribution(self, m: int, parameter: str) -> (np.ndarray, np.ndarray):
@@ -280,7 +333,7 @@ class History:
         return df[parameter].as_matrix(), w
 
     @with_session
-    def get_model_probabilities(self, t=None) -> np.ndarray:
+    def get_model_probabilities(self, t=None) -> pd.DataFrame:
         """
         Model probabilities.
 
@@ -294,26 +347,22 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
-        if t is not None and t < 0:
-            raise Exception("Model probabilities only for t >= 0 or t = None defined.")
-        if t is None:
-            t = (self._session
-                 .query(func.max(Population.t))
-                 .filter(Population.abc_smc_id == self.id)
-                 .one()
-                 [0])
-
         p_models = (self._session
-                    .query(Model.p_model)
+                    .query(Model.p_model, Model.m, Population.t)
                     .join(Population)
                     .join(ABCSMC)
                     .filter(ABCSMC.id == self.id)
-                    .filter(Population.t == t)
+                    .filter((Population.t == t if t is not None else Population.t > 0))
                     .order_by(Model.m)
                     .all())
-
-        p_models_arr = sp.array([r[0] for r in p_models], dtype=float)
-        return p_models_arr
+        # TODO this is a mess
+        if t is not None:
+            p_models_df = pd.DataFrame([p[:2] for p in p_models], columns=["p", "m"]).set_index("m")
+            p_models_df = p_models_df[p_models_df.p > 0]
+            return p_models_df
+        else:
+            p_models_df = pd.DataFrame(p_models, columns=["p", "m", "t"]).pivot("t", "m", "p").fillna(0)
+            return p_models_df
 
     def nr_of_models_alive(self, t=None) -> int:
         """
@@ -330,8 +379,10 @@ class History:
             Number of models still alive.
             None is for the last population
         """
+        if t is None:
+            t = self.max_t
         model_probs = self.get_model_probabilities(t)
-        return int((model_probs > 0).sum())
+        return int((model_probs.p > 0).sum())
 
     @with_session
     def get_weighted_distances(self, t: int) -> pd.DataFrame:
@@ -352,17 +403,16 @@ class History:
         if t is None:
             t = self.max_t
 
-        model_probabilities = self.get_model_probabilities(t)
-        model_probabilities_df = pd.DataFrame({"m": list(range(len(model_probabilities))),
-                                               "model_probabilities": model_probabilities})
         query = (self._session.query(Sample.distance, Particle.w, Model.m)
                  .join(Particle)
                  .join(Model).join(Population).join(ABCSMC)
                  .filter(ABCSMC.id == self.id)
                  .filter(Population.t == t))
         df = pd.read_sql_query(query.statement, self._engine)
-        df_weighted = df.merge(model_probabilities_df)
-        df_weighted["w"] *= df_weighted["model_probabilities"]
+
+        model_probabilities = self.get_model_probabilities(t).reset_index()
+        df_weighted = df.merge(model_probabilities)
+        df_weighted["w"] *= df_weighted["p"]
         return df_weighted
 
     @with_session
@@ -415,7 +465,7 @@ class History:
         return json.loads(abc.population_strategy)
 
 
-def normalize(population: List[ValidParticle], nr_models: int):
+def normalize(population: List[ValidParticle]):
     """
       * Normalize particle weights according to nr of particles in a model
       * Caclculate marginal model probabilities
@@ -423,21 +473,24 @@ def normalize(population: List[ValidParticle], nr_models: int):
     # TODO: This has a medium ugly side effect... maybe it is ok
     population = list(population)
 
-    store = [[] for _ in range(nr_models)]
+    store = {}
 
     for particle in population:
         if particle is not None:  # particle might be none or empty if no particle was found within the allowed nr of sample attempts
-            store[particle.m].append(particle)
+            store.setdefault(particle.m, []).append(particle)
         else:
             print("ABC History warning: Empty particle.")
 
 
-    model_total_weights = [sum(particle.weight for particle in model) for model in store]
-    population_total_weight = sum(model_total_weights)
-    model_probabilities = [w / population_total_weight for w in model_total_weights]
+    model_total_weights = {m: sum(particle.weight for particle in model)
+                           for m, model in store.items()}
+    population_total_weight = sum(model_total_weights.values())
+    model_probabilities = {m: w / population_total_weight for m, w in model_total_weights.items()}
 
     # normalize within each model
-    for model_total_weight, model in zip(model_total_weights, store):
+    for m in store:
+        model_total_weight = model_total_weights[m]
+        model = store[m]
         for particle in model:
             particle.weight /= model_total_weight
 

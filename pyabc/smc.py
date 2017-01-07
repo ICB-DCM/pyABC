@@ -10,9 +10,9 @@ import logging
 abclogger = logging.getLogger("ABC")
 import pandas as pd
 import scipy as sp
-import copy as cp
 
-from parallel.sampler import MappingSampler
+
+from parallel.sampler import SingleCoreSampler
 from .distance_functions import DistanceFunction, to_distance
 from .epsilon import Epsilon
 from .model import Model
@@ -21,12 +21,16 @@ from .transition import Transition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
+from .random import fast_random_choice
 
 model_output = TypeVar("model_output")
 
 
 def identity(x):
     return x
+
+
+
 
 
 class ABCSMC:
@@ -126,7 +130,7 @@ class ABCSMC:
                  eps: Epsilon,
                  population_strategy: PopulationStrategy,
                  summary_statistics: Callable[[model_output], dict]=identity,
-                 sampler = None):
+                 sampler=None):
 
         # sanity checks
         self.models = list(models)
@@ -148,7 +152,7 @@ class ABCSMC:
         self._points_sampled_from_prior = None
         self.population_strategy = population_strategy
         if sampler is None:
-            self.sampler = MappingSampler(map)
+            self.sampler = SingleCoreSampler()
         else:
             self.sampler = sampler
 
@@ -211,7 +215,7 @@ class ABCSMC:
         # initialize
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
-        self.history = History(abc_options['db_path'], len(self.models), model_names)
+        self.history = History(abc_options['db_path'])
 
         # initialize distance function and epsilon
         sample_from_prior = self.prior_sample()
@@ -222,8 +226,11 @@ class ABCSMC:
             return self.distance_function(x, self.x_0)
 
         self.eps.initialize(sample_from_prior, distance_to_ground_truth_function)
-        self.history.store_initial_data(ground_truth_model, abc_options,
-                                        observed_summary_statistics, ground_truth_parameter,
+        self.history.store_initial_data(ground_truth_model,
+                                        abc_options,
+                                        observed_summary_statistics,
+                                        ground_truth_parameter,
+                                        model_names,
                                         self.distance_function.to_json(),
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
@@ -280,8 +287,8 @@ class ABCSMC:
         if t == 0:
             weight = len(distance_list) / self.population_strategy.nr_samples_per_parameter
         else:
-            model_factor = sum(model_probabilities[j] * self.model_perturbation_kernel.pmf(m_ss, j)
-                                 for j in range(len(self.models)))
+            model_factor = sum(row.p * self.model_perturbation_kernel.pmf(m_ss, m)
+                                 for m, row in model_probabilities.iterrows())
             particle_factor = self.transitions[m_ss].pdf(pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
             if normalization == 0:
@@ -293,7 +300,7 @@ class ABCSMC:
                       / normalization)
         return weight
 
-    def generate_valid_proposal(self, t, model_probabilities):
+    def generate_valid_proposal(self, t, m, p):
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior_distribution.rvs()
@@ -302,13 +309,17 @@ class ABCSMC:
 
         # later generation
         while True:  # find m_s and theta_ss, valid according to prior
-            m_s = sp.random.choice(len(model_probabilities), p=model_probabilities)
-            m_ss = self.model_perturbation_kernel.rvs(m_s)
-            # theta_s is None if the population m_ss has died out.
-            # This can happen since the model_perturbation_kernel can return
-            # a model nr which has died out.
-            if model_probabilities[m_ss] == 0:
-                continue
+            if len(m) > 1:
+                index = fast_random_choice(p)
+                m_s = m[index]
+                m_ss = self.model_perturbation_kernel.rvs(m_s)
+                # theta_s is None if the population m_ss has died out.
+                # This can happen since the model_perturbation_kernel can return
+                # a model nr which has died out.
+                if m_ss not in m:
+                    continue
+            else:
+                m_ss = m[0]
             theta_ss = self.transitions[m_ss].rvs()
 
             if (self.model_prior_distribution.pmf(m_ss)
@@ -337,11 +348,14 @@ class ABCSMC:
             abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
             self.fit_transitions(t)
             # cache model_probabilities to not to query the database so soften
-            model_probabilities = self.history.get_model_probabilities()
+            model_probabilities = self.history.get_model_probabilities(self.history.max_t)
             abclogger.debug('now submitting population ' + str(t))
 
+            m = sp.array(model_probabilities.index)
+            p = sp.array(model_probabilities.p)
+
             def sample_one():
-                return self.generate_valid_proposal(t, model_probabilities)
+                return self.generate_valid_proposal(t, m, p)
 
             def eval_one(par):
                 return self.evaluate_proposal(*par, current_eps, t, model_probabilities)
@@ -373,8 +387,9 @@ class ABCSMC:
         if t == 0:  # we need a particle population to do the fitting
             return
 
-        for m in range(self.history.nr_models):
+        for m in self.history.alive_models(t - 1):
             particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles_df, weights)
 
-        self.population_strategy.adapt_population_size(self.transitions, self.history.get_model_probabilities())
+        self.population_strategy.adapt_population_size(self.transitions,
+                                        self.history.get_model_probabilities(self.history.max_t))

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div class="container">
+    <h1>ABC Overview</h1>
+    <table class="table">
+        <tr>
+            <th>ID</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Duration</th>
+        </tr>
+        {% for r in runs %}
+        <tr>
+            <td><a href="{{ url_for('abc_detail', abc_id=r.id) }}">
+                {{ r.id }} <span class="glyphicon glyphicon-equalizer"></span>
+            </a></td>
+            <td>{{ r.start_time }}</td>
+            <td>{{ r.end_time }}</td>
+            <td>{{ r.end_time - r.start_time if r.end_time else "" }}</td>
+        </tr>
+
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

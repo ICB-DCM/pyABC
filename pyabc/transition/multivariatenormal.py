@@ -18,7 +18,18 @@ def silverman_rule_of_thumb(n_samples, dimension):
 class MultivariateNormalTransition(Transition):
     """
     Pretty stupid but should in principle be functional
+
+    Parameters
+    ----------
+
+    scaling: float
+        Scaling is a factor which additionally multiplies the
+        bandwidth with. Since silverman and Scott usually have to large
+        bandwidths, it should make most sense to have 0 < scaling <= 1
+
     """
+    def __init__(self, scaling=1.):
+        self.scaling = scaling
 
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
@@ -40,7 +51,7 @@ class MultivariateNormalTransition(Transition):
         cov = smart_cov(self._X_arr, w)
         effective_sample_size = len(X) / (1 + w.var())
         dimension = cov.shape[0]
-        self.cov = cov * silverman_rule_of_thumb(effective_sample_size, dimension)
+        self.cov = cov * silverman_rule_of_thumb(effective_sample_size, dimension) * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def rvs(self):

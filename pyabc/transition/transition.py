@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy import stats as st
-
+from sklearn.base import BaseEstimator
 from .exceptions import NotEnoughParticles
 from .powerlaw import fitpowerlaw
 
@@ -13,10 +13,11 @@ from .transitionmeta import TransitionMeta
 
 transition_logger = logging.getLogger("Transitions")
 
-class Transition(metaclass=TransitionMeta):
-    NR_STEPS = 30
+
+class Transition(BaseEstimator, metaclass=TransitionMeta):
+    NR_STEPS = 10
     FIRST_STEP_FACTOR = 3
-    NR_BOOTSTRAP = 10
+    NR_BOOTSTRAP = 5
     X = None
     w = None
 
@@ -64,6 +65,10 @@ class Transition(metaclass=TransitionMeta):
             Probability density at .
         """
 
+    def score(self, X: pd.DataFrame, w: np.ndarray):
+        densities = self.pdf(X)
+        return (np.log(densities) * w).sum()
+
     def no_meaningful_particles(self) -> bool:
         return len(self.X) == 0 or self.no_parameters
 
@@ -81,8 +86,13 @@ class Transition(metaclass=TransitionMeta):
         n_samples_list = list(range(start, stop, step)) + [len(self.X)]
         cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
 
+        self.n_samples_list_ = n_samples_list
+        self.cvs_ = cvs
+
         try:
             popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+            self.f_ = f
+            self.popt_ = popt
             required_n = finv(coefficient_of_variation)
             return required_n
         except RuntimeError:

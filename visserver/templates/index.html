@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="jumbotron">
+            <h1>pyABC Visualization Server</h1>
+            Visualize your ABC runs
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <a href="{{url_for('abc_overview')}}">
+                    <img class="card-img-top"
+                         width="50%"
+                         style="opacity: 0.5"
+                         src="{{ url_for('static', filename='abc_run_list_panel_image.svg') }}"
+                         alt="ABC Run List Image">
+                </a>
+                <div class="card-block">
+                    <h2 class="card-title">ABC Run List</h2>
+                    <p class="card-text">
+                        Get an overview over completed and ongoing ABC runs
+                    </p>
+                    <a href="{{url_for('abc_overview')}}" class="btn btn-primary">Go to ABC Run List</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <a href="{{url_for('server_info')}}">
+                    <img class="card-img-top"
+                         width="50%"
+                         style="opacity: 0.5"
+                         src="{{ url_for('static', filename='server_info_panel_image.svg') }}"
+                         alt="Server Info Image">
+                </a>
+                <div class="card-block">
+                    <h2 class="card-title">Server Info</h2>
+                    <p class="card-text">
+                        Information about the running server
+                    </p>
+                    <a href="{{url_for('server_info')}}" class="btn btn-primary">Server Info</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

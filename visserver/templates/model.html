@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}ABC {{ abc_id }}, Model {{ model_id }}{% endblock %}
+
+
+{% block scripts %}
+{{ super() }}
+{{ BOKEH.render()|safe }}
+{{ plot.script|safe }}
+
+{% endblock %}
+
+
+{% block navbar_links %}
+{{ super() }}
+<li><a href="{{ url_for('abc_overview') }}">Overview</a></li>
+<li><a href="{{ url_for('abc_detail', abc_id=abc_id) }}">ABC {{ abc_id }}</a></li>
+
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+        Population <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        {% for t in available_t %}
+        <li>
+            <a href="{{ url_for('abc_model',abc_id=abc_id, model_id=model_id, t=t) }}">t={{ t }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+</li>
+
+
+{% endblock %}
+
+
+{% block content %}
+<div class="container">
+    <h1>ABC {{ abc_id }}, Model {{ model_id }}, t={{ t }}</h1>
+
+    <h2>Population</h2>
+        <ul class="pagination">
+            {% for t_ind in available_t %}
+            <li {% if t== t_ind %}class="active" {% endif %}>
+                <a href="{{ url_for('abc_model',abc_id=abc_id, model_id=model_id, t=t_ind) }}">
+                    {{ t_ind }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+
+    <h2>Parameter</h2>
+    {{ plot.div|safe }}
+
+</div>
+{% endblock %}

@@ -31,6 +31,7 @@ from .storage import History
 from .model import Model, SimpleModel, ModelResult
 from .transition import MultivariateNormalTransition
 from .populationstrategy import AdaptivePopulationStrategy, ConstantPopulationStrategy
+from .transition import GridSearchCV
 
 __all__ = [
     "ABCSMC",
@@ -58,5 +59,16 @@ __all__ = [
     "ModelPerturbationKernel",
     # random_variables end
     "SQLDataStore",
-    "ABCLoader"
+    "ABCLoader",
+    "GridSearchCV"
 ]
+
+
+import os
+import logging
+try:
+    loglevel = os.environ["ABC_LOG_LEVEL"]
+    numeric_loglevel = getattr(logging, loglevel.upper())
+    logging.getLogger().setLevel(numeric_loglevel)
+except KeyError:
+    pass

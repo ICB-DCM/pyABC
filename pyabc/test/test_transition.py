@@ -3,7 +3,7 @@ from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
 import pytest
-
+from pyabc import GridSearchCV
 
 def data(n):
     df = pd.DataFrame({"a": np.random.rand(n), "b": np.random.rand(n)})
@@ -114,3 +114,18 @@ def test_argument_order():
     reversed = test[::-1]
     assert (np.array(test) != np.array(reversed)).all()   # works b/c of even nr of parameters
     assert m.pdf(test) == m.pdf(reversed)
+
+
+def test_score():
+    m = MultivariateNormalTransition()
+    df, w = data(20)
+    m.fit(df, w)
+    score = m.score(df, w)
+
+
+def test_grid_search():
+    m = MultivariateNormalTransition()
+    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)})
+    df, w = data(20)
+    m_grid.fit(df, w)
+
