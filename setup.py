@@ -5,7 +5,7 @@ Created on Thu May  8 13:37:43 2014
 @author: emmanuel
 """
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
@@ -13,7 +13,7 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
                 "dill",
                 'gitpython', 'seaborn', 'scikit-learn',
                 'matplotlib', 'sqlalchemy'],
-     packages=find_packages(exclude=["examples", "doc", "devideas"]),
+     packages=["pyabc"],
      author='Emmanuel Klinger, Dennis Rickert',
      author_email='emmanuel.klinger@brain.mpg.de, dennis.rickert@helmholtz-muenchen.de',
      name="pyabc",
