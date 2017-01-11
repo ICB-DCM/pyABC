@@ -5,6 +5,10 @@ ABC
 [![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
 [![Build Status](https://travis-ci.org/neuralyzer/pyabc.svg?branch=master)](https://travis-ci.org/neuralyzer/pyabc)
 
+
+![pyABC](doc/logo.png)
+
+
 Massively parallel ABC for Python.
 
 
