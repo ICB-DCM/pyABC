@@ -1,5 +1,11 @@
 name: py35
 dependencies:
-  - python=3.5
-
-
+  - python=3.5.1
+  - numpy
+  - scipy
+  - bokeh
+  - pandas
+  - flask
+  - matplotlib
+  - scikit-learn
+  - distributed
