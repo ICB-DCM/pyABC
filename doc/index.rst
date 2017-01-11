@@ -24,8 +24,8 @@ API reference
 .. toctree::
    :maxdepth: 2
 
-   distance_api
    abcsmc_api
+   distance_api
    model_api
    epsilon_api
    datastore_api
