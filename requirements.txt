@@ -16,3 +16,4 @@ scikit-learn
 matplotlib
 sqlalchemy
 distributed
+pytest
