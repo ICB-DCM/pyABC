@@ -3,3 +3,16 @@ gitpython
 sqlalchemy
 flask
 flask_bootstrap
+numpy
+scipy
+pandas
+cloudpickle
+bokeh
+redis
+dill
+gitpython
+seaborn
+scikit-learn
+matplotlib
+sqlalchemy
+distributed
