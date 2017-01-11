@@ -10,7 +10,7 @@ This part of the documentaiton guides you step by step through the usage of this
 .. toctree::
    :maxdepth: 2
 
-
+   installation
    model_selection
    web_visualization
    parallel
