@@ -18,6 +18,16 @@ This part of the documentaiton guides you step by step through the usage of this
    parallel
 
 
+Developer's Guide
+-----------------
+
+
+.. toctree::
+   :maxdepth: 2
+
+   documentation
+   code
+
 
 API reference
 -------------
