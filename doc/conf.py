@@ -63,10 +63,9 @@ author = 'Emmanuel Klinger'
 #
 # The short X.Y version.
 
-import pkg_resources  # part of setuptools
-version = pkg_resources.require("pyabc")[0].version
 
-version = version
+
+version = "0.1.3"
 # The full version, including alpha/beta/rc tags.
 release = version
 
