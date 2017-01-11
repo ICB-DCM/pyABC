@@ -25,7 +25,6 @@ from .distance_functions import (ZScoreDistanceFunction,
                                  RangeEstimatorDistanceFunction,
                                  DistanceFunctionWithMeasureList)
 from .epsilon import Epsilon, ConstantEpsilon, MedianEpsilon, ListEpsilon
-from .loader import SQLDataStore, ABCLoader
 from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult
