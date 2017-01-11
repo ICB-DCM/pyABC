@@ -22,6 +22,7 @@ This part of the documentaiton guides you step by step through the usage of this
 Developer's Guide
 -----------------
 
+Interested in contributing? It is not that hard.
 
 .. toctree::
    :maxdepth: 2
