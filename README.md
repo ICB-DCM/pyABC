@@ -8,6 +8,12 @@ ABC
 Massively parallel ABC for Python.
 
 
+The documentation is hosted on RTD.
+[Check the documentation](http://pyabc.readthedocs.io/en/latest/index.html)
+
+
+
+
 Building the documentation
 --------------------------
 
