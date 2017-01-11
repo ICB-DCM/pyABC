@@ -1,5 +1,5 @@
-Welcome to ABC's documentation!
-===============================
+Welcome to pyABC's documentation!
+=================================
 
 
 User's Guide
@@ -44,7 +44,4 @@ Indices and tables
 * :ref:`search`
 
 
-
-TODOS
------
 .. todolist::
