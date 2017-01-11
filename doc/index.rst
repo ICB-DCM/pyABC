@@ -24,10 +24,10 @@ API reference
 .. toctree::
    :maxdepth: 2
 
+   distance_api
    abcsmc_api
    model_api
    epsilon_api
-   distance_api
    datastore_api
    parameters_api
    random_variables_api
