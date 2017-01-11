@@ -1,6 +1,5 @@
 name: py35
 dependencies:
   - python=3.5.1=0
-python:
-   setup_py_install: true
+
 
