@@ -131,18 +131,3 @@ In line 53 we run the ``ABCSMC`` specifying the maximum number of populations an
 Whatever is reached first terminates the ABC run. The result is a :class:`History <abcsmc.History>` object which
 can, for example be queried for the posterior probabilities.
 
-
-More sophisticated analysis - The ABC loader
---------------------------------------------
-
-Usually you want to look at the ABC results stored in the database, rather than query the :class:`History <abcsmc.History>` object itself.
-To do so you can use the :class:`ABCLoader <abcsmc.ABCLoader>` class.
-
-
-ABC loader example
-~~~~~~~~~~~~~~~~~~
-
-Check the example below for some common :class:`ABCLoader <abcsmc.ABCLoader>` usage patterns.
-The followin was run just during an ABC run. So you'll see intermediate results.
-
-.. include:: ABCLoader/abc_quick_plots.rst

@@ -1,5 +1,4 @@
-PYABC
-=====
+
 
 .. automodule:: pyabc.smc
    :members:

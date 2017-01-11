@@ -1,3 +1,9 @@
+"""
+
+Scheduling strategies
+"""
+
+
 import scipy as sp
 import logging
 import json
