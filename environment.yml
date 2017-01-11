@@ -9,3 +9,4 @@ dependencies:
   - matplotlib
   - scikit-learn
   - distributed
+  - sphinx
