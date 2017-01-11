@@ -9,4 +9,4 @@ install:
   - pip install --upgrade pytest==3.0.5
 # command to run tests
 script:
-  - python -m pytest
+  - travis_wait 45 python -m pytest
