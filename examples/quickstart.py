@@ -4,7 +4,6 @@ from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    PercentileDistanceFunction, SimpleModel,
                    MultivariateNormalTransition, ConstantPopulationStrategy)
 from parallel import MulticoreSampler
-import scipy as sp
 import tempfile
 import os
 
