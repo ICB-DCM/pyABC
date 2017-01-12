@@ -21,3 +21,16 @@ Writing tests
 
 Test can be written with `pytest <http://docs.pytest.org/en/latest/>`_
 or the `unittest <https://docs.python.org/3/library/unittest.html>`_ module.
+
+
+Versioning scheme
+-----------------
+
+For version numbers, we use A.B.C, where
+
+* ``C`` is increased for bug fixes
+* ``B`` is increased for new features
+* ``A`` for API breaking changes.
+
+That is, we follow the versioning scheme suggested
+by the `Python packaging guide <https://packaging.python.org>`_.

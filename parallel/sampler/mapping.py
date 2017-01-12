@@ -1,41 +1,10 @@
-from abc import ABC, abstractmethod
-import dill as pickle
 import functools
-import numpy as np
 import random
 
+import dill as pickle
+import numpy as np
 
-def identity(x):
-    return x
-
-
-class Sampler(ABC):
-    @abstractmethod
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        pass
-
-
-class SingleCoreSampler(Sampler):
-    """
-    Sample on a single core. No parallelization.
-    """
-    def __init__(self):
-        self.nr_evaluations_ = 0
-
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        nr_simulations = 0
-        results = []
-        for _ in range(n):
-            while True:
-                new_param = sample_one()
-                new_sim = simulate_one(new_param)
-                nr_simulations += 1
-                if accept_one(new_sim):
-                    break
-            results.append(new_sim)
-        self.nr_evaluations_ = nr_simulations
-        assert len(results) == n
-        return results
+from .base import Sampler
 
 
 class MappingSampler(Sampler):
@@ -89,3 +58,7 @@ class MappingSampler(Sampler):
         self.nr_evaluations_ = sum(nr for res, nr in counted_results)
         results = [res for res, nr in counted_results]
         return results
+
+
+def identity(x):
+    return x

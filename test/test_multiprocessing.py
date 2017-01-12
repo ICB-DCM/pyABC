@@ -1,17 +1,15 @@
 import unittest
+
+from parallel import MappingSampler
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
-                   MedianEpsilon, MinMaxDistanceFunction, PercentileDistanceFunction, SimpleModel, Model, ModelResult,
+                   MedianEpsilon, MinMaxDistanceFunction, Model, ModelResult,
                    MultivariateNormalTransition)
-import random
+
 import os
-import scipy.stats as st
-from scipy.special import gamma, binom
 import scipy as sp
-import scipy.interpolate
 import multiprocessing
 import tempfile
-import parallel.sampler as ps
-from pyabc.populationstrategy import ConstantPopulationStrategy, AdaptivePopulationStrategy
+from pyabc.populationstrategy import ConstantPopulationStrategy
 
 REMOVE_DB = False
 
@@ -52,7 +50,7 @@ class TestABCFast(TestABC):
         models = [AllInOneModel() for _ in range(2)]
         model_prior = RV("randint", 0, 2)
         mp_pool = multiprocessing.Pool(4)
-        mp_sampler = ps.MappingSampler(map=mp_pool.map)
+        mp_sampler = MappingSampler(map=mp_pool.map)
         population_size = ConstantPopulationStrategy(800, 3)
         parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
         parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]

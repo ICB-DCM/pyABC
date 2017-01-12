@@ -8,7 +8,7 @@ from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from parallel.sampler import SingleCoreSampler, MappingSampler
+from parallel import SingleCoreSampler, MappingSampler, MulticoreSampler
 from scipy.special import gamma, binom
 import scipy.interpolate
 import scipy as sp
@@ -22,7 +22,7 @@ class MultiProcessingMappingSampler(MappingSampler):
         super().__init__(mapper)
 
 
-@pytest.fixture(params=[SingleCoreSampler, MappingSampler, MultiProcessingMappingSampler])
+@pytest.fixture(params=[SingleCoreSampler, MappingSampler, MultiProcessingMappingSampler, MulticoreSampler])
 def sampler(request):
     return request.param()
 
