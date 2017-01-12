@@ -182,7 +182,7 @@ class History:
         # store ground truth to db
         try:
             git_hash = git.Repo(os.environ['PYTHONPATH']).head.commit.hexsha
-        except (git.exc.NoSuchPathError, KeyError) as e:
+        except (git.exc.NoSuchPathError, KeyError, git.exc.InvalidGitRepositoryError) as e:
             git_hash = str(e)
         abc_smc_simulation = ABCSMC(json_parameters=str(options),
                                     start_time=datetime.datetime.now(),

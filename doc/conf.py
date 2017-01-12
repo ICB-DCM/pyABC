@@ -67,6 +67,7 @@ author = 'Emmanuel Klinger'
 import sys
 import io
 import pyabc
+
 version = pyabc.__version__
 # The full version, including alpha/beta/rc tags.
 release = version
@@ -80,6 +81,8 @@ with open("../examples/quickstart.py") as f:
     quickstart_content = f.read()
 
 exec(quickstart_content)
+
+import examples.quickstart
 
 sys.stdout, sys.stderr = old
 
