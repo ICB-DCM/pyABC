@@ -6,7 +6,6 @@ dependencies:
   - bokeh
   - pandas
   - flask
-  - matplotlib
   - scikit-learn
   - distributed
   - sphinx
