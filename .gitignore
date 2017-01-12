@@ -82,3 +82,5 @@ data/.snakemake
 data/.spyderproject
 data/.spyproject
 data/processed
+examples/*.err
+examples/*.out
