@@ -9,23 +9,25 @@ from typing import Union
 
 logger = logging.getLogger("MutlicoreSampler")
 
+SENTINEL = None
+
 
 def feed(feed_q, n_jobs, n_proc):
     for _ in range(n_jobs):
         feed_q.put(1)
 
     for _ in range(n_proc):
-        feed_q.put(None)
+        feed_q.put(SENTINEL)
 
 
 def work(feed_q, result_q, sample_one, simulate_one, accept_one):
     random.seed()
     np.random.seed()
+    single_core_sampler = SingleCoreSampler()
     while True:
         arg = feed_q.get()
-        if arg == None:
+        if arg == SENTINEL:
             break
-        single_core_sampler = SingleCoreSampler()
         res = single_core_sampler.sample_until_n_accepted(sample_one, simulate_one, accept_one, 1)
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
@@ -58,8 +60,8 @@ class MulticoreSampler(Sampler):
 
     """
     def __init__(self, n_procs: Union[int, None] = None):
+        super().__init__()
         self.n_procs = n_procs if n_procs else nr_cores_available()
-        self.nr_evaluations_ = 0
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         logger.info(f"Start sampling on {self.n_procs} cores")
@@ -85,6 +87,9 @@ class MulticoreSampler(Sampler):
 
         for proc in worker_processes:
             proc.join()
+
+        # Queue's get close automatically on garbage collection
+        # No explicit closing necessary.
 
         results, evaluations = zip(*collected_results)
         self.nr_evaluations_ = sum(evaluations)

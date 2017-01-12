@@ -5,8 +5,6 @@ class SingleCoreSampler(Sampler):
     """
     Sample on a single core. No parallelization.
     """
-    def __init__(self):
-        self.nr_evaluations_ = 0
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         nr_simulations = 0

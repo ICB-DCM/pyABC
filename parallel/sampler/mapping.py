@@ -21,8 +21,8 @@ class MappingSampler(Sampler):
         or the MappingSampler class should handle serialization
     """
     def __init__(self, map=map, mapper_pickles=False):
+        super().__init__()
         self.map = map
-        self.nr_evaluations_ = 0
         self.pickle, self.unpickle = (identity, identity) if mapper_pickles else (pickle.dumps, pickle.loads)
 
     def __getstate__(self):
