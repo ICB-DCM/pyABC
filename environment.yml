@@ -8,4 +8,5 @@ dependencies:
   - flask
   - scikit-learn
   - distributed
+  - matplotlib
   - sphinx
