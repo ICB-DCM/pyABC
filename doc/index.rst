@@ -15,6 +15,7 @@ This part of the documentaiton guides you step by step through the usage of this
    :maxdepth: 2
 
    installation
+   what
    model_selection
    web_visualization
    parallel

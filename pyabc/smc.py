@@ -64,7 +64,7 @@ class ABCSMC:
         it can make sense to have the model produce some kind or raw output
         and then take the same summary statistics function for all the models.
 
-    model_prior_distribution: RV
+    model_prior: RV
         A random variable giving the prior weights of the model classes.
         If the prior is uniform over the model classes
         this is something like ``RV("randint", 0, len(models))``.
@@ -73,7 +73,7 @@ class ABCSMC:
         Kernel which governs with which probability to switch the model
         for a given sample.
 
-    parameter_given_model_prior_distribution: List[Distribution]
+    parameter_priors: List[Distribution]
         A list of prior distributions for the models' parameters.
         Each list entry is the prior distribution for the corresponding model.
 
@@ -123,9 +123,9 @@ class ABCSMC:
     """
     def __init__(self,
                  models: List[Model],
-                 model_prior_distribution: RV,
+                 model_prior: RV,
                  model_perturbation_kernel: ModelPerturbationKernel,
-                 parameter_given_model_prior_distribution: List[Distribution],
+                 parameter_priors: List[Distribution],
                  transitions: List[Transition],
                  distance_function,
                  eps: Epsilon,
@@ -136,13 +136,13 @@ class ABCSMC:
         # sanity checks
         self.models = list(models)
         if not (len(self.models)
-                == len(parameter_given_model_prior_distribution)
+                == len(parameter_priors)
                 == len(transitions)):
             raise Exception("Nr of models has to be equal to the number of parameter prior distributions has to be equal"
                             " to the number of parameter perturbation kernels")
-        self.model_prior_distribution = model_prior_distribution
+        self.model_prior = model_prior
         self.model_perturbation_kernel = model_perturbation_kernel
-        self.parameter_given_model_prior_distribution = parameter_given_model_prior_distribution  # this cannot be serialized by dill
+        self.parameter_priors = parameter_priors  # this cannot be serialized by dill
         self.transitions = transitions  # type: List[Transition]
         self.distance_function = to_distance(distance_function)
         self.eps = eps
@@ -248,8 +248,8 @@ class ABCSMC:
         """
         if self._points_sampled_from_prior is None:
             def sample_one():
-                m = self.model_prior_distribution.rvs()
-                par = self.parameter_given_model_prior_distribution[m].rvs()
+                m = self.model_prior.rvs()
+                par = self.parameter_priors[m].rvs()
                 return m, par
 
             def simulate_one(para):
@@ -295,8 +295,8 @@ class ABCSMC:
             if normalization == 0:
                 print('normalization is zero!')
             fraction_accepted_runs_for_single_parameter = len(distance_list) / self.population_strategy.nr_samples_per_parameter  # reflects stochasticity of the model
-            weight = (self.model_prior_distribution.pmf(m_ss)
-                      * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss)
+            weight = (self.model_prior.pmf(m_ss)
+                      * self.parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
                       / normalization)
         return weight
@@ -304,8 +304,8 @@ class ABCSMC:
     def generate_valid_proposal(self, t, m, p):
         # first generation
         if t == 0:  # sample from prior
-            m_ss = self.model_prior_distribution.rvs()
-            theta_ss = self.parameter_given_model_prior_distribution[m_ss].rvs()
+            m_ss = self.model_prior.rvs()
+            theta_ss = self.parameter_priors[m_ss].rvs()
             return m_ss, theta_ss
 
         # later generation
@@ -323,8 +323,8 @@ class ABCSMC:
                 m_ss = m[0]
             theta_ss = self.transitions[m_ss].rvs()
 
-            if (self.model_prior_distribution.pmf(m_ss)
-                                             * self.parameter_given_model_prior_distribution[m_ss].pdf(theta_ss) > 0):
+            if (self.model_prior.pmf(m_ss)
+                                             * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
     def run(self, minimum_epsilon: float) -> History:
