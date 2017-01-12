@@ -24,9 +24,9 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
     version=version,
     license="GPLv3",
     platforms="all",
-    url="https://github.com/neuralyzer/pyabc",
+    url="http://pyabc.readthedocs.io/en/latest/",
     include_package_data=True,
-    description='Massively parallel ABC for Python',
+    description='Parallel ABC for Python',
     classifiers=[
         'Programming Language :: Python :: 3.6'
     ],
