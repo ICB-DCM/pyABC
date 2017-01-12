@@ -1,12 +1,11 @@
 language: python
 python:
-  - "3.5"
   - "3.6"
 # command to install dependencies
 install:
   - pip install .
   - pip install -r requirements.txt
-  - pip install --upgrade pytest==3.0.5
+  - pip install --upgrade pytest
 # command to run tests
 script:
   - python -m pytest test
