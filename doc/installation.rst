@@ -6,8 +6,8 @@ Installation
 Preparation
 -----------
 
-This package requires Python 3.5 or later.
-It is tested with Python 3.5 and 3.6.
+This package requires Python 3.6 or later.
+
 
 
 PIP
