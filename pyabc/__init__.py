@@ -31,6 +31,7 @@ from .model import Model, SimpleModel, ModelResult
 from .transition import MultivariateNormalTransition
 from .populationstrategy import AdaptivePopulationStrategy, ConstantPopulationStrategy
 from .transition import GridSearchCV
+from .version import __version__
 
 __all__ = [
     "ABCSMC",

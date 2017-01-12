@@ -6,7 +6,10 @@ Created on Thu May  8 13:37:43 2014
 """
 
 from setuptools import setup
+import os
 
+with open(os.path.join(os.path.dirname(__file__), "pyabc", "version.py")) as f:
+    version = f.read().split("\n")[0].split("=")[-1].strip(' ').strip('"')
 
 setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
                 "flask", "flask_bootstrap", "bokeh", "redis",
@@ -18,14 +21,13 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
     author='Emmanuel Klinger, Dennis Rickert',
     author_email='emmanuel.klinger@brain.mpg.de, dennis.rickert@helmholtz-muenchen.de',
     name="pyabc",
-    version="0.2.0",
+    version=version,
     license="GPLv3",
     platforms="all",
     url="https://github.com/neuralyzer/pyabc",
     include_package_data=True,
     description='Massively parallel ABC for Python',
     classifiers=[
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6'
     ],
    keywords='inference abc approximate bayesian computation parallel distributed',
