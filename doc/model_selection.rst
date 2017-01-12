@@ -17,10 +17,7 @@ You should see something similar to
 
 .. literalinclude:: ../examples/quickstart.py.out
 
-and maybe additional logging output such as
-
-
-.. literalinclude:: ../examples/quickstart.py.err
+and maybe additional logging output.
 
 
 Step by step explanation
