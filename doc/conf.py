@@ -75,15 +75,9 @@ release = version
 
 old = sys.stdout, sys.stderr
 new = io.StringIO(), io.StringIO()
+
 sys.stdout, sys.stderr = new
-
-with open("../examples/quickstart.py") as f:
-    quickstart_content = f.read()
-
-exec(quickstart_content)
-
-import examples.quickstart
-
+import examples.quickstart # this executes a script
 sys.stdout, sys.stderr = old
 
 new[0].seek(0)
@@ -93,7 +87,6 @@ try:
     os.remove("../examples/quickstart.py.out")
 except FileNotFoundError:
     pass
-
 
 try:
     os.remove("../examples/quickstart.py.err")
