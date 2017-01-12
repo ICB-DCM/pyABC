@@ -15,11 +15,11 @@ Here is a small example on how to do Bayesian model selection.
 You should see something similar to
 
 
-.. literalinclude:: _build/quickstart.py.out
+.. literalinclude:: ../examples/quickstart.py.out
 
 on stdout and on stderr something like
 
-.. literalinclude:: _build//quickstart.py.err
+.. literalinclude:: ../examples//quickstart.py.err
 
 
 

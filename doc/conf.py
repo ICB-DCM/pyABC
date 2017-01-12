@@ -86,9 +86,20 @@ sys.stdout, sys.stderr = old
 new[0].seek(0)
 new[1].seek(0)
 
-with open("_build/quickstart.py.out", "w") as f:
+try:
+    os.remove("../examples/quickstart.py.out")
+except FileNotFoundError:
+    pass
+
+
+try:
+    os.remove("../examples/quickstart.py.err")
+except FileNotFoundError:
+    pass
+
+with open("../examples/quickstart.py.out", "w") as f:
     f.write(new[0].read())
-with open("_build/quickstart.py.err", "w") as f:
+with open("../examples/quickstart.py.err", "w") as f:
     f.write(new[1].read())
 
 
