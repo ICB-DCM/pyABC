@@ -26,11 +26,11 @@ or the `unittest <https://docs.python.org/3/library/unittest.html>`_ module.
 Versioning scheme
 -----------------
 
-For version numbers, we use A.B.C, where
+For version numbers, we use ``A.B.C``, where
 
 * ``C`` is increased for bug fixes
 * ``B`` is increased for new features
-* ``A`` for API breaking changes.
+* ``A`` for API breaking, backwards incompatible changes.
 
 That is, we follow the versioning scheme suggested
 by the `Python packaging guide <https://packaging.python.org>`_.
