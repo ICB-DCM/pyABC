@@ -8,4 +8,6 @@ install:
   - pip install --upgrade pytest
 # command to run tests
 script:
+  - python examples/quickstart.py
   - python -m pytest test
+
