@@ -5,7 +5,7 @@ Created on Thu May  8 13:37:43 2014
 @author: emmanuel
 """
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 
 with open(os.path.join(os.path.dirname(__file__), "pyabc", "version.py")) as f:
@@ -17,7 +17,7 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
                 'gitpython', 'seaborn', 'scikit-learn',
                 'matplotlib', 'sqlalchemy',
                 'distributed'],
-    packages=["pyabc", "visserver"],
+    packages=find_packages(exclude=["examples*", "devideas*", "test*", "test"]),
     author='Emmanuel Klinger, Dennis Rickert',
     author_email='emmanuel.klinger@brain.mpg.de, dennis.rickert@helmholtz-muenchen.de',
     name="pyabc",
@@ -34,7 +34,7 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
     zip_safe=False,  # not zip safe b/c of Flask templates
     entry_points={
         'console_scripts': [
-              'abc-server = visserver.server:run_app',
+              'abc-server = pyabc.visserver.server:run_app',
         ]
 },
       )

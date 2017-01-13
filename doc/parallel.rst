@@ -4,7 +4,7 @@ Parallel job execution on an SGE cluster environment
 Quick start
 -----------
 
-The parallel package provides as main class the :class:`SGE <parallel.sge.SGE>`. It's ``map`` method
+The parallel package provides as main class the :class:`SGE <pyabc.parallel.sge.SGE>`. It's ``map`` method
 automatically parallelizes across an SGE cluster.
 
 Usage of the parallel package is farly easy. For example
@@ -33,10 +33,10 @@ more robustly.
 .. note::
 
    A configuration file in ``~/.parallel`` is required.
-   See :class:`SGE <parallel.sge.SGE>`.
+   See :class:`SGE <pyabc.parallel.sge.SGE>`.
 
 
-The ``parallel.sge.util.sge_available`` can be used to check if an SGE cluster can be used on the machine.
+The ``pyabc.parallel.sge.util.sge_available`` can be used to check if an SGE cluster can be used on the machine.
 
 Check the :doc:`API documentation <parallel_api>` for more details.
 
@@ -44,5 +44,5 @@ Check the :doc:`API documentation <parallel_api>` for more details.
 Information about running jobs
 ------------------------------
 
-Use the ``python -m parallel.job_info_redis`` to get a nicely formatted output of the current execution state.
-Check ``python -m parallel.job_info_redis --help`` for more details.
+Use the ``python -m pyabc.parallel.job_info_redis`` to get a nicely formatted output of the current execution state.
+Check ``python -m pyabc.parallel.job_info_redis --help`` for more details.
