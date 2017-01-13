@@ -1,4 +1,4 @@
-from parallel import MulticoreSampler
+from pyabc.parallel import MulticoreSampler
 
 
 class UnpickleAble:

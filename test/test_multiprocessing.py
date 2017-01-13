@@ -1,14 +1,14 @@
+import multiprocessing
+import os
+import tempfile
 import unittest
 
-from parallel import MappingSampler
+import scipy as sp
+
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    MedianEpsilon, MinMaxDistanceFunction, Model, ModelResult,
                    MultivariateNormalTransition)
-
-import os
-import scipy as sp
-import multiprocessing
-import tempfile
+from pyabc.parallel import MappingSampler
 from pyabc.populationstrategy import ConstantPopulationStrategy
 
 REMOVE_DB = False

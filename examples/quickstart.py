@@ -1,12 +1,13 @@
+import os
+import tempfile
+
 import scipy.stats as st
+
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
                    MultivariateNormalTransition, ConstantPopulationStrategy)
-from parallel import MulticoreSampler
-import tempfile
-import os
-
+from pyabc.parallel import MulticoreSampler
 
 # Define a gaussian model
 sigma = .5

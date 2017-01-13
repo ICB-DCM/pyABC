@@ -1,18 +1,21 @@
-import pytest
+import multiprocessing
 import os
-import tempfile
 import random
+import tempfile
+
+import pytest
+import scipy as sp
+import scipy.interpolate
 import scipy.stats as st
+from scipy.special import gamma, binom
+
 from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    MedianEpsilon, MinMaxDistanceFunction,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from parallel import SingleCoreSampler, MappingSampler, MulticoreSampler
-from scipy.special import gamma, binom
-import scipy.interpolate
-import scipy as sp
-import multiprocessing
+from pyabc.parallel import SingleCoreSampler, MappingSampler, MulticoreSampler
+
 REMOVE_DB = False
 
 
