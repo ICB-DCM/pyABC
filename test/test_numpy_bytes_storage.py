@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from pyabc.storage import np_from_bytes, np_to_bytes
+from pyabc.storage.numpy_bytes_storage import np_from_bytes, np_to_bytes
 
 
 @pytest.fixture
