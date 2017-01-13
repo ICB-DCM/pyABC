@@ -6,14 +6,14 @@ Parallel Approximate Bayesian Computation - Sequential Monte Carlo
 """
 
 import datetime
+import logging
 from typing import List, Callable, TypeVar
 
-import logging
 abclogger = logging.getLogger("ABC")
 import pandas as pd
 import scipy as sp
 
-from parallel import SingleCoreSampler
+from .parallel import SingleCoreSampler
 from .distance_functions import DistanceFunction, to_distance
 from .epsilon import Epsilon
 from .model import Model
