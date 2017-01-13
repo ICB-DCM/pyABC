@@ -51,16 +51,6 @@ class History:
 
     debug: bool
         Whether to print additional debug output.
-
-
-    .. warning::
-
-        Most likely you will never have to instantiate the class yourself.
-        An instance of this class is returned by the ``ABCSMC.run`` method.
-        It can then be used for querying. However, most likely even that won't
-        be used as querying is usually done on the stored database usind the
-        abc_loader.
-
     """
     DB_TIMEOUT = 120
 
