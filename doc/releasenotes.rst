@@ -2,6 +2,15 @@ Release Notes
 =============
 
 
+0.3.0
+-----
+
+Easier usage
+------------
+
+Provide more default values for ABCSMC. This improves usability.
+
+
 0.2.0
 -----
 
