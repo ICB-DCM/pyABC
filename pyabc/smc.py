@@ -13,16 +13,18 @@ abclogger = logging.getLogger("ABC")
 import pandas as pd
 import scipy as sp
 
-from .parallel import SingleCoreSampler
+from .parallel import MulticoreSampler
 from .distance_functions import DistanceFunction, to_distance
-from .epsilon import Epsilon
+from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .parameters import ValidParticle
-from .transition import Transition
+from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
-from .populationstrategy import PopulationStrategy
+from .populationstrategy import PopulationStrategy, ConstantPopulationStrategy
 from .random import fast_random_choice
+from typing import Union
+
 
 model_output = TypeVar("model_output")
 
@@ -121,41 +123,55 @@ class ABCSMC:
                   Bioinformatics 26, no. 1 (January 1, 2010):
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
-    def __init__(self,
-                 models: List[Model],
-                 model_prior: RV,
-                 model_perturbation_kernel: ModelPerturbationKernel,
+    def __init__(self, models: List[Model],
                  parameter_priors: List[Distribution],
-                 transitions: List[Transition],
                  distance_function,
-                 eps: Epsilon,
-                 population_strategy: PopulationStrategy,
-                 summary_statistics: Callable[[model_output], dict]=identity,
+                 population_strategy: Union[PopulationStrategy, int],
+                 summary_statistics: Callable[[model_output], dict] = identity,
+                 model_prior: RV = None,
+                 model_perturbation_kernel: ModelPerturbationKernel = None,
+                 transitions: List[Transition] = None, eps: Epsilon = None,
                  sampler=None):
 
         # sanity checks
         self.models = list(models)
-        if not (len(self.models)
-                == len(parameter_priors)
-                == len(transitions)):
-            raise Exception("Nr of models has to be equal to the number of parameter prior distributions has to be equal"
-                            " to the number of parameter perturbation kernels")
-        self.model_prior = model_prior
-        self.model_perturbation_kernel = model_perturbation_kernel
+
         self.parameter_priors = parameter_priors  # this cannot be serialized by dill
-        self.transitions = transitions  # type: List[Transition]
+        assert len(self.models) == len(self.parameter_priors), "Number models and number parameter priors have to agree"
+
         self.distance_function = to_distance(distance_function)
-        self.eps = eps
+
         self.summary_statistics = summary_statistics
+
+        if model_prior is None:
+            model_prior = RV("randint", 0, len(self.models))
+        self.model_prior = model_prior
+
+        if model_perturbation_kernel is None:
+            model_perturbation_kernel = ModelPerturbationKernel(len(self.models), probability_to_stay=.7)
+        self.model_perturbation_kernel = model_perturbation_kernel
+
+        if transitions is None:
+            transitions = [MultivariateNormalTransition() for _ in self.models]
+        self.transitions = transitions  # type: List[Transition]
+
+        if eps is None:
+            eps = MedianEpsilon()
+        self.eps = eps
+
+        self.population_strategy = population_strategy
+
+        if sampler is None:
+            self.sampler = MulticoreSampler()
+        else:
+            self.sampler = sampler
+
         self.stop_if_only_single_model_alive = True
         self.x_0 = None
         self.history = None  # type: History
         self._points_sampled_from_prior = None
-        self.population_strategy = population_strategy
-        if sampler is None:
-            self.sampler = SingleCoreSampler()
-        else:
-            self.sampler = sampler
+
+
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()

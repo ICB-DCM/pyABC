@@ -1,4 +1,3 @@
-import multiprocessing
 import os
 import random
 import tempfile
@@ -9,23 +8,17 @@ import scipy.interpolate
 import scipy.stats as st
 from scipy.special import gamma, binom
 
-from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
+from pyabc import (ABCSMC, RV,  Distribution,
                    MedianEpsilon, MinMaxDistanceFunction,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from pyabc.parallel import SingleCoreSampler, MappingSampler, MulticoreSampler
+from pyabc.parallel import MulticoreSampler
 
 REMOVE_DB = False
 
 
-class MultiProcessingMappingSampler(MappingSampler):
-    def __init__(self, map=None):
-        mapper = multiprocessing.Pool().map
-        super().__init__(mapper)
-
-
-@pytest.fixture(params=[SingleCoreSampler, MappingSampler, MultiProcessingMappingSampler, MulticoreSampler])
+@pytest.fixture(params=[MulticoreSampler])
 def sampler(request):
     return request.param()
 
@@ -58,16 +51,11 @@ def test_cookie_jar(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(1500, 1)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution,
-                 parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]),
-                 MedianEpsilon(.1),
-                 population_size,
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]), population_size,
+                 eps=MedianEpsilon(.1),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -96,14 +84,12 @@ def test_empty_population(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(1500, 3)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(0),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -127,15 +113,13 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(800, 3)
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1))
                                                 for _ in range(2)]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(.1),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -157,15 +141,13 @@ class AllInOneModel(Model):
 
 def test_all_in_one_model(db_path, sampler):
     models = [AllInOneModel() for _ in range(2)]
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(800, 3)
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1))
                                                 for _ in range(2)]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(.1),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -185,17 +167,15 @@ def test_beta_binomial_different_priors(db_path, sampler):
 
     models = [model for _ in range(2)]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(800, 3)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
                                                 Distribution(theta=RV("beta", a2, b2))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(.1),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -227,17 +207,15 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path, sam
 
     models = [model for _ in range(2)]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(800, 5)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
                                                 Distribution(theta=RV("beta", a2, b2))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
-                 MedianEpsilon(median_multiplier=.9), population_size,
+                 population_size,
+                 eps=MedianEpsilon(median_multiplier=.9),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -268,14 +246,12 @@ def test_continuous_non_gaussian(db_path, sampler):
 
     models = [model]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 1)
     population_size = ConstantPopulationStrategy(250, 2)
     parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0, 1))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition()]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.2),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(.2),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -315,15 +291,13 @@ def test_gaussian_single_population(db_path, sampler):
 
     models = [model]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 1)
     nr_populations = 1
     population_size = ConstantPopulationStrategy(600, nr_populations)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_prior))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition()]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.1),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 eps=MedianEpsilon(.1),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -361,15 +335,13 @@ def test_gaussian_multiple_populations(db_path, sampler):
 
     models = [model]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 1)
     nr_populations = 4
     population_size = ConstantPopulationStrategy(600, nr_populations)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition()]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 eps=MedianEpsilon(.2),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -406,16 +378,16 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
 
     models = [model]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 1)
     nr_populations = 4
     population_size = ConstantPopulationStrategy(600, nr_populations)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
     parameter_perturbation_kernels = [GridSearchCV(MultivariateNormalTransition(),
                                       {"scaling": sp.logspace(-1, 1.5, 5)})]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 transitions=parameter_perturbation_kernels,
+                 eps=MedianEpsilon(.2),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -452,16 +424,14 @@ def test_two_competing_gaussians_single_population(db_path, sampler):
 
     models = [model, model]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = ConstantPopulationStrategy(500, 1)
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma_x)),
                                                 Distribution(x=RV("norm", mu_x_2, sigma_x))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.02),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 eps=MedianEpsilon(.02),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -496,24 +466,18 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     models = [model, model]
     models = list(map(SimpleModel, models))
 
-    # The prior over the model classes is uniform
-    model_prior = RV("randint", 0, 2)
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma)),
                                                 Distribution(x=RV("norm", mu_x_2, sigma))]
 
-    # Particles are perturbed in a Gaussian fashion
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-
     # We plug all the ABC setup together
     nr_populations = 3
     population_size = ConstantPopulationStrategy(400, 3)
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
-                 population_size,
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 PercentileDistanceFunction(measures_to_use=["y"]), population_size,
+                 eps=MedianEpsilon(.2),
                  sampler=sampler)
 
     # Finally we add meta data such as model names and define where to store the results
@@ -553,14 +517,12 @@ def test_empty_population_adaptive(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = AdaptivePopulationStrategy(1500, 3)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(0),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(0),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -581,14 +543,12 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
 
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 2)
     population_size = AdaptivePopulationStrategy(800, 3)
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.8),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), MedianEpsilon(.1),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
+                 eps=MedianEpsilon(.1),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -610,15 +570,13 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
 
     models = [model]
     models = list(map(SimpleModel, models))
-    model_prior = RV("randint", 0, 1)
     nr_populations = 4
     population_size = AdaptivePopulationStrategy(600, nr_populations)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
-    parameter_perturbation_kernels = [MultivariateNormalTransition()]
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(1, probability_to_stay=1),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 eps=MedianEpsilon(.2),
                  sampler=sampler)
 
     options = {'db_path': db_path}
@@ -670,10 +628,10 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
     # We plug all the ABC setup together
     nr_populations = 3
     population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.05)
-    abc = ABCSMC(models, model_prior, ModelPerturbationKernel(2, probability_to_stay=.7),
-                 parameter_given_model_prior_distribution, parameter_perturbation_kernels,
-                 PercentileDistanceFunction(measures_to_use=["y"]), MedianEpsilon(.2),
+    abc = ABCSMC(models, parameter_given_model_prior_distribution,
+                 MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 eps=MedianEpsilon(.2),
                  sampler=sampler)
 
     # Finally we add meta data such as model names and define where to store the results
