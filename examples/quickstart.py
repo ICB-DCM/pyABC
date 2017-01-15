@@ -24,8 +24,6 @@ mu_x_1, mu_x_2 = 0, 1
 parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma)),
                                             Distribution(x=RV("norm", mu_x_2, sigma))]
 
-# Particles are perturbed in a Gaussian fashion
-parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
 
 # We plug all the ABC setup together
 population_strategy = ConstantPopulationStrategy(100, 2)
