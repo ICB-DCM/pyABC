@@ -6,7 +6,7 @@ Release Notes
 -----
 
 Easier usage
-------------
+````````````
 
 Provide more default values for ABCSMC. This improves usability.
 
