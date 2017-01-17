@@ -6,10 +6,25 @@ Welcome to pyABC's documentation!
 
 Version: |version|
 
+
+pyABC is a framework for likelihood free inference. That means, if you have
+a model and some data and want to know the posterior distribution over the model
+parameters, i.e. you want to know with which probability which parameters
+explain the observed data, then pyABC might be for you.
+
+All you need is some way to numerically draw samples from the model, given
+the model parameters. pyABC "inverts" the model for you and tells you
+which parameters were well matching and which ones not. You do **not** need
+to analytically calculate the likelihood function.
+
+pyABC runes efficiently on multicore machines and distributed cluster setups.
+It is easy to use nad flexibly extensible.
+
 User's Guide
 ------------
 
-This part of the documentaiton guides you step by step through the usage of this package.
+This part of the documentaiton guides you step by step through
+the usage of this package.
 
 .. toctree::
    :maxdepth: 2
