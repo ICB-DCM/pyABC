@@ -5,7 +5,7 @@ import scipy.stats as st
 
 from pyabc import (ABCSMC, RV, Distribution,
                    PercentileDistanceFunction, SimpleModel,
-                   MultivariateNormalTransition, ConstantPopulationStrategy)
+                   ConstantPopulationStrategy)
 
 # Define a gaussian model
 sigma = .5
@@ -21,8 +21,10 @@ models = list(map(SimpleModel, models))
 
 # However, our models' priors are not the same. Their mean differs.
 mu_x_1, mu_x_2 = 0, 1
-parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma)),
-                                            Distribution(x=RV("norm", mu_x_2, sigma))]
+parameter_given_model_prior_distribution = [
+    Distribution(x=RV("norm", mu_x_1, sigma)),
+    Distribution(x=RV("norm", mu_x_2, sigma))
+]
 
 
 # We plug all the ABC setup together
@@ -31,8 +33,11 @@ abc = ABCSMC(models, parameter_given_model_prior_distribution,
              PercentileDistanceFunction(measures_to_use=["y"]),
              population_strategy)
 
-# Finally we add meta data such as model names and define where to store the results
-options = {'db_path': os.path.expanduser("sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db"))}
+# Finally we add meta data such as model names
+# # and define where to store the results
+options = {'db_path':
+               os.path.expanduser("sqlite:///" +
+               os.path.join(tempfile.gettempdir(), "test.db"))}
 # y_observed is the important piece here: our actual observation.
 y_observed = 1
 abc.set_data({"y": y_observed}, 0, {}, options)
