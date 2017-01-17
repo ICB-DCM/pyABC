@@ -1,30 +1,69 @@
-What is this package about?
-===========================
+What is pyABC about?
+====================
+
+pyABC helps to solve the problem of parameter inference, in settings where all
+you can do is simulate from the (black-box) model but no further analysis is
+possible. Putting it differently, if you have a forward simulator, then pyABC
+does the backwards parameter inference step for you.
 
 
-When to use it?
----------------
+
+What you need
+-------------
+
+* Some kind of experimentally observed or synthetically generated data
+* a parametrized stochastic simulator (e.g. a Python functions which makes
+  calls to random nunmber generators)
+  which supposedly explains the data
+
+
+What you don't need
+-------------------
+
+* the likelihood function: p(parameter|data) is *not* required.
+
+
+.. figure:: abc_general.svg
+   :alt: ABC
+
+
+
+When better not to use pyABC
+----------------------------
+
+.. figure:: rose_hammer.svg
+   :width: 50%
+   :alt: ABC
+   :align: right
+
+ABC likelihood inference is not a hammer for every nail. If you're actually able to write
+down the likelihood then use it and apply a different inference technique which exploits it.
+This package helps to solve the much harder problem of likelihood free inference.
+
+
+
+
+
+
+Why to use pyABC?
+-----------------
 
 This is a package for Approximate Bayesian Computationh, using a Sequential Monte Carlo scheme.
 This provides a particularly efficient technique for Bayesian posterior estimation in cases where
 it is very hard to calculate the likelihood function efficiently.
 
 
-
-Why to use it?
---------------
-
-This package was designed to perform well on
+pyABC was designed to perform well on
 
 * multicore and
 * distributed environments.
 
-It integrates well with SGE like environments, as commonly found in scientific settings,
+pyABC integrates well with SGE like environments, as commonly found in scientific settings,
 but can also be deployed to the cloud. Amongst other backend modes,
 `Dask.distributed <http://distributed.readthedocs.io/en/latest/>`_  can be used under the hood.
 
 
-It sounds like a contradiction, but this package is on the one hand easy to use for standard applications,
+It sounds like a contradiction, but pyABC is on the one hand easy to use for standard applications,
 on the other hand it can be very flexible experimented with it, exploring all aspects of new ABC-SMC schemes.
 Appart of a rich set of default choices, it is easy to parametrize aspects of your algorithm through the implementation
 of custom classes.
