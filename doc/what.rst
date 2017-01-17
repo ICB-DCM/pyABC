@@ -7,6 +7,10 @@ possible. Putting it differently, if you have a forward simulator, then pyABC
 does the backwards parameter inference step for you.
 
 
+.. image:: abc_general.svg
+   :alt: ABC
+
+
 
 What you need
 -------------
@@ -23,9 +27,6 @@ What you don't need
 * the likelihood function: p(parameter|data) is *not* required.
 
 
-.. figure:: abc_general.svg
-   :alt: ABC
-
 
 
 When better not to use pyABC
@@ -35,6 +36,8 @@ When better not to use pyABC
    :width: 50%
    :alt: ABC
    :align: right
+
+   Not everything is a nail.
 
 ABC likelihood inference is not a hammer for every nail. If you're actually able to write
 down the likelihood then use it and apply a different inference technique which exploits it.
