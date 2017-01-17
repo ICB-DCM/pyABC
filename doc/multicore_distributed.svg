@@ -10,13 +10,13 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="151.42615mm"
-   height="76.579887mm"
-   viewBox="0 0 151.42615 76.579887"
+   width="131.84456mm"
+   height="63.272831mm"
+   viewBox="0 0 131.84456 63.272831"
    version="1.1"
    id="svg8"
    inkscape:version="0.92.0 r"
-   sodipodi:docname="multicure_distributed.svg">
+   sodipodi:docname="multicore_distributed.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
@@ -26,11 +26,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.98994949"
-     inkscape:cx="301.67725"
-     inkscape:cy="46.889609"
+     inkscape:zoom="1.979899"
+     inkscape:cx="255.31972"
+     inkscape:cy="98.746824"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g4651"
      showgrid="false"
      inkscape:window-width="1857"
      inkscape:window-height="1008"
@@ -62,7 +62,7 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-23.386806,-11.994763)">
+     transform="translate(-23.386806,-17.035892)">
     <g
        id="g4673"
        transform="translate(13.898015,5.8799296)">
@@ -70,7 +70,7 @@
          transform="translate(-1.3363477,-16.303441)"
          id="g4651">
         <rect
-           style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.36500001;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.36500001;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
            id="rect4504"
            width="15.199156"
            height="15.199156"
@@ -171,12 +171,14 @@
     </g>
     <g
        id="g4736"
-       transform="translate(12.444815,-7.7508163)">
+       transform="matrix(0.64670128,0,0,0.64736689,43.693654,8.3713011)"
+       style="stroke-width:1.54551387">
       <g
          transform="translate(0.13363477)"
-         id="g4723">
+         id="g4723"
+         style="stroke-width:1.54551387">
         <rect
-           style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.16499996;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+           style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.80052364;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
            id="rect4677-8"
            width="28.33057"
            height="8.151721"
@@ -192,7 +194,7 @@
            height="4.0090427"
            width="10.289877"
            id="rect4729"
-           style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.16499996;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+           style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:1.80052364;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
       </g>
       <use
          height="100%"
@@ -201,7 +203,8 @@
          id="use4725"
          xlink:href="#g4723"
          y="0"
-         x="0" />
+         x="0"
+         style="stroke-width:1.54551387" />
       <use
          height="100%"
          width="100%"
@@ -209,31 +212,35 @@
          id="use4727"
          xlink:href="#use4725"
          y="0"
-         x="0" />
+         x="0"
+         style="stroke-width:1.54551387" />
     </g>
     <use
        x="0"
        y="0"
        xlink:href="#g4736"
        id="use4752"
-       transform="translate(38.755987)"
+       transform="translate(31.392067)"
        width="100%"
-       height="100%" />
+       height="100%"
+       style="stroke-width:1.54551387" />
     <use
        x="0"
        y="0"
        xlink:href="#use4752"
        id="use4754"
-       transform="translate(-38.755987,42.920152)"
+       transform="translate(-31.392067,34.107866)"
        width="100%"
-       height="100%" />
+       height="100%"
+       style="stroke-width:1.54551387" />
     <use
        x="0"
        y="0"
        xlink:href="#use4754"
        id="use4756"
-       transform="translate(38.755987)"
+       transform="translate(31.392067)"
        width="100%"
-       height="100%" />
+       height="100%"
+       style="stroke-width:1.54551387" />
   </g>
 </svg>
