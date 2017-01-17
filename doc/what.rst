@@ -51,9 +51,16 @@ This package helps to solve the much harder problem of likelihood free inference
 Why to use pyABC?
 -----------------
 
+
+
 This is a package for Approximate Bayesian Computationh, using a Sequential Monte Carlo scheme.
 This provides a particularly efficient technique for Bayesian posterior estimation in cases where
 it is very hard to calculate the likelihood function efficiently.
+
+.. image:: multicore_distributed.svg
+   :alt: Multicore and distributed
+   :align: right
+   :width: 100%
 
 
 pyABC was designed to perform well on

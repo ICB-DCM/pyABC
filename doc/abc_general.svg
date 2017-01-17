@@ -286,8 +286,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="330.01308"
-     inkscape:cy="106.53561"
+     inkscape:cx="328.51254"
+     inkscape:cy="239.2936"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -340,7 +340,7 @@
            sodipodi:role="line">Θ</tspan></text>
     </g>
     <rect
-       style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.33526385;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.33526385;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect5212"
        width="67.619186"
        height="16.036171"
@@ -349,7 +349,7 @@
        transform="scale(1,-1)" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.34722233px;line-height:52.91666412px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.34722233px;line-height:52.91666412px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
        x="69.484703"
        y="31.06682"
        id="text5210"><tspan
@@ -357,7 +357,7 @@
          id="tspan5208"
          x="69.484703"
          y="31.06682"
-         style="fill:#ffffff;stroke-width:0.26458332px">Simulator</tspan></text>
+         style="fill:#000000;stroke-width:0.26458332px;">Simulator</tspan></text>
     <path
        style="fill:#e69f00;fill-rule:evenodd;stroke:#e69f00;stroke-width:1.88736117;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#marker5929)"
        d="M 36.852682,21.455356 62.201605,21.64557"
@@ -525,7 +525,7 @@
        id="text5210-1"
        x="86.926979"
        y="73.966942"><tspan
-   id="tspan5208-2"
-   style="fill:#000000;stroke-width:0.26458332px">ABC</tspan></text>
+         id="tspan5208-2"
+         style="fill:#000000;stroke-width:0.26458332px">ABC</tspan></text>
   </g>
 </svg>
