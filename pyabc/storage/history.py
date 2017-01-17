@@ -117,7 +117,26 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-    def weighted_parameters_dataframe(self, t, m):
+    def weighted_parameters_dataframe(self, t: int, m: int) -> (pd.DataFrame, np.ndarray):
+        """
+        Returns the weighted population sample as pandas DataFrame.
+
+        Parameters
+        ----------
+        t: int
+            Population number
+        m: int
+            model index
+
+        Returns
+        -------
+        pars, w: pandas.DataFrame, np.ndarray
+
+        pars:
+            is a DataFrame of parameters
+        w:
+            are the weights associated with each parameter
+        """
         if t is None:
             t = self.max_t
 
@@ -151,7 +170,7 @@ class History:
         return df
 
     @with_session
-    def store_initial_data(self, ground_truth_model: int, options,
+    def store_initial_data(self, ground_truth_model: int, options: dict,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            model_names: List[str],
@@ -166,17 +185,26 @@ class History:
         ground_truth_model: int
             Nr of the ground truth model.
 
+        options: dict
+            Of ABC metadata
+
         observed_summary_statistics: dict
             the measured summary statistics
 
         ground_truth_parameter: dict
             the ground truth parameters
 
+        model_names: List
+            A list of model names
+
         distance_function_json_str: str
-            the distance function represented as json string
+            The distance function represented as json string
 
         eps_function_json_str: str
-            the epsilon represented as json string
+            The epsilon represented as json string
+
+        population_strategy_json_str:
+            The population strategy represented as json string
         """
         self.model_names = model_names
         # store ground truth to db
@@ -314,12 +342,8 @@ class History:
         particle_population: list
             List of sampled particles
 
-        Returns
-        -------
-
-        enough_particles: bool
-            Whether enough particles were found in the population.
-
+        nr_simulations: int
+            The number of model evaluations for this population
         """
         store, model_probabilities = normalize(particle_population)
         self._save_to_population_db(t, current_epsilon,
@@ -436,7 +460,16 @@ class History:
         return df_weighted
 
     @with_session
-    def get_nr_particles_per_population(self):
+    def get_nr_particles_per_population(self) -> pd.DataFrame:
+        """
+
+        Returns
+        -------
+        nr_particles_per_population: pd.DataFrame
+            A pandas DataFrame containing the number
+            of particles for each population
+
+        """
         query = (self._session.query(Population.t)
                  .join(ABCSMC)
                  .join(Model)
@@ -450,14 +483,33 @@ class History:
     @with_session
     def max_t(self):
         """
-        Current population.
+        The number of populations already stored.
         """
         max_t = (self._session.query(func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return max_t
 
     @with_session
-    def get_sum_stats(self, t, m):
+    def get_sum_stats(self, t: int, m: int) -> (np.ndarray, List):
+        """
+        Summary statistics
+
+        Parameters
+        ----------
+        t: int
+            Population number
+        m: int
+            Model index
+
+        Returns
+        -------
+
+        w, sum_stats: np.ndarray, np.ndarray
+        w:
+            The weights associated with the summary statistics
+        sum_stats: list
+            List of summary statistics
+        """
         if t is None:
             t = self.max_t
 
@@ -482,6 +534,13 @@ class History:
 
     @with_session
     def get_population_strategy(self):
+        """
+
+        Returns
+        -------
+        population_strategy:
+            The population strategy.
+        """
         abc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
         return json.loads(abc.population_strategy)
 
