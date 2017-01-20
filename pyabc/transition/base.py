@@ -24,9 +24,9 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             The `fit`, `pdf` and `rvs` methods are automatically wrapped
             to handle the special case of no parameters.
 
-            Hence, you can safely assume that you encounter at least one parameter.
-            All the defined transitions will then automatically generalize to the case
-            of no paramter.
+            Hence, you can safely assume that you encounter at least one
+            parameter. All the defined transitions will then automatically
+            generalize to the case of no paramter.
     """
     NR_STEPS = 10
     FIRST_STEP_FACTOR = 3
@@ -62,7 +62,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         """
 
     @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+            -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at `x`.
 
@@ -114,7 +115,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
                                       .format(len(self.X)))
             return len(self.X)
 
-    def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) -> float:
+    def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) \
+            -> float:
         if self.no_meaningful_particles():
             raise NotEnoughParticles
 
@@ -126,7 +128,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         density_values = []
         for k in range(self.NR_BOOTSTRAP):
-            bootstrapped_points = self.X.sample(n_samples, replace=True, weights=self.w)
+            bootstrapped_points = self.X.sample(n_samples, replace=True,
+                                                weights=self.w)
             self_cp.fit(bootstrapped_points, uniform_weights)
             density_values.append(self_cp.pdf(self.X))
 

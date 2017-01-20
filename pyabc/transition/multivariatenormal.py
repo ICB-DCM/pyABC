@@ -39,20 +39,24 @@ class MultivariateNormalTransition(Transition):
         cov = smart_cov(self._X_arr, w)
         effective_sample_size = len(X) / (1 + w.var())
         dimension = cov.shape[0]
-        self.cov = cov * silverman_rule_of_thumb(effective_sample_size, dimension) * self.scaling
+        self.cov = cov * silverman_rule_of_thumb(effective_sample_size,
+                                                 dimension) * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def rvs(self):
         sample = self.X.sample(weights=self.w).iloc[0]
-        perturbed = sample + np.random.multivariate_normal(np.zeros(self.cov.shape[0]), self.cov)
+        perturbed = (sample +
+                     np.random.multivariate_normal(
+                         np.zeros(self.cov.shape[0]), self.cov))
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
         x = x[self.X.columns]
         x = np.array(x)
         if len(x.shape) == 1:
-            x = x[None,:]
-        dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum() for xs in x])
+            x = x[None, :]
+        dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
+                         for xs in x])
         return dens if dens.size != 1 else float(dens)
 
 

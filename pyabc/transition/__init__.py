@@ -11,4 +11,5 @@ from .multivariatenormal import MultivariateNormalTransition
 from .exceptions import NotEnoughParticles
 from .model_selection import GridSearchCV
 
-__all__ = ["Transition", "MultivariateNormalTransition", "GridSearchCV"]
+__all__ = ["Transition", "MultivariateNormalTransition", "GridSearchCV",
+           "NotEnoughParticles"]
