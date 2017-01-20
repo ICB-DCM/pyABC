@@ -21,7 +21,7 @@ models = list(map(SimpleModel, models))
 
 # However, our models' priors are not the same. Their mean differs.
 mu_x_1, mu_x_2 = 0, 1
-parameter_given_model_prior_distribution = [
+parameter_priors = [
     Distribution(x=RV("norm", mu_x_1, sigma)),
     Distribution(x=RV("norm", mu_x_2, sigma))
 ]
@@ -29,7 +29,7 @@ parameter_given_model_prior_distribution = [
 
 # We plug all the ABC setup together
 population_strategy = ConstantPopulationStrategy(100, 2)
-abc = ABCSMC(models, parameter_given_model_prior_distribution,
+abc = ABCSMC(models, parameter_priors,
              PercentileDistanceFunction(measures_to_use=["y"]),
              population_strategy)
 

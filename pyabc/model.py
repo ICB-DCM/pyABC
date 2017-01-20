@@ -2,9 +2,13 @@
 Models
 ======
 
-Models afor ABCSMC
+Models for ABCSMC
 """
 
+from .parameters import Parameter
+from typing import Callable, Any
+
+__all__ = ["Model", "SimpleModel", "ModelResult"]
 
 class ModelResult:
     """
@@ -19,7 +23,8 @@ class ModelResult:
 
 class Model:
     """
-    General ABC Model. This is to be subclassed.
+    General ABC Model. This is the most flexible model class, but
+    also the most complicated one to use. This is to be subclassed.
 
     The individual steps
 
@@ -33,8 +38,20 @@ class Model:
     Every model has to have a working summary_statistics implementation
     and a working accept implementation. The summary_statistics method
     is necessary to initialize distance functions are epsilons.
+
+    .. warning::
+
+        Most likely you do no want to suse this class, but the
+        :class:`SimpleModel` instead.
+
+    Parameters
+    ----------
+
+        name: str
+            A descriptive name of the model. This name is nowhere
+            directly used, but simplifies further analysis for the user.
     """
-    def __init__(self, name="model"):
+    def __init__(self, name: str="model"):
         self.name = name
 
     def __repr__(self):
@@ -63,15 +80,21 @@ class Model:
 
 class SimpleModel(Model):
     """
-    A model which is to be initialized with a function which generates the sample.
+    A model which is initialized with a function which generates the sampler.
+    For most cases this class is to be used
 
     Parameters
     ----------
 
     sample_function: Callable[[Parameter], Any]
-        Returns the sample to be passed to the summary statistics method
+        Returns the sample to be passed to the summary statistics method.
+        This function as a single argument which is a Parameter.
+
+    name: str. optional
+        The name of the model. If not provided, the names if inferred from
+        the function name of `sample_function`.
     """
-    def __init__(self, sample_function, name=None):
+    def __init__(self, sample_function: Callable[[Parameter], Any], name=None):
         if name is None:
             name = sample_function.__name__
         super().__init__(name)

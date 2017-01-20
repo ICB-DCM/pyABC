@@ -1,3 +1,13 @@
+"""
+Population stratgy
+==================
+
+Strategies to choose the population size.
+
+At the moment, only constant population size is supported. But this might
+change in the future.
+"""
+
 from .transition import NotEnoughParticles
 import logging
 import json
@@ -6,53 +16,80 @@ adaptation_logger = logging.getLogger("Adaptation")
 
 class PopulationStrategy:
     """
+    Size of the diffrent populations
+
+    This is a non-functional base implementation. Do not use this class
+    directly. Subclasses must override the `adapt_population_size` method.
+
+    Parameters
+    ----------
+
     nr_particles: int
-        Number of particles
+       Number of particles per populations
 
     nr_populations: int
+        Maximum number of populations
 
     nr_samples_per_parameter: int
+        Number of samples to draw for a proposed parameter
     """
-    def __init__(self, nr_particles, nr_populations, nr_samples_per_parameter=1):
+    def __init__(self, nr_particles: int, nr_populations: int, nr_samples_per_parameter: int=1):
         self.nr_particles = nr_particles
         self.nr_populations = nr_populations
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
-    def min_nr_particles(self):
-        """
-        Minimum number of samples which have to be accepted for a population.
-        If this number is not reached, the algorithm stops.
-        This option, together with the ``max_nr_allowed_sample_attempts_per_particle``
-        ensures that the algorithm terminates.
-
-        More precisely, this parameter determines to which extend an approximation to the
-        ABCSMC algorithm is allowed.
-        """
-        return self.nr_particles // 2
-
-    def max_nr_allowed_sample_attempts_per_particle(self):
-        """
-        The maximum number of sample attempts allowed for each particle.
-        If this number is reached, the sampling for a particle is stopped.
-        Hence, a population may return with less particles than started.
-        This is an approximation to the ABCSMC algorithm which ensures, that
-        the algorithm terminates.
-        """
-        return self.nr_particles * 2
-
     def adapt_population_size(self, perturbers, model_weights):
+        """
+
+        Parameters
+        ----------
+        perturbers
+        model_weights
+
+        Returns
+        -------
+
+        """
         raise NotImplementedError
 
     def get_config(self):
+        """
+        Returns
+        -------
+        dict
+            Configuration of the class as dictionary
+        """
         return {"name": self.__class__.__name__,
                 "nr_particles": self.nr_particles,
                 "nr_populations": self.nr_populations}
 
     def to_json(self):
+        """
+        Returns
+        -------
+
+        str
+            Configuration of the class as json string.
+        """
         return json.dumps(self.get_config())
 
 
 class ConstantPopulationStrategy(PopulationStrategy):
+    """
+    Constant size of the diffrent populations
+
+    Parameters
+    ----------
+
+    nr_particles: int
+       Number of particles per populations
+
+    nr_populations: int
+        Maximum number of populations
+
+    nr_samples_per_parameter: int
+        Number of samples to draw for a proposed parameter
+    """
     def adapt_population_size(self, perturbers, model_weights):
         pass
 

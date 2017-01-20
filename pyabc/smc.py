@@ -385,16 +385,10 @@ class ABCSMC:
 
             population = [particle for particle in population if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
-            nr_particles_in_this_population = sum(1 for p in population if p is not None)
-            enough_particles = nr_particles_in_this_population >= self.population_strategy.min_nr_particles()
-            if enough_particles:
-                self.history.append_population(t, current_eps, population, self.sampler.nr_evaluations_)
-            else:
-                abclogger.info("Not enough particles in population: Found {f}, required {r}."
-                               .format(f=nr_particles_in_this_population, r=self.population_strategy.min_nr_particles()))
+            self.history.append_population(t, current_eps, population, self.sampler.nr_evaluations_)
             abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
 
-            if (not enough_particles or (current_eps <= minimum_epsilon) or
+            if (current_eps <= minimum_epsilon or
                 (self.stop_if_only_single_model_alive and self.history.nr_of_models_alive() <= 1)):
                 break
         self.history.done()

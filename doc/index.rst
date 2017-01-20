@@ -64,6 +64,7 @@ modules and packages.
    epsilon_api
    datastore_api
    transition_api
+   populationstrategy_api
    sampler_api
    parameters_api
    random_variables_api
