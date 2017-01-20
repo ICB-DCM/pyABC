@@ -34,11 +34,12 @@ def with_session(f):
 def internal_docstring_warning(f):
     warning = """
 
-    .. warning::
+        .. warning::
 
-        This function is called by the :class:`pyabc.smc.ABCSMC` class
-        internally.
-        You should not call this method under normal circumstances.
+            This function is called by the :class:`pyabc.smc.ABCSMC` class
+            internally.
+            You should not call this method under normal circumstances.
+
     """
     f.__doc__ += warning
     return f
@@ -53,6 +54,7 @@ class History:
 
     Parameters
     ----------
+
     db_path: str
         SQLAlchemy database identifier.
     """
@@ -112,11 +114,13 @@ class History:
 
         Parameters
         ----------
+
         t: int
             Population nr
 
         Returns
         -------
+
         alive: List
             A list which contains the indices of those
             models which are still alive
@@ -135,6 +139,7 @@ class History:
 
         Parameters
         ----------
+
         t: int
             Population number
         m: int
@@ -184,6 +189,7 @@ class History:
 
         Returns
         -------
+
         all_populations: pd.DataFrame
             DataFrame with population info
         """
@@ -209,6 +215,7 @@ class History:
 
         Parameters
         ----------
+
         ground_truth_model: int
             Nr of the ground truth model.
 
@@ -232,6 +239,7 @@ class History:
 
         population_strategy_json_str:
             The population strategy represented as json string
+
         """
         self.model_names = model_names
         # store ground truth to db
@@ -308,7 +316,9 @@ class History:
     @internal_docstring_warning
     def done(self):
         """
+
         Close database sessions and store end time of population.
+
         """
         abc_smc_simulation = (self._session.query(ABCSMC)
                               .filter(ABCSMC.id == self.id)
