@@ -52,6 +52,8 @@ Interested in contributing? It is not that hard.
 API reference
 -------------
 
+This part of the documentation describes the individual classes, functions,
+modules and packages.
 
 .. toctree::
    :maxdepth: 2
@@ -61,9 +63,11 @@ API reference
    model_api
    epsilon_api
    datastore_api
+   transition_api
+   sampler_api
    parameters_api
    random_variables_api
-   parallel_api.rst
+   parallel_api
    license
 
 

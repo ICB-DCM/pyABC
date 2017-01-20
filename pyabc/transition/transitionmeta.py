@@ -2,32 +2,42 @@ from abc import ABCMeta
 import warnings
 import numpy as np
 import pandas as pd
+import functools
 
 
-def fit_wrap(self, X, w):
-    self.X = X
-    self.w = w
-    if len(X.columns) == 0:
-        self.no_parameters = True
-        return
-    self.no_parameters = False
-    if w.size > 0:
-        if not np.isclose(w.sum(), 1):
-            warnings.warn("w not normalized Got w.sum()={}".format(w.sum()))
-            w /= w.sum()
-    self.fit_old(X, w)
+def wrap_fit(f):
+    @functools.wraps(f)
+    def fit(self, X, w):
+        self.X = X
+        self.w = w
+        if len(X.columns) == 0:
+            self.no_parameters = True
+            return
+        self.no_parameters = False
+        if w.size > 0:
+            if not np.isclose(w.sum(), 1):
+                warnings.warn("w not normalized Got w.sum()={}".format(w.sum()))
+                w /= w.sum()
+        f(self, X, w)
+    return fit
 
 
-def pdf_wrap(self, x):
-    if self.no_parameters:
-        return 1
-    return self.pdf_old(x)
+def wrap_pdf(f):
+    @functools.wraps(f)
+    def pdf(self, x):
+        if self.no_parameters:
+            return 1
+        return f(self, x)
+    return pdf
 
 
-def rvs_wrap(self):
-    if self.no_parameters:
-        return pd.Series()
-    return self.rvs_old()
+def wrap_rvs(f):
+    @functools.wraps(f)
+    def rvs(self):
+        if self.no_parameters:
+            return pd.Series()
+        return f(self)
+    return rvs
 
 
 class TransitionMeta(ABCMeta):
@@ -37,11 +47,6 @@ class TransitionMeta(ABCMeta):
     """
     def __init__(cls, name, bases, attrs):
         ABCMeta.__init__(cls, name, bases, attrs)
-        cls.fit_old = cls.fit
-        cls.fit = fit_wrap
-
-        cls.pdf_old = cls.pdf
-        cls.pdf = pdf_wrap
-
-        cls.rvs_old = cls.rvs
-        cls.rvs = rvs_wrap
+        cls.fit = wrap_fit(cls.fit)
+        cls.pdf = wrap_pdf(cls.pdf)
+        cls.rvs = wrap_rvs(cls.rvs)

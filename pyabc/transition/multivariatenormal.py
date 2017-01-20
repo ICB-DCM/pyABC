@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 from .exceptions import NotEnoughParticles
-from .transition import Transition
+from .base import Transition
 
 
 def scott_rule_of_thumb(n_samples, dimension):
@@ -17,14 +17,14 @@ def silverman_rule_of_thumb(n_samples, dimension):
 
 class MultivariateNormalTransition(Transition):
     """
-    Pretty stupid but should in principle be functional
+    Transition vis a multivariate Gaussian KDE estimate.
 
     Parameters
     ----------
 
     scaling: float
         Scaling is a factor which additionally multiplies the
-        bandwidth with. Since silverman and Scott usually have to large
+        bandwidth with. Since Silverman and Scott usually have too large
         bandwidths, it should make most sense to have 0 < scaling <= 1
 
     """
@@ -32,18 +32,6 @@ class MultivariateNormalTransition(Transition):
         self.scaling = scaling
 
     def fit(self, X: pd.DataFrame, w: np.ndarray):
-        """
-        Fit the transition kernel
-
-        Parameters
-        ----------
-        X: DataFrame
-            The parameters.
-        w: array
-            Array of weights
-
-        It holds that len(X) == len(w).
-        """
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
 

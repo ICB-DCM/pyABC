@@ -5,6 +5,15 @@ logger = logging.getLogger("GridSearchCV")
 
 
 class GridSearchCV(GridSearchCVSKL):
+    """
+    Do a grid search to automatically select the best parameters for transition
+    classes such as the :class:`pyabc.transition.MultivariateNormalTransition`.
+
+    This is essentially a thin wrapper around
+    'sklearn.model_selection.GridSearchCV'. It translates the scikit-learn
+    interface to the interface used in pyABC. It implements hence a thin
+    `adapter pattern <https://en.wikipedia.org/wiki/Adapter_pattern>`_.
+    """
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None, n_jobs=1, iid=True, refit=True, cv=5,
                  verbose=0, pre_dispatch='2*n_jobs', error_score='raise', return_train_score=True):
         super().__init__(estimator, param_grid, scoring, fit_params, n_jobs, iid, refit, cv, verbose, pre_dispatch,

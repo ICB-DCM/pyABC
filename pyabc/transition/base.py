@@ -15,6 +15,19 @@ transition_logger = logging.getLogger("Transitions")
 
 
 class Transition(BaseEstimator, metaclass=TransitionMeta):
+    """
+    Abstract Transition base class. Derive all Transitions from this class
+
+        .. note::
+            This class does a little bit of meta-programming.
+
+            The `fit`, `pdf` and `rvs` methods are automatically wrapped
+            to handle the special case of no parameters.
+
+            Hence, you can safely assume that you encounter at least one parameter.
+            All the defined transitions will then automatically generalize to the case
+            of no paramter.
+    """
     NR_STEPS = 10
     FIRST_STEP_FACTOR = 3
     NR_BOOTSTRAP = 5
@@ -45,13 +58,13 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         Returns
         -------
         sample: pd.Series
-            A sample from the fitted model
+            A sample from the fitted model.
         """
 
     @abstractmethod
     def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
         """
-        Evaluate the probability density function (PDF) at x.
+        Evaluate the probability density function (PDF) at `x`.
 
         Parameters
         ----------
@@ -62,7 +75,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         -------
 
         density: float
-            Probability density at .
+            Probability density at `x`.
         """
 
     def score(self, X: pd.DataFrame, w: np.ndarray):
