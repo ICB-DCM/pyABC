@@ -1,6 +1,3 @@
-Distance
-========
-
 .. automodule:: pyabc.distance_functions
    :members:
    :special-members: __call__

@@ -1,6 +1,6 @@
 """
 Distance functions
-------------------
+==================
 """
 
 import json

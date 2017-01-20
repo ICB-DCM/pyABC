@@ -17,6 +17,4 @@
    :members:
 
 
-.. automodule:: pyabc.parallel.sampler
-   :members:
 
