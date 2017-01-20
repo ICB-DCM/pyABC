@@ -1,1 +1,3 @@
-python -m flake8 --exclude="devideas,doc/conf.py,test,test_nondeterministic,build,pyabc/legacy_covariance.py" $1
+#!/bin/bash
+EXCLUDE=`cat flake8_exclude.txt`
+python -m flake8 --exclude=$EXCLUDE $2
