@@ -25,9 +25,9 @@ class Sampler(ABC):
 
     @abstractmethod
     def sample_until_n_accepted(self, sample_one: Callable[[], A],
-                                      simulate_one: Callable[[A], ValidParticle],
-                                      accept_one: Callable[[ValidParticle], bool],
-                                                 n: int) -> List[B]:
+                                simulate_one: Callable[[A], ValidParticle],
+                                accept_one: Callable[[ValidParticle], bool],
+                                n: int) -> List[B]:
         """
         Parameters
         ----------

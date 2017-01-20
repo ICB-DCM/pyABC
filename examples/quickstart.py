@@ -10,6 +10,7 @@ from pyabc import (ABCSMC, RV, Distribution,
 # Define a gaussian model
 sigma = .5
 
+
 def model(parameters):
     # sample from a gaussian
     y = st.norm(parameters.x, sigma).rvs()
