@@ -28,7 +28,9 @@ def work(feed_q, result_q, sample_one, simulate_one, accept_one):
         arg = feed_q.get()
         if arg == SENTINEL:
             break
-        res = single_core_sampler.sample_until_n_accepted(sample_one, simulate_one, accept_one, 1)
+        res = single_core_sampler.sample_until_n_accepted(sample_one,
+                                                          simulate_one,
+                                                          accept_one, 1)
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
@@ -75,7 +77,10 @@ class MulticoreSampler(Sampler):
 
         feed_process = Process(target=feed, args=(feed_q, n, self.n_procs))
 
-        worker_processes = [Process(target=work, args=(feed_q, result_q, sample_one, simulate_one, accept_one))
+        worker_processes = [Process(target=work, args=(feed_q, result_q,
+                                                       sample_one,
+                                                       simulate_one,
+                                                       accept_one))
                             for _ in range(self.n_procs)]
 
         for proc in worker_processes:
