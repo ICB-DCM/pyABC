@@ -34,8 +34,13 @@ def work(feed_q, result_q, sample_one, simulate_one, accept_one):
 
 class MulticoreSampler(Sampler):
     """
-    Requires no pickling of the ``sample_one``, ``simulate_one`` and ``accept_one`` function.
-    This is achieved using fork on linux.
+    Samples on multiple cores using the multiprocessing module.
+    This sampler is optimized for low latencies and is efficient, even
+    if the individual model evaluations are fast.
+
+    Requires no pickling of the ``sample_one``,
+    ``simulate_one`` and ``accept_one`` function.
+    This is achieved using fork on linux (see :class:`Sampler`).
 
     The simulation results are still pickled as they are transmitted
     from the worker processes back to the parent process.
@@ -50,7 +55,7 @@ class MulticoreSampler(Sampler):
     ----------
         n_procs: Union[int, None]
             If set to None, the Number of cores is determined according to
-            :func:`parallel.util.nr_cores_available`.
+            :func:`pyabc.parallel.util.nr_cores_available`.
 
 
     .. warning::

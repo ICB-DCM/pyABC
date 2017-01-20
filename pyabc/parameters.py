@@ -85,7 +85,32 @@ class Parameter(ParameterStructure):
 
 
 class ValidParticle:
-    def __init__(self, m: int, parameter: Parameter, weight: float, distance_list: List[float],
+    """
+    A valid (accepted) particle.
+
+    Parameters
+    ----------
+
+    m: int
+        The model nr
+
+    parameter: Parameter
+        The model specific parameter
+
+    weight: float, 0 < weight < 1
+        The weight of the particle
+
+    distance_list: List[float]
+        A particle can contain more than one sample.
+        If so, the distances of the individual samples
+        are stored in this list. In the most common case of a single
+        sample, this list has length 1.
+
+    summary_statistics_list
+        List of summary statistics which describe the sample
+    """
+    def __init__(self, m: int, parameter: Parameter,
+                 weight: float, distance_list: List[float],
                  summary_statistics_list: List[dict]):
         self.m = m
         self.parameter = parameter
