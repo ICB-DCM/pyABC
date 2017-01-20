@@ -19,9 +19,11 @@ class DistanceFunction(ABC):
     @abstractmethod
     def __call__(self, x: dict, x_0: dict) -> float:
         """
-        Abstract method. This method has to be overwritten by all concrete implementations.
+        Abstract method. This method has to be overwritten by
+        all concrete implementations.
 
-        Evaluate the distance of the tentatively samples particle to the measured data.
+        Evaluate the distance of the tentatively samples particle to the
+        measured data.
 
         Parameters
         ----------
@@ -36,12 +38,14 @@ class DistanceFunction(ABC):
         -------
 
         distance: float
-            Attributes distance of the tentatively sampled particle from the measured data.
+            Attributes distance of the tentatively sampled particle
+            from the measured data.
         """
 
     def initialize(self, sample_from_prior: List[dict]):
         """
-        This method is called by the ABCSMC framework before the first usage of the distance function
+        This method is called by the ABCSMC framework before the first
+        usage of the distance function
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -119,13 +123,15 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
 
     def __init__(self, measures_to_use='all'):
         self._measures_to_use_passed_to_init = measures_to_use
-        self.measures_to_use = None  #: The measures (summary statistics) to use for distance calculation.
+        #: The measures (summary statistics) to use for distance calculation.
+        self.measures_to_use = None
 
     def initialize(self, sample_from_prior):
         super().initialize(sample_from_prior)
         if self._measures_to_use_passed_to_init == 'all':
             self.measures_to_use == sample_from_prior[0].keys()
-            raise Exception("distance function from all measures not implemented.")
+            raise Exception(
+                "distance function from all measures not implemented.")
         else:
             self.measures_to_use = self._measures_to_use_passed_to_init
 
@@ -144,7 +150,8 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
 
     .. math::
 
-        d(x, y) = \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
+        d(x, y) =\
+         \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """
     def __call__(self, x, y):
         return sum(abs((x[key]-y[key])/y[key]) if y[key] != 0 else
@@ -157,7 +164,8 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
     Calculate distance in whitened coordinates.
 
     A whitening transformation :math:`X` is calculated from an initial sample.
-    The distance is measured as euclidean distance in the transformed space. I.e
+    The distance is measured as euclidean distance in the transformed space.
+    I.e
 
     .. math::
 
@@ -171,13 +179,15 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
         return sp.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sample_from_prior):
-        samples_vec = sp.asarray([self._dict_to_to_vect(x) for x in sample_from_prior])
+        samples_vec = sp.asarray([self._dict_to_to_vect(x)
+                                  for x in sample_from_prior])
         # samples_vec is an array of shape nr_samples x nr_features
         means = samples_vec.mean(axis=0)
         centered = samples_vec - means
         covariance = centered.T.dot(centered)
         w, v = la.eigh(covariance)
-        self._whitening_transformation_matrix = v.dot(sp.diag(1. / sp.sqrt(w))).dot(v.T)
+        self._whitening_transformation_matrix = (
+            v.dot(sp.diag(1. / sp.sqrt(w))).dot(v.T))
 
     def initialize(self, sample_from_prior):
         super().initialize(sample_from_prior)
@@ -185,13 +195,15 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
 
     def __call__(self, x, y):
         x_vec, y_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(y)
-        distance = la.norm(self._whitening_transformation_matrix.dot(x_vec - y_vec), 2)
+        distance = la.norm(
+            self._whitening_transformation_matrix.dot(x_vec - y_vec), 2)
         return distance
 
 
 class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
     """
-    Abstract base class for distance functions which estimate is based on a range.
+    Abstract base class for distance functions which estimate is based on a
+    range.
 
     It defines the two template methods ``lower`` and ``upper``.
 
@@ -199,9 +211,12 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
 
     .. math::
 
-        d(x, y) = \\sum_{i \\in \\text{measures}} \\left | \\frac{x_i - y_i}{u_i - l_i}  \\right |
+        d(x, y) = \
+        \\sum_{i \\in \\text{measures}} \\left | \\frac{x_i - y_i}{u_i - l_i}\
+          \\right |
 
-    where :math:`l_i` and :math:`u_i` are the lower and upper margin for measure :math:`i`.
+    where :math:`l_i` and :math:`u_i` are the lower and upper
+    margin for measure :math:`i`.
     """
     @staticmethod
     def lower(parameter_list: List[float]):
@@ -251,7 +266,9 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
         for sample in sample_from_prior:
             for measure in self.measures_to_use:
                 measures[measure].append(sample[measure])
-        self.normalization = {measure: self.upper(measures[measure]) - self.lower(measures[measure])
+        self.normalization = {measure:
+                              self.upper(measures[measure])
+                              - self.lower(measures[measure])
                               for measure in self.measures_to_use}
 
     def initialize(self, sample_from_prior):
@@ -259,7 +276,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
         self._calculate_normalization(sample_from_prior)
 
     def __call__(self, x, y):
-        distance = sum(abs((x[key]-y[key])/self.normalization[key]) for key in self.measures_to_use)
+        distance = sum(abs((x[key]-y[key])/self.normalization[key])
+                       for key in self.measures_to_use)
         return distance
 
 
@@ -279,18 +297,21 @@ class MinMaxDistanceFunction(RangeEstimatorDistanceFunction):
 
 class PercentileDistanceFunction(RangeEstimatorDistanceFunction):
     """
-    Calculate normalization 20% and 80% from percentiles as lower and upper margins
+    Calculate normalization 20% and 80% from percentiles as lower
+    and upper margins
     """
 
     PERCENTILE = 20  #: The percentiles
 
     @staticmethod
     def upper(parameter_list):
-        return sp.percentile(parameter_list, 100 - PercentileDistanceFunction.PERCENTILE)
+        return sp.percentile(parameter_list,
+                             100 - PercentileDistanceFunction.PERCENTILE)
 
     @staticmethod
     def lower(parameter_list):
-        return sp.percentile(parameter_list, PercentileDistanceFunction.PERCENTILE)
+        return sp.percentile(parameter_list,
+                             PercentileDistanceFunction.PERCENTILE)
 
     def get_config(self):
         config = super().get_config()
