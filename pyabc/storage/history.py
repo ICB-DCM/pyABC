@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import List
+from typing import List, Union
 import json
 import git
 import numpy as np
@@ -31,6 +31,19 @@ def with_session(f):
     return f_wrapper
 
 
+def internal_docstring_warning(f):
+    warning = """
+
+    .. warning::
+
+        This function is called by the :class:`pyabc.smc.ABCSMC` class
+        internally.
+        You should not call this method under normal circumstances.
+    """
+    f.__doc__ += warning
+    return f
+
+
 class History:
     """
     History for ABCSMC.
@@ -40,21 +53,12 @@ class History:
 
     Parameters
     ----------
-    db_path: stt
+    db_path: str
         SQLAlchemy database identifier.
-
-    model_names: List[str]
-        List of model names.
-
-    min_nr_particles_per_population: int
-        Minimum nr of particles per population.
-
-    debug: bool
-        Whether to print additional debug output.
     """
     DB_TIMEOUT = 120
 
-    def __init__(self, db_path: str, debug=False):
+    def __init__(self, db_path: str):
         """
         Only counts the simulations which appear in particles.
         If a simulation terminated prematurely it is not counted.
@@ -70,12 +74,16 @@ class History:
         return(f)
 
     @property
-    def db_size(self):
+    def db_size(self) -> Union[int, str]:
         """
 
         Returns
         -------
-        db_size in MB
+        db_size: int, str
+            Size of the SQLite database in MB.
+            Currently this only works for SQLite databases.
+
+            Returns an error string of the DB size cannot be calculated.
         """
         try:
             return os.path.getsize(self.db_file()) / 10**6
@@ -84,6 +92,9 @@ class History:
 
     @with_session
     def all_runs(self):
+        """
+        Get all ABCSMC runs which are stored in the database.
+        """
         runs = self._session.query(ABCSMC).all()
         return runs
 
@@ -97,6 +108,7 @@ class History:
     @with_session
     def alive_models(self, t) -> List:
         """
+        Get the models which are still alive at time `t`.
 
         Parameters
         ----------
@@ -162,6 +174,19 @@ class History:
 
     @with_session
     def get_all_populations(self):
+        """
+        Returns a pandas Dataframe with columns
+
+        * `t`: Popultion number
+        * `population_end_time`: The end time of the population
+        * `nr_samples`: The number of sample attempts performed for a population
+        * `epsilon`: The acceptence threshold for the population.
+
+        Returns
+        -------
+        all_populations: pd.DataFrame
+            DataFrame with population info
+        """
         query = (self._session.query(Population.t,
                                      Population.population_end_time,
                                      Population.nr_samples, Population.epsilon)
@@ -170,6 +195,7 @@ class History:
         return df
 
     @with_session
+    @internal_docstring_warning
     def store_initial_data(self, ground_truth_model: int, options: dict,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
@@ -179,6 +205,7 @@ class History:
                            population_strategy_json_str: str):
         """
         Store the initial configuration data.
+
 
         Parameters
         ----------
@@ -242,8 +269,16 @@ class History:
 
     @property
     @with_session
-    def total_nr_simulations(self):
-        "Total nr of simulations/samples."
+    def total_nr_simulations(self) -> int:
+        """
+        Number of sample attempts for the ABC run.
+
+        Returns
+        -------
+
+        int
+            Total nr of sample attempts for the ABC run.
+        """
         nr_sim = (self._session.query(func.sum(Population.nr_samples))
                   .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return nr_sim
@@ -270,8 +305,11 @@ class History:
         self._engine = None
 
     @with_session
+    @internal_docstring_warning
     def done(self):
-        "Close database sessions and store end time of population."
+        """
+        Close database sessions and store end time of population.
+        """
         abc_smc_simulation = (self._session.query(ABCSMC)
                               .filter(ABCSMC.id == self.id)
                               .one())
@@ -325,6 +363,7 @@ class History:
         self._session.commit()
         history_logger.debug("Appended population")
 
+    @internal_docstring_warning
     def append_population(self, t: int, current_epsilon: float,
                           particle_population: List[ValidParticle],
                           nr_simulations: int):
@@ -344,6 +383,7 @@ class History:
 
         nr_simulations: int
             The number of model evaluations for this population
+
         """
         store, model_probabilities = normalize(particle_population)
         self._save_to_population_db(t, current_epsilon,

@@ -29,9 +29,9 @@ the usage of this package.
 .. toctree::
    :maxdepth: 2
 
-   installation
    what
    model_selection
+   installation
    web_visualization
    parallel
    releasenotes

@@ -1,9 +1,9 @@
-Model Selection
-===============
-
-
 Quickstart
-----------
+==========
+
+
+Exemplary model and parameter selection
+---------------------------------------
 
 Here is a small example on how to do Bayesian model selection.
 

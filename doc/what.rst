@@ -9,6 +9,7 @@ does the backwards parameter inference step for you.
 
 .. image:: abc_general.svg
    :alt: ABC
+   :width: 100%
 
 
 
@@ -35,7 +36,7 @@ When better not to use pyABC
 .. figure:: rose_hammer.svg
    :width: 50%
    :alt: ABC
-   :align: right
+   :align: left
 
    Not everything is a nail.
 
@@ -59,7 +60,6 @@ it is very hard to calculate the likelihood function efficiently.
 
 .. image:: multicore_distributed.svg
    :alt: Multicore and distributed
-   :align: right
    :width: 100%
 
 
