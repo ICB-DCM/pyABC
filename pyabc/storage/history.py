@@ -133,7 +133,8 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-    def weighted_parameters_dataframe(self, t: int, m: int) -> (pd.DataFrame, np.ndarray):
+    def weighted_parameters_dataframe(self, t: int, m: int)\
+            -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample as pandas DataFrame.
 
@@ -170,7 +171,7 @@ class History:
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.as_matrix()
         assert w_arr.size == 0 or np.isclose(w_arr.sum(), 1),\
-               "weight not close to 1, w.sum()={}".format(w_arr.sum())
+            "weight not close to 1, w.sum()={}".format(w_arr.sum())
         return pars, w_arr
 
     @with_session
@@ -184,7 +185,8 @@ class History:
 
         * `t`: Popultion number
         * `population_end_time`: The end time of the population
-        * `nr_samples`: The number of sample attempts performed for a population
+        * `nr_samples`: The number of sample attempts performed
+           for a population
         * `epsilon`: The acceptence threshold for the population.
 
         Returns
@@ -248,12 +250,13 @@ class History:
         except (git.exc.NoSuchPathError, KeyError,
                 git.exc.InvalidGitRepositoryError) as e:
             git_hash = str(e)
-        abc_smc_simulation = ABCSMC(json_parameters=str(options),
-                            start_time=datetime.datetime.now(),
-                            git_hash=git_hash,
-                            distance_function=distance_function_json_str,
-                            epsilon_function=eps_function_json_str,
-                            population_strategy=population_strategy_json_str)
+        abc_smc_simulation = ABCSMC(
+            json_parameters=str(options),
+            start_time=datetime.datetime.now(),
+            git_hash=git_hash,
+            distance_function=distance_function_json_str,
+            epsilon_function=eps_function_json_str,
+            population_strategy=population_strategy_json_str)
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abc_smc_simulation.populations.append(population)
 
@@ -268,8 +271,10 @@ class History:
                 gt_part.parameters.append(Parameter(name=key, value=value))
         sample = Sample(distance=0)
         gt_part.samples = [sample]
-        sample.summary_statistics = [SummaryStatistic(name=key, value=value)
-                        for key, value in observed_summary_statistics.items()]
+        sample.summary_statistics = [
+            SummaryStatistic(name=key, value=value)
+            for key, value in observed_summary_statistics.items()
+        ]
         self._session.add(abc_smc_simulation)
         self._session.commit()
         self.id = abc_smc_simulation.id
@@ -329,7 +334,7 @@ class History:
 
     @with_session
     def _save_to_population_db(self, t: int, current_epsilon: float,
-                               nr_simulations:int,
+                               nr_simulations: int,
                                store: dict, model_probabilities: dict):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
@@ -400,7 +405,7 @@ class History:
                                     nr_simulations, store, model_probabilities)
 
     def get_results_distribution(self, m: int, parameter: str)\
-                                                 -> (np.ndarray, np.ndarray):
+            -> (np.ndarray, np.ndarray):
         """
         Returns parameter values and weights of the last population.
 
@@ -438,7 +443,8 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
-        p_models = (self._session
+        p_models = (
+            self._session
             .query(Model.p_model, Model.m, Population.t)
             .join(Population)
             .join(ABCSMC)
@@ -564,12 +570,11 @@ class History:
             t = self.max_t
 
         particles = (self._session.query(Particle)
-
-         .join(Model).join(Population).join(ABCSMC)
-         .filter(ABCSMC.id == self.id)
-         .filter(Population.t == t)
-         .filter(Model.m == m)
-         .all())
+                     .join(Model).join(Population).join(ABCSMC)
+                     .filter(ABCSMC.id == self.id)
+                     .filter(Population.t == t)
+                     .filter(Model.m == m)
+                     .all())
 
         results = []
         weights = []
@@ -613,7 +618,6 @@ def normalize(population: List[ValidParticle]):
         else:
             print("ABC History warning: Empty particle.")
 
-
     model_total_weights = {m: sum(particle.weight for particle in model)
                            for m, model in store.items()}
     population_total_weight = sum(model_total_weights.values())
@@ -628,4 +632,3 @@ def normalize(population: List[ValidParticle]):
             particle.weight /= model_total_weight
 
     return store, model_probabilities
-
