@@ -19,11 +19,14 @@ class Epsilon(ABC):
     """
     Abstract epsilon base class.
 
-    This class encapsulates a strategy for setting a new epsilon for each new population.
+    This class encapsulates a strategy for setting a new epsilon for
+    each new population.
     """
-    def initialize(self, sample_from_prior: List[dict], distance_to_ground_truth_function: Callable[[dict], float]):
+    def initialize(self, sample_from_prior: List[dict],
+                   distance_to_ground_truth_function: Callable[[dict], float]):
         """
-        This method is called by the ABCSMC framework before the first usage of the epsilon
+        This method is called by the ABCSMC framework before the first usage
+         of the epsilon
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -77,7 +80,8 @@ class Epsilon(ABC):
             The population number
 
         history: History
-            ABC history object. Can be used to query summary statistics to set the epsilon
+            ABC history object. Can be used to query summary statistics to
+            set the epsilon
 
         Returns
         -------
@@ -142,7 +146,8 @@ class MedianEpsilon(Epsilon):
     ----------
 
     initial_epsilon: Union[str, int]
-        * If 'from_sample', then the initial median is calculated from samples as its median.
+        * If 'from_sample', then the initial median is calculated from
+        samples as its median.
         * Ff a number is given, this number is used.
 
     median_multiplier: float
@@ -152,8 +157,11 @@ class MedianEpsilon(Epsilon):
         it is given as a number.
     """
 
-    def __init__(self, initial_epsilon: Union[str, int, float]='from_sample', median_multiplier: float =1):
-        eps_logger.debug("init medianepsilon initial_epsilon={}, median_multiplier={}".format(initial_epsilon, median_multiplier))
+    def __init__(self, initial_epsilon: Union[str, int, float]='from_sample',
+                 median_multiplier: float =1):
+        eps_logger.debug(
+            "init medianepsilon initial_epsilon={}, median_multiplier={}"
+            .format(initial_epsilon, median_multiplier))
         super().__init__()
         self._initial_epsilon = initial_epsilon
         self.median_multiplier = median_multiplier
@@ -165,10 +173,13 @@ class MedianEpsilon(Epsilon):
         return config
 
     def initialize(self, sample_from_prior, distance_to_ground_truth_function):
-        super().initialize(sample_from_prior, distance_to_ground_truth_function)
+        super().initialize(sample_from_prior,
+                           distance_to_ground_truth_function)
         eps_logger.debug("calc initial epsilon")
-        if self._initial_epsilon == 'from_sample':  # calculate initial epsilon if not given
-            distances = sp.asarray([distance_to_ground_truth_function(x) for x in sample_from_prior])
+        # calculate initial epsilon if not given
+        if self._initial_epsilon == 'from_sample':
+            distances = sp.asarray([distance_to_ground_truth_function(x)
+                                    for x in sample_from_prior])
             eps_t0 = sp.median(distances) * self.median_multiplier
             self._look_up = {0: eps_t0}
         else:
@@ -181,7 +192,9 @@ class MedianEpsilon(Epsilon):
             return self._look_up[t]
         except KeyError:
             df_weighted = history.get_weighted_distances(None)
-            median = weighted_median(df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
+            median = weighted_median(
+                df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
             self._look_up[t] = median * self.median_multiplier
-            eps_logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
+            eps_logger.debug("new eps, t={}, eps={}"
+                             .format(t, self._look_up[t]))
             return self._look_up[t]
