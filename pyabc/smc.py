@@ -192,9 +192,9 @@ class ABCSMC:
         self.stop_if_only_single_model_alive = False
 
     def set_data(self, observed_summary_statistics: dict,
-                 ground_truth_model: int,
-                 ground_truth_parameter: dict,
-                 abc_options: dict):
+                 abc_options: Union[dict, str],
+                 ground_truth_model: int = -1,
+                 ground_truth_parameter: dict = None):
         """
         Set the data to be fitted.
 
@@ -206,33 +206,45 @@ class ABCSMC:
                ``{'statistic_1' : val_1, 'statistic_2': val_2, ... }``.
 
                The dictionary provided here represents the measured data.
-               Particle during ABCSMC sampling are compared against the summary statistics
-               provided here.
+               Particle during ABCSMC sampling are compared against the
+               summary statistics provided here.
 
-        ground_truth_model: int
-            This is only meta data stored to the database, but not actually used for the ABCSMC algorithm
-            If you want to predict your ABCSMC procedure against synthetic samples, you can use
-            this parameter to indicate the ground truth model number. This helps with futher analysis.
-            If you use actually measured data (and don't know the ground truth) you can set this to anything.
+        abc_options: Union[dict, str]
+            If a string, it has to be a valid SQLAlchemy database identifier.
+
+            If a dict, it has to contain the key "db_path" which has to be a
+            valid SQLAlchem database identifier. The dictionary can
+            contain an arbitrary number of additional keys,
+            only for recording purposes. Store arbitrary
+            meta information in this dictionary. Can be used for really
+            anything.
+
+        ground_truth_model: int, optional
+            This is only meta data stored to the database, but not actually
+            used for the ABCSMC algorithm If you want to predict your ABCSMC
+            procedure against synthetic samples, you can use
+            this parameter to indicate the ground truth model number.
+            This helps with futher analysis. If you use actually measured data
+            (and don't know the ground truth) you can set this to anything.
             A value if ``-1`` is recommended.
 
-        ground_truth_parameter: dict
-            Similar to ``ground_truth_model``, this is only for recording purposes, but not used in the
-            ABCSMC algorithm. This stores the parameters of the ground truth model if it was synthetically
-            obtained.
-
-        abc_options: dict
-            Has to contain the key "db_path" which has to be a valid SQLAlchem database identifier.
-            Can caontain an arbitrary number of additional keys, only for recording purposes.
-            Store arbitrary meta information in this dictionary. Can be used for really anything.
-
-        model_names: List[str]
-            Only for recording purposes. Record names of the models
+        ground_truth_parameter: dict, optional
+            Similar to ``ground_truth_model``, this is only for recording
+            purposes, but not used in the ABCSMC algorithm.
+            This stores the parameters of the ground truth model
+            if it was syntheticallyobtained.
         """
         # initialize
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
-        self.history = History(abc_options['db_path'])
+        try:
+            db = abc_options["db_path"]
+        except TypeError:
+            db = abc_options
+        self.history = History(db)
+
+        if ground_truth_parameter is None:
+            ground_truth_parameter = {}
 
         # initialize distance function and epsilon
         sample_from_prior = self.prior_sample()

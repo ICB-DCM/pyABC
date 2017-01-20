@@ -2,6 +2,16 @@ Release Notes
 =============
 
 
+
+0.3.1
+-----
+
+Easier usage
+~~~~~~~~~~~~
+
+Refactor the ABCSMC.set_data and provide defaults.
+
+
 0.3.0
 -----
 

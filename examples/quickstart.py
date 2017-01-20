@@ -34,13 +34,12 @@ abc = ABCSMC(models, parameter_priors,
              population_strategy)
 
 # Finally we add meta data such as model names
-# # and define where to store the results
-options = {'db_path':
-               os.path.expanduser("sqlite:///" +
-               os.path.join(tempfile.gettempdir(), "test.db"))}
+# and define where to store the results
+db_path = (os.path.expanduser("sqlite:///" +
+           os.path.join(tempfile.gettempdir(), "test.db")))
 # y_observed is the important piece here: our actual observation.
 y_observed = 1
-abc.set_data({"y": y_observed}, 0, {}, options)
+abc.set_data({"y": y_observed}, db_path)
 
 # We run the ABC with 3 populations max
 minimum_epsilon = .05

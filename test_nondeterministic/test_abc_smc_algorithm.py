@@ -59,7 +59,7 @@ def test_cookie_jar(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"result": 0}, 0, {}, options)
+    abc.set_data({"result": 0}, options, 0, {})
 
     minimum_epsilon = .2
     history = abc.run(minimum_epsilon)
@@ -93,7 +93,7 @@ def test_empty_population(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"result": 0}, 0, {}, options)
+    abc.set_data({"result": 0}, options, 0, {})
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon)
@@ -123,7 +123,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"result": 2}, 0, {}, options)
+    abc.set_data({"result": 2}, options, 0, {})
 
     minimum_epsilon = .2
     history = abc.run( minimum_epsilon)
@@ -151,7 +151,7 @@ def test_all_in_one_model(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"result": 2}, 0, {}, options)
+    abc.set_data({"result": 2}, options, 0, {})
 
     minimum_epsilon = .2
     history = abc.run(minimum_epsilon)
@@ -180,7 +180,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
 
     options = {'db_path': db_path}
     n1 = 2
-    abc.set_data({"result": n1}, 0, {}, options)
+    abc.set_data({"result": n1}, options, 0, {})
 
     minimum_epsilon = .2
     history = abc.run(minimum_epsilon)
@@ -220,7 +220,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path, sam
 
     options = {'db_path': db_path}
     n1 = 2
-    abc.set_data({"result": n1}, 0, {}, options)
+    abc.set_data({"result": n1}, options, 0, {})
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon)
@@ -256,7 +256,7 @@ def test_continuous_non_gaussian(db_path, sampler):
 
     options = {'db_path': db_path}
     d_observed = .5
-    abc.set_data({"result": d_observed}, 0, {}, options)
+    abc.set_data({"result": d_observed}, options, 0, {})
     abc.do_not_stop_when_only_single_model_alive()
 
     minimum_epsilon = -1
@@ -301,7 +301,7 @@ def test_gaussian_single_population(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"y": observed_data}, 0, {}, options)
+    abc.set_data({"y": observed_data}, options, 0, {})
 
     minimum_epsilon = -1
 
@@ -345,7 +345,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     minimum_epsilon = -1
 
@@ -391,7 +391,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     minimum_epsilon = -1
 
@@ -435,7 +435,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     minimum_epsilon = -1
     nr_populations = 1
@@ -484,7 +484,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     options = {'db_path': db_path}
     # y_observed is the important piece here: our actual observation.
     y_observed = 1
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = .05
@@ -526,7 +526,7 @@ def test_empty_population_adaptive(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"result": 0}, 0, {}, options)
+    abc.set_data({"result": 0}, options, 0, {})
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon)
@@ -552,7 +552,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"result": 2}, 0, {}, options)
+    abc.set_data({"result": 2}, options, 0, {})
 
     minimum_epsilon = .2
     history = abc.run( minimum_epsilon)
@@ -580,7 +580,7 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
                  sampler=sampler)
 
     options = {'db_path': db_path}
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     minimum_epsilon = -1
 
@@ -638,7 +638,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
     options = {'db_path': db_path}
     # y_observed is the important piece here: our actual observation.
     y_observed = 1
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = .05

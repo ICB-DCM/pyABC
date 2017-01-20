@@ -74,7 +74,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     options = {'db_path': db_path}
     # y_observed is the important piece here: our actual observation.
     y_observed = 1
-    abc.set_data({"y": y_observed}, 0, {}, options)
+    abc.set_data({"y": y_observed}, options, 0, {})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = .05
