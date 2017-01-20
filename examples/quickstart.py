@@ -10,8 +10,11 @@ from pyabc import (ABCSMC, RV, Distribution,
 # Define a gaussian model
 sigma = .5
 
-def model(args):
-    return {"y": st.norm(args['x'], sigma).rvs()}
+def model(parameters):
+    # sample from a gaussian
+    y = st.norm(parameters.x, sigma).rvs()
+    # return the sample as dictionary
+    return {"y": y}
 
 
 # We define two models, but they are identical so far
