@@ -13,10 +13,7 @@ from .random_variables import (Distribution,
                                RV,
                                RVBase,
                                RVDecorator,
-                               LowerBoundDecorator,
-                               MultivariateMultiTypeNormalDistribution,
-                               NonEmptyMultivariateMultiTypeNormalDistribution,
-                               EmptyMultivariateMultiTypeNormalDistribution)
+                               LowerBoundDecorator)
 from .distance_functions import (ZScoreDistanceFunction,
                                  PCADistanceFunction,
                                  MinMaxDistanceFunction,
@@ -53,9 +50,6 @@ __all__ = [
     "LowerBoundDecorator",
     "Parameter",
     "Distribution",
-    "MultivariateMultiTypeNormalDistribution",
-    "NonEmptyMultivariateMultiTypeNormalDistribution",
-    "EmptyMultivariateMultiTypeNormalDistribution",
     "Kernel",
     "ModelPerturbationKernel",
     # random_variables end

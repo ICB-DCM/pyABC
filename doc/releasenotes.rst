@@ -2,6 +2,22 @@ Release Notes
 =============
 
 
+0.3.2
+-----
+
+PEP8
+~~~~
+
+Comply with PEP8 with a few exceptions where it does not make sense.
+Flake8 runs now with the test. The tests do not pass if flake8 complains.
+
+
+Legacy code cleanup
+~~~~~~~~~~~~~~~~~~~
+
+Remove legacy classes such as the MultivariateMultiTypeNormalDistributions
+and the legacy covariance calculation. Also remove devideas folder.
+
 
 0.3.1
 -----

@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from pyabc import GridSearchCV
 
+
 def data(n):
     df = pd.DataFrame({"a": np.random.rand(n), "b": np.random.rand(n)})
     w = np.ones(len(df)) / len(df)
@@ -36,14 +37,13 @@ def test_variance_estimate():
     assert var_list[0] >= var_list[1]
 
 
-
 def test_variance_no_side_effect():
     m = MultivariateNormalTransition()
     df, w = data(60)
     m.fit(df, w)
     # very intrusive test. touches internals of m. not very nice.
     X_orig_id = id(m.X)
-    var = m.mean_coefficient_of_variation()
+    m.mean_coefficient_of_variation()  # this has to be called here
     assert id(m.X) == X_orig_id
 
 
@@ -112,7 +112,8 @@ def test_argument_order():
     m.fit(df, w)
     test = df.iloc[0]
     reversed = test[::-1]
-    assert (np.array(test) != np.array(reversed)).all()   # works b/c of even nr of parameters
+    # works b/c of even nr of parameters
+    assert (np.array(test) != np.array(reversed)).all()
     assert m.pdf(test) == m.pdf(reversed)
 
 
@@ -120,7 +121,7 @@ def test_score():
     m = MultivariateNormalTransition()
     df, w = data(20)
     m.fit(df, w)
-    score = m.score(df, w)
+    m.score(df, w)  # just call it
 
 
 def test_grid_search():

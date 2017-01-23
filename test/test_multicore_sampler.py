@@ -14,4 +14,7 @@ unpickleable = UnpickleAble()
 
 def test_no_pickle():
     sampler = MulticoreSampler()
-    sampler.sample_until_n_accepted(unpickleable, unpickleable, unpickleable, 10)
+    sampler.sample_until_n_accepted(unpickleable,
+                                    unpickleable,
+                                    unpickleable,
+                                    10)
