@@ -1,8 +1,9 @@
 Web based visualization
 =======================
 
-This tool comes with a webserver, which displays lots of useful information on the currently running
-and already completed ABC tasks. You can launch it with
+This tool comes with a webserver, which displays lots of useful
+information on the currently running and already completed ABC tasks.
+You can launch it with
 
 .. code::
 
