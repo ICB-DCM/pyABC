@@ -5,6 +5,12 @@ Release Notes
 0.3.2
 -----
 
+* Fix SGE regression. Forgot to update a module path on refactoring.
+
+
+0.3.2
+-----
+
 PEP8
 ~~~~
 

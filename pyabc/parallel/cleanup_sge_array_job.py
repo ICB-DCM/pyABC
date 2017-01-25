@@ -1,6 +1,6 @@
 import sys
 
-from pyabc.parallel import job_db_factory
+from pyabc.parallel.db import job_db_factory
 
 tmp_path = sys.argv[1]
 job_nr = sys.argv[2]
