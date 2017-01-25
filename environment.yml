@@ -1,6 +1,6 @@
-name: py36
+name: py35
 dependencies:
-  - python=3.6
+  - python=3.5
   - numpy
   - scipy
   - bokeh
