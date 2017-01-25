@@ -2,7 +2,7 @@ Release Notes
 =============
 
 
-0.3.2
+0.3.3
 -----
 
 * Fix SGE regression. Forgot to update a module path on refactoring.
