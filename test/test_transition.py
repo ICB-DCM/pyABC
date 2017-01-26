@@ -1,4 +1,4 @@
-from pyabc.transition import NotEnoughParticles
+from pyabc.transition import NotEnoughParticles, LocalTransition
 from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
@@ -94,6 +94,15 @@ def test_two_particles():
     m.required_nr_samples(.1)
 
 
+def test_multivariate_rvs():
+    # TODO define proper behavior
+    df, w = data(2)
+    m = MultivariateNormalTransition()
+    m.fit(df, w)
+    m.required_nr_samples(.1)
+    assert (m.rvs().index == pd.Index(["a", "b"])).all()
+
+
 def test_many_particles():
     df, w = data(20)
     m = MultivariateNormalTransition()
@@ -153,3 +162,21 @@ def test_grid_search_single_sample():
     df, w = data(1)
     m_grid.fit(df, w)
     assert m_grid.cv == cv
+
+
+def test_local_transition_rvs():
+    t = LocalTransition()
+    df, w = data(20)
+    t.fit(df, w)
+    sample = t.rvs()
+    assert (sample.index == pd.Index(["a", "b"])).all()
+
+
+def test_local_trasition_pdf():
+    t = LocalTransition()
+    df, w = data(20)
+    t.fit(df, w)
+    single = t.pdf(df.iloc[0])
+    multiple = t.pdf(df)
+    assert isinstance(single, float)
+    assert multiple.shape == (20,)
