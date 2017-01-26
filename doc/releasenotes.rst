@@ -1,6 +1,16 @@
 Release Notes
 =============
 
+0.4 series
+..........
+
+0.4.0
+-----
+
+Add local transition class which makea a local KDE fit.
+
+0.3 series
+..........
 
 0.3.3
 -----
@@ -43,6 +53,9 @@ Easier usage
 Provide more default values for ABCSMC. This improves usability.
 
 
+0.2 series
+..........
+
 0.2.0
 -----
 
@@ -54,6 +67,9 @@ The new sampler relies on forking instead of pickling for the ``sample_one``,
 This brings a huge performance improvement for single machine multicore settings
 compared to ``multiprocessing.Pool.map`` like execution which repeatedly pickles.
 
+
+0.1 series
+..........
 
 0.1.3
 -----

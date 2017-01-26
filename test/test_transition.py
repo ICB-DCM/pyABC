@@ -47,7 +47,7 @@ def test_many_particles_single_par(transition):
 
 def test_variance_estimate(transition):
     var_list = []
-    for n in [50, 100]:
+    for n in [20, 250]:
         df, w = data(n)
         transition.fit(df, w)
         var = transition.mean_coefficient_of_variation()
@@ -172,5 +172,3 @@ def test_grid_search_single_sample_multivariate_normal():
     df, w = data(1)
     m_grid.fit(df, w)
     assert m_grid.cv == cv
-
-

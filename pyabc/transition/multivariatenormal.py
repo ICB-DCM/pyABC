@@ -59,6 +59,3 @@ class MultivariateNormalTransition(Transition):
         dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
                          for xs in x])
         return dens if dens.size != 1 else float(dens)
-
-
-

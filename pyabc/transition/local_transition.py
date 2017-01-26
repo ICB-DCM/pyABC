@@ -9,6 +9,7 @@ from .exceptions import NotEnoughParticles
 
 class LocalTransition(Transition):
     """
+    Local KDE fit.
 
     Parameters
     ----------
@@ -21,7 +22,7 @@ class LocalTransition(Transition):
         Scaling factor for the local covariance matrices.
     """
 
-    def __init__(self, k=10, scaling=1):
+    def __init__(self, k=50, scaling=1):
         self.k = k
         self.scaling = scaling
 
@@ -70,7 +71,7 @@ class LocalTransition(Transition):
                         local_weights / local_weights.sum())
         if sp.absolute(cov.sum()) == 0:
             for k in range(cov.shape[0]):
-                cov[k,k] = sp.absolute(self.X_arr[0,k])
+                cov[k, k] = sp.absolute(self.X_arr[0, k])
         return cov * self.scaling
 
     def rvs(self):
