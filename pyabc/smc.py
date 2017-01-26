@@ -212,9 +212,7 @@ class ABCSMC:
         abc_options: Union[dict, str]
             If a string, it has to be a valid SQLAlchemy database identifier.
 
-            If a dict, it has to contain the key "db_path" which has to be a
-            valid SQLAlchem database identifier. The dictionary can
-            contain an arbitrary number of additional keys,
+g            contain an arbitrary number of additional keys,
             only for recording purposes. Store arbitrary
             meta information in this dictionary. Can be used for really
             anything.

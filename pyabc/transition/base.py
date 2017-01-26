@@ -40,6 +40,9 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         Fit the perturber to the sampled data.
         Concrete implementations might do something like fitting a KDE.
 
+        The parameters given as ``X`` and ``w`` are automatically stored
+        in ``self.X`` and ``self.w``.
+
         Parameters
         ----------
         X: pd.DataFrame
