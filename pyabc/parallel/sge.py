@@ -357,13 +357,13 @@ cd "{current_working_directory}"
 export OMP_NUM_THREADS=$NSLOTS
 export MKL_NUM_THREADS=$NSLOTS
 export PYTHONPATH={pythonpath}
-{python_executable} -m pyabc.parallel.execute_sge_array_job {tmp_dir} $SGE_TASK_ID
-{python_executable} -m pyabc.parallel.cleanup_sge_array_job {tmp_dir} $SGE_TASK_ID
+{executable} -m pyabc.parallel.execute_sge_array_job {tmp_dir} $SGE_TASK_ID
+{pexecutable} -m pyabc.parallel.cleanup_sge_array_job {tmp_dir} $SGE_TASK_ID
 """.format(tmp_dir=tmp_dir, nr_elements=nr_tasks,
            current_working_directory=os.getcwd(),
            RAM=self.memory, time=self.time,
            job_name=self.job_name,
-           python_executable=self.python_executable_path,
+           executable=self.python_executable_path,
            sge_error_file=self.sge_error_file,
            sge_output_file=self.sge_output_file,
            priority=self.config["SGE"]["PRIORITY"],
