@@ -10,10 +10,12 @@ from typing import Callable, Any
 
 __all__ = ["Model", "SimpleModel", "ModelResult"]
 
+
 class ModelResult:
     """
     Result of a model evaluation.
-    Allows to flexibly return everything from summary_statistics to accepted/rejected.
+    Allows to flexibly return everything from summary_statistics to
+    accepted/rejected.
     """
     def __init__(self, sum_stats=None, distance=None, accepted=None):
         self.sum_stats = sum_stats if sum_stats is not None else {}
@@ -65,14 +67,17 @@ class Model:
         sum_stats = sum_stats_calculator(raw_data)
         return ModelResult(sum_stats=sum_stats)
 
-    def distance(self, pars, sum_stats_calculator, distance_calculator) -> ModelResult:
+    def distance(self, pars, sum_stats_calculator, distance_calculator) \
+            -> ModelResult:
         sum_stats_result = self.summary_statistics(pars, sum_stats_calculator)
         distance = distance_calculator(sum_stats_result.sum_stats)
         sum_stats_result.distance = distance
         return sum_stats_result
 
-    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) -> ModelResult:
-        distance_result = self.distance(pars, sum_stats_calculator, distance_calculator)
+    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) \
+            -> ModelResult:
+        distance_result = self.distance(pars, sum_stats_calculator,
+                                        distance_calculator)
         accepted = distance_result.distance <= eps
         distance_result.accepted = accepted
         return distance_result

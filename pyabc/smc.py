@@ -8,32 +8,29 @@ Parallel Approximate Bayesian Computation - Sequential Monte Carlo
 import datetime
 import logging
 from typing import List, Callable, TypeVar
-
-abclogger = logging.getLogger("ABC")
 import pandas as pd
 import scipy as sp
-
 from .parallel import MulticoreSampler
-from .distance_functions import DistanceFunction, to_distance
+from .distance_functions import DistanceFunction  # noqa: F401
+from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .parameters import ValidParticle
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
-from .populationstrategy import PopulationStrategy, ConstantPopulationStrategy
+from .populationstrategy import PopulationStrategy
 from .random import fast_random_choice
 from typing import Union
 
+
+abclogger = logging.getLogger("ABC")
 
 model_output = TypeVar("model_output")
 
 
 def identity(x):
     return x
-
-
-
 
 
 class ABCSMC:
@@ -84,15 +81,21 @@ class ABCSMC:
 
             * ``t`` is the population nr
             * ``stat`` a dictionary of summary statistics.
-               E.g. ``stat['std']['parameter_1']`` is the standard deviation of ``parameter_1``.
+               E.g. ``stat['std']['parameter_1']`` is the
+               standard deviation of ``parameter_1``.
 
-                .. warning:: If a model has only one particle left the standdardeviation is zero.
+                .. warning::
 
-        This callable is called at the beginning of a new population with the statistics dictionary
-        from the last population to determine the new parameter perturbation kernel for the next population.
+                    If a model has only one particle left
+                    the standdardeviation is zero.
+
+        This callable is called at the beginning of a new population with
+        the statistics dictionary from the last population to determine the
+        new parameter perturbation kernel for the next population.
 
     distance_function: DistanceFunction
-        Measures the distance of the tentatively sampled particle to the measured data.
+        Measures the distance of the tentatively sampled particle to the
+        measured data.
 
     eps: Epsilon
         Returns the current acceptance epsilon.
@@ -101,16 +104,19 @@ class ABCSMC:
 
     mapper: map like
         Something like the built in map.
-        I.e. mapper(f, args) takes a callable ``f`` and applies it the the arguments in the list ``args``.
+        I.e. mapper(f, args) takes a callable ``f`` and applies it the the
+        arguments in the list ``args``.
         This mapper is used for particle sampling.
-        It can be a distributed mapper such as the :class:`parallel.sge.SGE` class.
+        It can be a distributed mapper such as the :class:`parallel.sge.SGE`
+        class.
 
     sampler:
-        In some cases, a mapper implementation will require initialization to run properly,
-        e.g. database connection, grid setup, etc... The sampler is an object that encapsulates
-        this information.  The default sampler will simply call the callable mapper at the right
-        place; a more involved sampler will help the mapper-function to distribute function calls
-        accross a distributed infrastructure.
+        In some cases, a mapper implementation will require initialization
+        to run properly, e.g. database connection, grid setup, etc...
+        The sampler is an object that encapsulates this information.
+        The default sampler will simply call the callable mapper at the right
+        place; a more involved sampler will help the mapper-function to
+        distribute function calls accross a distributed infrastructure.
 
     debug: bool
         Whether to output additional debug information
@@ -136,8 +142,10 @@ class ABCSMC:
         # sanity checks
         self.models = list(models)
 
-        self.parameter_priors = parameter_priors  # this cannot be serialized by dill
-        assert len(self.models) == len(self.parameter_priors), "Number models and number parameter priors have to agree"
+        # this cannot be serialized by dill
+        self.parameter_priors = parameter_priors
+        assert len(self.models) == len(self.parameter_priors), \
+            "Number models and number parameter priors have to agree"
 
         self.distance_function = to_distance(distance_function)
 
@@ -148,7 +156,8 @@ class ABCSMC:
         self.model_prior = model_prior
 
         if model_perturbation_kernel is None:
-            model_perturbation_kernel = ModelPerturbationKernel(len(self.models), probability_to_stay=.7)
+            model_perturbation_kernel = ModelPerturbationKernel(
+                len(self.models), probability_to_stay=.7)
         self.model_perturbation_kernel = model_perturbation_kernel
 
         if transitions is None:
@@ -171,15 +180,11 @@ class ABCSMC:
         self.history = None  # type: History
         self._points_sampled_from_prior = None
 
-
-
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
         # print(state_red_dict)
         return state_red_dict
-
-
 
     def do_not_stop_when_only_single_model_alive(self):
         """
@@ -202,8 +207,8 @@ class ABCSMC:
         ----------
 
         observed_summary_statistics : dict
-               **This is the really important parameter here**. It is of the form
-               ``{'statistic_1' : val_1, 'statistic_2': val_2, ... }``.
+               **This is the really important parameter here**. It is of the
+               form ``{'statistic_1' : val_1, 'statistic_2': val_2, ... }``.
 
                The dictionary provided here represents the measured data.
                Particle during ABCSMC sampling are compared against the
@@ -252,7 +257,8 @@ g            contain an arbitrary number of additional keys,
         def distance_to_ground_truth_function(x):
             return self.distance_function(x, self.x_0)
 
-        self.eps.initialize(sample_from_prior, distance_to_ground_truth_function)
+        self.eps.initialize(sample_from_prior,
+                            distance_to_ground_truth_function)
         self.history.store_initial_data(ground_truth_model,
                                         abc_options,
                                         observed_summary_statistics,
@@ -280,16 +286,19 @@ g            contain an arbitrary number of additional keys,
 
             def simulate_one(para):
                 (m, par) = para
-                model_result = self.models[m].summary_statistics(par, self.summary_statistics)
+                model_result = self.models[m].summary_statistics(
+                    par, self.summary_statistics)
                 return model_result.sum_stats
 
-            sample_from_prior = self.sampler.sample_until_n_accepted(sample_one, simulate_one, lambda x: True,
-                                                                     self.population_strategy.nr_particles)
+            sample_from_prior = self.sampler.sample_until_n_accepted(
+                sample_one, simulate_one, lambda x: True,
+                self.population_strategy.nr_particles)
         else:
             sample_from_prior = self._points_sampled_from_prior
         return sample_from_prior
 
-    def evaluate_proposal(self, m_ss, theta_ss, current_eps, t, model_probabilities):
+    def evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
+                          model_probabilities):
         """
         This is where the actual model evaluation happens.
         """
@@ -297,30 +306,40 @@ g            contain an arbitrary number of additional keys,
         distance_list = []
         summary_statistics_list = []
         for _ in range(self.population_strategy.nr_samples_per_parameter):
-            model_result = self.models[m_ss].accept(theta_ss, self.summary_statistics,
-                                                    lambda x: self.distance_function(x, self.x_0), current_eps)
+            model_result = self.models[m_ss].accept(
+                theta_ss, self.summary_statistics,
+                lambda x: self.distance_function(x, self.x_0), current_eps)
             if model_result.accepted:
                 distance_list.append(model_result.distance)
                 summary_statistics_list.append(model_result.sum_stats)
 
         if len(distance_list) > 0:
-            weight = self.calc_proposal_weight(distance_list, m_ss, theta_ss, t, model_probabilities)
+            weight = self.calc_proposal_weight(
+                distance_list, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
-        valid_particle = ValidParticle(m_ss, theta_ss, weight, distance_list, summary_statistics_list)
+        valid_particle = ValidParticle(
+            m_ss, theta_ss, weight, distance_list, summary_statistics_list)
         return valid_particle
 
-    def calc_proposal_weight(self, distance_list, m_ss, theta_ss, t, model_probabilities):
+    def calc_proposal_weight(self, distance_list, m_ss, theta_ss,
+                             t, model_probabilities):
         if t == 0:
-            weight = len(distance_list) / self.population_strategy.nr_samples_per_parameter
+            weight = (len(distance_list)
+                      / self.population_strategy.nr_samples_per_parameter)
         else:
-            model_factor = sum(row.p * self.model_perturbation_kernel.pmf(m_ss, m)
-                                 for m, row in model_probabilities.iterrows())
-            particle_factor = self.transitions[m_ss].pdf(pd.Series(dict(theta_ss)))
+            model_factor = sum(
+                row.p * self.model_perturbation_kernel.pmf(m_ss, m)
+                for m, row in model_probabilities.iterrows())
+            particle_factor = self.transitions[m_ss].pdf(
+                pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
             if normalization == 0:
                 print('normalization is zero!')
-            fraction_accepted_runs_for_single_parameter = len(distance_list) / self.population_strategy.nr_samples_per_parameter  # reflects stochasticity of the model
+            # reflects stochasticity of the model
+            fraction_accepted_runs_for_single_parameter = (
+                len(distance_list)
+                / self.population_strategy.nr_samples_per_parameter)
             weight = (self.model_prior.pmf(m_ss)
                       * self.parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
@@ -341,8 +360,8 @@ g            contain an arbitrary number of additional keys,
                 m_s = m[index]
                 m_ss = self.model_perturbation_kernel.rvs(m_s)
                 # theta_s is None if the population m_ss has died out.
-                # This can happen since the model_perturbation_kernel can return
-                # a model nr which has died out.
+                # This can happen since the model_perturbation
+                # _kernel can return  a model nr which has died out.
                 if m_ss not in m:
                     continue
             else:
@@ -350,12 +369,13 @@ g            contain an arbitrary number of additional keys,
             theta_ss = self.transitions[m_ss].rvs()
 
             if (self.model_prior.pmf(m_ss)
-                                             * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
+                    * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
     def run(self, minimum_epsilon: float) -> History:
         """
-        Run the ABCSMC model selection. This method can be called many times. It makes another
+        Run the ABCSMC model selection. This method can be called many times.
+         It makes another
         step continuing where it has stopped before.
 
         It is stopped when the maximum number of populations is reached
@@ -369,13 +389,16 @@ g            contain an arbitrary number of additional keys,
         """
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
-        # not saved as attribute b/c Mapper of type "ipython_cluster" is not pickable
+        # not saved as attribute b/c Mapper of type
+        # "ipython_cluster" is not pickable
         for t in range(t0, t0+self.population_strategy.nr_populations):
-            current_eps = self.eps(t, self.history)  # this is calculated here to avoid double initialization of medians
+            # this is calculated here to avoid double initialization of medians
+            current_eps = self.eps(t, self.history)
             abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
             self.fit_transitions(t)
             # cache model_probabilities to not to query the database so soften
-            model_probabilities = self.history.get_model_probabilities(self.history.max_t)
+            model_probabilities = self.history.get_model_probabilities(
+                self.history.max_t)
             abclogger.debug('now submitting population ' + str(t))
 
             m = sp.array(model_probabilities.index)
@@ -385,21 +408,28 @@ g            contain an arbitrary number of additional keys,
                 return self.generate_valid_proposal(t, m, p)
 
             def eval_one(par):
-                return self.evaluate_proposal(*par, current_eps, t, model_probabilities)
+                return self.evaluate_proposal(*par, current_eps, t,
+                                              model_probabilities)
 
             def accept_one(particle):
                 return len(particle.distance_list) > 0
 
-            population = self.sampler.sample_until_n_accepted(sample_one, eval_one, accept_one,
-                                                              self.population_strategy.nr_particles)
+            population = self.sampler.sample_until_n_accepted(
+                sample_one, eval_one, accept_one,
+                self.population_strategy.nr_particles)
 
-            population = [particle for particle in population if not isinstance(particle, Exception)]
+            population = [particle for particle in population
+                          if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
-            self.history.append_population(t, current_eps, population, self.sampler.nr_evaluations_)
-            abclogger.debug('\ntotal nr simulations up to t =' + str(t) + ' is ' + str(self.history.total_nr_simulations))
+            self.history.append_population(
+                t, current_eps, population, self.sampler.nr_evaluations_)
+            abclogger.debug(
+                '\ntotal nr simulations up to t =' + str(t) + ' is '
+                + str(self.history.total_nr_simulations))
 
             if (current_eps <= minimum_epsilon or
-                (self.stop_if_only_single_model_alive and self.history.nr_of_models_alive() <= 1)):
+                (self.stop_if_only_single_model_alive
+                 and self.history.nr_of_models_alive() <= 1)):
                 break
         self.history.done()
         return self.history
@@ -409,8 +439,10 @@ g            contain an arbitrary number of additional keys,
             return
 
         for m in self.history.alive_models(t - 1):
-            particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
+            particles_df, weights = self.history.weighted_parameters_dataframe(
+                t - 1, m)
             self.transitions[m].fit(particles_df, weights)
 
-        self.population_strategy.adapt_population_size(self.transitions,
-                                        self.history.get_model_probabilities(self.history.max_t))
+        self.population_strategy.adapt_population_size(
+            self.transitions,
+            self.history.get_model_probabilities(self.history.max_t))

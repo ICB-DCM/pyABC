@@ -125,7 +125,8 @@ class ValidParticle:
         setattr(self, key, value)
 
     def __eq__(self, other):
-        for key in ["m", "parameter", "weight", "distance_list", "summary_statistics_list"]:
+        for key in ["m", "parameter", "weight", "distance_list",
+                    "summary_statistics_list"]:
             if self[key] != other[key]:
                 return False
         return True

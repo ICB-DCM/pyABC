@@ -15,5 +15,3 @@ def fitpowerlaw(x, y):
     y = np.array(y)
     popt, cov = curve_fit(power_law, x, y, p0=[.5, 1 / 5])
     return popt, lambda x: power_law(x, *popt), lambda y: finverse(y, *popt)
-
-

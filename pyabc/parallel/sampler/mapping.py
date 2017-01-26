@@ -20,14 +20,16 @@ class MappingSampler(Sampler):
         include
 
         * multiprocessing.pool.map
-          (see https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.Pool)
+          (see https://docs.python.org/3/\
+library/multiprocessing.html#multiprocessing.pool.Pool)
         * :class:`pyabc.parallel.sge.SGE`'s map method. This mapper is useful
           in SGE-like environments where you don't want to start workers which
           run forever.
         * Dask's distributed `distributed.Client`'s map
           (see https://distributed.readthedocs.io/en/latest/api.html#client)
         * IPython parallel' map
-          (see http://ipyparallel.readthedocs.io/en/latest/task.html#quick-and-easy-parallelism)
+          (see http://ipyparallel.readthedocs.io/en/latest/\
+task.html#quick-and-easy-parallelism)
 
         and many other implementations.
 
@@ -43,13 +45,16 @@ class MappingSampler(Sampler):
         The default is `False`. However, this might have a substantial
         performance impact as much serialization and deserialization is done,
         which could limit overall performace if the model evaluations are
-        comparatively fast. For example, for the :class:`pyabc.parallel.sge.SGE`
-        mapper, this option should be set to `True` for better performance.
+        comparatively fast. For example, for the
+        :class:`pyabc.parallel.sge.SGE` mapper, this option should be set to
+         `True` for better performance.
     """
     def __init__(self, map=map, mapper_pickles=False):
         super().__init__()
         self.map = map
-        self.pickle, self.unpickle = (identity, identity) if mapper_pickles else (pickle.dumps, pickle.loads)
+        self.pickle, self.unpickle = ((identity, identity)
+                                      if mapper_pickles
+                                      else (pickle.dumps, pickle.loads))
 
     def __getstate__(self):
         return self.pickle, self.unpickle, self.nr_evaluations_
@@ -78,7 +83,8 @@ class MappingSampler(Sampler):
         simulate_pickle = self.pickle(simulate_one)
         accept_pickle = self.pickle(accept_one)
 
-        map_function = functools.partial(self.map_function, sample_pickle, simulate_pickle, accept_pickle)
+        map_function = functools.partial(self.map_function, sample_pickle,
+                                         simulate_pickle, accept_pickle)
 
         counted_results = list(self.map(map_function, [None] * n))
         self.nr_evaluations_ = sum(nr for res, nr in counted_results)

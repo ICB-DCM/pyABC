@@ -84,3 +84,4 @@ data/.spyproject
 data/processed
 examples/*.err
 examples/*.out
+doc/*.log

@@ -1,3 +1,10 @@
+"""
+The tests here should try to test the correctness of the algorithm.
+They are not intended to function primarily as integration tests (although
+they certainly do partially). It is, e.g., not intended to test all possible
+samplers with all possible problems here. The samplers have their own test.
+"""
+
 import os
 import random
 import tempfile
@@ -18,9 +25,9 @@ from pyabc.parallel import MulticoreSampler
 REMOVE_DB = False
 
 
-@pytest.fixture(params=[MulticoreSampler])
-def sampler(request):
-    return request.param()
+@pytest.fixture
+def sampler():
+    return MulticoreSampler()
 
 
 @pytest.fixture

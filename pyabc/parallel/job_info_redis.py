@@ -15,8 +15,8 @@ def main():
     def default_dict(job):
         job_set = set(map(int, r.lrange(job, 0, -1)))
         nr_jobs_total = len(job_set)
-        return {"started": 0, "finished": 0, "jobs": job_set, "nr_jobs_total": nr_jobs_total}
-
+        return {"started": 0, "finished": 0, "jobs": job_set,
+                "nr_jobs_total": nr_jobs_total}
 
     results = {}
     for key in r.keys():
@@ -30,14 +30,15 @@ def main():
             results[job]["jobs"].remove(nr)
         else:
             if key not in results:
-               results[key] = default_dict(key)
+                results[key] = default_dict(key)
 
     FMT = "{:<20}{:<10}{:<10}{:<10}{:<10}"
     print(FMT.format("Job", "started", "finished", "total", "submitted"))
     print("-" * 60)
     for job, states in sorted(results.items(), key=lambda x: x[0]):
-        print(FMT.format(job, states["started"], states["finished"],states["started"] + states["finished"], states["nr_jobs_total"]))
-
+        print(FMT.format(job, states["started"], states["finished"],
+                         states["started"] + states["finished"],
+                         states["nr_jobs_total"]))
 
     if args.show_list:
         print("\n\nNeither started nor finished jobs")

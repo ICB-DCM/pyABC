@@ -1,30 +1,31 @@
+import os
+import json
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import sys
-import bokeh.plotting.helpers as helpers
-helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
-                            '#e69f00',
-                            '#56b4e9',
-                            '#009e73',
-                            '#f0e442',
-                            '#0072b2',
-                            '#d55e00',
-                            '#cc79a7']
-from bokeh.charts import Line, Scatter, Bar
-from bokeh.embed import components
-import os
-import json
 from pyabc import History
-from bokeh.resources import INLINE
 import pandas as pd
-from bokeh.models.widgets import Panel, Tabs
-BOKEH = INLINE
+import bokeh.plotting.helpers as helpers
+# this has to be set before the other bokeh imports
+helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
+                           '#e69f00',
+                           '#56b4e9',
+                           '#009e73',
+                           '#f0e442',
+                           '#0072b2',
+                           '#d55e00',
+                           '#cc79a7']
+from bokeh.charts import Line, Scatter, Bar  # noqa: E402
+from bokeh.embed import components  # noqa: E402
+from bokeh.resources import INLINE  # noqa: E402
+from bokeh.models.widgets import Panel, Tabs  # noqa: E402
 
+BOKEH = INLINE
 
 
 class PlotScriptDiv:
     def __init__(self, script, div):
-        self.script=script
+        self.script = script
         self.div = div
 
 
@@ -68,15 +69,21 @@ def abc_detail(abc_id):
         populations = history.get_all_populations()
         populations = populations[populations.t > 0]
         particles = (history.get_nr_particles_per_population().reset_index()
-                     .rename(columns={"index": "t", "t": "particles"}).query("t > 0"))
+                     .rename(columns={"index": "t", "t": "particles"})
+                     .query("t > 0"))
 
-        melted = pd.melt(model_probabilities, id_vars="t", var_name="m", value_name="p")
+        melted = pd.melt(model_probabilities, id_vars="t", var_name="m",
+                         value_name="p")
         prob_plot = Bar(melted, label="t", stack="m", values="p")
         prob_plot.ylabel = "p"
-        plot = Tabs(tabs=[Panel(child=prob_plot, title="Probability"),
-                          Panel(child=Scatter(x="t", y="nr_samples", data=populations), title="Samples"),
-                          Panel(child=Scatter(x="t", y="particles", data=particles), title="Particles"),
-                          Panel(child=Scatter(x="t", y="epsilon", data=populations), title="Epsilon")])
+        plot = Tabs(tabs=[
+            Panel(child=prob_plot, title="Probability"),
+            Panel(child=Scatter(x="t", y="nr_samples", data=populations),
+                  title="Samples"),
+            Panel(child=Scatter(x="t", y="particles", data=particles),
+                  title="Particles"),
+            Panel(child=Scatter(x="t", y="epsilon", data=populations),
+                  title="Epsilon")])
         plot = PlotScriptDiv(*components(plot))
         return render_template("abc_detail.html",
                                abc_id=abc_id,
@@ -107,7 +114,8 @@ def abc_model(abc_id, model_id, t):
         plot_df = df[["CDF", parameter]].sort_values(parameter)
         plot_df_cumsum = plot_df.cumsum()
         plot_df_cumsum[parameter] = plot_df[parameter]
-        p = Panel(child=Line(x=parameter, y="CDF", data=plot_df_cumsum), title=parameter)
+        p = Panel(child=Line(x=parameter, y="CDF", data=plot_df_cumsum),
+                  title=parameter)
         tabs.append(p)
     if len(tabs) == 0:
         plot = PlotScriptDiv("", "This model has no Parameters")
@@ -125,7 +133,8 @@ def abc_model(abc_id, model_id, t):
 
 @app.route("/info")
 def server_info():
-    return render_template("server_info.html", db_path=history.db_path, db_size=round(history.db_size, 2))
+    return render_template("server_info.html", db_path=history.db_path,
+                           db_size=round(history.db_size, 2))
 
 
 @app.errorhandler(404)

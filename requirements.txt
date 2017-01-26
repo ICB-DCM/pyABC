@@ -17,3 +17,4 @@ matplotlib
 sqlalchemy
 distributed
 pytest
+flake8

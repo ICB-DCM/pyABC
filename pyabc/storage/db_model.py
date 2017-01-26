@@ -1,12 +1,12 @@
 import datetime
-
 import sqlalchemy.types as types
-from sqlalchemy import Column, Integer, DateTime, String, ForeignKey, Float, LargeBinary
+from sqlalchemy import (Column, Integer, DateTime, String,
+                        ForeignKey, Float, LargeBinary)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from .numpy_bytes_storage import np_from_bytes, np_to_bytes
 
 Base = declarative_base()
-from .numpy_bytes_storage import np_from_bytes, np_to_bytes
 
 
 class Numpy(types.TypeDecorator):
@@ -32,8 +32,10 @@ class ABCSMC(Base):
     populations = relationship("Population")
 
     def __repr__(self):
-        return ("<ABCSMC(id={id}, start_time={start_time}, end_time={end_time})>"
-                 .format(id=self.id, start_time= self.start_time, end_time=self.end_time))
+        return ("<ABCSMC(id={id}, start_time={start_time}, "
+                "end_time={end_time})>"
+                .format(id=self.id, start_time=self.start_time,
+                        end_time=self.end_time))
 
 
 class Population(Base):
@@ -51,9 +53,13 @@ class Population(Base):
         self.population_end_time = datetime.datetime.now()
 
     def __repr__(self):
-        return ("<Population(id={id}, abc_smc_id={abc_smc_id}, t={t}) nr_samples={nr_samples} eps={eps} population_end_time={population_end_time}>"
-                 .format(id=self.id, abc_smc_id=self.abc_smc_id, t=self.t, nr_samples=self.nr_samples,
-                         eps=self.epsilon, population_end_time=self.population_end_time))
+        return ("<Population(id={id}, abc_smc_id={abc_smc_id}, t={t}) "
+                "nr_samples={nr_samples} eps={eps} "
+                "population_end_time={population_end_time}>"
+                .format(id=self.id, abc_smc_id=self.abc_smc_id, t=self.t,
+                        nr_samples=self.nr_samples,
+                        eps=self.epsilon,
+                        population_end_time=self.population_end_time))
 
 
 class Model(Base):
@@ -66,7 +72,9 @@ class Model(Base):
     particles = relationship("Particle")
 
     def __repr__(self):
-        return "<Model id={} population_id={} m ={} name={} p_model={}>".format(self.id, self.population_id, self.m, self.name, self.p_model)
+        return ("<Model id={} population_id={} m ={} name={} p_model={}>"
+                .format(self.id, self.population_id, self.m, self.name,
+                        self.p_model))
 
 
 class Particle(Base):
@@ -86,7 +94,8 @@ class Parameter(Base):
     value = Column(Float)
 
     def __repr__(self):
-        return "<{} {}={}>".format(self.__class__.__name__, self.name, self.value)
+        return "<{} {}={}>".format(self.__class__.__name__,
+                                   self.name, self.value)
 
 
 class Sample(Base):

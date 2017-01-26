@@ -4,19 +4,16 @@ Approximate Bayesian computation - Sequential Monte Carlo
 
 ABCSMC algorithms for Bayesian model selection.
 """
-
+import os
+import logging
 from .parameters import Parameter
 from .random_variables import (Distribution,
-                                   Kernel,
-                                   ModelPerturbationKernel,
-                                   RV,
-                                   RVBase,
-                                   RVDecorator,
-                                   LowerBoundDecorator,
-                                   MultivariateMultiTypeNormalDistribution,
-                                   NonEmptyMultivariateMultiTypeNormalDistribution,
-                                   EmptyMultivariateMultiTypeNormalDistribution,
-                                   RVDecorator)
+                               Kernel,
+                               ModelPerturbationKernel,
+                               RV,
+                               RVBase,
+                               RVDecorator,
+                               LowerBoundDecorator)
 from .distance_functions import (ZScoreDistanceFunction,
                                  PCADistanceFunction,
                                  MinMaxDistanceFunction,
@@ -29,9 +26,10 @@ from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult
 from .transition import MultivariateNormalTransition
-from .populationstrategy import AdaptivePopulationStrategy, ConstantPopulationStrategy
+from .populationstrategy import (AdaptivePopulationStrategy,
+                                 ConstantPopulationStrategy)
 from .transition import GridSearchCV
-from .version import __version__
+from .version import __version__  # noqa: F401
 
 __all__ = [
     "ABCSMC",
@@ -52,20 +50,22 @@ __all__ = [
     "LowerBoundDecorator",
     "Parameter",
     "Distribution",
-    "MultivariateMultiTypeNormalDistribution",
-    "NonEmptyMultivariateMultiTypeNormalDistribution",
-    "EmptyMultivariateMultiTypeNormalDistribution",
     "Kernel",
     "ModelPerturbationKernel",
     # random_variables end
     "SQLDataStore",
     "ABCLoader",
-    "GridSearchCV"
+    "GridSearchCV",
+    "ConstantPopulationStrategy",
+    "AdaptivePopulationStrategy",
+    "MultivariateNormalTransition",
+    "SimpleModel",
+    "ModelResult",
+    "Model",
+    "History"
 ]
 
 
-import os
-import logging
 try:
     loglevel = os.environ["ABC_LOG_LEVEL"]
     numeric_loglevel = getattr(logging, loglevel.upper())

@@ -4,6 +4,7 @@ import time
 import redis
 import configparser
 
+
 def within_time(job_start_time, max_run_time_h):
     return time.time() - job_start_time < max_run_time_h * 1.1 * 3600
 
@@ -12,7 +13,8 @@ class SQLiteJobDB:
     SQLITE_DB_TIMEOUT = 2000
 
     def __init__(self, tmp_dir):
-        self.connection = sqlite3.connect(os.path.join(tmp_dir, 'status.db'), timeout=self.SQLITE_DB_TIMEOUT)
+        self.connection = sqlite3.connect(os.path.join(tmp_dir, 'status.db'),
+                                          timeout=self.SQLITE_DB_TIMEOUT)
 
     def clean_up(self):
         pass
@@ -20,15 +22,21 @@ class SQLiteJobDB:
     def create(self, nr_jobs):
         # create database for job information
         with self.connection:
-            self.connection.execute("CREATE TABLE IF NOT EXISTS status(ID INTEGER, status TEXT, time REAL)")
+            self.connection.execute(
+                "CREATE TABLE IF NOT EXISTS "
+                "status(ID INTEGER, status TEXT, time REAL)")
 
     def start(self, ID):
         with self.connection:
-            self.connection.execute("INSERT INTO status VALUES(?,?,?)", (ID, 'started', time.time()))
+            self.connection.execute(
+                "INSERT INTO status VALUES(?,?,?)",
+                (ID, 'started', time.time()))
 
     def finish(self, ID):
         with self.connection:
-            self.connection.execute("INSERT INTO status VALUES(?,?,?)", (ID, 'finished', time.time()))
+            self.connection.execute(
+                "INSERT INTO status VALUES(?,?,?)",
+                (ID, 'finished', time.time()))
 
     def wait_for_job(self, ID, max_run_time_h):
         """
@@ -36,14 +44,17 @@ class SQLiteJobDB:
         Return false otherwise
         """
         with self.connection:
-            results = self.connection.execute("SELECT status, time from status WHERE ID=" + str(ID)).fetchall()
+            results = self.connection.execute(
+                "SELECT status, time from status WHERE ID="
+                + str(ID)).fetchall()
             nr_rows = len(results)
 
         if nr_rows == 0:  # job not jet started
             return True
         if nr_rows == 1:  # job already started
             job_start_time = results[0][1]
-            if not within_time(job_start_time, max_run_time_h):  # job took to long
+            # job took to long
+            if not within_time(job_start_time, max_run_time_h):
                 print('Job ' + str(ID) + ' timed out.')
                 return False  # job took to long
             else:  # still time left

@@ -1,17 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Union, List
-
-import numpy as np
-import scipy as sp
-from scipy import linalg as la
-from scipy.integrate import nquad
-
+from typing import Union
 from .parameters import Parameter, ParameterStructure
-
 rv_logger = logging.getLogger("RV")
-from numbers import Number
 
 
 class RVBase(ABC):
@@ -20,12 +12,16 @@ class RVBase(ABC):
 
     .. note::
 
-        Why introduce another random variable class and not just use the one's provided in
+        Why introduce another random variable class and not just use
+        the one's provided in
         ``scipy.stats``?
 
-        This funny construction is done because ``scipy.stats`` distributions are not pickleable.
-        This class is really a very thin wrapper around ``scipy.stats`` distributions to make them pickleable.
-        It is important to be able to pickle them to execute the ACBSMC algorithm in a distributed cluster
+        This funny construction is done because ``scipy.stats``
+        distributions are not pickleable.
+        This class is really a very thin wrapper around ``scipy.stats``
+        distributions to make them pickleable.
+        It is important to be able to pickle them to execute the ACBSMC
+        algorithm in a distributed cluster
         environment
     """
 
@@ -116,10 +112,12 @@ class RV(RVBase):
         Name of the distribution as in ``scipy.stats``
 
     args:
-        Arguments as in ``scipy.stats`` matching the distribution with name "name"/
+        Arguments as in ``scipy.stats`` matching the distribution
+        with name "name".
 
     kwargs:
-        Keyword arguments as in s``cipy.stats`` matching the distribution with name "name"/
+        Keyword arguments as in s``cipy.stats``
+        matching the distribution with name "name".
     """
     @staticmethod
     def from_dictionary(dictionary: dict) -> "RV":
@@ -144,7 +142,8 @@ class RV(RVBase):
 
             Either the "args" or the "kwargs" key has to be present.
         """
-        return RV(dictionary['type'], *dictionary.get('args', []), **dictionary.get('kwargs', {}))
+        return RV(dictionary['type'], *dictionary.get('args', []),
+                  **dictionary.get('kwargs', {}))
 
     def __init__(self, name: str, *args, **kwargs):
         self.name = name
@@ -184,7 +183,8 @@ class RV(RVBase):
         return self.distribution.cdf(x)
 
     def __repr__(self):
-        return "<RV(name={name}, args={args} kwargs={kwargs})>".format(name=self.name, args=self.args, kwargs=self.kwargs)
+        return ("<RV(name={name}, args={args} kwargs={kwargs})>"
+                .format(name=self.name, args=self.args, kwargs=self.kwargs))
 
 
 class RVDecorator(RVBase):
@@ -198,7 +198,8 @@ class RVDecorator(RVBase):
     It stores the decorated random variable in ``self.component``
 
     Overwrite the method ``decorator_repr`` the represent the decorator type.
-    The decorated variable will then be automatically included in the call to ``__repr__``.
+    The decorated variable will then be automatically included in
+    the call to ``__repr__``.
 
     Parameters
     ----------
@@ -230,7 +231,8 @@ class RVDecorator(RVBase):
 
         Template method.
 
-        The ``__repr__`` method used ``decorator_repr`` and the ``__repr__`` of the
+        The ``__repr__`` method used ``decorator_repr`` and the
+        ``__repr__`` of the
         decorated RV to build a combined representation.
 
         Returns
@@ -242,7 +244,9 @@ class RVDecorator(RVBase):
         return "Decorator"
 
     def __repr__(self):
-        return "[{decorator_repr}]".format(decorator_repr=self.decorator_repr()) + self.component.__repr__()
+        return ("[{decorator_repr}]"
+                .format(decorator_repr=self.decorator_repr())
+                + self.component.__repr__())
 
 
 class LowerBoundDecorator(RVDecorator):
@@ -253,8 +257,10 @@ class LowerBoundDecorator(RVDecorator):
 
     .. note::
 
-        Sampling is done via rejection. Up to 10000 samples are taken from the decorated RV.
-        The first sample within the permitted range is then taken. Otherwise None is returned.
+        Sampling is done via rejection. Up to 10000 samples are taken
+        from the decorated RV.
+        The first sample within the permitted range is then taken.
+        Otherwise None is returned.
 
     Parameters
     ----------
@@ -269,7 +275,8 @@ class LowerBoundDecorator(RVDecorator):
 
     def __init__(self, component: RV, lower_bound: float):
         if component.cdf(lower_bound) == 1:
-            raise Exception("LowerBoundDecorator: Conditioning on a set of measure zero.")
+            raise Exception(
+                "LowerBoundDecorator: Conditioning on a set of measure zero.")
         self.lower_bound = lower_bound
         super(LowerBoundDecorator, self).__init__(component)
 
@@ -282,19 +289,22 @@ class LowerBoundDecorator(RVDecorator):
     def rvs(self):
         for _ in range(LowerBoundDecorator.MAX_TRIES):
             sample = self.component.rvs()
-            if not (sample <= self.lower_bound):   # not sure whether > is the exact opposite. but <= is consistent
-                return sample                      # with the other functions
+            # not sure whether > is the exact opposite. but <= is consistent
+            if not (sample <= self.lower_bound):
+                return sample  # with the other functions
         return None
 
     def pdf(self, x):
         if x <= self.lower_bound:
             return 0.
-        return self.component.pdf(x) / (1 - self.component.cdf(self.lower_bound))
+        return (self.component.pdf(x)
+                / (1 - self.component.cdf(self.lower_bound)))
 
     def pmf(self, x):
         if x <= self.lower_bound:
             return 0.
-        return self.component.pmf(x) / (1 - self.component.cdf(self.lower_bound))
+        return (self.component.pmf(x)
+                / (1 - self.component.cdf(self.lower_bound)))
 
     def cdf(self, x):
         if x <= self.lower_bound:
@@ -303,201 +313,19 @@ class LowerBoundDecorator(RVDecorator):
         return (self.component.cdf(x) - lower_mass) / (1 - lower_mass)
 
 
-class EmptyMultivariateMultiTypeNormalDistribution:
-    """
-    Empty multivariate distribution.
-
-    Returns always empty parameters upon sampling.
-    """
-
-    def rvs(self):
-        """Return empty Parameter"""
-        return Parameter()
-
-    def pdf(self, x):
-        """Return always 1"""
-        return 1
-
-    def __mul__(self, other):
-        return EmptyMultivariateMultiTypeNormalDistribution()
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-
-class NonEmptyMultivariateMultiTypeNormalDistribution:
-    """
-    Multi variate and multi type normal distribution.
-
-    This distribution is essentially a multivariate normal, but takes into account
-    if a type is an integer and returns it always as rounded integer.
-    This is useful if some of your model parameters are discrete.
-
-    Parameters
-    ----------
-    covariance_matrix: np.ndarray
-        2D array. The covariance matrix.
-
-    parameter_names: List[str]
-        List of parameter names
-
-    parameter_types: list
-        A list containing ``int`` and/or ``float`` to indicate whether a parameter
-        is of type ``float`` or ``int``.
-
-    zero_covariance_substitutes: float
-        Substitutes zero variance entries on the diagonal of the diagonal representation
-        of the covariance matrix.
-    """
-    def __init__(self, covariance_matrix: np.ndarray, parameter_names: List[str],
-                 parameter_types: list,
-                 zero_covariance_substitutes=1e-4):
-        import warnings
-        warnings.warn("Deprecated: NonEmptyMultivariateMultiTypeNormalDistribution")
-        # check parameter lengths
-        if not (covariance_matrix.shape[0]
-                == covariance_matrix.shape[1]
-                == len(parameter_names)
-                == len(parameter_types)):
-            raise Exception("MultivariateMultiTypeNormalDistribution: Parameter numbers not matching. "
-                            " The shape of the covariance matrix has to agree with the length of parameter_names "
-                            "and the length of parameter_types.")
-
-        # check for possible singularity of covariance matrix due to integer data types
-        covariance_matrix = covariance_matrix.astype(float)
-        # vector of minimum covariances in ordinary basis
-        try:
-            w, v = la.eigh(covariance_matrix)
-        except ValueError as value_error:
-            raise ValueError("Bad covariance matrix: {}".format(covariance_matrix)) from value_error
-        self.zero_covariance_substitutes = zero_covariance_substitutes
-        self.covariance_matrix = v.dot(sp.diag(sp.maximum(w, zero_covariance_substitutes))).dot(v.T)
-        self.parameter_names = parameter_names
-        self.parameter_types = parameter_types
-
-    def _get_rv(self):
-        import scipy.stats as st
-        try:
-            return st.multivariate_normal(cov=self.covariance_matrix)
-        except Exception as e:
-            print('cov', self.covariance_matrix)
-            raise e
-
-    def rvs(self) -> Parameter:
-        "Sample from distribution"
-        val = self._get_rv().rvs()
-
-        def round_if_necessary(val):
-            return [int(round(v)) if _type == int else v
-                    for v, _type in zip(val, self.parameter_types)]
-        try:
-            val = round_if_necessary(val)
-        except TypeError:
-            val = [val]
-            val = round_if_necessary(val)
-
-        return Parameter({p: v for p, v in zip(self.parameter_names, val)})
-
-    def pdf(self, x: dict) -> float:
-        """
-        Probability density function at x.
-
-        Parameters
-        ----------
-        x: dict
-           Where to predict
-
-        Returns
-        -------
-
-        density: float
-            The probability density
-        """
-        rv = self._get_rv()
-        parameters_sorted = [x[key] for key in self.parameter_names]
-        if int not in self.parameter_types:
-            return rv.pdf(parameters_sorted)
-
-        # from there: at least one integer variable
-        for x_, p_ in zip(parameters_sorted, self.parameter_types):
-            if p_ == int and not isinstance(x_, int):
-                raise Exception('Parameter types not matching.')
-
-        ranges = [(k-.5, k+.5) for k, _t in zip(parameters_sorted, self.parameter_types) if _t == int]
-        vals = sp.zeros(len(parameters_sorted))
-        for k in range(len(parameters_sorted)):
-            if self.parameter_types[k] != int:
-                vals[k] = parameters_sorted[k]
-        int_par_indices = [k for k in range(len(parameters_sorted)) if self.parameter_types[k] == int]
-
-        def f(*x):
-            for k, _x in zip(int_par_indices,x):
-                    vals[k] = _x
-            return rv.pdf(vals)
-        return nquad(f, ranges)[0]
-
-    def __mul__(self, other):
-        if not isinstance(other, Number):
-            return NotImplemented
-        return NonEmptyMultivariateMultiTypeNormalDistribution(self.covariance_matrix.copy()*other,
-                                                               self.parameter_names.copy(),
-                                                               self.parameter_types.copy(),
-                                                               self.zero_covariance_substitutes)
-
-    def __rmul__(self, other):
-        return self.__mul__(other)
-
-
-def MultivariateMultiTypeNormalDistribution(covariance_matrix, parameter_names, parameter_types,
-                 zero_covariance_substitutes=1e-4) -> Union[NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution] :
-        """
-        Factory function for multi variate and multi type normal distribution.
-
-        This distribution is essentially a multivariate normal, but takes into account
-        if a type is an integer and returns it always as rounded integer.
-        This is useful if some of your model parameters are discrete.
-
-        Parameters
-        ----------
-        covariance_matrix: np.ndarray
-            2D array. The covariance matrix.
-
-        parameter_names: List[str]
-            List of parameter names
-
-        parameter_types: list
-            A list containing ``int`` and/or ``float`` to indicate whether a parameter
-            is of type ``float`` or ``int``.
-
-        zero_covariance_substitutes: float
-            Substitutes zero variance entries on the diagonal of the diagonal representation
-            of the covariance matrix.
-
-        Returns
-        -------
-        multivariate_distribution: Union[NonEmptyMultivariateMultiTypeNormalDistribution, EmptyMultivariateMultiTypeNormalDistribution]
-            Returns NonEmptyMultivariateMultiTypeNormalDistribution of len(parameter_names) > 0 otherwise
-            a EmptyMultivariateMultiTypeNormalDistribution is returned.
-        """
-        if len(parameter_names) > 0:
-            return NonEmptyMultivariateMultiTypeNormalDistribution(covariance_matrix, parameter_names, parameter_types,
-                                                                   zero_covariance_substitutes=zero_covariance_substitutes)
-        else:
-            rv_logger.debug("Create EmptyMultivariateMultiTypeNormalDistribution")
-            return EmptyMultivariateMultiTypeNormalDistribution()
-
-
 class Distribution(ParameterStructure):
     """
     Distribution of parameters for a model.
 
-    A distribution is a collection of RVs and/or distributions. Essentially something like a dictionary
+    A distribution is a collection of RVs and/or distributions.
+    Essentially something like a dictionary
     of random variables or distributions.
 
     This should be used as prior and also as Kernel density.
     """
     def __repr__(self):
-        return "<Distribution {keys}>".format(keys=str(list(self.get_parameter_names()))[1:-1])
+        return "<Distribution {keys}>".format(
+            keys=str(list(self.get_parameter_names()))[1:-1])
 
     @staticmethod
     def from_dictionary_of_dictionaries(dict_of_dicts: dict) -> "Distribution":
@@ -509,8 +337,8 @@ class Distribution(ParameterStructure):
         dict_of_dicts: dict
             The keys of the dict indicate the parameters names.
             The values are itself dictionaries representing scipy.stats
-            distribution. I.e. the have the key "name" and at least one of the keys
-            "args" or "kwargs".
+            distribution. I.e. the have the key "name" and at least one
+            of the keys "args" or "kwargs".
 
         Returns
         -------
@@ -533,7 +361,8 @@ class Distribution(ParameterStructure):
         copied_distribution: Distribution
             A copy of the distribution.
         """
-        return Distribution(**{key: value.copy() for key, value in self.items()})
+        return Distribution(**{key: value.copy()
+                               for key, value in self.items()})
 
     def update_random_variables(self, **random_variables):
         """
@@ -574,7 +403,8 @@ class Distribution(ParameterStructure):
 
     def pdf(self, x: Union[Parameter, dict]):
         """
-        Get combination of probability density function (for continuous variables) and
+        Get combination of probability density function (for continuous
+        variables) and
         probability mass function (for discrete variables) at point x
 
         Parameters
@@ -591,9 +421,11 @@ class Distribution(ParameterStructure):
             res = []
             for key, val in x.items():
                 try:
-                    res.append(self[key].pdf(val))  # works for continuous variables
+                    # works for continuous variables
+                    res.append(self[key].pdf(val))
                 except AttributeError:
-                    res.append(self[key].pmf(val))  # discrete variables do not have a pdf but a pmf
+                    # discrete variables do not have a pdf but a pmf
+                    res.append(self[key].pmf(val))
             return reduce(lambda s, t: s*t, res)
         else:
             return 1
@@ -604,14 +436,16 @@ class Kernel:
     A Kernel of the form K(x,y) = K(x-y).
 
     Can be initialized from a distribution or using individual variables.
-    E.g. do ``Kernel(distribution)`` or ``Kernel(par_name_1=rv1, par_name2=rv2)``
+    E.g. do ``Kernel(distribution)`` or
+    ``Kernel(par_name_1=rv1, par_name2=rv2)``
 
     If X is a given RV with pdf f, then K(x,y) = f(x-y).
     """
     def __init__(self, *distribution, **random_variables):
         if not ((bool(len(distribution)) != bool(len(random_variables))) or
-                 (len(distribution) == len(random_variables) == 0)):
-            raise Exception("Give single argument XOR keyword arguments. Never both.")
+                (len(distribution) == len(random_variables) == 0)):
+            raise Exception(
+                "Give single argument XOR keyword arguments. Never both.")
         elif len(distribution) == 1:  # parameter is a Distribution object
             self.distribution = distribution[0]
         else:  # parameter is a dictionary
@@ -659,7 +493,8 @@ class ModelPerturbationKernel:
         If ``None``, probability to stay is set to 1/nr_of_models.
         Otherwise, the supplied value is used.
     """
-    def __init__(self, nr_of_models: int, probability_to_stay: Union[float, None]=None):
+    def __init__(self, nr_of_models: int,
+                 probability_to_stay: Union[float, None]=None):
         self.nr_of_models = nr_of_models
         if nr_of_models == 1:
             self.probability_to_stay = 1
@@ -667,13 +502,16 @@ class ModelPerturbationKernel:
             if probability_to_stay is None:
                 self.probability_to_stay = 1 / nr_of_models
             else:
-                self.probability_to_stay = min(max(probability_to_stay, 0), 1)
+                self.probability_to_stay = min(
+                    max(probability_to_stay, 0), 1)
 
     def _get_discrete_rv(self, m):
         p_stay = self.probability_to_stay
         p_move = (1 - p_stay) / (self.nr_of_models-1)
-        probabilities = [p_stay if n == m else p_move for n in range(self.nr_of_models)]
-        return RV('rv_discrete', values=(range(len(probabilities)), probabilities))
+        probabilities = [p_stay if n == m else p_move
+                         for n in range(self.nr_of_models)]
+        return RV('rv_discrete',
+                  values=(range(len(probabilities)), probabilities))
 
     def rvs(self, m: int) -> int:
         """
@@ -714,8 +552,10 @@ class ModelPerturbationKernel:
         probability: float
             Probability with which to jump from ``m`` to ``n``.
         """
-        if not (0 <= n <= self.nr_of_models and 0 <= m <= self.nr_of_models-1):
-            raise Exception('n and m have to be between 0 and nr_of_models - 1')
+        if not (0 <= n <= self.nr_of_models
+                and 0 <= m <= self.nr_of_models-1):
+            raise Exception(
+                'n and m have to be between 0 and nr_of_models - 1')
         if self.nr_of_models == 1:
             return 1 if n == m else 0
         else:

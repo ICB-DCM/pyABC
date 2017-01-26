@@ -12,14 +12,16 @@ class ExecutionContextMixin:
 
 class NamedPrinter(ExecutionContextMixin):
     """
-    Context with appends the job name and number to anything printed by that job.
+    Context with appends the job name and number to anything
+    printed by that job.
     """
     def __init__(self, tmp_path, job_nr):
         super().__init__(tmp_path, job_nr)
         import sys
         self.original_stdout_write = sys.stdout.write
         self.original_stderr_write = sys.stderr.write
-        self.name_tag = "[{}:{}]".format(os.path.basename(self.tmp_path), self.job_nr)
+        self.name_tag = "[{}:{}]".format(os.path.basename(self.tmp_path),
+                                         self.job_nr)
 
     def __enter__(self):
         import sys
@@ -54,7 +56,8 @@ class DefaultContext(ExecutionContextMixin):
 
 class ProfilingContext(ExecutionContextMixin):
     """
-    Profiles the running jobs and stores the profiles in the temporary job folder
+    Profiles the running jobs and stores the profiles in the
+    temporary job folder
     in the subdirectory "profiling".
 
     Useful for debugging. Do not use in production.
@@ -74,9 +77,11 @@ class ProfilingContext(ExecutionContextMixin):
         self._dump_profile()
 
     def _dump_profile(self):
-        output_directory = os.path.join(self.tmp_path, self.RELATIVE_OUTPUT_FOLDER)
+        output_directory = os.path.join(self.tmp_path,
+                                        self.RELATIVE_OUTPUT_FOLDER)
         self._make_output_directory(output_directory)
-        output_file = os.path.join(output_directory, str(self.job_nr) + ".pstats")
+        output_file = os.path.join(output_directory,
+                                   str(self.job_nr) + ".pstats")
         self._profile.dump_stats(output_file)
 
     @staticmethod
