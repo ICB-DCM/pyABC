@@ -3,6 +3,8 @@ import scipy as sp
 import pandas as pd
 from .base import Transition
 from scipy.spatial import cKDTree
+from .util import smart_cov
+from .exceptions import NotEnoughParticles
 
 
 class LocalTransition(Transition):
@@ -24,6 +26,8 @@ class LocalTransition(Transition):
         self.scaling = scaling
 
     def fit(self, X, w):
+        if len(X) == 0:
+            raise NotEnoughParticles("Fitting not possible.")
         self.X_arr = X.as_matrix()
 
         ctree = cKDTree(X)
@@ -39,11 +43,11 @@ class LocalTransition(Transition):
     def pdf(self, x):
         x = x[self.X.columns].as_matrix()
         if len(x.shape) == 1:
-            return self._pdf(x)
+            return self._pdf_single(x)
         else:
-            return sp.array([self._pdf(x) for x in x])
+            return sp.array([self._pdf_single(x) for x in x])
 
-    def _pdf(self, x):
+    def _pdf_single(self, x):
         distance = self.X_arr - x
         cov_distance = sp.einsum("ijk,ik,ij->i", self.inv_covs, distance,
                                  distance)
@@ -51,13 +55,22 @@ class LocalTransition(Transition):
 
     def _calc_cov(self, n, indices):
         """
-        Calculate covariance of around local support vector
+        Calculate covariance around local support vector
         """
-        indices_excluding_self = indices[n, 1:]
-        nearest_vectors = self.X_arr[indices_excluding_self] - self.X_arr[n]
-        local_weights = self.w[indices_excluding_self]
-        cov = sp.cov(nearest_vectors, rowvar=False,
-                     aweights=local_weights / local_weights.sum())
+        if len(indices) > 1:
+            surrounding_indices = indices[n, 1:]
+            nearest_vector_deltas = (self.X_arr[surrounding_indices]
+                                     - self.X_arr[n])
+            local_weights = self.w[surrounding_indices]
+        else:
+            nearest_vector_deltas = sp.absolute(self.X_arr)
+            local_weights = sp.array([1])
+
+        cov = smart_cov(nearest_vector_deltas,
+                        local_weights / local_weights.sum())
+        if sp.absolute(cov.sum()) == 0:
+            for k in range(cov.shape[0]):
+                cov[k,k] = sp.absolute(self.X_arr[0,k])
         return cov * self.scaling
 
     def rvs(self):

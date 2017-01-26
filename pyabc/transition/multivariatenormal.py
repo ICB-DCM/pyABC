@@ -5,6 +5,7 @@ import pandas as pd
 import scipy.stats as st
 from .exceptions import NotEnoughParticles
 from .base import Transition
+from .util import smart_cov
 
 
 def scott_rule_of_thumb(n_samples, dimension):
@@ -60,16 +61,4 @@ class MultivariateNormalTransition(Transition):
         return dens if dens.size != 1 else float(dens)
 
 
-def smart_cov(X_arr, w):
-    """
-    Also returns a covariance of X_arr consists of only one single sample
-    """
-    if X_arr.shape[0] == 1:
-        cov_diag = X_arr[0]
-        cov = np.diag(np.absolute(cov_diag))
-        return cov
 
-    cov = np.cov(X_arr, aweights=w, rowvar=False)
-    if len(cov.shape) == 0:
-        cov = np.array([[cov]])
-    return cov
