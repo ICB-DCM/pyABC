@@ -5,6 +5,9 @@ from .base import Transition
 from scipy.spatial import cKDTree
 from .util import smart_cov
 from .exceptions import NotEnoughParticles
+import logging
+
+logger = logging.getLogger("LocalTransition")
 
 
 class LocalTransition(Transition):
@@ -20,7 +23,15 @@ class LocalTransition(Transition):
 
     scaling: float
         Scaling factor for the local covariance matrices.
+
+    Attributes
+    ----------
+
+    EPS: float
+        Scaling of the identity matrix to be added to the covariance
+        in case the covariances are not invertible.
     """
+    EPS = 1e-5
 
     def __init__(self, k=50, scaling=1):
         self.k = k
@@ -36,10 +47,17 @@ class LocalTransition(Transition):
 
         self.covs = sp.array([self._calc_cov(n, indices)
                               for n in range(X.shape[0])])
-        self.inv_covs = sp.array(list(map(la.inv, self.covs)))
+        self.inv_covs = sp.array(list(map(self._safe_inv, self.covs)))
         self.determinants = sp.array(list(map(la.det, self.covs)))
         self.normalization = sp.sqrt(
             (2 * sp.pi) ** self.X_arr.shape[1] * self.determinants)
+
+    def _safe_inv(self, cov):
+        try:
+            return la.inv(cov)
+        except la.LinAlgError as e:
+            logger.error("Linalg cov={}".format(cov))
+            return la.inv(cov + sp.identity(cov.shape[0]) * self.EPS)
 
     def pdf(self, x):
         x = x[self.X.columns].as_matrix()
