@@ -32,10 +32,29 @@ class LocalTransition(Transition):
         in case the covariances are not invertible.
     """
     EPS = 1e-5
+    MIN_K = 5
 
-    def __init__(self, k=50, scaling=1):
-        self.k = k
+    def __init__(self, k=50, k_fraction=None, scaling=1):
+        if k_fraction is not None:
+            self.k_fraction = k_fraction
+            self._k = None
+        else:
+            self.k_fraction = None
+            self._k = k
+
         self.scaling = scaling
+
+    @property
+    def k(self):
+        if self.k_fraction is not None:
+            if self.w is None:
+                k_ = 0
+            else:
+                k_ = int(self.k_fraction * len(self.w))
+        else:
+            k_ = self._k
+
+        return max(k_, self.MIN_K)
 
     def fit(self, X, w):
         if len(X) == 0:
@@ -68,9 +87,10 @@ class LocalTransition(Transition):
 
     def _pdf_single(self, x):
         distance = self.X_arr - x
-        cov_distance = sp.einsum("ijk,ik,ij->i", self.inv_covs, distance,
-                                 distance)
-        return (sp.exp(-.5 * cov_distance) / self.normalization * self.w).sum()
+        cov_distance = sp.einsum("ij,ijk,ik->i",
+                                 distance, self.inv_covs, distance)
+        return sp.average(sp.exp(-.5 * cov_distance) / self.normalization,
+                          weights=self.w)
 
     def _calc_cov(self, n, indices):
         """
