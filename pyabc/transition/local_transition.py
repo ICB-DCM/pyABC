@@ -31,8 +31,8 @@ class LocalTransition(Transition):
         Scaling of the identity matrix to be added to the covariance
         in case the covariances are not invertible.
     """
-    EPS = 1e-5
-    MIN_K = 5
+    EPS = 1e-3
+    MIN_K = 10
 
     def __init__(self, k=50, k_fraction=None, scaling=1):
         if k_fraction is not None:
@@ -54,7 +54,12 @@ class LocalTransition(Transition):
         else:
             k_ = self._k
 
-        return max(k_, self.MIN_K)
+        try:
+            dim = self.X_arr.shape[1]
+        except AttributeError:
+            dim = 0
+
+        return max([k_, self.MIN_K, dim])
 
     def fit(self, X, w):
         if len(X) == 0:
@@ -66,6 +71,7 @@ class LocalTransition(Transition):
 
         self.covs = sp.array([self._calc_cov(n, indices)
                               for n in range(X.shape[0])])
+        assert len(self.covs.shape) == 3
         self.inv_covs = sp.array(list(map(self._safe_inv, self.covs)))
         self.determinants = sp.array(list(map(la.det, self.covs)))
         self.normalization = sp.sqrt(
@@ -75,7 +81,7 @@ class LocalTransition(Transition):
         try:
             return la.inv(cov)
         except la.LinAlgError as e:
-            logger.error("Linalg cov={}".format(cov))
+            logger.error("Linalg cov={}, err={}".format(cov, e))
             return la.inv(cov + sp.identity(cov.shape[0]) * self.EPS)
 
     def pdf(self, x):
