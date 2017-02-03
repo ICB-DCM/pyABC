@@ -139,4 +139,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         density_values = np.array(density_values)
         variation = st.variation(density_values, 0)
         mean_variation = (variation * self.w).sum()
+        if not np.isfinite(mean_variation):
+            msg = "CV not finite {}".format(mean_variation)
+            raise NotEnoughParticles(msg)
         return mean_variation
