@@ -98,10 +98,12 @@ class ConstantPopulationStrategy(PopulationStrategy):
 class AdaptivePopulationStrategy(PopulationStrategy):
     def __init__(self, nr_particles, nr_populations,
                  nr_samples_per_parameter=1,
-                 mean_cv=0.05, max_population_size=float("inf")):
+                 mean_cv=0.05, max_population_size=float("inf"),
+                 min_population_size=10):
         super().__init__(nr_particles, nr_populations,
                          nr_samples_per_parameter)
         self.max_population_size = max_population_size
+        self.min_population_size = min_population_size
         self.mean_cv = mean_cv
 
     def get_config(self):
@@ -122,8 +124,9 @@ class AdaptivePopulationStrategy(PopulationStrategy):
             old_particles = self.nr_particles
             try:
                 aggregated_nr_particles = sum(nr_required_samples)
-                self.nr_particles = min(
-                    int(aggregated_nr_particles), self.max_population_size)
+                self.nr_particles = max(min(int(aggregated_nr_particles),
+                                            self.max_population_size),
+                                        self.min_population_size)
             except TypeError:
                 print("DEBUGTYPEERROR", nr_required_samples,
                       self.max_population_size)
