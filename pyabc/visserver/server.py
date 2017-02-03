@@ -2,7 +2,7 @@ import os
 import json
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
-import sys
+import click
 from pyabc import History
 import pandas as pd
 import bokeh.plotting.helpers as helpers
@@ -40,6 +40,7 @@ def main():
 
 @app.route("/abc")
 def abc_overview():
+    history = app.config["HISTORY"]
     runs = history.all_runs()
     return render_template("abc_overview.html", runs=runs)
 
@@ -58,6 +59,7 @@ class ABCInfo:
 
 @app.route("/abc/<int:abc_id>")
 def abc_detail(abc_id):
+    history = app.config["HISTORY"]
     history.id = abc_id
     abc = ABCInfo(history.this_abc())
     model_probabilities = history.get_model_probabilities()
@@ -100,6 +102,7 @@ def abc_detail(abc_id):
 
 @app.route("/abc/<int:abc_id>/model/<int:model_id>/t/<t>")
 def abc_model(abc_id, model_id, t):
+    history = app.config["HISTORY"]
     history.id = abc_id
     if t == "max":
         t = history.max_t
@@ -133,6 +136,7 @@ def abc_model(abc_id, model_id, t):
 
 @app.route("/info")
 def server_info():
+    history = app.config["HISTORY"]
     return render_template("server_info.html", db_path=history.db_path,
                            db_size=round(history.db_size, 2))
 
@@ -142,12 +146,17 @@ def page_not_found(e):
     return render_template('404.html'), 404
 
 
-db = os.path.expanduser(sys.argv[1])
-history = History("sqlite:///" + db)
-
-
-def run_app():
-    app.run(debug=True)
+@click.command()
+@click.option("--debug", default=False, type=bool,
+              help="Whether to run the server in debug mode")
+@click.option("--port", default=5000, type=int,
+              help="The port on which the server runs")
+@click.argument("db")
+def run_app(db, debug, port):
+    db = os.path.expanduser(db)
+    history = History("sqlite:///" + db)
+    app.config["HISTORY"] = history
+    app.run(debug=debug, port=port)
 
 
 if __name__ == '__main__':

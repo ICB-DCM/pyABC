@@ -18,3 +18,4 @@ sqlalchemy
 distributed
 pytest
 flake8
+click
