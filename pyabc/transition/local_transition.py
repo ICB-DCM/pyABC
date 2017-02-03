@@ -69,9 +69,10 @@ class LocalTransition(Transition):
         ctree = cKDTree(X)
         _, indices = ctree.query(X, k=min(self.k + 1, X.shape[0]))
 
-        self.covs = sp.array([self._calc_cov(n, indices)
-                              for n in range(X.shape[0])])
-        self.inv_covs = sp.array(list(map(la.inv, self.covs)))
+        covs, inv_covs = list(zip(*[self._cov_and_inv(n, indices)
+                                    for n in range(X.shape[0])]))
+        self.covs = sp.array(covs)
+        self.inv_covs = sp.array(inv_covs)
         self.determinants = sp.array(list(map(la.det, self.covs)))
         self.normalization = sp.sqrt(
             (2 * sp.pi) ** self.X_arr.shape[1] * self.determinants)
@@ -90,10 +91,20 @@ class LocalTransition(Transition):
         return sp.average(sp.exp(-.5 * cov_distance) / self.normalization,
                           weights=self.w)
 
-    def _calc_cov(self, n, indices):
+    def _cov_and_inv(self, n, indices):
         """
         Calculate covariance around local support vector
+        and also the inverse
         """
+        try:
+            cov = self._cov(indices, n)
+            inv_cov = la.inv(cov)
+        except la.LinAlgError:
+            cov += sp.identity(cov.shape[0]) * self.EPS
+            inv_cov = la.inv(cov)
+        return cov, inv_cov
+
+    def _cov(self, indices, n, eps=0):
         if len(indices) > 1:
             surrounding_indices = indices[n, 1:]
             nearest_vector_deltas = (self.X_arr[surrounding_indices]
@@ -102,14 +113,11 @@ class LocalTransition(Transition):
         else:
             nearest_vector_deltas = sp.absolute(self.X_arr)
             local_weights = sp.array([1])
-
         cov = smart_cov(nearest_vector_deltas,
                         local_weights / local_weights.sum())
         if sp.absolute(cov.sum()) == 0:
             for k in range(cov.shape[0]):
                 cov[k, k] = sp.absolute(self.X_arr[0, k])
-        if not la.norm(cov, 2) < self.EPS:
-            cov += sp.identity(cov.shape[0]) * self.EPS
         return cov * self.scaling
 
     def rvs(self):

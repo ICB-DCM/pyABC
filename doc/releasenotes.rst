@@ -7,7 +7,8 @@ Release Notes
 0.4.0
 -----
 
-Add local transition class which makea a local KDE fit.
+* Add local transition class which makes a local KDE fit.
+* Fix corner cases of adaptive population size strategy
 
 0.3 series
 ..........
