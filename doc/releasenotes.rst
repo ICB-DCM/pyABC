@@ -9,6 +9,12 @@ Release Notes
 
 * Add local transition class which makes a local KDE fit.
 * Fix corner cases of adaptive population size strategy
+* Change the default: Do not stop if only a single model is alive.
+* Also include population 0, i.e. a sample from the prior, in the websever
+  visualization
+* Minor bug fixes
+    * Fix inconsistency in ABC options if db_path given as sole string argument
+
 
 0.3 series
 ..........

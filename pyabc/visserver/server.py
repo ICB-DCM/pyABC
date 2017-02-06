@@ -69,10 +69,10 @@ def abc_detail(abc_id):
     model_probabilities = model_probabilities.reset_index()
     if len(model_probabilities) > 0:
         populations = history.get_all_populations()
-        populations = populations[populations.t > 0]
+        populations = populations[populations.t >= 0]
         particles = (history.get_nr_particles_per_population().reset_index()
                      .rename(columns={"index": "t", "t": "particles"})
-                     .query("t > 0"))
+                     .query("t >= 0"))
 
         melted = pd.melt(model_probabilities, id_vars="t", var_name="m",
                          value_name="p")

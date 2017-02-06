@@ -180,7 +180,7 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(transition):
     This is a test created after I encountered this kind of bug
     """
     n = 13
-    df = pd.DataFrame({"a": np.ones(n) + sp.randn(n),
+    df = pd.DataFrame({"a": np.ones(n) *2,
                        "b": np.ones(n)})
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)
