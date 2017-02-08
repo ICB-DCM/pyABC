@@ -5,5 +5,16 @@ flask
 flask_bootstrap
 sortedcontainers
 numpy
+scipy
+pandas
+cloudpickle
+bokeh
+redis
+gitpython
+seaborn
+scikit-learn
+matplotlib
 distributed
+pytest
+flake8
 dill
