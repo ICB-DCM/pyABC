@@ -441,8 +441,7 @@ class ABCSMC:
             return
 
         for m in self.history.alive_models(t - 1):
-            particles_df, weights = self.history.weighted_parameters_dataframe(
-                t - 1, m)
+            particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles_df, weights)
 
         self.population_strategy.adapt_population_size(

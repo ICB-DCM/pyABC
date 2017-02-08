@@ -1,10 +1,11 @@
+from.base import Sampler
 import numpy as np
 import time
 from sortedcontainers import SortedListWithKey
 from distributed import Client
 
 
-class DaskDistributedSampler():
+class DaskDistributedSampler(Sampler):
     """
     Sample on a single core. No parallelization.
     """
@@ -61,9 +62,9 @@ class DaskDistributedSampler():
             else:
                 next_index = np.nan
             while next_index == next_valid_index+1:
-                seq_accepted = unprocessed_results.pop(0)
-                if seq_accepted:
-                    accepted_results.add((seq_accepted[0], seq_accepted[2]))
+                seq_evaluated = unprocessed_results.pop(0)
+                if seq_evaluated[1]:
+                    accepted_results.add((seq_evaluated[0], seq_evaluated[2]))
                 next_valid_index += 1
                 if len(unprocessed_results) > 0:
                     next_index = unprocessed_results[0][0]
@@ -101,8 +102,7 @@ class DaskDistributedSampler():
         while len(returned_results) < n:
             cur_res = accepted_results.pop(0)
             returned_results.append(cur_res[1])
-            print(cur_res)
-
+            self.nr_evaluations_ = cur_res[0]
         return returned_results
 
 

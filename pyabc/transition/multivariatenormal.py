@@ -34,7 +34,6 @@ class MultivariateNormalTransition(Transition):
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
-
         self._X_arr = X.as_matrix()
         cov = smart_cov(self._X_arr, w)
         effective_sample_size = len(X) / (1 + w.var())
