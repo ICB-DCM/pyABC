@@ -166,6 +166,8 @@ class ABCSMC:
 
         if transitions is None:
             transitions = [MultivariateNormalTransition() for _ in self.models]
+        if not isinstance(transitions, list):
+            transitions = [transitions]
         self.transitions = transitions  # type: List[Transition]
 
         if eps is None:
