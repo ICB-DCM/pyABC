@@ -8,7 +8,7 @@ from pyabc import (ABCSMC, RV, ModelPerturbationKernel, Distribution,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from parallel.sampler import SingleCoreSampler, MappingSampler
+from parallel.sampler import SingleCoreSampler, MappingSampler, DaskDistributedSampler
 from scipy.special import gamma, binom
 import scipy.interpolate
 import scipy as sp
@@ -22,7 +22,7 @@ class MultiProcessingMappingSampler(MappingSampler):
         super().__init__(mapper)
 
 
-@pytest.fixture(params=[SingleCoreSampler, MappingSampler, MultiProcessingMappingSampler])
+@pytest.fixture(params=[SingleCoreSampler, DaskDistributedSampler, MappingSampler, MultiProcessingMappingSampler])
 def sampler(request):
     return request.param()
 
@@ -49,7 +49,6 @@ def test_cookie_jar(db_path, sampler):
 
     theta1 = .2
     theta2 = .6
-
 
     model1 = make_model(theta1)
     model2 = make_model(theta2)

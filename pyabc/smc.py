@@ -162,8 +162,6 @@ class ABCSMC:
         # print(state_red_dict)
         return state_red_dict
 
-
-
     def do_not_stop_when_only_single_model_alive(self):
         """
         Calling this method causes the ABCSMC to still continue if only

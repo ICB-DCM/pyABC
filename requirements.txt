@@ -3,3 +3,7 @@ gitpython
 sqlalchemy
 flask
 flask_bootstrap
+sortedcontainers
+numpy
+distributed
+dill
