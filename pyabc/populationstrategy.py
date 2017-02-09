@@ -96,6 +96,36 @@ class ConstantPopulationStrategy(PopulationStrategy):
 
 
 class AdaptivePopulationStrategy(PopulationStrategy):
+    """
+    Adapt the population size according to the mean coefficient of variation
+    error criterion.
+
+    Parameters
+    ----------
+
+    nr_particles: int
+        Number of particles in the first populations
+
+    nr_populations: int
+        Max number of populations
+
+    mean_cv: float, optional
+        The error criterion. Defaults to 0.05.
+        A smaller value leads generally to larger populations.
+        The error criterion is the mean coefficient of variation of
+         the estimated KDE.
+
+    nr_samples_per_parameter: int, optional
+        Defaults to 1.
+
+    max_population_size: int, optional
+        Max nr of allowe particles in a population.
+        Defaults to ininity.
+
+    min_population_size: int, optional
+        Min number of particles allowed in a population.
+        Defaults to 10
+    """
     def __init__(self, nr_particles, nr_populations,
                  nr_samples_per_parameter=1,
                  mean_cv=0.05, max_population_size=float("inf"),
