@@ -12,7 +12,8 @@ logger = logging.getLogger("LocalTransition")
 
 class LocalTransition(Transition):
     """
-    Local KDE fit.
+    Local KDE fit. Takes into account only the k
+    nearest neighbors.
 
     Parameters
     ----------
@@ -23,6 +24,10 @@ class LocalTransition(Transition):
 
     scaling: float
         Scaling factor for the local covariance matrices.
+
+    k_fraction: float, optional
+        Calculate number of nearest neighbors to use according to
+        k = ``k_fraction`` * `population_size``
 
     Attributes
     ----------
