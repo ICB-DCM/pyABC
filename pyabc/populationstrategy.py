@@ -120,7 +120,7 @@ class AdaptivePopulationStrategy(PopulationStrategy):
 
     max_population_size: int, optional
         Max nr of allowe particles in a population.
-        Defaults to ininity.
+        Defaults to infinity.
 
     min_population_size: int, optional
         Min number of particles allowed in a population.

@@ -250,7 +250,6 @@ g            contain an arbitrary number of additional keys,
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
 
-
         self.history = History(abc_options["db_path"])
 
         if ground_truth_parameter is None:
