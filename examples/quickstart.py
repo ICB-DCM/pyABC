@@ -20,7 +20,6 @@ def model(parameters):
 
 # We define two models, but they are identical so far
 models = [model, model]
-models = list(map(SimpleModel, models))
 
 
 # However, our models' priors are not the same. Their mean differs.
