@@ -21,7 +21,7 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from pyabc.parallel import MulticoreSampler
+from pyabc.parallel import MulticoreSampler, DaskDistributedSampler
 
 REMOVE_DB = False
 
@@ -30,11 +30,9 @@ REMOVE_DB = False
 def transition(request):
     return request.param
 
-
-@pytest.fixture
-def sampler():
-    return MulticoreSampler()
-
+@pytest.fixture(params=[DaskDistributedSampler, MulticoreSampler])
+def sampler(request):
+    return request.param()
 
 @pytest.fixture
 def db_path():
