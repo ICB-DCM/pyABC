@@ -14,6 +14,7 @@ import scipy as sp
 import scipy.interpolate
 import scipy.stats as st
 from scipy.special import gamma, binom
+from pyabc.transition import LocalTransition
 
 from pyabc import (ABCSMC, RV,  Distribution,
                    MedianEpsilon, MinMaxDistanceFunction,
@@ -23,6 +24,11 @@ from pyabc import (ABCSMC, RV,  Distribution,
 from pyabc.parallel import MulticoreSampler
 
 REMOVE_DB = False
+
+
+@pytest.fixture(params=[LocalTransition, MultivariateNormalTransition])
+def transition(request):
+    return request.param
 
 
 @pytest.fixture
@@ -421,7 +427,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     assert abs(std_emp - sigma_x_given_y) < .12
 
 
-def test_two_competing_gaussians_single_population(db_path, sampler):
+def test_two_competing_gaussians_single_population(db_path, sampler, transition):
     sigma_x = .5
     sigma_y = .5
     y_observed = 1
@@ -438,6 +444,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler):
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 transitions=[transition(), transition()],
                  eps=MedianEpsilon(.02),
                  sampler=sampler)
 
@@ -461,7 +468,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler):
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < .07
 
 
-def test_two_competing_gaussians_multiple_population(db_path, sampler):
+def test_two_competing_gaussians_multiple_population(db_path, sampler, transition):
     # Define a gaussian model
     sigma = .5
 
@@ -482,9 +489,11 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     # We plug all the ABC setup together
     nr_populations = 3
     population_size = ConstantPopulationStrategy(400, 3)
+
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]), population_size,
                  eps=MedianEpsilon(.2),
+                 transitions=[transition(), transition()],
                  sampler=sampler)
 
     # Finally we add meta data such as model names and define where to store the results

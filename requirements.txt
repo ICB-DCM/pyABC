@@ -10,11 +10,13 @@ pandas
 cloudpickle
 bokeh
 redis
+dill
 gitpython
 seaborn
 scikit-learn
 matplotlib
+sqlalchemy
 distributed
 pytest
 flake8
-dill
+click

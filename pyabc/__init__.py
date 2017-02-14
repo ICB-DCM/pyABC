@@ -25,7 +25,7 @@ from .epsilon import Epsilon, ConstantEpsilon, MedianEpsilon, ListEpsilon
 from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult
-from .transition import MultivariateNormalTransition
+from .transition import MultivariateNormalTransition, LocalTransition
 from .populationstrategy import (AdaptivePopulationStrategy,
                                  ConstantPopulationStrategy)
 from .transition import GridSearchCV
@@ -59,6 +59,7 @@ __all__ = [
     "ConstantPopulationStrategy",
     "AdaptivePopulationStrategy",
     "MultivariateNormalTransition",
+    "LocalTransition",
     "SimpleModel",
     "ModelResult",
     "Model",

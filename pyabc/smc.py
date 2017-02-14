@@ -139,11 +139,15 @@ class ABCSMC:
                  transitions: List[Transition] = None, eps: Epsilon = None,
                  sampler=None):
 
-        # sanity checks
-        self.models = list(models)
+        if not isinstance(models, list):
+            models = [models]
+        self.models = models
 
-        # this cannot be serialized by dill
+        if not isinstance(parameter_priors, list):
+            parameter_priors = [parameter_priors]
         self.parameter_priors = parameter_priors
+
+        # sanity checks
         assert len(self.models) == len(self.parameter_priors), \
             "Number models and number parameter priors have to agree"
 
@@ -162,6 +166,8 @@ class ABCSMC:
 
         if transitions is None:
             transitions = [MultivariateNormalTransition() for _ in self.models]
+        if not isinstance(transitions, list):
+            transitions = [transitions]
         self.transitions = transitions  # type: List[Transition]
 
         if eps is None:
@@ -175,7 +181,7 @@ class ABCSMC:
         else:
             self.sampler = sampler
 
-        self.stop_if_only_single_model_alive = True
+        self.stop_if_only_single_model_alive = False
         self.x_0 = None
         self.history = None  # type: History
         self._points_sampled_from_prior = None
@@ -217,9 +223,7 @@ class ABCSMC:
         abc_options: Union[dict, str]
             If a string, it has to be a valid SQLAlchemy database identifier.
 
-            If a dict, it has to contain the key "db_path" which has to be a
-            valid SQLAlchem database identifier. The dictionary can
-            contain an arbitrary number of additional keys,
+g            contain an arbitrary number of additional keys,
             only for recording purposes. Store arbitrary
             meta information in this dictionary. Can be used for really
             anything.
@@ -240,13 +244,14 @@ class ABCSMC:
             if it was syntheticallyobtained.
         """
         # initialize
+        if isinstance(abc_options, str):
+            abc_options = {"db_path": abc_options}
+
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
-        try:
-            db = abc_options["db_path"]
-        except TypeError:
-            db = abc_options
-        self.history = History(db)
+
+
+        self.history = History(abc_options["db_path"])
 
         if ground_truth_parameter is None:
             ground_truth_parameter = {}
@@ -292,12 +297,11 @@ class ABCSMC:
                     par, self.summary_statistics)
                 return model_result.sum_stats
 
-            sample_from_prior = self.sampler.sample_until_n_accepted(
-                sample_one, simulate_one, lambda x: True,
-                self.population_strategy.nr_particles)
-        else:
-            sample_from_prior = self._points_sampled_from_prior
-        return sample_from_prior
+            self._points_sampled_from_prior = (
+                self.sampler.sample_until_n_accepted(
+                    sample_one, simulate_one, lambda x: True,
+                    self.population_strategy.nr_particles))
+        return self._points_sampled_from_prior
 
     def evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
                           model_probabilities):

@@ -246,7 +246,7 @@ class History:
         self.model_names = model_names
         # store ground truth to db
         try:
-            git_hash = git.Repo(os.environ['PYTHONPATH']).head.commit.hexsha
+            git_hash = git.Repo(os.getcwd()).head.commit.hexsha
         except (git.exc.NoSuchPathError, KeyError,
                 git.exc.InvalidGitRepositoryError) as e:
             git_hash = str(e)
@@ -449,14 +449,14 @@ class History:
             .join(Population)
             .join(ABCSMC)
             .filter(ABCSMC.id == self.id)
-            .filter((Population.t == t if t is not None else Population.t > 0))
+            .filter((Population.t == t if t is not None else Population.t >= 0))
             .order_by(Model.m)
             .all())
         # TODO this is a mess
         if t is not None:
             p_models_df = pd.DataFrame([p[:2] for p in p_models],
                                        columns=["p", "m"]).set_index("m")
-            p_models_df = p_models_df[p_models_df.p > 0]
+            p_models_df = p_models_df[p_models_df.p >= 0]
             return p_models_df
         else:
             p_models_df = (pd.DataFrame(p_models, columns=["p", "m", "t"])
