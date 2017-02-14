@@ -22,6 +22,7 @@ from .storage import History
 from .populationstrategy import PopulationStrategy
 from .random import fast_random_choice
 from typing import Union
+from .model import SimpleModel
 
 
 abclogger = logging.getLogger("ABC")
@@ -141,6 +142,7 @@ class ABCSMC:
 
         if not isinstance(models, list):
             models = [models]
+        models = list(map(SimpleModel.assert_model, models))
         self.models = models
 
         if not isinstance(parameter_priors, list):
@@ -249,7 +251,6 @@ g            contain an arbitrary number of additional keys,
 
         self.x_0 = observed_summary_statistics
         model_names = [model.name for model in self.models]
-
 
         self.history = History(abc_options["db_path"])
 

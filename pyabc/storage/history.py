@@ -449,7 +449,7 @@ class History:
             .join(Population)
             .join(ABCSMC)
             .filter(ABCSMC.id == self.id)
-            .filter((Population.t == t if t is not None else Population.t >= 0))
+            .filter(Population.t == t if t is not None else Population.t >= 0)
             .order_by(Model.m)
             .all())
         # TODO this is a mess

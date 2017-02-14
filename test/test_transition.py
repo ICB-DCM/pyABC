@@ -2,7 +2,6 @@ from pyabc.transition import NotEnoughParticles, LocalTransition
 from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
-import scipy as sp
 import pytest
 from pyabc import GridSearchCV
 
@@ -180,7 +179,7 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(transition):
     This is a test created after I encountered this kind of bug
     """
     n = 13
-    df = pd.DataFrame({"a": np.ones(n) *2,
+    df = pd.DataFrame({"a": np.ones(n) * 2,
                        "b": np.ones(n)})
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)

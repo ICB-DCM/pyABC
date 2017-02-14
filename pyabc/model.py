@@ -107,3 +107,10 @@ class SimpleModel(Model):
 
     def sample(self, pars):
         return self.sample_function(pars)
+
+    @staticmethod
+    def assert_model(model_or_function):
+        if isinstance(model_or_function, Model):
+            return model_or_function
+        else:
+            return SimpleModel(model_or_function)

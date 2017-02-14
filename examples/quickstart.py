@@ -4,7 +4,7 @@ import tempfile
 import scipy.stats as st
 
 from pyabc import (ABCSMC, RV, Distribution,
-                   PercentileDistanceFunction, SimpleModel,
+                   PercentileDistanceFunction,
                    ConstantPopulationStrategy)
 
 # Define a gaussian model
@@ -20,7 +20,6 @@ def model(parameters):
 
 # We define two models, but they are identical so far
 models = [model, model]
-models = list(map(SimpleModel, models))
 
 
 # However, our models' priors are not the same. Their mean differs.
@@ -39,8 +38,8 @@ abc = ABCSMC(models, parameter_priors,
 
 # Finally we add meta data such as model names
 # and define where to store the results
-db_path = (os.path.expanduser("sqlite:///" +
-           os.path.join(tempfile.gettempdir(), "test.db")))
+db_path = ("sqlite:///" +
+           os.path.join(tempfile.gettempdir(), "test.db"))
 # y_observed is the important piece here: our actual observation.
 y_observed = 1
 abc.set_data({"y": y_observed}, db_path)
