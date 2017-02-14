@@ -87,7 +87,8 @@ task.html#quick-and-easy-parallelism)
                                          simulate_pickle, accept_pickle)
 
         counted_results = list(self.map(map_function, [None] * n))
-        self.nr_evaluations_ = sum(nr for res, nr in counted_results)
+        self.nr_evaluations_ = sum(res[1] for res in counted_results
+                                   if not isinstance(res, Exception))
         results = [res for res, nr in counted_results]
         return results
 

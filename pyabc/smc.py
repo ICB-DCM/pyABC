@@ -446,8 +446,8 @@ g            contain an arbitrary number of additional keys,
             return
 
         for m in self.history.alive_models(t - 1):
-            particles_df, weights = self.history.weighted_parameters_dataframe(t - 1, m)
-            self.transitions[m].fit(particles_df, weights)
+            particles, w = self.history.weighted_parameters_dataframe(t - 1, m)
+            self.transitions[m].fit(particles, w)
 
         self.population_strategy.adapt_population_size(
             self.transitions,

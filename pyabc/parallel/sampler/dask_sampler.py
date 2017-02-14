@@ -1,15 +1,16 @@
-from.base import Sampler
 import numpy as np
 import time
 from sortedcontainers import SortedListWithKey
 from distributed import Client
+from.base import Sampler
 
 
 class DaskDistributedSampler(Sampler):
     """
     Sample on a single core. No parallelization.
     """
-    def __init__(self, dask_client=None, client_core_load_factor=1.2, client_max_jobs=200,  throttle_delay=0.0):
+    def __init__(self, dask_client=None, client_core_load_factor=1.2,
+                 client_max_jobs=200,  throttle_delay=0.0):
         self.nr_evaluations_ = 0
 
         # Assign Client
@@ -44,7 +45,8 @@ class DaskDistributedSampler(Sampler):
         # Main Loop, leave once we have enough material
         while True:
             # Gather finished jobs
-            # make sure to track and update both total accepted and sequentially accepted jobs
+            # make sure to track and update both total accepted
+            # and sequentially accepted jobs
             for curJob in running_jobs:
                 if curJob.done():
                     remote_evaluated = curJob.result()
@@ -53,7 +55,8 @@ class DaskDistributedSampler(Sampler):
                     remote_accept = remote_evaluated[1]
                     remote_jobid = remote_evaluated[2]
                     # print("Received result on job ", remote_jobid)
-                    unprocessed_results.add((remote_jobid, remote_accept, remote_result))
+                    unprocessed_results.add(
+                        (remote_jobid, remote_accept, remote_result))
                     if remote_accept:
                         num_accepted_total += 1
 
@@ -81,15 +84,23 @@ class DaskDistributedSampler(Sampler):
             self.client_cores = sum(self.my_client.ncores().values())
             # Only submit more jobs if:
             # Number of jobs open < max_jobs
-            # Number of jobs open < self.scheduler_workers_running * worker_load_factor
+            # Number of jobs open
+            # < self.scheduler_workers_running * worker_load_factor
             # num_accepted_total < jobs required
-            if (len(running_jobs) < self.client_max_jobs) and \
-                    (len(running_jobs) < self.client_cores * self.client_core_load_factor) and \
-                    (num_accepted_total < n):
-                for _ in range(0, np.minimum(self.client_max_jobs,
-                                             self.client_cores * self.client_core_load_factor).astype(int) - len(running_jobs)):
+            if (len(running_jobs) < self.client_max_jobs
+               and (len(running_jobs)
+                    < self.client_cores * self.client_core_load_factor)
+               and num_accepted_total < n):
+                for _ in range(0,
+                               np.minimum(self.client_max_jobs,
+                                          self.client_cores
+                                          * self.client_core_load_factor
+                                          ).astype(int)
+                               - len(running_jobs)):
                     new_param = sample_one()
-                    running_jobs.append(self.my_client.submit(full_submit_function, new_param, next_job_id))
+                    running_jobs.append(
+                        self.my_client.submit(full_submit_function,
+                                              new_param, next_job_id))
                     # print("Submitted job ", next_job_id)
                     next_job_id += 1
             # Wait for scheduler_throttle_delay seconds
@@ -104,5 +115,3 @@ class DaskDistributedSampler(Sampler):
             returned_results.append(cur_res[1])
             self.nr_evaluations_ = cur_res[0]
         return returned_results
-
-
