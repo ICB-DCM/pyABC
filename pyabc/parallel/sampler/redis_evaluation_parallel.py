@@ -23,7 +23,8 @@ SLEEP_TIME = .1
 
 def work_on_population(redis: Redis):
     n_worker = redis.incr(N_WORKER)
-    worker_logger.info("Start work population. I am worker {}".format(n_worker))
+    worker_logger.info("Start work population. I am worker {}"
+                       .format(n_worker))
     sample, simulate, accept = pickle.loads(redis.get(SSA))
 
     random.seed()
@@ -42,7 +43,8 @@ def work_on_population(redis: Redis):
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, new_sim)))
 
     redis.decr(N_WORKER)
-    worker_logger.info("Finished population, did {} samples.".format(internal_counter))
+    worker_logger.info("Finished population, did {} samples."
+                       .format(internal_counter))
 
 
 def work(redis: Redis=None):
@@ -63,7 +65,9 @@ class RedisEvalParallelSampler(Sampler):
         self.redis = redis if redis is not None else Redis()
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        self.redis.set(SSA, cloudpickle.dumps((sample_one, simulate_one, accept_one)))
+        self.redis.set(SSA,
+                       cloudpickle.dumps(
+                           (sample_one, simulate_one, accept_one)))
         self.redis.set(N_EVAL, 0)
         self.redis.set(N_PARTICLES, n)
         self.redis.set(N_WORKER, 0)
