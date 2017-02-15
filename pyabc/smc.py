@@ -10,7 +10,7 @@ import logging
 from typing import List, Callable, TypeVar
 import pandas as pd
 import scipy as sp
-from .parallel import MulticoreSampler
+from .parallel import MulticoreParticleParallelSampler
 from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
@@ -179,7 +179,7 @@ class ABCSMC:
         self.population_strategy = population_strategy
 
         if sampler is None:
-            self.sampler = MulticoreSampler()
+            self.sampler = MulticoreParticleParallelSampler()
         else:
             self.sampler = sampler
 

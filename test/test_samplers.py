@@ -11,7 +11,9 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    PercentileDistanceFunction, SimpleModel,
                    ConstantPopulationStrategy)
 from pyabc.parallel import (SingleCoreSampler, MappingSampler,
-                            MulticoreSampler, DaskDistributedSampler)
+                            MulticoreParticleParallelSampler,
+                            DaskDistributedSampler,
+                            MulticoreEvalParallelSampler)
 
 REMOVE_DB = False
 
@@ -27,9 +29,12 @@ class MultiProcessingMappingSampler(MappingSampler):
         super().__init__(multi_proc_map)
 
 
-@pytest.fixture(params=[SingleCoreSampler, DaskDistributedSampler,
+@pytest.fixture(params=[MulticoreEvalParallelSampler,
+                        SingleCoreSampler,
                         MultiProcessingMappingSampler,
-                        MulticoreSampler, MappingSampler])
+                        MulticoreParticleParallelSampler,
+                        MappingSampler,
+                        DaskDistributedSampler])
 def sampler(request):
     return request.param()
 

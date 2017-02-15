@@ -21,7 +21,8 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from pyabc.parallel import MulticoreSampler, DaskDistributedSampler
+from pyabc.parallel import (MulticoreEvalParallelSampler, MulticoreParticleParallelSampler,
+                            DaskDistributedSampler)
 
 REMOVE_DB = False
 
@@ -30,9 +31,13 @@ REMOVE_DB = False
 def transition(request):
     return request.param
 
-@pytest.fixture(params=[DaskDistributedSampler, MulticoreSampler])
+
+@pytest.fixture(params=[MulticoreEvalParallelSampler, MulticoreParticleParallelSampler,
+                        #DaskDistributedSampler
+                        ])
 def sampler(request):
     return request.param()
+
 
 @pytest.fixture
 def db_path():
@@ -48,6 +53,9 @@ def db_path():
 
 
 def test_cookie_jar(db_path, sampler):
+    import scipy.stats as st
+    from time import sleep
+
     def make_model(theta):
         def model(args):
             return {"result": 1 if random.random() > theta else 0}

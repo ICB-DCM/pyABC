@@ -34,7 +34,7 @@ def work(feed_q, result_q, sample_one, simulate_one, accept_one):
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
-class MulticoreSampler(Sampler):
+class MulticoreParticleParallelSampler(Sampler):
     """
     Samples on multiple cores using the multiprocessing module.
     This sampler is optimized for low latencies and is efficient, even
