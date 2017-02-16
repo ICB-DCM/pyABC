@@ -62,34 +62,33 @@ task.html#quick-and-easy-parallelism)
     def __setstate__(self, state):
         self.pickle, self.unpickle, self.nr_evaluations_ = state
 
-    def map_function(self, sample_pickle, simulate_pickle, accept_pickle, _):
-        sample_one = self.unpickle(sample_pickle)
-        simulate_one = self.unpickle(simulate_pickle)
-        accept_one = self.unpickle(accept_pickle)
+    def map_function(self, sample_simulate_accept, _):
+        sample, simulate, accept = self.unpickle(sample_simulate_accept)
 
         np.random.seed()
         random.seed()
         nr_simulations = 0
         while True:
-            new_param = sample_one()
-            new_sim = simulate_one(new_param)
+            new_param = sample()
+            new_sim = simulate(new_param)
             nr_simulations += 1
-            if accept_one(new_sim):
+            if accept(new_sim):
                 break
         return new_sim, nr_simulations
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        sample_pickle = self.pickle(sample_one)
-        simulate_pickle = self.pickle(simulate_one)
-        accept_pickle = self.pickle(accept_one)
-
-        map_function = functools.partial(self.map_function, sample_pickle,
-                                         simulate_pickle, accept_pickle)
+    def sample_until_n_accepted(self, sample, simualte, accept, n):
+        # pickle them as a tuple instead of individual pickling
+        # this should save time and should make better use of
+        # shared references
+        sample_simulate_accept = self.pickle((sample, simualte, accept))
+        map_function = functools.partial(self.map_function,
+                                         sample_simulate_accept)
 
         counted_results = list(self.map(map_function, [None] * n))
-        self.nr_evaluations_ = sum(res[1] for res in counted_results
-                                   if not isinstance(res, Exception))
-        results = [res for res, nr in counted_results]
+        counted_results = filter(lambda x: not isinstance(x, Exception),
+                                 counted_results)
+        results, evals = zip(*counted_results)
+        self.nr_evaluations_ = sum(evals)
         return results
 
 
