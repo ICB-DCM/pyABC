@@ -7,6 +7,8 @@ import cloudpickle
 import logging
 from time import sleep, time
 import click
+import signal
+import sys
 logging.basicConfig(level="INFO")
 
 worker_logger = logging.getLogger("REDIS-WORKER")
@@ -22,10 +24,24 @@ START = "start"
 SLEEP_TIME = .1
 
 
-def work_on_population(redis: StrictRedis):
+class KillHandler:
+    def __init__(self):
+        self.killed = False
+        self.exit = True
+        signal.signal(signal.SIGTERM, self.handle)
+        signal.signal(signal.SIGINT, self.handle)
+
+    def handle(self, *args):
+        self.killed = True
+        if self.exit:
+            sys.exit(0)
+
+
+def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
     ssa = redis.get(SSA)
     if ssa is None:
         return
+    kill_handler.exit = False
     n_worker = redis.incr(N_WORKER)
     worker_logger.info("Begin population. I am worker {}"
                        .format(n_worker))
@@ -37,6 +53,14 @@ def work_on_population(redis: StrictRedis):
 
     internal_counter = 0
     while n_particles > 0:
+        if kill_handler.killed:
+            worker_logger.info("Worker {} received stop signal. "
+                               "Terminating in the middle of a population"
+                               " after {} samples."
+                               .format(n_worker, internal_counter))
+            redis.decr(N_WORKER)
+            sys.exit(0)
+
         particle_id = redis.incr(N_EVAL)
         internal_counter += 1
 
@@ -47,6 +71,7 @@ def work_on_population(redis: StrictRedis):
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, new_sim)))
 
     redis.decr(N_WORKER)
+    kill_handler.exit = True
     worker_logger.info("Finished population, did {} samples."
                        .format(internal_counter))
 
@@ -57,6 +82,8 @@ def work_on_population(redis: StrictRedis):
 @click.option('--max_runtime_s', type=int, default=50*3600,
               help='Max worker runtime in seconds.')
 def work(host="localhost", port=6379, max_runtime_s=50*3600):
+    kill_handler = KillHandler()
+
     start_time = time()
     worker_logger.info("Start redis worker. Max run time {}s"
                        .format(max_runtime_s))
@@ -66,12 +93,12 @@ def work(host="localhost", port=6379, max_runtime_s=50*3600):
     p = redis.pubsub()
     p.subscribe(MSG)
 
-    work_on_population(redis)
+    work_on_population(redis, kill_handler)
     listener = p.listen()
     next(listener)  # first message contains as data only 1 number 1
     for msg in listener:
         if msg["data"].decode() == "start":
-            work_on_population(redis)
+            work_on_population(redis, kill_handler)
         elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
             worker_logger.info("Shutdown redis worker. Max runtime {}s reached"
@@ -117,8 +144,6 @@ class RedisEvalParallelSampler(Sampler):
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:n]
-
-
 
         population = [res[1] for res in id_results]
         return population
