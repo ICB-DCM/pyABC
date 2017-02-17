@@ -33,11 +33,7 @@ def transition(request):
     return request.param
 
 
-@pytest.fixture(params=[MulticoreEvalParallelSampler,
-                        MulticoreParticleParallelSampler,
-                        RedisEvalParallelSamplerServerStarter,
-                        #DaskDistributedSampler
-                        ])
+@pytest.fixture(params=[MulticoreEvalParallelSampler])
 def sampler(request):
     s = request.param()
     yield s
