@@ -7,10 +7,18 @@ from.base import Sampler
 
 class DaskDistributedSampler(Sampler):
     """
-    Sample on a single core. No parallelization.
+    Parallelize with dask. This sampler requires a pre-configured dask cluster
+
+    Parameters
+    ----------
+
+    dask_client: dask.Client, optional
+        The configured dask Client.
+        If none is provided, then a local dask distributed Cluster is created.
     """
     def __init__(self, dask_client=None, client_core_load_factor=1.2,
                  client_max_jobs=200,  throttle_delay=0.0):
+        super().__init__()
         self.nr_evaluations_ = 0
 
         # Assign Client

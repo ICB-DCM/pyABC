@@ -77,16 +77,15 @@ def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
 @click.command(help="Evaluation parallel redis sampler for pyABC.")
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
-@click.option('--max_runtime_s', type=int, default=50*3600,
+@click.option('--max_runtime_s', type=int, default=2*3600,
               help='Max worker runtime in seconds.')
-def work(host="localhost", port=6379, max_runtime_s=50*3600):
+def work(host="localhost", port=6379, max_runtime_s=2*3600):
     kill_handler = KillHandler()
 
     start_time = time()
     worker_logger.info("Start redis worker. Max run time {}s"
                        .format(max_runtime_s))
     redis = StrictRedis(host=host, port=port)
-
 
     p = redis.pubsub()
     p.subscribe(MSG)
@@ -105,6 +104,34 @@ def work(host="localhost", port=6379, max_runtime_s=50*3600):
 
 
 class RedisEvalParallelSampler(Sampler):
+    """
+    Redis based low latency sampler.
+    This sampler is extremely well performiing in distributed environments.
+    It vastly outperforms :class:`pyabc.parallel.sampler.DaskDistributedSampler` for
+    short model evaluation runtimes. The longer the model evaluation times,
+    the less the advantage becomes. It requires a running redis server as
+    broker.
+
+    This sampler requires workers to be started via the command
+    ``abc-redis-worker``.
+    An example call might look like
+    ``abc-redis-worker --host=123.456.789.123 --max_runtime_s=7200``
+    to connect to a Redis server on IP ``123.456.789.123`` and to terminate
+    the worker after finishing the first population which ends after 7200s
+    since worker start. So the actual runtime might be longer thatn 7200s.
+    See ``abc-redis-worker --help`` for its options.
+
+    Parameters
+    ----------
+
+    host: str, optional
+        IP address or name of the Redis server.
+        Default is "localhost"
+
+    port: int, optional
+        Port of the Redis server.
+        Default if 6379.
+    """
     def __init__(self, host="localhost", port=6379):
         super().__init__()
         worker_logger.info("Redis sampler: host={} port={}".format(host, port))
