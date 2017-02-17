@@ -19,7 +19,20 @@ N_WORKER = "n_workers"
 
 MSG = "msg_pubsub"
 START = "start"
+STOP = "stop"
 SLEEP_TIME = .1
+
+
+TIMES = {"s": 1,
+         "m": 60,
+         "h": 3600,
+         "d":  24*3600}
+
+
+def runtime_parse(s):
+    unit = TIMES[s[-1].lower()]
+    nr = float(s[:-1])
+    return unit * nr
 
 
 class KillHandler:
@@ -77,12 +90,13 @@ def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
 @click.command(help="Evaluation parallel redis sampler for pyABC.")
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
-@click.option('--max_runtime_s', type=int, default=2*3600,
+@click.option('--runtime', type=str, default="2h",
               help='Max worker runtime in seconds.')
-def work(host="localhost", port=6379, max_runtime_s=2*3600):
+def work(host="localhost", port=6379, runtime="2h"):
     kill_handler = KillHandler()
 
     start_time = time()
+    max_runtime_s = runtime_parse(runtime)
     worker_logger.info("Start redis worker. Max run time {}s"
                        .format(max_runtime_s))
     redis = StrictRedis(host=host, port=port)
@@ -94,13 +108,42 @@ def work(host="localhost", port=6379, max_runtime_s=2*3600):
     listener = p.listen()
     next(listener)  # first message contains as data only 1 number 1
     for msg in listener:
-        if msg["data"].decode() == "start":
+        if msg["data"].decode() == START:
             work_on_population(redis, kill_handler)
         elapsed_time = time() - start_time
+        if msg["data"].decode() == STOP:
+            worker_logger.info("Received stop signal. Shutdown redis worker.")
+            return
         if elapsed_time > max_runtime_s:
             worker_logger.info("Shutdown redis worker. Max runtime {}s reached"
                                .format(max_runtime_s))
             return
+
+
+@click.command(help="ABC Redis cluster manager. "
+                    "The command can be 'info' or 'stop'. "
+                    "For 'stop' the workers are shut down cleanly "
+                    "after the current population. "
+                    "For 'info' you'll see how many workers are connected, "
+                    "how many evaluations the current population has, and "
+                    "how many particles are still missing.")
+@click.option('--host', default="localhost", help='Redis host.')
+@click.option('--port', default=6379, type=int, help='Redis port.')
+@click.argument('command', type=str)
+def manage(command, host="localhost", port=6379):
+    redis = StrictRedis(host=host, port=port)
+    if command == "info":
+        pipe = redis.pipeline()
+        pipe.get(N_WORKER)
+        pipe.get(N_EVAL)
+        pipe.get(N_PARTICLES)
+        res = pipe.execute()
+        res = [r.decode() if r is not None else r for r in res]
+        print("Workers={} Evaluations={} Particles={}".format(*res))
+    elif command == "stop":
+        redis.publish(MSG, STOP)
+    else:
+        print("Unknown command:", command)
 
 
 class RedisEvalParallelSampler(Sampler):
@@ -176,4 +219,4 @@ class RedisEvalParallelSampler(Sampler):
 
 
 if __name__ == "__main__":
-    work()
+    manage()
