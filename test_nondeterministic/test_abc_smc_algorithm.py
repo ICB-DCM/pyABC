@@ -36,10 +36,15 @@ def transition(request):
 @pytest.fixture(params=[MulticoreEvalParallelSampler,
                         MulticoreParticleParallelSampler,
                         RedisEvalParallelSamplerServerStarter,
-                        DaskDistributedSampler
+                        #DaskDistributedSampler
                         ])
 def sampler(request):
-    return request.param()
+    s = request.param()
+    yield s
+    try:
+        s.cleanup()
+    except AttributeError:
+        pass
 
 
 @pytest.fixture
@@ -652,7 +657,8 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.05)
+    population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.05,
+                                                 max_population_size=1000)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
