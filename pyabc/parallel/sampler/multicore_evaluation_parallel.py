@@ -27,6 +27,19 @@ def work(sample, simulate, accept,
 
 
 class MulticoreEvalParallelSampler(Sampler):
+    """
+    Multicore Evaluation parallel sampler.
+
+    Implements the same strategy as
+    :class:`pyabc.parallel.sampler.RedisEvalParallelSampler`
+    or
+    :class:`pyabc.parallel.sampler.DaskDistributedSampler`.
+
+    However, parallelization is restricted to a single machine with multiple
+    processes.
+    This sampler has very low communication overhead and is thus suitable
+    for short running model evaluations.
+    """
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         n_eval = Value(c_longlong)
         n_eval.value = 0

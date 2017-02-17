@@ -22,8 +22,9 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
 from pyabc.parallel import (MulticoreEvalParallelSampler, MulticoreParticleParallelSampler,
-                            DaskDistributedSampler, RedisEvalParallelSampler)
-
+                            DaskDistributedSampler)
+from pyabc.parallel.sampler.redis_sampler_server_starter\
+    import RedisEvalParallelSamplerServerStarter
 REMOVE_DB = False
 
 
@@ -34,8 +35,8 @@ def transition(request):
 
 @pytest.fixture(params=[MulticoreEvalParallelSampler,
                         MulticoreParticleParallelSampler,
-                        RedisEvalParallelSampler,
-                        #DaskDistributedSampler
+                        RedisEvalParallelSamplerServerStarter,
+                        DaskDistributedSampler
                         ])
 def sampler(request):
     return request.param()

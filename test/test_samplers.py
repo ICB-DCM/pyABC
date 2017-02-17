@@ -12,8 +12,10 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    ConstantPopulationStrategy)
 from pyabc.parallel import (SingleCoreSampler, MappingSampler,
                             MulticoreParticleParallelSampler,
-                            DaskDistributedSampler, RedisEvalParallelSampler,
+                            DaskDistributedSampler,
                             MulticoreEvalParallelSampler)
+from pyabc.parallel.sampler.redis_sampler_server_starter\
+    import RedisEvalParallelSamplerServerStarter
 
 REMOVE_DB = False
 
@@ -29,15 +31,20 @@ class MultiProcessingMappingSampler(MappingSampler):
         super().__init__(multi_proc_map)
 
 
-@pytest.fixture(params=[RedisEvalParallelSampler,
+@pytest.fixture(params=[RedisEvalParallelSamplerServerStarter,
                         MulticoreEvalParallelSampler,
                         SingleCoreSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
-                        MappingSampler#, DaskDistributedSampler
+                        MappingSampler, DaskDistributedSampler
                         ])
 def sampler(request):
-    return request.param()
+    s = request.param()
+    yield s
+    try:
+        s.cleanup()
+    except AttributeError:
+        pass
 
 
 @pytest.fixture

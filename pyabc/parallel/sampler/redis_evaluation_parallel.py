@@ -91,7 +91,12 @@ def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
 @click.option('--runtime', type=str, default="2h",
-              help='Max worker runtime in seconds.')
+              help='Max worker runtime if the form <NR><UNIT>, '
+                   'where <NR> is any number and <UNIT> can be s, '
+                   '(S,) m, (M,) '
+                   'h, (H,) d, (D) for seconds, minutes, hours and days. '
+                   'E.g. for 12 hours you would pass --runtime=12h, for half '
+                   'a day you could do 0.5d.')
 def work(host="localhost", port=6379, runtime="2h"):
     kill_handler = KillHandler()
 
@@ -131,6 +136,10 @@ def work(host="localhost", port=6379, runtime="2h"):
 @click.option('--port', default=6379, type=int, help='Redis port.')
 @click.argument('command', type=str)
 def manage(command, host="localhost", port=6379):
+    return _manage(command, host=host, port=port)
+
+
+def _manage(command, host="localhost", port=6379):
     redis = StrictRedis(host=host, port=port)
     if command == "info":
         pipe = redis.pipeline()
@@ -150,7 +159,8 @@ class RedisEvalParallelSampler(Sampler):
     """
     Redis based low latency sampler.
     This sampler is extremely well performiing in distributed environments.
-    It vastly outperforms :class:`pyabc.parallel.sampler.DaskDistributedSampler` for
+    It vastly outperforms
+    :class:`pyabc.parallel.sampler.DaskDistributedSampler` for
     short model evaluation runtimes. The longer the model evaluation times,
     the less the advantage becomes. It requires a running redis server as
     broker.
@@ -158,9 +168,9 @@ class RedisEvalParallelSampler(Sampler):
     This sampler requires workers to be started via the command
     ``abc-redis-worker``.
     An example call might look like
-    ``abc-redis-worker --host=123.456.789.123 --max_runtime_s=7200``
+    ``abc-redis-worker --host=123.456.789.123 --runtime=2h``
     to connect to a Redis server on IP ``123.456.789.123`` and to terminate
-    the worker after finishing the first population which ends after 7200s
+    the worker after finishing the first population which ends after 2 hours
     since worker start. So the actual runtime might be longer thatn 7200s.
     See ``abc-redis-worker --help`` for its options.
 
