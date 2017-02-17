@@ -47,8 +47,6 @@ def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
                        .format(n_worker))
     sample, simulate, accept = pickle.loads(ssa)
 
-    random.seed()
-    np.random.seed()
     n_particles = int(redis.get(N_PARTICLES).decode())
 
     internal_counter = 0
@@ -69,6 +67,8 @@ def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
         if accept(new_sim):
             n_particles = redis.decr(N_PARTICLES)
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, new_sim)))
+        else:
+            n_particles = int(redis.get(N_PARTICLES).decode())
 
     redis.decr(N_WORKER)
     kill_handler.exit = True
