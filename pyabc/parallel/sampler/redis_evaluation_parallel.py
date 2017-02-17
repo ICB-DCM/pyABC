@@ -164,6 +164,9 @@ class RedisEvalParallelSampler(Sampler):
     since worker start. So the actual runtime might be longer thatn 7200s.
     See ``abc-redis-worker --help`` for its options.
 
+    Use the command ``abc-redis-manager`` to retrieve info and stop the running
+    workers.
+
     Parameters
     ----------
 
