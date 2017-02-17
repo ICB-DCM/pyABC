@@ -1,7 +1,5 @@
 from redis import StrictRedis
 from .base import Sampler
-import numpy as np
-import random
 import pickle
 import cloudpickle
 import logging

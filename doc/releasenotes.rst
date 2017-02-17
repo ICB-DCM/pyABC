@@ -14,6 +14,18 @@ Release Notes
   visualization
 * Minor bug fixes
     * Fix inconsistency in ABC options if db_path given as sole string argument
+* Add three evaluation parallel samplers
+    * Dask based implementation
+        * More communication overhead
+    * Redis based implementation
+        * Less communication overhad
+        * Performs also well for short running simulations
+    * Multicore evaluation parallel sampler
+        * In most common cases, where the population size is much bigger
+          than the number of cores, this sampler is not going to be faster
+          than the multicore particle parallel sampler.
+        * However, on machines with lots of cores and moderate sized populations
+          this sampler might be faster
 
 
 0.3 series
