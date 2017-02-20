@@ -1,7 +1,7 @@
 from multiprocessing import Process, Queue, Value
 from ctypes import c_longlong
 from .base import Sampler
-from ..parallel import nr_cores_available
+from ..sge import nr_cores_available
 import numpy as np
 import random
 
@@ -31,9 +31,9 @@ class MulticoreEvalParallelSampler(Sampler):
     Multicore Evaluation parallel sampler.
 
     Implements the same strategy as
-    :class:`pyabc.parallel.sampler.RedisEvalParallelSampler`
+    :class:`pyabc.sampler.RedisEvalParallelSampler`
     or
-    :class:`pyabc.parallel.sampler.DaskDistributedSampler`.
+    :class:`pyabc.sampler.DaskDistributedSampler`.
 
     However, parallelization is restricted to a single machine with multiple
     processes.

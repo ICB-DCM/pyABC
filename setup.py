@@ -33,15 +33,15 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
         'Programming Language :: Python :: 3.6'
       ],
       keywords='inference abc approximate bayesian '
-               'computation parallel distributed',
+               'computation sge distributed',
       zip_safe=False,  # not zip safe b/c of Flask templates
       entry_points={
         'console_scripts': [
               'abc-server = pyabc.visserver.server:run_app',
               'abc-redis-worker = '
-              'pyabc.parallel.sampler.redis_eps:work',
+              'pyabc.sge.sampler.redis_eps:work',
               'abc-redis-manager = '
-              'pyabc.parallel.sampler.redis_eps:manage',
+              'pyabc.sge.sampler.redis_eps:manage',
         ]
     },
       )

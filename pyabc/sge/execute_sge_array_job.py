@@ -5,7 +5,7 @@ import sys
 import cloudpickle
 from .db import job_db_factory
 
-from pyabc.parallel.execution_contexts import NamedPrinter
+from pyabc.sge.execution_contexts import NamedPrinter
 
 tmp_path = sys.argv[1]
 job_nr = sys.argv[2]

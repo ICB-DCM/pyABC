@@ -22,7 +22,7 @@ class MappingSampler(Sampler):
         * multiprocessing.pool.map
           (see https://docs.python.org/3/\
 library/multiprocessing.html#multiprocessing.pool.Pool)
-        * :class:`pyabc.parallel.sge.SGE`'s map method. This mapper is useful
+        * :class:`pyabc.sge.SGE`'s map method. This mapper is useful
           in SGE-like environments where you don't want to start workers which
           run forever.
         * Dask's distributed `distributed.Client`'s map
@@ -46,7 +46,7 @@ task.html#quick-and-easy-parallelism)
         performance impact as much serialization and deserialization is done,
         which could limit overall performace if the model evaluations are
         comparatively fast. For example, for the
-        :class:`pyabc.parallel.sge.SGE` mapper, this option should be set to
+        :class:`pyabc.sge.SGE` mapper, this option should be set to
          `True` for better performance.
     """
     def __init__(self, map=map, mapper_pickles=False):

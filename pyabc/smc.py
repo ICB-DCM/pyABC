@@ -108,7 +108,7 @@ class ABCSMC:
         I.e. mapper(f, args) takes a callable ``f`` and applies it the the
         arguments in the list ``args``.
         This mapper is used for particle sampling.
-        It can be a distributed mapper such as the :class:`parallel.sge.SGE`
+        It can be a distributed mapper such as the :class:`pyabc.sge.SGE`
         class.
 
     sampler:

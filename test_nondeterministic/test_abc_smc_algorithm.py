@@ -20,7 +20,7 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from pyabc.parallel import (MulticoreEvalParallelSampler)
+from pyabc.sampler import MulticoreEvalParallelSampler
 from pyabc.transition import LocalTransition
 
 REMOVE_DB = False

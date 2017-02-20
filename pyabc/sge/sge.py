@@ -22,7 +22,7 @@ class SGE:
     """Map a function to be executed on an SGE cluster environment
     Reads a config file (if it exists) in you home directory
     which should look as the default
-    in parallel.config.
+    in sge.config.
 
     The mapper reads commonly used parameters from a configuration file
     stored in ``~/.parallel``
@@ -100,11 +100,11 @@ class SGE:
 
     execution_context: \
     :class:`DefaultContext \
-        <pyabc.parallel.execution_contexts.DefaultContext>`,\
+        <pyabc.sge.execution_contexts.DefaultContext>`,\
     :class:`ProfilingContext \
-        <pyabc.parallel.execution_contexts.ProfilingContext>`,\
+        <pyabc.sge.execution_contexts.ProfilingContext>`,\
     :class:`NamedPrinter \
-        <pyabc.parallel.execution_contexts.NamedPrinter>`
+        <pyabc.sge.execution_contexts.NamedPrinter>`
 
         Any context manager can be passed here.
         The ``__enter__`` method is called before evaluating the function on
@@ -357,8 +357,8 @@ cd "{current_working_directory}"
 export OMP_NUM_THREADS=$NSLOTS
 export MKL_NUM_THREADS=$NSLOTS
 export PYTHONPATH={pythonpath}
-{executable} -m pyabc.parallel.execute_sge_array_job {tmp_dir} $SGE_TASK_ID
-{executable} -m pyabc.parallel.cleanup_sge_array_job {tmp_dir} $SGE_TASK_ID
+{executable} -m pyabc.sge.execute_sge_array_job {tmp_dir} $SGE_TASK_ID
+{executable} -m pyabc.sge.cleanup_sge_array_job {tmp_dir} $SGE_TASK_ID
 """.format(tmp_dir=tmp_dir, nr_elements=nr_tasks,
            current_working_directory=os.getcwd(),
            RAM=self.memory, time=self.time,

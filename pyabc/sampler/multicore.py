@@ -1,6 +1,6 @@
 from multiprocessing import Process, Queue
 from .base import Sampler
-from ..parallel import nr_cores_available
+from ..sge import nr_cores_available
 from .singlecore import SingleCoreSampler
 import numpy as np
 import random
@@ -57,7 +57,7 @@ class MulticoreParticleParallelSampler(Sampler):
     ----------
         n_procs: Union[int, None]
             If set to None, the Number of cores is determined according to
-            :func:`pyabc.parallel.util.nr_cores_available`.
+            :func:`pyabc.sge.util.nr_cores_available`.
 
 
     .. warning::

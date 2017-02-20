@@ -1,6 +1,6 @@
 from time import sleep
 
-from pyabc.parallel import SGE
+from pyabc.sge import SGE
 
 if __name__ == "__main__":
 

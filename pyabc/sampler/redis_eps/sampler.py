@@ -13,7 +13,7 @@ class RedisEvalParallelSampler(Sampler):
     Redis based low latency sampler.
     This sampler is extremely well performiing in distributed environments.
     It vastly outperforms
-    :class:`pyabc.parallel.sampler.DaskDistributedSampler` for
+    :class:`pyabc.sampler.DaskDistributedSampler` for
     short model evaluation runtimes. The longer the model evaluation times,
     the less the advantage becomes. It requires a running redis server as
     broker.
