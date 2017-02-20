@@ -1,4 +1,4 @@
-from.base import Sampler
+from .base import Sampler
 
 
 class SingleCoreSampler(Sampler):

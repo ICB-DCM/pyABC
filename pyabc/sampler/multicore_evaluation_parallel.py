@@ -1,7 +1,7 @@
 from multiprocessing import Process, Queue, Value
 from ctypes import c_longlong
 from .base import Sampler
-from .. import nr_cores_available
+from ..parallel import nr_cores_available
 import numpy as np
 import random
 

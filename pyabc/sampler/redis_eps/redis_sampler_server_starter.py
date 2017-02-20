@@ -3,7 +3,7 @@ from subprocess import Popen
 from multiprocessing import Process
 import psutil
 from .cli import work, _manage
-from pyabc.parallel import RedisEvalParallelSampler
+from .sampler import RedisEvalParallelSampler
 
 
 class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):

@@ -2,7 +2,7 @@ import numpy as np
 import time
 from sortedcontainers import SortedListWithKey
 from distributed import Client
-from.base import Sampler
+from .base import Sampler
 
 
 class DaskDistributedSampler(Sampler):

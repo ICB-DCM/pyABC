@@ -1,5 +1,5 @@
-from pyabc.parallel import (MulticoreParticleParallelSampler,
-                            MulticoreEvalParallelSampler)
+from pyabc.sampler import (MulticoreParticleParallelSampler,
+                           MulticoreEvalParallelSampler)
 import pytest
 
 

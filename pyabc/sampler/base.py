@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable, TypeVar, List
-from ...parameters import ValidParticle
+from ..parameters import ValidParticle
 
 A = TypeVar('A')
 B = TypeVar('B')

@@ -10,12 +10,12 @@ from pyabc import (ABCSMC, RV,  Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
                    ConstantPopulationStrategy)
-from pyabc.parallel import (SingleCoreSampler, MappingSampler,
-                            MulticoreParticleParallelSampler,
-                            DaskDistributedSampler,
-                            MulticoreEvalParallelSampler)
-from pyabc.parallel.sampler.redis_eps.redis_sampler_server_starter \
-    import RedisEvalParallelSamplerServerStarter
+from pyabc.sampler import (SingleCoreSampler, MappingSampler,
+                           MulticoreParticleParallelSampler,
+                           DaskDistributedSampler,
+                           MulticoreEvalParallelSampler,
+                           RedisEvalParallelSamplerServerStarter)
+
 
 REMOVE_DB = False
 

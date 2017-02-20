@@ -1,6 +1,6 @@
 from multiprocessing import Process, Queue
 from .base import Sampler
-from .. import nr_cores_available
+from ..parallel import nr_cores_available
 from .singlecore import SingleCoreSampler
 import numpy as np
 import random
