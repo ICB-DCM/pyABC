@@ -34,7 +34,9 @@ class KillHandler:
             sys.exit(0)
 
 
-def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
+def work_on_population(redis: StrictRedis, start_time: int,
+                       max_runtime_s: int,
+                       kill_handler: KillHandler):
     ssa = redis.get(SSA)
     if ssa is None:
         return
@@ -55,6 +57,15 @@ def work_on_population(redis: StrictRedis, kill_handler: KillHandler):
                                .format(n_worker, internal_counter))
             redis.decr(N_WORKER)
             sys.exit(0)
+
+        current_runtime = time() - start_time
+        if current_runtime > max_runtime_s:
+            worker_logger.info("Worker {} stops during population because "
+                               "max runtime {} is exceeded {}"
+                               .format(n_worker, max_runtime_s,
+                                       current_runtime))
+            redis.decr(N_WORKER)
+            return
 
         particle_id = redis.incr(N_EVAL)
         internal_counter += 1
@@ -99,16 +110,18 @@ def _work(host="localhost", port=6379, runtime="2h"):
     p = redis.pubsub()
     p.subscribe(MSG)
 
-    work_on_population(redis, kill_handler)
+    work_on_population(redis, start_time, max_runtime_s, kill_handler)
     listener = p.listen()
-    next(listener)  # first message contains as data only 1 number 1
+    next(listener)  # first message contains as data nr subscribers
     for msg in listener:
         if msg["data"].decode() == START:
-            work_on_population(redis, kill_handler)
-        elapsed_time = time() - start_time
+            work_on_population(redis, start_time, max_runtime_s, kill_handler)
+
         if msg["data"].decode() == STOP:
             worker_logger.info("Received stop signal. Shutdown redis worker.")
             return
+
+        elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
             worker_logger.info("Shutdown redis worker. Max runtime {}s reached"
                                .format(max_runtime_s))
