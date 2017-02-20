@@ -39,9 +39,9 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
         'console_scripts': [
               'abc-server = pyabc.visserver.server:run_app',
               'abc-redis-worker = '
-              'pyabc.parallel.sampler.redis_evaluation_parallel:work',
+              'pyabc.parallel.sampler.redis_eps:work',
               'abc-redis-manager = '
-              'pyabc.parallel.sampler.redis_evaluation_parallel:manage',
+              'pyabc.parallel.sampler.redis_eps:manage',
         ]
     },
       )

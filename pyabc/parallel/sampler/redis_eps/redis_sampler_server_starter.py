@@ -2,7 +2,8 @@ from time import sleep
 from subprocess import Popen
 from multiprocessing import Process
 import psutil
-from .redis_evaluation_parallel import RedisEvalParallelSampler, work, _manage
+from .cli import work, _manage
+from pyabc.parallel import RedisEvalParallelSampler
 
 
 class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):

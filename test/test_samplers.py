@@ -14,7 +14,7 @@ from pyabc.parallel import (SingleCoreSampler, MappingSampler,
                             MulticoreParticleParallelSampler,
                             DaskDistributedSampler,
                             MulticoreEvalParallelSampler)
-from pyabc.parallel.sampler.redis_sampler_server_starter\
+from pyabc.parallel.sampler.redis_eps.redis_sampler_server_starter \
     import RedisEvalParallelSamplerServerStarter
 
 REMOVE_DB = False

@@ -14,17 +14,15 @@ import scipy as sp
 import scipy.interpolate
 import scipy.stats as st
 from scipy.special import gamma, binom
-from pyabc.transition import LocalTransition
 
 from pyabc import (ABCSMC, RV,  Distribution,
                    MedianEpsilon, MinMaxDistanceFunction,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
                    MultivariateNormalTransition, ConstantPopulationStrategy,
                    AdaptivePopulationStrategy, GridSearchCV)
-from pyabc.parallel import (MulticoreEvalParallelSampler, MulticoreParticleParallelSampler,
-                            DaskDistributedSampler)
-from pyabc.parallel.sampler.redis_sampler_server_starter\
-    import RedisEvalParallelSamplerServerStarter
+from pyabc.parallel import (MulticoreEvalParallelSampler)
+from pyabc.transition import LocalTransition
+
 REMOVE_DB = False
 
 
@@ -57,9 +55,6 @@ def db_path():
 
 
 def test_cookie_jar(db_path, sampler):
-    import scipy.stats as st
-    from time import sleep
-
     def make_model(theta):
         def model(args):
             return {"result": 1 if random.random() > theta else 0}
