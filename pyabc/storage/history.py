@@ -32,15 +32,17 @@ def with_session(f):
 
 
 def internal_docstring_warning(f):
-    warning = """
+    first_line = f.__doc__.split("\n")[1]
+    indent_level = len(first_line) - len(first_line.lstrip())
+    indent = " " * indent_level
+    warning = ("\n" + indent +
+            "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
+            "class internally. "
+            "You should most likely not find it necessary to call "
+            "this method under normal circumstances."
+            )
 
-        .. warning::
 
-            This function is called by the :class:`pyabc.smc.ABCSMC` class
-            internally.
-            You should not call this method under normal circumstances.
-
-    """
     f.__doc__ += warning
     return f
 
@@ -148,6 +150,7 @@ class History:
 
         Returns
         -------
+
         pars, w: pandas.DataFrame, np.ndarray
 
         pars:
@@ -214,7 +217,6 @@ class History:
         """
         Store the initial configuration data.
 
-
         Parameters
         ----------
 
@@ -239,7 +241,7 @@ class History:
         eps_function_json_str: str
             The epsilon represented as json string
 
-        population_strategy_json_str:
+        population_strategy_json_str: str
             The population strategy represented as json string
 
         """
@@ -320,11 +322,11 @@ class History:
     @with_session
     @internal_docstring_warning
     def done(self):
+        """Close database sessions and store end time of population.
+
+
         """
 
-        Close database sessions and store end time of population.
-
-        """
         abc_smc_simulation = (self._session.query(ABCSMC)
                               .filter(ABCSMC.id == self.id)
                               .one())
@@ -387,6 +389,7 @@ class History:
 
         Parameters
         ----------
+
         t: int
             Population number.
 
@@ -602,8 +605,8 @@ class History:
 
 def normalize(population: List[ValidParticle]):
     """
-      * Normalize particle weights according to nr of particles in a model
-      * Caclculate marginal model probabilities
+    * Normalize particle weights according to nr of particles in a model
+    * Caclculate marginal model probabilities
     """
     # TODO: This has a medium ugly side effect... maybe it is ok
     population = list(population)

@@ -117,6 +117,7 @@ def _work(host="localhost", port=6379, runtime="2h"):
             data = msg["data"].decode()
         except AttributeError:
             data = msg["data"]
+
         if data == START or isinstance(data, int):
             work_on_population(redis, start_time, max_runtime_s, kill_handler)
 

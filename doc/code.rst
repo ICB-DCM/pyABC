@@ -15,7 +15,7 @@ Python (PEP8)
 
 We try to respect the `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ standard.
 We run `flake8 <http://flake8.pycqa.org/en/latest/>`_ as part of the test
- suite. The tests won't pass if flake8 complains.
+suite. The tests won't pass if flake8 complains.
 
 Writing tests
 -------------

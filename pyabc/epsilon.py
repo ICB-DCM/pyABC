@@ -26,7 +26,7 @@ class Epsilon(ABC):
                    distance_to_ground_truth_function: Callable[[dict], float]):
         """
         This method is called by the ABCSMC framework before the first usage
-         of the epsilon
+        of the epsilon
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -146,9 +146,10 @@ class MedianEpsilon(Epsilon):
     ----------
 
     initial_epsilon: Union[str, int]
+
         * If 'from_sample', then the initial median is calculated from
-        samples as its median.
-        * Ff a number is given, this number is used.
+          samples as its median.
+        * If a number is given, this number is used.
 
     median_multiplier: float
         Multiplies the median by that number. also applies it

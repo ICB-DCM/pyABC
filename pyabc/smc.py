@@ -225,7 +225,9 @@ class ABCSMC:
         abc_options: Union[dict, str]
             If a string, it has to be a valid SQLAlchemy database identifier.
 
-g            contain an arbitrary number of additional keys,
+            If a dict, has to contain the key "db_path" which has to be a valid
+            SQLAlchemy database identifier. Can contain an arbitrary number of
+            additional keys,
             only for recording purposes. Store arbitrary
             meta information in this dictionary. Can be used for really
             anything.
@@ -382,7 +384,7 @@ g            contain an arbitrary number of additional keys,
     def run(self, minimum_epsilon: float) -> History:
         """
         Run the ABCSMC model selection. This method can be called many times.
-         It makes another
+        It makes another
         step continuing where it has stopped before.
 
         It is stopped when the maximum number of populations is reached
@@ -390,7 +392,6 @@ g            contain an arbitrary number of additional keys,
 
         Parameters
         ----------
-
         minimum_epsilon: float
             Stop if epsilon is smaller than minimum epsilon specified here.
         """

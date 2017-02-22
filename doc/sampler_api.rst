@@ -1,4 +1,4 @@
-.. automodule:: pyabc.parallel.sampler
+.. automodule:: pyabc.sampler
    :members:
    :show-inheritance:
 

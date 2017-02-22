@@ -15,13 +15,12 @@ class MappingSampler(Sampler):
     ----------
 
     map: A function which works like the built in `map`.
-
         The map can be really any generic map operations. Possible canidates
         include
 
         * multiprocessing.pool.map
-          (see https://docs.python.org/3/\
-library/multiprocessing.html#multiprocessing.pool.Pool)
+          (see https://docs.python.org/3/library/\
+          multiprocessing.html#multiprocessing.pool.Pool)
         * :class:`pyabc.sge.SGE`'s map method. This mapper is useful
           in SGE-like environments where you don't want to start workers which
           run forever.
@@ -29,7 +28,7 @@ library/multiprocessing.html#multiprocessing.pool.Pool)
           (see https://distributed.readthedocs.io/en/latest/api.html#client)
         * IPython parallel' map
           (see http://ipyparallel.readthedocs.io/en/latest/\
-task.html#quick-and-easy-parallelism)
+          task.html#quick-and-easy-parallelism)
 
         and many other implementations.
 

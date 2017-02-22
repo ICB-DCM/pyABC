@@ -33,7 +33,7 @@ the usage of this package.
    model_selection
    installation
    web_visualization
-   parallel
+   sge
    releasenotes
 
 
@@ -68,7 +68,7 @@ modules and packages.
    sampler_api
    parameters_api
    random_variables_api
-   parallel_api
+   sge_api
    license
 
 
