@@ -107,17 +107,20 @@ def _work(host="localhost", port=6379, runtime="2h"):
                        .format(max_runtime_s))
     redis = StrictRedis(host=host, port=port)
 
+
     p = redis.pubsub()
     p.subscribe(MSG)
-
-    work_on_population(redis, start_time, max_runtime_s, kill_handler)
     listener = p.listen()
-    next(listener)  # first message contains as data nr subscribers
     for msg in listener:
-        if msg["data"].decode() == START:
+        # check if it is int to run at least once
+        try:
+            data = msg["data"].decode()
+        except AttributeError:
+            data = msg["data"]
+        if data == START or isinstance(data, int):
             work_on_population(redis, start_time, max_runtime_s, kill_handler)
 
-        if msg["data"].decode() == STOP:
+        if data == STOP:
             worker_logger.info("Received stop signal. Shutdown redis worker.")
             return
 
