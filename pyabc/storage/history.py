@@ -35,13 +35,12 @@ def internal_docstring_warning(f):
     first_line = f.__doc__.split("\n")[1]
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
-    warning = ("\n" + indent +
-            "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
-            "class internally. "
-            "You should most likely not find it necessary to call "
-            "this method under normal circumstances."
-            )
-
+    warning = (
+        "\n" + indent +
+        "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
+        "class internally. "
+        "You should most likely not find it necessary to call "
+        "this method under normal circumstances.")
 
     f.__doc__ += warning
     return f

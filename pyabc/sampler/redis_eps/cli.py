@@ -107,7 +107,6 @@ def _work(host="localhost", port=6379, runtime="2h"):
                        .format(max_runtime_s))
     redis = StrictRedis(host=host, port=port)
 
-
     p = redis.pubsub()
     p.subscribe(MSG)
     listener = p.listen()
