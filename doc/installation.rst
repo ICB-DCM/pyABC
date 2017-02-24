@@ -6,7 +6,14 @@ Installation
 Preparation
 -----------
 
-This package requires Python 3.6 or later.
+This package requires Python 3.5 or later.
+The package is tested on Linux.
+
+Windows is currently not officially supported.
+As some of the multi-core parallelizations rely on forking, these won't work
+on Windows.
+However, most other parts of the package should work on Windows
+as well.
 
 
 
