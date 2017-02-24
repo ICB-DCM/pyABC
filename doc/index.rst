@@ -33,6 +33,7 @@ the usage of this package.
    model_selection
    installation
    web_visualization
+   sampler
    sge
    releasenotes
 
