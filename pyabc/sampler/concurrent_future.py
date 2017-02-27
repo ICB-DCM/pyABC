@@ -1,30 +1,20 @@
-from distributed import Client
 from .base import Sampler
 from .eps_sampling_function import sample_until_n_accepted_proto, full_submit_function_pickle
 
 
-class DaskDistributedSampler(Sampler):
+class ConcurrentFutureSampler(Sampler):
     """
-    Parallelize with dask. This sampler requires a pre-configured dask cluster
-
-    Parameters
-    ----------
-
-    dask_client: dask.Client, optional
-        The configured dask Client.
-        If none is provided, then a local dask distributed Cluster is created.
+    Sample on a single core. No parallelization.
     """
     sample_until_n_accepted = sample_until_n_accepted_proto
     full_submit_function_pickle = full_submit_function_pickle
 
-    def __init__(self, dask_client=None, client_core_load_factor=1.2, client_max_jobs=200,  throttle_delay=0.0,
-                 default_pickle=False, batchsize=1):
+    def __init__(self, cfuture_executor=None, client_core_load_factor=1.2, client_max_jobs=200,  throttle_delay=0.0,
+                 default_pickle=True, batchsize=1):
         self.nr_evaluations_ = 0
 
         # Assign Client
-        if dask_client is None:
-            dask_client = Client()
-        self.my_client = dask_client
+        self.my_client = cfuture_executor
 
         # Client options
         self.throttle_delay = throttle_delay
@@ -34,7 +24,11 @@ class DaskDistributedSampler(Sampler):
         # Job state
         self.jobs_queued = 0
 
-        # For dask, we use cloudpickle by default
+        # Empty functions
+        self.simulate_one = None
+        self.accept_one = None
+
+        # Option pickling
         self.default_pickle = default_pickle
 
         # Batchsize
@@ -46,5 +40,7 @@ class DaskDistributedSampler(Sampler):
         return d
 
     def client_cores(self):
-        return sum(self.my_client.ncores().values())
+        return self.client_max_jobs
+
+
 

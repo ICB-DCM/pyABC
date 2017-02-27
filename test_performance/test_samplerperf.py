@@ -1,22 +1,18 @@
 import multiprocessing
 import os
 import tempfile
-
+import time
 import pytest
 import scipy as sp
 import scipy.stats as st
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
 from pyabc import (ABCSMC, RV,  Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
                    ConstantPopulationStrategy)
-from pyabc.sampler import (SingleCoreSampler, MappingSampler,
-                           MulticoreParticleParallelSampler,
-                           DaskDistributedSampler,
-                           ConcurrentFutureSampler,
-                           MulticoreEvalParallelSampler,
-                           RedisEvalParallelSamplerServerStarter)
-
+from pyabc.sampler import SingleCoreSampler, MappingSampler, MulticoreEvalParallelSampler, DaskDistributedSampler, \
+                           ConcurrentFutureSampler
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 REMOVE_DB = False
 
@@ -36,16 +32,6 @@ class GenericFutureWithProcessPool(ConcurrentFutureSampler):
         super().__init__(cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay)
 
 
-class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
-    def __init__(self, map=None):
-        cfuture_executor = ProcessPoolExecutor(max_workers=8)
-        client_core_load_factor = 1.0
-        client_max_jobs = 8
-        throttle_delay = 0.0
-        batchsize = 15
-        super().__init__(cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay, batchsize=batchsize)
-
-
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
     def __init__(self, map=None):
         cfuture_executor = ThreadPoolExecutor(max_workers=8)
@@ -62,28 +48,24 @@ class MultiProcessingMappingSampler(MappingSampler):
 
 class DaskDistributedSamplerBatch(DaskDistributedSampler):
     def __init__(self, map=None):
-        batchsize = 20
+        batchsize = 10
         super().__init__(batchsize=batchsize)
 
 
-@pytest.fixture(params=[RedisEvalParallelSamplerServerStarter,
-                        MulticoreEvalParallelSampler,
-                        SingleCoreSampler,
-                        MultiProcessingMappingSampler,
-                        MulticoreParticleParallelSampler,
-                        MappingSampler, DaskDistributedSampler,
-                        GenericFutureWithThreadPool,
-                        GenericFutureWithProcessPool,
-                        GenericFutureWithProcessPoolBatch,
-                        DaskDistributedSamplerBatch
-                        ])
+class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
+    def __init__(self, map=None):
+        cfuture_executor = ProcessPoolExecutor(max_workers=8)
+        client_core_load_factor = 1.0
+        client_max_jobs = 8
+        throttle_delay = 0.0
+        batchsize = 10
+        super().__init__(cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay, batchsize=batchsize)
+
+
+@pytest.fixture(params=[GenericFutureWithProcessPoolBatch, DaskDistributedSamplerBatch,
+                        MulticoreEvalParallelSampler, SingleCoreSampler, MultiProcessingMappingSampler])
 def sampler(request):
-    s = request.param()
-    yield s
-    try:
-        s.cleanup()
-    except AttributeError:
-        pass
+    return request.param()
 
 
 @pytest.fixture
@@ -104,6 +86,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     sigma = .5
 
     def model(args):
+        time.sleep(.1)
         return {"y": st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
@@ -118,8 +101,8 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     ]
 
     # We plug all the ABC setup together
-    nr_populations = 3
-    population_size = ConstantPopulationStrategy(40, 3)
+    nr_populations = 1
+    population_size = ConstantPopulationStrategy(20, nr_populations)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
                  population_size,
@@ -130,7 +113,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     # define where to store the results
     options = {'db_path': db_path}
     # y_observed is the important piece here: our actual observation.
-    y_observed = 1
+    y_observed = 2
     abc.set_data({"y": y_observed}, options, 0, {})
 
     # We run the ABC with 3 populations max
@@ -152,4 +135,5 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
                                               + p2_expected_unnormalized)
     assert history.max_t == nr_populations-1
     # the next line only tests of we obtain correct numerical types
-    assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf
+
+    #assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf
