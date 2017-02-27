@@ -14,9 +14,11 @@ Release Notes
   visualization
 * Minor bug fixes
     * Fix inconsistency in ABC options if db_path given as sole string argument
-* Add three evaluation parallel samplers
+* Add four evaluation parallel samplers
     * Dask based implementation
         * More communication overhead
+    * Future executor evaluation parallel sampler
+        * Very similar to the Dask implementation
     * Redis based implementation
         * Less communication overhad
         * Performs also well for short running simulations
