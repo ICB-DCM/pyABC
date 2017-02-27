@@ -17,7 +17,8 @@ class DaskDistributedSampler(Sampler):
     sample_until_n_accepted = sample_until_n_accepted_proto
     full_submit_function_pickle = full_submit_function_pickle
 
-    def __init__(self, dask_client=None, client_core_load_factor=1.2, client_max_jobs=200,  throttle_delay=0.0,
+    def __init__(self, dask_client=None, client_core_load_factor=1.2,
+                 client_max_jobs=200,  throttle_delay=0.0,
                  default_pickle=False, batchsize=1):
         self.nr_evaluations_ = 0
 

@@ -9,8 +9,9 @@ class ConcurrentFutureSampler(Sampler):
     sample_until_n_accepted = sample_until_n_accepted_proto
     full_submit_function_pickle = full_submit_function_pickle
 
-    def __init__(self, cfuture_executor=None, client_core_load_factor=1.2, client_max_jobs=200,  throttle_delay=0.0,
-                 default_pickle=True, batchsize=1):
+    def __init__(self, cfuture_executor=None, client_core_load_factor=1.2,
+                 client_max_jobs=200,  throttle_delay=0.0, default_pickle=True,
+                 batchsize=1):
         self.nr_evaluations_ = 0
 
         # Assign Client

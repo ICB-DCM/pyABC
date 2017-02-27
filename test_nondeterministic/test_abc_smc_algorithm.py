@@ -72,9 +72,8 @@ def test_cookie_jar(db_path, sampler):
     population_size = ConstantPopulationStrategy(1500, 1)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
-                 MinMaxDistanceFunction(measures_to_use=["result"]), population_size,
-                 eps=MedianEpsilon(.1),
-                 sampler=sampler)
+                 MinMaxDistanceFunction(measures_to_use=["result"]),
+                 population_size, eps=MedianEpsilon(.1), sampler=sampler)
 
     options = {'db_path': db_path}
     abc.set_data({"result": 0}, options, 0, {})
@@ -82,10 +81,9 @@ def test_cookie_jar(db_path, sampler):
     minimum_epsilon = .2
     history = abc.run(minimum_epsilon)
 
-
-
     mp = history.get_model_probabilities(history.max_t)
-    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
+    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 +
+                                                                     theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .05
 
 
@@ -119,7 +117,8 @@ def test_empty_population(db_path, sampler):
 
 
     mp = history.get_model_probabilities(history.max_t)
-    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
+    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 +
+                                                                     theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .05
 
 
@@ -132,7 +131,8 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
     population_size = ConstantPopulationStrategy(800, 3)
-    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1))
+    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
+                                                                      1, 1))
                                                 for _ in range(2)]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -153,14 +153,16 @@ class AllInOneModel(Model):
     def summary_statistics(self, pars, sum_stats_calculator) -> ModelResult:
         return ModelResult(sum_stats={"result": 1})
 
-    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) -> ModelResult:
+    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) -> \
+            ModelResult:
         return ModelResult(accepted=True)
 
 
 def test_all_in_one_model(db_path, sampler):
     models = [AllInOneModel() for _ in range(2)]
     population_size = ConstantPopulationStrategy(800, 3)
-    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1))
+    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
+                                                                      1, 1))
                                                 for _ in range(2)]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -188,8 +190,10 @@ def test_beta_binomial_different_priors(db_path, sampler):
     population_size = ConstantPopulationStrategy(800, 3)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
-    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
-                                                Distribution(theta=RV("beta", a2, b2))]
+    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
+                                                                      a1, b1)),
+                                                Distribution(theta=RV("beta",
+                                                                      a2, b2))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
@@ -212,12 +216,15 @@ def test_beta_binomial_different_priors(db_path, sampler):
 
     p1_expected_unnormalized = expected_p(a1, b1, n1)
     p2_expected_unnormalized = expected_p(a2, b2, n1)
-    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized+p2_expected_unnormalized)
-    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized+p2_expected_unnormalized)
+    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized +
+                                              p2_expected_unnormalized)
+    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized +
+                                              p2_expected_unnormalized)
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < .08
 
 
-def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path, sampler):
+def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path,
+                                                                    sampler):
     binomial_n = 5
 
     def model(args):
@@ -228,8 +235,10 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path, sam
     population_size = ConstantPopulationStrategy(800, 5)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
-    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", a1, b1)),
-                                                Distribution(theta=RV("beta", a2, b2))]
+    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
+                                                                      a1, b1)),
+                                                Distribution(theta=RV("beta",
+                                                                      a2, b2))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
@@ -252,8 +261,10 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path, sam
 
     p1_expected_unnormalized = expected_p(a1, b1, n1)
     p2_expected_unnormalized = expected_p(a2, b2, n1)
-    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
-    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized + p2_expected_unnormalized)
+    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized +
+                                              p2_expected_unnormalized)
+    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized +
+                                              p2_expected_unnormalized)
 
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < .08
 
@@ -265,7 +276,8 @@ def test_continuous_non_gaussian(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     population_size = ConstantPopulationStrategy(250, 2)
-    parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0, 1))]
+    parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0,
+                                                                  1))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
@@ -281,15 +293,23 @@ def test_continuous_non_gaussian(db_path, sampler):
     history = abc.run(minimum_epsilon)
     posterior_x, posterior_weight = history.get_results_distribution(0, "u")
     sort_indices = sp.argsort(posterior_x)
-    f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
-                                          sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
+    f_empirical = sp.interpolate.interp1d(sp.hstack((-200,
+                                                     posterior_x[sort_indices],
+                                                     200)),
+                                          sp.hstack((0,
+                                                     sp.cumsum(
+                                                         posterior_weight[
+                                                             sort_indices]),
+                                                     1)))
 
     @sp.vectorize
     def f_expected(u):
-        return (sp.log(u)-sp.log(d_observed)) / (- sp.log(d_observed)) * (u > d_observed)
+        return (sp.log(u)-sp.log(d_observed)) / (- sp.log(d_observed)) * \
+               (u > d_observed)
 
     x = sp.linspace(0.1, 1)
-    max_distribution_difference = sp.absolute(f_empirical(x) - f_expected(x)).max()
+    max_distribution_difference = sp.absolute(f_empirical(x) -
+                                              f_expected(x)).max()
     assert max_distribution_difference < 0.12
 
 
@@ -311,7 +331,9 @@ def test_gaussian_single_population(db_path, sampler):
     models = list(map(SimpleModel, models))
     nr_populations = 1
     population_size = ConstantPopulationStrategy(600, nr_populations)
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_prior))]
+    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0,
+                                                                  sigma_prior))
+                                                ]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,

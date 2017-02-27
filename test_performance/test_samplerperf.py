@@ -29,7 +29,8 @@ class GenericFutureWithProcessPool(ConcurrentFutureSampler):
         client_core_load_factor = 1.0
         client_max_jobs = 8
         throttle_delay = 0.0
-        super().__init__(cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay)
+        super().__init__(cfuture_executor, client_core_load_factor,
+                         client_max_jobs, throttle_delay)
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
@@ -38,7 +39,8 @@ class GenericFutureWithThreadPool(ConcurrentFutureSampler):
         client_core_load_factor = 1.0
         client_max_jobs = 8
         throttle_delay = 0.0
-        super().__init__(cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay)
+        super().__init__(cfuture_executor, client_core_load_factor,
+                         client_max_jobs, throttle_delay)
 
 
 class MultiProcessingMappingSampler(MappingSampler):
@@ -59,11 +61,14 @@ class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
         client_max_jobs = 8
         throttle_delay = 0.0
         batchsize = 10
-        super().__init__(cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay, batchsize=batchsize)
+        super().__init__(cfuture_executor, client_core_load_factor,
+                         client_max_jobs, throttle_delay, batchsize=batchsize)
 
 
-@pytest.fixture(params=[GenericFutureWithProcessPoolBatch, DaskDistributedSamplerBatch,
-                        MulticoreEvalParallelSampler, SingleCoreSampler, MultiProcessingMappingSampler])
+@pytest.fixture(params=[GenericFutureWithProcessPoolBatch,
+                        DaskDistributedSamplerBatch,
+                        MulticoreEvalParallelSampler, SingleCoreSampler,
+                        MultiProcessingMappingSampler])
 def sampler(request):
     return request.param()
 
@@ -86,7 +91,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     sigma = .5
 
     def model(args):
-        time.sleep(.1)
+        time.sleep(.41)
         return {"y": st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
@@ -135,5 +140,3 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
                                               + p2_expected_unnormalized)
     assert history.max_t == nr_populations-1
     # the next line only tests of we obtain correct numerical types
-
-    #assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf

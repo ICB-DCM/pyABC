@@ -15,7 +15,8 @@ def full_submit_function_pickle(self, param, job_id):
     return result_batch
 
 
-def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one, n):
+def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one,
+                                  n):
     # For default pickling
     if self.default_pickle:
         self.simulate_one = pickle.dumps(simulate_one)
@@ -41,7 +42,8 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one, n)
     # Main Loop, leave once we have enough material
     while True:
         # Gather finished jobs
-        # make sure to track and update both total accepted and sequentially accepted jobs
+        # make sure to track and update both total accepted and sequentially
+        # accepted jobs
         for curJob in running_jobs:
             if curJob.done():
                 remote_batch = curJob.result()
@@ -52,7 +54,8 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one, n)
                     remote_accept = remote_evaluated[1]
                     remote_jobid = remote_evaluated[2]
                     # print("Received result on job ", remote_jobid)
-                    unprocessed_results.add((remote_jobid, remote_accept, remote_result))
+                    unprocessed_results.add((remote_jobid, remote_accept,
+                                             remote_result))
                     if remote_accept:
                         num_accepted_total += 1
 
@@ -79,13 +82,18 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one, n)
         # Update informations on scheduler state
         # Only submit more jobs if:
         # Number of jobs open < max_jobs
-        # Number of jobs open < self.scheduler_workers_running * worker_load_factor
+        # Number of jobs open < self.scheduler_workers_running *
+        # worker_load_factor
         # num_accepted_total < jobs required
         if (len(running_jobs) < self.client_max_jobs) and \
-                (len(running_jobs) < self.client_cores() * self.client_core_load_factor) and \
+                (len(running_jobs) < self.client_cores() *
+                    self.client_core_load_factor) and \
                 (num_accepted_total < n):
-            for _ in range(0, np.minimum(self.client_max_jobs,
-                                         self.client_cores() * self.client_core_load_factor).astype(int) - len(running_jobs)):
+            for _ in range(0,
+                           np.minimum(self.client_max_jobs,
+                                      self.client_cores() *
+                                      self.client_core_load_factor).astype(int)
+                           - len(running_jobs)):
                 para_batch = []
                 job_id_batch = []
                 for i in range(self.batchsize):
@@ -93,7 +101,9 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one, n)
                     job_id_batch.append(next_job_id)
                     next_job_id += 1
 
-                running_jobs.append(self.my_client.submit(full_submit_function, para_batch, job_id_batch))
+                running_jobs.append(self.my_client.submit(full_submit_function,
+                                                          para_batch,
+                                                          job_id_batch))
 
         # Wait for scheduler_throttle_delay seconds
         time.sleep(self.throttle_delay)
