@@ -5,8 +5,7 @@ from sortedcontainers import SortedListWithKey
 
 
 def full_submit_function_pickle(self, param, job_id):
-    simulate_one = pickle.loads(self.simulate_one)
-    accept_one = pickle.loads(self.accept_one)
+    simulate_one, accept_one = pickle.loads(self.simulate_accept_one)
     result_batch = []
     for j in range(self.batchsize):
         eval_result = simulate_one(param[j])
@@ -19,8 +18,7 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one,
                                   n):
     # For default pickling
     if self.default_pickle:
-        self.simulate_one = pickle.dumps(simulate_one)
-        self.accept_one = pickle.dumps(accept_one)
+        self.simulate_accept_one = pickle.dumps((simulate_one, accept_one))
         full_submit_function = self.full_submit_function_pickle
     else:
         # For advanced pickling, e.g. cloudpickle
