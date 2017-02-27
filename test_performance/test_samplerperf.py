@@ -57,12 +57,10 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
 class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
     def __init__(self, map=None):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
-        client_core_load_factor = 1.0
         client_max_jobs = 8
-        throttle_delay = 0.0
         batchsize = 10
-        super().__init__(cfuture_executor, client_core_load_factor,
-                         client_max_jobs, throttle_delay, batchsize=batchsize)
+        super().__init__(cfuture_executor=cfuture_executor,
+                         client_max_jobs=client_max_jobs, batchsize=batchsize)
 
 
 @pytest.fixture(params=[GenericFutureWithProcessPoolBatch,

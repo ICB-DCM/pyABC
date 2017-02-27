@@ -86,13 +86,11 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one,
         # worker_load_factor
         # num_accepted_total < jobs required
         if (len(running_jobs) < self.client_max_jobs) and \
-                (len(running_jobs) < self.client_cores() *
-                    self.client_core_load_factor) and \
+                (len(running_jobs) < self.client_cores()) and \
                 (num_accepted_total < n):
             for _ in range(0,
                            np.minimum(self.client_max_jobs,
-                                      self.client_cores() *
-                                      self.client_core_load_factor).astype(int)
+                                      self.client_cores()).astype(int)
                            - len(running_jobs)):
                 para_batch = []
                 job_id_batch = []
@@ -104,9 +102,6 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one,
                 running_jobs.append(self.my_client.submit(full_submit_function,
                                                           para_batch,
                                                           job_id_batch))
-
-        # Wait for scheduler_throttle_delay seconds
-        time.sleep(self.throttle_delay)
 
     # Cancel all unfinished jobs
     for curJob in running_jobs:
