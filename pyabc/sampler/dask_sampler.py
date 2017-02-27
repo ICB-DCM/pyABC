@@ -72,4 +72,3 @@ class DaskDistributedSampler(Sampler):
 
     def client_cores(self):
         return sum(self.my_client.ncores().values())
-

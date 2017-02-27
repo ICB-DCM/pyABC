@@ -39,7 +39,8 @@ class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
         batchsize = 15
-        super().__init__(cfuture_executor, client_max_jobs, batchsize=batchsize)
+        super().__init__(cfuture_executor, client_max_jobs,
+                         batchsize=batchsize)
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):

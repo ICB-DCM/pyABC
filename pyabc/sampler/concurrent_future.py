@@ -1,5 +1,6 @@
 from .base import Sampler
-from .eps_sampling_function import sample_until_n_accepted_proto, full_submit_function_pickle
+from .eps_sampling_function import (sample_until_n_accepted_proto,
+                                    full_submit_function_pickle)
 
 
 class ConcurrentFutureSampler(Sampler):
@@ -72,6 +73,3 @@ class ConcurrentFutureSampler(Sampler):
 
     def client_cores(self):
         return self.client_max_jobs
-
-
-

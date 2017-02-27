@@ -1,1 +1,1 @@
-doc/conf.py,test_nondeterministic,build
+doc/conf.py,test_nondeterministic,build,test_performance

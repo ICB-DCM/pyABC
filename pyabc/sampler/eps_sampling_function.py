@@ -1,5 +1,4 @@
 import numpy as np
-import time
 import cloudpickle as pickle
 from sortedcontainers import SortedListWithKey
 
@@ -110,5 +109,3 @@ def sample_until_n_accepted_proto(self, sample_one, simulate_one, accept_one,
         returned_results.append(cur_res[1])
         self.nr_evaluations_ = cur_res[0]
     return returned_results
-
-
