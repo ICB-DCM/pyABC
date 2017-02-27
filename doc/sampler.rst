@@ -33,18 +33,26 @@ functions.
 
 Distributed-only samplers
 -------------------------
+Both distributed samplers implement the evaluation parallel strategy EPS.
 
-The :class:`pyabc.sampler.RedisEvalParallelSampler` is intended for distributed
-execution and implements the evaluation parallel strategy.
-However, it has really very low overhad, and by running the workers and
-the redis-server locally it is actually competetive with the mutli-core
-only samplers
+The :class:`pyabc.sampler.RedisEvalParallelSampler` has low communication
+overhead, and when running workers and redis-server locally is actually
+competitive with the mutli-core only samplers. The
+:class:`pyabc.sampler.RedisEvalParallelSampler` performs parameter sampling on
+a per worker basis, and can handle fast function evaluations below 100ms
+efficiently.
 
-The :class:`pyabc.sampler.DaskDistributedSampler` really only makes sense
-for distributed exectuion of long running simulation due to its substantial
-communication overhead.
-Even when the dask-scheduler is run locally and the workers as well, ths
-communication overhead is still substantial.
+The :class:`pyabc.sampler.DaskDistributedSampler` has slightly higher
+communication overhead, however this can be compensated with batch submission
+mode. As the :class:`pyabc.sampler.DaskDistributedSampler` performs parameter
+sampling locally on the master, it is unsuitable for simulation functions with
+a runtime below 100ms, as network communication becomes prohibitive at this
+point.
+
+In general, the Redis based sampler will require slightly more effort in
+setting up than the Dask based sampler, but has fewer constraints regarding
+simulation function runtime. The Dask sampler is in turn better suited to
+handle worker failures and unexpected execution host terminations.
 
 
 
@@ -52,12 +60,17 @@ Mutli-core and distributed samplers
 -----------------------------------
 
 Moreover, there are two more generic samplers which can be used in a
-multicore and distributed fashion: The :class:`pyabc.sampler.MappingSampler` can
-be used in a multi-core context if the provided map implementation is a
-multi-core one, such as, e.g. multiprocessing.Pool.map, or distributed if the
-map is a distributed one, such as :class:`pyabc.sge.SGE.map`.
-Moreover, there is a sampler which supports the concurrent futures interface
+multicore and distributed fashion:
 
+The :class:`pyabc.sampler.MappingSampler` can be used in a multi-core context
+if the provided map implementation is a multi-core one, such as, e.g.
+multiprocessing.Pool.map, or distributed if the map is a distributed one, such
+as :class:`pyabc.sge.SGE.map`.
 
+Similarly, the :class:`pyabc.sampler.ConcurrentFutureSampler` can use any
+implementation of the python concurrent.futures.Executor interface. Again,
+implementations are available for both multi-core (e.g.
+concurrent.futures.ProcessPoolExecutor) and distributed (e.g. Dask)
+environments
 
 Check the :doc:`API documentation <sampler_api>` for more details.
