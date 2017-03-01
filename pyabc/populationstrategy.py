@@ -11,6 +11,7 @@ change in the future.
 from .transition import NotEnoughParticles
 import logging
 import json
+import warnings
 adaptation_logger = logging.getLogger("Adaptation")
 
 
@@ -130,6 +131,7 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                  nr_samples_per_parameter=1,
                  mean_cv=0.05, max_population_size=float("inf"),
                  min_population_size=10):
+        warnings.warn("Adaptive population strategy is experimental.")
         super().__init__(nr_particles, nr_populations,
                          nr_samples_per_parameter)
         self.max_population_size = max_population_size
