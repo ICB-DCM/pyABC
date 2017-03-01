@@ -2,6 +2,10 @@ language: python
 python:
   - "3.6"
 # command to install dependencies
+addons:
+  apt:
+    packages:
+    - redis-server
 install:
   - pip install .
   - pip install -r requirements.txt
@@ -9,5 +13,5 @@ install:
 # command to run tests
 script:
   - python -m examples.quickstart
-  - python -m pytest test
+  - travis_wait 30 python -m pytest test
 
