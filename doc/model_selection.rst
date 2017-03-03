@@ -5,7 +5,14 @@ Quickstart
 Exemplary model and parameter selection
 ---------------------------------------
 
-Here is a small example on how to do Bayesian model selection.
+Here is a small example on how to do Bayesian model selection. The example uses
+the following classes from the pyABC package:
+
+* :class:`ABCSMC <pyabc.smc.ABCSMC>`
+* :class:`RV <pyabc.random_variables.RV>`
+* :class:`Distribution <pyabc.random_variables.Distribution>`
+* :class:`PercentileDistanceFunction <pyabc.distance_functions.PercentileDistanceFunction>`
+* :class:`ConstantPopulationStrategy <pyabc.populationstrategy.ConstantPopulationStrategy>`
 
 
 

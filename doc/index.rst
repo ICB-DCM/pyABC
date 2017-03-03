@@ -38,17 +38,6 @@ the usage of this package.
    releasenotes
 
 
-Developer's Guide
------------------
-
-Interested in contributing? It is not that hard.
-
-.. toctree::
-   :maxdepth: 2
-
-   documentation
-   code
-
 
 API reference
 -------------
@@ -71,6 +60,18 @@ modules and packages.
    random_variables_api
    sge_api
    license
+
+
+Developer's Guide
+-----------------
+
+Interested in contributing? It is not that hard.
+
+.. toctree::
+   :maxdepth: 2
+
+   documentation
+   code
 
 
 
