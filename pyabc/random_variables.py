@@ -37,7 +37,7 @@ class RVBase(ABC):
         """
 
     @abstractmethod
-    def rvs(self) -> float:
+    def rvs(self, *args, **kwargs) -> float:
         """
         Sample from the RV.
 
@@ -49,7 +49,7 @@ class RVBase(ABC):
         """
 
     @abstractmethod
-    def pmf(self, x) -> float:
+    def pmf(self, x, *args, **kwargs) -> float:
         """
         Probability mass function
 
@@ -67,7 +67,7 @@ class RVBase(ABC):
         """
 
     @abstractmethod
-    def pdf(self, x: float) -> float:
+    def pdf(self, x: float, *args, **kwargs) -> float:
         """
         Probability density function
 
@@ -84,7 +84,7 @@ class RVBase(ABC):
         """
 
     @abstractmethod
-    def cdf(self, x: float) -> float:
+    def cdf(self, x: float, *args, **kwargs) -> float:
         """
         Cumulative distribution function.
 
@@ -170,17 +170,17 @@ class RV(RVBase):
     def copy(self):
         return RV(self.name, *self.args, **self.kwargs)
 
-    def rvs(self):
-        return self.distribution.rvs()
+    def rvs(self, *args, **kwargs):
+        return self.distribution.rvs(*args, **kwargs)
 
-    def pmf(self, x):
-        return self.distribution.pmf(x)
+    def pmf(self, x, *args, **kwargs):
+        return self.distribution.pmf(x, *args, **kwargs)
 
-    def pdf(self, x):
-        return self.distribution.pdf(x)
+    def pdf(self, x, *args, **kwargs):
+        return self.distribution.pdf(x, *args, **kwargs)
 
-    def cdf(self, x):
-        return self.distribution.cdf(x)
+    def cdf(self, x, *args, **kwargs):
+        return self.distribution.cdf(x, *args, **kwargs)
 
     def __repr__(self):
         return ("<RV(name={name}, args={args} kwargs={kwargs})>"
@@ -210,17 +210,17 @@ class RVDecorator(RVBase):
     def __init__(self, component: RVBase):
         self.component = component  #: The decorated random variable
 
-    def rvs(self):
-        return self.component.rvs()
+    def rvs(self, *args, **kwargs):
+        return self.component.rvs(*args, **kwargs)
 
-    def pmf(self, x):
-        return self.component.pmf()
+    def pmf(self, x, *args, **kwargs):
+        return self.component.pmf(x, *args, **kwargs)
 
-    def pdf(self, x):
-        return self.component.pdf()
+    def pdf(self, x, *args, **kwargs):
+        return self.component.pdf(x, *args, **kwargs)
 
-    def cdf(self, x):
-        return self.component.cdf()
+    def cdf(self, x, *args, **kwargs):
+        return self.component.cdf(x, *args, **kwargs)
 
     def copy(self):
         return self.__class__(self.component.copy())

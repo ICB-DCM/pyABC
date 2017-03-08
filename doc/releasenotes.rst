@@ -4,6 +4,13 @@ Release Notes
 0.4 series
 ..........
 
+0.4.1
+-----
+
+* fix minor bug in RVs wrapper. args and keyword args were not passed to the
+  wrapper random variable.
+
+
 0.4.0
 -----
 
