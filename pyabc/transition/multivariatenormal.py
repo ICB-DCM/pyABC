@@ -7,12 +7,19 @@ from .exceptions import NotEnoughParticles
 from .base import Transition
 from .util import smart_cov
 
+import scipy.stats
 
 def scott_rule_of_thumb(n_samples, dimension):
+    """
+    see scipy.stats.kde.gaussian_kde.scotts_factor
+    """
     return n_samples ** (-1. / (dimension + 4))
 
 
 def silverman_rule_of_thumb(n_samples, dimension):
+    """
+    see scipy.stats.kde.gaussian_kde.silverman_factor
+    """
     return (4 / n_samples / (dimension + 2)) ** (1 / (dimension + 4))
 
 
