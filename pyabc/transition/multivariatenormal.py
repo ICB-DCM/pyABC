@@ -7,7 +7,6 @@ from .exceptions import NotEnoughParticles
 from .base import Transition
 from .util import smart_cov
 
-import scipy.stats
 
 def scott_rule_of_thumb(n_samples, dimension):
     """

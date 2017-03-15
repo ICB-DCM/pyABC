@@ -129,16 +129,17 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         self_cp = copy.copy(self)
         uniform_weights = np.ones(n_samples) / n_samples
 
-        density_values = []
+        bootstrapped_densities_at_X = []
         for k in range(self.NR_BOOTSTRAP):
             bootstrapped_points = self.X.sample(n_samples, replace=True,
                                                 weights=self.w)
             self_cp.fit(bootstrapped_points, uniform_weights)
-            density_values.append(self_cp.pdf(self.X))
+            bootstrapped_densities_at_X.append(self_cp.pdf(self.X))
 
-        density_values = np.array(density_values)
-        variation = st.variation(density_values, 0)
-        mean_variation = (variation * self.w).sum()
+        bootstrapped_densities_at_X = np.array(bootstrapped_densities_at_X)
+        variation_at_X = st.variation(bootstrapped_densities_at_X, 0)
+        self.variation_at_X_ = variation_at_X
+        mean_variation = (variation_at_X * self.w).sum()
         if not np.isfinite(mean_variation):
             msg = "CV not finite {}".format(mean_variation)
             raise NotEnoughParticles(msg)

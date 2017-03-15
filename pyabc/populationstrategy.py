@@ -154,14 +154,13 @@ class AdaptivePopulationStrategy(PopulationStrategy):
 
         if len(nr_required_samples) > 0:
             old_particles = self.nr_particles
-            try:
-                aggregated_nr_particles = sum(nr_required_samples)
-                self.nr_particles = max(min(int(aggregated_nr_particles),
-                                            self.max_population_size),
-                                        self.min_population_size)
-            except TypeError:
-                print("DEBUGTYPEERROR", nr_required_samples,
-                      self.max_population_size)
-                raise
+
+            desired_nr_particles = sum(
+                n * w for n, w in zip(nr_required_samples, model_weights))
+
+            self.nr_particles = max(min(int(desired_nr_particles),
+                                        self.max_population_size),
+                                    self.min_population_size)
+
             adaptation_logger.debug("Change nr particles {} -> {}"
                                     .format(old_particles, self.nr_particles))
