@@ -97,10 +97,10 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             return 1
 
         start = max(len(self.X) // self.FIRST_STEP_FACTOR, 1)
-        stop = len(self.X)
+        stop = len(self.X) * 2
         step = max(len(self.X) // self.NR_STEPS, 1)
 
-        n_samples_list = list(range(start, stop, step)) + [len(self.X)]
+        n_samples_list = list(range(start, stop, step))
         cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
 
         self.n_samples_list_ = n_samples_list
