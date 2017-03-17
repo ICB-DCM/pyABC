@@ -40,12 +40,12 @@ class PopulationStrategy:
         self.nr_populations = nr_populations
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
-    def adapt_population_size(self, perturbers, model_weights):
+    def adapt_population_size(self, transitions, model_weights):
         """
 
         Parameters
         ----------
-        perturbers
+        transitions
         model_weights
 
         Returns
@@ -92,7 +92,7 @@ class ConstantPopulationStrategy(PopulationStrategy):
     nr_samples_per_parameter: int
         Number of samples to draw for a proposed parameter
     """
-    def adapt_population_size(self, perturbers, model_weights):
+    def adapt_population_size(self, transitions, model_weights):
         pass
 
 

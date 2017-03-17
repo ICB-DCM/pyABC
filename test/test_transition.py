@@ -1,4 +1,4 @@
-from pyabc.transition import NotEnoughParticles, LocalTransition
+from pyabc.transition import NotEnoughParticles, LocalTransition, Transition
 from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
@@ -23,14 +23,14 @@ def data_single(n):
     return df, w
 
 
-def test_rvs_return_type(transition):
+def test_rvs_return_type(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
     sample = transition.rvs()
     assert (sample.index == pd.Index(["a", "b"])).all()
 
 
-def test_pdf_return_types(transition):
+def test_pdf_return_types(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
     single = transition.pdf(df.iloc[0])
@@ -39,13 +39,13 @@ def test_pdf_return_types(transition):
     assert multiple.shape == (20,)
 
 
-def test_many_particles_single_par(transition):
+def test_many_particles_single_par(transition: Transition):
     df, w = data_single(20)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
 
-def test_variance_estimate(transition):
+def test_variance_estimate(transition: Transition):
     var_list = []
     for n in [20, 250]:
         df, w = data(n)
@@ -56,7 +56,21 @@ def test_variance_estimate(transition):
     assert var_list[0] >= var_list[1]
 
 
-def test_variance_no_side_effect(transition):
+def test_variance_estimate_higher_n_than_sample(transition: Transition):
+    n = 100
+    df, w = data(n)
+    transition.fit(df, w)
+
+    var_list = []
+    for n_test in [n, n*2, n*5]:
+        var = transition.mean_coefficient_of_variation(n_test)
+        var_list.append(var)
+
+    for lower, upper in zip(var_list[:-1], var_list[1:]):
+        assert lower >= upper
+
+
+def test_variance_no_side_effect(transition: Transition):
     df, w = data(60)
     transition.fit(df, w)
     # very intrusive test. touches internals of m. not very nice.
@@ -65,7 +79,7 @@ def test_variance_no_side_effect(transition):
     assert id(transition.X) == X_orig_id
 
 
-def test_particles_no_parameters(transition):
+def test_particles_no_parameters(transition: Transition):
     df = pd.DataFrame(index=[0, 1, 2, 3])
     assert len(df) == 4
     w = np.array([1, 1, 1, 1]) / 4
@@ -83,46 +97,46 @@ def test_empty(transition):
         transition.required_nr_samples(.1)
 
 
-def test_0_particles_fit(transition):
+def test_0_particles_fit(transition: Transition):
     # TODO define proper behavior
     df, w = data(0)
     with pytest.raises(NotEnoughParticles):
         transition.fit(df, w)
 
 
-def test_single_particle_fit(transition):
+def test_single_particle_fit(transition: Transition):
     # TODO define proper behavior
     df, w = data(1)
     transition.fit(df, w)
 
 
-def test_single_particle_required_nr_samples(transition):
+def test_single_particle_required_nr_samples(transition: Transition):
     # TODO define proper behavior
     df, w = data(1)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
 
-def test_two_particles_fit(transition):
+def test_two_particles_fit(transition: Transition):
     # TODO define proper behavior
     df, w = data(2)
     transition.fit(df, w)
 
 
-def test_two_particles_required_nr_samples(transition):
+def test_two_particles_required_nr_samples(transition: Transition):
     # TODO define proper behavior
     df, w = data(2)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
 
-def test_many_particles(transition):
+def test_many_particles(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
 
-def test_argument_order(transition):
+def test_argument_order(transition: Transition):
     """
     Dataframes passed to the transition kernels are generated from dicts.
     Order of parameter names is no guaranteed.
@@ -137,7 +151,7 @@ def test_argument_order(transition):
     assert transition.pdf(test) == transition.pdf(reversed)
 
 
-def test_score(transition):
+def test_score(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
     transition.score(df, w)  # just call it
@@ -174,7 +188,8 @@ def test_grid_search_single_sample_multivariate_normal():
     assert m_grid.cv == cv
 
 
-def test_mean_coefficient_of_variation_sample_not_full_rank(transition):
+def test_mean_coefficient_of_variation_sample_not_full_rank(
+        transition: Transition):
     """
     This is a test created after I encountered this kind of bug
     """

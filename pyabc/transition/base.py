@@ -120,8 +120,24 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
     def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) \
             -> float:
+        """
+        Estimate the uncertainty on the KDE.
+
+        Parameters
+        ----------
+        n_samples: int, optional
+            Estimate the CV for ``n_samples`` samples.
+            If this parameter is not given, the sample size of the last fit
+            is used.
+
+        Returns
+        -------
+
+        mean_cv: float
+            The estimated average coefficient of variation.
+        """
         if self.no_meaningful_particles():
-            raise NotEnoughParticles
+            raise NotEnoughParticles(n_samples)
 
         if n_samples is None:
             n_samples = len(self.X)
@@ -129,18 +145,22 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         self_cp = copy.copy(self)
         uniform_weights = np.ones(n_samples) / n_samples
 
-        bootstrapped_densities_at_X = []
-        for k in range(self.NR_BOOTSTRAP):
-            bootstrapped_points = self.X.sample(n_samples, replace=True,
-                                                weights=self.w)
-            self_cp.fit(bootstrapped_points, uniform_weights)
-            bootstrapped_densities_at_X.append(self_cp.pdf(self.X))
+        test_points = self.X
+        test_weights = self.w
 
-        bootstrapped_densities_at_X = np.array(bootstrapped_densities_at_X)
-        variation_at_X = st.variation(bootstrapped_densities_at_X, 0)
-        self.variation_at_X_ = variation_at_X
-        mean_variation = (variation_at_X * self.w).sum()
+        bootstrapped_pdfs_at_test = []
+        for k in range(self.NR_BOOTSTRAP):
+            bootstrapped_points = pd.DataFrame(
+                [self.rvs() for _ in range(len(uniform_weights))])
+            self_cp.fit(bootstrapped_points, uniform_weights)
+            bootstrapped_pdfs_at_test.append(self_cp.pdf(test_points))
+
+        bootstrapped_pdfs_at_test = np.array(bootstrapped_pdfs_at_test)
+        variation_at_test = st.variation(bootstrapped_pdfs_at_test, 0)
+        mean_variation = (variation_at_test * test_weights).sum()
         if not np.isfinite(mean_variation):
             msg = "CV not finite {}".format(mean_variation)
             raise NotEnoughParticles(msg)
+
+        self.variation_at_test_points_ = variation_at_test
         return mean_variation
