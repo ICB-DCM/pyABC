@@ -74,13 +74,19 @@ class LocalTransition(Transition):
         ctree = cKDTree(X)
         _, indices = ctree.query(X, k=min(self.k + 1, X.shape[0]))
 
-        covs, inv_covs = list(zip(*[self._cov_and_inv(n, indices)
+        covs, inv_covs, dets = list(zip(*[self._cov_and_inv(n, indices)
                                     for n in range(X.shape[0])]))
         self.covs = sp.array(covs)
         self.inv_covs = sp.array(inv_covs)
-        self.determinants = sp.array(list(map(la.det, self.covs)))
+        self.determinants = sp.array(dets)
+
+
         self.normalization = sp.sqrt(
             (2 * sp.pi) ** self.X_arr.shape[1] * self.determinants)
+
+        if not sp.isreal(self.normalization).all():
+            raise Exception("Normalization not real")
+        self.normalization = sp.real(self.normalization)
 
     def pdf(self, x):
         x = x[self.X.columns].as_matrix()
@@ -101,15 +107,15 @@ class LocalTransition(Transition):
         Calculate covariance around local support vector
         and also the inverse
         """
-        try:
-            cov = self._cov(indices, n)
-            inv_cov = la.inv(cov)
-        except la.LinAlgError:
+        cov = self._cov(indices, n)
+        det = la.det(cov)
+        while det <= 0:
             cov += sp.identity(cov.shape[0]) * self.EPS
-            inv_cov = la.inv(cov)
-        return cov, inv_cov
+            det = la.det(cov)
+        inv_cov = la.inv(cov)
+        return cov, inv_cov, det
 
-    def _cov(self, indices, n, eps=0):
+    def _cov(self, indices, n):
         if len(indices) > 1:
             surrounding_indices = indices[n, 1:]
             nearest_vector_deltas = (self.X_arr[surrounding_indices]

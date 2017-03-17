@@ -28,8 +28,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             parameter. All the defined transitions will then automatically
             generalize to the case of no paramter.
     """
-    NR_STEPS = 10
-    FIRST_STEP_FACTOR = 3
     NR_BOOTSTRAP = 5
     X = None
     w = None
@@ -88,35 +86,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
     def no_meaningful_particles(self) -> bool:
         return len(self.X) == 0 or self.no_parameters
-
-    def required_nr_samples(self, coefficient_of_variation: float) -> int:
-        if self.no_meaningful_particles():
-            raise NotEnoughParticles
-
-        if len(self.X) == 1:
-            return 1
-
-        start = max(len(self.X) // self.FIRST_STEP_FACTOR, 1)
-        stop = len(self.X) * 2
-        step = max(len(self.X) // self.NR_STEPS, 1)
-
-        n_samples_list = list(range(start, stop, step))
-        cvs = list(map(self.mean_coefficient_of_variation, n_samples_list))
-
-        self.n_samples_list_ = n_samples_list
-        self.cvs_ = cvs
-
-        try:
-            popt, f, finv = fitpowerlaw(n_samples_list, cvs)
-            self.f_ = f
-            self.popt_ = popt
-            required_n = finv(coefficient_of_variation)
-            return required_n
-        except RuntimeError:
-            transition_logger.warning("Power law fit failed. "
-                                      "Falling back to current nr particles {}"
-                                      .format(len(self.X)))
-            return len(self.X)
 
     def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) \
             -> float:
@@ -178,3 +147,53 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         self.test_weights_ = test_weights
         self.variation_at_test_points_ = variation_at_test
         return mean_variation
+
+    def required_nr_samples(self, coefficient_of_variation: float) -> int:
+        if self.no_meaningful_particles():
+            raise NotEnoughParticles
+
+        res = estimate_n(len(self.X), coefficient_of_variation,
+                         self.mean_coefficient_of_variation)
+        self.cv_estimate_ = res
+        return res.n_estimated
+
+
+from collections import namedtuple
+
+CVEstimate = namedtuple("CVEstimate", "n_estimated n_samples_list cvs f popt")
+
+
+def estimate_n(current_poop_size: int, target_cv: float, calc_cv,
+               n_steps=10, first_step_factor=3) -> CVEstimate:
+    """
+
+    Parameters
+    ----------
+    current_poop_size: int
+    target_cv: float
+    calc_cv: A function mapping population_size -> cv
+
+    Returns
+    -------
+
+    suggested_pop_size: int
+    """
+    if current_poop_size == 1:
+        return CVEstimate(1, [], [], None, None)
+
+    start = max(current_poop_size // first_step_factor, 1)
+    stop = current_poop_size * 2
+    step = max(current_poop_size // n_steps, 1)
+
+    n_samples_list = list(range(start, stop, step))
+    cvs = list(map(calc_cv, n_samples_list))
+
+    try:
+        popt, f, finv = fitpowerlaw(n_samples_list, cvs)
+        suggested_pop_size = finv(target_cv)
+        return CVEstimate(suggested_pop_size, n_samples_list, cvs, f, popt)
+    except RuntimeError:
+        transition_logger.warning("Power law fit failed. "
+                                  "Falling back to current nr particles {}"
+                                  .format(current_poop_size))
+        return CVEstimate(current_poop_size, n_samples_list, cvs, None, None)
