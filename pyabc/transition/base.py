@@ -135,6 +135,14 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         mean_cv: float
             The estimated average coefficient of variation.
+
+        Note
+        ----
+
+        A call to this method, as a side effect, also sets the attributes
+        ``test_points_``, ``test_weights_`` and ``variation_at_test_points_``.
+        These are the individual points, weights and varations
+        used to calculate the mean.
         """
         if self.no_meaningful_particles():
             raise NotEnoughParticles(n_samples)
@@ -145,6 +153,10 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         self_cp = copy.copy(self)
         uniform_weights = np.ones(n_samples) / n_samples
 
+        # TODO: decide which test points to use
+        # maybe also sample them from the kde directly?
+        # however X and w might better represent the next population.
+        # not sure what is best
         test_points = self.X
         test_weights = self.w
 
@@ -162,5 +174,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             msg = "CV not finite {}".format(mean_variation)
             raise NotEnoughParticles(msg)
 
+        self.test_points_ = test_points
+        self.test_weights_ = test_weights
         self.variation_at_test_points_ = variation_at_test
         return mean_variation
