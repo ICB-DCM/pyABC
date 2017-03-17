@@ -39,6 +39,6 @@ def predict_population_size(current_poop_size: int, target_cv: float, calc_cv,
         return CVEstimate(suggested_pop_size, n_samples_list, cvs, f, popt)
     except RuntimeError:
         logger.warning("Power law fit failed. "
-                                  "Falling back to current nr particles {}"
-                                  .format(current_poop_size))
+                       "Falling back to current nr particles {}"
+                       .format(current_poop_size))
         return CVEstimate(current_poop_size, n_samples_list, cvs, None, None)

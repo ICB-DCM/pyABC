@@ -156,4 +156,3 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
                                       self.mean_coefficient_of_variation)
         self.cv_estimate_ = res
         return res.n_estimated
-
