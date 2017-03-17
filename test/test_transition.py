@@ -50,7 +50,7 @@ def test_variance_estimate(transition: Transition):
     for n in [20, 250]:
         df, w = data(n)
         transition.fit(df, w)
-        var = transition.mean_coefficient_of_variation()
+        var = transition.mean_cv()
         var_list.append(var)
 
     assert var_list[0] >= var_list[1]
@@ -63,7 +63,7 @@ def test_variance_estimate_higher_n_than_sample(transition: Transition):
 
     var_list = []
     for n_test in [n, n*2, n*5]:
-        var = transition.mean_coefficient_of_variation(n_test)
+        var = transition.mean_cv(n_test)
         var_list.append(var)
 
     for lower, upper in zip(var_list[:-1], var_list[1:]):
@@ -75,7 +75,7 @@ def test_variance_no_side_effect(transition: Transition):
     transition.fit(df, w)
     # very intrusive test. touches internals of m. not very nice.
     X_orig_id = id(transition.X)
-    transition.mean_coefficient_of_variation()  # this has to be called here
+    transition.mean_cv()  # this has to be called here
     assert id(transition.X) == X_orig_id
 
 
@@ -198,4 +198,4 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(
                        "b": np.ones(n)})
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)
-    transition.mean_coefficient_of_variation()
+    transition.mean_cv()

@@ -8,10 +8,13 @@ At the moment, only constant population size is supported. But this might
 change in the future.
 """
 
-from .transition import NotEnoughParticles
+import numpy as np
 import logging
 import json
 import warnings
+from typing import List
+from .transition import Transition
+from .transition.predict_population_size import predict_population_size
 adaptation_logger = logging.getLogger("Adaptation")
 
 
@@ -143,24 +146,24 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                 "max_population_size": self.max_population_size,
                 "mean_cv": self.mean_cv}
 
-    def adapt_population_size(self, transitions, model_weights):
-        nr_required_samples = []
-        for trans in transitions:
-            try:
-                nr_required_samples.append(trans.required_nr_samples(
-                    coefficient_of_variation=self.mean_cv))
-            except NotEnoughParticles:
-                pass
+    def adapt_population_size(self, transitions: List[Transition],
+                              model_weights):
+        def calc_cv(nr_particles):
+            cv = sum(
+                w * transition.mean_cv(
+                    np.round(nr_particles * w).astype(int))
+                for transition, w in
+                zip(transitions, model_weights.as_matrix()))
+            return float(cv)
 
-        if len(nr_required_samples) > 0:
-            old_particles = self.nr_particles
+        old_particles = self.nr_particles
+        cv_estimate = predict_population_size(old_particles,
+                                              self.mean_cv,
+                                              calc_cv)
 
-            desired_nr_particles = sum(
-                n * w for n, w in zip(nr_required_samples, model_weights))
+        self.nr_particles = max(min(int(cv_estimate.n_estimated),
+                                    self.max_population_size),
+                                self.min_population_size)
 
-            self.nr_particles = max(min(int(desired_nr_particles),
-                                        self.max_population_size),
-                                    self.min_population_size)
-
-            adaptation_logger.debug("Change nr particles {} -> {}"
-                                    .format(old_particles, self.nr_particles))
+        adaptation_logger.debug("Change nr particles {} -> {}"
+                                .format(old_particles, self.nr_particles))

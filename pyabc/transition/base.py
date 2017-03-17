@@ -87,7 +87,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
     def no_meaningful_particles(self) -> bool:
         return len(self.X) == 0 or self.no_parameters
 
-    def mean_coefficient_of_variation(self, n_samples: Union[None, int]=None) \
+    def mean_cv(self, n_samples: Union[None, int]=None) \
             -> float:
         """
         Estimate the uncertainty on the KDE.
@@ -153,6 +153,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             raise NotEnoughParticles
 
         res = predict_population_size(len(self.X), coefficient_of_variation,
-                                      self.mean_coefficient_of_variation)
+                                      self.mean_cv)
         self.cv_estimate_ = res
         return res.n_estimated

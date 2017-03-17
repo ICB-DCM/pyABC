@@ -6,7 +6,8 @@ logger = logging.getLogger("CV Estimation")
 CVEstimate = namedtuple("CVEstimate", "n_estimated n_samples_list cvs f popt")
 
 
-def predict_population_size(current_poop_size: int, target_cv: float, calc_cv,
+def predict_population_size(current_poop_size: int,
+                            target_cv: float, calc_cv,
                             n_steps=10, first_step_factor=3) -> CVEstimate:
     """
     Estimate the required nr of particles for a target coefficient of
@@ -14,7 +15,7 @@ def predict_population_size(current_poop_size: int, target_cv: float, calc_cv,
 
     Parameters
     ----------
-    current_poop_size: int
+    current_pop_size: int
     target_cv: float
     calc_cv: A function mapping population_size -> cv
 
