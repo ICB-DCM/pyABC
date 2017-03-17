@@ -148,7 +148,7 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         for trans in transitions:
             try:
                 nr_required_samples.append(trans.required_nr_samples(
-                    target_cv=self.mean_cv))
+                    coefficient_of_variation=self.mean_cv))
             except NotEnoughParticles:
                 pass
 

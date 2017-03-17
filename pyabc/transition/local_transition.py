@@ -80,7 +80,6 @@ class LocalTransition(Transition):
         self.inv_covs = sp.array(inv_covs)
         self.determinants = sp.array(dets)
 
-
         self.normalization = sp.sqrt(
             (2 * sp.pi) ** self.X_arr.shape[1] * self.determinants)
 
