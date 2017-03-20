@@ -4,6 +4,16 @@ Release Notes
 0.4 series
 ..........
 
+
+0.4.2
+-----
+
+* Changes to the experimental adaptive population strategy.
+   * Smarter update for model selection
+   * Better CV estimation
+
+
+
 0.4.1
 -----
 

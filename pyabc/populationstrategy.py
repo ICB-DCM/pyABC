@@ -43,7 +43,8 @@ class PopulationStrategy:
         self.nr_populations = nr_populations
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
-    def adapt_population_size(self, transitions, model_weights):
+    def adapt_population_size(self, transitions: List[Transition],
+                              model_weights: np.ndarray):
         """
 
         Parameters
@@ -147,13 +148,13 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                 "mean_cv": self.mean_cv}
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights):
+                              model_weights: np.ndarray):
         def calc_cv(nr_particles):
             cv = sum(
                 w * transition.mean_cv(
                     np.round(nr_particles * w).astype(int))
                 for transition, w in
-                zip(transitions, model_weights.as_matrix()))
+                zip(transitions, model_weights))
             return float(cv)
 
         old_particles = self.nr_particles

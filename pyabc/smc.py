@@ -450,6 +450,6 @@ class ABCSMC:
             particles, w = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles, w)
 
-        self.population_strategy.adapt_population_size(
-            self.transitions,
-            self.history.get_model_probabilities(self.history.max_t))
+        w = self.history.get_model_probabilities(
+            self.history.max_t)["p"].as_matrix()
+        self.population_strategy.adapt_population_size(self.transitions, w)
