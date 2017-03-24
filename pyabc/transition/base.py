@@ -113,6 +113,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         These are the individual points, weights and varations
         used to calculate the mean.
         """
+        # TODO: not sure if this is the right behaviour
         if self.no_meaningful_particles():
             raise NotEnoughParticles(n_samples)
 

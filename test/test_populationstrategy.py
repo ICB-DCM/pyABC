@@ -28,6 +28,7 @@ def test_adapt_single_model(population_strategy: PopulationStrategy):
     kernel.fit(df, w)
 
     population_strategy.adapt_population_size([kernel], sp.array([1.]))
+    assert population_strategy.nr_particles > 0
 
 
 def test_adapt_two_models(population_strategy: PopulationStrategy):
@@ -41,5 +42,19 @@ def test_adapt_two_models(population_strategy: PopulationStrategy):
         kernels.append(kernel)
 
     population_strategy.adapt_population_size(kernels, sp.array([.7, .2]))
+    assert population_strategy.nr_particles > 0
 
-# TODO: how to deal with possibly not normalized input?
+
+def test_no_parameters(population_strategy: PopulationStrategy):
+    n = 10
+    df = pd.DataFrame(index=list(range(n)))
+    w = sp.ones(n) / n
+
+    kernels = []
+    for _ in range(2):
+        kernel = MultivariateNormalTransition()
+        kernel.fit(df, w)
+        kernels.append(kernel)
+
+    population_strategy.adapt_population_size(kernels, sp.array([.7, .3]))
+    assert population_strategy.nr_particles > 0

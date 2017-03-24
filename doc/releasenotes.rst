@@ -5,6 +5,12 @@ Release Notes
 ..........
 
 
+0.4.3
+-----
+
+* Fix edge case of models without parameters for population size adaptation
+
+
 0.4.2
 -----
 

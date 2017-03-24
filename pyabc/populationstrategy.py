@@ -13,7 +13,7 @@ import logging
 import json
 import warnings
 from typing import List
-from .transition import Transition
+from .transition import Transition, NotEnoughParticles
 from .transition.predict_population_size import predict_population_size
 adaptation_logger = logging.getLogger("Adaptation")
 
@@ -149,12 +149,17 @@ class AdaptivePopulationStrategy(PopulationStrategy):
 
     def adapt_population_size(self, transitions: List[Transition],
                               model_weights: np.ndarray):
+        # TODO: cover case of models without parameters
+        # the averaging with model_weights breaks down in this case
         def calc_cv(nr_particles):
-            cv = sum(
-                w * transition.mean_cv(
-                    np.round(nr_particles * w).astype(int))
-                for transition, w in
-                zip(transitions, model_weights))
+            cv = 0
+            for transition, w in zip(transitions, model_weights):
+                try:
+                    cv += w * transition.mean_cv(
+                          np.round(nr_particles * w).astype(int))
+                except NotEnoughParticles:
+                    pass
+            assert not np.isnan(cv), "CV is NaN"
             return float(cv)
 
         old_particles = self.nr_particles
@@ -162,9 +167,10 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                                               self.mean_cv,
                                               calc_cv)
 
-        self.nr_particles = max(min(int(cv_estimate.n_estimated),
-                                    self.max_population_size),
-                                self.min_population_size)
+        if not np.isnan(cv_estimate.n_estimated):
+            self.nr_particles = max(min(int(cv_estimate.n_estimated),
+                                        self.max_population_size),
+                                    self.min_population_size)
 
         adaptation_logger.debug("Change nr particles {} -> {}"
                                 .format(old_particles, self.nr_particles))
