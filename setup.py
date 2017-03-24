@@ -19,17 +19,17 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
                         'distributed'],
       packages=find_packages(exclude=["examples*", "devideas*",
                                       "test*", "test"]),
-      author='Emmanuel Klinger, Dennis Rickert',
-      author_email='emmanuel.klinger@brain.mpg.de, '
-                   'dennis.rickert@helmholtz-muenchen.de',
+      author='Emmanuel Klinger',
+      author_email='emmanuel.klinger@brain.mpg.de',
       name="pyabc",
       version=version,
       license="GPLv3",
       platforms="all",
       url="http://pyabc.readthedocs.io/en/latest/",
       include_package_data=True,
-      description='Parallel ABC for Python',
+      description='Distributed, likelihood-free ABC-SMC inference',
       classifiers=[
+        'Programming Language :: Python :: 3.5'
         'Programming Language :: Python :: 3.6'
       ],
       keywords='inference abc approximate bayesian '
