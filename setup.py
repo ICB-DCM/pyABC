@@ -29,7 +29,7 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
       include_package_data=True,
       description='Distributed, likelihood-free ABC-SMC inference',
       classifiers=[
-        'Programming Language :: Python :: 3.5'
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6'
       ],
       keywords='inference abc approximate bayesian '
