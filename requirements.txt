@@ -20,3 +20,4 @@ distributed
 pytest
 flake8
 click
+nbsphinx

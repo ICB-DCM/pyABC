@@ -8,7 +8,7 @@ from scipy import stats as st
 from sklearn.base import BaseEstimator
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
-
+from pyabc.cv.bootstrap import calc_cv
 from .transitionmeta import TransitionMeta
 
 transition_logger = logging.getLogger("Transitions")
@@ -50,7 +50,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         """
 
     @abstractmethod
-    def rvs(self) -> pd.Series:
+    def rvs_single(self) -> pd.Series:
         """
         Random variable sample (rvs).
 
@@ -61,6 +61,11 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         sample: pd.Series
             A sample from the fitted model.
         """
+
+    def rvs(self, size=None):
+        if size is None:
+            return self.rvs_single()
+        return pd.DataFrame([self.rvs_single() for _ in range(size)])
 
     @abstractmethod
     def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
@@ -120,34 +125,18 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         if n_samples is None:
             n_samples = len(self.X)
 
-        self_cp = copy.copy(self)
-        uniform_weights = np.ones(n_samples) / n_samples
-
-        # TODO: decide which test points to use
-        # maybe also sample them from the kde directly?
-        # however X and w might better represent the next population.
-        # not sure what is best
         test_points = self.X
         test_weights = self.w
 
-        bootstrapped_pdfs_at_test = []
-        for k in range(self.NR_BOOTSTRAP):
-            bootstrapped_points = pd.DataFrame(
-                [self.rvs() for _ in range(len(uniform_weights))])
-            self_cp.fit(bootstrapped_points, uniform_weights)
-            bootstrapped_pdfs_at_test.append(self_cp.pdf(test_points))
-
-        bootstrapped_pdfs_at_test = np.array(bootstrapped_pdfs_at_test)
-        variation_at_test = st.variation(bootstrapped_pdfs_at_test, 0)
-        mean_variation = (variation_at_test * test_weights).sum()
-        if not np.isfinite(mean_variation):
-            msg = "CV not finite {}".format(mean_variation)
-            raise NotEnoughParticles(msg)
-
         self.test_points_ = test_points
         self.test_weights_ = test_weights
-        self.variation_at_test_points_ = variation_at_test
-        return mean_variation
+
+        cv, variation_at_test = calc_cv(n_samples, np.array([1]),
+                                        self.NR_BOOTSTRAP, test_weights,
+                                        [self], [test_points])
+
+        self.variation_at_test_points_ = variation_at_test[0]
+        return cv
 
     def required_nr_samples(self, coefficient_of_variation: float) -> int:
         if self.no_meaningful_particles():

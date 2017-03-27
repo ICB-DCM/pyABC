@@ -1,6 +1,8 @@
-from collections import namedtuple
 import logging
-from .powerlaw import fitpowerlaw
+from collections import namedtuple
+
+from pyabc.cv.powerlaw import fitpowerlaw
+
 logger = logging.getLogger("CV Estimation")
 
 CVEstimate = namedtuple("CVEstimate", "n_estimated n_samples_list cvs f popt")

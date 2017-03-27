@@ -30,7 +30,7 @@ parameter_priors = [
 ]
 
 
-# We plug all the ABC setup together
+# We plug all the ABC setup together with 2 populations maximum
 population_strategy = ConstantPopulationStrategy(100, 2)
 abc = ABCSMC(models, parameter_priors,
              PercentileDistanceFunction(measures_to_use=["y"]),
@@ -44,7 +44,7 @@ db_path = ("sqlite:///" +
 y_observed = 1
 abc.set_data({"y": y_observed}, db_path)
 
-# We run the ABC with 3 populations max
+# We run the ABC
 minimum_epsilon = .05
 history = abc.run(minimum_epsilon)
 

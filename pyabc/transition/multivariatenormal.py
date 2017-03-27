@@ -49,7 +49,7 @@ class MultivariateNormalTransition(Transition):
                                                  dimension) * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
-    def rvs(self):
+    def rvs_single(self):
         sample = self.X.sample(weights=self.w).iloc[0]
         perturbed = (sample +
                      np.random.multivariate_normal(

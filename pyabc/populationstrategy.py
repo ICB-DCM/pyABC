@@ -8,13 +8,18 @@ At the moment, only constant population size is supported. But this might
 change in the future.
 """
 
-import numpy as np
-import logging
+import copy
 import json
+import logging
 import warnings
+
+import numpy as np
 from typing import List
-from .transition import Transition, NotEnoughParticles
+
+from pyabc.cv.bootstrap import calc_cv
+from .transition import Transition
 from .transition.predict_population_size import predict_population_size
+
 adaptation_logger = logging.getLogger("Adaptation")
 
 
@@ -149,23 +154,17 @@ class AdaptivePopulationStrategy(PopulationStrategy):
 
     def adapt_population_size(self, transitions: List[Transition],
                               model_weights: np.ndarray):
-        # TODO: cover case of models without parameters
-        # the averaging with model_weights breaks down in this case
-        def calc_cv(nr_particles):
-            cv = 0
-            for transition, w in zip(transitions, model_weights):
-                try:
-                    cv += w * transition.mean_cv(
-                          np.round(nr_particles * w).astype(int))
-                except NotEnoughParticles:
-                    pass
-            assert not np.isnan(cv), "CV is NaN"
-            return float(cv)
+        test_X = [trans.X for trans in transitions]
+        test_w = [trans.w for trans in transitions]
 
-        old_particles = self.nr_particles
-        cv_estimate = predict_population_size(old_particles,
-                                              self.mean_cv,
-                                              calc_cv)
+        N_BOOTSTR = 5
+
+
+        reference_nr_part = self.nr_particles
+        target_cv = self.mean_cv
+        cv_estimate = predict_population_size(reference_nr_part,
+                                              target_cv,
+                                              lambda nr_particles: calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w, transitions, test_X)[0])
 
         if not np.isnan(cv_estimate.n_estimated):
             self.nr_particles = max(min(int(cv_estimate.n_estimated),
@@ -173,4 +172,4 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                                     self.min_population_size)
 
         adaptation_logger.debug("Change nr particles {} -> {}"
-                                .format(old_particles, self.nr_particles))
+                                .format(reference_nr_part, self.nr_particles))

@@ -5,6 +5,14 @@ Release Notes
 ..........
 
 
+0.4.4
+-----
+
+* Improvements to adaptive population size strategy
+   * Use same CV estimation algorithm for Transition and PopulationStrategy
+   * Bootstrapping on full joint space for model selection
+
+
 0.4.3
 -----
 

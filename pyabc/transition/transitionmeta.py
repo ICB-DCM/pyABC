@@ -32,13 +32,13 @@ def wrap_pdf(f):
     return pdf
 
 
-def wrap_rvs(f):
+def wrap_rvs_single(f):
     @functools.wraps(f)
-    def rvs(self):
+    def rvs_single(self):
         if self.no_parameters:
             return pd.Series()
         return f(self)
-    return rvs
+    return rvs_single
 
 
 class TransitionMeta(ABCMeta):
@@ -50,4 +50,4 @@ class TransitionMeta(ABCMeta):
         ABCMeta.__init__(cls, name, bases, attrs)
         cls.fit = wrap_fit(cls.fit)
         cls.pdf = wrap_pdf(cls.pdf)
-        cls.rvs = wrap_rvs(cls.rvs)
+        cls.rvs_single = wrap_rvs_single(cls.rvs_single)

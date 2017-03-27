@@ -23,6 +23,7 @@ from .populationstrategy import PopulationStrategy
 from .random import fast_random_choice
 from typing import Union
 from .model import SimpleModel
+import copy
 
 
 abclogger = logging.getLogger("ABC")
@@ -403,7 +404,8 @@ class ABCSMC:
             # this is calculated here to avoid double initialization of medians
             current_eps = self.eps(t, self.history)
             abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
-            self.fit_transitions(t)
+            self._fit_transitions(t)
+            self._adapt_population(t)
             # cache model_probabilities to not to query the database so soften
             model_probabilities = self.history.get_model_probabilities(
                 self.history.max_t)
@@ -442,14 +444,23 @@ class ABCSMC:
         self.history.done()
         return self.history
 
-    def fit_transitions(self, t):
+    def _adapt_population(self, t):
+        if t == 0:  # we need a particle population to do the fitting
+            return
+
+        w = self.history.get_model_probabilities(
+            self.history.max_t)["p"].as_matrix()
+        # make a copy in case the population strategy messes with
+        # the transitions
+        # WARNING: the deepcopy also copies the random states of scipy.stats
+        # distributions
+        copied_transitions = copy.deepcopy(self.transitions)
+        self.population_strategy.adapt_population_size(copied_transitions, w)
+
+    def _fit_transitions(self, t):
         if t == 0:  # we need a particle population to do the fitting
             return
 
         for m in self.history.alive_models(t - 1):
             particles, w = self.history.weighted_parameters_dataframe(t - 1, m)
             self.transitions[m].fit(particles, w)
-
-        w = self.history.get_model_probabilities(
-            self.history.max_t)["p"].as_matrix()
-        self.population_strategy.adapt_population_size(self.transitions, w)

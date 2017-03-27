@@ -130,7 +130,7 @@ class LocalTransition(Transition):
                 cov[k, k] = sp.absolute(self.X_arr[0, k])
         return cov * self.scaling
 
-    def rvs(self):
+    def rvs_single(self):
         support_index = sp.random.choice(self.w.shape[0], p=self.w)
         sample = sp.random.multivariate_normal(self.X_arr[support_index],
                                                self.covs[support_index])
