@@ -30,7 +30,7 @@ the usage of this package.
    :maxdepth: 2
 
    what
-   model_selection
+   examples/quickstart.ipynb
    installation
    web_visualization
    sampler
