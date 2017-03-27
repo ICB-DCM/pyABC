@@ -10,3 +10,8 @@ dependencies:
   - distributed
   - matplotlib
   - sphinx
+  - pandoc
+  - nbconvert
+  - ipykernel
+  - pip:
+    - nbsphinx
