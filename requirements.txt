@@ -21,3 +21,4 @@ pytest
 flake8
 click
 nbsphinx
+ipykernel
