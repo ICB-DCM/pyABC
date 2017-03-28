@@ -61,7 +61,7 @@ class ABCInfo:
 def abc_detail(abc_id):
     history = app.config["HISTORY"]
     history.id = abc_id
-    abc = ABCInfo(history.this_abc())
+    abc = ABCInfo(history.get_abc())
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
     model_probabilities.columns = list(map(lambda x: "{}".format(x),

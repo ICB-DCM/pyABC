@@ -73,8 +73,7 @@ class History:
 
     def db_file(self):
         f = self.db_path.split(":")[-1][3:]
-        print(f)
-        return(f)
+        return f
 
     @property
     def db_size(self) -> Union[int, str]:
@@ -179,7 +178,7 @@ class History:
         return pars, w_arr
 
     @with_session
-    def this_abc(self):
+    def get_abc(self):
         return self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
 
     @with_session
