@@ -169,5 +169,5 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                                         self.max_population_size),
                                     self.min_population_size)
 
-        adaptation_logger.debug("Change nr particles {} -> {}"
+        adaptation_logger.info("Change nr particles {} -> {}"
                                 .format(reference_nr_part, self.nr_particles))

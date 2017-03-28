@@ -26,7 +26,7 @@ class GridSearchCV(GridSearchCVSKL):
         if len(X) == 1:
             res = self.estimator.fit(X, y)
             self.best_estimator_ = self.estimator
-            logging.info("Single sample Gridsearch. Params: {}".format(
+            logging.debug("Single sample Gridsearch. Params: {}".format(
                 self.estimator.get_params()))
             return res
 

@@ -43,7 +43,7 @@ class RedisEvalParallelSampler(Sampler):
     """
     def __init__(self, host="localhost", port=6379):
         super().__init__()
-        worker_logger.info("Redis sampler: host={} port={}".format(host, port))
+        worker_logger.debug("Redis sampler: host={} port={}".format(host, port))
         self.redis = StrictRedis(host=host, port=port)
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):

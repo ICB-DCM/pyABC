@@ -397,7 +397,7 @@ class ABCSMC:
         for t in range(t0, t0+max_nr_populations):
             # this is calculated here to avoid double initialization of medians
             current_eps = self.eps(t, self.history)
-            abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
+            abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
             self._fit_transitions(t)
             self._adapt_population(t)
             # cache model_probabilities to not to query the database so soften

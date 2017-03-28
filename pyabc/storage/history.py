@@ -20,7 +20,7 @@ history_logger = logging.getLogger("History")
 def with_session(f):
     @wraps(f)
     def f_wrapper(self: "History", *args, **kwargs):
-        history_logger.info('Database access through "{}"'.format(f.__name__))
+        history_logger.debug('Database access through "{}"'.format(f.__name__))
         no_session = self._session is None and self._engine is None
         if no_session:
             self._make_session()
@@ -332,7 +332,7 @@ class History:
                               .one())
         abc_smc_simulation.end_time = datetime.datetime.now()
         self._session.commit()
-        history_logger.debug("Done {}".format(abc_smc_simulation))
+        history_logger.info("Done {}".format(abc_smc_simulation))
 
     @with_session
     def _save_to_population_db(self, t: int, current_epsilon: float,

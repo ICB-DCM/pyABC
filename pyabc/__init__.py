@@ -68,8 +68,8 @@ __all__ = [
 
 
 try:
-    loglevel = os.environ["ABC_LOG_LEVEL"]
-    numeric_loglevel = getattr(logging, loglevel.upper())
-    logging.getLogger().setLevel(numeric_loglevel)
+    loglevel = os.environ["ABC_LOG_LEVEL"].upper()
 except KeyError:
-    pass
+    loglevel = "INFO"
+
+logging.basicConfig(level=loglevel)

@@ -71,7 +71,7 @@ class MulticoreParticleParallelSampler(Sampler):
         self.n_procs = n_procs if n_procs else nr_cores_available()
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        logger.info("Start sampling on {} cores".format(self.n_procs))
+        logger.debug("Start sampling on {} cores".format(self.n_procs))
         feed_q = Queue()
         result_q = Queue()
 

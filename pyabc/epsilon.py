@@ -11,7 +11,6 @@ from abc import ABC, abstractmethod
 from .storage import History
 from .weighted_statistics import weighted_median
 from typing import List, Callable, Union
-logging.basicConfig(level=logging.DEBUG)
 eps_logger = logging.getLogger("Epsilon")
 
 
@@ -186,7 +185,7 @@ class MedianEpsilon(Epsilon):
         else:
             self._look_up = {0: self._initial_epsilon}
 
-        eps_logger.debug("initial epsilon is {}".format(self._look_up[0]))
+        eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
     def __call__(self, t, history):
         try:
@@ -196,6 +195,6 @@ class MedianEpsilon(Epsilon):
             median = weighted_median(
                 df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
             self._look_up[t] = median * self.median_multiplier
-            eps_logger.debug("new eps, t={}, eps={}"
+            eps_logger.info("new eps, t={}, eps={}"
                              .format(t, self._look_up[t]))
             return self._look_up[t]
