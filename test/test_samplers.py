@@ -114,7 +114,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = ConstantPopulationStrategy(40, 3)
+    population_size = ConstantPopulationStrategy(40)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
                  population_size,
@@ -130,7 +130,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     # We run the ABC with 3 populations max
     minimum_epsilon = .05
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
 
     # Evaluate the model probabililties
     mp = history.get_model_probabilities(history.max_t)

@@ -41,10 +41,8 @@ class PopulationStrategy:
     nr_samples_per_parameter: int
         Number of samples to draw for a proposed parameter
     """
-    def __init__(self, nr_particles: int, nr_populations: int,
-                 nr_samples_per_parameter: int=1):
+    def __init__(self, nr_particles: int, *, nr_samples_per_parameter: int=1):
         self.nr_particles = nr_particles
-        self.nr_populations = nr_populations
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
     def adapt_population_size(self, transitions: List[Transition],
@@ -70,8 +68,7 @@ class PopulationStrategy:
             Configuration of the class as dictionary
         """
         return {"name": self.__class__.__name__,
-                "nr_particles": self.nr_particles,
-                "nr_populations": self.nr_populations}
+                "nr_particles": self.nr_particles}
 
     def to_json(self):
         """
@@ -135,13 +132,14 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         Min number of particles allowed in a population.
         Defaults to 10
     """
-    def __init__(self, nr_particles, nr_populations,
-                 nr_samples_per_parameter=1,
-                 mean_cv=0.05, max_population_size=float("inf"),
-                 min_population_size=10):
+    def __init__(self, start_nr_particles, mean_cv=0.05,
+                 *,
+                 max_population_size=float("inf"),
+                 min_population_size=10,
+                 nr_samples_per_parameter=1):
         warnings.warn("Adaptive population strategy is experimental.")
-        super().__init__(nr_particles, nr_populations,
-                         nr_samples_per_parameter)
+        super().__init__(start_nr_particles,
+                         nr_samples_per_parameter=nr_samples_per_parameter)
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
         self.mean_cv = mean_cv

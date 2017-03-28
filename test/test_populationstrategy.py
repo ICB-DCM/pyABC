@@ -8,11 +8,11 @@ import scipy as sp
 
 
 def Adaptive():
-    return AdaptivePopulationStrategy(100, 2)
+    return AdaptivePopulationStrategy(100)
 
 
 def Constant():
-    return ConstantPopulationStrategy(100,  2)
+    return ConstantPopulationStrategy(100)
 
 
 @pytest.fixture(params=[Adaptive, Constant],

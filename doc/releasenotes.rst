@@ -1,6 +1,20 @@
 Release Notes
 =============
 
+0.5 series
+..........
+
+
+0.5.0
+-----
+
+* Usability improvements and minor API canges
+    * ABCSMC accepts now an integer to be passed for constant population size
+    * The maximum number populations specification has moved from the
+      PopulationStrategy classes to the ABCSMC.run method. The ABCSMC.run
+      method will be where it is defined when to stop.
+
+
 0.4 series
 ..........
 

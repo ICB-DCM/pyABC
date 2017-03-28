@@ -69,7 +69,7 @@ def test_cookie_jar(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(1500, 1)
+    population_size = ConstantPopulationStrategy(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -79,7 +79,7 @@ def test_cookie_jar(db_path, sampler):
     abc.set_data({"result": 0}, options, 0, {})
 
     minimum_epsilon = .2
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=1)
 
     mp = history.get_model_probabilities(history.max_t)
     expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 +
@@ -100,7 +100,7 @@ def test_empty_population(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(1500, 3)
+    population_size = ConstantPopulationStrategy(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -112,7 +112,7 @@ def test_empty_population(db_path, sampler):
     abc.set_data({"result": 0}, options, 0, {})
 
     minimum_epsilon = -1
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
 
 
 
@@ -130,7 +130,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(800, 3)
+    population_size = ConstantPopulationStrategy(800)
     parameter_given_model_prior_distribution = [Distribution(theta=st.beta(
                                                                       1, 1))
                                                 for _ in range(2)]
@@ -144,7 +144,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
     abc.set_data({"result": 2}, options, 0, {})
 
     minimum_epsilon = .2
-    history = abc.run( minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
     mp = history.get_model_probabilities(history.max_t)
     assert abs(mp.p[0] - .5) + abs(mp.p[1] - .5) < .08
 
@@ -160,7 +160,7 @@ class AllInOneModel(Model):
 
 def test_all_in_one_model(db_path, sampler):
     models = [AllInOneModel() for _ in range(2)]
-    population_size = ConstantPopulationStrategy(800, 3)
+    population_size = ConstantPopulationStrategy(800)
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
                                                                       1, 1))
                                                 for _ in range(2)]
@@ -174,7 +174,7 @@ def test_all_in_one_model(db_path, sampler):
     abc.set_data({"result": 2}, options, 0, {})
 
     minimum_epsilon = .2
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
     mp = history.get_model_probabilities(history.max_t)
     assert abs(mp.p[0] - .5) + abs(mp.p[1] - .5) < .08
 
@@ -187,7 +187,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
 
     models = [model for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(800, 3)
+    population_size = ConstantPopulationStrategy(800)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
@@ -205,7 +205,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
     abc.set_data({"result": n1}, options, 0, {})
 
     minimum_epsilon = .2
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
     mp = history.get_model_probabilities(history.max_t)
 
     def B(a, b):
@@ -232,7 +232,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path,
 
     models = [model for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(800, 5)
+    population_size = ConstantPopulationStrategy(800)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
@@ -250,7 +250,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path,
     abc.set_data({"result": n1}, options, 0, {})
 
     minimum_epsilon = -1
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=5)
     mp = history.get_model_probabilities(history.max_t)
 
     def B(a, b):
@@ -275,7 +275,7 @@ def test_continuous_non_gaussian(db_path, sampler):
 
     models = [model]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(250, 2)
+    population_size = ConstantPopulationStrategy(250)
     parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0,
                                                                   1))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -290,7 +290,7 @@ def test_continuous_non_gaussian(db_path, sampler):
     abc.do_not_stop_when_only_single_model_alive()
 
     minimum_epsilon = -1
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=2)
     posterior_x, posterior_weight = history.get_results_distribution(0, "u")
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200,
@@ -330,7 +330,7 @@ def test_gaussian_single_population(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 1
-    population_size = ConstantPopulationStrategy(600, nr_populations)
+    population_size = ConstantPopulationStrategy(600)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0,
                                                                   sigma_prior))
                                                 ]
@@ -347,7 +347,7 @@ def test_gaussian_single_population(db_path, sampler):
 
 
     abc.do_not_stop_when_only_single_model_alive()
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_results_distribution(0, "x")
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
@@ -376,7 +376,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 4
-    population_size = ConstantPopulationStrategy(600, nr_populations)
+    population_size = ConstantPopulationStrategy(600)
     parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
@@ -389,7 +389,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_results_distribution(0, "x")
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
@@ -418,7 +418,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 4
-    population_size = ConstantPopulationStrategy(600, nr_populations)
+    population_size = ConstantPopulationStrategy(600)
     parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     parameter_perturbation_kernels = [GridSearchCV(MultivariateNormalTransition(),
                                       {"scaling": sp.logspace(-1, 1.5, 5)})]
@@ -435,7 +435,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_results_distribution(0, "x")
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
@@ -463,7 +463,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler, transition)
 
     models = [model, model]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(500, 1)
+    population_size = ConstantPopulationStrategy(500)
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(mu_x_1, sigma_x)),
@@ -481,7 +481,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler, transition)
     minimum_epsilon = -1
     nr_populations = 1
     abc.do_not_stop_when_only_single_model_alive()
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=1)
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
@@ -516,7 +516,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler, transitio
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = ConstantPopulationStrategy(400, 3)
+    population_size = ConstantPopulationStrategy(400)
 
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]), population_size,
@@ -532,7 +532,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler, transitio
 
     # We run the ABC with 3 populations max
     minimum_epsilon = .05
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
 
     # Evaluate the model probabililties
     mp = history.get_model_probabilities(history.max_t)
@@ -561,7 +561,7 @@ def test_empty_population_adaptive(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    population_size = AdaptivePopulationStrategy(1500, 3)
+    population_size = AdaptivePopulationStrategy(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -573,7 +573,7 @@ def test_empty_population_adaptive(db_path, sampler):
     abc.set_data({"result": 0}, options, 0, {})
 
     minimum_epsilon = -1
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
     mp = history.get_model_probabilities(history.max_t)
     expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (theta1 + theta2)
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < .1
@@ -587,7 +587,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
 
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = AdaptivePopulationStrategy(800, 3)
+    population_size = AdaptivePopulationStrategy(800)
     parameter_given_model_prior_distribution = [
         Distribution(theta=st.beta(1, 1)) for _ in range(2)]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -600,7 +600,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
     abc.set_data({"result": 2}, options, 0, {})
 
     minimum_epsilon = .2
-    history = abc.run( minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
     mp = history.get_model_probabilities(history.max_t)
     assert abs(mp.p[0] - .5) + abs(mp.p[1] - .5) < .08
 
@@ -616,7 +616,7 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 4
-    population_size = AdaptivePopulationStrategy(600, nr_populations)
+    population_size = AdaptivePopulationStrategy(600)
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(0, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -631,7 +631,7 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_results_distribution(0, "x")
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
@@ -673,7 +673,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = AdaptivePopulationStrategy(400, 3, mean_cv=0.05,
+    population_size = AdaptivePopulationStrategy(400, mean_cv=0.05,
                                                  max_population_size=1000)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
@@ -689,7 +689,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
 
     # We run the ABC with 3 populations max
     minimum_epsilon = .05
-    history = abc.run(minimum_epsilon)
+    history = abc.run(minimum_epsilon, max_nr_populations=3)
 
     # Evaluate the model probabililties
     mp = history.get_model_probabilities(history.max_t)

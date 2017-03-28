@@ -40,7 +40,7 @@ class ABCSMC:
     """
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
-    This is an implementation of an ABCSMC algorithm similar to [#toni-stumpf]_
+    This is an implementation of an ABCSMC algorithm similar to [#tonistumpf]_
 
 
     Parameters
@@ -113,7 +113,9 @@ class ABCSMC:
         place; a more involved sampler will help the mapper-function to
         distribute function calls accross a distributed infrastructure.
 
-    .. [#toni-stumpf] Toni, Tina, and Michael P. H. Stumpf.
+
+
+    .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
                   Systems in Systems and Population Biology.”
                   Bioinformatics 26, no. 1 (January 1, 2010):
@@ -168,7 +170,7 @@ class ABCSMC:
 
         if isinstance(population_specification, int):
             population_specification = ConstantPopulationStrategy(
-                population_specification, float("inf"))
+                population_specification)
         self.population_strategy = population_specification
 
         if sampler is None:
@@ -374,7 +376,7 @@ class ABCSMC:
                     * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
-    def run(self, minimum_epsilon: float) -> History:
+    def run(self, minimum_epsilon: float, max_nr_populations: int) -> History:
         """
         Run the ABCSMC model selection. This method can be called many times.
         It makes another
@@ -392,7 +394,7 @@ class ABCSMC:
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
         # "ipython_cluster" is not pickable
-        for t in range(t0, t0+self.population_strategy.nr_populations):
+        for t in range(t0, t0+max_nr_populations):
             # this is calculated here to avoid double initialization of medians
             current_eps = self.eps(t, self.history)
             abclogger.debug('t:' + str(t) + ' eps:' + str(current_eps))
