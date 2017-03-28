@@ -255,7 +255,7 @@ class ABCSMC:
             ground_truth_parameter = {}
 
         # initialize distance function and epsilon
-        sample_from_prior = self.prior_sample()
+        sample_from_prior = self._prior_sample()
 
         self.distance_function.initialize(sample_from_prior)
 
@@ -273,7 +273,7 @@ class ABCSMC:
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
 
-    def prior_sample(self):
+    def _prior_sample(self):
         """
         Only sample from prior and return results without changing
         the history of the Epsilon. This can be used to get initial samples
@@ -301,8 +301,8 @@ class ABCSMC:
                     self.population_strategy.nr_particles))
         return self._points_sampled_from_prior
 
-    def evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
-                          model_probabilities):
+    def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
+                           model_probabilities):
         """
         This is where the actual model evaluation happens.
         """
@@ -318,7 +318,7 @@ class ABCSMC:
                 summary_statistics_list.append(model_result.sum_stats)
 
         if len(distance_list) > 0:
-            weight = self.calc_proposal_weight(
+            weight = self._calc_proposal_weight(
                 distance_list, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
@@ -326,8 +326,8 @@ class ABCSMC:
             m_ss, theta_ss, weight, distance_list, summary_statistics_list)
         return valid_particle
 
-    def calc_proposal_weight(self, distance_list, m_ss, theta_ss,
-                             t, model_probabilities):
+    def _calc_proposal_weight(self, distance_list, m_ss, theta_ss,
+                              t, model_probabilities):
         if t == 0:
             weight = (len(distance_list)
                       / self.population_strategy.nr_samples_per_parameter)
@@ -350,7 +350,7 @@ class ABCSMC:
                       / normalization)
         return weight
 
-    def generate_valid_proposal(self, t, m, p):
+    def _generate_valid_proposal(self, t, m, p):
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior.rvs()
@@ -409,11 +409,11 @@ class ABCSMC:
             p = sp.array(model_probabilities.p)
 
             def sample_one():
-                return self.generate_valid_proposal(t, m, p)
+                return self._generate_valid_proposal(t, m, p)
 
             def eval_one(par):
-                return self.evaluate_proposal(*par, current_eps, t,
-                                              model_probabilities)
+                return self._evaluate_proposal(*par, current_eps, t,
+                                               model_probabilities)
 
             def accept_one(particle):
                 return len(particle.distance_list) > 0

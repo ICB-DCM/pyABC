@@ -5,6 +5,15 @@ Release Notes
 ..........
 
 
+0.5.1
+-----
+
+* Minor ABCSMC API changes
+    * Mark the de-factor private methods as private by prepending an
+      underscore. This should not cause trouble as usually noone would
+      ever use these methods.
+
+
 0.5.0
 -----
 
