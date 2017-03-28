@@ -9,7 +9,7 @@ automatically parallelizes across an SGE cluster.
 
 Usage of the parallel package is farly easy. For example
 
-.. code::
+.. code-block:: python
 
    from parallel import SGE
    sge = SGE(priority=-200, memory="3G")
@@ -23,7 +23,9 @@ Usage of the parallel package is farly easy. For example
 
    print(result)
 
+
 .. parsed-literal::
+
    [2, 4, 6, 8]
 
 

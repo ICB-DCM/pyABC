@@ -61,7 +61,8 @@ def test_no_parameters(population_strategy: PopulationStrategy):
     assert population_strategy.nr_particles > 0
 
 
-def test_one_with_one_without_parameters(population_strategy: PopulationStrategy):
+def test_one_with_one_without_parameters(population_strategy:
+                                         PopulationStrategy):
     n = 10
     kernels = []
 

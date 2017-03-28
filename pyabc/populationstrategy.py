@@ -8,7 +8,6 @@ At the moment, only constant population size is supported. But this might
 change in the future.
 """
 
-import copy
 import json
 import logging
 import warnings
@@ -159,12 +158,13 @@ class AdaptivePopulationStrategy(PopulationStrategy):
 
         N_BOOTSTR = 5
 
-
         reference_nr_part = self.nr_particles
         target_cv = self.mean_cv
-        cv_estimate = predict_population_size(reference_nr_part,
-                                              target_cv,
-                                              lambda nr_particles: calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w, transitions, test_X)[0])
+        cv_estimate = predict_population_size(
+            reference_nr_part, target_cv,
+            lambda nr_particles: calc_cv(nr_particles, model_weights,
+                                         N_BOOTSTR, test_w, transitions,
+                                         test_X)[0])
 
         if not np.isnan(cv_estimate.n_estimated):
             self.nr_particles = max(min(int(cv_estimate.n_estimated),

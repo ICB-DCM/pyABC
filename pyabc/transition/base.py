@@ -1,10 +1,8 @@
-import copy
 from abc import abstractmethod
 from typing import Union
 import logging
 import numpy as np
 import pandas as pd
-from scipy import stats as st
 from sklearn.base import BaseEstimator
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size

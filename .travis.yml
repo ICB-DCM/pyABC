@@ -13,6 +13,4 @@ install:
   - pip install --upgrade pytest
 # command to run tests
 script:
-  - python -m examples.quickstart
   - travis_wait python -m pytest test
-

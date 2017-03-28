@@ -29,7 +29,7 @@ class SGE:
     An example configuration file could look as follows:
 
 
-    .. code::
+    .. code-block:: bash
 
         #~/.parallel
         [DIRECTORIES]
