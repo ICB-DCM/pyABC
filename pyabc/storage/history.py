@@ -134,7 +134,7 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-    def weighted_parameters_dataframe(self, t: int, m: int)\
+    def get_distribution(self, t: int, m: int)\
             -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample as pandas DataFrame.
@@ -142,8 +142,10 @@ class History:
         Parameters
         ----------
 
-        t: int
-            Population number
+        t: int, None
+            Population number.
+            If t is None, then the last population is returned.
+
         m: int
             model index
 
@@ -405,30 +407,6 @@ class History:
         store, model_probabilities = normalize(particle_population)
         self._save_to_population_db(t, current_epsilon,
                                     nr_simulations, store, model_probabilities)
-
-    def get_results_distribution(self, m: int, parameter: str)\
-            -> (np.ndarray, np.ndarray):
-        """
-        Returns parameter values and weights of the last population.
-
-        Parameters
-        ----------
-
-        m: int
-            Model number
-
-        parameter: str
-            Parameter name.
-
-        Returns
-        -------
-
-        results: Tuple[np.ndarray]
-            results = (points, weights) with the points
-            and the weights of the last population.
-        """
-        df, w = self.weighted_parameters_dataframe(None, m)
-        return df[parameter].as_matrix(), w
 
     @with_session
     def get_model_probabilities(self, t=None) -> pd.DataFrame:

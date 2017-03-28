@@ -108,7 +108,7 @@ def abc_model(abc_id, model_id, t):
         t = history.max_t
     else:
         t = int(t)
-    df, w = history.weighted_parameters_dataframe(t, model_id)
+    df, w = history.get_distribution(t, model_id)
     df["CDF"] = w
     tabs = []
 

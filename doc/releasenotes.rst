@@ -4,6 +4,14 @@ Release Notes
 0.5 series
 ..........
 
+0.5.1
+-----
+
+* Minor History API changes
+    * Remove History.get_results_distribution
+    * rename History.get_weighted_particles_dataframe to
+      History.get_distribution
+
 
 0.5.1
 -----

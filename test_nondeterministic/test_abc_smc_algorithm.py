@@ -291,7 +291,8 @@ def test_continuous_non_gaussian(db_path, sampler):
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon, max_nr_populations=2)
-    posterior_x, posterior_weight = history.get_results_distribution(0, "u")
+    posterior_x, posterior_weight = history.get_distribution(None, 0)
+    posterior_x = posterior_x["u"].as_matrix()
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200,
                                                      posterior_x[sort_indices],
@@ -348,7 +349,8 @@ def test_gaussian_single_population(db_path, sampler):
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
-    posterior_x, posterior_weight = history.get_results_distribution(0, "x")
+    posterior_x, posterior_weight = history.get_distribution(None, 0)
+    posterior_x = posterior_x["x"].as_matrix()
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
                                           sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
@@ -390,7 +392,8 @@ def test_gaussian_multiple_populations(db_path, sampler):
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
-    posterior_x, posterior_weight = history.get_results_distribution(0, "x")
+    posterior_x, posterior_weight = history.get_distribution(None, 0)
+    posterior_x = posterior_x["x"].as_matrix()
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
                                           sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
@@ -436,7 +439,8 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
-    posterior_x, posterior_weight = history.get_results_distribution(0, "x")
+    posterior_x, posterior_weight = history.get_distribution(None, 0)
+    posterior_x = posterior_x["x"].as_matrix()
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
                                           sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
@@ -632,7 +636,8 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
-    posterior_x, posterior_weight = history.get_results_distribution(0, "x")
+    posterior_x, posterior_weight = history.get_distribution(None, 0)
+    posterior_x = posterior_x["x"].as_matrix()
     sort_indices = sp.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
                                           sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))

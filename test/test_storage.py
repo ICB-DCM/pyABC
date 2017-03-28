@@ -44,7 +44,7 @@ def test_single_particle_save_load(history: History):
                                          [{"ss": .1}])]
     history.append_population(0, 42, particle_population, 2)
 
-    df, w = history.weighted_parameters_dataframe(0, 0)
+    df, w = history.get_distribution(0, 0)
 
     assert w[0] == 1
     assert df.a.iloc[0] == 23
@@ -122,7 +122,7 @@ def test_dataframe_storage_readout():
             for m in range(5):
                 pop = pops[(h, m, t)]
                 expected_particles_list = [p.parameter for p in pop]
-                pars_df, w = h.weighted_parameters_dataframe(t, m)
+                pars_df, w = h.get_distribution(t, m)
                 # use range(len and not zip on dataframe to not stop early
                 # in case of population not completely stored
                 assert np.isclose(w.sum(), 1)
