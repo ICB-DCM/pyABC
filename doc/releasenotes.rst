@@ -4,7 +4,8 @@ Release Notes
 0.5 series
 ..........
 
-0.5.1
+
+0.5.2
 -----
 
 * Minor History API changes
