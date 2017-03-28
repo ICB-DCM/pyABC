@@ -384,8 +384,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
                  eps=MedianEpsilon(.2),
                  sampler=sampler)
 
-    options = {'db_path': db_path}
-    abc.set_data({"y": y_observed}, options, 0, {})
+    abc.set_data({"y": y_observed}, db_path)
 
     minimum_epsilon = -1
 
