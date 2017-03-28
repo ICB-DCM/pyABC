@@ -131,7 +131,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
     population_size = ConstantPopulationStrategy(800, 3)
-    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
+    parameter_given_model_prior_distribution = [Distribution(theta=st.beta(
                                                                       1, 1))
                                                 for _ in range(2)]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -377,7 +377,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
     models = list(map(SimpleModel, models))
     nr_populations = 4
     population_size = ConstantPopulationStrategy(600, nr_populations)
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
+    parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
@@ -420,7 +420,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     models = list(map(SimpleModel, models))
     nr_populations = 4
     population_size = ConstantPopulationStrategy(600, nr_populations)
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
+    parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     parameter_perturbation_kernels = [GridSearchCV(MultivariateNormalTransition(),
                                       {"scaling": sp.logspace(-1, 1.5, 5)})]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -466,8 +466,9 @@ def test_two_competing_gaussians_single_population(db_path, sampler, transition)
     models = list(map(SimpleModel, models))
     population_size = ConstantPopulationStrategy(500, 1)
     mu_x_1, mu_x_2 = 0, 1
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma_x)),
-                                                Distribution(x=RV("norm", mu_x_2, sigma_x))]
+    parameter_given_model_prior_distribution = [
+        Distribution(x=st.norm(mu_x_1, sigma_x)),
+        Distribution(x=st.norm(mu_x_2, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
@@ -510,8 +511,9 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler, transitio
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma)),
-                                                Distribution(x=RV("norm", mu_x_2, sigma))]
+    parameter_given_model_prior_distribution = [
+        Distribution(x=st.norm(mu_x_1, sigma)),
+        Distribution(x=st.norm(mu_x_2, sigma))]
 
     # We plug all the ABC setup together
     nr_populations = 3
@@ -587,7 +589,8 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
     population_size = AdaptivePopulationStrategy(800, 3)
-    parameter_given_model_prior_distribution = [Distribution(theta=RV("beta", 1, 1)) for _ in range(2)]
+    parameter_given_model_prior_distribution = [
+        Distribution(theta=st.beta(1, 1)) for _ in range(2)]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
                  population_size,
@@ -615,7 +618,8 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
     models = list(map(SimpleModel, models))
     nr_populations = 4
     population_size = AdaptivePopulationStrategy(600, nr_populations)
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0, sigma_x))]
+    parameter_given_model_prior_distribution = [
+        Distribution(x=st.norm(0, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
@@ -662,8 +666,8 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
-    parameter_given_model_prior_distribution = [Distribution(x=RV("norm", mu_x_1, sigma)),
-                                                Distribution(x=RV("norm", mu_x_2, sigma))]
+    parameter_given_model_prior_distribution = [Distribution(x=st.norm(mu_x_1, sigma)),
+                                                Distribution(x=st.norm(mu_x_2, sigma))]
 
     # Particles are perturbed in a Gaussian fashion
     parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]

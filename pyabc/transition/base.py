@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
-from pyabc.cv.bootstrap import calc_cv
+from ..cv.bootstrap import calc_cv
 from .transitionmeta import TransitionMeta
 
 transition_logger = logging.getLogger("Transitions")

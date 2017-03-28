@@ -89,7 +89,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     sigma = .5
 
     def model(args):
-        time.sleep(.41)
+        time.sleep(.01)
         return {"y": st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
@@ -99,8 +99,8 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
-        Distribution(x=RV("norm", mu_x_1, sigma)),
-        Distribution(x=RV("norm", mu_x_2, sigma))
+        Distribution(x=st.norm(mu_x_1, sigma)),
+        Distribution(x=st.norm(mu_x_2, sigma))
     ]
 
     # We plug all the ABC setup together

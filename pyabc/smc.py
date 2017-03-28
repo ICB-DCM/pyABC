@@ -90,7 +90,7 @@ class ABCSMC:
                 .. warning::
 
                     If a model has only one particle left
-                    the standdardeviation is zero.
+                    the standard deviation is zero.
 
         This callable is called at the beginning of a new population with
         the statistics dictionary from the last population to determine the
@@ -105,14 +105,6 @@ class ABCSMC:
         This epsilon changes from population to population.
         The eps instance provided the strategy fo how to change it.
 
-    mapper: map like
-        Something like the built in map.
-        I.e. mapper(f, args) takes a callable ``f`` and applies it the the
-        arguments in the list ``args``.
-        This mapper is used for particle sampling.
-        It can be a distributed mapper such as the :class:`pyabc.sge.SGE`
-        class.
-
     sampler:
         In some cases, a mapper implementation will require initialization
         to run properly, e.g. database connection, grid setup, etc...
@@ -120,11 +112,6 @@ class ABCSMC:
         The default sampler will simply call the callable mapper at the right
         place; a more involved sampler will help the mapper-function to
         distribute function calls accross a distributed infrastructure.
-
-    debug: bool
-        Whether to output additional debug information
-
-
 
     .. [#toni-stumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -135,7 +122,8 @@ class ABCSMC:
     def __init__(self, models: List[Model],
                  parameter_priors: List[Distribution],
                  distance_function,
-                 population_strategy: Union[PopulationStrategy, int],
+                 population_specification: Union[PopulationStrategy, int]
+                 = 100,
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
@@ -178,9 +166,10 @@ class ABCSMC:
             eps = MedianEpsilon()
         self.eps = eps
 
-        if isinstance(population_strategy, int):
-            population_strategy = ConstantPopulationStrategy(population_strategy, 50)
-        self.population_strategy = population_strategy
+        if isinstance(population_specification, int):
+            population_specification = ConstantPopulationStrategy(
+                population_specification, float("inf"))
+        self.population_strategy = population_specification
 
         if sampler is None:
             self.sampler = MulticoreParticleParallelSampler()
@@ -231,8 +220,7 @@ class ABCSMC:
 
             If a dict, has to contain the key "db_path" which has to be a valid
             SQLAlchemy database identifier. Can contain an arbitrary number of
-            additional keys,
-            only for recording purposes. Store arbitrary
+            additional keys, only for recording purposes. Store arbitrary
             meta information in this dictionary. Can be used for really
             anything.
 
@@ -251,6 +239,7 @@ class ABCSMC:
             This stores the parameters of the ground truth model
             if it was syntheticallyobtained.
         """
+
         # initialize
         if isinstance(abc_options, str):
             abc_options = {"db_path": abc_options}
