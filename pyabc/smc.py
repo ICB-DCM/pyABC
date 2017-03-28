@@ -23,6 +23,7 @@ from .populationstrategy import PopulationStrategy
 from .random import fast_random_choice
 from typing import Union
 from .model import SimpleModel
+from .populationstrategy import ConstantPopulationStrategy
 import copy
 
 
@@ -177,6 +178,8 @@ class ABCSMC:
             eps = MedianEpsilon()
         self.eps = eps
 
+        if isinstance(population_strategy, int):
+            population_strategy = ConstantPopulationStrategy(population_strategy, 50)
         self.population_strategy = population_strategy
 
         if sampler is None:
