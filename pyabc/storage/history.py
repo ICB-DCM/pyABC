@@ -133,7 +133,7 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-    def get_distribution(self, t: int, m: int)\
+    def get_distribution(self, m: int, t: int=None) \
             -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample as pandas DataFrame.

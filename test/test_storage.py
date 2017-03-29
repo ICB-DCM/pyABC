@@ -122,7 +122,7 @@ def test_dataframe_storage_readout():
             for m in range(5):
                 pop = pops[(h, m, t)]
                 expected_particles_list = [p.parameter for p in pop]
-                pars_df, w = h.get_distribution(t, m)
+                pars_df, w = h.get_distribution(m, t)
                 # use range(len and not zip on dataframe to not stop early
                 # in case of population not completely stored
                 assert np.isclose(w.sum(), 1)

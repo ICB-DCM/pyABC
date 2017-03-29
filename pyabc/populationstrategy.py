@@ -170,4 +170,4 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                                     self.min_population_size)
 
         adaptation_logger.info("Change nr particles {} -> {}"
-                                .format(reference_nr_part, self.nr_particles))
+                               .format(reference_nr_part, self.nr_particles))

@@ -89,7 +89,6 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     sigma = .5
 
     def model(args):
-        time.sleep(.01)
         return {"y": st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far

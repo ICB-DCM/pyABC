@@ -195,6 +195,6 @@ class MedianEpsilon(Epsilon):
             median = weighted_median(
                 df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
             self._look_up[t] = median * self.median_multiplier
-            eps_logger.info("new eps, t={}, eps={}"
+            eps_logger.debug("new eps, t={}, eps={}"
                              .format(t, self._look_up[t]))
             return self._look_up[t]

@@ -456,5 +456,5 @@ class ABCSMC:
             return
 
         for m in self.history.alive_models(t - 1):
-            particles, w = self.history.get_distribution(t - 1, m)
+            particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)

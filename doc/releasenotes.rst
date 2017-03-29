@@ -1,6 +1,21 @@
 Release Notes
 =============
 
+0.6 series
+..........
+
+
+0.6.0
+-----
+
+History API
+~~~~~~~~~~~
+
+Change the signature from History.get_distribution(t, m)
+to History.get_distribution(m, t) and make the time argument optional
+defaulting to the last time point
+
+
 0.5 series
 ..........
 
