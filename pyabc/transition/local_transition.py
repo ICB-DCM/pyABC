@@ -27,7 +27,7 @@ class LocalTransition(Transition):
 
     k_fraction: float, optional
         Calculate number of nearest neighbors to use according to
-        k = ``k_fraction`` * `population_size``
+        ``k = k_fraction * population_size`` (and rounds it).
 
     Attributes
     ----------
