@@ -1,6 +1,6 @@
 from multiprocessing import Process, Queue, Value
 from ctypes import c_longlong
-from .base import Sampler
+from .multicorebase import MultiCoreSampler
 from ..sge import nr_cores_available
 import numpy as np
 import random
@@ -26,7 +26,7 @@ def work(sample, simulate, accept,
             queue.put((particle_id, new_sim))
 
 
-class MulticoreEvalParallelSampler(Sampler):
+class MulticoreEvalParallelSampler(MultiCoreSampler):
     """
     Multicore Evaluation parallel sampler.
 
@@ -39,7 +39,24 @@ class MulticoreEvalParallelSampler(Sampler):
     processes.
     This sampler has very low communication overhead and is thus suitable
     for short running model evaluations.
+
+
+    Parameters
+    ----------
+        n_procs: int, optional
+            If set to None, the Number of cores is determined according to
+            :func:`pyabc.sge.util.nr_cores_available`.
     """
+    def __init__(self, n_procs=None):
+        super().__init__()
+        self._n_procs = n_procs
+
+    @property
+    def n_procs(self):
+        if self._n_procs is not None:
+            return self._n_procs
+        return nr_cores_available()
+
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         n_eval = Value(c_longlong)
         n_eval.value = 0
@@ -54,7 +71,7 @@ class MulticoreEvalParallelSampler(Sampler):
                     args=(sample_one, simulate_one, accept_one,
                           queue, n_eval, n_particles),
                     daemon=True)
-            for _ in range(nr_cores_available())
+            for _ in range(self.n_procs)
         ]
 
         for proc in processes:

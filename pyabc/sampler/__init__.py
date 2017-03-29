@@ -1,6 +1,8 @@
 """
-Sampling
-========
+Multi-core and Distributed Sampling
+===================================
+
+The choice of the sampler determines in which way parallelization is performed.
 """
 
 from .singlecore import SingleCoreSampler

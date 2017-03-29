@@ -1,11 +1,10 @@
 from multiprocessing import Process, Queue
-from .base import Sampler
-from ..sge import nr_cores_available
+
 from .singlecore import SingleCoreSampler
 import numpy as np
 import random
 import logging
-from typing import Union
+from .multicorebase import MultiCoreSampler
 
 logger = logging.getLogger("MutlicoreSampler")
 
@@ -34,7 +33,7 @@ def work(feed_q, result_q, sample_one, simulate_one, accept_one):
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
-class MulticoreParticleParallelSampler(Sampler):
+class MulticoreParticleParallelSampler(MultiCoreSampler):
     """
     Samples on multiple cores using the multiprocessing module.
     This sampler is optimized for low latencies and is efficient, even
@@ -55,7 +54,7 @@ class MulticoreParticleParallelSampler(Sampler):
 
     Parameters
     ----------
-        n_procs: Union[int, None]
+        n_procs: int, optional
             If set to None, the Number of cores is determined according to
             :func:`pyabc.sge.util.nr_cores_available`.
 
@@ -66,9 +65,6 @@ class MulticoreParticleParallelSampler(Sampler):
         As there is no fork on Windows. This sampler might not work.
 
     """
-    def __init__(self, n_procs: Union[int, None] = None):
-        super().__init__()
-        self.n_procs = n_procs if n_procs else nr_cores_available()
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         logger.debug("Start sampling on {} cores".format(self.n_procs))

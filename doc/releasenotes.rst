@@ -4,6 +4,11 @@ Release Notes
 0.6 series
 ..........
 
+0.6.1
+-----
+
+MulticoreEvalParallelSampler gets an n_procs parameter.
+
 
 0.6.0
 -----

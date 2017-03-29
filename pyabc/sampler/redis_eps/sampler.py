@@ -30,6 +30,8 @@ class RedisEvalParallelSampler(Sampler):
     Use the command ``abc-redis-manager`` to retrieve info and stop the running
     workers.
 
+    Start as many workers as you whish.
+
     Parameters
     ----------
 
