@@ -62,7 +62,7 @@ def test_variance_estimate_higher_n_than_sample(transition: Transition):
     transition.fit(df, w)
 
     var_list = []
-    for n_test in [n, n*2, n*5]:
+    for n_test in [n, n*4, n*10]:
         var = transition.mean_cv(n_test)
         var_list.append(var)
 

@@ -378,17 +378,38 @@ class ABCSMC:
 
     def run(self, minimum_epsilon: float, max_nr_populations: int) -> History:
         """
-        Run the ABCSMC model selection. This method can be called many times.
-        It makes another
-        step continuing where it has stopped before.
-
-        It is stopped when the maximum number of populations is reached
-        or the ``minimum_epsilon`` value is reached.
-
+        Run the ABCSMC model selection until either of the stopping
+        criteria is met.
+        
         Parameters
         ----------
         minimum_epsilon: float
             Stop if epsilon is smaller than minimum epsilon specified here.
+            
+        max_nr_populations: int
+            Tha maximum number of populations. Stop if this number is reached.
+        
+        
+        Population after population is sampled and particles which are close
+        enough to the observed data are accepted into the next population.
+        If an adaptive Epsilon is specified (this is the default), then
+        the acceptance threshold decreases from population to population
+        automatically in a data dependent way.
+
+        Sampling of further populations is stopped, when either of the two
+        stopping criteria is met:
+        
+            * the maximum number of populations ``max_nr_populations``
+              is reached
+            * or the acceptance threshold for the last sampled population was
+              smaller than ``minimum_epsilon``.
+            
+        The value of ``minimum_epsilon`` determines the quality of the ABCSMC
+        approximation. The smaller the better. But sampling time also increases
+        with decreasing ``minimum_epsilon``.
+            
+        This method can be called repeatedly to sample further populations
+        after sampling was stopped once.
         """
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
