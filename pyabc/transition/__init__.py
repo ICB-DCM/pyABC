@@ -1,9 +1,11 @@
 """
-Transitions
-============
+Transitions (Perturbation Kernels)
+=================================
 
-Perturbation strategies. The thinks defined here transition the current
-population to the next one.
+Perturbation strategies. The classes defined here transition the current
+population to the next one. pyABC implements global and local transitions.
+
+
 """
 
 from .base import Transition
