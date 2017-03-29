@@ -1,6 +1,10 @@
 """
 
-Scheduling strategies
+Acceptance threshold Scheduling strategies.
+
+Acceptance thresholds can calculated based on the distances from the
+observed data or can follow a pre-defined list, can be constant or can have
+a user-defined implementation.
 """
 
 
@@ -139,7 +143,7 @@ class ListEpsilon(Epsilon):
 
 class MedianEpsilon(Epsilon):
     """
-    Calculate epsilon as median from the last population.
+    Calculate epsilon as median of the distances from the last population.
 
     Parameters
     ----------
@@ -155,6 +159,15 @@ class MedianEpsilon(Epsilon):
         to the initial median if it is calculated from samples.
         However, it does **not** apply to the initial median if
         it is given as a number.
+
+
+    This strategy should work even if the posterior is multi-modal.
+    Note that the acceptance threshold calculation is based on the distance
+    to the observation, not on the parameters which generated data with that
+    distance.
+    If completely different parameter sets produce equally good samples
+    the distances of their samples to the ground truth data should be
+    comparable.
     """
 
     def __init__(self, initial_epsilon: Union[str, int, float]='from_sample',

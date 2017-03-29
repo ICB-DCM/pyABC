@@ -96,10 +96,11 @@ class ABCSMC:
         of a single model. Defaults to multivariate normal transitions for
         every model.
 
-    eps: Epsilon
-        Returns the current acceptance epsilon.
-        This epsilon changes from population to population.
-        The eps instance provided the strategy fo how to change it.
+    eps: Epsilon, optional
+        Accepts any :class:`pyabc.epsilon.Epsilon` subclass.
+        The default is the :class:`pyabc.epsilon.MediaEpsilon` which adapts
+        automatically. The object passed here determines how the acceptance
+        threshold scheduling is performed.
 
     sampler:
         In some cases, a mapper implementation will require initialization
