@@ -92,8 +92,9 @@ class ABCSMC:
 
     transitions: List[Transition], Transition, optional
         A list of :class:`pyabc.transition.Transition` objects
-        or a single :class:`pyabc.transition.Transition` in case of a single model.
-        Defaults to multivariate normal transitions for every model.
+        or a single :class:`pyabc.transition.Transition` in case
+        of a single model. Defaults to multivariate normal transitions for
+        every model.
 
     eps: Epsilon
         Returns the current acceptance epsilon.
