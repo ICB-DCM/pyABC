@@ -4,6 +4,13 @@ Release Notes
 0.6 series
 ..........
 
+
+0.6.2
+-----
+
+Bug fix. Forgot to add the new Multicore base class.
+
+
 0.6.1
 -----
 
