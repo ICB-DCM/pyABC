@@ -35,15 +35,14 @@ class LocalTransition(Transition):
     EPS: float
         Scaling of the identity matrix to be added to the covariance
         in case the covariances are not invertible.
-        
-        
+
+
     .. [Filippi] Filippi, Sarah, Chris P. Barnes, Julien Cornebise,
                  and Michael P.H. Stumpf. “On Optimality of Kernels
                  for Approximate Bayesian Computation Using Sequential
                  Monte Carlo.” Statistical Applications in Genetics and
                  Molecular Biology 12, no. 1 (2013):
                  87–107. doi:10.1515/sagmb-2012-0069.
-
     """
     EPS = 1e-3
     MIN_K = 10

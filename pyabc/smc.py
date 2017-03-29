@@ -57,6 +57,21 @@ class ABCSMC:
 
        Each callable represents thus one single model.
 
+    parameter_priors: List[Distribution]
+        A list of prior distributions for the models' parameters.
+        Each list entry is the prior distribution for the corresponding model.
+
+    distance_function: DistanceFunction
+        Measures the distance of the tentatively sampled particle to the
+        measured data.
+
+    population_specification: int, PopulationStrategy, optional
+        Specify the size of the population.
+        If ``population_specification`` is an ``int``, then the size is
+        constant. Adaptive population sizes are also possible by passing a
+        :class:`pyabc.populationstrategy.PopulationStrategy` object.
+        The default is 100 particles per population.
+
     summary_statistics: Callable[[model_output], dict]
         A function which takes the raw model output as returned by
         any ot the models and calculates the corresponding summary
@@ -75,30 +90,10 @@ class ABCSMC:
         Kernel which governs with which probability to switch the model
         for a given sample.
 
-    parameter_priors: List[Distribution]
-        A list of prior distributions for the models' parameters.
-        Each list entry is the prior distribution for the corresponding model.
-
-    transitions: List[Callable[[int, dict], Kernel]]
-        A list of functions mapping ``(t, stat) -> Kernel``, where
-
-            * ``t`` is the population nr
-            * ``stat`` a dictionary of summary statistics.
-               E.g. ``stat['std']['parameter_1']`` is the
-               standard deviation of ``parameter_1``.
-
-                .. warning::
-
-                    If a model has only one particle left
-                    the standard deviation is zero.
-
-        This callable is called at the beginning of a new population with
-        the statistics dictionary from the last population to determine the
-        new parameter perturbation kernel for the next population.
-
-    distance_function: DistanceFunction
-        Measures the distance of the tentatively sampled particle to the
-        measured data.
+    transitions: List[Transition], Transition, optional
+        A list of :class:`pyabc.transition.Transition` objects
+        or a single :class:`pyabc.transition.Transition` in case of a single model.
+        Defaults to multivariate normal transitions for every model.
 
     eps: Epsilon
         Returns the current acceptance epsilon.
@@ -129,7 +124,8 @@ class ABCSMC:
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
-                 transitions: List[Transition] = None, eps: Epsilon = None,
+                 transitions: List[Transition] = None,
+                 eps: Epsilon = None,
                  sampler=None):
 
         if not isinstance(models, list):
@@ -380,16 +376,16 @@ class ABCSMC:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
-        
+
         Parameters
         ----------
         minimum_epsilon: float
             Stop if epsilon is smaller than minimum epsilon specified here.
-            
+
         max_nr_populations: int
             Tha maximum number of populations. Stop if this number is reached.
-        
-        
+
+
         Population after population is sampled and particles which are close
         enough to the observed data are accepted into the next population.
         If an adaptive Epsilon is specified (this is the default), then
@@ -398,16 +394,16 @@ class ABCSMC:
 
         Sampling of further populations is stopped, when either of the two
         stopping criteria is met:
-        
+
             * the maximum number of populations ``max_nr_populations``
               is reached
             * or the acceptance threshold for the last sampled population was
               smaller than ``minimum_epsilon``.
-            
+
         The value of ``minimum_epsilon`` determines the quality of the ABCSMC
         approximation. The smaller the better. But sampling time also increases
         with decreasing ``minimum_epsilon``.
-            
+
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
