@@ -119,7 +119,7 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         The error criterion. Defaults to 0.05.
         A smaller value leads generally to larger populations.
         The error criterion is the mean coefficient of variation of
-         the estimated KDE.
+        the estimated KDE.
 
     nr_samples_per_parameter: int, optional
         Defaults to 1.

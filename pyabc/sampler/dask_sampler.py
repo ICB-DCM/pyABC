@@ -46,6 +46,7 @@ class DaskDistributedSampler(Sampler):
 
     def __init__(self, dask_client=None, client_max_jobs=np.inf,
                  default_pickle=False, batchsize=1):
+        super().__init__()
         self.nr_evaluations_ = 0
 
         # Assign Client
