@@ -158,6 +158,8 @@ class History:
         w:
             are the weights associated with each parameter
         """
+        m = int(m)
+        t = int(t)
         if t is None:
             t = self.max_t
 

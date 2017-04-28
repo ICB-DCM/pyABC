@@ -37,6 +37,10 @@ def rand_pop(m):
 
 
 def test_single_particle_save_load(history: History):
+    # Test if np.int64 can also be used for indexing
+    # This is an important test!!!
+    m_list = [0, np.int64(0)]
+    t_list = [0, np.int64(0)]
     particle_population = [ValidParticle(0,
                                          Parameter({"a": 23, "b": 12}),
                                          .2,
@@ -44,11 +48,12 @@ def test_single_particle_save_load(history: History):
                                          [{"ss": .1}])]
     history.append_population(0, 42, particle_population, 2)
 
-    df, w = history.get_distribution(0, 0)
-
-    assert w[0] == 1
-    assert df.a.iloc[0] == 23
-    assert df.b.iloc[0] == 12
+    for m in m_list:
+        for t in t_list:
+            df, w = history.get_distribution(m, t)
+            assert w[0] == 1
+            assert df.a.iloc[0] == 23
+            assert df.b.iloc[0] == 12
 
 
 def test_sum_stats_save_load(history: History):
