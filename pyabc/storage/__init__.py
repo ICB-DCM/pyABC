@@ -21,7 +21,7 @@ database identifier. For example, if you ABC-SMC data is stored in a file
 .. code-block:: python
 
    history = History("sqlite:///data.db")
-   
+
 Don't mind the three slashes. This is SQLAlchemy syntax.
 
 If more than one ABC-SMC run is stored in your database file, these runs will
@@ -29,10 +29,10 @@ have IDs. The first run has ID 1, the second run ID 2 and so on. Per default,
 the first run found in the database is automatically selected. To select a
 specific run by manually, do
 
-.. code-block:: python 
- 
+.. code-block:: python
+
     history.id = n
-    
+
 if n is the run number, e.g. n=3.
 
 
@@ -62,7 +62,7 @@ example,
 .. code-block:: python
 
    df, w = history.get_distribution(m)
-   
+
 will return a DataFrame df and an array w of parameters of model m.
 The DataFrame df contains the parameters of the populations
 and the array w their weights. If you're interested in intermediate
@@ -72,9 +72,6 @@ number
 .. code-block:: python
 
    df, w = history.get_distribution(m, t)
-
-
-
 
 """
 

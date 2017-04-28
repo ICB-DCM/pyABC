@@ -350,7 +350,6 @@ class ABCSMC:
 
     def _generate_valid_proposal(self, t, m, p):
         """
-        
         Parameters
         ----------
         t: populaton number
