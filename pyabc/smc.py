@@ -10,7 +10,7 @@ import logging
 from typing import List, Callable, TypeVar
 import pandas as pd
 import scipy as sp
-from .sampler import MulticoreParticleParallelSampler
+from .sampler import MulticoreEvalParallelSampler
 from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
@@ -106,9 +106,8 @@ class ABCSMC:
         In some cases, a mapper implementation will require initialization
         to run properly, e.g. database connection, grid setup, etc...
         The sampler is an object that encapsulates this information.
-        The default sampler will simply call the callable mapper at the right
-        place; a more involved sampler will help the mapper-function to
-        distribute function calls accross a distributed infrastructure.
+        The default sampler will parallelize across the cores of a single
+        machine only.
 
 
 
@@ -172,7 +171,7 @@ class ABCSMC:
         self.population_strategy = population_specification
 
         if sampler is None:
-            self.sampler = MulticoreParticleParallelSampler()
+            self.sampler = MulticoreEvalParallelSampler()
         else:
             self.sampler = sampler
 

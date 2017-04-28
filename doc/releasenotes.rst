@@ -5,6 +5,13 @@ Release Notes
 ..........
 
 
+0.6.4
+-----
+
+Performance improvement. Use MulticoreEvalParallelSampler as default. This
+should bring better performance for machines with many cores and comparatively
+small population sizes.
+
 0.6.3
 -----
 
