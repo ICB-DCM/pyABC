@@ -435,6 +435,8 @@ class History:
         if t is not None:
             p_models_df = pd.DataFrame([p[:2] for p in p_models],
                                        columns=["p", "m"]).set_index("m")
+            # TODO the following line is redundant
+            # only models with no-zero weight are stored for each population
             p_models_df = p_models_df[p_models_df.p >= 0]
             return p_models_df
         else:

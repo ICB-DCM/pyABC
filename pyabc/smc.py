@@ -349,6 +349,18 @@ class ABCSMC:
         return weight
 
     def _generate_valid_proposal(self, t, m, p):
+        """
+        
+        Parameters
+        ----------
+        t: populaton number
+        m: Indices of alive models
+        p: Probabilities of alive models
+
+        Returns
+        -------
+
+        """
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior.rvs()
