@@ -125,6 +125,7 @@ class History:
             A list which contains the indices of those
             models which are still alive
         """
+        t = int(t)
         alive = (self._session.query(Model.m)
                  .join(Population)
                  .join(ABCSMC)
@@ -159,9 +160,10 @@ class History:
             are the weights associated with each parameter
         """
         m = int(m)
-        t = int(t)
         if t is None:
             t = self.max_t
+        else:
+            t = int(t)
 
         query = (self._session.query(Particle.id, Parameter.name,
                                      Parameter.value, Particle.w)
@@ -424,6 +426,8 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
+        if t is not None:
+            t = int(t)
         p_models = (
             self._session
             .query(Model.p_model, Model.m, Population.t)
@@ -464,6 +468,8 @@ class History:
         """
         if t is None:
             t = self.max_t
+        else:
+            t = int(t)
         model_probs = self.get_model_probabilities(t)
         return int((model_probs.p > 0).sum())
 
@@ -485,6 +491,8 @@ class History:
         """
         if t is None:
             t = self.max_t
+        else:
+            t = int(t)
 
         query = (self._session.query(Sample.distance, Particle.w, Model.m)
                  .join(Particle)
@@ -549,8 +557,11 @@ class History:
         sum_stats: list
             List of summary statistics
         """
+        m = int(m)
         if t is None:
             t = self.max_t
+        else:
+            t = int(t)
 
         particles = (self._session.query(Particle)
                      .join(Model).join(Population).join(ABCSMC)

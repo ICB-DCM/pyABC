@@ -5,6 +5,13 @@ Release Notes
 ..........
 
 
+0.6.3
+-----
+
+Bug fix. Ensure numpy.int64 can also be passed to History methods were an
+integer argument is expected.
+
+
 0.6.2
 -----
 

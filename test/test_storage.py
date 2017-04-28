@@ -44,7 +44,6 @@ def test_single_particle_save_load(history: History):
                                          [{"ss": .1}])]
     history.append_population(0, 42, particle_population, 2)
 
-
     df, w = history.get_distribution(0, 0)
     assert w[0] == 1
     assert df.a.iloc[0] == 23
