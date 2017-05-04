@@ -18,7 +18,7 @@ What you need
 
 * Some kind of experimentally observed or synthetically generated data
 * a parametrized stochastic simulator (e.g. a Python functions which makes
-  calls to random nunmber generators)
+  calls to random number generators)
   which supposedly explains the data
 
 
