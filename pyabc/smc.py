@@ -117,8 +117,9 @@ class ABCSMC:
                   Bioinformatics 26, no. 1 (January 1, 2010):
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
-    def __init__(self, models: List[Model],
-                 parameter_priors: List[Distribution],
+    def __init__(self, models: Union[List[Model], Model],
+                 parameter_priors: Union[List[Distribution],
+                                         Distribution, Callable],
                  distance_function,
                  population_specification: Union[PopulationStrategy, int]
                  = 100,
@@ -384,7 +385,8 @@ class ABCSMC:
                     * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
-    def run(self, minimum_epsilon: float, max_nr_populations: int) -> History:
+    def run(self, minimum_epsilon: float, max_nr_populations: int,
+            acceptance_rate=0) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -396,6 +398,9 @@ class ABCSMC:
 
         max_nr_populations: int
             Tha maximum number of populations. Stop if this number is reached.
+        acceptance_rate: float
+            Minimal allowed acceptance rate. Sampling stops if a population
+            has a lower rate.
 
 
         Population after population is sampled and particles which are close
@@ -454,16 +459,20 @@ class ABCSMC:
             population = [particle for particle in population
                           if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
+            nr_evaluations = self.sampler.nr_evaluations_
             self.history.append_population(
-                t, current_eps, population, self.sampler.nr_evaluations_)
+                t, current_eps, population, nr_evaluations)
             abclogger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 
-            if (current_eps <= minimum_epsilon or
-                (self.stop_if_only_single_model_alive
-                 and self.history.nr_of_models_alive() <= 1)):
+            current_acceptance_rate = len(population) / nr_evaluations
+            if (current_eps <= minimum_epsilon
+                or (self.stop_if_only_single_model_alive
+                    and self.history.nr_of_models_alive() <= 1)
+                or current_acceptance_rate < acceptance_rate):
                 break
+
         self.history.done()
         return self.history
 

@@ -207,6 +207,10 @@ class History:
                                      Population.nr_samples, Population.epsilon)
                  .filter(Population.abc_smc_id == self.id))
         df = pd.read_sql_query(query.statement, self._engine)
+        particles = self.get_nr_particles_per_population()
+        particles.index += 1
+        df["particles"] = particles
+        df = df.rename(columns={"nr_samples": "samples"})
         return df
 
     @with_session
@@ -507,7 +511,7 @@ class History:
         return df_weighted
 
     @with_session
-    def get_nr_particles_per_population(self) -> pd.DataFrame:
+    def get_nr_particles_per_population(self) -> pd.Series:
         """
 
         Returns

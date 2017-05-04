@@ -169,10 +169,10 @@ def test_population_retrieval(history):
     assert df[df.t == 2].epsilon.iloc[1] == .1235
     assert df[df.t == 3].epsilon.iloc[0] == .12330
 
-    assert df[df.t == 1].nr_samples.iloc[0] == 234
-    assert df[df.t == 2].nr_samples.iloc[0] == 345
-    assert df[df.t == 2].nr_samples.iloc[1] == 20345
-    assert df[df.t == 3].nr_samples.iloc[0] == 30345
+    assert df[df.t == 1].samples.iloc[0] == 234
+    assert df[df.t == 2].samples.iloc[0] == 345
+    assert df[df.t == 2].samples.iloc[1] == 20345
+    assert df[df.t == 3].samples.iloc[0] == 30345
 
     assert history.alive_models(1) == [0]
     assert history.alive_models(2) == [0, 5]

@@ -1,6 +1,22 @@
 Release Notes
 =============
 
+
+
+0.7 series
+..........
+
+
+0.7.0
+-----
+
+* ABCSMC.run gets a new parameter "acceptance_rate" to stop sampling if the
+  acceptance rate drops too low.
+* History.get_all_populations returns a DataFrame with columns "t",
+  "population_end_time", "samples", "epsilon", "particles". That is
+  "nr_samples" got renamed to "samples" and "particles" is new.
+
+
 0.6 series
 ..........
 

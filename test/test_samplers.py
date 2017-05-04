@@ -1,7 +1,4 @@
 import multiprocessing
-import os
-import tempfile
-
 import pytest
 import scipy as sp
 import scipy.stats as st
@@ -16,9 +13,6 @@ from pyabc.sampler import (SingleCoreSampler, MappingSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
                            RedisEvalParallelSamplerServerStarter)
-
-
-REMOVE_DB = False
 
 
 def multi_proc_map(f, x):
@@ -79,19 +73,6 @@ def sampler(request):
         s.cleanup()
     except AttributeError:
         pass
-
-
-@pytest.fixture
-def db_path():
-    db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest.db")
-    db = "sqlite:///" + db_file_location
-    yield db
-    if REMOVE_DB:
-        try:
-            if REMOVE_DB:
-                os.remove(db_file_location)
-        except FileNotFoundError:
-            pass
 
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
