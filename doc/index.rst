@@ -18,7 +18,7 @@ the model parameters. pyABC "inverts" the model for you and tells you
 which parameters were well matching and which ones not. You do **not** need
 to analytically calculate the likelihood function.
 
-pyABC runes efficiently on multicore machines and distributed cluster setups.
+pyABC runs efficiently on multicore machines and distributed cluster setups.
 It is easy to use and flexibly extensible.
 
 User's Guide
