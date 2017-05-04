@@ -54,7 +54,7 @@ Why to use pyABC?
 
 
 
-This is a package for Approximate Bayesian Computationh, using a Sequential Monte Carlo scheme.
+This is a package for Approximate Bayesian Computation, using a Sequential Monte Carlo scheme.
 This provides a particularly efficient technique for Bayesian posterior estimation in cases where
 it is very hard to calculate the likelihood function efficiently.
 
@@ -74,6 +74,6 @@ but can also be deployed to the cloud. Amongst other backend modes,
 
 
 It sounds like a contradiction, but pyABC is on the one hand easy to use for standard applications,
-on the other hand it can be very flexible experimented with it, exploring all aspects of new ABC-SMC schemes.
-Appart of a rich set of default choices, it is easy to parametrize aspects of your algorithm through the implementation
+on the other hand it allows for flexible experimentation, exploring all aspects of new ABC-SMC schemes.
+Apart of a rich set of default choices, it is easy to parametrize aspects of your algorithm through the implementation
 of custom classes.
