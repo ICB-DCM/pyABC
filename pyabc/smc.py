@@ -10,7 +10,6 @@ import logging
 from typing import List, Callable, TypeVar
 import pandas as pd
 import scipy as sp
-from .sampler import MulticoreEvalParallelSampler
 from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
@@ -24,6 +23,7 @@ from .random import fast_random_choice
 from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationStrategy
+from .platform_factory import DefaultSampler
 import copy
 
 
@@ -172,7 +172,7 @@ class ABCSMC:
         self.population_strategy = population_specification
 
         if sampler is None:
-            self.sampler = MulticoreEvalParallelSampler()
+            self.sampler = DefaultSampler()
         else:
             self.sampler = sampler
 
