@@ -7,6 +7,14 @@ Release Notes
 ..........
 
 
+0.7.1
+-----
+
+
+* Minor refactoring for better Windows compatibility. But runs in serial
+  on Windows
+
+
 0.7.0
 -----
 
