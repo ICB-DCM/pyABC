@@ -468,9 +468,9 @@ class ABCSMC:
 
             current_acceptance_rate = len(population) / nr_evaluations
             if (current_eps <= minimum_epsilon
-                or (self.stop_if_only_single_model_alive
-                    and self.history.nr_of_models_alive() <= 1)
-                or current_acceptance_rate < acceptance_rate):
+               or (self.stop_if_only_single_model_alive
+                   and self.history.nr_of_models_alive() <= 1)
+               or current_acceptance_rate < acceptance_rate):
                 break
 
         self.history.done()
