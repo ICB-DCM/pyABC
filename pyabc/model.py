@@ -8,7 +8,7 @@ Models for ABCSMC
 from .parameters import Parameter
 from typing import Callable, Any
 
-__all__ = ["Model", "SimpleModel", "ModelResult"]
+__all__ = ["Model", "SimpleModel", "ModelResult", "IntegratedModel"]
 
 
 class ModelResult:
@@ -44,7 +44,7 @@ class Model:
     .. warning::
 
         Most likely you do no want to suse this class, but the
-        :class:`SimpleModel` instead.
+        :class:`SimpleModel` instead, or even just a plain function as model.
 
     Parameters
     ----------
@@ -60,15 +60,62 @@ class Model:
         return "<{} {}>".format(self.__class__.__name__, self.name)
 
     def sample(self, pars):
+        """
+        Return a sample from the model evaluated ar parameters ``pars``.
+
+        This method has to be implemented by any subclass.
+
+        Parameters
+        ----------
+        pars: dictionary of parameters
+
+        Returns
+        -------
+
+        sample: any
+            The sampled data.
+        """
         raise NotImplementedError()
 
     def summary_statistics(self, pars, sum_stats_calculator) -> ModelResult:
+        """
+        Calculate the summary statistics.
+
+        Parameters
+        ----------
+        pars: Model parameters
+        sum_stats_calculator: A function which calculates summary statistics
+            the user is free to use or ignore this function
+
+        Returns
+        -------
+
+        model_result: ModelResult
+            The result filled with summary statistics
+        """
         raw_data = self.sample(pars)
         sum_stats = sum_stats_calculator(raw_data)
         return ModelResult(sum_stats=sum_stats)
 
     def distance(self, pars, sum_stats_calculator, distance_calculator) \
             -> ModelResult:
+        """
+        Calculate the distance
+
+        Parameters
+        ----------
+        pars: Model parameters
+        sum_stats_calculator: A function which calculates summary statistics.
+            The user is free to use or ignore this function.
+        distance_calculator: A function which calculates the distance.
+            The user is free to use or ignore this function.
+
+        Returns
+        -------
+
+        model_result: ModelResult
+            The result filled with the distance
+        """
         sum_stats_result = self.summary_statistics(pars, sum_stats_calculator)
         distance = distance_calculator(sum_stats_result.sum_stats)
         sum_stats_result.distance = distance
@@ -76,6 +123,26 @@ class Model:
 
     def accept(self, pars, sum_stats_calculator, distance_calculator, eps) \
             -> ModelResult:
+        """
+        Accept or not accept a parameter.
+
+        Parameters
+        ----------
+        pars: Model parameters
+        sum_stats_calculator: A function which calculates summary statistics.
+            The user is free to use or ignore this function.
+        distance_calculator: A function which calculates the distance.
+            The user is free to use or ignore this function.
+        eps: float
+            Acceptance threshold
+
+        Returns
+        -------
+
+        model_result: ModelResult
+            Result filled with the accepted field.
+
+        """
         distance_result = self.distance(pars, sum_stats_calculator,
                                         distance_calculator)
         accepted = distance_result.distance <= eps
@@ -114,3 +181,54 @@ class SimpleModel(Model):
             return model_or_function
         else:
             return SimpleModel(model_or_function)
+
+
+class IntegratedModel(Model):
+    """
+    A model class which integrates simulation, distance calculation
+    and rejection/acceptance.
+
+    This can bring performance improvements if the user can calculate
+    the distance function on the fly during model simulation and interrupt
+    the simulation if the current acceptance threshold cannot be satisfied
+    anymore.
+
+    Subclass this model and implement ``integrated_simulate`` to define
+    your own integrated model..
+    """
+    def integrated_simulate(self, pars, eps: float) -> ModelResult:
+        """
+        Method which integrated simulation and acceptance/rejections
+        in a single method.
+
+        Parameters
+        ----------
+        pars: dict
+            Parameters at which to evaluate the model
+
+        eps: float
+            Current acceptance threshold
+
+        Returns
+        -------
+
+        model_result: ModelResult
+            In case the parameter evaluation is rejected, this method
+            should simply return ``ModelResult(accepted=False)``.
+            If the parameter was accepted, this method should return either
+            ``ModelResult(accepted=True, distance=distance)`` or
+            ``ModelResult(accepted=True, distance=distance, \
+sum_stats=sum_stats)``
+            in which ``distance`` denotes the achieved
+            distance and ``sum_stats`` the summary statistics (e.g. simulated
+            data) of the run. Note that providing the summaru statistics
+            is optional. If they are procided, then they are also logged in
+            the database.
+        """
+        raise NotImplementedError()
+
+    def summary_statistics(self, pars, sum_stats_calculator):
+        return ModelResult()
+
+    def accept(self, pars, sum_stats_calculator, distance_calculator, eps):
+        return self.integrated_simulate(pars, eps)

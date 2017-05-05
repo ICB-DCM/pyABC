@@ -24,7 +24,7 @@ from .distance_functions import (ZScoreDistanceFunction,
 from .epsilon import Epsilon, ConstantEpsilon, MedianEpsilon, ListEpsilon
 from .smc import ABCSMC
 from .storage import History
-from .model import Model, SimpleModel, ModelResult
+from .model import Model, SimpleModel, ModelResult, IntegratedModel
 from .transition import MultivariateNormalTransition, LocalTransition
 from .populationstrategy import (AdaptivePopulationStrategy,
                                  ConstantPopulationStrategy)
@@ -63,6 +63,7 @@ __all__ = [
     "SimpleModel",
     "ModelResult",
     "Model",
+    "IntegratedModel",
     "History"
 ]
 
