@@ -11,7 +11,7 @@ Usage of the parallel package is farly easy. For example
 
 .. code-block:: python
 
-   from parallel import SGE
+   from pyabc.sge import SGE
    sge = SGE(priority=-200, memory="3G")
 
    def f(x):
