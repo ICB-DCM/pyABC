@@ -36,6 +36,7 @@ the usage of this package.
    web_visualization
    sampler
    sge
+   examples
    releasenotes
 
 
