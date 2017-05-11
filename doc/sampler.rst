@@ -4,6 +4,9 @@ Parallel and Distributed Sampling Strategies
 The pyABC package offers a variety of different parallel and distributed
 sampling strategies. Single-core, multi-core and distributed execution is
 supported in a couple different ways.
+The ParticleParallel samplers implement the
+"Static Scheduling (STAT)" strategy. The EvalParallel samplers implement the
+"DynamicScheduling (DYN)" strategy.
 
 Single-core execution
 ---------------------
