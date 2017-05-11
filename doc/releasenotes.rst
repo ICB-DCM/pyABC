@@ -7,6 +7,13 @@ Release Notes
 ..........
 
 
+0.7.2
+-----
+
+Easier early stopping models via the IntegratedModel class.
+Also has now examples.
+
+
 0.7.1
 -----
 
