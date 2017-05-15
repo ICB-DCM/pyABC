@@ -56,23 +56,24 @@ class History:
     Parameters
     ----------
 
-    db_path: str
+    db: str
         SQLAlchemy database identifier.
     """
     DB_TIMEOUT = 120
 
-    def __init__(self, db_path: str):
+    def __init__(self, db: str):
         """
         Only counts the simulations which appear in particles.
         If a simulation terminated prematurely it is not counted.
+        
         """
-        self.db_path = db_path
+        self.db_identifier = db
         self._session = None
         self._engine = None
         self.id = self._pre_calculate_id()
 
     def db_file(self):
-        f = self.db_path.split(":")[-1][3:]
+        f = self.db_identifier.split(":")[-1][3:]
         return f
 
     @property
@@ -182,6 +183,29 @@ class History:
         return pars, w_arr
 
     @with_session
+    def _load_model_names_from_db(self):
+        res = (self._session.query(Model.name)
+               .join(Population)
+               .join(ABCSMC)
+               .filter(ABCSMC.id == self.id)
+               .filter(Population.t == -1)
+               .order_by(Model.m)
+               .distinct().all())
+        return [r[0] for r in res]
+
+    @property
+    def model_names(self):
+        try:
+            return self._model_names
+        except AttributeError:
+            self._model_names = self._load_model_names_from_db()
+            return self._model_names
+
+    @model_names.setter
+    def model_names(self, val):
+        self._model_names = val
+
+    @with_session
     def get_abc(self):
         return self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
 
@@ -270,12 +294,24 @@ class History:
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abc_smc_simulation.populations.append(population)
 
-        model = Model(m=ground_truth_model, p_model=1,
-                      name=model_names[ground_truth_model])
-        population.models.append(model)
+        if ground_truth_model >= 0: # GT model given
+            gt_model_name = model_names[ground_truth_model]
+            gt_p = 1
+        else:  # ground_truth_model == -1 means it is not given
+            gt_model_name = ""
+            gt_p = 0
 
+        gt_model = Model(m=ground_truth_model,
+                         p_model=gt_p,
+                         name=gt_model_name)
+
+        for m, name in enumerate(model_names):
+            if m != ground_truth_model:
+                population.models.append(Model(m=m, name=name, p_model=0))
+
+        population.models.append(gt_model)
         gt_part = Particle(w=1)
-        model.particles.append(gt_part)
+        gt_model.particles.append(gt_part)
 
         for key, value in ground_truth_parameter.items():
                 gt_part.parameters.append(Parameter(name=key, value=value))
@@ -289,6 +325,22 @@ class History:
         self._session.commit()
         self.id = abc_smc_simulation.id
         history_logger.info("Start {}".format(abc_smc_simulation))
+
+    @with_session
+    def observed_sum_stat(self):
+        sum_stats = (self._session
+                     .query(SummaryStatistic)
+                     .join(Sample)
+                     .join(Particle)
+                     .join(Model)
+                     .join(Population)
+                     .join(ABCSMC)
+                     .filter(ABCSMC.id == self.id)
+                     .filter(Population.t == -1)
+                     .all()
+                     )
+        sum_stats_dct = {ss.name: ss.value for ss in sum_stats}
+        return sum_stats_dct
 
     @property
     @with_session
@@ -312,7 +364,7 @@ class History:
         #  but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db_path,
+        engine = create_engine(self.db_identifier,
                                connect_args={'timeout': self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)

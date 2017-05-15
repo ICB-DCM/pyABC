@@ -25,7 +25,7 @@ from .model import SimpleModel
 from .populationstrategy import ConstantPopulationStrategy
 from .platform_factory import DefaultSampler
 import copy
-
+import warnings
 
 abclogger = logging.getLogger("ABC")
 
@@ -202,29 +202,89 @@ class ABCSMC:
                  ground_truth_model: int = -1,
                  ground_truth_parameter: dict = None):
         """
-        Set the data to be fitted.
+        This method is an alias for the ``new`` method.
+        This method is deprecated and to be removed in future releases.
+        Use the ``new`` method instead.         
+        Note that the argument order has changed!
+        
+        .. warning:: Deprecation
+        
+           This method is deprecated.
+        """
+        warnings.warn("The method \"set_data\" is deprecated and to be removed "
+                      "in pyABC 0.10.0. "
+                      "Use the method \"new\" instead. "
+                      "Note that the API has changed slightly!",
+                      DeprecationWarning, stacklevel=2)
+        if not isinstance(observed_summary_statistics, str):
+            db = abc_options["db_path"]
+            meta = abc_options
+        else:
+            meta = {}
+        return self.new(db,
+                        observed_sum_stat=observed_summary_statistics,
+                        gt_model=ground_truth_model,
+                        gt_par=ground_truth_parameter,
+                        meta_info=meta)
+
+    def load(self, db: str, abc_id=1):
+        """
+        
+        Parameters
+        ----------
+        db: str
+            A SQLAlchemy database identifier pointing to the database from
+            which to continue a run.
+            
+        abc_id: int, optional
+            The id of the ABC-SMC run in the database which is to be continued.
+            The default is 1. If more than one ABC-SMC run is stored, use
+            the ``abc_id`` parameter to indicate which one to continue.
+            
+
+        Returns
+        -------
+        
+        continuation_id: int
+
+        """
+        self.history = History(db)
+        self.history.id = abc_id
+
+        self.x_0 = self.history.observed_sum_stat()
+        self._initialize_dist_and_eps()
+        return self.history.id
+
+    def new(self, db: Union[dict, str],
+            observed_sum_stat: dict = None,
+            *,
+            gt_model: int = -1,
+            gt_par: dict = None,
+            meta_info=None):
+        """
+        Make a new ABCSMC run.
 
         Parameters
         ----------
 
-        observed_summary_statistics : dict
+        db: str
+            Has to be a valid SQLAlchemy database identifier.
+            This indicates the database to be used for the ABC-SMC run.
+
+        observed_sum_stat : dict, optional
                **This is the really important parameter here**. It is of the
                form ``{'statistic_1' : val_1, 'statistic_2': val_2, ... }``.
 
                The dictionary provided here represents the measured data.
                Particle during ABCSMC sampling are compared against the
                summary statistics provided here.
+               
+               This parameter is optional, as the distance function might
+               implement comparison to the observed data on its own.
+               Not givin this parameter is equivalent to passing an empty
+               dictionary ``{}``.
 
-        abc_options: Union[dict, str]
-            If a string, it has to be a valid SQLAlchemy database identifier.
-
-            If a dict, has to contain the key "db_path" which has to be a valid
-            SQLAlchemy database identifier. Can contain an arbitrary number of
-            additional keys, only for recording purposes. Store arbitrary
-            meta information in this dictionary. Can be used for really
-            anything.
-
-        ground_truth_model: int, optional
+        gt_model: int, optional
             This is only meta data stored to the database, but not actually
             used for the ABCSMC algorithm If you want to predict your ABCSMC
             procedure against synthetic samples, you can use
@@ -233,28 +293,45 @@ class ABCSMC:
             (and don't know the ground truth) you can set this to anything.
             A value if ``-1`` is recommended.
 
-        ground_truth_parameter: dict, optional
+        gt_par: dict, optional
             Similar to ``ground_truth_model``, this is only for recording
             purposes, but not used in the ABCSMC algorithm.
             This stores the parameters of the ground truth model
             if it was syntheticallyobtained.
+            
+        meta_info: dict, optional
+            Can contain an arbitrary number of keys, only for recording
+            purposes. Store arbitrary
+            meta information in this dictionary. Can be used for really
+            anything.
         """
 
         # initialize
-        if isinstance(abc_options, str):
-            abc_options = {"db_path": abc_options}
+        if observed_sum_stat is None:
+            observed_sum_stat = {}
 
-        self.x_0 = observed_summary_statistics
+        self.x_0 = observed_sum_stat
         model_names = [model.name for model in self.models]
 
-        self.history = History(abc_options["db_path"])
+        self.history = History(db)
 
-        if ground_truth_parameter is None:
-            ground_truth_parameter = {}
+        if gt_par is None:
+            gt_par = {}
 
+        self._initialize_dist_and_eps()
+        self.history.store_initial_data(gt_model,
+                                        meta_info,
+                                        observed_sum_stat,
+                                        gt_par,
+                                        model_names,
+                                        self.distance_function.to_json(),
+                                        self.eps.to_json(),
+                                        self.population_strategy.to_json())
+        return self.history.id
+
+    def _initialize_dist_and_eps(self):
         # initialize distance function and epsilon
         sample_from_prior = self._prior_sample()
-
         self.distance_function.initialize(sample_from_prior)
 
         def distance_to_ground_truth_function(x):
@@ -262,14 +339,6 @@ class ABCSMC:
 
         self.eps.initialize(sample_from_prior,
                             distance_to_ground_truth_function)
-        self.history.store_initial_data(ground_truth_model,
-                                        abc_options,
-                                        observed_summary_statistics,
-                                        ground_truth_parameter,
-                                        model_names,
-                                        self.distance_function.to_json(),
-                                        self.eps.to_json(),
-                                        self.population_strategy.to_json())
 
     def _prior_sample(self):
         """

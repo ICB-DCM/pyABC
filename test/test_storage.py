@@ -6,23 +6,36 @@ import numpy as np
 import tempfile
 
 
+def path():
+    return os.path.join(tempfile.gettempdir(), "history_test.db")
+
 @pytest.fixture
 def history():
     # Don't use memory database for testing.
     # A real file with disconnect and reconnect is closer to the real scenario
-    path = os.path.join(tempfile.gettempdir(), "history_test.db")
+    this_path = path()
     model_names = ["fake_name_{}".format(k) for k in range(50)]
-    h = History("sqlite:///" + path, )
+    h = History("sqlite:///" + this_path)
     h.store_initial_data(0, {}, {}, {}, model_names,
                          "", "", '{"name": "pop_strategy_str_test"}')
     yield h
     try:
-        os.remove(path)
+        os.remove(this_path)
     except FileNotFoundError:
         pass
 
-
-history_2 = history
+@pytest.fixture
+def history_uninitialized():
+    # Don't use memory database for testing.
+    # A real file with disconnect and reconnect is closer to the real scenario
+    this_path = path()
+    model_names = ["fake_name_{}".format(k) for k in range(50)]
+    h = History("sqlite:///" + this_path)
+    yield h
+    try:
+        os.remove(this_path)
+    except FileNotFoundError:
+        pass
 
 
 def rand_pop(m):
@@ -195,3 +208,51 @@ def test_model_probabilities_all(history):
     history.append_population(1, .23, rand_pop(3), 234)
     probs = history.get_model_probabilities()
     assert (probs[3].as_matrix() == np.array([1])).all()
+
+
+def test_observed_sum_stats(history_uninitialized: History):
+    h = history_uninitialized
+    obs_sum_stats = {"s1": 1,
+                     "s2": 1.1,
+                     "s3": np.array(.1),
+                     "s4": np.random.rand(10)}
+    h.store_initial_data(0, {}, obs_sum_stats, {}, [""], "", "", "")
+
+    h2 = History(h.db_identifier)
+    loaded_sum_stats = h2.observed_sum_stat()
+
+    for k in ["s1", "s2", "s3"]:
+        assert loaded_sum_stats[k] == obs_sum_stats[k]
+        assert isinstance(loaded_sum_stats[k], np.ndarray)
+
+    assert (loaded_sum_stats["s4"] == obs_sum_stats["s4"]).all()
+    assert loaded_sum_stats["s1"] is not obs_sum_stats["s1"]
+    assert loaded_sum_stats["s2"] is not obs_sum_stats["s2"]
+    assert loaded_sum_stats["s3"] is not obs_sum_stats["s3"]
+    assert loaded_sum_stats["s4"] is not obs_sum_stats["s4"]
+
+
+def test_model_name_load(history_uninitialized: History):
+    h = history_uninitialized
+    model_names = ["m1", "m2", "m3"]
+    h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+
+    h2 = History(h.db_identifier)
+    model_names_loaded = h2.model_names
+    assert model_names == model_names_loaded
+
+
+def test_model_name_load_single(history_uninitialized: History):
+    h = history_uninitialized
+    model_names = ["m1"]
+    h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+    particle_population = [ValidParticle(0,
+                                         Parameter({"a": 23, "b": 12}),
+                                         .2,
+                                         [.1],
+                                         [{"ss": .1}])]
+    h.append_population(0, 42, particle_population, 2)
+
+    h2 = History(h.db_identifier)
+    model_names_loaded = h2.model_names
+    assert model_names == model_names_loaded
