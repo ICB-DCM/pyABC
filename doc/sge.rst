@@ -4,10 +4,11 @@ Parallel job execution on an SGE cluster environment
 Quick start
 -----------
 
-The parallel package provides as main class the :class:`SGE <pyabc.sge.SGE>`. It's ``map`` method
-automatically parallelizes across an SGE cluster.
+The pyabc.sge package provides as most important class
+the :class:`SGE <pyabc.sge.SGE>`. It's ``map`` method
+automatically parallelizes across an SGE/UGE cluster.
 
-Usage of the parallel package is farly easy. For example
+Usage of the parallel package is fairly easy. For example
 
 .. code-block:: python
 
@@ -29,8 +30,9 @@ Usage of the parallel package is farly easy. For example
    [2, 4, 6, 8]
 
 
-The job scheduling is either done via a SQLite database or a REDIS instance. REDIS is recommended as it works
-more robustly.
+The job scheduling is either done via a SQLite database or a REDIS instance.
+REDIS is recommended as it works more robustly, in particular in cases
+where distributed file systems are rather slow.
 
 .. note::
 
@@ -46,5 +48,17 @@ Check the :doc:`API documentation <sge_api>` for more details.
 Information about running jobs
 ------------------------------
 
-Use the ``python -m pyabc.sge.job_info_redis`` to get a nicely formatted output of the current execution state.
+Use the ``python -m pyabc.sge.job_info_redis`` to get a nicely formatted output
+of the current execution state, in case the REDIS mode is used.
 Check ``python -m pyabc.sge.job_info_redis --help`` for more details.
+
+
+Usage notes
+-----------
+
+The :class:`SGE <pyabc.sge.SGE>` class can be used in standalone mode for
+convenient parallelization of jobs across a cluster, completely independent
+of the rest of the pyABC package.
+The :class:`SGE <pyabc.sge.SGE>` class can also be combined, for instance, with
+the :class:`pyabc.sampler.MappingSampler` class for simple parallelization
+of ABC-SCM runs across a SGE cluster.
