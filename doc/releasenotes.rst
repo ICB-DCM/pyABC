@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+0.8 series
+..........
+
+
+0.8.0
+-----
+
+* Deprecate the "set_data" method of the ABCSMC class.
+  Use the "new" method instead.
+* Add a "load" method to the ABCSMC class for easier resuming stored ABCSMC
+  runs.
+* Add an example to the documentation how to resume stored ABC-SMC runs.
 
 
 0.7 series

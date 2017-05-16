@@ -13,7 +13,7 @@ def test_stop_acceptance_rate_too_low(db_path):
         return abs(x["par"] - y["par"])
 
     abc = ABCSMC(model, Distribution(par=st.uniform(0, 10)), dist, 10)
-    abc.set_data({"par": .5}, db_path)
+    abc.new(db_path, {"par": .5})
     history = abc.run(-1, 8, acceptance_rate=set_acc_rate)
     df = history.get_all_populations()
     df["acceptance_rate"] = df["particles"] / df["samples"]
