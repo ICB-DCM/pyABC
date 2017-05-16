@@ -55,7 +55,7 @@ def test_single_particle_save_load(history: History):
                                          .2,
                                          [.1],
                                          [{"ss": .1}])]
-    history.append_population(0, 42, particle_population, 2)
+    history.append_population(0, 42, particle_population, 2, [""])
 
     df, w = history.get_distribution(0, 0)
     assert w[0] == 1
@@ -73,7 +73,7 @@ def test_single_particle_save_load_np_int64(history: History):
                                          .2,
                                          [.1],
                                          [{"ss": .1}])]
-    history.append_population(0, 42, particle_population, 2)
+    history.append_population(0, 42, particle_population, 2, [""])
 
     for m in m_list:
         for t in t_list:
@@ -98,7 +98,7 @@ def test_sum_stats_save_load(history: History):
                       [.1],
                       [{"ss12": .11, "ss22": arr}])
     ]
-    history.append_population(0, 42, particle_population, 2)
+    history.append_population(0, 42, particle_population, 2, ["m1", "m2"])
     weights, sum_stats = history.get_sum_stats(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
@@ -113,8 +113,8 @@ def test_total_nr_samples(history: History):
                                          .2,
                                          [.1],
                                          [{"ss": .1}])]
-    history.append_population(0, 42, particle_population, 4234)
-    history.append_population(0, 42, particle_population, 3)
+    history.append_population(0, 42, particle_population, 4234, ["m1"])
+    history.append_population(0, 42, particle_population, 3, ["m1"])
 
     assert 4237 == history.total_nr_simulations
 
@@ -126,15 +126,15 @@ def test_t_count(history: History):
                                          [.1],
                                          [{"ss": .1}])]
     for t in range(1, 10):
-        history.append_population(t, 42, particle_population, 2)
+        history.append_population(t, 42, particle_population, 2, ["m1"])
         assert t == history.max_t
 
 
 def test_dataframe_storage_readout():
     path = os.path.join(tempfile.gettempdir(), "history_test.db")
-
+    model_names = ["fake_name"] * 5
     def make_hist():
-        model_names = ["fake_name"]*5
+
         h = History("sqlite:///" + path)
         h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
         return h
@@ -147,7 +147,7 @@ def test_dataframe_storage_readout():
             for m in range(5):
                 pops[(h, m, t)] = rand_pop(m)
                 population.extend(pops[(h, m, t)])
-            h.append_population(t, .1, population, 2)
+            h.append_population(t, .1, population, 2, model_names)
 
     for h in histories:
         for t in range(4):
@@ -171,10 +171,11 @@ def test_dataframe_storage_readout():
 
 
 def test_population_retrieval(history):
-    history.append_population(1, .23, rand_pop(0), 234)
-    history.append_population(2, .123, rand_pop(0), 345)
-    history.append_population(2, .1235, rand_pop(5), 20345)
-    history.append_population(3, .12330, rand_pop(30), 30345)
+    model_names = ["m1"]
+    history.append_population(1, .23, rand_pop(0), 234, ["m1"])
+    history.append_population(2, .123, rand_pop(0), 345, ["m1"])
+    history.append_population(2, .1235, rand_pop(5), 20345, ["m1"]*6)
+    history.append_population(3, .12330, rand_pop(30), 30345, ["m1"]*31)
     df = history.get_all_populations()
 
     assert df[df.t == 1].epsilon.iloc[0] == .23
@@ -198,25 +199,31 @@ def test_population_strategy_storage(history):
 
 
 def test_model_probabilities(history):
-    history.append_population(1, .23, rand_pop(3), 234)
+    history.append_population(1, .23, rand_pop(3), 234,
+                              ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities(1)
     assert probs.p[3] == 1
     assert probs.index.tolist() == [3]
 
 
 def test_model_probabilities_all(history):
-    history.append_population(1, .23, rand_pop(3), 234)
+    history.append_population(1, .23, rand_pop(3), 234,
+                              ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities()
     assert (probs[3].as_matrix() == np.array([1])).all()
 
 
-def test_observed_sum_stats(history_uninitialized: History):
+@pytest.fixture(params=[0, None], ids=["GT=0", "GT=None"])
+def gt_model(request):
+    return request.param
+
+def test_observed_sum_stats(history_uninitialized: History, gt_model):
     h = history_uninitialized
     obs_sum_stats = {"s1": 1,
                      "s2": 1.1,
                      "s3": np.array(.1),
                      "s4": np.random.rand(10)}
-    h.store_initial_data(0, {}, obs_sum_stats, {}, [""], "", "", "")
+    h.store_initial_data(gt_model, {}, obs_sum_stats, {}, [""], "", "", "")
 
     h2 = History(h.db_identifier)
     loaded_sum_stats = h2.observed_sum_stat()
@@ -238,11 +245,21 @@ def test_model_name_load(history_uninitialized: History):
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
 
     h2 = History(h.db_identifier)
-    model_names_loaded = h2.model_names
+    model_names_loaded = h2.model_names()
     assert model_names == model_names_loaded
 
 
-def test_model_name_load_single(history_uninitialized: History):
+def test_model_name_load_no_gt_model(history_uninitialized: History):
+    h = history_uninitialized
+    model_names = ["m1", "m2", "m3"]
+    h.store_initial_data(None, {}, {}, {}, model_names, "", "", "")
+
+    h2 = History(h.db_identifier)
+    model_names_loaded = h2.model_names()
+    assert model_names == model_names_loaded
+
+
+def test_model_name_load_single_with_pop(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1"]
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
@@ -251,8 +268,8 @@ def test_model_name_load_single(history_uninitialized: History):
                                          .2,
                                          [.1],
                                          [{"ss": .1}])]
-    h.append_population(0, 42, particle_population, 2)
+    h.append_population(0, 42, particle_population, 2, model_names)
 
     h2 = History(h.db_identifier)
-    model_names_loaded = h2.model_names
+    model_names_loaded = h2.model_names()
     assert model_names == model_names_loaded

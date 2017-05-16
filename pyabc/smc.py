@@ -216,10 +216,11 @@ class ABCSMC:
                       "Use the method \"new\" instead. "
                       "Note that the API has changed slightly!",
                       DeprecationWarning, stacklevel=2)
-        if not isinstance(observed_summary_statistics, str):
+        if not isinstance(abc_options, str):
             db = abc_options["db_path"]
             meta = abc_options
         else:
+            db = abc_options
             meta = {}
         return self.new(db,
                         observed_sum_stat=observed_summary_statistics,
@@ -258,7 +259,7 @@ class ABCSMC:
     def new(self, db: Union[dict, str],
             observed_sum_stat: dict = None,
             *,
-            gt_model: int = -1,
+            gt_model: int = None,
             gt_par: dict = None,
             meta_info=None):
         """
@@ -529,8 +530,10 @@ class ABCSMC:
                           if not isinstance(particle, Exception)]
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
+            model_names = [model.name for model in self.models]
             self.history.append_population(
-                t, current_eps, population, nr_evaluations)
+                t, current_eps, population, nr_evaluations,
+                model_names)
             abclogger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))

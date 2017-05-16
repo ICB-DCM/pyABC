@@ -183,27 +183,15 @@ class History:
         return pars, w_arr
 
     @with_session
-    def _load_model_names_from_db(self):
+    def model_names(self, t=-1):
         res = (self._session.query(Model.name)
                .join(Population)
                .join(ABCSMC)
                .filter(ABCSMC.id == self.id)
-               .filter(Population.t == -1)
+               .filter(Population.t == t)
                .order_by(Model.m)
                .distinct().all())
         return [r[0] for r in res]
-
-    @property
-    def model_names(self):
-        try:
-            return self._model_names
-        except AttributeError:
-            self._model_names = self._load_model_names_from_db()
-            return self._model_names
-
-    @model_names.setter
-    def model_names(self, val):
-        self._model_names = val
 
     @with_session
     def get_abc(self):
@@ -277,14 +265,14 @@ class History:
             The population strategy represented as json string
 
         """
-        self.model_names = model_names
         # store ground truth to db
         try:
             git_hash = git.Repo(os.getcwd()).head.commit.hexsha
         except (git.exc.NoSuchPathError, KeyError,
                 git.exc.InvalidGitRepositoryError) as e:
             git_hash = str(e)
-        abc_smc_simulation = ABCSMC(
+
+        abcsmc = ABCSMC(
             json_parameters=str(options),
             start_time=datetime.datetime.now(),
             git_hash=git_hash,
@@ -292,39 +280,33 @@ class History:
             epsilon_function=eps_function_json_str,
             population_strategy=population_strategy_json_str)
         population = Population(t=-1, nr_samples=0, epsilon=0)
-        abc_smc_simulation.populations.append(population)
+        abcsmc.populations.append(population)
 
-        if ground_truth_model >= 0: # GT model given
-            gt_model_name = model_names[ground_truth_model]
-            gt_p = 1
-        else:  # ground_truth_model == -1 means it is not given
-            gt_model_name = ""
-            gt_p = 0
+        if ground_truth_model is not None: # GT model given
+            gt_model = Model(m=ground_truth_model,
+                             p_model=1,
+                             name=model_names[ground_truth_model])
+            population.models.append(gt_model)
+            gt_part = Particle(w=1)
+            gt_model.particles.append(gt_part)
 
-        gt_model = Model(m=ground_truth_model,
-                         p_model=gt_p,
-                         name=gt_model_name)
+            for key, value in ground_truth_parameter.items():
+                gt_part.parameters.append(Parameter(name=key, value=value))
+            sample = Sample(distance=0)
+            gt_part.samples = [sample]
+            sample.summary_statistics = [
+                SummaryStatistic(name=key, value=value)
+                for key, value in observed_summary_statistics.items()
+            ]
 
         for m, name in enumerate(model_names):
             if m != ground_truth_model:
                 population.models.append(Model(m=m, name=name, p_model=0))
 
-        population.models.append(gt_model)
-        gt_part = Particle(w=1)
-        gt_model.particles.append(gt_part)
-
-        for key, value in ground_truth_parameter.items():
-                gt_part.parameters.append(Parameter(name=key, value=value))
-        sample = Sample(distance=0)
-        gt_part.samples = [sample]
-        sample.summary_statistics = [
-            SummaryStatistic(name=key, value=value)
-            for key, value in observed_summary_statistics.items()
-        ]
-        self._session.add(abc_smc_simulation)
+        self._session.add(abcsmc)
         self._session.commit()
-        self.id = abc_smc_simulation.id
-        history_logger.info("Start {}".format(abc_smc_simulation))
+        self.id = abcsmc.id
+        history_logger.info("Start {}".format(abcsmc))
 
     @with_session
     def observed_sum_stat(self):
@@ -397,7 +379,8 @@ class History:
     @with_session
     def _save_to_population_db(self, t: int, current_epsilon: float,
                                nr_simulations: int,
-                               store: dict, model_probabilities: dict):
+                               store: dict, model_probabilities: dict,
+                               model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
         # prepare
@@ -411,7 +394,7 @@ class History:
         abc_smc_simulation.populations.append(population)
         for m, model_population in store.items():
             model = Model(m=int(m), p_model=float(model_probabilities[m]),
-                          name=str(self.model_names[m]))
+                          name=str(model_names[m]))
             population.models.append(model)
             for store_item in model_population:
                 weight = store_item['weight']
@@ -443,7 +426,8 @@ class History:
     @internal_docstring_warning
     def append_population(self, t: int, current_epsilon: float,
                           particle_population: List[ValidParticle],
-                          nr_simulations: int):
+                          nr_simulations: int,
+                          model_names):
         """
         Append population to database.
 
@@ -465,7 +449,8 @@ class History:
         """
         store, model_probabilities = normalize(particle_population)
         self._save_to_population_db(t, current_epsilon,
-                                    nr_simulations, store, model_probabilities)
+                                    nr_simulations, store, model_probabilities,
+                                    model_names)
 
     @with_session
     def get_model_probabilities(self, t=None) -> pd.DataFrame:
@@ -586,11 +571,22 @@ class History:
     @with_session
     def max_t(self):
         """
-        The number of populations already stored.
+        The population number of the last populations.
+        This is equivalent to ``n_populations - 1``.
+        
         """
         max_t = (self._session.query(func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return max_t
+
+    @property
+    def n_populations(self):
+        """
+        Number of populations stored in the database.
+        This is equivalent to ``max_t + 1`.
+
+        """
+        return self.max_t + 1
 
     @with_session
     def get_sum_stats(self, t: int, m: int) -> (np.ndarray, List):
