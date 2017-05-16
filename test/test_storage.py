@@ -9,6 +9,7 @@ import tempfile
 def path():
     return os.path.join(tempfile.gettempdir(), "history_test.db")
 
+
 @pytest.fixture
 def history():
     # Don't use memory database for testing.
@@ -24,12 +25,12 @@ def history():
     except FileNotFoundError:
         pass
 
+
 @pytest.fixture
 def history_uninitialized():
     # Don't use memory database for testing.
     # A real file with disconnect and reconnect is closer to the real scenario
     this_path = path()
-    model_names = ["fake_name_{}".format(k) for k in range(50)]
     h = History("sqlite:///" + this_path)
     yield h
     try:
@@ -133,6 +134,7 @@ def test_t_count(history: History):
 def test_dataframe_storage_readout():
     path = os.path.join(tempfile.gettempdir(), "history_test.db")
     model_names = ["fake_name"] * 5
+
     def make_hist():
 
         h = History("sqlite:///" + path)
@@ -171,7 +173,6 @@ def test_dataframe_storage_readout():
 
 
 def test_population_retrieval(history):
-    model_names = ["m1"]
     history.append_population(1, .23, rand_pop(0), 234, ["m1"])
     history.append_population(2, .123, rand_pop(0), 345, ["m1"])
     history.append_population(2, .1235, rand_pop(5), 20345, ["m1"]*6)
@@ -216,6 +217,7 @@ def test_model_probabilities_all(history):
 @pytest.fixture(params=[0, None], ids=["GT=0", "GT=None"])
 def gt_model(request):
     return request.param
+
 
 def test_observed_sum_stats(history_uninitialized: History, gt_model):
     h = history_uninitialized

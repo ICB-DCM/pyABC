@@ -204,14 +204,15 @@ class ABCSMC:
         """
         This method is an alias for the ``new`` method.
         This method is deprecated and to be removed in future releases.
-        Use the ``new`` method instead.         
+        Use the ``new`` method instead.
         Note that the argument order has changed!
-        
-        .. warning:: Deprecation
-        
+
+        .. warning::
+
            This method is deprecated.
         """
-        warnings.warn("The method \"set_data\" is deprecated and to be removed "
+        warnings.warn("The method \"set_data\" is deprecated "
+                      "and to be removed "
                       "in pyABC 0.10.0. "
                       "Use the method \"new\" instead. "
                       "Note that the API has changed slightly!",
@@ -230,22 +231,22 @@ class ABCSMC:
 
     def load(self, db: str, abc_id=1):
         """
-        
+        Load an ABC-SMC run for continuation.
+
         Parameters
         ----------
         db: str
             A SQLAlchemy database identifier pointing to the database from
             which to continue a run.
-            
+
         abc_id: int, optional
             The id of the ABC-SMC run in the database which is to be continued.
             The default is 1. If more than one ABC-SMC run is stored, use
             the ``abc_id`` parameter to indicate which one to continue.
-            
 
         Returns
         -------
-        
+
         continuation_id: int
 
         """
@@ -279,7 +280,7 @@ class ABCSMC:
                The dictionary provided here represents the measured data.
                Particle during ABCSMC sampling are compared against the
                summary statistics provided here.
-               
+
                This parameter is optional, as the distance function might
                implement comparison to the observed data on its own.
                Not givin this parameter is equivalent to passing an empty
@@ -299,7 +300,7 @@ class ABCSMC:
             purposes, but not used in the ABCSMC algorithm.
             This stores the parameters of the ground truth model
             if it was syntheticallyobtained.
-            
+
         meta_info: dict, optional
             Can contain an arbitrary number of keys, only for recording
             purposes. Store arbitrary

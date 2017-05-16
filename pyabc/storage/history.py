@@ -65,7 +65,6 @@ class History:
         """
         Only counts the simulations which appear in particles.
         If a simulation terminated prematurely it is not counted.
-        
         """
         self.db_identifier = db
         self._session = None
@@ -189,6 +188,7 @@ class History:
                .join(ABCSMC)
                .filter(ABCSMC.id == self.id)
                .filter(Population.t == t)
+               .filter(Model.name.isnot(None))
                .order_by(Model.m)
                .distinct().all())
         return [r[0] for r in res]
@@ -282,22 +282,27 @@ class History:
         population = Population(t=-1, nr_samples=0, epsilon=0)
         abcsmc.populations.append(population)
 
-        if ground_truth_model is not None: # GT model given
+        if ground_truth_model is not None:  # GT model given
             gt_model = Model(m=ground_truth_model,
                              p_model=1,
                              name=model_names[ground_truth_model])
-            population.models.append(gt_model)
-            gt_part = Particle(w=1)
-            gt_model.particles.append(gt_part)
+        else:
+            gt_model = Model(m=None,
+                             p_model=1,
+                             name=None)
 
-            for key, value in ground_truth_parameter.items():
-                gt_part.parameters.append(Parameter(name=key, value=value))
-            sample = Sample(distance=0)
-            gt_part.samples = [sample]
-            sample.summary_statistics = [
-                SummaryStatistic(name=key, value=value)
-                for key, value in observed_summary_statistics.items()
-            ]
+        population.models.append(gt_model)
+        gt_part = Particle(w=1)
+        gt_model.particles.append(gt_part)
+
+        for key, value in ground_truth_parameter.items():
+            gt_part.parameters.append(Parameter(name=key, value=value))
+        sample = Sample(distance=0)
+        gt_part.samples = [sample]
+        sample.summary_statistics = [
+            SummaryStatistic(name=key, value=value)
+            for key, value in observed_summary_statistics.items()
+        ]
 
         for m, name in enumerate(model_names):
             if m != ground_truth_model:
@@ -319,6 +324,7 @@ class History:
                      .join(ABCSMC)
                      .filter(ABCSMC.id == self.id)
                      .filter(Population.t == -1)
+                     .filter(Model.p_model == 1)
                      .all()
                      )
         sum_stats_dct = {ss.name: ss.value for ss in sum_stats}
@@ -573,7 +579,6 @@ class History:
         """
         The population number of the last populations.
         This is equivalent to ``n_populations - 1``.
-        
         """
         max_t = (self._session.query(func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])

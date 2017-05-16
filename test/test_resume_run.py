@@ -1,7 +1,14 @@
 from pyabc import (ABCSMC, Distribution, RV)
 import scipy as sp
+import pytest
 
-def test_resume(db_path):
+
+@pytest.fixture(params=[0, None])
+def gt_model(request):
+    return request.param
+
+
+def test_resume(db_path, gt_model):
     def model(parameter):
         return {"data": parameter["mean"] + sp.randn()}
 
@@ -13,12 +20,15 @@ def test_resume(db_path):
         return abs(x_data - y_data)
 
     abc = ABCSMC(model, prior, distance)
-    run_id = abc.new(db_path, {"data": 2.5})
+    run_id = abc.new(db_path, {"data": 2.5}, gt_model=gt_model)
     print("Run ID:", run_id)
-    history = abc.run(minimum_epsilon=.1, max_nr_populations=2)
+    hist_new = abc.run(minimum_epsilon=0, max_nr_populations=1)
+    assert hist_new.n_populations == 1
 
     abc_continued = ABCSMC(model, prior, distance)
     run_id_continued = abc_continued.load(db_path, run_id)
     print("Run ID continued:", run_id_continued)
-    history_continued = abc_continued.run(minimum_epsilon=.1,
-                                          max_nr_populations=2)
+    hist_contd = abc_continued.run(minimum_epsilon=0, max_nr_populations=1)
+
+    assert hist_contd.n_populations == 2
+    assert hist_new.n_populations == 2
