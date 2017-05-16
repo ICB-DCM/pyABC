@@ -26,4 +26,5 @@ License text
 ------------
 
 .. literalinclude::  ../LICENSE.txt
+   :language: none
 

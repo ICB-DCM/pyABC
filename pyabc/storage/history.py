@@ -370,7 +370,8 @@ class History:
     @with_session
     @internal_docstring_warning
     def done(self):
-        """Close database sessions and store end time of population.
+        """
+        Close database sessions and store end time of population.        
 
 
         """
@@ -588,8 +589,7 @@ class History:
     def n_populations(self):
         """
         Number of populations stored in the database.
-        This is equivalent to ``max_t + 1`.
-
+        This is equivalent to ``max_t + 1``.
         """
         return self.max_t + 1
 

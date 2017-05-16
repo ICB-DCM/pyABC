@@ -244,6 +244,7 @@ class ABCSMC:
             The default is 1. If more than one ABC-SMC run is stored, use
             the ``abc_id`` parameter to indicate which one to continue.
 
+
         .. note::
 
             The Epsilon's and distance function's initialize methods are
