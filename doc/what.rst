@@ -17,9 +17,9 @@ What you need
 -------------
 
 * Some kind of experimentally observed or synthetically generated data
-* a parametrized stochastic simulator (e.g. a Python functions which makes
-  calls to random number generators)
+* a parametrized stochastic simulator
   which supposedly explains the data
+  (e.g. a function which possibly uses a random number generator)
 
 
 What you don't need
@@ -40,18 +40,17 @@ When better not to use pyABC
 
    Not everything is a nail.
 
-ABC likelihood inference is not a hammer for every nail. If you're actually able to write
-down the likelihood then use it and apply a different inference technique which exploits it.
-This package helps to solve the much harder problem of likelihood free inference.
-
-
+ABC-SMC likelihood-free inference is not a hammer for every nail.
+If you're actually able to write down the likelihood then using it and applying
+a different inference technique which exploits it might be the better approach.
+This package helps to solve the much harder problem of
+likelihood-free inference.
 
 
 
 
 Why to use pyABC?
 -----------------
-
 
 
 This is a package for Approximate Bayesian Computation, using a Sequential Monte Carlo scheme.
@@ -71,6 +70,7 @@ pyABC was designed to perform well on
 pyABC integrates well with SGE like environments, as commonly found in scientific settings,
 but can also be deployed to the cloud. Amongst other backend modes,
 `Dask.distributed <http://distributed.readthedocs.io/en/latest/>`_  can be used under the hood.
+A Redis based broker or IPython parallel is also supported.
 
 
 It sounds like a contradiction, but pyABC is on the one hand easy to use for standard applications,

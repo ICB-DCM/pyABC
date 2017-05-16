@@ -1,7 +1,7 @@
 Examples
 ========
 
-
+The following examples should help to get a better idea of how to use pyABC.
 
 .. toctree::
    :maxdepth: 1

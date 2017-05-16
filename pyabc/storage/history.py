@@ -371,7 +371,7 @@ class History:
     @internal_docstring_warning
     def done(self):
         """
-        Close database sessions and store end time of population.        
+        Close database sessions and store end time of population.
 
 
         """
