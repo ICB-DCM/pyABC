@@ -38,6 +38,7 @@ the usage of this package.
    sge
    examples
    releasenotes
+   license
 
 
 
@@ -61,7 +62,6 @@ modules and packages.
    parameters_api
    random_variables_api
    sge_api
-   license
 
 
 Developer's Guide

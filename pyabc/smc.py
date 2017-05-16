@@ -46,22 +46,25 @@ class ABCSMC:
     Parameters
     ----------
 
-    models: List[Callable[[Parameter], model_output]]
-       Calling ``models[m](par)`` returns the raw model output
-       of model ``m`` with the corresponding parameters ``par``.
-       This raw output is then passed to summary_statistics.
-       calculated summary statistics. Per default, the model is
-       assumed to already return the calculated summary statistcs.
-       The default summary_statistics function is therefore
-       just the identity.
+    models: list of models, single model, single function or list of functions
+       * If models is a function, then the function should have a single
+         parameter, which is of dictionary type, and should return a single
+         dictionary, which contains the simulated data.
+       * If models is a list of functions, then the first point applies to
+         each function.
+       * Models can also be a list of Model instances or a single
+         Model instance.
 
-       Each callable represents thus one single model.
+       This model's output is passed to the summary statistics calculation.
+       Per default, the model is assumed to already return the calculated
+       summary statistcs. Accordingly, the default summary_statistics
+       function is just the identity.
 
     parameter_priors: List[Distribution]
         A list of prior distributions for the models' parameters.
         Each list entry is the prior distribution for the corresponding model.
 
-    distance_function: DistanceFunction
+    distance_function: DistanceFunction, optional
         Measures the distance of the tentatively sampled particle to the
         measured data.
 
@@ -81,14 +84,15 @@ class ABCSMC:
         it can make sense to have the model produce some kind or raw output
         and then take the same summary statistics function for all the models.
 
-    model_prior: RV
+    model_prior: RV, optional
         A random variable giving the prior weights of the model classes.
-        If the prior is uniform over the model classes
-        this is something like ``RV("randint", 0, len(models))``.
+        The default is a uniform prior over the model classes,
+        ``RV("randint", 0, len(models))``.
 
     model_perturbation_kernel: ModelPerturbationKernel
-        Kernel which governs with which probability to switch the model
-        for a given sample.
+        Kernel which governs with which probability to switch from one
+        model to anoter model for a given sample while generating proposals
+        for the subsequent population from the current population.
 
     transitions: List[Transition], Transition, optional
         A list of :class:`pyabc.transition.Transition` objects
@@ -98,15 +102,16 @@ class ABCSMC:
 
     eps: Epsilon, optional
         Accepts any :class:`pyabc.epsilon.Epsilon` subclass.
-        The default is the :class:`pyabc.epsilon.MediaEpsilon` which adapts
+        The default is the :class:`pyabc.epsilon.MedianEpsilon` which adapts
         automatically. The object passed here determines how the acceptance
         threshold scheduling is performed.
 
-    sampler:
+    sampler: Sampler, optional
         In some cases, a mapper implementation will require initialization
-        to run properly, e.g. database connection, grid setup, etc...
+        to run properly, e.g. database connection, grid setup, etc..
         The sampler is an object that encapsulates this information.
-        The default sampler will parallelize across the cores of a single
+        The default sampler :class:`pyabc.sampler.MulticoreEvalParallelSampler`
+        will parallelize across the cores of a single
         machine only.
 
 
@@ -229,7 +234,7 @@ class ABCSMC:
                         gt_par=ground_truth_parameter,
                         meta_info=meta)
 
-    def load(self, db: str, abc_id=1):
+    def load(self, db: str, abc_id: int = 1):
         """
         Load an ABC-SMC run for continuation.
 
@@ -254,7 +259,7 @@ class ABCSMC:
         self.history.id = abc_id
         self.x_0 = self.history.observed_sum_stat()
 
-    def new(self, db: Union[dict, str],
+    def new(self, db: str,
             observed_sum_stat: dict = None,
             *,
             gt_model: int = None,
@@ -268,11 +273,12 @@ class ABCSMC:
 
         db: str
             Has to be a valid SQLAlchemy database identifier.
-            This indicates the database to be used for the ABC-SMC run.
+            This indicates the database to be used (and created if necessary
+            and possible) for the ABC-SMC run.
 
         observed_sum_stat : dict, optional
-               **This is the really important parameter here**. It is of the
-               form ``{'statistic_1' : val_1, 'statistic_2': val_2, ... }``.
+               This is the really important parameter here. It is of the
+               form ``{'statistic_1': val_1, 'statistic_2': val_2, ... }``.
 
                The dictionary provided here represents the measured data.
                Particle during ABCSMC sampling are compared against the
@@ -280,7 +286,7 @@ class ABCSMC:
 
                This parameter is optional, as the distance function might
                implement comparison to the observed data on its own.
-               Not givin this parameter is equivalent to passing an empty
+               Not giving this parameter is equivalent to passing an empty
                dictionary ``{}``.
 
         gt_model: int, optional
@@ -289,20 +295,21 @@ class ABCSMC:
             procedure against synthetic samples, you can use
             this parameter to indicate the ground truth model number.
             This helps with futher analysis. If you use actually measured data
-            (and don't know the ground truth) you can set this to anything.
-            A value if ``-1`` is recommended.
+            (and don't know the ground truth) you don't have to set this.
 
         gt_par: dict, optional
             Similar to ``ground_truth_model``, this is only for recording
-            purposes, but not used in the ABCSMC algorithm.
+            purposes in the database, but not used in the ABCSMC algorithm.
             This stores the parameters of the ground truth model
-            if it was syntheticallyobtained.
+            if it was synthetically obtained.
+            Don't give this parameter if you don't know the ground truth.
 
         meta_info: dict, optional
             Can contain an arbitrary number of keys, only for recording
             purposes. Store arbitrary
             meta information in this dictionary. Can be used for really
             anything.
+            This dictionary is stored in the database.
         """
 
         # initialize
@@ -453,7 +460,7 @@ class ABCSMC:
                 return m_ss, theta_ss
 
     def run(self, minimum_epsilon: float, max_nr_populations: int,
-            acceptance_rate=0) -> History:
+            acceptance_rate: float = 0.) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -465,24 +472,26 @@ class ABCSMC:
 
         max_nr_populations: int
             Tha maximum number of populations. Stop if this number is reached.
-        acceptance_rate: float
+        acceptance_rate: float, optional
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
 
 
         Population after population is sampled and particles which are close
-        enough to the observed data are accepted into the next population.
+        enough to the observed data are accepted and added to the next
+        population.
         If an adaptive Epsilon is specified (this is the default), then
         the acceptance threshold decreases from population to population
         automatically in a data dependent way.
 
-        Sampling of further populations is stopped, when either of the two
+        Sampling of further populations is stopped, when either of the three
         stopping criteria is met:
 
             * the maximum number of populations ``max_nr_populations``
-              is reached
-            * or the acceptance threshold for the last sampled population was
-              smaller than ``minimum_epsilon``.
+              is reached,
+            * the acceptance threshold for the last sampled population was
+              smaller than ``minimum_epsilon``,
+            * or the acceptance rate dropped below ``acceptance_rate``.
 
         The value of ``minimum_epsilon`` determines the quality of the ABCSMC
         approximation. The smaller the better. But sampling time also increases
