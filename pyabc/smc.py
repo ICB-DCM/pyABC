@@ -244,18 +244,14 @@ class ABCSMC:
             The default is 1. If more than one ABC-SMC run is stored, use
             the ``abc_id`` parameter to indicate which one to continue.
 
-        Returns
-        -------
+        .. note::
 
-        continuation_id: int
-
+            The Epsilon's and distance function's initialize methods are
+            not called when an ABCSMC run is loaded.
         """
         self.history = History(db)
         self.history.id = abc_id
-
         self.x_0 = self.history.observed_sum_stat()
-        self._initialize_dist_and_eps()
-        return self.history.id
 
     def new(self, db: Union[dict, str],
             observed_sum_stat: dict = None,
@@ -333,16 +329,15 @@ class ABCSMC:
 
     def _initialize_dist_and_eps(self):
         # initialize distance function and epsilon
-        sample_from_prior = self._prior_sample()
-        self.distance_function.initialize(sample_from_prior)
+        self.distance_function.initialize(self._prior_sample())
 
         def distance_to_ground_truth_function(x):
             return self.distance_function(x, self.x_0)
 
-        self.eps.initialize(sample_from_prior,
+        self.eps.initialize(self._prior_sample(),
                             distance_to_ground_truth_function)
 
-    def _prior_sample(self):
+    def _prior_sample(self) -> List[dict]:
         """
         Only sample from prior and return results without changing
         the history of the Epsilon. This can be used to get initial samples
@@ -359,7 +354,7 @@ class ABCSMC:
                 return m, par
 
             def simulate_one(para):
-                (m, par) = para
+                m, par = para
                 model_result = self.models[m].summary_statistics(
                     par, self.summary_statistics)
                 return model_result.sum_stats

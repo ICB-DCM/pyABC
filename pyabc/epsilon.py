@@ -178,6 +178,7 @@ class MedianEpsilon(Epsilon):
         super().__init__()
         self._initial_epsilon = initial_epsilon
         self.median_multiplier = median_multiplier
+        self._look_up = {}
 
     def get_config(self):
         config = super().get_config()
