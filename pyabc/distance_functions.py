@@ -1,6 +1,10 @@
 """
 Distance functions
 ==================
+
+Distance functions which measure closeness of observed and sampled data.
+For custom distance functions, either pass a plain function to ABCSMC or
+subclass the DistanceFunction class if finer graind configuration is required.
 """
 
 import json
@@ -85,11 +89,21 @@ class DistanceFunction(ABC):
 
 
 class SimpleFunctionDistance(DistanceFunction):
+    """
+    This is a wrapper around a simple function which calculates the distance.
+    If a function is passed to the ABCSMC class, then it is converted to
+    an instance of the SimpleFunctionDistance class.
+    """
     def __init__(self, function):
         self.function = function
 
     def __call__(self, x, y):
         return self.function(x, y)
+
+    def get_config(self):
+        conf = super().get_config()
+        conf["name"] = self.function.__name__
+        return conf
 
 
 def to_distance(maybe_distance_function):
@@ -97,7 +111,7 @@ def to_distance(maybe_distance_function):
 
     Parameters
     ----------
-    maybe_distance_function: either a callable, which takes to arguments or
+    maybe_distance_function: either a callable, which takes two arguments or
     a DistanceFunction instance
 
     Returns
@@ -112,6 +126,7 @@ def to_distance(maybe_distance_function):
 class DistanceFunctionWithMeasureList(DistanceFunction):
     """
     Base class for distance functions with measure list.
+    This class is not functional on its own.
 
     Parameters
     ----------
@@ -119,6 +134,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
     measures_to_use: Union[str, List[str]].
         * If set to "all", all measures are used. This is the default
         * If a list is provided, the measures in the list are used.
+        * measures refers to the summary statistics.
     """
 
     def __init__(self, measures_to_use='all'):
