@@ -116,7 +116,7 @@ class SGE:
 
             .. warning::
 
-                If ``chunk_size`` is larger than 1, this can have bad
+                If ``chunk_size`` is larger than 1, this can have
                 side effects
                 as all the jobs within one chunk are executed within the python
                 process.
