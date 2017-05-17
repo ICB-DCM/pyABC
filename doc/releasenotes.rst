@@ -13,6 +13,9 @@ Release Notes
 * Add a "load" method to the ABCSMC class for easier resuming stored ABCSMC
   runs.
 * Add an example to the documentation how to resume stored ABC-SMC runs.
+* Rename the acceptance_rate parameter form ABCSMC.run to min_acceptance_rate
+  for clarity. Usage of acceptance_rate is deprecated.
+* Various documentation improvements, correcting typos, clarifications, etc.
 
 
 0.7 series

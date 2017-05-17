@@ -34,6 +34,7 @@ strategies.
   implements the STAT sampling strategy.
 * Next, the :class:`pyabc.sampler.MulticoreEvalParallelSampler` implements the
   DYN strategy. This is currently the default sampler.
+
 Both samplers are highly specialized to the multi-core setting and
 have very little communication overhead.
 Even for very small model evaluation times

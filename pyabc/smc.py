@@ -464,19 +464,21 @@ class ABCSMC:
                 return m_ss, theta_ss
 
     def run(self, minimum_epsilon: float, max_nr_populations: int,
-            acceptance_rate: float = 0.) -> History:
+            min_acceptance_rate: float = 0., **kwargs) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
 
         Parameters
         ----------
+
         minimum_epsilon: float
             Stop if epsilon is smaller than minimum epsilon specified here.
 
         max_nr_populations: int
-            Tha maximum number of populations. Stop if this number is reached.
-        acceptance_rate: float, optional
+            The maximum number of populations. Stop if this number is reached.
+
+        min_acceptance_rate: float, optional
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
 
@@ -504,6 +506,16 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
+        if len(kwargs) > 1:
+            raise TypeError("Keyword arguments are not allowed.")
+
+        if "acceptance_rate" in kwargs:
+            warnings.warn("The acceptance_rate argument is deprecated and "
+                          "removed in pyABc 0.9.0. "
+                          "Use min_acceptance_rate instead.",
+                          DeprecationWarning, stacklevel=2)
+            min_acceptance_rate = kwargs["acceptance_rate"]
+
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
@@ -552,7 +564,7 @@ class ABCSMC:
             if (current_eps <= minimum_epsilon
                or (self.stop_if_only_single_model_alive
                    and self.history.nr_of_models_alive() <= 1)
-               or current_acceptance_rate < acceptance_rate):
+               or current_acceptance_rate < min_acceptance_rate):
                 break
 
         self.history.done()
