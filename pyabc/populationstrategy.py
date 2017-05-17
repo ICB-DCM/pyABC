@@ -4,8 +4,8 @@ Population stratgy
 
 Strategies to choose the population size.
 
-At the moment, only constant population size is supported. But this might
-change in the future.
+The population size can be constant or can change over the course
+of the generations.
 """
 
 import json
@@ -24,10 +24,11 @@ adaptation_logger = logging.getLogger("Adaptation")
 
 class PopulationStrategy:
     """
-    Size of the diffrent populations
+    Strategy to select the sizes of the populations.
 
-    This is a non-functional base implementation. Do not use this class
-    directly. Subclasses must override the `adapt_population_size` method.
+    This is a non-functional abstract base implementation. Do not use this
+    class directly. Subclasses must override the `adapt_population_size`
+    method.
 
     Parameters
     ----------
@@ -35,11 +36,9 @@ class PopulationStrategy:
     nr_particles: int
        Number of particles per populations
 
-    nr_populations: int
-        Maximum number of populations
-
-    nr_samples_per_parameter: int
-        Number of samples to draw for a proposed parameter
+    nr_samples_per_parameter: int, optional
+        Number of samples to draw for a proposed parameter.
+        Default is 1.
     """
     def __init__(self, nr_particles: int, *, nr_samples_per_parameter: int=1):
         self.nr_particles = nr_particles
@@ -48,20 +47,24 @@ class PopulationStrategy:
     def adapt_population_size(self, transitions: List[Transition],
                               model_weights: np.ndarray):
         """
+        Select the population size for the next population.
 
         Parameters
         ----------
-        transitions
-        model_weights
+        transitions: List of Transitions
+        model_weights: array of model weights
 
         Returns
         -------
-
+        n: int
+            The new population size
         """
         raise NotImplementedError
 
     def get_config(self):
         """
+        Get the configuration of this object.
+
         Returns
         -------
         dict
@@ -72,6 +75,10 @@ class PopulationStrategy:
 
     def to_json(self):
         """
+        Return the configuration as json string.
+        Per default, this converts the dictionary returned
+        by get_config to json.
+
         Returns
         -------
 
@@ -91,9 +98,6 @@ class ConstantPopulationStrategy(PopulationStrategy):
     nr_particles: int
        Number of particles per populations
 
-    nr_populations: int
-        Maximum number of populations
-
     nr_samples_per_parameter: int
         Number of samples to draw for a proposed parameter
     """
@@ -104,16 +108,16 @@ class ConstantPopulationStrategy(PopulationStrategy):
 class AdaptivePopulationStrategy(PopulationStrategy):
     """
     Adapt the population size according to the mean coefficient of variation
-    error criterion.
+    error criterion. This strategy tries to respond to the shape of the
+    current posterior approximation by selection the population size such
+    that the variation of the density estimates matches the target
+    variation given via the mean_cv argument.
 
     Parameters
     ----------
 
-    nr_particles: int
+    start_nr_particles: int
         Number of particles in the first populations
-
-    nr_populations: int
-        Max number of populations
 
     mean_cv: float, optional
         The error criterion. Defaults to 0.05.
@@ -121,16 +125,17 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         The error criterion is the mean coefficient of variation of
         the estimated KDE.
 
-    nr_samples_per_parameter: int, optional
-        Defaults to 1.
-
     max_population_size: int, optional
-        Max nr of allowe particles in a population.
+        Max nr of allowed particles in a population.
         Defaults to infinity.
 
     min_population_size: int, optional
         Min number of particles allowed in a population.
         Defaults to 10
+
+    nr_samples_per_parameter: int, optional
+        Defaults to 1.
+
     """
     def __init__(self, start_nr_particles, mean_cv=0.05,
                  *,

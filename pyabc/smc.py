@@ -117,6 +117,13 @@ class ABCSMC:
         machine only.
 
 
+    Attributes
+    ----------
+
+    stop_if_only_single_model_alive: bool
+        Defaults to False. Set this to true if you want to stop ABCSMC
+        automatically as soon as only a single model has survived.
+
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -195,13 +202,8 @@ class ABCSMC:
         return state_red_dict
 
     def do_not_stop_when_only_single_model_alive(self):
-        """
-        Calling this method causes the ABCSMC to still continue if only
-        a single model is still alive. This is useful if the interest lies in
-        estimating the model parameter as compared to doing model selection.
-
-        The default behavior is to stop when only a single model is alive.
-        """
+        warnings.warn("This method is deprecated and removed "
+                      "in pyABC 10.0.", DeprecationWarning, stacklevel=2)
         self.stop_if_only_single_model_alive = False
 
     def set_data(self, observed_summary_statistics: dict,
@@ -216,7 +218,7 @@ class ABCSMC:
 
         .. warning::
 
-           This method is deprecated.
+           The method "set_data" is deprecated.
         """
         warnings.warn("The method \"set_data\" is deprecated "
                       "and to be removed "

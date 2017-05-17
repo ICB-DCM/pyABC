@@ -49,14 +49,14 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     If your summary statistics are only a dict with a couple of numbers,
     the overhead should not be substantial.
     However, if your summary statistics are large numpy arrays
-    or similar, this could cause overhad
+    or similar, this could cause overhead
 
 
     Parameters
     ----------
         n_procs: int, optional
             If set to None, the Number of cores is determined according to
-            :func:`pyabc.sge.util.nr_cores_available`.
+            :func:`pyabc.sge.nr_cores_available`.
 
 
     .. warning::

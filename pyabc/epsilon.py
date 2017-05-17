@@ -1,6 +1,6 @@
 """
 
-Acceptance threshold Scheduling strategies.
+Acceptance threshold scheduling strategies.
 
 Acceptance thresholds can calculated based on the distances from the
 observed data or can follow a pre-defined list, can be constant or can have
@@ -32,7 +32,8 @@ class Epsilon(ABC):
         of the epsilon
         and can be used to calibrate it to the statistics of the samples.
 
-        The default implementation is to do nothing.
+        The default implementation is to do nothing. It is not necessary
+        to implement this method.
 
         Parameters
         ----------
@@ -80,7 +81,8 @@ class Epsilon(ABC):
         Parameters
         ----------
         t: int
-            The population number
+            The population number. Counting is zero based. So the first
+            population has t=0.
 
         history: History
             ABC history object. Can be used to query summary statistics to
@@ -97,6 +99,8 @@ class Epsilon(ABC):
 class ConstantEpsilon(Epsilon):
     """
     Keep epsilon constant over all populations.
+    This acceptance threshold scheduling strategy is most likely only
+    interesting for debugging purposes.
 
     Parameters
     ----------
@@ -126,7 +130,7 @@ class ListEpsilon(Epsilon):
 
     values: List[float]
         List of epsilon values.
-        ``values[k]`` is the value for population k.
+        ``values[t]`` is the value for population t.
     """
     def __init__(self, values: List[float]):
         super().__init__()
@@ -151,7 +155,7 @@ class MedianEpsilon(Epsilon):
     initial_epsilon: Union[str, int]
 
         * If 'from_sample', then the initial median is calculated from
-          samples as its median.
+          a sample of the current population size from the priro distribution.
         * If a number is given, this number is used.
 
     median_multiplier: float
@@ -161,7 +165,7 @@ class MedianEpsilon(Epsilon):
         it is given as a number.
 
 
-    This strategy should work even if the posterior is multi-modal.
+    This strategy works even if the posterior is multi-modal.
     Note that the acceptance threshold calculation is based on the distance
     to the observation, not on the parameters which generated data with that
     distance.

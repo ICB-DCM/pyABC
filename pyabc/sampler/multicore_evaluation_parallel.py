@@ -40,12 +40,25 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
     This sampler has very low communication overhead and is thus suitable
     for short running model evaluations.
 
+    Requires no pickling of the ``sample_one``,
+    ``simulate_one`` and ``accept_one`` function.
+    This is achieved using fork on linux (see :class:`Sampler`).
+
+    The simulation results are still pickled as they are transmitted
+    from the worker processes back to the parent process.
+    Depending on the kind of summary statistics this can be fast or slow.
+    If your summary statistics are only a dict with a couple of numbers,
+    the overhead should not be substantial.
+    However, if your summary statistics are large numpy arrays
+    or similar, this could cause overhead
+
 
     Parameters
     ----------
-        n_procs: int, optional
-            If set to None, the Number of cores is determined according to
-            :func:`pyabc.sge.util.nr_cores_available`.
+
+    n_procs: int, optional
+        If set to None, the Number of cores is determined according to
+        :func:`pyabc.sge.nr_cores_available`.
     """
     def __init__(self, n_procs=None):
         super().__init__()

@@ -108,6 +108,8 @@ class ValidParticle:
 
     summary_statistics_list
         List of summary statistics which describe the sample
+        This list is usually of length 1. This list is longer only if more
+        than one sample is taken for a particle.
     """
     def __init__(self, m: int, parameter: Parameter,
                  weight: float, distance_list: List[float],

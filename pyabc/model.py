@@ -25,8 +25,10 @@ class ModelResult:
 
 class Model:
     """
-    General ABC Model. This is the most flexible model class, but
-    also the most complicated one to use. This is to be subclassed.
+    General model. This is the most flexible model class, but
+    also the most complicated one to use.
+    This is an abstract class and not functional on its own.
+    Derive concrete subclasses for actual usage.
 
     The individual steps
 
@@ -35,23 +37,22 @@ class Model:
       * distance
       * accept
 
-    are to be overwritten.
+    can be overwritten.
 
-    Every model has to have a working summary_statistics implementation
-    and a working accept implementation. The summary_statistics method
-    is necessary to initialize distance functions are epsilons.
+    To use this class, at least the sample method has to be overriden.
 
-    .. warning::
+    .. note::
 
-        Most likely you do no want to suse this class, but the
-        :class:`SimpleModel` instead, or even just a plain function as model.
+        Most likely you do not want to use this class directly, but the
+        :class:`SimpleModel` instead, or even just pass a plain function
+        as model.
 
     Parameters
     ----------
 
         name: str
-            A descriptive name of the model. This name is nowhere
-            directly used, but simplifies further analysis for the user.
+            A descriptive name of the model. This name can simplify further
+            analysis for the user as it is stored in the database.
     """
     def __init__(self, name: str="model"):
         self.name = name
@@ -152,8 +153,10 @@ class Model:
 
 class SimpleModel(Model):
     """
-    A model which is initialized with a function which generates the sampler.
-    For most cases this class is to be used
+    A model which is initialized with a function which generates the samples.
+    For most cases this class is to be used.
+    Note that you can also pass a plain function to the ABCSMC class.
+    This function get automatically converted to a SimpleModel.
 
     Parameters
     ----------
@@ -177,6 +180,24 @@ class SimpleModel(Model):
 
     @staticmethod
     def assert_model(model_or_function):
+        """
+        Alternative constructor. Accepts either a Model instance or a
+        function and returns always a Model instance.
+
+
+        Parameters
+        ----------
+        model_or_function: Model, function
+            Constructs a SimpleModel instance if a function is passed.
+            If a Model instance is passed, the Model instance itself is
+            returned.
+
+        Returns
+        -------
+
+        model: SimpleModel or Model
+
+        """
         if isinstance(model_or_function, Model):
             return model_or_function
         else:
@@ -198,7 +219,7 @@ class IntegratedModel(Model):
     """
     def integrated_simulate(self, pars, eps: float) -> ModelResult:
         """
-        Method which integrated simulation and acceptance/rejections
+        Method which integrates simulation and acceptance/rejection
         in a single method.
 
         Parameters
@@ -221,8 +242,8 @@ class IntegratedModel(Model):
 sum_stats=sum_stats)``
             in which ``distance`` denotes the achieved
             distance and ``sum_stats`` the summary statistics (e.g. simulated
-            data) of the run. Note that providing the summaru statistics
-            is optional. If they are procided, then they are also logged in
+            data) of the run. Note that providing the summary statistics
+            is optional. If they are provided, then they are also logged in
             the database.
         """
         raise NotImplementedError()

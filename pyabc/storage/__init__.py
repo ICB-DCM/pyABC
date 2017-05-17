@@ -14,7 +14,7 @@ information later on.
 Initializing the databse interface from a file
 ----------------------------------------------
 
-For querying, you initialize a History object passing with a valid SQLAlchmey
+For querying, you initialize a History object with a valid SQLAlchmey
 database identifier. For example, if you ABC-SMC data is stored in a file
 "data.db", you initialize the History with:
 
@@ -25,7 +25,7 @@ database identifier. For example, if you ABC-SMC data is stored in a file
 Don't mind the three slashes. This is SQLAlchemy syntax.
 
 If more than one ABC-SMC run is stored in your database file, these runs will
-have IDs. The first run has ID 1, the second run ID 2 and so on. Per default,
+have IDs. The first run has ID=1, the second run ID=2 and so on. Per default,
 the first run found in the database is automatically selected. To select a
 specific run by manually, do
 
@@ -52,7 +52,7 @@ stored data. The most important ones are:
   particles per population (this number os not necessariliy constant),
 * ``History.get_weighted_distances``, to retrieve the distances the parameter
   samples achieved,
-* ``History.max_t`` to get the total number of populations, and
+* ``History.n_populations`` to get the total number of populations, and
 * ``History.total_nr_simulations`` to get the total number of simulations, i.e.
   sample attempts.
 
@@ -63,11 +63,11 @@ example,
 
    df, w = history.get_distribution(m)
 
-will return a DataFrame df and an array w of parameters of model m.
-The DataFrame df contains the parameters of the populations
-and the array w their weights. If you're interested in intermediate
+will return a DataFrame df of parameters and an array w of weights of the
+particles of model m in the last available population.
+If you're interested in intermediate
 populations, add the optional t parameter, which indicates the population
-number
+number (the first population is t=0)
 
 .. code-block:: python
 

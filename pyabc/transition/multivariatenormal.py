@@ -10,14 +10,26 @@ from .util import smart_cov
 
 def scott_rule_of_thumb(n_samples, dimension):
     """
-    see scipy.stats.kde.gaussian_kde.scotts_factor
+    Scott's rule of thumb.
+
+    .. math::
+
+       \\left ( \\frac{1}{n} \\right ) ^{\\frac{1}{d+4}}
+
+    (see also scipy.stats.kde.gaussian_kde.scotts_factor)
     """
     return n_samples ** (-1. / (dimension + 4))
 
 
 def silverman_rule_of_thumb(n_samples, dimension):
     """
-    see scipy.stats.kde.gaussian_kde.silverman_factor
+    Silverman's rule of thumb.
+
+    .. math::
+
+       \\left ( \\frac{4}{n (d+2)} \\right ) ^ {\\frac{1}{d + 4}}
+
+    (see also scipy.stats.kde.gaussian_kde.silverman_factor)
     """
     return (4 / n_samples / (dimension + 2)) ** (1 / (dimension + 4))
 
@@ -34,9 +46,17 @@ class MultivariateNormalTransition(Transition):
         bandwidth with. Since Silverman and Scott usually have too large
         bandwidths, it should make most sense to have 0 < scaling <= 1
 
+    bandwidth_selector: optional
+        Defaults to `silverman_rule_of_thumb`.
+        The bandwidth selector is a function of the form
+        f(n_samples: float, dimension: int),
+        where n_samples denotes the (effective) samples size (and is therefore)
+        a float and dimension is the parameter dimension.
+
     """
-    def __init__(self, scaling=1.):
+    def __init__(self, scaling=1., bandwidth_selector=silverman_rule_of_thumb):
         self.scaling = scaling
+        self.bandwidth_selector = bandwidth_selector
 
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         if len(X) == 0:
@@ -45,7 +65,7 @@ class MultivariateNormalTransition(Transition):
         cov = smart_cov(self._X_arr, w)
         effective_sample_size = len(X) / (1 + w.var())
         dimension = cov.shape[0]
-        self.cov = cov * silverman_rule_of_thumb(effective_sample_size,
+        self.cov = cov * self.bandwidth_selector(effective_sample_size,
                                                  dimension) * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 

@@ -1,7 +1,7 @@
 import unittest
 
 from pyabc.parameters import Parameter
-from pyabc.random_variables import RV, Distribution, Kernel
+from pyabc.random_variables import RV, Distribution
 
 
 class TextRVComposition(unittest.TestCase):
@@ -25,16 +25,6 @@ class TextRVComposition(unittest.TestCase):
 
     def test_composition(self):
         self.assertEqual(1 / 4 ** 3, self.d.pdf(self.x_one))
-
-    def test_composed_kernel_perturb_zero(self):
-        k = Kernel(self.d_plus_one)
-        sample = k.rvs(self.x_zero)
-        self.assertEqual(sample, self.x_one)
-
-    def test_composed_kernel_perturb_one(self):
-        k = Kernel(self.d_plus_one)
-        sample = k.rvs(self.x_one)
-        self.assertEqual(sample, self.x_two)
 
 
 class TestRVInitialization(unittest.TestCase):

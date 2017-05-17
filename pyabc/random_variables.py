@@ -116,7 +116,7 @@ class RV(RVBase):
         with name "name".
 
     kwargs:
-        Keyword arguments as in s``cipy.stats``
+        Keyword arguments as in ``scipy.stats``
         matching the distribution with name "name".
     """
     @staticmethod
@@ -321,7 +321,7 @@ class Distribution(ParameterStructure):
     Essentially something like a dictionary
     of random variables or distributions.
 
-    This should be used as prior and also as Kernel density.
+    This should be used to define a prior.
     """
     def __repr__(self):
         return "<Distribution {keys}>".format(
@@ -429,54 +429,6 @@ class Distribution(ParameterStructure):
             return reduce(lambda s, t: s*t, res)
         else:
             return 1
-
-
-class Kernel:
-    """
-    A Kernel of the form K(x,y) = K(x-y).
-
-    Can be initialized from a distribution or using individual variables.
-    E.g. do ``Kernel(distribution)`` or
-    ``Kernel(par_name_1=rv1, par_name2=rv2)``
-
-    If X is a given RV with pdf f, then K(x,y) = f(x-y).
-    """
-    def __init__(self, *distribution, **random_variables):
-        if not ((bool(len(distribution)) != bool(len(random_variables))) or
-                (len(distribution) == len(random_variables) == 0)):
-            raise Exception(
-                "Give single argument XOR keyword arguments. Never both.")
-        elif len(distribution) == 1:  # parameter is a Distribution object
-            self.distribution = distribution[0]
-        else:  # parameter is a dictionary
-            self.distribution = Distribution(**random_variables)
-
-    def add_random_variables(self, **random_variables):
-        """
-        Add random variables to kernel
-
-        Parameters
-        ----------
-        random_variables: keyword arguments
-            Keys are the names, values the random variables
-        """
-        self.distribution.update_random_variables(**random_variables)
-
-    def get_parameter_names(self):
-        return self.distribution.get_parameter_names()
-
-    def rvs(self, theta):
-        """
-        Return sample form :math:`K( \\dot, theta)`
-        """
-        return self.distribution.rvs() + theta
-
-    def pdf(self, x, y):
-        """
-        Return density :math:`K(x,y)`
-        I.e probability of getting form y to x.
-        """
-        return self.distribution.pdf(x-y)
 
 
 class ModelPerturbationKernel:

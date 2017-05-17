@@ -3,6 +3,7 @@ Multi-core and Distributed Sampling
 ===================================
 
 The choice of the sampler determines in which way parallelization is performed.
+See also the `explanation of the samplers <sampler.html>`_.
 """
 
 from .singlecore import SingleCoreSampler

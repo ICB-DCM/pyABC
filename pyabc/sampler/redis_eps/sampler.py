@@ -11,11 +11,11 @@ from .redis_logging import worker_logger
 class RedisEvalParallelSampler(Sampler):
     """
     Redis based low latency sampler.
-    This sampler is extremely well performiing in distributed environments.
-    It vastly outperforms
+    This sampler is well performing in distributed environments.
+    It is usually faster than the
     :class:`pyabc.sampler.DaskDistributedSampler` for
     short model evaluation runtimes. The longer the model evaluation times,
-    the less the advantage becomes. It requires a running redis server as
+    the less the advantage becomes. It requires a running Redis server as
     broker.
 
     This sampler requires workers to be started via the command
@@ -24,13 +24,14 @@ class RedisEvalParallelSampler(Sampler):
     ``abc-redis-worker --host=123.456.789.123 --runtime=2h``
     to connect to a Redis server on IP ``123.456.789.123`` and to terminate
     the worker after finishing the first population which ends after 2 hours
-    since worker start. So the actual runtime might be longer thatn 7200s.
+    since worker start. So the actual runtime might be longer than 2h.
     See ``abc-redis-worker --help`` for its options.
 
     Use the command ``abc-redis-manager`` to retrieve info and stop the running
     workers.
 
-    Start as many workers as you whish.
+    Start as many workers as you wish. Workers can be dynamically added
+    during the ABC run.
 
     Parameters
     ----------

@@ -4,7 +4,7 @@ Distance functions
 
 Distance functions which measure closeness of observed and sampled data.
 For custom distance functions, either pass a plain function to ABCSMC or
-subclass the DistanceFunction class if finer graind configuration is required.
+subclass the DistanceFunction class if finer grained configuration is required.
 """
 
 import json
@@ -88,6 +88,15 @@ class DistanceFunction(ABC):
         return json.dumps(self.get_config())
 
 
+class NoDistance(DistanceFunction):
+    """
+    Implents a kind of null object as distance function.
+    """
+    def __call__(self, x: dict, x_0: dict) -> float:
+        raise Exception("{} is not intended to be called."
+                        .format(self.__class__.__name__))
+
+
 class SimpleFunctionDistance(DistanceFunction):
     """
     This is a wrapper around a simple function which calculates the distance.
@@ -118,6 +127,9 @@ def to_distance(maybe_distance_function):
     -------
 
     """
+    if maybe_distance_function is None:
+        return NoDistance()
+
     if isinstance(maybe_distance_function, DistanceFunction):
         return maybe_distance_function
     return SimpleFunctionDistance(maybe_distance_function)

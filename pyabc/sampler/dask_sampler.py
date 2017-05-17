@@ -7,8 +7,8 @@ import numpy as np
 
 class DaskDistributedSampler(Sampler):
     """
-    Parallelize with dask. This sampler is intended to be used with a pre-con-
-    figured dask client, but is able to initialize client, scheduler and
+    Parallelize with dask. This sampler is intended to be used with a
+    pre-configured dask client, but is able to initialize client, scheduler and
     workers on its own on the local machine for testing/debugging purposes.
 
     Parameters
@@ -16,7 +16,7 @@ class DaskDistributedSampler(Sampler):
 
     dask_client: dask.Client, optional
         The configured dask Client.
-        If none is provided, then a local dask distributed Cluster is created.
+        If none is provided, then a local dask distributed cluster is created.
 
     client_max_jobs:
         Maximum number of jobs that can submitted to the client at a time.
@@ -31,14 +31,14 @@ class DaskDistributedSampler(Sampler):
         evaluate functions. This allows utilization of locally defined
         functions, which can not be pickled using default pickle, at the cost
         of an additional pickling overhead. For dask, this workaround should
-        not be necessary and it should be save to use default_pickle=false
+        not be necessary and it should be save to use default_pickle=false.
 
     batchsize: int, optional
         Number of parameter samples that are evaluated in one remote execution
         call. Batchsubmission can be used to reduce the communication overhead
         for fast (ms-s) model evaluations. Large batchsizes can result in un-
         necessary model evaluations. By default, batchsize=1, i.e. no batching
-        is done
+        is done.
 
     """
     sample_until_n_accepted = sample_until_n_accepted_proto

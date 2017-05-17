@@ -33,7 +33,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
     @abstractmethod
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         """
-        Fit the perturber to the sampled data.
+        Fit the density estimator (perturber) to the sampled data.
         Concrete implementations might do something like fitting a KDE.
 
         The parameters given as ``X`` and ``w`` are automatically stored
@@ -61,6 +61,31 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         """
 
     def rvs(self, size=None):
+        """
+        Sample from the density.
+
+        Parameters
+        ----------
+
+        size: int, optional
+            Number of independent samples to draw.
+            Defaults to 1 and is in this case equivalent to calling
+            "rvs_single".
+
+        Returns
+        -------
+
+        samples: The samples as pandas DataFrame
+
+
+        Note
+        ----
+
+        This method can be overridden for efficient implementations.
+        The default is to call rvs_single repeatedly (which might
+        not be the most efficient way).
+
+        """
         if size is None:
             return self.rvs_single()
         return pd.DataFrame([self.rvs_single() for _ in range(size)])
@@ -73,8 +98,12 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Parameters
         ----------
-        x: pd.Series
-            Parameter
+        x: pd.Series, pd.DataFrame
+            Parameter. If x is a series, then x should have the the columns
+            from X passed to the fit method as indices.
+            If x is a DataFrame, then x should have the same columns as X
+            passed before to the fit method. The order of the columns is not
+            important
 
         Returns
         -------

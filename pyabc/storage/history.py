@@ -85,7 +85,7 @@ class History:
             Size of the SQLite database in MB.
             Currently this only works for SQLite databases.
 
-            Returns an error string of the DB size cannot be calculated.
+            Returns an error string if the DB size cannot be calculated.
         """
         try:
             return os.path.getsize(self.db_file()) / 10**6
@@ -142,19 +142,21 @@ class History:
         Parameters
         ----------
 
-        t: int, None
-            Population number.
-            If t is None, then the last population is returned.
-
         m: int
             model index
+
+        t: int, optional
+            Population number.
+            If t is not specified, then the last population is returned.
+
+
 
         Returns
         -------
 
-        pars, w: pandas.DataFrame, np.ndarray
+        df, w: pandas.DataFrame, np.ndarray
 
-        pars:
+        df:
             is a DataFrame of parameters
         w:
             are the weights associated with each parameter
@@ -204,7 +206,7 @@ class History:
 
         * `t`: Popultion number
         * `population_end_time`: The end time of the population
-        * `nr_samples`: The number of sample attempts performed
+        * `samples`: The number of sample attempts performed
            for a population
         * `epsilon`: The acceptence threshold for the population.
 
@@ -522,14 +524,15 @@ class History:
         return int((model_probs.p > 0).sum())
 
     @with_session
-    def get_weighted_distances(self, t: int) -> pd.DataFrame:
+    def get_weighted_distances(self, t: Union[int, None]) -> pd.DataFrame:
         """
         Median of a population's distances to the measured sample
 
         Parameters
         ----------
-        t: int
-            Population number
+        t: int, None
+            Population number.
+            If t is None the last population is selected.
 
         Returns
         -------
@@ -608,11 +611,9 @@ class History:
         Returns
         -------
 
-        w, sum_stats: np.ndarray, np.ndarray
-        w:
-            The weights associated with the summary statistics
-        sum_stats: list
-            List of summary statistics
+        w, sum_stats: np.ndarray, list
+            * w: the weights associated with the summary statistics
+            * sum_stats: list of summary statistics
         """
         m = int(m)
         if t is None:

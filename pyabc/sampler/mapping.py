@@ -9,7 +9,9 @@ from .base import Sampler
 
 class MappingSampler(Sampler):
     """
-    Parallelize via a map operation
+    Parallelize via a map operation.
+    This sampler can be applied in a multi-core or in a distributed
+    setting.
 
     Parameters
     ----------
@@ -42,10 +44,14 @@ latest/task.html#quick-and-easy-parallelism)
         Whether the mapper handles the pickling itself
         or the MappingSampler class should handle serialization.
 
-        The default is `True`. Setting this to `False` might have a substantial
-        performance impact as much serialization and deserialization is done,
+        The default is `False`.
+        While this setting is compatible with a larger range of
+        map functions, its performance can be suboptimal.
+        As possibly too much serialization and deserialization is done,
         which could limit overall performace if the model evaluations are
-        comparatively fast. For example, for the
+        comparatively fast.
+        The passed map function might implement more efficient serialization.
+        For example, for the
         :class:`pyabc.sge.SGE` mapper, this option should be set to
         `True` for better performance.
     """
@@ -79,7 +85,10 @@ latest/task.html#quick-and-easy-parallelism)
     def sample_until_n_accepted(self, sample, simualte, accept, n):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
-        # shared references
+        # shared references.
+        # Correct usage of shared references might even be necessary
+        # to ensure correct working, depending on the details of the
+        # model implementations.
         sample_simulate_accept = self.pickle((sample, simualte, accept))
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)

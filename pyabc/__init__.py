@@ -8,7 +8,6 @@ import os
 import logging
 from .parameters import Parameter
 from .random_variables import (Distribution,
-                               Kernel,
                                ModelPerturbationKernel,
                                RV,
                                RVBase,
@@ -50,7 +49,6 @@ __all__ = [
     "LowerBoundDecorator",
     "Parameter",
     "Distribution",
-    "Kernel",
     "ModelPerturbationKernel",
     # random_variables end
     "SQLDataStore",
