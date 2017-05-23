@@ -1,5 +1,8 @@
-Parallel and Distributed Sampling Strategies
-============================================
+Parallel and Distributed Sampling
+=================================
+
+Strategies
+----------
 
 The pyABC package offers a variety of different parallel and distributed
 sampling strategies. Single-core, multi-core and distributed execution is
@@ -14,7 +17,7 @@ scheduling.
 
 
 Single-core execution
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 For single-core execution, pyABC offers
 the :class:`pyabc.sampler.SingleCoreSampler`.
@@ -24,7 +27,7 @@ code can be hard sometimes.
 
 
 Multi-core only samplers
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 For multi-core execution, pyABC implements two possible parallelization
@@ -45,7 +48,7 @@ work as expected on Windows.
 
 
 Distributed samplers
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 The distributed samplers can, be used in a distributed setting, and of course
 also locally by setting up a local cluster. However, for local execution,
@@ -74,8 +77,8 @@ handle worker failures and unexpected execution host terminations.
 
 
 
-Gemeral extensible samplers
----------------------------
+General extensible samplers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Moreover, there are two more generic samplers which can be used in a
 multicore and distributed fashion.
@@ -94,3 +97,135 @@ concurrent.futures.ProcessPoolExecutor) and distributed (e.g. Dask)
 environments
 
 Check the :doc:`API documentation <sampler_api>` for more details.
+
+
+How to setup a Redis based distributed cluster
+----------------------------------------------
+
+
+Step 1: Start a Redis server without password authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Start one some machine, which is reachable by the machine running the pyABC
+main application and by the workers, a Redis server, disabling password
+authentication:
+
+
+.. code:: bash
+
+   redis-server --protected-mode no
+
+
+You should get an output looking similar to the one below:
+
+.. literalinclude:: redis_setup/redis_start_output.txt
+
+If you're on Linux, you can install redis either via your package manager
+of if you're using anaconda via
+
+.. code:: bash
+
+   conda install redis
+
+At this point, Windows is not officially supported by the Redis developers.
+We assume for now, that the IP address of the machine running the Redis server
+is 111.111.111.111.
+
+
+
+Step 2 or 3: Start pyABC
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+It does not matter what you do first: starting pyABC or starting the
+workers. Assuming the models, priors and the distance function are defined,
+configure pyABC to use the Redis sampler
+
+.. code:: python
+
+   from pyabc.sampler import RedisEvalParallelSampler
+
+   redis_sampler = RedisEvalParallelSampler(host="111.111.111.111")
+
+   abc = pyabc.ABCSMC(models, priors, distance, sampler=redis_sampler)
+
+Note that 111.111.111.111 is the IP address of the machine running the Redis
+server. Then start the ABC-SMC run as usual with
+
+.. code:: python
+
+   abc.run(...)
+
+
+passing the stopping conditions.
+
+
+Step 2 or 3: Start the workers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It does not matter what you do first: starting pyABC or starting the
+workers. You can even dynamically add workers after the sampling has started.
+Start as many workers as you whish on the machines you whish. Up to 10,000
+workers should not pose any problem if the model evaluation times are on the
+second scale or longer.
+
+.. code:: bash
+
+    abc-redis-worker --host=111.111.111.111
+
+Again, 111.111.111.111 is the IP address of the machine running the Redis
+server. You should get an output similar to
+
+
+.. parsed-literal::
+
+   INFO:REDIS-WORKER:Start redis worker. Max run time 7200.0s
+
+Note that the ``abc-redis-worker`` command also has options to set the
+maximal runtime of a worker, e.g. ``--runtime=2h``, ``--runtime=3600s``,
+``--runtime=2d``, to start a worker running for 2 hours, 3600 seconds
+or 2 days.
+The default is 2 hours. It is OK if a worker
+stops during the sampling of a generation. You can add new workers during
+the sampling process.
+
+
+Optional: Monitoring
+~~~~~~~~~~~~~~~~~~~~
+
+pyABC ships with a small utility to manage the Redis based sampler setup.
+To monitor the ongoing sampling, do
+
+
+.. code: bash
+
+  abc-redis-manager info --host=111.111.111.111
+
+again, assuming 111.111.111.111 is the IP of the Redis server. If no sampling
+has happened yet, the output should look like
+
+.. parsed-literal::
+
+   Workers=None Evaluations=None Particles=None
+
+The keys are to be read as follows:
+
+* Workers: Currently sampling workers. This will show None or zero, even if
+  workers are connected but they are not running. This number drops to zero
+  at the end of a generation.
+* Evaluations: Number of accumulated model evaluations for the current
+  generations. This is a sum across all workers.
+* Particles: Number of particles which remain to be accepted.
+  This number decreases over the
+  course of a population and reaches 0 (or a negative number due to excess
+  sampling) at the end of a population. At the very start, this is just the
+  population size.
+
+
+Optional: Stopping workers
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``abc-redis-manager stop`` to send a signal to the workers that they should
+shutdown at the end of the current generation.
+
+You can also stop workers with ``Ctrl-C``, or even send a kill signal when
+pyABC has finished.
