@@ -21,3 +21,11 @@ Download the examples as notebooks
 * :download:`Model selection (Quickstart) <examples/quickstart.ipynb>`
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
+
+
+.. warning::
+
+   Upgrade to the latest pyABC version before running the examples.
+   If you installed pyABC some weeks (or days) a ago, some new features might
+   have been added in the meantime.
+   Refer to the :ref:`upgrading` section on how to upgrade pyABC.
