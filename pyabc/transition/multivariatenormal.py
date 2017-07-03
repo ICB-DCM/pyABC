@@ -43,7 +43,7 @@ class MultivariateNormalTransition(Transition):
 
     scaling: float
         Scaling is a factor which additionally multiplies the
-        bandwidth with. Since Silverman and Scott usually have too large
+        covariance with. Since Silverman and Scott usually have too large
         bandwidths, it should make most sense to have 0 < scaling <= 1
 
     bandwidth_selector: optional
@@ -54,7 +54,7 @@ class MultivariateNormalTransition(Transition):
         a float and dimension is the parameter dimension.
 
     """
-    def __init__(self, scaling=1., bandwidth_selector=silverman_rule_of_thumb):
+    def __init__(self, scaling=2., bandwidth_selector=silverman_rule_of_thumb):
         self.scaling = scaling
         self.bandwidth_selector = bandwidth_selector
 
