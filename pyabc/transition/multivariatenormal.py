@@ -63,11 +63,11 @@ class MultivariateNormalTransition(Transition):
             raise NotEnoughParticles("Fitting not possible.")
         self._X_arr = X.as_matrix()
         cov = smart_cov(self._X_arr, w)
-        effective_sample_size = len(X) / (1 + w.var())
-        dimension = cov.shape[0]
-        self.cov = cov * self.bandwidth_selector(effective_sample_size,
-                                                 dimension) * self.scaling
-        self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
+        dim = cov.shape[0]
+        eff_sample_size = len(X) / (1 + w.var())
+        bw_factor = self.bandwidth_selector(eff_sample_size, dim)
+        self.cov = cov * bw_factor**2 * self.scaling
+        self.normal = st.multivariate_normal(cov=cov, allow_singular=True)
 
     def rvs_single(self):
         sample = self.X.sample(weights=self.w).iloc[0]
