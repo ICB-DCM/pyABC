@@ -17,7 +17,8 @@ Emmanuel Klinger:
 Contributions
 -------------
 
-Dennis Rickert contributed through discussions and code.
+Dennis Rickert contributed through
+discussions and code.
 
 
 .. _license-text:
