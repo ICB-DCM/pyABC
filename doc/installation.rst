@@ -46,8 +46,9 @@ Install as user into your home directory (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Installing pyABC into you system's Python
-distribution can be problematic as you might not want to change your
-system's Python installation or you don't have root rights.
+distribution can be problematic as you might not want to
+change your system's Python installation or you
+don't have root rights.
 The recommended alternative is to install pyABC into your
 home directory with::
 
@@ -70,7 +71,8 @@ If you want the bleeding edge version, install directly from github::
 Upgrading
 ---------
 
-If you want to upgrade from a previous pyABC version, use::
+If you want to upgrade from a previous
+pyABC version, use::
 
     pip install --upgrade pyabc
 
@@ -78,7 +80,8 @@ If you want to upgrade from a previous pyABC version, use::
 instead of ``pip install``.
 You can also consult the `pip documentation <https://pip.pypa.io/en/stable/>`_
 on how to manage packages.
-If you installed pyABC into your home directory with
+If you installed pyABC into your
+home directory with
 ``pip install --user pyabc``, then upgrade also with the ``--user`` flag::
 
 
