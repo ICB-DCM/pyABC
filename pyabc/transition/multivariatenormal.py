@@ -54,7 +54,7 @@ class MultivariateNormalTransition(Transition):
         a float and dimension is the parameter dimension.
 
     """
-    def __init__(self, scaling=2., bandwidth_selector=silverman_rule_of_thumb):
+    def __init__(self, scaling=1, bandwidth_selector=silverman_rule_of_thumb):
         self.scaling = scaling
         self.bandwidth_selector = bandwidth_selector
 
@@ -62,12 +62,12 @@ class MultivariateNormalTransition(Transition):
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
         self._X_arr = X.as_matrix()
-        cov = smart_cov(self._X_arr, w)
+        sample_cov = smart_cov(self._X_arr, w)
         dim = cov.shape[0]
         eff_sample_size = len(X) / (1 + w.var())
         bw_factor = self.bandwidth_selector(eff_sample_size, dim)
-        self.cov = cov * bw_factor**2 * self.scaling
-        self.normal = st.multivariate_normal(cov=cov, allow_singular=True)
+        self.cov = sample_cov * bw_factor**2 * self.scaling
+        self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
     def rvs_single(self):
         sample = self.X.sample(weights=self.w).iloc[0]
