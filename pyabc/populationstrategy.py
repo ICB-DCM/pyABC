@@ -137,6 +137,8 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         Defaults to 1.
 
     """
+    N_BOOTSTR = 10
+
     def __init__(self, start_nr_particles, mean_cv=0.05,
                  *,
                  max_population_size=float("inf"),
@@ -159,14 +161,13 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
-        N_BOOTSTR = 5
 
         reference_nr_part = self.nr_particles
         target_cv = self.mean_cv
         cv_estimate = predict_population_size(
             reference_nr_part, target_cv,
             lambda nr_particles: calc_cv(nr_particles, model_weights,
-                                         N_BOOTSTR, test_w, transitions,
+                                         self.N_BOOTSTR, test_w, transitions,
                                          test_X)[0])
 
         if not np.isnan(cv_estimate.n_estimated):

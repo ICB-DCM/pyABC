@@ -85,3 +85,4 @@ data/processed
 examples/*.err
 examples/*.out
 doc/*.log
+*.kdev*
