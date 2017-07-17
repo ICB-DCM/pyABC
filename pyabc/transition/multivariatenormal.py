@@ -64,7 +64,7 @@ class MultivariateNormalTransition(Transition):
         self._X_arr = X.as_matrix()
         sample_cov = smart_cov(self._X_arr, w)
         dim = sample_cov.shape[0]
-        eff_sample_size = len(X) / (1 + w.var())
+        eff_sample_size = 1 / (w**2).sum()
         bw_factor = self.bandwidth_selector(eff_sample_size, dim)
         self.cov = sample_cov * bw_factor**2 * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)

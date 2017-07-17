@@ -161,7 +161,6 @@ class AdaptivePopulationStrategy(PopulationStrategy):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
-
         reference_nr_part = self.nr_particles
         target_cv = self.mean_cv
         cv_estimate = predict_population_size(
