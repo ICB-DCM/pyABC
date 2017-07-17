@@ -1,5 +1,4 @@
 from abc import ABCMeta
-import warnings
 import numpy as np
 import pandas as pd
 import functools
@@ -16,8 +15,6 @@ def wrap_fit(f):
         self.no_parameters = False
         if w.size > 0:
             if not np.isclose(w.sum(), 1):
-                warnings.warn("w not normalized Got w.sum()={}".format(
-                    w.sum()))
                 w /= w.sum()
         f(self, X, w)
     return fit

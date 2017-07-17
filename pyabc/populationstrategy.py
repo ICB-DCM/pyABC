@@ -10,7 +10,6 @@ of the generations.
 
 import json
 import logging
-import warnings
 
 import numpy as np
 from typing import List
@@ -144,7 +143,6 @@ class AdaptivePopulationStrategy(PopulationStrategy):
                  max_population_size=float("inf"),
                  min_population_size=10,
                  nr_samples_per_parameter=1):
-        warnings.warn("Adaptive population strategy is experimental.")
         super().__init__(start_nr_particles,
                          nr_samples_per_parameter=nr_samples_per_parameter)
         self.max_population_size = max_population_size
