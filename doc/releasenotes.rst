@@ -5,6 +5,12 @@ Release Notes
 ..........
 
 
+0.8.1
+-----
+
+Minor internal refactorings and minor documetation updates.
+Nothing a user should notice.
+
 0.8.0
 -----
 
