@@ -80,7 +80,7 @@ def abc_detail(abc_id):
         prob_plot.ylabel = "p"
         plot = Tabs(tabs=[
             Panel(child=prob_plot, title="Probability"),
-            Panel(child=Scatter(x="t", y="nr_samples", data=populations),
+            Panel(child=Scatter(x="t", y="samples", data=populations),
                   title="Samples"),
             Panel(child=Scatter(x="t", y="particles", data=particles),
                   title="Particles"),
@@ -137,7 +137,7 @@ def abc_model(abc_id, model_id, t):
 @app.route("/info")
 def server_info():
     history = app.config["HISTORY"]
-    return render_template("server_info.html", db_path=history.db_path,
+    return render_template("server_info.html", db_path=history.db_file(),
                            db_size=round(history.db_size, 2))
 
 
