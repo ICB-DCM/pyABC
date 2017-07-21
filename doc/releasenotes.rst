@@ -5,6 +5,12 @@ Release Notes
 ..........
 
 
+0.8.2
+-----
+
+Bug fixes for web server.
+
+
 0.8.1
 -----
 
