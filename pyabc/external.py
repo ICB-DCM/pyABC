@@ -52,7 +52,22 @@ class R:
             highlight(code, SLexer(), formatter)))
 
 
-    def model(self, function_name):
+    def model(self, function_name: str):
+        """
+        The R-model.
+
+        Parameters
+        ----------
+        function_name: str
+            Name of the function in the R script which defines the model
+
+        Returns
+        -------
+
+        model: callable
+            The model
+
+        """
         model = robjects.r[function_name]
 
         def model_py(par):
@@ -61,7 +76,23 @@ class R:
         model_py.__name__ = function_name
         return model_py
 
-    def distance(self, function_name):
+    def distance(self, function_name: str):
+        """
+        The R-distance function
+
+        Parameters
+        ----------
+        function_name: str
+            Name of the function in the R script which defines the distance
+            function
+
+        Returns
+        -------
+
+        distance: callable
+            The distance function
+
+        """
         distance = robjects.r[function_name]
 
         def distance_py(*args):
@@ -71,12 +102,44 @@ class R:
         distance_py.__name__ = function_name
         return distance_py
 
-    def summary_statistics(self, function_name):
+    def summary_statistics(self, function_name: str):
+        """
+        The R-summary statistics
+
+        Parameters
+        ----------
+        function_name: str
+          Name of the function in the R script which defines the summary
+          statistics function
+
+        Returns
+        -------
+
+        summary_statistics: callable
+            The summary statistics function
+        """
         summary_statistics = robjects.r[function_name]
         summary_statistics.__name__ = function_name
         return summary_statistics
 
-    def observation(self, name):
+    def observation(self, name: str):
+        """
+        The summary statistics of the observed data as defined in R
+
+        Parameters
+        ----------
+
+        name: str
+            Name of the named list defined in the R script which hold
+            the observed data.
+
+        Returns
+        -------
+
+        observation: r named list
+            A dictionary like object which hold the summary statistics
+            of the observed data.
+        """
         return robjects.r[name]
 
 

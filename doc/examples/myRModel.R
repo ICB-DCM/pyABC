@@ -22,7 +22,7 @@ myModel <- function(pars){
 #' pass through the result of the model function if the
 #' summary statistics calculation is already
 #' done there. Splitting summary statistics and the model
-#' makes most sense in a mdel selection scenario
+#' makes most sense in a model selection scenario
 #' 
 #' @param modelResult The data simulated by the model
 #' @return Named list of summary statistics.
@@ -47,7 +47,7 @@ myDistance <- function(sumStatSample, sumStatData){
 
 # We store the observed data as named list
 # in a variable.
-observation <- list(x=4, y=8)
+myObservation <- list(x=4, y=8)
 
 # The functions model, summaryStatistics and distance
 # have to be constructed in
