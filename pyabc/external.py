@@ -32,7 +32,7 @@ class R:
         the model, the summary statistics and the distance function as
         well as the observed data.
     """
-    def __init__(self, source_file):
+    def __init__(self, source_file: str):
         self.source_file = source_file
         robjects.r.source(source_file)
 
