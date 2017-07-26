@@ -63,6 +63,7 @@ modules and packages.
    random_variables_api
    sge_api
    external_API
+   visualization_api
 
 
 Developer's Guide

@@ -60,7 +60,7 @@ def hist_2d(df, w,
     Returns
     -------
 
-    X, Y, PDF: np.ndarray, np.ndarray, np.ndarray
+    X, Y, PDF: (np.ndarray, np.ndarray, np.ndarray)
         The X, the Y and the densities at these points.
         These can be passed for plotting, for example as
         plt.pcolormesh(X, Y, PDF)
@@ -90,7 +90,7 @@ def plot_hist_2d(df, w, x, y,
     """
     Plots a 2d histogram.
 
-     Parameters
+    Parameters
     ----------
     df: Pandas Dataframe
         The rows are the observations, the columns the variables
@@ -125,7 +125,8 @@ def plot_hist_2d(df, w, x, y,
     Returns
     -------
 
-    ax: axis of the plot
+    ax: matplotlib axis
+        axis of the plot
 
     """
     X, Y, PDF = hist_2d(df, w, x, y,
