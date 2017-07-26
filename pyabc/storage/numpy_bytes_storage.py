@@ -19,6 +19,8 @@ def np_to_bytes(arr):
     return arr_bytes
 
 
+_primitive_types = [int, float, str]
+
 def np_from_bytes(arr_bytes):
     """
     Load numpy array from bytes
@@ -36,4 +38,10 @@ def np_from_bytes(arr_bytes):
     f.seek(0)
     arr = np.load(f)
     f.close()
+    for type_ in _primitive_types:
+        try:
+            if type_(arr) == arr:
+                return type_(arr)
+        except TypeError:
+            pass
     return arr

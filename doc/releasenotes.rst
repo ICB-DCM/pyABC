@@ -5,6 +5,12 @@ Release Notes
 ..........
 
 
+0.8.3
+-----
+
+Add support for models defined in R.
+
+
 0.8.2
 -----
 

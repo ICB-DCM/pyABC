@@ -62,6 +62,7 @@ modules and packages.
    parameters_api
    random_variables_api
    sge_api
+   external_API
 
 
 Developer's Guide
