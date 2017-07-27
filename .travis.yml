@@ -6,17 +6,13 @@ python:
 addons:
   apt:
     sources:
-    - sourceline: 'deb http://cran.rstudio.com/bin/linux/ubuntu precise/'
+    - sourceline: 'deb http://cran.rstudio.com/bin/linux/ubuntu trusty/'
     packages:
     - redis-server
     - r-base
     - r-base-dev
     - r-base-core
     - r-recommended
-before_install:
-  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
-  - sudo apt-get update -q
-  - sudo apt-get install gcc-4.8 -y
 install:
   - pip install .
   - pip install -r requirements.txt
