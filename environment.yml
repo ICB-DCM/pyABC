@@ -14,5 +14,7 @@ dependencies:
   - nbconvert
   - ipykernel
   - r-base
+  - rpy2
+  - pygments
   - pip:
     - nbsphinx

@@ -11,6 +11,8 @@ addons:
     - redis-server
     - r-base
     - r-base-dev
+    - r-base-core
+    - r-recommended
 before_install:
   - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
   - sudo apt-get update -q
