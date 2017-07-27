@@ -9,6 +9,7 @@ import pandas as pd
 from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
 import matplotlib.pyplot as plt
 
+
 def hist_2d(df, w,
             x, y,
             xmin=None, xmax=None,
@@ -66,8 +67,10 @@ def hist_2d(df, w,
         plt.pcolormesh(X, Y, PDF)
 
     """
-    kde = MultivariateNormalTransition(scaling=1, bandwidth_selector=silverman_rule_of_thumb)
-    kde.fit(df[[x,y]], w)
+    kde = MultivariateNormalTransition(
+        scaling=1,
+        bandwidth_selector=silverman_rule_of_thumb)
+    kde.fit(df[[x, y]], w)
     if xmin is None:
         xmin = df[x].min()
     if xmax is None:
@@ -76,7 +79,8 @@ def hist_2d(df, w,
         ymin = df[y].min()
     if ymax is None:
         ymax = df[y].max()
-    X, Y = np.meshgrid(np.linspace(xmin, xmax, num=numx), np.linspace(ymin, ymax, num=numy))
+    X, Y = np.meshgrid(np.linspace(xmin, xmax, num=numx),
+                       np.linspace(ymin, ymax, num=numy))
     test = pd.DataFrame({x: X.flatten(), y: Y.flatten()})
     pdf = kde.pdf(test)
     PDF = pdf.reshape(X.shape)
@@ -134,7 +138,7 @@ def plot_hist_2d(df, w, x, y,
                         ymin=ymin, ymax=ymax, numx=numx, numy=numy)
     if ax is None:
         fig, ax = plt.subplots()
-    mesh = ax.pcolormesh(X, Y, PDF);
+    mesh = ax.pcolormesh(X, Y, PDF)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
     ax.set_title("Posterior")

@@ -8,7 +8,8 @@ Release Notes
 0.8.3
 -----
 
-Add support for models defined in R.
+* Add (experimental) support for models defined in R.
+* Add some visualization functions for convenience.
 
 
 0.8.2

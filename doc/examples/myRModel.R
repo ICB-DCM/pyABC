@@ -4,7 +4,7 @@
 
 #' The model to be simulated.
 #' In this example, it is just a multivariate normal
-#' distrubution.  The number of parameters depends on the
+#' distribution. The number of parameters depends on the
 #' model and can be arbitrary. However, the parameters
 #' should be real numbers.
 #' The return type is arbitrary as well.
@@ -17,12 +17,12 @@ myModel <- function(pars){
 #' Calculates summary statistics from whatever the model returns
 #' 
 #' It is important that the summary statistics have names
-#' to store them correctly in pyABC's database
+#' to store them correctly in pyABC's database.
 #' In many cases, the summary statistics function might just
 #' pass through the result of the model function if the
 #' summary statistics calculation is already
 #' done there. Splitting summary statistics and the model
-#' makes most sense in a model selection scenario
+#' makes most sense in a model selection scenario.
 #' 
 #' @param modelResult The data simulated by the model
 #' @return Named list of summary statistics.
@@ -49,15 +49,12 @@ myDistance <- function(sumStatSample, sumStatData){
 # in a variable.
 myObservation <- list(x=4, y=8)
 
-# The functions model, summaryStatistics and distance
+# The functions for the model, the summary
+# statistics and distance
 # have to be constructed in
-# such a way that the following always makes sense.
-# Note: The model function can in principle already return
-# a named list and the summary statistics function
-# can just pass it through. A separate summary statistics
-# function is mainly useful in a model selection
-# scenario.
-myDistance(
-  mySummaryStatistics(myModel(list(meanX=1,meanY=2))),
-  mySummaryStatistics(myModel(list(meanX=2, meanY=2))))
+# such a way that the following always makes sense:
+#
+# myDistance(
+#   mySummaryStatistics(myModel(list(meanX=1, meanY=2))),
+#   mySummaryStatistics(myModel(list(meanX=2, meanY=2))))
 

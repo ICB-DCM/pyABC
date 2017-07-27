@@ -9,12 +9,15 @@ import rpy2.robjects as robjects
 from .random_variables import Parameter
 import numpy as np
 import pandas as pd
+import warnings
 
 __all__ = ["R"]
 
 
 def dict_to_named_list(dct):
-    if isinstance(dct, dict) or isinstance(dct, Parameter) or isinstance(dct,pd.core.series.Series):
+    if (isinstance(dct, dict)
+            or isinstance(dct, Parameter)
+            or isinstance(dct, pd.core.series.Series)):
         return robjects.r.list(**{key: val for key, val in dct.items()})
     return dct
 
@@ -33,6 +36,9 @@ class R:
         well as the observed data.
     """
     def __init__(self, source_file: str):
+        warnings.warn("The support of the R language for ABC-SMC is "
+                      "considered experimental. The API might change in the "
+                      "future.")
         self.source_file = source_file
         robjects.r.source(source_file)
 
@@ -50,7 +56,6 @@ class R:
         return display.HTML('<style type="text/css">{}</style>{}'.format(
             formatter.get_style_defs('.highlight'),
             highlight(code, SLexer(), formatter)))
-
 
     def model(self, function_name: str):
         """
@@ -141,6 +146,3 @@ class R:
             of the observed data.
         """
         return robjects.r[name]
-
-
-

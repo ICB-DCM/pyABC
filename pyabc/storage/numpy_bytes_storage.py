@@ -21,6 +21,7 @@ def np_to_bytes(arr):
 
 _primitive_types = [int, float, str]
 
+
 def np_from_bytes(arr_bytes):
     """
     Load numpy array from bytes

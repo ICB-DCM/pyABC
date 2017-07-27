@@ -232,12 +232,11 @@ def test_observed_sum_stats(history_uninitialized: History, gt_model):
 
     for k in ["s1", "s2", "s3"]:
         assert loaded_sum_stats[k] == obs_sum_stats[k]
-        assert isinstance(loaded_sum_stats[k], np.ndarray)
 
     assert (loaded_sum_stats["s4"] == obs_sum_stats["s4"]).all()
-    assert loaded_sum_stats["s1"] is not obs_sum_stats["s1"]
-    assert loaded_sum_stats["s2"] is not obs_sum_stats["s2"]
-    assert loaded_sum_stats["s3"] is not obs_sum_stats["s3"]
+    assert loaded_sum_stats["s1"] == obs_sum_stats["s1"]
+    assert loaded_sum_stats["s2"] == obs_sum_stats["s2"]
+    assert loaded_sum_stats["s3"] == obs_sum_stats["s3"]
     assert loaded_sum_stats["s4"] is not obs_sum_stats["s4"]
 
 
