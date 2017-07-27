@@ -7,7 +7,7 @@ addons:
   apt:
     packages:
     - redis-server
-    - r
+    - r-base
 install:
   - pip install .
   - pip install -r requirements.txt
