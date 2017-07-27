@@ -13,6 +13,6 @@ dependencies:
   - pandoc
   - nbconvert
   - ipykernel
-  - r
+  - r-base
   - pip:
     - nbsphinx
