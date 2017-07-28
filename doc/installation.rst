@@ -26,7 +26,7 @@ system's package manager (this might be the case for old
 Debian or Ubuntu operating systems),
 it is recommended to install the latest version of the
 `Anaconda Python 3 distribution <https://www.continuum.io/downloads>`_.
-See also: :ref:`anaconcaCluster`.
+See also: :ref:`anacondaCluster`.
 
 
 PIP Installation
@@ -91,7 +91,7 @@ home directory with
 
 
 
-.. _anaconcaCluster:
+.. _anacondaCluster:
 
 Installing Anaconda on a Cluster environment
 --------------------------------------------
