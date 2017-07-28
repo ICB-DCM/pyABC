@@ -47,7 +47,9 @@ myDistance <- function(sumStatSample, sumStatData){
 
 # We store the observed data as named list
 # in a variable.
-myObservation <- list(x=4, y=8)
+# This is passed by pyABC as to myDistance
+# as the sumStatData argument
+mySumStatData <- list(x=4, y=8)
 
 # The functions for the model, the summary
 # statistics and distance

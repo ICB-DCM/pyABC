@@ -26,6 +26,7 @@ system's package manager (this might be the case for old
 Debian or Ubuntu operating systems),
 it is recommended to install the latest version of the
 `Anaconda Python 3 distribution <https://www.continuum.io/downloads>`_.
+See also: :ref:`anaconcaCluster`.
 
 
 PIP Installation
@@ -90,4 +91,43 @@ home directory with
 
 
 
+.. _anaconcaCluster:
 
+Installing Anaconda on a Cluster environment
+--------------------------------------------
+
+We're assuming you're on a Linux environment.
+Use the most recent Anaconda Python 3.x distribution.
+As of writing this documentation, this is the
+`Anaconda Python 3.6 <https://www.continuum.io/downloads>`_ distribution.
+To install it, run::
+
+   wget https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh
+
+to download the installer. To execute the installer run::
+
+   bash Anaconda3-4.4.0-Linux-x86_64.sh
+
+and follow the guided installation process (i.e. approve the license
+and tell the installer where to install it to). You might want to replace
+the "4.4.0" by the most recent version of Anaconda.
+Find out on the `Anaconda Download <https://www.continuum.io/downloads>`_
+page which one it is.
+
+
+.. note::
+
+    The Anaconda installer asks you at the end of the installation whether
+    you want to use Anaconda Python as your default Python::
+
+       Do you wish the installer to prepend the Anaconda3 install location
+       to PATH in your /home/username/.bashrc ? [yes|no]
+       [no] >>>
+
+    If you answer yes, the path to the Anaconda installation is prepended to
+    your ``PATH`` environment variable and subsequent calls to ``pip``
+    (see below) use the Anaconda Python pip (check with the command
+    ``which pip``).
+    If you answer no, you need to ensure manually, that the correct Python
+    installation is used.
+    Just saying "yes" here might safe you from some difficulties later on.
