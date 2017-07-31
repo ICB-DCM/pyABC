@@ -5,11 +5,12 @@ pyABC's interface to external simulators
 Currently, the R language is supported.
 """
 
-import rpy2.robjects as robjects
+from rpy2.robjects import r
 from .random_variables import Parameter
 import numpy as np
 import pandas as pd
 import warnings
+
 
 __all__ = ["R"]
 
@@ -18,7 +19,7 @@ def dict_to_named_list(dct):
     if (isinstance(dct, dict)
             or isinstance(dct, Parameter)
             or isinstance(dct, pd.core.series.Series)):
-        return robjects.r.list(**{key: val for key, val in dct.items()})
+        return r.list(**{key: val for key, val in dct.items()})
     return dct
 
 
@@ -40,7 +41,7 @@ class R:
                       "considered experimental. The API might change in the "
                       "future.")
         self.source_file = source_file
-        robjects.r.source(source_file)
+        r.source(source_file)
 
     def display_source_ipython(self):
         from pygments import highlight
@@ -73,7 +74,7 @@ class R:
             The model
 
         """
-        model = robjects.r[function_name]
+        model = r[function_name]
 
         def model_py(par):
             return model(dict_to_named_list(par))
@@ -98,7 +99,7 @@ class R:
             The distance function
 
         """
-        distance = robjects.r[function_name]
+        distance = r[function_name]
 
         def distance_py(*args):
             args = tuple(dict_to_named_list(d) for d in args)
@@ -123,7 +124,7 @@ class R:
         summary_statistics: callable
             The summary statistics function
         """
-        summary_statistics = robjects.r[function_name]
+        summary_statistics = r[function_name]
         summary_statistics.__name__ = function_name
         return summary_statistics
 
@@ -145,4 +146,4 @@ class R:
             A dictionary like object which hold the summary statistics
             of the observed data.
         """
-        return robjects.r[name]
+        return r[name]

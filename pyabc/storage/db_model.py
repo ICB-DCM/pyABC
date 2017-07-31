@@ -4,19 +4,19 @@ from sqlalchemy import (Column, Integer, DateTime, String,
                         ForeignKey, Float, LargeBinary)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from .numpy_bytes_storage import np_from_bytes, np_to_bytes
+from .bytes_storage import from_bytes, to_bytes
 
 Base = declarative_base()
 
 
-class Numpy(types.TypeDecorator):
+class BytesStorage(types.TypeDecorator):
     impl = LargeBinary
 
     def process_bind_param(self, value, dialect):
-        return np_to_bytes(value)
+        return to_bytes(value)
 
     def process_result_value(self, value, dialect):
-        return np_from_bytes(value)
+        return from_bytes(value)
 
 
 class ABCSMC(Base):
@@ -111,4 +111,4 @@ class SummaryStatistic(Base):
     id = Column(Integer, primary_key=True)
     sample_id = Column(Integer, ForeignKey('samples.id'))
     name = Column(String(200))
-    value = Column(Numpy)
+    value = Column(BytesStorage)

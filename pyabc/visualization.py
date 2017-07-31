@@ -10,11 +10,103 @@ from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
 import matplotlib.pyplot as plt
 
 
-def hist_2d(df, w,
-            x, y,
-            xmin=None, xmax=None,
-            ymin=None, ymax=None,
-            numx=50, numy=50):
+def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
+    """
+    Calculates a 1 dimensional histogram from a Dataframe and weights.
+
+    For example, a results distribution might be obtained from the history
+    class and plotted as follows::
+
+        df, w = history.get_distribution(0)
+        x, pdf = hist_2d(df, w, "x")
+        plt.plot(x, pdf)
+
+
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables
+    w: np.ndarray
+        The corresponding weights
+    x: str
+        The variable for the x-axis
+    xmin: float, optional
+        The lower limit in x for the histogram.
+        If left empty, it is set to the minimum of the ovbservations of the
+        variable to be plotted as x.
+    xmax: float, optional
+        The upper limit in x for the histogram.
+        If left empty, it is set to the maximum of the ovbservations of the
+        variable to be plotted as x.
+    numx: int, optional
+        The number of bins in x direction.
+        Defaults tp 50.
+
+    Returns
+    -------
+
+    x, pdf: (np.ndarray, np.ndarray)
+        The x and the densities at these points.
+        These can be passed for plotting, for example as
+        plt.plot(x, pdf)
+
+    """
+    kde = MultivariateNormalTransition(
+        scaling=1,
+        bandwidth_selector=silverman_rule_of_thumb)
+    kde.fit(df[[x]], w)
+    if xmin is None:
+        xmin = df[x].min()
+    if xmax is None:
+        xmax = df[x].max()
+    x_vals = np.linspace(xmin, xmax, num=numx)
+    test = pd.DataFrame({x: x_vals})
+    pdf = kde.pdf(test)
+    return x_vals, pdf
+
+
+def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, **kwargs):
+    """
+    Plots a 1d histogram.
+
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables
+    w: The corresponding weights
+    x: str
+        The variable for the x-axis
+
+    xmin: float, optional
+        The lower limit in x for the histogram.
+        If left empty, it is set to the minimum of the ovbservations of the
+        variable to be plotted as x.
+    xmax: float, optional
+        The upper limit in x for the histogram.
+        If left empty, it is set to the maximum of the ovbservations of the
+        variable to be plotted as x.
+    numx: int, optional
+        The number of bins in x direction.
+        Defaults tp 50.
+
+    Returns
+    -------
+
+    ax: matplotlib axis
+        axis of the plot
+
+    """
+    x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx)
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.plot(x_vals, pdf, **kwargs)
+    ax.set_xlabel(x)
+    ax.set_ylabel("Posterior")
+    return ax
+
+
+def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
+           numx=50, numy=50):
     """
     Calculates a 2 dimensional histogram from a Dataframe and weights.
 
@@ -87,10 +179,8 @@ def hist_2d(df, w,
     return X, Y, PDF
 
 
-def plot_hist_2d(df, w, x, y,
-                 xmin=None, xmax=None,
-                 ymin=None, ymax=None,
-                 numx=50, numy=50, ax=None):
+def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
+                numx=50, numy=50, ax=None):
     """
     Plots a 2d histogram.
 
@@ -133,9 +223,9 @@ def plot_hist_2d(df, w, x, y,
         axis of the plot
 
     """
-    X, Y, PDF = hist_2d(df, w, x, y,
-                        xmin=xmin, xmax=xmax,
-                        ymin=ymin, ymax=ymax, numx=numx, numy=numy)
+    X, Y, PDF = kde_2d(df, w, x, y,
+                       xmin=xmin, xmax=xmax,
+                       ymin=ymin, ymax=ymax, numx=numx, numy=numy)
     if ax is None:
         fig, ax = plt.subplots()
     mesh = ax.pcolormesh(X, Y, PDF)

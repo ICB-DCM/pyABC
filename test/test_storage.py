@@ -4,6 +4,17 @@ import os
 from pyabc.parameters import Parameter, ValidParticle
 import numpy as np
 import tempfile
+import scipy as sp
+import pandas as pd
+from rpy2.robjects import r
+from rpy2.robjects import pandas2ri
+
+
+def example_df():
+    return pd.DataFrame({"a": [1, 2],
+                         "b": [1.1, 2.2],
+                         "c": ["foo", "bar"]},
+                        index=["first", "second"])
 
 
 def path():
@@ -85,27 +96,34 @@ def test_single_particle_save_load_np_int64(history: History):
 
 
 def test_sum_stats_save_load(history: History):
-    import scipy as sp
     arr = sp.random.rand(10)
     arr2 = sp.random.rand(10, 2)
     particle_population = [
         ValidParticle(0, Parameter({"a": 23, "b": 12}),
                       .2,
                       [.1],
-                      [{"ss1": .1, "ss2": arr2}]),
+                      [{"ss1": .1, "ss2": arr2,
+                        "ss3": example_df(),
+                        "rdf0": r["iris"]}]),
         ValidParticle(0,
                       Parameter({"a": 23, "b": 12}),
                       .2,
                       [.1],
-                      [{"ss12": .11, "ss22": arr}])
+                      [{"ss12": .11, "ss22": arr,
+                        "ss33": example_df(),
+                        "rdf": r["mtcars"]}])
     ]
     history.append_population(0, 42, particle_population, 2, ["m1", "m2"])
     weights, sum_stats = history.get_sum_stats(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
+    assert (sum_stats[0]["ss3"] == example_df()).all().all()
+    assert (sum_stats[0]["rdf0"] == pandas2ri.ri2py(r["iris"])).all().all()
     assert sum_stats[1]["ss12"] == .11
     assert (sum_stats[1]["ss22"] == arr).all()
+    assert (sum_stats[1]["ss33"] == example_df()).all().all()
+    assert (sum_stats[1]["rdf"] == pandas2ri.ri2py(r["mtcars"])).all().all()
 
 
 def test_total_nr_samples(history: History):

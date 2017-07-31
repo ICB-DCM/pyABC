@@ -8,6 +8,14 @@ Release Notes
 0.8.3
 -----
 
+* support serialization of DataFrames used as summary statistics for storage
+  in the database. This feature is still considered experimental. DataFrame
+  serialization is much more difficult than expected.
+
+
+0.8.3
+-----
+
 * Add (experimental) support for models defined in R.
 * Add some visualization functions for convenience.
 

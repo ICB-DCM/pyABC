@@ -10,6 +10,12 @@ def np_to_bytes(arr):
     ----------
     arr: anything numpy.save with allow_pickle=False can store
 
+
+    .. note::
+
+        Allowing for pickling is considered to be too dangerous.
+        It is not guaranteed that pickled objects can be read back in later.
+
     """
     f = BytesIO()
     np.save(f, arr, allow_pickle=False)
