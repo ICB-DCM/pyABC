@@ -5,7 +5,7 @@ Release Notes
 ..........
 
 
-0.8.3
+0.8.4
 -----
 
 * support serialization of DataFrames used as summary statistics for storage
