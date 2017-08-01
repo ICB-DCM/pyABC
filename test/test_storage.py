@@ -50,13 +50,29 @@ def history_uninitialized():
         pass
 
 
-def rand_pop(m):
+def rand_pop(m: int):
+    """
+
+    Parameters
+    ----------
+    m: int
+
+        the model number
+
+    Returns
+    -------
+
+    """
     pop = [ValidParticle(m,
                          Parameter({"a": np.random.randint(10),
                                     "b": np.random.randn()}),
-                         200,
-                         [.1],
-                         [{"ss": .1}])
+                         sp.rand()*42,
+                         [sp.rand()],
+                         [{"ss_float": 0.1,
+                           "ss_int": 42,
+                           "ss_str": "foo bar string",
+                           "ss_np": sp.rand(13, 42),
+                           "ss_df": example_df()}])
            for _ in range(np.random.randint(10)+3)]
     return pop
 

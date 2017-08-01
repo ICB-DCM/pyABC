@@ -73,6 +73,18 @@ number (the first population is t=0)
 
    df, w = history.get_distribution(m, t)
 
+
+What can be stored as summary statistics
+----------------------------------------
+
+Currently, integers, floats, strings and in general everything that can be
+converted to a numpy array can be stored.
+In addition it is also possible to store pandas DataFrames.
+
+.. warning::
+
+   Storage of pandas DataFrames is considered experimental at this point.
+
 """
 
 from .history import History

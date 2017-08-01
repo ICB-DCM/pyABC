@@ -537,8 +537,10 @@ class History:
         Returns
         -------
 
-        median: float
-            The median of the distances.
+        median: DataFrame
+            Weighted distances.
+            The dataframe has column "w" for the weights
+            and column distance for the distances
         """
         if t is None:
             t = self.max_t

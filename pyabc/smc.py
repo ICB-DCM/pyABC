@@ -288,6 +288,14 @@ class ABCSMC:
                Particle during ABCSMC sampling are compared against the
                summary statistics provided here.
 
+               The summary statistics' values can be integers, floats,
+               strings and everything which is a numpy array or can be
+               converted to one (e.g. lists).
+               In addition, pandas.DataFrames can also be used as summary
+               statistics.
+               **Note that storage of pandas DataFrames in pyABC's database
+               is still considered experimental.**
+
                This parameter is optional, as the distance function might
                implement comparison to the observed data on its own.
                Not giving this parameter is equivalent to passing an empty
