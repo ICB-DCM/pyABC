@@ -8,13 +8,14 @@ import scipy as sp
 import pandas as pd
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
+from pyabc.storage.df_to_file import sumstat_to_json
 
 
 def example_df():
-    return pd.DataFrame({"a": [1, 2],
-                         "b": [1.1, 2.2],
-                         "c": ["foo", "bar"]},
-                        index=["first", "second"])
+    return pd.DataFrame({"col_a": [1, 2],
+                         "col_b": [1.1, 2.2],
+                         "col_c": ["foo", "bar"]},
+                        index=["ind_first", "ind_second"])
 
 
 def path():
@@ -206,7 +207,7 @@ def test_dataframe_storage_readout():
         pass
 
 
-def test_population_retrieval(history):
+def test_population_retrieval(history: History):
     history.append_population(1, .23, rand_pop(0), 234, ["m1"])
     history.append_population(2, .123, rand_pop(0), 345, ["m1"])
     history.append_population(2, .1235, rand_pop(5), 20345, ["m1"]*6)
@@ -226,6 +227,7 @@ def test_population_retrieval(history):
     assert history.alive_models(1) == [0]
     assert history.alive_models(2) == [0, 5]
     assert history.alive_models(3) == [30]
+    print("ID", history.id)
 
 
 def test_population_strategy_storage(history):
@@ -308,3 +310,14 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
     h2 = History(h.db_identifier)
     model_names_loaded = h2.model_names()
     assert model_names == model_names_loaded
+
+
+def test_population_to_df(history: History):
+    # TODO this test is not very good yet
+    for t in range(3):
+        for m in range(4):
+            history.append_population(t, .23, rand_pop(m), 234,
+                                      ["m0", "m1", "m2", "m3"])
+    df = history.get_full_population(m=0)
+    df_js = sumstat_to_json(df)
+    assert len(df) == len(df_js)

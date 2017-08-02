@@ -653,6 +653,110 @@ class History:
         abc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
         return json.loads(abc.population_strategy)
 
+    @with_session
+    def get_full_population(self, *, m=None, t="last", tidy=True) \
+            -> pd.DataFrame:
+        """
+
+        Parameters
+        ----------
+        m: int, optional
+            The model to query.
+            If omitted, all models are returned
+        t: str, optional
+            Can be "last" or "all"
+            In case of "all", all populations are returned.
+            If "last", only the last population is returned.
+        tidy: bool, optional
+            If True, try to return a tidy DataFrame, where the individual
+            parameters and summary statistics are pivoted.
+            Setting tidy to true will only work for a single model and
+            a single population.
+
+        Returns
+        -------
+
+        full_population: DataFrame
+        """
+        query = (self._session.query(Population.t,
+                                     Population.epsilon,
+                                     Population.nr_samples.label("samples"),
+                                     Model.m,
+                                     Model.name.label("model_name"),
+                                     Model.p_model,
+                                     Particle.w,
+                                     Particle.id.label("particle_id"),
+                                     Sample.distance,
+                                     Parameter.name.label("par_name"),
+                                     Parameter.value.label("par_val"),
+                                     SummaryStatistic.name
+                                     .label("sumstat_name"),
+                                     SummaryStatistic.value
+                                     .label("sumstat_val"),
+                                     )
+                 .join(ABCSMC)
+                 .join(Model)
+                 .join(Particle)
+                 .join(Sample)
+                 .join(SummaryStatistic)
+                 .join(Parameter)
+                 .filter(ABCSMC.id == self.id)
+                 )
+        if m is not None:
+            query = query.filter(Model.m == m)
+
+        if t == "last":
+            t = self.max_t
+        if t != "all":
+            query = query.filter(Population.t == t)
+
+        df = pd.read_sql_query(query.statement, self._engine)
+
+        if len(df.m.unique()) == 1:
+            del df["m"]
+            del df["model_name"]
+            del df["p_model"]
+
+        if isinstance(t, int):
+            del df["t"]
+
+        if tidy:
+            if isinstance(t, int) and "m" not in df:
+                df = df.set_index("particle_id")
+                df_unique = (df[["distance", "w"]]
+                             .drop_duplicates())
+
+                df_par = (df[["par_name", "par_val"]]
+                          .reset_index()
+                          .drop_duplicates(subset=["particle_id",
+                                                   "par_name"])
+                          .pivot(index="particle_id",
+                                 columns="par_name",
+                                 values="par_val"))
+                df_par.columns = ["par_" + c
+                                  for c in df_par.columns]
+
+                df_sumstat = (df[["sumstat_name", "sumstat_val"]]
+                              .reset_index()
+                              .drop_duplicates(subset=["particle_id",
+                                                       "sumstat_name"])
+                              .pivot(index="particle_id",
+                                     columns="sumstat_name",
+                                     values="sumstat_val"))
+                df_sumstat.columns = ["sumstat_" + c
+                                      for c in df_sumstat.columns]
+
+                df_tidy = (df_unique
+                           .merge(df_par,
+                                  left_index=True,
+                                  right_index=True)
+                           .merge(df_sumstat,
+                                  left_index=True,
+                                  right_index=True))
+                df = df_tidy
+
+        return df
+
 
 def normalize(population: List[ValidParticle]):
     """
