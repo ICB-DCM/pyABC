@@ -21,6 +21,9 @@ to analytically calculate the likelihood function.
 pyABC runs efficiently on multi-core machines and distributed cluster setups.
 It is easy to use and flexibly extensible.
 
+If you're interested in using it, you can cite the preprint available here:
+https://doi.org/10.1101/162552
+
 User's Guide
 ------------
 

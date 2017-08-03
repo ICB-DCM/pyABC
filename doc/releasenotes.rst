@@ -9,8 +9,9 @@ Release Notes
 -----
 
 * support serialization of DataFrames used as summary statistics for storage
-  in the database. This feature is still considered experimental. DataFrame
-  serialization is much more difficult than expected.
+  in the database. This feature is still considered experimental.
+* Add command line utility to export pyABC's database to different file formats
+  such as csv, feather, html, json and more.
 
 
 0.8.3
