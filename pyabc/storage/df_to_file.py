@@ -44,4 +44,3 @@ def to_file(df: pd.DataFrame, file: str, file_format="feather"):
     df_json = sumstat_to_json(df)
     df_json_no_index = df_json.reset_index()
     getattr(df_json_no_index, "to_" + file_format)(file)
-

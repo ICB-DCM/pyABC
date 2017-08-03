@@ -37,6 +37,7 @@ the usage of this package.
    sampler
    sge
    examples
+   export_db
    releasenotes
    license
 

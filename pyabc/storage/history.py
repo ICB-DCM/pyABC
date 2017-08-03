@@ -654,9 +654,11 @@ class History:
         return json.loads(abc.population_strategy)
 
     @with_session
-    def get_full_population(self, *, m=None, t="last", tidy=True) \
+    def get_population_extended(self, *, m=None, t="last", tidy=True) \
             -> pd.DataFrame:
         """
+        Get extended population inofrmation, including parameters, distances,
+        summary statistics, weights and more.
 
         Parameters
         ----------

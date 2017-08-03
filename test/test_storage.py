@@ -318,6 +318,6 @@ def test_population_to_df(history: History):
         for m in range(4):
             history.append_population(t, .23, rand_pop(m), 234,
                                       ["m0", "m1", "m2", "m3"])
-    df = history.get_full_population(m=0)
+    df = history.get_population_extended(m=0)
     df_js = sumstat_to_json(df)
     assert len(df) == len(df_js)

@@ -37,8 +37,9 @@ def main(db, out, format, generation="last", model=None):
         pass
 
     history = History(db)
-    df = history.get_full_population(m=m, t=t, tidy=True)
+    df = history.get_population_extended(m=m, t=t, tidy=True)
     to_file(df, out, file_format=format)
+
 
 if __name__ == "__main__":
     main()

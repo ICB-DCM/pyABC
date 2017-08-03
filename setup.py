@@ -43,8 +43,8 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
               'pyabc.sampler.redis_eps.cli:work',
               'abc-redis-manager = '
               'pyabc.sampler.redis_eps.cli:manage',
-              'abc-dump = '
-              'pyabc.storage.dump:main',
+              'abc-export = '
+              'pyabc.storage.export:main',
         ]
     },
       )
