@@ -16,5 +16,7 @@ dependencies:
   - r-base
   - rpy2
   - pygments
+  - pyarrow
+  - feather-format
   - pip:
     - nbsphinx
