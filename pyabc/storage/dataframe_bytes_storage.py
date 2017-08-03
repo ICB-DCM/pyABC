@@ -1,8 +1,6 @@
 import pandas as pd
 from io import StringIO, BytesIO
 import csv
-import pyarrow
-import pyarrow.parquet as parquet
 import numpy as np
 
 
@@ -47,19 +45,25 @@ def df_from_bytes_json_(bytes_: bytes) -> pd.DataFrame:
     return pd.read_json(bytes_.decode())
 
 
-def df_to_bytes_parquet_(df: pd.DataFrame) -> bytes:
-    b = BytesIO()
-    table = pyarrow.Table.from_pandas(df)
-    parquet.write_table(table, b)
-    b.seek(0)
-    return b.read()
+try:
+    import pyarrow
+    import pyarrow.parquet as parquet
 
+    def df_to_bytes_parquet_(df: pd.DataFrame) -> bytes:
+        b = BytesIO()
+        table = pyarrow.Table.from_pandas(df)
+        parquet.write_table(table, b)
+        b.seek(0)
+        return b.read()
 
-def df_from_bytes_parquet_(bytes_: bytes) -> pd.DataFrame:
-    b = BytesIO(bytes_)
-    table = parquet.read_table(b)
-    df = table.to_pandas()
-    return df
+    def df_from_bytes_parquet_(bytes_: bytes) -> pd.DataFrame:
+        b = BytesIO(bytes_)
+        table = parquet.read_table(b)
+        df = table.to_pandas()
+        return df
+
+except ModuleNotFoundError:
+    pass
 
 
 def df_to_bytes_np_records_(df: pd.DataFrame) -> bytes:
