@@ -62,7 +62,7 @@ try:
         df = table.to_pandas()
         return df
 
-except ModuleNotFoundError:
+except Exception:
     pass
 
 
