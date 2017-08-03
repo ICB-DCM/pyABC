@@ -16,5 +16,6 @@ dependencies:
   - r-base
   - rpy2
   - pygments
+  - dask
   - pip:
     - nbsphinx
