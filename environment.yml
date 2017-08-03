@@ -1,6 +1,4 @@
 name: py35
-channels:
-- conda-forge
 dependencies:
   - python=3.5
   - numpy
@@ -19,7 +17,6 @@ dependencies:
   - rpy2
   - pygments
   - dask
-  - pyarrow
-  - feather-format
   - pip:
     - nbsphinx
+    - feather-format
