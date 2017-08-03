@@ -25,3 +25,5 @@ ipykernel
 rpy2
 pygments
 ipython
+feather-format
+pyarrow

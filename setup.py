@@ -16,6 +16,7 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
                         "dill",
                         'gitpython', 'seaborn', 'scikit-learn',
                         'matplotlib', 'sqlalchemy', 'click',
+                        'feather-format',
                         'distributed', 'rpy2', 'pygments', 'IPython'],
       packages=find_packages(exclude=["examples*", "devideas*",
                                       "test*", "test"]),
@@ -42,6 +43,8 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
               'pyabc.sampler.redis_eps.cli:work',
               'abc-redis-manager = '
               'pyabc.sampler.redis_eps.cli:manage',
+              'abc-dump = '
+              'pyabc.storage.dump:main',
         ]
     },
       )
