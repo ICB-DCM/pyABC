@@ -5,6 +5,14 @@ Release Notes
 ..........
 
 
+0.8.5
+-----
+
+* minor bug fix. The external.R interface did not display the source code
+  correctly.
+* minor doc updates
+
+
 0.8.4
 -----
 

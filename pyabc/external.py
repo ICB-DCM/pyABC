@@ -44,13 +44,17 @@ class R:
         r.source(source_file)
 
     def display_source_ipython(self):
+        """
+        Convenience method to print the loaded source file
+        as syntas highlighted HTML within IPython.
+        """
         from pygments import highlight
         from pygments.lexers import SLexer
 
         from pygments.formatters import HtmlFormatter
         import IPython.display as display
 
-        with open('myRModel.R') as f:
+        with open(self.source_file) as f:
             code = f.read()
 
         formatter = HtmlFormatter()
@@ -136,7 +140,7 @@ class R:
         ----------
 
         name: str
-            Name of the named list defined in the R script which hold
+            Name of the named list defined in the R script which holds
             the observed data.
 
         Returns
