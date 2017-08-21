@@ -24,7 +24,7 @@ Download the examples as notebooks
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
-* :download:`Conversion reactin <examples/conversion_reaction.ipynb>`
+* :download:`Conversion reaction <examples/conversion_reaction.ipynb>`
 
 
 .. warning::
