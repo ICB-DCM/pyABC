@@ -4,6 +4,11 @@ Release Notes
 0.8 series
 ..........
 
+0.8.5
+-----
+
+* minor bug fix in plot_kde_2d if the axis is provided
+
 
 0.8.5
 -----

@@ -228,6 +228,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                        ymin=ymin, ymax=ymax, numx=numx, numy=numy)
     if ax is None:
         fig, ax = plt.subplots()
+    else:
+        fig = ax.figure
     mesh = ax.pcolormesh(X, Y, PDF)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
