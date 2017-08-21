@@ -12,6 +12,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/early_stopping.ipynb
    examples/resuming.ipynb
    examples/using_R.ipynb
+   examples/conversion_reaction.ipynb
 
 
 
@@ -23,6 +24,7 @@ Download the examples as notebooks
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
+* :download:`Conversion reactin <examples/conversion_reaction.ipynb>`
 
 
 .. warning::
