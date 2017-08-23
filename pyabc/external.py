@@ -13,7 +13,7 @@ Currently, the R language is supported.
 
 try:
     from rpy2.robjects import r
-except ModuleNotFoundError:
+except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     raise Exception("Install rpy2 to enable support for the R language")
 from .random_variables import Parameter
 import numpy as np

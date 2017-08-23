@@ -11,7 +11,7 @@ try:
         if isinstance(object_, robjects.DataFrame):
             return pandas2ri.ri2py(object_).copy()
         return object_
-except ModuleNotFoundError:
+except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     def r_to_py(object_):
         return object_
 
