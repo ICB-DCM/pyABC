@@ -4,6 +4,18 @@ Release Notes
 0.8 series
 ..........
 
+
+0.8.7
+-----
+
+Make rpy2 an optional dependency. If rpy2 is installed, then R can be used
+if not, the rest will still work.
+
+0.8.6
+-----
+
+minor bug fixes
+
 0.8.5
 -----
 

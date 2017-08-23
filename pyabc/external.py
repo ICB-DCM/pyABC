@@ -3,9 +3,18 @@ pyABC's interface to external simulators
 ========================================
 
 Currently, the R language is supported.
+
+.. note::
+
+    The rpy2 package needs to be installed to interface with the R language.
+    Installation of rpy2 is optional if R support is not required.
+    See also :ref:`installation of optional dependencies <install-optional>`.
 """
 
-from rpy2.robjects import r
+try:
+    from rpy2.robjects import r
+except ModuleNotFoundError:
+    raise Exception("Install rpy2 to enable support for the R language")
 from .random_variables import Parameter
 import numpy as np
 import pandas as pd

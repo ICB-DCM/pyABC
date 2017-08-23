@@ -1,13 +1,23 @@
 from .numpy_bytes_storage import np_from_bytes, np_to_bytes
 from .dataframe_bytes_storage import df_to_bytes, df_from_bytes
 import pandas as pd
-import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri
+
+
+try:
+    import rpy2.robjects as robjects
+    from rpy2.robjects import pandas2ri
+
+    def r_to_py(object_):
+        if isinstance(object_, robjects.DataFrame):
+            return pandas2ri.ri2py(object_).copy()
+        return object_
+except ModuleNotFoundError:
+    def r_to_py(object_):
+        return object_
 
 
 def to_bytes(object_):
-    if isinstance(object_, robjects.DataFrame):
-        object_ = pandas2ri.ri2py(object_).copy()
+    object_ = r_to_py(object_)
     if isinstance(object_, pd.DataFrame):
         return df_to_bytes(object_)
     return np_to_bytes(object_)
