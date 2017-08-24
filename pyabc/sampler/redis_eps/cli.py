@@ -2,12 +2,15 @@ import sys
 import signal
 from redis import StrictRedis
 import pickle
+import os
 import cloudpickle
 from time import time
 import click
 from .redis_logging import worker_logger
 from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
                   MSG)
+from multiprocessing import Pool
+
 
 TIMES = {"s": 1,
          "m": 60,
@@ -94,8 +97,18 @@ def work_on_population(redis: StrictRedis, start_time: int,
                    'h, (H,) d, (D) for seconds, minutes, hours and days. '
                    'E.g. for 12 hours you would pass --runtime=12h, for half '
                    'a day you could do 0.5d.')
-def work(host="localhost", port=6379, runtime="2h"):
-    return _work(host=host, port=port, runtime=runtime)
+@click.option('--processes', type=int, default=1, help="The number of worker "
+                                                       "processes to start")
+def work(host="localhost", port=6379, runtime="2h", processes=1):
+    # start a single process right here, not within pool
+    # this handles the problem of starting a daemon process within a
+    # daemon process
+    if processes == 1:
+        return _work(host, port, runtime)
+
+    with Pool(processes) as pool:
+        res = pool.starmap(_work, [(host, port, runtime)] * processes)
+    return res
 
 
 def _work(host="localhost", port=6379, runtime="2h"):
@@ -103,8 +116,8 @@ def _work(host="localhost", port=6379, runtime="2h"):
 
     start_time = time()
     max_runtime_s = runtime_parse(runtime)
-    worker_logger.info("Start redis worker. Max run time {}s"
-                       .format(max_runtime_s))
+    worker_logger.info("Start redis worker. Max run time {}s, PID={}"
+                       .format(max_runtime_s, os.getpid()))
     redis = StrictRedis(host=host, port=port)
 
     p = redis.pubsub()

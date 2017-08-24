@@ -178,7 +178,7 @@ server. You should get an output similar to
 
 .. parsed-literal::
 
-   INFO:REDIS-WORKER:Start redis worker. Max run time 7200.0s
+   INFO:REDIS-WORKER:Start redis worker. Max run time 7200.0s, PID=2731
 
 Note that the ``abc-redis-worker`` command also has options to set the
 maximal runtime of a worker, e.g. ``--runtime=2h``, ``--runtime=3600s``,
@@ -187,6 +187,10 @@ or 2 days.
 The default is 2 hours. It is OK if a worker
 stops during the sampling of a generation. You can add new workers during
 the sampling process.
+The ``abc-redis-worker`` command also has an option ``--processes`` which
+allows you to start several worker procecces in parallel.
+This might be handy in situations where you have to use a whole cluster node
+with several cores.
 
 
 Optional: Monitoring

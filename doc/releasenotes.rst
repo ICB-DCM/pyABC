@@ -4,6 +4,12 @@ Release Notes
 0.8 series
 ..........
 
+0.8.8
+-----
+
+Add ``--processes`` option to abc-redis-worker to start a number of workers
+in parallel.
+
 
 0.8.7
 -----
