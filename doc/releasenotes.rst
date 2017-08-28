@@ -4,6 +4,13 @@ Release Notes
 0.8 series
 ..........
 
+
+0.8.9
+-----
+
+Ensure that summary statistics have names.
+Also add kwargs to ``plot_kde_2d`` which are passed to pcolormesh.
+
 0.8.8
 -----
 

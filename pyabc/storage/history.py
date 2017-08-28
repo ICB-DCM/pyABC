@@ -426,6 +426,8 @@ class History:
                     sample = Sample(distance=distance)
                     particle.samples.append(sample)
                     for name, value in summ_stat.items():
+                        if name is None:
+                            raise Exception("Summary statistics need names.")
                         sample.summary_statistics.append(
                             SummaryStatistic(name=name, value=value))
 

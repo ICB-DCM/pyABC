@@ -180,7 +180,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-                numx=50, numy=50, ax=None):
+                numx=50, numy=50, ax=None, **kwargs):
     """
     Plots a 2d histogram.
 
@@ -230,7 +230,7 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         fig, ax = plt.subplots()
     else:
         fig = ax.figure
-    mesh = ax.pcolormesh(X, Y, PDF)
+    mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
     ax.set_title("Posterior")
