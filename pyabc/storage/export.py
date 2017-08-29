@@ -21,7 +21,10 @@ from .history import History
                    "dumped. Can be an integer, which"
                    "identifies the model number. Note that the first model "
                    "has number 0.")
-def main(db, out, format, generation="last", model=None):
+@click.option("--id", default=1, type=int,
+              help="The ABC-SMC run id which to dump. "
+                   "Defaults to 1")
+def main(db, out, format, generation="last", model=None, id=1):
     if ":///" not in db:  # check if db is a file or SQLAlchemy identifier
         db = "sqlite:///" + db
 
@@ -37,6 +40,7 @@ def main(db, out, format, generation="last", model=None):
         pass
 
     history = History(db)
+    history.id = id
     df = history.get_population_extended(m=m, t=t, tidy=True)
     to_file(df, out, file_format=format)
 

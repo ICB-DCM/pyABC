@@ -4,6 +4,11 @@ Release Notes
 0.8 series
 ..........
 
+0.8.10
+------
+
+Add ``--id`` option to abc-export to handle databases with multiple ABC runs.
+
 
 0.8.9
 -----
