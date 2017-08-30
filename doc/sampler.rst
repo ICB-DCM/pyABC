@@ -197,10 +197,10 @@ Optional: Monitoring
 ~~~~~~~~~~~~~~~~~~~~
 
 pyABC ships with a small utility to manage the Redis based sampler setup.
-To monitor the ongoing sampling, do
+To monitor the ongoing sampling, execute
 
 
-.. code: bash
+.. code:: bash
 
   abc-redis-manager info --host=111.111.111.111
 
