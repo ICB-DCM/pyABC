@@ -32,6 +32,15 @@ def dict_to_named_list(dct):
     return dct
 
 
+# The way unpickling is done is not optimal
+# The objects reloaded when reading the source again will be different
+# from the unpickled objects.
+# This might cause problems if the R code relies on side effects/
+#
+# On the other hand, this might be the intended behavior, if for example
+# one of the objects is modified by hand within Python.
+
+
 class R:
     """
     Interface to R.
@@ -103,6 +112,8 @@ class R:
             return model(dict_to_named_list(par))
 
         model_py.__name__ = function_name
+        # set reference to this class to ensure the source file is
+        # read again when unpickling
         model_py._R = self
         return model_py
 
@@ -130,6 +141,8 @@ class R:
             return float(np.array(distance(*args)))
 
         distance_py.__name__ = function_name
+        # set reference to this class to ensure the source file is
+        # read again when unpickling
         distance_py._R = self
         return distance_py
 
@@ -151,6 +164,8 @@ class R:
         """
         summary_statistics = r[function_name]
         summary_statistics.__name__ = function_name
+        # set reference to this class to ensure the source file is
+        # read again when unpickling
         summary_statistics._R = self
         return summary_statistics
 
@@ -173,5 +188,7 @@ class R:
             of the observed data.
         """
         obs = r[name]
+        # set reference to this class to ensure the source file is
+        # read again when unpickling
         obs._r = self
         return obs
