@@ -4,6 +4,12 @@ Release Notes
 0.8 series
 ..........
 
+0.8.11
+------
+
+Ensure R source file is reloaded when unpickling R objects.
+
+
 0.8.10
 ------
 

@@ -34,7 +34,7 @@ def dict_to_named_list(dct):
 
 class R:
     """
-    Interface to R
+    Interface to R.
 
     Parameters
     ----------
@@ -50,12 +50,22 @@ class R:
                       "considered experimental. The API might change in the "
                       "future.")
         self.source_file = source_file
-        r.source(source_file)
+        self._read_source()
+
+    def __getstate__(self):
+        return self.source_file
+
+    def __setstate__(self, state):
+        self.source_file = state
+        self._read_source()
+
+    def _read_source(self):
+        r.source(self.source_file)
 
     def display_source_ipython(self):
         """
         Convenience method to print the loaded source file
-        as syntas highlighted HTML within IPython.
+        as syntax highlighted HTML within IPython.
         """
         from pygments import highlight
         from pygments.lexers import SLexer
@@ -78,13 +88,13 @@ class R:
         Parameters
         ----------
         function_name: str
-            Name of the function in the R script which defines the model
+            Name of the function in the R script which defines the model.
 
         Returns
         -------
 
         model: callable
-            The model
+            The model.
 
         """
         model = r[function_name]
@@ -93,23 +103,24 @@ class R:
             return model(dict_to_named_list(par))
 
         model_py.__name__ = function_name
+        model_py._R = self
         return model_py
 
     def distance(self, function_name: str):
         """
-        The R-distance function
+        The R-distance function.
 
         Parameters
         ----------
         function_name: str
             Name of the function in the R script which defines the distance
-            function
+            function.
 
         Returns
         -------
 
         distance: callable
-            The distance function
+            The distance function.
 
         """
         distance = r[function_name]
@@ -119,31 +130,33 @@ class R:
             return float(np.array(distance(*args)))
 
         distance_py.__name__ = function_name
+        distance_py._R = self
         return distance_py
 
     def summary_statistics(self, function_name: str):
         """
-        The R-summary statistics
+        The R-summary statistics.
 
         Parameters
         ----------
         function_name: str
           Name of the function in the R script which defines the summary
-          statistics function
+          statistics function.
 
         Returns
         -------
 
         summary_statistics: callable
-            The summary statistics function
+            The summary statistics function.
         """
         summary_statistics = r[function_name]
         summary_statistics.__name__ = function_name
+        summary_statistics._R = self
         return summary_statistics
 
     def observation(self, name: str):
         """
-        The summary statistics of the observed data as defined in R
+        The summary statistics of the observed data as defined in R.
 
         Parameters
         ----------
@@ -156,7 +169,9 @@ class R:
         -------
 
         observation: r named list
-            A dictionary like object which hold the summary statistics
+            A dictionary like object which holds the summary statistics
             of the observed data.
         """
-        return r[name]
+        obs = r[name]
+        obs._r = self
+        return obs
