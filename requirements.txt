@@ -26,3 +26,4 @@ rpy2
 pygments
 ipython
 feather-format
+bkcharts

@@ -4,6 +4,15 @@ Release Notes
 0.8 series
 ..........
 
+
+0.8.12
+------
+
+* Minor bug fix. Visualization server produced error when JSON information
+  was empty.
+* Adapt to new bkcharts packge.
+
+
 0.8.11
 ------
 

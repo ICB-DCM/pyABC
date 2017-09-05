@@ -54,7 +54,7 @@ class ABCInfo:
         try:
             return json.loads(json_str)
         except json.JSONDecodeError:
-            return json_str
+            return {}
 
 
 @app.route("/abc/<int:abc_id>")
