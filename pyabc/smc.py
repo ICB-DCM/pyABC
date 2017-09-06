@@ -21,7 +21,7 @@ from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
-from .random import fast_random_choice
+from .pyabc_rand_choice import fast_random_choice
 from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationStrategy
