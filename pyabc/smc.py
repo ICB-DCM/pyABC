@@ -17,7 +17,7 @@ from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .parameters import ValidParticle
-from .transition import Transition, LocalTransition
+from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
@@ -171,7 +171,7 @@ class ABCSMC:
         self.model_perturbation_kernel = model_perturbation_kernel
 
         if transitions is None:
-            transitions = [LocalTransition(k_fraction=0.2)
+            transitions = [MultivariateNormalTransition()
                            for _ in self.models]
         if not isinstance(transitions, list):
             transitions = [transitions]

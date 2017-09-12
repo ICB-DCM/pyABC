@@ -4,6 +4,11 @@ Release Notes
 0.8 series
 ..........
 
+0.8.12
+------
+
+* Minor doc fixes
+
 
 0.8.12
 ------
