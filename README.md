@@ -19,10 +19,11 @@ The documentation is hosted on RTD.
 
 
 
-Building the documentation
---------------------------
+Examples
+--------
 
-Make sure to set your `PYTHONPATH` environment
-variable accordingly. Then run `make html` in
-the `doc` folder. The html doc can be found in
-`doc/_build/html`.
+Many examples are available as Jupyter Notebooks in the
+[examples directory](doc/examples) and also as download and for
+online inepection in the
+[example section of the documentation](http://pyabc.readthedocs.io/en/latest/examples.html).
+
