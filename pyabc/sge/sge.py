@@ -36,7 +36,8 @@ class SGE:
         TMP=/tmp
 
         [BROKER]
-        TYPE=REDIS   # can be SQLITE or REDIS
+        # The value of TYPE can be SQLITE or REDIS
+        TYPE=REDIS
 
         [SGE]
         QUEUE=p.openmp

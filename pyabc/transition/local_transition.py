@@ -47,7 +47,7 @@ class LocalTransition(Transition):
     EPS = 1e-3
     MIN_K = 10
 
-    def __init__(self, k=None, k_fraction=1/4, scaling=2):
+    def __init__(self, k=None, k_fraction=1/4, scaling=1):
         if k_fraction is not None:
             self.k_fraction = k_fraction
             self._k = None

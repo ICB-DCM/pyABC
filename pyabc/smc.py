@@ -17,7 +17,7 @@ from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .parameters import ValidParticle
-from .transition import Transition, MultivariateNormalTransition
+from .transition import Transition, LocalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
@@ -128,7 +128,7 @@ class ABCSMC:
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
                   Systems in Systems and Population Biology.”
-                  Bioinformatics 26, no. 1 (January 1, 2010):
+                  Bioinformatics 26, no. 1 (2010):
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
     def __init__(self, models: Union[List[Model], Model],
@@ -171,13 +171,14 @@ class ABCSMC:
         self.model_perturbation_kernel = model_perturbation_kernel
 
         if transitions is None:
-            transitions = [MultivariateNormalTransition() for _ in self.models]
+            transitions = [LocalTransition(k_fraction=0.2)
+                           for _ in self.models]
         if not isinstance(transitions, list):
             transitions = [transitions]
         self.transitions = transitions  # type: List[Transition]
 
         if eps is None:
-            eps = MedianEpsilon()
+            eps = MedianEpsilon(median_multiplier=0.7)
         self.eps = eps
 
         if isinstance(population_specification, int):
@@ -198,12 +199,11 @@ class ABCSMC:
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
-        # print(state_red_dict)
         return state_red_dict
 
     def do_not_stop_when_only_single_model_alive(self):
         warnings.warn("This method is deprecated and removed "
-                      "in pyABC 10.0.", DeprecationWarning, stacklevel=2)
+                      "in pyABC 1.0.0", DeprecationWarning, stacklevel=2)
         self.stop_if_only_single_model_alive = False
 
     def set_data(self, observed_summary_statistics: dict,
@@ -222,7 +222,7 @@ class ABCSMC:
         """
         warnings.warn("The method \"set_data\" is deprecated "
                       "and to be removed "
-                      "in pyABC 0.10.0. "
+                      "in pyABC 0.10.0 "
                       "Use the method \"new\" instead. "
                       "Note that the API has changed slightly!",
                       DeprecationWarning, stacklevel=2)

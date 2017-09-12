@@ -67,17 +67,21 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        logger.debug("Start sampling on {} cores".format(self.n_procs))
+        # starting more than n jobs
+        # does not help in this parallelization scheme
+        n_procs = min(n, self.n_procs)
+        logger.debug("Start sampling on {} cores ({} requested)"
+                     .format(n_procs, self.n_procs))
         feed_q = Queue()
         result_q = Queue()
 
-        feed_process = Process(target=feed, args=(feed_q, n, self.n_procs))
+        feed_process = Process(target=feed, args=(feed_q, n, n_procs))
 
         worker_processes = [Process(target=work, args=(feed_q, result_q,
                                                        sample_one,
                                                        simulate_one,
                                                        accept_one))
-                            for _ in range(self.n_procs)]
+                            for _ in range(n_procs)]
 
         for proc in worker_processes:
             proc.start()
@@ -94,7 +98,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         for proc in worker_processes:
             proc.join()
 
-        # Queue's get close automatically on garbage collection
+        # Queue's get closed automatically on garbage collection
         # No explicit closing necessary.
 
         results, evaluations = zip(*collected_results)
