@@ -111,7 +111,13 @@ class SimpleFunctionDistance(DistanceFunction):
 
     def get_config(self):
         conf = super().get_config()
-        conf["name"] = self.function.__name__
+        try:
+            conf["name"] = self.function.__name__
+        except AttributeError:
+            try:
+                conf["name"] = self.function.__class_.__name__
+            except AttributeError:
+                pass
         return conf
 
 

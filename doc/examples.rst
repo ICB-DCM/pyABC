@@ -25,8 +25,8 @@ Download the examples as notebooks
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
-* :download:`Conversion reaction <examples/conversion_reaction.ipynb>`
-* :download:`Stochastic chemical reaction <examples/chemical_reaction.ipynb>`
+* :download:`Ordinary Differential Equations: Conversion reaction <examples/conversion_reaction.ipynb>`
+* :download:`Markov Jump Process: Chemical Reaction <examples/chemical_reaction.ipynb>`
 
 
 .. warning::

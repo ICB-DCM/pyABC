@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
 import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
 
 
 def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
@@ -180,7 +182,8 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-                numx=50, numy=50, ax=None, **kwargs):
+                numx=50, numy=50, ax=None, colorbar=True,
+                title=True, **kwargs):
     """
     Plots a 2d histogram.
 
@@ -188,11 +191,11 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     ----------
     df: Pandas Dataframe
         The rows are the observations, the columns the variables
-    w: The corresponding weights
+    w: The corresponding weights.
     x: str
-        The variable for the x-axis
+        The variable for the x-axis.
     y: str
-        The variable for the y-axis
+        The variable for the y-axis.
     xmin: float, optional
         The lower limit in x for the histogram.
         If left empty, it is set to the minimum of the ovbservations of the
@@ -204,7 +207,7 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     ymin: float, optional
         The lower limit in y for the histogram.
         If left empty, it is set to the minimum of the ovbservations of the
-        variable to be plotted as y
+        variable to be plotted as y.
     ymax: float, optional
         The upper limit in y for the histogram.
         If left empty, it is set to the maximum of the ovbservations of the
@@ -215,6 +218,10 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     numy int, optional
         The number of bins in y direction.
         Defaults tp 50.
+    colorbar: bool, optional
+        Whether to plot a colorbar. Defaults to True.
+    title: bool, optional
+        Whether to put a title on the plot. Defaults to True.
 
     Returns
     -------
@@ -233,7 +240,48 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
-    ax.set_title("Posterior")
-    cbar = fig.colorbar(mesh)
-    cbar.set_label("PDF")
+    if title:
+        ax.set_title("Posterior")
+    if colorbar:
+        cbar = fig.colorbar(mesh)
+        cbar.set_label("PDF")
     return ax
+
+
+def plot_kde_matrix(df, w, limits=None):
+    """
+    Plot a KDE matrix.
+
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables
+    w: The corresponding weights.
+    limits: dictionary, optional
+        Dictionary of the form {"name": (lower_limit, upper_limit)}
+    """
+    grid = sns.PairGrid(df)
+    if limits is None:
+        limits = {}
+
+    def off_diagonal(x, y, **kwargs):
+        df = pd.concat((x, y), axis=1)
+        plot_kde_2d(df, w,
+                    x.name, y.name,
+                    xmin=limits.get(x.name, None)[0],
+                    xmax=limits.get(x.name, None)[1],
+                    ymin=limits.get(y.name, None)[0],
+                    ymax=limits.get(y.name, None)[1],
+                    ax=plt.gca(), title=False)
+
+    def diagonal(x, **kwargs):
+        df = pd.concat((x,), axis=1)
+        plot_kde_1d(df, w, x.name,
+                    xmin=limits.get(x.name, None)[0],
+                    xmax=limits.get(x.name, None)[1],
+                    ax=plt.gca())
+
+    grid.map_upper(off_diagonal)
+    grid.map_lower(off_diagonal)
+    grid.map_diag(diagonal)
+    return grid
