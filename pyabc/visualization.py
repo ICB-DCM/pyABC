@@ -264,21 +264,23 @@ def plot_kde_matrix(df, w, limits=None):
     if limits is None:
         limits = {}
 
+    default = (None, None)
+
     def off_diagonal(x, y, **kwargs):
         df = pd.concat((x, y), axis=1)
         plot_kde_2d(df, w,
                     x.name, y.name,
-                    xmin=limits.get(x.name, None)[0],
-                    xmax=limits.get(x.name, None)[1],
-                    ymin=limits.get(y.name, None)[0],
-                    ymax=limits.get(y.name, None)[1],
+                    xmin=limits.get(x.name, default)[0],
+                    xmax=limits.get(x.name, default)[1],
+                    ymin=limits.get(y.name, default)[0],
+                    ymax=limits.get(y.name, default)[1],
                     ax=plt.gca(), title=False)
 
     def diagonal(x, **kwargs):
         df = pd.concat((x,), axis=1)
         plot_kde_1d(df, w, x.name,
-                    xmin=limits.get(x.name, None)[0],
-                    xmax=limits.get(x.name, None)[1],
+                    xmin=limits.get(x.name, default)[0],
+                    xmax=limits.get(x.name, default)[1],
                     ax=plt.gca())
 
     grid.map_upper(off_diagonal)
