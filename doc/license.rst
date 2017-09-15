@@ -1,13 +1,14 @@
 License
 =======
 
-This package is licensed under a GPLv3 license. See the :ref:`license-text`
+This package is licensed under a permissive 3-clause BSD license.
+See the :ref:`license-text`
 
 
 Author
 ------
 
-The package was developed by
+The package was mainly developed by
 
 Emmanuel Klinger:
 `emmanuel.klinger@brain.mpg.de <emmanuel.klinger@brain.mpg.de>`_,
