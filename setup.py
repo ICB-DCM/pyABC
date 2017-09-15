@@ -33,7 +33,7 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
       classifiers=[
         'Programming Language :: Python :: 3.6'
       ],
-      keywords='inference abc approximate bayesian '
+      keywords='likelihood-free inference abc approximate bayesian '
                'computation sge distributed',
       zip_safe=False,  # not zip safe b/c of Flask templates
       entry_points={

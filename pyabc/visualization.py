@@ -5,7 +5,6 @@ Visualizations
 Helper functions to visualize results of ABCSMC runs.
 """
 import numpy as np
-import pandas as pd
 from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -279,7 +278,7 @@ def plot_kde_matrix(df, w, limits=None):
     def scatter(x, y, **kwargs):
         alpha = w / w.max()
         colors = np.zeros((alpha.size, 4))
-        colors[:,3] = alpha
+        colors[:, 3] = alpha
         plt.gca().scatter(x, y, color="k")
 
     def diagonal(x, **kwargs):
