@@ -36,11 +36,11 @@ the usage of this package.
    what
    examples/quickstart.ipynb
    installation
-   web_visualization
+   examples
    sampler
    sge
-   examples
    export_db
+   web_visualization
    releasenotes
    license
 
