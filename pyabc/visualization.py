@@ -247,17 +247,20 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     return ax
 
 
-def plot_kde_matrix(df, w, limits=None):
+def plot_kde_matrix(df, w, limits=None, colorbar=True):
     """
     Plot a KDE matrix.
 
     Parameters
     ----------
     df: Pandas Dataframe
-        The rows are the observations, the columns the variables
-    w: The corresponding weights.
+        The rows are the observations, the columns the variables.
+    w: np.narray
+        The corresponding weights.
+    colorbar: bool
+        Whether to plot the colorbars or not.
     limits: dictionary, optional
-        Dictionary of the form {"name": (lower_limit, upper_limit)}
+        Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
     """
     grid = sns.PairGrid(df, diag_sharey=False)
     if limits is None:
@@ -273,7 +276,7 @@ def plot_kde_matrix(df, w, limits=None):
                     xmax=limits.get(x.name, default)[1],
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
-                    ax=plt.gca(), title=False)
+                    ax=plt.gca(), title=False, colorbar=colorbar)
 
     def scatter(x, y, **kwargs):
         alpha = w / w.max()
