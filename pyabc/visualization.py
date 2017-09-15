@@ -260,7 +260,7 @@ def plot_kde_matrix(df, w, limits=None):
     limits: dictionary, optional
         Dictionary of the form {"name": (lower_limit, upper_limit)}
     """
-    grid = sns.PairGrid(df)
+    grid = sns.PairGrid(df, diag_sharey=False)
     if limits is None:
         limits = {}
 
@@ -276,6 +276,12 @@ def plot_kde_matrix(df, w, limits=None):
                     ymax=limits.get(y.name, default)[1],
                     ax=plt.gca(), title=False)
 
+    def scatter(x, y, **kwargs):
+        alpha = w / w.max()
+        colors = np.zeros((alpha.size, 4))
+        colors[:,3] = alpha
+        plt.gca().scatter(x, y, color="k")
+
     def diagonal(x, **kwargs):
         df = pd.concat((x,), axis=1)
         plot_kde_1d(df, w, x.name,
@@ -283,7 +289,7 @@ def plot_kde_matrix(df, w, limits=None):
                     xmax=limits.get(x.name, default)[1],
                     ax=plt.gca())
 
-    grid.map_upper(off_diagonal)
-    grid.map_lower(off_diagonal)
     grid.map_diag(diagonal)
+    grid.map_upper(scatter)
+    grid.map_lower(off_diagonal)
     return grid

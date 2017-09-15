@@ -178,7 +178,7 @@ class ABCSMC:
         self.transitions = transitions  # type: List[Transition]
 
         if eps is None:
-            eps = MedianEpsilon(median_multiplier=0.7)
+            eps = MedianEpsilon(median_multiplier=1)
         self.eps = eps
 
         if isinstance(population_specification, int):

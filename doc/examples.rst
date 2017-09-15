@@ -14,6 +14,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/using_R.ipynb
    examples/conversion_reaction.ipynb
    examples/chemical_reaction.ipynb
+   examples/multiscale_agent_based.ipynb
 
 
 
