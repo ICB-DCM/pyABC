@@ -4,10 +4,16 @@ Release Notes
 0.8 series
 ..........
 
-0.8.12
+0.8.13
 ------
 
 * Minor doc fixes
+* Python 3.5 support dropped. It might still work for a while with Python 3.5
+  but this is not guaranteed anymore.
+* Add kde matrix visualization function
+* Add 2d tumor growth example
+* Add Gillespie example
+* Change license
 
 
 0.8.12

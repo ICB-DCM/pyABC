@@ -25,13 +25,12 @@ setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
       author_email='emmanuel.klinger@brain.mpg.de',
       name="pyabc",
       version=version,
-      license="GPLv3",
+      license="BSD",
       platforms="all",
       url="http://pyabc.readthedocs.io/en/latest/",
       include_package_data=True,
       description='Distributed, likelihood-free ABC-SMC inference',
       classifiers=[
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6'
       ],
       keywords='inference abc approximate bayesian '
