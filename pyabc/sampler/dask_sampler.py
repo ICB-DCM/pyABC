@@ -1,11 +1,10 @@
 from distributed import Client
 from .base import Sampler
-from .eps_sampling_function import sample_until_n_accepted_proto, \
-    full_submit_function_pickle
+from .eps_mixin import EPSMixin
 import numpy as np
 
 
-class DaskDistributedSampler(Sampler):
+class DaskDistributedSampler(EPSMixin, Sampler):
     """
     Parallelize with dask. This sampler is intended to be used with a
     pre-configured dask client, but is able to initialize client, scheduler and
@@ -41,13 +40,10 @@ class DaskDistributedSampler(Sampler):
         is done.
 
     """
-    sample_until_n_accepted = sample_until_n_accepted_proto
-    full_submit_function_pickle = full_submit_function_pickle
 
     def __init__(self, dask_client=None, client_max_jobs=np.inf,
                  default_pickle=False, batchsize=1):
         super().__init__()
-        self.nr_evaluations_ = 0
 
         # Assign Client
         if dask_client is None:

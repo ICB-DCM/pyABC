@@ -27,8 +27,8 @@ Download the examples as notebooks
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
 * :download:`Ordinary Differential Equations: Conversion reaction <examples/conversion_reaction.ipynb>`
-* :download:`Markov Jump Process: Chemical Reaction <examples/chemical_reaction.ipynb>`
-* :download:`Multi-scale agent based model <examples/multiscale_agent_based.ipynb>`
+* :download:`Markov Jump Process: Reaction Network <examples/chemical_reaction.ipynb>`
+* :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
 
 
 .. warning::

@@ -1,9 +1,8 @@
 from .base import Sampler
-from .eps_sampling_function import (sample_until_n_accepted_proto,
-                                    full_submit_function_pickle)
+from .eps_mixin import EPSMixin
 
 
-class ConcurrentFutureSampler(Sampler):
+class ConcurrentFutureSampler(EPSMixin, Sampler):
     """
     Parallelize with an arbitrary sampler that implements the python concurrent
     futures executor interface. Specifically, it needs to implement a "submit"
@@ -40,12 +39,10 @@ class ConcurrentFutureSampler(Sampler):
 
 
     """
-    sample_until_n_accepted = sample_until_n_accepted_proto
-    full_submit_function_pickle = full_submit_function_pickle
 
     def __init__(self, cfuture_executor=None, client_max_jobs=200,
                  default_pickle=True, batchsize=1):
-        self.nr_evaluations_ = 0
+        super().__init__()
 
         # Assign Client
         self.my_client = cfuture_executor
