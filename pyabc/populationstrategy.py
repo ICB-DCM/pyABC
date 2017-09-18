@@ -87,7 +87,7 @@ class PopulationStrategy:
         return json.dumps(self.get_config())
 
 
-class ConstantPopulationStrategy(PopulationStrategy):
+class ConstantPopulationSize(PopulationStrategy):
     """
     Constant size of the diffrent populations
 
@@ -104,7 +104,7 @@ class ConstantPopulationStrategy(PopulationStrategy):
         pass
 
 
-class AdaptivePopulationStrategy(PopulationStrategy):
+class AdaptivePopulationSize(PopulationStrategy):
     """
     Adapt the population size according to the mean coefficient of variation
     error criterion. This strategy tries to respond to the shape of the

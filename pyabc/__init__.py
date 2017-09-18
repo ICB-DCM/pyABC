@@ -25,8 +25,8 @@ from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult, IntegratedModel
 from .transition import MultivariateNormalTransition, LocalTransition
-from .populationstrategy import (AdaptivePopulationStrategy,
-                                 ConstantPopulationStrategy)
+from .populationstrategy import (AdaptivePopulationSize,
+                                 ConstantPopulationSize)
 from .transition import GridSearchCV
 from .version import __version__  # noqa: F401
 
@@ -54,8 +54,8 @@ __all__ = [
     "SQLDataStore",
     "ABCLoader",
     "GridSearchCV",
-    "ConstantPopulationStrategy",
-    "AdaptivePopulationStrategy",
+    "ConstantPopulationSize",
+    "AdaptivePopulationSize",
     "MultivariateNormalTransition",
     "LocalTransition",
     "SimpleModel",

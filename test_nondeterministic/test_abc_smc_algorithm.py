@@ -15,11 +15,11 @@ import scipy.interpolate
 import scipy.stats as st
 from scipy.special import gamma, binom
 
-from pyabc import (ABCSMC, RV,  Distribution,
+from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon, MinMaxDistanceFunction,
                    PercentileDistanceFunction, SimpleModel, Model, ModelResult,
-                   MultivariateNormalTransition, ConstantPopulationStrategy,
-                   AdaptivePopulationStrategy, GridSearchCV)
+                   MultivariateNormalTransition, ConstantPopulationSize,
+                   AdaptivePopulationSize, GridSearchCV)
 from pyabc.sampler import MulticoreEvalParallelSampler
 from pyabc.transition import LocalTransition
 
@@ -69,7 +69,7 @@ def test_cookie_jar(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(1500)
+    population_size = ConstantPopulationSize(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -99,7 +99,7 @@ def test_empty_population(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(1500)
+    population_size = ConstantPopulationSize(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -127,7 +127,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(800)
+    population_size = ConstantPopulationSize(800)
     parameter_given_model_prior_distribution = [Distribution(theta=st.beta(
                                                                       1, 1))
                                                 for _ in range(2)]
@@ -155,7 +155,7 @@ class AllInOneModel(Model):
 
 def test_all_in_one_model(db_path, sampler):
     models = [AllInOneModel() for _ in range(2)]
-    population_size = ConstantPopulationStrategy(800)
+    population_size = ConstantPopulationSize(800)
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
                                                                       1, 1))
                                                 for _ in range(2)]
@@ -180,7 +180,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
 
     models = [model for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(800)
+    population_size = ConstantPopulationSize(800)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
@@ -223,7 +223,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path,
 
     models = [model for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(800)
+    population_size = ConstantPopulationSize(800)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [Distribution(theta=RV("beta",
@@ -264,7 +264,7 @@ def test_continuous_non_gaussian(db_path, sampler):
 
     models = [model]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(250)
+    population_size = ConstantPopulationSize(250)
     parameter_given_model_prior_distribution = [Distribution(u=RV("uniform", 0,
                                                                   1))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -318,7 +318,7 @@ def test_gaussian_single_population(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 1
-    population_size = ConstantPopulationStrategy(600)
+    population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [Distribution(x=RV("norm", 0,
                                                                   sigma_prior))
                                                 ]
@@ -363,7 +363,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 4
-    population_size = ConstantPopulationStrategy(600)
+    population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
@@ -406,7 +406,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 4
-    population_size = ConstantPopulationStrategy(600)
+    population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     parameter_perturbation_kernels = [GridSearchCV(MultivariateNormalTransition(),
                                       {"scaling": sp.logspace(-1, 1.5, 5)})]
@@ -450,7 +450,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler, transition)
 
     models = [model, model]
     models = list(map(SimpleModel, models))
-    population_size = ConstantPopulationStrategy(500)
+    population_size = ConstantPopulationSize(500)
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(mu_x_1, sigma_x)),
@@ -501,7 +501,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler, transitio
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = ConstantPopulationStrategy(400)
+    population_size = ConstantPopulationSize(400)
 
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]), population_size,
@@ -545,7 +545,7 @@ def test_empty_population_adaptive(db_path, sampler):
     model2 = make_model(theta2)
     models = [model1, model2]
     models = list(map(SimpleModel, models))
-    population_size = AdaptivePopulationStrategy(1500)
+    population_size = AdaptivePopulationSize(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["result"]),
@@ -570,7 +570,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
 
     models = [model_fun for _ in range(2)]
     models = list(map(SimpleModel, models))
-    population_size = AdaptivePopulationStrategy(800)
+    population_size = AdaptivePopulationSize(800)
     parameter_given_model_prior_distribution = [
         Distribution(theta=st.beta(1, 1)) for _ in range(2)]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -597,7 +597,7 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
     models = [model]
     models = list(map(SimpleModel, models))
     nr_populations = 4
-    population_size = AdaptivePopulationStrategy(600)
+    population_size = AdaptivePopulationSize(600)
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(0, sigma_x))]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
@@ -653,8 +653,8 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = AdaptivePopulationStrategy(400, mean_cv=0.05,
-                                                 max_population_size=1000)
+    population_size = AdaptivePopulationSize(400, mean_cv=0.05,
+                                             max_population_size=1000)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,

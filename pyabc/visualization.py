@@ -283,6 +283,8 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True):
         colors = np.zeros((alpha.size, 4))
         colors[:, 3] = alpha
         plt.gca().scatter(x, y, color="k")
+        plt.gca().set_xlim(*limits.get(x.name, default))
+        plt.gca().set_ylim(*limits.get(y.name, default))
 
     def diagonal(x, **kwargs):
         df = pd.concat((x,), axis=1)

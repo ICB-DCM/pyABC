@@ -15,6 +15,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/conversion_reaction.ipynb
    examples/chemical_reaction.ipynb
    examples/multiscale_agent_based.ipynb
+   examples/sde_ion_channels.ipynb
 
 
 
@@ -29,6 +30,7 @@ Download the examples as notebooks
 * :download:`Ordinary Differential Equations: Conversion reaction <examples/conversion_reaction.ipynb>`
 * :download:`Markov Jump Process: Reaction Network <examples/chemical_reaction.ipynb>`
 * :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
+* :download:`Stochastic Differential Equation: Ion channel noise in Hodgkin-Huxley neurons <examples/sde_ion_channels.ipynb>`
 
 
 .. warning::

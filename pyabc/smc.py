@@ -24,7 +24,7 @@ from .populationstrategy import PopulationStrategy
 from .pyabc_rand_choice import fast_random_choice
 from typing import Union
 from .model import SimpleModel
-from .populationstrategy import ConstantPopulationStrategy
+from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
 import copy
 import warnings
@@ -135,8 +135,7 @@ class ABCSMC:
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function,
-                 population_specification: Union[PopulationStrategy, int]
-                 = 100,
+                 population_size: Union[PopulationStrategy, int] = 100,
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
@@ -181,10 +180,10 @@ class ABCSMC:
             eps = MedianEpsilon(median_multiplier=1)
         self.eps = eps
 
-        if isinstance(population_specification, int):
-            population_specification = ConstantPopulationStrategy(
-                population_specification)
-        self.population_strategy = population_specification
+        if isinstance(population_size, int):
+            population_size = ConstantPopulationSize(
+                population_size)
+        self.population_strategy = population_size
 
         if sampler is None:
             self.sampler = DefaultSampler()

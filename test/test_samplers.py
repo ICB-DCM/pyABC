@@ -3,10 +3,10 @@ import pytest
 import scipy as sp
 import scipy.stats as st
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from pyabc import (ABCSMC, RV,  Distribution,
+from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
-                   ConstantPopulationStrategy)
+                   ConstantPopulationSize)
 from pyabc.sampler import (SingleCoreSampler, MappingSampler,
                            MulticoreParticleParallelSampler,
                            DaskDistributedSampler,
@@ -95,7 +95,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = ConstantPopulationStrategy(40)
+    population_size = ConstantPopulationSize(40)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
                  population_size,

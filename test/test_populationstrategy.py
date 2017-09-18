@@ -1,6 +1,6 @@
 import pytest
-from pyabc.populationstrategy import (AdaptivePopulationStrategy,
-                                      ConstantPopulationStrategy,
+from pyabc.populationstrategy import (AdaptivePopulationSize,
+                                      ConstantPopulationSize,
                                       PopulationStrategy)
 from pyabc.transition import MultivariateNormalTransition
 import pandas as pd
@@ -8,11 +8,11 @@ import scipy as sp
 
 
 def Adaptive():
-    return AdaptivePopulationStrategy(100)
+    return AdaptivePopulationSize(100)
 
 
 def Constant():
-    return ConstantPopulationStrategy(100)
+    return ConstantPopulationSize(100)
 
 
 @pytest.fixture(params=[Adaptive, Constant],

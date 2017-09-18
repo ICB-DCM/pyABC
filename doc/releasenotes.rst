@@ -7,9 +7,9 @@ Release Notes
 0.8.14
 ------
 
-Bug fix in MulticoreEvalParallelSampler. The multiprocessing.Queue could fill
+* Bug fix in MulticoreEvalParallelSampler. The multiprocessing.Queue could fill
 up and cause a deadlock on joining the workers. This is now fixed.
-
+* Rename ``population_specification`` to ``population_size``.
 
 0.8.13
 ------
