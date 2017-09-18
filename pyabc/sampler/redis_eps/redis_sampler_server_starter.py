@@ -17,7 +17,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         self.__worker = [
             Process(target=work,
                     args=(["--host", "localhost", "--port", str(port)],),
-                    daemon=True)
+                    daemon=False)
             for _ in range(2)
         ]
         for p in self.__worker:

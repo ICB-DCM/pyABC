@@ -4,6 +4,13 @@ Release Notes
 0.8 series
 ..........
 
+0.8.14
+------
+
+Bug fix in MulticoreEvalParallelSampler. The multiprocessing.Queue could fill
+up and cause a deadlock on joining the workers. This is now fixed.
+
+
 0.8.13
 ------
 

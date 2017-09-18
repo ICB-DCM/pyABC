@@ -6,6 +6,9 @@ import numpy as np
 import random
 
 
+DONE = "Done"
+
+
 def work(sample, simulate, accept,
          queue, n_eval: Value, n_particles: Value):
     random.seed()
@@ -24,6 +27,7 @@ def work(sample, simulate, accept,
                 n_particles.value -= 1
 
             queue.put((particle_id, new_sim))
+    queue.put(DONE)
 
 
 class MulticoreEvalParallelSampler(MultiCoreSampler):
@@ -92,15 +96,18 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         id_results = []
 
-        while len(id_results) < n:
-            id_results.append(queue.get())
+        # make sure all results are collected
+        # and the queue is emptied to prevent deadlocks
+        n_done = 0
+        while n_done < len(processes):
+            val = queue.get()
+            if val == DONE:
+                n_done += 1
+            else:
+                id_results.append(val)
 
         for proc in processes:
             proc.join()
-
-        # make sure all results are collected
-        while not queue.empty():
-            id_results.append(queue.get())
 
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
