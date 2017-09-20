@@ -3,8 +3,8 @@
 .. autoclass:: pyabc.populationstrategy.PopulationStrategy
    :members:
 
-.. autoclass:: pyabc.populationstrategy.ConstantPopulationStrategy
+.. autoclass:: pyabc.populationstrategy.ConstantPopulationSize
    :members:
 
-.. autoclass:: pyabc.populationstrategy.AdaptivePopulationStrategy
+.. autoclass:: pyabc.populationstrategy.AdaptivePopulationSize
    :members:
