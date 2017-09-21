@@ -10,6 +10,8 @@ from .redis_logging import worker_logger
 from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
                   MSG)
 from multiprocessing import Pool
+import numpy as np
+import random
 
 
 TIMES = {"s": 1,
@@ -112,6 +114,9 @@ def work(host="localhost", port=6379, runtime="2h", processes=1):
 
 
 def _work(host="localhost", port=6379, runtime="2h"):
+    np.random.seed()
+    random.seed()
+
     kill_handler = KillHandler()
 
     start_time = time()

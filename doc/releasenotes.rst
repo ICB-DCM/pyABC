@@ -4,6 +4,13 @@ Release Notes
 0.8 series
 ..........
 
+0.8.15
+------
+
+* Bug fix. Rand seed initialization in case of starting multiple workers
+ with --processes in redis server was not correct.
+
+
 0.8.14
 ------
 
