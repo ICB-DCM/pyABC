@@ -8,14 +8,14 @@ Release Notes
 ------
 
 * Bug fix. Rand seed initialization in case of starting multiple workers
- with --processes in redis server was not correct.
+  with --processes in redis server was not correct.
 
 
 0.8.14
 ------
 
 * Bug fix in MulticoreEvalParallelSampler. The multiprocessing.Queue could fill
-up and cause a deadlock on joining the workers. This is now fixed.
+  up and cause a deadlock on joining the workers. This is now fixed.
 * Rename ``population_specification`` to ``population_size``.
 * Improve ``plot_kde_matrix`` plot ranger are now handled in a less confusing
   way
