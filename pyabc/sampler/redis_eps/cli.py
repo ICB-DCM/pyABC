@@ -155,7 +155,10 @@ def _work(host="localhost", port=6379, runtime="2h"):
                     "after the current population. "
                     "For 'info' you'll see how many workers are connected, "
                     "how many evaluations the current population has, and "
-                    "how many particles are still missing.")
+                    "how many particles are still missing. "
+                    "For 'reset-workers', the worker count will be resetted to"
+                    "zero. This does not cancel the sampling. This is useful "
+                    "if workers were unexpectedly killed.")
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
 @click.argument('command', type=str)
@@ -175,5 +178,7 @@ def _manage(command, host="localhost", port=6379):
         print("Workers={} Evaluations={} Particles={}".format(*res))
     elif command == "stop":
         redis.publish(MSG, STOP)
+    elif command == "reset-workers":
+        redis.set(N_WORKER, 0)
     else:
         print("Unknown command:", command)

@@ -233,3 +233,20 @@ shutdown at the end of the current generation.
 
 You can also stop workers with ``Ctrl-C``, or even send a kill signal when
 pyABC has finished.
+
+
+Optional: Something with the workers went wrong in the middle of a run
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+It can happen, that workers get unexpectedly killed.
+If they are not able to communicate to the redis-server that they've finished
+working on the current population before they're killed,
+the pyABC master process will wait forever.
+In such cases, the following can be done
+
+1. Terminate all running workers (but not the pyABC master process and also
+   not the redis-server)
+2. Execute ``abc-redis-manager reset-workers`` to manually reset the number
+   of registered workers to zero.
+3. Start worker processes again.

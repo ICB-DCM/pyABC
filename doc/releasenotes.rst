@@ -4,6 +4,14 @@ Release Notes
 0.8 series
 ..........
 
+
+0.8.16
+------
+
+Add "abc-redis-manager reset-workers" command in case workers were unexpectedly
+killed.
+
+
 0.8.15
 ------
 
