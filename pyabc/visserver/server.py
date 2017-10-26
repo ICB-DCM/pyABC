@@ -6,6 +6,7 @@ import click
 from pyabc import History
 import pandas as pd
 import bokeh.plotting.helpers as helpers
+from bokeh.plotting import figure
 # this has to be set before the other bokeh imports
 helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
                            '#e69f00',
@@ -15,7 +16,7 @@ helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
                            '#0072b2',
                            '#d55e00',
                            '#cc79a7']
-from bokeh.charts import Line, Scatter, Bar  # noqa: E402
+from bkcharts import Line  # noqa: E402
 from bokeh.embed import components  # noqa: E402
 from bokeh.resources import INLINE  # noqa: E402
 from bokeh.models.widgets import Panel, Tabs  # noqa: E402
@@ -76,17 +77,45 @@ def abc_detail(abc_id):
 
         melted = pd.melt(model_probabilities, id_vars="t", var_name="m",
                          value_name="p")
-        prob_plot = Bar(melted, label="t", stack="m", values="p")
-        prob_plot.ylabel = "p"
+        melted = melted.convert_objects()
+        melted["m"] = pd.to_numeric(melted["m"])
+
+        # although it might seem cumbersome, not using the bkcharts
+        # package works more reliably
+
+        prob_plot = figure()
+        prob_plot.xaxis.axis_label = 'Generation t'
+        prob_plot.yaxis.axis_label = 'Probability'
+        for c, (m, data) in zip(helpers.DEFAULT_PALETTE, melted.groupby("m")):
+            prob_plot.line(data["t"], data["p"],
+                           legend="Model " + str(m), color=c,
+                           line_width=2)
+
+        particles_fig = figure()
+        particles_fig.xaxis.axis_label = 'Generation t'
+        particles_fig.yaxis.axis_label = 'Particles'
+        particles_fig.line(particles["t"], particles["particles"],
+                           line_width=2)
+
+        samples_fig = figure()
+        samples_fig.xaxis.axis_label = 'Generation t'
+        samples_fig.yaxis.axis_label = 'Samples'
+        samples_fig.line(populations["t"], populations["samples"],
+                         line_width=2)
+
+        eps_fig = figure()
+        eps_fig.xaxis.axis_label = 'Generation t'
+        eps_fig.yaxis.axis_label = 'Epsilon'
+        eps_fig.line(populations["t"], populations["epsilon"],
+                     line_width=2)
+
         plot = Tabs(tabs=[
             Panel(child=prob_plot, title="Probability"),
-            Panel(child=Scatter(x="t", y="samples", data=populations),
-                  title="Samples"),
-            Panel(child=Scatter(x="t", y="particles", data=particles),
-                  title="Particles"),
-            Panel(child=Scatter(x="t", y="epsilon", data=populations),
-                  title="Epsilon")])
+            Panel(child=samples_fig, title="Samples"),
+            Panel(child=particles_fig, title="Particles"),
+            Panel(child=eps_fig, title="Epsilon")])
         plot = PlotScriptDiv(*components(plot))
+
         return render_template("abc_detail.html",
                                abc_id=abc_id,
                                plot=plot,

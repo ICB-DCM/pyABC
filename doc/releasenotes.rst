@@ -8,8 +8,9 @@ Release Notes
 0.8.16
 ------
 
-Add "abc-redis-manager reset-workers" command in case workers were unexpectedly
-killed.
+* Add "abc-redis-manager reset-workers" command in case workers were
+  unexpectedlykilled.
+* Adapt web server to changed bkcharts API.
 
 
 0.8.15
