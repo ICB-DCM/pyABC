@@ -9,6 +9,7 @@ scipy
 pandas
 cloudpickle
 bokeh
+bkcharts
 redis
 dill
 gitpython
