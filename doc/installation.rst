@@ -6,7 +6,7 @@ Installation und Upgrading
 Preparation
 -----------
 
-This package requires Python 3.5 or later.
+This package requires Python 3.6 or later.
 The package is tested on Linux (using Travis continuous integration).
 
 Not all of the package's functionality is available for Microsoft Windows.
