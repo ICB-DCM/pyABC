@@ -1,8 +1,8 @@
 Welcome to pyABC's documentation!
 =================================
 
-.. image:: https://travis-ci.org/neuralyzer/pyabc.svg?branch=master
-    :target: https://travis-ci.org/neuralyzer/pyabc
+.. image:: https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master
+    :target: https://travis-ci.org/ICB-DCM/pyABC
 
 Version: |version|
 

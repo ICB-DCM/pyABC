@@ -2,12 +2,13 @@
 ![pyABC](doc/logo.png)
 
 
-Massively parallel ABC for Python.
+Massively parallel, distributed and scalable ABC-SMC for Python with support
+for the R language.
 
 
 Docs: [![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
-Stable: [![Build Status](https://travis-ci.org/neuralyzer/pyabc.svg?branch=master)](https://travis-ci.org/neuralyzer/pyabc)
-Development: [![Build Status](https://travis-ci.org/neuralyzer/pyabc.svg?branch=development)](https://travis-ci.org/neuralyzer/pyabc)
+Stable: [![Build Status](https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master)](https://travis-ci.org/neuralyzer/pyabc)
+
 
 
 
