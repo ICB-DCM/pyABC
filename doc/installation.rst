@@ -46,7 +46,7 @@ into your system's Python distribution. This requires usually root access.
 Install as user into your home directory (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installing pyABC into you system's Python
+Installing pyABC into your system's Python
 distribution can be problematic as you might not want to
 change your system's Python installation or you
 don't have root rights.
@@ -62,7 +62,7 @@ GIT Installation
 
 If you want the bleeding edge version, install directly from github::
 
-   pip install git+https://github.com/neuralyzer/pyabc.git
+   pip install git+https://github.com/icb-dcm/pyabc.git
 
 
 
