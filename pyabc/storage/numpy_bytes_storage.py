@@ -49,6 +49,6 @@ def np_from_bytes(arr_bytes):
         try:
             if type_(arr) == arr:
                 return type_(arr)
-        except TypeError:
+        except (TypeError, ValueError):
             pass
     return arr
