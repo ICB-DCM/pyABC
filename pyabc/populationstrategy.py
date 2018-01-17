@@ -107,8 +107,9 @@ class ConstantPopulationSize(PopulationStrategy):
 class AdaptivePopulationSize(PopulationStrategy):
     """
     Adapt the population size according to the mean coefficient of variation
-    error criterion. This strategy tries to respond to the shape of the
-    current posterior approximation by selecting the population size such
+    error criterion, as detailed in [#klingerhasenaueradaptive]_.
+    This strategy tries to respond to the shape of the
+    current posterior approximation by selection the population size such
     that the variation of the density estimates matches the target
     variation given via the mean_cv argument.
 
@@ -135,6 +136,16 @@ class AdaptivePopulationSize(PopulationStrategy):
     nr_samples_per_parameter: int, optional
         Defaults to 1.
 
+
+
+
+    .. [#klingerhasenaueradaptive] Klinger, Emmanuel, and Jan Hasenauer.
+        “A Scheme for Adaptive Selection of Population Sizes in
+        Approximate Bayesian Computation - Sequential Monte Carlo.”
+        Computational Methods in Systems Biology, 128–44.
+        Lecture Notes in Computer Science.
+        Springer, Cham, 2017.
+        https://doi.org/10.1007/978-3-319-67471-1_8.
     """
     N_BOOTSTR = 10
 
