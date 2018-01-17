@@ -59,7 +59,7 @@ class ABCSMC:
 
        This model's output is passed to the summary statistics calculation.
        Per default, the model is assumed to already return the calculated
-       summary statistcs. Accordingly, the default summary_statistics
+       summary statistics. Accordingly, the default summary_statistics
        function is just the identity.
 
     parameter_priors: List[Distribution]
@@ -93,7 +93,7 @@ class ABCSMC:
 
     model_perturbation_kernel: ModelPerturbationKernel
         Kernel which governs with which probability to switch from one
-        model to anoter model for a given sample while generating proposals
+        model to another model for a given sample while generating proposals
         for the subsequent population from the current population.
 
     transitions: List[Transition], Transition, optional
@@ -305,7 +305,7 @@ class ABCSMC:
             used for the ABCSMC algorithm If you want to predict your ABCSMC
             procedure against synthetic samples, you can use
             this parameter to indicate the ground truth model number.
-            This helps with futher analysis. If you use actually measured data
+            This helps with further analysis. If you use actually measured data
             (and don't know the ground truth) you don't have to set this.
 
         gt_par: dict, optional

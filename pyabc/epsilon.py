@@ -2,8 +2,8 @@
 
 Acceptance threshold scheduling strategies.
 
-Acceptance thresholds can calculated based on the distances from the
-observed data or can follow a pre-defined list, can be constant or can have
+Acceptance thresholds can be calculated based on the distances from the
+observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
@@ -39,7 +39,7 @@ class Epsilon(ABC):
         ----------
 
         sample_from_prior: List[dict]
-            List of dictionaries containng the summary statistics.
+            List of dictionaries containing the summary statistics.
 
         distance_to_ground_truth_function: Callable[[dict], float]
             One of the distance functions pre evaluated at its second argument
@@ -155,7 +155,7 @@ class MedianEpsilon(Epsilon):
     initial_epsilon: Union[str, int]
 
         * If 'from_sample', then the initial median is calculated from
-          a sample of the current population size from the priro distribution.
+          a sample of the current population size from the prior distribution.
         * If a number is given, this number is used.
 
     median_multiplier: float
@@ -169,7 +169,7 @@ class MedianEpsilon(Epsilon):
     Note that the acceptance threshold calculation is based on the distance
     to the observation, not on the parameters which generated data with that
     distance.
-    If completely different parameter sets produce equally good samples
+    If completely different parameter sets produce equally good samples,
     the distances of their samples to the ground truth data should be
     comparable.
     """
