@@ -12,6 +12,8 @@ import scipy as sp
 from scipy import linalg as la
 from abc import ABC, abstractmethod
 from typing import List
+import math
+from .parameters import ValidParticle
 
 
 class DistanceFunction(ABC):
@@ -110,8 +112,8 @@ class SimpleFunctionDistance(DistanceFunction):
     an instance of the SimpleFunctionDistance class.
     """
 
-    def __init__(self, function):
-        self.function = function
+    def __init__(self, func):
+        self.function = func
 
     def __call__(self, x, y):
         return self.function(x, y)
@@ -148,36 +150,9 @@ def to_distance(maybe_distance_function):
     return SimpleFunctionDistance(maybe_distance_function)
 
 
-class PNormDistance(DistanceFunction):
-    """
-    Compute the p-norm of the summary statistics.
-    """
-
-    def __init__(self, p):
-        if p < 1:
-            raise Exception("It must be p >= 1")
-        self.p = p
-
-    def __call__(self, x:dict, y:dict):
-        import math
-        if self.p == math.inf:
-            return max(abs(x[key] - y[key]) for key in x.keys())
-        else:
-            return math.pow(sum(pow(abs(x[key]-y[key]),self.p) for key in x.keys()),1/self.p)
-
-
-class EuclideanDistance(PNormDistance):
-    """
-    Simple euclidean distance of the summary statistics.
-    """
-
-    def __init__(self):
-        super().__init__(2)
-
-
 class WeightedPNormDistance(DistanceFunction):
 
-    def __init__(self, p:float):
+    def __init__(self, p: float):
         if p < 1:
             raise Exception("It must be p >= 1")
         # Exponent
@@ -185,30 +160,38 @@ class WeightedPNormDistance(DistanceFunction):
         # Weights
         self.w = None
 
-    def initialize(self, sample_from_prior:List[dict]):
+    def initialize(self, sample_from_prior: List[dict]):
         """
         Initialize weights.
         :param sample_from_prior:
         :return:
         """
+
         self.w = {key:1 for key in sample_from_prior[0].keys()}
 
-    def update(self, simulations_all):
+    def update(self, simulations_all: List[ValidParticle]):
         """
         Update weights based on all simulations
         :param simulations_all:
         :return:
         """
 
-        import math
-
         # calculate median absolute deviation for each summary statistic
         n = len(simulations_all)
-        for key in simulations_all[0].summary_statistics_list[0].keys():
-            self.w[key] = 1/math.sqrt(sum(abs(simulations_all[j].summary_statistics_list[0][key])**2 for j in range(n))/n)
+        num_ss = 0
+        for key in self.w.keys():
+            esd = 0
+            num_ss = 0
+            for j in range(n):
+                m = len(simulations_all[j].summary_statistics_list)
+                num_ss += m
+                for k in range(m):
+                    esd += abs(simulations_all[j].summary_statistics_list[k][key])**2
 
-    def __call__(self, x:dict, y:dict):
-        import math
+            esd = math.sqrt(esd/num_ss)
+            self.w[key] = 1/esd
+
+    def __call__(self, x: dict, y: dict):
         if self.p == math.inf:
             return max(abs(self.w[key]*(x[key]-y[key])) for key in x.keys())
         else:
@@ -217,7 +200,16 @@ class WeightedPNormDistance(DistanceFunction):
                 1/self.p)
 
 
-class WeightedEuclideanDistance(DistanceFunction):
+class PNormDistance(WeightedPNormDistance):
+    """
+    Compute the p-norm of the summary statistics.
+    """
+
+    def update(self, simulations_all):
+        pass
+
+
+class WeightedEuclideanDistance(WeightedPNormDistance):
     """
     Euclidean distance of summary statistics weighted by scalars, eg. (3) in
     [#prangle_adaptingthedistance]_.
@@ -228,13 +220,19 @@ class WeightedEuclideanDistance(DistanceFunction):
     """
 
     def __init__(self):
-        pass
+        super().__init__(2)
 
-    def initialize(self, sample_from_prior):
-        super().initialize(sample_from_prior)
+    def initialize(self, sample_from_prior: List[dict]):
+        self.w = {key:1 for key in sample_from_prior[0].keys()}
 
-    def update(self, **args):
-        pass
+
+class EuclideanDistance(PNormDistance):
+    """
+    Simple euclidean distance of the summary statistics.
+    """
+
+    def __init__(self):
+        super().__init__(2)
 
 
 class DistanceFunctionWithMeasureList(DistanceFunction):
