@@ -377,11 +377,12 @@ class ABCSMC:
                 model_result = self.models[m].summary_statistics(
                     par, self.summary_statistics)
                 return model_result.sum_stats
-
-            self._points_sampled_from_prior = (
+# TODO
+            samples = (
                 self.sampler.sample_until_n_accepted(
                     sample_one, simulate_one, lambda x: True,
                     self.population_strategy.nr_particles))
+            self._points_sampled_from_prior = samples['simulations_accepted']
         return self._points_sampled_from_prior
 
     def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
@@ -550,10 +551,15 @@ class ABCSMC:
 
             def accept_one(particle):
                 return len(particle.distance_list) > 0
-
-            population = self.sampler.sample_until_n_accepted(
+# TODO
+            samples = self.sampler.sample_until_n_accepted(
                 sample_one, eval_one, accept_one,
                 self.population_strategy.nr_particles)
+
+            samples_all = samples['simulations_all']
+            self.distance_function.update(samples_all)
+
+            population = samples['simulations_accepted']
 
             population = [particle for particle in population
                           if not isinstance(particle, Exception)]

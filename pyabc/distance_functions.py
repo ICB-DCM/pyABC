@@ -87,10 +87,11 @@ class DistanceFunction(ABC):
         """
         return json.dumps(self.get_config())
 
-    def update(self, **args):
+    def update(self, simulations_all:List[dict]):
         """
-        Update the distance function.
+        Update the distance function. Default: Do nothing.
         """
+        pass
 
 
 class NoDistance(DistanceFunction):
@@ -112,8 +113,8 @@ class SimpleFunctionDistance(DistanceFunction):
     def __init__(self, function):
         self.function = function
 
-    def __call__(self, x, x_0):
-        return self.function(x, x_0)
+    def __call__(self, x, y):
+        return self.function(x, y)
 
     def get_config(self):
         conf = super().get_config()
@@ -147,14 +148,73 @@ def to_distance(maybe_distance_function):
     return SimpleFunctionDistance(maybe_distance_function)
 
 
-class EuclideanDistance(DistanceFunction):
+class PNormDistance(DistanceFunction):
+    """
+    Compute the p-norm of the summary statistics.
+    """
+
+    def __init__(self, p):
+        if p < 1:
+            raise Exception("It must be p >= 1")
+        self.p = p
+
+    def __call__(self, x:dict, y:dict):
+        import math
+        if self.p == math.inf:
+            return max(abs(x[key] - y[key]) for key in x.keys())
+        else:
+            return math.pow(sum(pow(abs(x[key]-y[key]),self.p) for key in x.keys()),1/self.p)
+
+
+class EuclideanDistance(PNormDistance):
     """
     Simple euclidean distance of the summary statistics.
     """
 
-    def __call__(self, x:dict, x_0:dict):
+    def __init__(self):
+        super().__init__(2)
+
+
+class WeightedPNormDistance(DistanceFunction):
+
+    def __init__(self, p:float):
+        if p < 1:
+            raise Exception("It must be p >= 1")
+        # Exponent
+        self.p = p
+        # Weights
+        self.w = None
+
+    def initialize(self, sample_from_prior:List[dict]):
+        """
+        Initialize weights.
+        :param sample_from_prior:
+        :return:
+        """
+        self.w = {key:1 for key in sample_from_prior[0].keys()}
+
+    def update(self, simulations_all):
+        """
+        Update weights based on all simulations
+        :param simulations_all:
+        :return:
+        """
+
         import math
-        return math.sqrt(sum((x[key]-x_0[key])**2 for key in x.keys()))
+
+        # calculate median absolute deviation for each summary statistic
+        n = len(simulations_all)
+        for key in simulations_all[0].summary_statistics_list[0].keys():
+            self.w[key] = 1/math.sqrt(sum(abs(simulations_all[j].summary_statistics_list[0][key])**2 for j in range(n))/n)
+
+    def __call__(self, x:dict, y:dict):
+        import math
+        if self.p == math.inf:
+            return max(abs(self.w[key]*(x[key]-y[key])) for key in x.keys())
+        else:
+            return math.pow(
+                sum(pow(abs(self.w[key]*(x[key]-y[key])),self.p) for key in x.keys()),
+                1/self.p)
 
 
 class WeightedEuclideanDistance(DistanceFunction):

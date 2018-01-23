@@ -16,8 +16,9 @@ from .redis_eps import (RedisEvalParallelSampler,
                         RedisEvalParallelSamplerServerStarter)
 from .concurrent_future import ConcurrentFutureSampler
 
-__all__ = ["Sampler", "SingleCoreSampler", "MulticoreParticleParallelSampler",
-           "MappingSampler", "DaskDistributedSampler",
-           "RedisEvalParallelSampler",
-           "MulticoreEvalParallelSampler",
-           "RedisEvalParallelSamplerServerStarter", "ConcurrentFutureSampler"]
+__all__ = ["Sampler", "SingleCoreSampler"]
+           #"MulticoreParticleParallelSampler",
+           #"MappingSampler", "DaskDistributedSampler",
+           #"RedisEvalParallelSampler",
+           #"MulticoreEvalParallelSampler",
+           #"RedisEvalParallelSamplerServerStarter", "ConcurrentFutureSampler"]
