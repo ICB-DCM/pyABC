@@ -13,11 +13,15 @@ from .random_variables import (Distribution,
                                RVBase,
                                RVDecorator,
                                LowerBoundDecorator)
-from .distance_functions import (ZScoreDistanceFunction,
+from .distance_functions import (DistanceFunction,
+                                 NoDistance,
+                                 SimpleFunctionDistance,
+                                 EuclideanDistance,
+                                 WeightedEuclideanDistance,
+                                 ZScoreDistanceFunction,
                                  PCADistanceFunction,
                                  MinMaxDistanceFunction,
                                  PercentileDistanceFunction,
-                                 DistanceFunction,
                                  RangeEstimatorDistanceFunction,
                                  DistanceFunctionWithMeasureList)
 from .epsilon import Epsilon, ConstantEpsilon, MedianEpsilon, ListEpsilon
@@ -34,6 +38,10 @@ __all__ = [
     "ABCSMC",
     # Distance start
     "DistanceFunction",
+    "NoDistance",
+    "SimpleFunctionDistance",
+    "EuclideanDistance",
+    "WeightedEuclideanDistance",
     "DistanceFunctionWithMeasureList",
     "ZScoreDistanceFunction",
     "PCADistanceFunction",

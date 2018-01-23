@@ -437,7 +437,7 @@ class ABCSMC:
         """
         Parameters
         ----------
-        t: populaton number
+        t: Population number
         m: Indices of alive models
         p: Probabilities of alive models
 

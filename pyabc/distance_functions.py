@@ -87,10 +87,15 @@ class DistanceFunction(ABC):
         """
         return json.dumps(self.get_config())
 
+    def update(self, **args):
+        """
+        Update the distance function.
+        """
+
 
 class NoDistance(DistanceFunction):
     """
-    Implents a kind of null object as distance function.
+    Implements a kind of null object as distance function.
     """
     def __call__(self, x: dict, x_0: dict) -> float:
         raise Exception("{} is not intended to be called."
@@ -103,11 +108,12 @@ class SimpleFunctionDistance(DistanceFunction):
     If a function is passed to the ABCSMC class, then it is converted to
     an instance of the SimpleFunctionDistance class.
     """
+
     def __init__(self, function):
         self.function = function
 
-    def __call__(self, x, y):
-        return self.function(x, y)
+    def __call__(self, x, x_0):
+        return self.function(x, x_0)
 
     def get_config(self):
         conf = super().get_config()
@@ -139,6 +145,36 @@ def to_distance(maybe_distance_function):
     if isinstance(maybe_distance_function, DistanceFunction):
         return maybe_distance_function
     return SimpleFunctionDistance(maybe_distance_function)
+
+
+class EuclideanDistance(DistanceFunction):
+    """
+    Simple euclidean distance of the summary statistics.
+    """
+
+    def __call__(self, x:dict, x_0:dict):
+        import math
+        return math.sqrt(sum((x[key]-x_0[key])**2 for key in x.keys()))
+
+
+class WeightedEuclideanDistance(DistanceFunction):
+    """
+    Euclidean distance of summary statistics weighted by scalars, eg. (3) in
+    [#prangle_adaptingthedistance]_.
+
+        .. [#prangle_adaptingthedistance] Prangle, Dennis.
+        “Adapting the ABC distance function”.
+        arXiv:1507.00874v3.
+    """
+
+    def __init__(self):
+        pass
+
+    def initialize(self, sample_from_prior):
+        super().initialize(sample_from_prior)
+
+    def update(self, **args):
+        pass
 
 
 class DistanceFunctionWithMeasureList(DistanceFunction):
@@ -377,7 +413,7 @@ class IdentityFakeDistance(DistanceFunction):
     A fake distance function, which just passes
     the summary statistics on. This class assumes, that
     the model already returns the distance. This can be useful
-    in cases where simulatin can be stopped early when
+    in cases where simulating can be stopped early when
     during the simulation some condition is reached which
     makes it impossible to accept the particle.
     """
