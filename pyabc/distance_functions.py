@@ -256,6 +256,12 @@ class WeightedPNormDistance(PNormDistance):
                 self.w[key] = 1 / val
 
 
+class WeightedPNormDistance2(PNormDistance):
+    """
+    Also remember all previous weights.
+    """
+
+
 def median_absolute_deviation(data: List):
     """
     Calculate the `sample median absolute deviation (MAD)
