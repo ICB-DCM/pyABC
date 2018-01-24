@@ -13,7 +13,7 @@ from scipy import linalg as la
 from abc import ABC, abstractmethod
 from typing import List
 import math
-from .parameters import ValidParticle
+import statistics
 
 
 class DistanceFunction(ABC):
@@ -150,89 +150,142 @@ def to_distance(maybe_distance_function):
     return SimpleFunctionDistance(maybe_distance_function)
 
 
-class WeightedPNormDistance(DistanceFunction):
-
-    def __init__(self, p: float):
-        if p < 1:
-            raise Exception("It must be p >= 1")
-        # Exponent
-        self.p = p
-        # Weights
-        self.w = None
-
-    def initialize(self, sample_from_prior: List[dict]):
-        """
-        Initialize weights.
-        :param sample_from_prior:
-        :return:
-        """
-
-        self.w = {key:1 for key in sample_from_prior[0].keys()}
-
-    def update(self, simulations_all: List[ValidParticle]):
-        """
-        Update weights based on all simulations
-        :param simulations_all:
-        :return:
-        """
-
-        # calculate median absolute deviation for each summary statistic
-        n = len(simulations_all)
-        num_ss = 0
-        for key in self.w.keys():
-            esd = 0
-            num_ss = 0
-            for j in range(n):
-                m = len(simulations_all[j].summary_statistics_list)
-                num_ss += m
-                for k in range(m):
-                    esd += abs(simulations_all[j].summary_statistics_list[k][key])**2
-
-            esd = math.sqrt(esd/num_ss)
-            self.w[key] = 1/esd
-
-    def __call__(self, x: dict, y: dict):
-        if self.p == math.inf:
-            return max(abs(self.w[key]*(x[key]-y[key])) for key in x.keys())
-        else:
-            return math.pow(
-                sum(pow(abs(self.w[key]*(x[key]-y[key])),self.p) for key in x.keys()),
-                1/self.p)
-
-
-class PNormDistance(WeightedPNormDistance):
+class PNormDistance(DistanceFunction):
     """
     Compute the p-norm of the summary statistics.
     """
 
-    def update(self, simulations_all):
-        pass
-
-
-class WeightedEuclideanDistance(WeightedPNormDistance):
-    """
-    Euclidean distance of summary statistics weighted by scalars, eg. (3) in
-    [#prangle_adaptingthedistance]_.
-
-        .. [#prangle_adaptingthedistance] Prangle, Dennis.
-        “Adapting the ABC distance function”.
-        arXiv:1507.00874v3.
-    """
-
-    def __init__(self):
-        super().__init__(2)
+    def __init__(self, p: float):
+        if p < 1:
+            raise Exception("pyabc:distance_function: p must be >= 1")
+        self.p = p
+        self.w = None
 
     def initialize(self, sample_from_prior: List[dict]):
-        self.w = {key:1 for key in sample_from_prior[0].keys()}
+        # init weights with 1, and retrieve keys
+        self.w = {k: 1 for k in sample_from_prior[0].keys()}
+
+    def __call__(self, x: dict, y: dict):
+        if self.p == math.inf:
+            return max(abs(self.w[key]*(x[key]-y[key])) for key in self.w.keys())
+        else:
+            return math.pow(
+                sum(pow(abs(self.w[key]*(x[key]-y[key])),self.p) for key in self.w.keys()),
+                1/self.p)
 
 
-class EuclideanDistance(PNormDistance):
+class WeightedPNormDistance(PNormDistance):
+
+    SCALE_TYPE_MAD = 0 # mean absolute deviation
+    SCALE_TYPE_SD  = 1 # standard deviation
+
+    def __init__(self, p: float, adaptive: bool, scale_type: int):
+        """
+        Create new instance of a weighted p-norm distance
+
+        :param p: float
+            p as in p-norm.
+        :param adaptive: bool
+            True:  Adapt distance after each iteration,
+            False: Adapt distance only once at the beginning.
+        :param scale_type: int
+            As in SCALE constants.
+        """
+
+        super().__init__(p)
+        self.adaptive = adaptive
+        self.scale_type = scale_type
+
+    def initialize(self, sample_from_prior: List[dict]):
+        """
+        Initialize weights.
+
+        :param sample_from_prior:
+        """
+
+        super().initialize(sample_from_prior)
+        # update weights from samples
+        self._update(sample_from_prior)
+
+    def update(self, all_summary_statistics_list: List[dict]):
+        """
+        Update weights based on all simulations. Usually called in
+        each iteration.
+
+        :param all_summary_statistics_list: List[dict]
+            List of all summary statistics (also those rejected).
+        """
+
+        print(self.w)
+
+        if not self.adaptive:
+            return
+
+        self._update(all_summary_statistics_list)
+
+    def _update(self, all_summary_statistics_list: List[dict]):
+        """
+        Here the real update of weights happens.
+
+        :param all_summary_statistics_list: List[dict]
+            List of all summary statistics (also those rejected).
+        :return:
+        """
+
+        n = len(all_summary_statistics_list)
+
+        for key in self.w.keys():
+            # prepare list for key
+            current_list = []
+            for j in range(n):
+                current_list.append(all_summary_statistics_list[j][key])
+
+            # compute weighting
+            if self.scale_type == WeightedPNormDistance.SCALE_TYPE_MAD:
+                val = median_absolute_deviation(current_list)
+            elif self.scale_type == WeightedPNormDistance.SCALE_TYPE_SD:
+                val = standard_deviation(current_list)
+            else:
+                raise Exception("pyabc:distance_function: scale_type not recognized.")
+
+            if val == 0:
+                self.w[key] = 1
+            else:
+                self.w[key] = 1 / val
+
+
+def median_absolute_deviation(data: List):
     """
-    Simple euclidean distance of the summary statistics.
+    Calculate the `sample median absolute deviation (MAD)
+    <https://en.wikipedia.org/wiki/Median_absolute_deviation>'_, defined as
+    ``median(abs(data - median(data))''.
+
+    :param data: List
+        List of data points.
+    :return: mad
+        The median absolute deviation of the data.
     """
 
-    def __init__(self):
-        super().__init__(2)
+    data_median = statistics.median(data)
+    normalized_data = []
+    for item in data:
+        normalized_data.append(abs(item - data_median))
+    mad = statistics.median(normalized_data)
+    return mad
+
+
+def standard_deviation(data: List):
+    """
+    Calculate the ` sample standard deviation (SD)
+    <https://en.wikipedia.org/wiki/Standard_deviation>`_.
+    :param data: List
+        List of data points.
+    :return: sd
+        The standard deviation of the data points.
+    """
+
+    sd = statistics.stdev(data)
+    return sd
 
 
 class DistanceFunctionWithMeasureList(DistanceFunction):

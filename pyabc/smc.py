@@ -367,6 +367,7 @@ class ABCSMC:
             The sample is cached.
         """
         if self._points_sampled_from_prior is None:
+
             def sample_one():
                 m = self.model_prior.rvs()
                 par = self.parameter_priors[m].rvs()
@@ -378,15 +379,15 @@ class ABCSMC:
                     par, self.summary_statistics)
                 return model_result.sum_stats
 # TODO
-            samples = (
+            points_sampled_from_prior = (
                 self.sampler.sample_until_n_accepted(
                     sample_one, simulate_one, lambda x: True,
                     self.population_strategy.nr_particles))
-            self._points_sampled_from_prior = samples['simulations_accepted']
+            self._points_sampled_from_prior = points_sampled_from_prior
         return self._points_sampled_from_prior
 
     def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
-                           model_probabilities):
+                           model_probabilities, all_summary_statistics_list):
         """
         This is where the actual model evaluation happens.
         """
@@ -397,6 +398,7 @@ class ABCSMC:
             model_result = self.models[m_ss].accept(
                 theta_ss, self.summary_statistics,
                 lambda x: self.distance_function(x, self.x_0), current_eps)
+            all_summary_statistics_list.append(model_result.sum_stats)
             if model_result.accepted:
                 distance_list.append(model_result.distance)
                 summary_statistics_list.append(model_result.sum_stats)
@@ -444,7 +446,7 @@ class ABCSMC:
 
         Returns
         -------
-
+# TODO what is m_ss, theta_ss?
         """
         # first generation
         if t == 0:  # sample from prior
@@ -542,24 +544,26 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
+            # list of all summary statistics sampled,
+            # regardless of whether they were accepted
+            all_summary_statistics_list = []
+
             def sample_one():
                 return self._generate_valid_proposal(t, m, p)
 
             def eval_one(par):
                 return self._evaluate_proposal(*par, current_eps, t,
-                                               model_probabilities)
+                                               model_probabilities,
+                                               all_summary_statistics_list)
 
             def accept_one(particle):
                 return len(particle.distance_list) > 0
 # TODO
-            samples = self.sampler.sample_until_n_accepted(
+            population = self.sampler.sample_until_n_accepted(
                 sample_one, eval_one, accept_one,
                 self.population_strategy.nr_particles)
 
-            samples_all = samples['simulations_all']
-            self.distance_function.update(samples_all)
-
-            population = samples['simulations_accepted']
+            self.distance_function.update(all_summary_statistics_list)
 
             population = [particle for particle in population
                           if not isinstance(particle, Exception)]
