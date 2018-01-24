@@ -93,7 +93,6 @@ class DistanceFunction(ABC):
         """
         Update the distance function. Default: Do nothing.
         """
-        pass
 
 
 class NoDistance(DistanceFunction):
@@ -310,7 +309,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
     def initialize(self, sample_from_prior):
         super().initialize(sample_from_prior)
         if self._measures_to_use_passed_to_init == 'all':
-            self.measures_to_use == sample_from_prior[0].keys()
+            self.measures_to_use = sample_from_prior[0].keys()
             raise Exception(
                 "distance function from all measures not implemented.")
         else:
