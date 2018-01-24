@@ -73,6 +73,7 @@ class DistanceFunction(ABC):
         config: dict
             Dictionary describing the distance function.
         """
+
         return {"name": self.__class__.__name__}
 
     def to_json(self) -> str:
@@ -87,9 +88,10 @@ class DistanceFunction(ABC):
             The default implementation is to try to convert the dictionary
             returned my ``get_config``.
         """
+
         return json.dumps(self.get_config())
 
-    def update(self, simulations_all:List[dict]):
+    def update(self, simulations_all: List[dict]):
         """
         Update the distance function. Default: Do nothing.
         """
@@ -99,6 +101,7 @@ class NoDistance(DistanceFunction):
     """
     Implements a kind of null object as distance function.
     """
+
     def __call__(self, x: dict, x_0: dict) -> float:
         raise Exception("{} is not intended to be called."
                         .format(self.__class__.__name__))
@@ -169,14 +172,14 @@ class PNormDistance(DistanceFunction):
             return max(abs(self.w[key]*(x[key]-y[key])) for key in self.w.keys())
         else:
             return math.pow(
-                sum(pow(abs(self.w[key]*(x[key]-y[key])),self.p) for key in self.w.keys()),
+                sum(pow(abs(self.w[key]*(x[key]-y[key])), self.p) for key in self.w.keys()),
                 1/self.p)
 
 
 class WeightedPNormDistance(PNormDistance):
 
-    SCALE_TYPE_MAD = 0 # mean absolute deviation
-    SCALE_TYPE_SD  = 1 # standard deviation
+    SCALE_TYPE_MAD = 0  # mean absolute deviation
+    SCALE_TYPE_SD = 1   # standard deviation
 
     def __init__(self, p: float, adaptive: bool, scale_type: int):
         """

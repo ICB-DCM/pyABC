@@ -70,7 +70,7 @@ class ABCSMC:
         Measures the distance of the tentatively sampled particle to the
         measured data.
 
-    population_specification: int, PopulationStrategy, optional
+    population_size: int, PopulationStrategy, optional
         Specify the size of the population.
         If ``population_specification`` is an ``int``, then the size is
         constant. Adaptive population sizes are also possible by passing a
