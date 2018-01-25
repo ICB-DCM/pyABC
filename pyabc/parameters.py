@@ -84,6 +84,20 @@ class Parameter(ParameterStructure):
         return Parameter(**self)
 
 
+class FullInfoValidParticle:
+    def __init__(self, m: int, parameter: Parameter,
+                 weight: float, distance_list: List[float],
+                 summary_statistics_list: List[dict],
+                 all_summary_statistics_list: List[dict]):
+        self.m = m
+        self.parameter = parameter
+        self.weight = weight
+        self.distance_list = distance_list
+        self.summary_statistics_list = summary_statistics_list
+        self.all_summary_statistics_list = all_summary_statistics_list
+        self.accepted = len(distance_list) > 0
+
+
 class ValidParticle:
     """
     A valid (accepted) particle.

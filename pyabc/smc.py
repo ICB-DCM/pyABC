@@ -16,7 +16,7 @@ from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
-from .parameters import ValidParticle
+from .parameters import FullInfoValidParticle, ValidParticle
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -378,22 +378,23 @@ class ABCSMC:
                 model_result = self.models[m].summary_statistics(
                     par, self.summary_statistics)
                 return model_result.sum_stats
-# TODO
-            points_sampled_from_prior = (
+
+            population_accepted, population_all = (
                 self.sampler.sample_until_n_accepted(
                     sample_one, simulate_one, lambda x: True,
                     self.population_strategy.nr_particles))
-            self._points_sampled_from_prior = points_sampled_from_prior
+            self._points_sampled_from_prior = population_all
         return self._points_sampled_from_prior
 
     def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
-                           model_probabilities, all_summary_statistics_list):
+                           model_probabilities):
         """
         This is where the actual model evaluation happens.
         """
         # from here, theta_ss is valid according to the prior
         distance_list = []
         summary_statistics_list = []
+        all_summary_statistics_list = []
         for _ in range(self.population_strategy.nr_samples_per_parameter):
             model_result = self.models[m_ss].accept(
                 theta_ss, self.summary_statistics,
@@ -408,8 +409,9 @@ class ABCSMC:
                 distance_list, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
-        valid_particle = ValidParticle(
-            m_ss, theta_ss, weight, distance_list, summary_statistics_list)
+        valid_particle = FullInfoValidParticle(
+            m_ss, theta_ss, weight, distance_list,
+            summary_statistics_list, all_summary_statistics_list)
         return valid_particle
 
     def _calc_proposal_weight(self, distance_list, m_ss, theta_ss,
@@ -553,31 +555,31 @@ class ABCSMC:
 
             def eval_one(par):
                 return self._evaluate_proposal(*par, current_eps, t,
-                                               model_probabilities,
-                                               all_summary_statistics_list)
+                                               model_probabilities)
 
-            def accept_one(particle):
-                return len(particle.distance_list) > 0
-# TODO
-            population = self.sampler.sample_until_n_accepted(
+            def accept_one(particle: FullInfoValidParticle):
+                return particle.accepted
+
+            population_accepted, population_all = self.sampler.sample_until_n_accepted(
                 sample_one, eval_one, accept_one,
                 self.population_strategy.nr_particles)
 
+            all_summary_statistics_list = ABCSMC._extract_all_summary_statistics(population_all)
             self.distance_function.update(all_summary_statistics_list)
 
-            population = [particle for particle in population
-                          if not isinstance(particle, Exception)]
+            population_accepted = self._create_valid_particle_list(population_accepted)
+
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
-                t, current_eps, population, nr_evaluations,
+                t, current_eps, population_accepted, nr_evaluations,
                 model_names)
             abclogger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 
-            current_acceptance_rate = len(population) / nr_evaluations
+            current_acceptance_rate = len(population_accepted) / nr_evaluations
             if (current_eps <= minimum_epsilon
                or (self.stop_if_only_single_model_alive
                    and self.history.nr_of_models_alive() <= 1)
@@ -586,6 +588,36 @@ class ABCSMC:
 
         self.history.done()
         return self.history
+
+    @staticmethod
+    def _extract_all_summary_statistics(population_all: List[FullInfoValidParticle]):
+        all_summary_statistics_list = []
+        for particle in population_all:
+            all_summary_statistics_list.extend(particle.all_summary_statistics_list)
+        return all_summary_statistics_list
+
+    def _create_valid_particle_list(self,full_valid_particle_list: List[FullInfoValidParticle]):
+        valid_particle_list = []
+        for fvp in full_valid_particle_list:
+            vp = ValidParticle(m=fvp.m,
+                               parameter=fvp.parameter,
+                               weight=fvp.weight,
+                               distance_list=fvp.distance_list,
+                               summary_statistics_list=fvp.summary_statistics_list)
+
+            # compute distances with new distance measure
+            vp.distance_list = []
+            for ss in vp.summary_statistics_list:
+                d = self.distance_function(ss, self.x_0)
+                vp.distance_list.append(d)
+
+            valid_particle_list.append(vp)
+
+        valid_particle_list = [vp for vp in valid_particle_list
+                               if not isinstance(vp, Exception)]
+
+        return valid_particle_list
+
 
     def _adapt_population(self, t):
         if t == 0:  # we need a particle population to do the fitting
