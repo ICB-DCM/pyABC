@@ -546,10 +546,6 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
-            # list of all summary statistics sampled,
-            # regardless of whether they were accepted
-            all_summary_statistics_list = []
-
             def sample_one():
                 return self._generate_valid_proposal(t, m, p)
 
