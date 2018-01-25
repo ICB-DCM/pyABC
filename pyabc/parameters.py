@@ -85,6 +85,42 @@ class Parameter(ParameterStructure):
 
 
 class FullInfoValidParticle:
+    """
+    A particle (accepted/rejected) containing all information from the
+    sampling process that may become necessary in the further process.
+
+    Properties
+    ----------
+
+    m: int
+        The model nr
+
+    parameter: Parameter
+        The model specific parameter
+
+    weight: float, 0 < weight < 1
+        The weight of the particle
+
+    distance_list: List[float]
+        A particle can contain more than one sample.
+        If so, the distances of the individual samples
+        are stored in this list. In the most common case of a single
+        sample, this list has length 1.
+
+    summary_statistics_list
+        List of summary statistics which describe the sample
+        This list is usually of length 1. This list is longer only if more
+        than one sample is taken for a particle.
+
+    all_summary_statistics_list:
+        List of all summary statistics that were generated during the
+        sampling process, regardless of whether they led to acceptance
+        or rejection.
+
+    accepted: bool
+        True if the particle was accepted, False if it was rejected.
+
+    """
     def __init__(self, m: int, parameter: Parameter,
                  weight: float, distance_list: List[float],
                  summary_statistics_list: List[dict],

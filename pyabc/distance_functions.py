@@ -91,10 +91,17 @@ class DistanceFunction(ABC):
 
         return json.dumps(self.get_config())
 
-    def update(self, simulations_all: List[dict]):
+    def update(self, simulations_all: List[dict]) -> bool:
         """
         Update the distance function. Default: Do nothing.
+        :param simulations_all:
+            List of all simulations (summary statistics).
+        :return:
+            True: If distance function has changed.
+            False: If distance function has not changed.
         """
+
+        return False
 
 
 class NoDistance(DistanceFunction):
@@ -176,12 +183,18 @@ class PNormDistance(DistanceFunction):
                 1/self.p)
 
 
+class EuclideanDistance(PNormDistance):
+
+    def __init__(self):
+        super().__init__(2)
+
+
 class WeightedPNormDistance(PNormDistance):
 
     SCALE_TYPE_MAD = 0  # mean absolute deviation
     SCALE_TYPE_SD = 1   # standard deviation
 
-    def __init__(self, p: float, adaptive: bool, scale_type: int):
+    def __init__(self, p: float, adaptive: bool=True, scale_type: int=SCALE_TYPE_MAD):
         """
         Create new instance of a weighted p-norm distance
 
@@ -221,9 +234,11 @@ class WeightedPNormDistance(PNormDistance):
         print(self.w)
 
         if not self.adaptive:
-            return
+            return False
 
         self._update(all_summary_statistics_list)
+
+        return True
 
     def _update(self, all_summary_statistics_list: List[dict]):
         """
@@ -256,10 +271,10 @@ class WeightedPNormDistance(PNormDistance):
                 self.w[key] = 1 / val
 
 
-class WeightedPNormDistance2(PNormDistance):
-    """
-    Also remember all previous weights.
-    """
+class WeightedEuclideanDistance(WeightedPNormDistance):
+
+    def __init__(self, adaptive: bool = True, scale_type: int = WeightedPNormDistance.SCALE_TYPE_MAD):
+        super().__init__(2, adaptive, scale_type)
 
 
 def median_absolute_deviation(data: List):

@@ -564,10 +564,13 @@ class ABCSMC:
                 sample_one, eval_one, accept_one,
                 self.population_strategy.nr_particles)
 
-            all_summary_statistics_list = ABCSMC._extract_all_summary_statistics(population_all)
-            self.distance_function.update(all_summary_statistics_list)
+            all_summary_statistics_list = ABCSMC._extract_all_summary_statistics(
+                population_all)
+            distance_function_changed = self.distance_function.update(
+                all_summary_statistics_list)
 
-            population_accepted = self._create_valid_particle_list(population_accepted)
+            population_accepted = self._create_valid_particle_list(population_accepted,
+                                                                   distance_function_changed)
 
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
@@ -596,7 +599,9 @@ class ABCSMC:
             all_summary_statistics_list.extend(particle.all_summary_statistics_list)
         return all_summary_statistics_list
 
-    def _create_valid_particle_list(self,full_valid_particle_list: List[FullInfoValidParticle]):
+    def _create_valid_particle_list(self,
+                                    full_valid_particle_list: List[FullInfoValidParticle],
+                                    distance_function_changed: bool):
         valid_particle_list = []
         for fvp in full_valid_particle_list:
             vp = ValidParticle(m=fvp.m,
@@ -606,10 +611,11 @@ class ABCSMC:
                                summary_statistics_list=fvp.summary_statistics_list)
 
             # compute distances with new distance measure
-            vp.distance_list = []
-            for ss in vp.summary_statistics_list:
-                d = self.distance_function(ss, self.x_0)
-                vp.distance_list.append(d)
+            if distance_function_changed:
+                vp.distance_list = []
+                for ss in vp.summary_statistics_list:
+                    d = self.distance_function(ss, self.x_0)
+                    vp.distance_list.append(d)
 
             valid_particle_list.append(vp)
 
