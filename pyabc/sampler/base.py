@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar, List
+from typing import Callable, TypeVar
 from ..parameters import ValidParticle
 
 A = TypeVar('A')
-B = TypeVar('B')
 
 
 class Sampler(ABC):
@@ -27,7 +26,7 @@ class Sampler(ABC):
     def sample_until_n_accepted(self, sample_one: Callable[[], A],
                                 simulate_one: Callable[[A], ValidParticle],
                                 accept_one: Callable[[ValidParticle], bool],
-                                n: int) -> List[B]:
+                                n: int):
         """
         Parameters
         ----------

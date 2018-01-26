@@ -765,7 +765,7 @@ class History:
 def normalize(population: List[ValidParticle]):
     """
     * Normalize particle weights according to nr of particles in a model
-    * Caclculate marginal model probabilities
+    * Calculate marginal model probabilities
     """
     # TODO: This has a medium ugly side effect... maybe it is ok
     population = list(population)

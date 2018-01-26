@@ -89,7 +89,7 @@ class PopulationStrategy:
 
 class ConstantPopulationSize(PopulationStrategy):
     """
-    Constant size of the diffrent populations
+    Constant size of the different populations
 
     Parameters
     ----------

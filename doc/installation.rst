@@ -62,7 +62,7 @@ GIT Installation
 
 If you want the bleeding edge version, install directly from github::
 
-   pip install git+https://github.com/neuralyzer/pyabc.git
+   pip install git+https://github.com/icb-dcm/pyabc.git
 
 
 
