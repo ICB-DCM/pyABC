@@ -556,17 +556,19 @@ class ABCSMC:
             def accept_one(particle: FullInfoValidParticle):
                 return particle.accepted
 
-            population_accepted, population_all = self.sampler.sample_until_n_accepted(
-                sample_one, eval_one, accept_one,
-                self.population_strategy.nr_particles)
+            population_accepted, population_all = \
+                self.sampler.sample_until_n_accepted(
+                    sample_one, eval_one, accept_one,
+                    self.population_strategy.nr_particles)
 
-            all_summary_statistics_list = ABCSMC._extract_all_summary_statistics(
-                population_all)
+            all_summary_statistics_list = \
+                ABCSMC._extract_all_summary_statistics(population_all)
             distance_function_changed = self.distance_function.update(
                 all_summary_statistics_list)
 
-            population_accepted = self._create_valid_particle_list(population_accepted,
-                                                                   distance_function_changed)
+            population_accepted = self._create_valid_particle_list(
+                population_accepted,
+                distance_function_changed)
 
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
@@ -589,22 +591,26 @@ class ABCSMC:
         return self.history
 
     @staticmethod
-    def _extract_all_summary_statistics(population_all: List[FullInfoValidParticle]):
+    def _extract_all_summary_statistics(
+            population_all: List[FullInfoValidParticle]):
         all_summary_statistics_list = []
         for particle in population_all:
-            all_summary_statistics_list.extend(particle.all_summary_statistics_list)
+            all_summary_statistics_list.extend(
+                particle.all_summary_statistics_list)
         return all_summary_statistics_list
 
-    def _create_valid_particle_list(self,
-                                    full_valid_particle_list: List[FullInfoValidParticle],
-                                    distance_function_changed: bool):
+    def _create_valid_particle_list(
+            self,
+            full_valid_particle_list: List[FullInfoValidParticle],
+            distance_function_changed: bool):
         valid_particle_list = []
         for fvp in full_valid_particle_list:
-            vp = ValidParticle(m=fvp.m,
-                               parameter=fvp.parameter,
-                               weight=fvp.weight,
-                               distance_list=fvp.distance_list,
-                               summary_statistics_list=fvp.summary_statistics_list)
+            vp = ValidParticle(
+                m=fvp.m,
+                parameter=fvp.parameter,
+                weight=fvp.weight,
+                distance_list=fvp.distance_list,
+                summary_statistics_list=fvp.summary_statistics_list)
 
             # compute distances with new distance measure
             if distance_function_changed:

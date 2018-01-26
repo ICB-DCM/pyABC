@@ -176,10 +176,12 @@ class PNormDistance(DistanceFunction):
 
     def __call__(self, x: dict, y: dict):
         if self.p == math.inf:
-            return max(abs(self.w[key]*(x[key]-y[key])) for key in self.w.keys())
+            return max(abs(self.w[key]*(x[key]-y[key]))
+                       for key in self.w.keys())
         else:
             return math.pow(
-                sum(pow(abs(self.w[key]*(x[key]-y[key])), self.p) for key in self.w.keys()),
+                sum(pow(abs(self.w[key]*(x[key]-y[key])), self.p)
+                    for key in self.w.keys()),
                 1/self.p)
 
 
@@ -194,7 +196,10 @@ class WeightedPNormDistance(PNormDistance):
     SCALE_TYPE_MAD = 0  # mean absolute deviation
     SCALE_TYPE_SD = 1   # standard deviation
 
-    def __init__(self, p: float, adaptive: bool=True, scale_type: int=SCALE_TYPE_MAD):
+    def __init__(self,
+                 p: float,
+                 adaptive: bool=True,
+                 scale_type: int=SCALE_TYPE_MAD):
         """
         Create new instance of a weighted p-norm distance
 
@@ -263,7 +268,8 @@ class WeightedPNormDistance(PNormDistance):
             elif self.scale_type == WeightedPNormDistance.SCALE_TYPE_SD:
                 val = standard_deviation(current_list)
             else:
-                raise Exception("pyabc:distance_function: scale_type not recognized.")
+                raise Exception(
+                    "pyabc:distance_function: scale_type not recognized.")
 
             if val == 0:
                 self.w[key] = 1
@@ -273,7 +279,9 @@ class WeightedPNormDistance(PNormDistance):
 
 class WeightedEuclideanDistance(WeightedPNormDistance):
 
-    def __init__(self, adaptive: bool = True, scale_type: int = WeightedPNormDistance.SCALE_TYPE_MAD):
+    def __init__(self,
+                 adaptive: bool = True,
+                 scale_type: int = WeightedPNormDistance.SCALE_TYPE_MAD):
         super().__init__(2, adaptive, scale_type)
 
 
