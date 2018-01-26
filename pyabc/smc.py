@@ -580,6 +580,7 @@ class ABCSMC:
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 
+            # check early termination conditions
             current_acceptance_rate = len(population_accepted) / nr_evaluations
             if (current_eps <= minimum_epsilon
                or (self.stop_if_only_single_model_alive
@@ -593,6 +594,11 @@ class ABCSMC:
     @staticmethod
     def _extract_all_summary_statistics(
             population_all: List[FullInfoValidParticle]):
+        """
+        Create a list of all summary statistics from the particles.
+        :param population_all:
+        :return:
+        """
         all_summary_statistics_list = []
         for particle in population_all:
             all_summary_statistics_list.extend(
@@ -603,6 +609,13 @@ class ABCSMC:
             self,
             full_valid_particle_list: List[FullInfoValidParticle],
             distance_function_changed: bool):
+        """
+        Create ValidParticle list to be saved in history, possibly also adapt
+        the distances.
+        :param full_valid_particle_list:
+        :param distance_function_changed:
+        :return:
+        """
         valid_particle_list = []
         for fvp in full_valid_particle_list:
             vp = ValidParticle(
@@ -625,7 +638,6 @@ class ABCSMC:
                                if not isinstance(vp, Exception)]
 
         return valid_particle_list
-
 
     def _adapt_population(self, t):
         if t == 0:  # we need a particle population to do the fitting

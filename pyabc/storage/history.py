@@ -659,7 +659,7 @@ class History:
     def get_population_extended(self, *, m=None, t="last", tidy=True) \
             -> pd.DataFrame:
         """
-        Get extended population inofrmation, including parameters, distances,
+        Get extended population information, including parameters, distances,
         summary statistics, weights and more.
 
         Parameters
