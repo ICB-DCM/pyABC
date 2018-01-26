@@ -85,12 +85,13 @@ class DistanceFunction(ABC):
             The default implementation is to try to convert the dictionary
             returned my ``get_config``.
         """
+
         return json.dumps(self.get_config())
 
 
 class NoDistance(DistanceFunction):
     """
-    Implents a kind of null object as distance function.
+    Implements a kind of null object as distance function.
     """
     def __call__(self, x: dict, x_0: dict) -> float:
         raise Exception("{} is not intended to be called."
