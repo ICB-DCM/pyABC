@@ -16,7 +16,7 @@ from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
-from .parameters import FullInfoValidParticle, ValidParticle
+from .parameters import Particle
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -26,6 +26,7 @@ from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
+from .sampler import Sample
 import copy
 import warnings
 
@@ -348,15 +349,20 @@ class ABCSMC:
 
     def _initialize_dist_and_eps(self):
         # initialize distance function and epsilon
-        self.distance_function.initialize(self._prior_sample())
+
+        prior_summary_statistics = self._prior_sample()
+
+        self.distance_function.initialize(prior_summary_statistics)
 
         def distance_to_ground_truth_function(x):
             return self.distance_function(x, self.x_0)
 
-        self.eps.initialize(self._prior_sample(),
-                            distance_to_ground_truth_function)
+        prior_distances = sp.asarray([distance_to_ground_truth_function(x)
+                                for x in prior_summary_statistics])
 
-    def _prior_sample(self) -> List[dict]:
+        self.eps.initialize(prior_distances)
+
+    def _prior_sample(self) -> Sample:
         """
         Only sample from prior and return results without changing
         the history of the Epsilon. This can be used to get initial samples
@@ -374,72 +380,42 @@ class ABCSMC:
                 return m, par
 
             def simulate_one(para):
-                m, par = para
+                distance_list = []
+                summary_statistics_list = []
+                # we are basically only interested in the summary statistics,
+                # but wrap a particle container around it, which can then be
+                # passed to the sampler
+                m, theta = para
                 model_result = self.models[m].summary_statistics(
-                    par, self.summary_statistics)
-                return model_result.sum_stats
-
-            population_accepted, population_all = (
-                self.sampler.sample_until_n_accepted(
-                    sample_one, simulate_one, lambda x: True,
-                    self.population_strategy.nr_particles))
-            self._points_sampled_from_prior = population_all
-        return self._points_sampled_from_prior
-
-    def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
-                           model_probabilities):
-        """
-        This is where the actual model evaluation happens.
-        """
-        # from here, theta_ss is valid according to the prior
-        distance_list = []
-        summary_statistics_list = []
-        all_summary_statistics_list = []
-        for _ in range(self.population_strategy.nr_samples_per_parameter):
-            model_result = self.models[m_ss].accept(
-                theta_ss, self.summary_statistics,
-                lambda x: self.distance_function(x, self.x_0), current_eps)
-            all_summary_statistics_list.append(model_result.sum_stats)
-            if model_result.accepted:
-                distance_list.append(model_result.distance)
+                    theta, self.summary_statistics)
                 summary_statistics_list.append(model_result.sum_stats)
+                all_summary_statistics_list = summary_statistics_list
+                weight = 0
+                accepted = True
+                # only all_summary_statistics_list field is filled
+                particle = Particle(
+                    m, theta, weight, [], [], all_summary_statistics_list,
+                    accepted)
+                return particle
 
-        if len(distance_list) > 0:
-            weight = self._calc_proposal_weight(
-                distance_list, m_ss, theta_ss, t, model_probabilities)
-        else:
-            weight = 0
-        valid_particle = FullInfoValidParticle(
-            m_ss, theta_ss, weight, distance_list,
-            summary_statistics_list, all_summary_statistics_list)
-        return valid_particle
+            def accept_one(particle: Particle):
+                return True
 
-    def _calc_proposal_weight(self, distance_list, m_ss, theta_ss,
-                              t, model_probabilities):
-        if t == 0:
-            weight = (len(distance_list)
-                      / self.population_strategy.nr_samples_per_parameter)
-        else:
-            model_factor = sum(
-                row.p * self.model_perturbation_kernel.pmf(m_ss, m)
-                for m, row in model_probabilities.iterrows())
-            particle_factor = self.transitions[m_ss].pdf(
-                pd.Series(dict(theta_ss)))
-            normalization = model_factor * particle_factor
-            if normalization == 0:
-                print('normalization is zero!')
-            # reflects stochasticity of the model
-            fraction_accepted_runs_for_single_parameter = (
-                len(distance_list)
-                / self.population_strategy.nr_samples_per_parameter)
-            weight = (self.model_prior.pmf(m_ss)
-                      * self.parameter_priors[m_ss].pdf(theta_ss)
-                      * fraction_accepted_runs_for_single_parameter
-                      / normalization)
-        return weight
+            # sample
+            sample = self.sampler.sample_until_n_accepted(
+                sample_one, simulate_one, accept_one,
+                self.population_strategy.nr_particles)
+
+            # extract summary statistics list
+            self._points_sampled_from_prior = \
+                sample.all_summary_statistics_list()
+
+        return self._points_sampled_from_prior
 
     def _generate_valid_proposal(self, t, m, p):
         """
+        Corresponds to Sampler.sample_one.
+
         Parameters
         ----------
         t: Population number
@@ -450,6 +426,7 @@ class ABCSMC:
         -------
 # TODO what is m_ss, theta_ss?
         """
+
         # first generation
         if t == 0:  # sample from prior
             m_ss = self.model_prior.rvs()
@@ -474,6 +451,66 @@ class ABCSMC:
             if (self.model_prior.pmf(m_ss)
                     * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
+
+    def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
+                           model_probabilities):
+        """
+        Corresponds to Sampler.simulate_one.
+        This is where the actual model evaluation happens.
+        """
+
+        # from here, theta_ss is valid according to the prior
+
+        distance_list = []
+        summary_statistics_list = []
+        all_summary_statistics_list = []
+
+        for _ in range(self.population_strategy.nr_samples_per_parameter):
+            model_result = self.models[m_ss].accept(
+                theta_ss, self.summary_statistics,
+                lambda x: self.distance_function(x, self.x_0), current_eps)
+            all_summary_statistics_list.append(model_result.sum_stats)
+            if model_result.accepted:
+                distance_list.append(model_result.distance)
+                summary_statistics_list.append(model_result.sum_stats)
+
+        if len(distance_list) > 0:
+            weight = self._calc_proposal_weight(
+                distance_list, m_ss, theta_ss, t, model_probabilities)
+        else:
+            weight = 0
+        accepted = len(distance_list) > 0
+
+        particle = Particle(
+            m_ss, theta_ss, weight, distance_list,
+            summary_statistics_list, all_summary_statistics_list,
+            accepted)
+
+        return particle
+
+    def _calc_proposal_weight(self, distance_list, m_ss, theta_ss,
+                              t, model_probabilities):
+        if t == 0:
+            weight = (len(distance_list)
+                      / self.population_strategy.nr_samples_per_parameter)
+        else:
+            model_factor = sum(
+                row.p * self.model_perturbation_kernel.pmf(m_ss, m)
+                for m, row in model_probabilities.iterrows())
+            particle_factor = self.transitions[m_ss].pdf(
+                pd.Series(dict(theta_ss)))
+            normalization = model_factor * particle_factor
+            if normalization == 0:
+                print('normalization is zero!')
+            # reflects stochasticity of the model
+            fraction_accepted_runs_for_single_parameter = (
+                len(distance_list)
+                / self.population_strategy.nr_samples_per_parameter)
+            weight = (self.model_prior.pmf(m_ss)
+                      * self.parameter_priors[m_ss].pdf(theta_ss)
+                      * fraction_accepted_runs_for_single_parameter
+                      / normalization)
+        return weight
 
     def run(self, minimum_epsilon: float, max_nr_populations: int,
             min_acceptance_rate: float = 0., **kwargs) -> History:
@@ -538,7 +575,7 @@ class ABCSMC:
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
             self._fit_transitions(t)
             self._adapt_population(t)
-            # cache model_probabilities to not to query the database so soften
+            # cache model_probabilities to not to query the database so often
             model_probabilities = self.history.get_model_probabilities(
                 self.history.max_t)
             abclogger.debug('now submitting population ' + str(t))
@@ -553,22 +590,20 @@ class ABCSMC:
                 return self._evaluate_proposal(*par, current_eps, t,
                                                model_probabilities)
 
-            def accept_one(particle: FullInfoValidParticle):
+            def accept_one(particle: Particle):
                 return particle.accepted
 
-            population_accepted, population_all = \
-                self.sampler.sample_until_n_accepted(
-                    sample_one, eval_one, accept_one,
-                    self.population_strategy.nr_particles)
+            sample = self.sampler.sample_until_n_accepted(
+                sample_one, eval_one, accept_one,
+                self.population_strategy.nr_particles)
 
-            all_summary_statistics_list = \
-                ABCSMC._extract_all_summary_statistics(population_all)
-            distance_function_changed = self.distance_function.update(
+            all_summary_statistics_list = sample.all_summary_statistics_list()
+            distance_function_adapted = self.distance_function.update(
                 all_summary_statistics_list)
 
             population_accepted = self._create_valid_particle_list(
                 population_accepted,
-                distance_function_changed)
+                distance_function_adapted)
 
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_

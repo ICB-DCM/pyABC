@@ -1,9 +1,42 @@
 from abc import ABC, abstractmethod
 from typing import Callable, TypeVar, List
-from ..parameters import ValidParticle
+from ..parameters import Particle
 
 A = TypeVar('A')
 B = TypeVar('B')
+
+class Sample:
+    def __init__(self):
+        self._accepted_particles = []
+        self._rejected_particles = []
+
+    def append(self, particle: Particle):
+        if particle.accepted:
+            self._accepted_particles.append(particle)
+        else:
+            self._rejected_particles.append(particle)
+
+    def accepted_particles(self) -> List[Particle]:
+        return self._accepted_particles
+
+    def rejected_particles(self) -> List[Particle]:
+        return self._rejected_particles
+
+    def all_particles(self) -> List[Particle]:
+        return self._accepted_particles + self._rejected_particles
+
+    def all_summary_statistics(self) -> List[dict]:
+        """
+        Return list of all summary statistics for all accepted and all rejected
+        particles.
+        :return: List of all summary statistics
+        """
+
+        all_summary_statistics = []
+        for particle in self.accepted_particles():
+            all_summary_statistics.extend(particle.all_summary_statistics_list)
+
+        return all_summary_statistics
 
 
 class Sampler(ABC):
@@ -25,9 +58,9 @@ class Sampler(ABC):
 
     @abstractmethod
     def sample_until_n_accepted(self, sample_one: Callable[[], A],
-                                simulate_one: Callable[[A], ValidParticle],
-                                accept_one: Callable[[ValidParticle], bool],
-                                n: int):
+                                simulate_one: Callable[[A], Particle],
+                                accept_one: Callable[[Particle], bool],
+                                n: int) -> Sample:
         """
         Parameters
         ----------

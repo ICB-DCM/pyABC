@@ -63,6 +63,8 @@ class DistanceFunction(ABC):
             List of dictionaries containng the summary statistics.
         """
 
+        pass
+
     def get_config(self) -> dict:
         """
         Return configuration of the distance function.
@@ -98,7 +100,7 @@ class DistanceFunction(ABC):
             List of all simulations (summary statistics).
         :return:
             True: If distance function has changed.
-            False: If distance function has not changed.
+            False: If distance function has not changed (default).
         """
 
         return False

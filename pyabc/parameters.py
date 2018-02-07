@@ -84,9 +84,9 @@ class Parameter(ParameterStructure):
         return Parameter(**self)
 
 
-class FullInfoValidParticle:
+class Particle:
     """
-    A particle (accepted/rejected) containing all information from the
+    A particle (accepted/rejected) contains all information from the
     sampling process that may become necessary in the further process.
 
     Properties
@@ -121,54 +121,20 @@ class FullInfoValidParticle:
         True if the particle was accepted, False if it was rejected.
 
     """
-    def __init__(self, m: int, parameter: Parameter,
-                 weight: float, distance_list: List[float],
-                 summary_statistics_list: List[dict],
-                 all_summary_statistics_list: List[dict]):
+    def __init__(self, m: int,
+                 parameter: Parameter,
+                 weight: float = 0,
+                 distance_list: List[float] = None,
+                 summary_statistics_list: List[dict] = None,
+                 all_summary_statistics_list: List[dict] = None,
+                 accepted: bool = True):
         self.m = m
         self.parameter = parameter
         self.weight = weight
         self.distance_list = distance_list
         self.summary_statistics_list = summary_statistics_list
         self.all_summary_statistics_list = all_summary_statistics_list
-        self.accepted = len(distance_list) > 0
-
-
-class ValidParticle:
-    """
-    A valid (accepted) particle.
-
-    Parameters
-    ----------
-
-    m: int
-        The model nr
-
-    parameter: Parameter
-        The model specific parameter
-
-    weight: float, 0 < weight < 1
-        The weight of the particle
-
-    distance_list: List[float]
-        A particle can contain more than one sample.
-        If so, the distances of the individual samples
-        are stored in this list. In the most common case of a single
-        sample, this list has length 1.
-
-    summary_statistics_list
-        List of summary statistics which describe the sample
-        This list is usually of length 1. This list is longer only if more
-        than one sample is taken for a particle.
-    """
-    def __init__(self, m: int, parameter: Parameter,
-                 weight: float, distance_list: List[float],
-                 summary_statistics_list: List[dict]):
-        self.m = m
-        self.parameter = parameter
-        self.weight = weight
-        self.distance_list = distance_list
-        self.summary_statistics_list = summary_statistics_list
+        self.accepted = accepted
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -178,7 +144,8 @@ class ValidParticle:
 
     def __eq__(self, other):
         for key in ["m", "parameter", "weight", "distance_list",
-                    "summary_statistics_list"]:
+                    "summary_statistics_list",
+                    "all_summary_statistics_list"]:
             if self[key] != other[key]:
                 return False
         return True

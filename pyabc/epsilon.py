@@ -25,8 +25,7 @@ class Epsilon(ABC):
     This class encapsulates a strategy for setting a new epsilon for
     each new population.
     """
-    def initialize(self, sample_from_prior: List[dict],
-                   distance_to_ground_truth_function: Callable[[dict], float]):
+    def initialize(self, prior_distances: List[float]):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon
@@ -38,15 +37,11 @@ class Epsilon(ABC):
         Parameters
         ----------
 
-        sample_from_prior: List[dict]
-            List of dictionaries containing the summary statistics.
-
-        distance_to_ground_truth_function: Callable[[dict], float]
-            One of the distance functions pre evaluated at its second argument
-            (the one representing the measured data).
-            E.g. something like lambda x: distance_funciton(x, x_measured)
+        prior_distances: List[float]
+            List containing the distances calculated for the summary statistics
 
         """
+        pass
 
     def get_config(self):
         """
@@ -75,7 +70,7 @@ class Epsilon(ABC):
         return json.dumps(self.get_config())
 
     @abstractmethod
-    def __call__(self, t: int, history: History):
+    def __call__(self, t: int, history: History, distances: List[float]):
         """
 
         Parameters
@@ -87,6 +82,11 @@ class Epsilon(ABC):
         history: History
             ABC history object. Can be used to query summary statistics to
             set the epsilon
+
+        distances: List[float]
+            List of distances of summary statistics, calculated with the
+            current distance function. This may be different from the list of
+            distances stored in the history.
 
         Returns
         -------
@@ -117,7 +117,7 @@ class ConstantEpsilon(Epsilon):
         config["constant_epsilon_value"] = self.constant_epsilon_value
         return config
 
-    def __call__(self, t, history):
+    def __call__(self, t, history, distances):
         return self.constant_epsilon_value
 
 
@@ -141,7 +141,7 @@ class ListEpsilon(Epsilon):
         config["epsilon_values"] = self.epsilon_values
         return config
 
-    def __call__(self, t, history):
+    def __call__(self, t, history, distances):
         return self.epsilon_values[t]
 
 
@@ -190,27 +190,24 @@ class MedianEpsilon(Epsilon):
                        "median_multiplier": self.median_multiplier})
         return config
 
-    def initialize(self, sample_from_prior, distance_to_ground_truth_function):
-        super().initialize(sample_from_prior,
-                           distance_to_ground_truth_function)
+    def initialize(self, prior_distances):
+        super().initialize(prior_distances)
         eps_logger.debug("calc initial epsilon")
         # calculate initial epsilon if not given
         if self._initial_epsilon == 'from_sample':
-            distances = sp.asarray([distance_to_ground_truth_function(x)
-                                    for x in sample_from_prior])
-            eps_t0 = sp.median(distances) * self.median_multiplier
+            eps_t0 = sp.median(prior_distances) * self.median_multiplier
             self._look_up = {0: eps_t0}
         else:
             self._look_up = {0: self._initial_epsilon}
 
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
-    def __call__(self, t, history):
+    def __call__(self, t, history, distances):
         try:
             return self._look_up[t]
         except KeyError:
             df_weighted = history.get_weighted_distances(None)
-            median = weighted_median(
+            median = weighted_median(distances
                 df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
             self._look_up[t] = median * self.median_multiplier
             eps_logger.debug("new eps, t={}, eps={}"
