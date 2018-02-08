@@ -14,6 +14,7 @@ import json
 from abc import ABC, abstractmethod
 from .storage import History
 from .weighted_statistics import weighted_median
+from .parameters import Population
 from typing import List, Callable, Union
 eps_logger = logging.getLogger("Epsilon")
 
@@ -43,6 +44,27 @@ class Epsilon(ABC):
         """
         pass
 
+    def update(self, t: int, history: History, latest_population: Population):
+        """
+        Update the epsilon value for time t. Default: Do nothing.
+
+        Parameters
+        ----------
+        t: int
+            The population number. Counting is zero based. So the first
+            population has t=0.
+
+        history: History
+            ABC history object. Can be used to query summary statistics to
+            set the epsilon
+
+        latest_population: Population
+            The latest population which may be different from the one stored in
+            history.
+        """
+
+        pass
+
     def get_config(self):
         """
         Return configuration of the distance function.
@@ -70,29 +92,16 @@ class Epsilon(ABC):
         return json.dumps(self.get_config())
 
     @abstractmethod
-    def __call__(self, t: int, history: History, distances: List[float]):
+    def __call__(self, t: int):
         """
+        Return current epsilon / epsilon at time t.
+        :param t:
+            Time point.
 
-        Parameters
-        ----------
-        t: int
-            The population number. Counting is zero based. So the first
-            population has t=0.
-
-        history: History
-            ABC history object. Can be used to query summary statistics to
-            set the epsilon
-
-        distances: List[float]
-            List of distances of summary statistics, calculated with the
-            current distance function. This may be different from the list of
-            distances stored in the history.
-
-        Returns
-        -------
-
+        :return:
         eps: float
             The new epsilon for population ``t``.
+
         """
 
 
@@ -117,7 +126,7 @@ class ConstantEpsilon(Epsilon):
         config["constant_epsilon_value"] = self.constant_epsilon_value
         return config
 
-    def __call__(self, t, history, distances):
+    def __call__(self, t):
         return self.constant_epsilon_value
 
 
@@ -132,6 +141,7 @@ class ListEpsilon(Epsilon):
         List of epsilon values.
         ``values[t]`` is the value for population t.
     """
+
     def __init__(self, values: List[float]):
         super().__init__()
         self.epsilon_values = list(values)
@@ -141,7 +151,7 @@ class ListEpsilon(Epsilon):
         config["epsilon_values"] = self.epsilon_values
         return config
 
-    def __call__(self, t, history, distances):
+    def __call__(self, t):
         return self.epsilon_values[t]
 
 
@@ -202,14 +212,15 @@ class MedianEpsilon(Epsilon):
 
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
-    def __call__(self, t, history, distances):
+    def update(self, t: int, history: History, latest_population: Population):
+        distances, weights = latest_population.get_weighted_distances()
+        median = weighted_median(distances, weights)
+        self._look_up[t] = median * self.median_multiplier
+        eps_logger.debug("new eps, t={}, eps={}"
+                         .format(t, self._look_up[t]))
+
+    def __call__(self, t):
         try:
             return self._look_up[t]
         except KeyError:
-            df_weighted = history.get_weighted_distances(None)
-            median = weighted_median(distances
-                df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
-            self._look_up[t] = median * self.median_multiplier
-            eps_logger.debug("new eps, t={}, eps={}"
-                             .format(t, self._look_up[t]))
-            return self._look_up[t]
+            ValueError("Epsilon for demanded time point does not exist.")

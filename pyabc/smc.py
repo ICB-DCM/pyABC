@@ -16,7 +16,7 @@ from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
-from .parameters import Particle
+from .parameters import Particle, FullInfoParticle, Population
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -358,11 +358,11 @@ class ABCSMC:
             return self.distance_function(x, self.x_0)
 
         prior_distances = sp.asarray([distance_to_ground_truth_function(x)
-                                for x in prior_summary_statistics])
+                                      for x in prior_summary_statistics])
 
         self.eps.initialize(prior_distances)
 
-    def _prior_sample(self) -> Sample:
+    def _prior_sample(self) -> List[dict]:
         """
         Only sample from prior and return results without changing
         the history of the Epsilon. This can be used to get initial samples
@@ -380,35 +380,26 @@ class ABCSMC:
                 return m, par
 
             def simulate_one(para):
-                distance_list = []
-                summary_statistics_list = []
-                # we are basically only interested in the summary statistics,
-                # but wrap a particle container around it, which can then be
-                # passed to the sampler
+                all_summary_statistics_list = []
                 m, theta = para
                 model_result = self.models[m].summary_statistics(
                     theta, self.summary_statistics)
-                summary_statistics_list.append(model_result.sum_stats)
-                all_summary_statistics_list = summary_statistics_list
+                all_summary_statistics_list.append(model_result.sum_stats)
                 weight = 0
                 accepted = True
-                # only all_summary_statistics_list field is filled
-                particle = Particle(
+                full_info_particle = FullInfoParticle(
                     m, theta, weight, [], [], all_summary_statistics_list,
                     accepted)
-                return particle
-
-            def accept_one(particle: Particle):
-                return True
+                return full_info_particle
 
             # sample
             sample = self.sampler.sample_until_n_accepted(
-                sample_one, simulate_one, accept_one,
+                sample_one, simulate_one,
                 self.population_strategy.nr_particles)
 
             # extract summary statistics list
             self._points_sampled_from_prior = \
-                sample.all_summary_statistics_list()
+                sample.all_summary_statistics_list
 
         return self._points_sampled_from_prior
 
@@ -481,12 +472,12 @@ class ABCSMC:
             weight = 0
         accepted = len(distance_list) > 0
 
-        particle = Particle(
+        full_info_particle = FullInfoParticle(
             m_ss, theta_ss, weight, distance_list,
             summary_statistics_list, all_summary_statistics_list,
             accepted)
 
-        return particle
+        return full_info_particle
 
     def _calc_proposal_weight(self, distance_list, m_ss, theta_ss,
                               t, model_probabilities):
@@ -569,9 +560,10 @@ class ABCSMC:
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
         # "ipython_cluster" is not pickable
-        for t in range(t0, t0+max_nr_populations):
+        t_max = t0 + max_nr_populations
+        for t in range(t0, t_max):
             # this is calculated here to avoid double initialization of medians
-            current_eps = self.eps(t, self.history)
+            current_eps = self.eps(t)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
             self._fit_transitions(t)
             self._adapt_population(t)
@@ -590,89 +582,52 @@ class ABCSMC:
                 return self._evaluate_proposal(*par, current_eps, t,
                                                model_probabilities)
 
-            def accept_one(particle: Particle):
-                return particle.accepted
-
+            # sample
             sample = self.sampler.sample_until_n_accepted(
-                sample_one, eval_one, accept_one,
+                sample_one, eval_one,
                 self.population_strategy.nr_particles)
 
-            all_summary_statistics_list = sample.all_summary_statistics_list()
-            distance_function_adapted = self.distance_function.update(
-                all_summary_statistics_list)
+            # retrieve accepted population
+            population = sample.accepted_population
 
-            population_accepted = self._create_valid_particle_list(
-                population_accepted,
-                distance_function_adapted)
-
+            # save to database before making any changes to the population
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
-                t, current_eps, population_accepted, nr_evaluations,
+                t, current_eps, population.get_list(), nr_evaluations,
                 model_names)
             abclogger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 
             # check early termination conditions
-            current_acceptance_rate = len(population_accepted) / nr_evaluations
+            current_acceptance_rate = \
+                len(population.get_list()) / nr_evaluations
             if (current_eps <= minimum_epsilon
-               or (self.stop_if_only_single_model_alive
-                   and self.history.nr_of_models_alive() <= 1)
-               or current_acceptance_rate < min_acceptance_rate):
+                    or (self.stop_if_only_single_model_alive
+                        and self.history.nr_of_models_alive() <= 1)
+                    or current_acceptance_rate < min_acceptance_rate):
                 break
+
+            # do some updates
+            if t < t_max:
+                # adapt distance function
+                distance_function_updated = self.distance_function.update(
+                    sample.all_summary_statistics_list)
+
+                # compute distances with the new distance measure
+                if distance_function_updated:
+                    def distance_to_ground_truth_function(x):
+                        return self.distance_function(x, self.x_0)
+                    population.update_distances(
+                        distance_to_ground_truth_function)
+
+                # update epsilon
+                self.eps.update(t+1, self.history, population)
 
         self.history.done()
         return self.history
-
-    @staticmethod
-    def _extract_all_summary_statistics(
-            population_all: List[FullInfoValidParticle]):
-        """
-        Create a list of all summary statistics from the particles.
-        :param population_all:
-        :return:
-        """
-        all_summary_statistics_list = []
-        for particle in population_all:
-            all_summary_statistics_list.extend(
-                particle.all_summary_statistics_list)
-        return all_summary_statistics_list
-
-    def _create_valid_particle_list(
-            self,
-            full_valid_particle_list: List[FullInfoValidParticle],
-            distance_function_changed: bool):
-        """
-        Create ValidParticle list to be saved in history, possibly also adapt
-        the distances.
-        :param full_valid_particle_list:
-        :param distance_function_changed:
-        :return:
-        """
-        valid_particle_list = []
-        for fvp in full_valid_particle_list:
-            vp = ValidParticle(
-                m=fvp.m,
-                parameter=fvp.parameter,
-                weight=fvp.weight,
-                distance_list=fvp.distance_list,
-                summary_statistics_list=fvp.summary_statistics_list)
-
-            # compute distances with new distance measure
-            if distance_function_changed:
-                vp.distance_list = []
-                for ss in vp.summary_statistics_list:
-                    d = self.distance_function(ss, self.x_0)
-                    vp.distance_list.append(d)
-
-            valid_particle_list.append(vp)
-
-        valid_particle_list = [vp for vp in valid_particle_list
-                               if not isinstance(vp, Exception)]
-
-        return valid_particle_list
 
     def _adapt_population(self, t):
         if t == 0:  # we need a particle population to do the fitting

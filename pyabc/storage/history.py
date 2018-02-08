@@ -8,7 +8,7 @@ import pandas as pd
 import scipy as sp
 from sqlalchemy import func
 
-from ..parameters import ValidParticle
+from ..parameters import Particle
 from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
@@ -406,6 +406,7 @@ class History:
                           name=str(model_names[m]))
             population.models.append(model)
             for store_item in model_population:
+                # a store_item is a Particle
                 weight = store_item['weight']
                 distance_list = store_item['distance_list']
                 parameter = store_item['parameter']
@@ -436,7 +437,7 @@ class History:
 
     @internal_docstring_warning
     def append_population(self, t: int, current_epsilon: float,
-                          particle_population: List[ValidParticle],
+                          particle_population: List[Particle],
                           nr_simulations: int,
                           model_names):
         """
@@ -762,7 +763,7 @@ class History:
         return df
 
 
-def normalize(population: List[ValidParticle]):
+def normalize(population: List[Particle]):
     """
     * Normalize particle weights according to nr of particles in a model
     * Calculate marginal model probabilities

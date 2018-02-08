@@ -6,7 +6,7 @@ class SingleCoreSampler(Sampler):
     Sample on a single core. No parallelization.
     """
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+    def sample_until_n_accepted(self, sample_one, simulate_one, n):
         nr_simulations = 0
         sample = Sample()
 
@@ -16,9 +16,9 @@ class SingleCoreSampler(Sampler):
                 new_sim = simulate_one(new_param)
                 sample.append(new_sim)
                 nr_simulations += 1
-                if accept_one(new_sim):
+                if new_sim.accepted:
                     break
         self.nr_evaluations_ = nr_simulations
-        assert len(sample.accepted_particles()) == n
+        assert len(sample.accepted_population.get_list()) == n
 
         return sample
