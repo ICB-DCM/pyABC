@@ -302,7 +302,7 @@ class Population:
             model_probability = self._model_probabilities[particle.m]
             for distance in particle.distance_list:
                 rows.append({'distance': distance,
-                             'weight': particle.weight * model_probability})
+                             'w': particle.weight * model_probability})
 
         df = pandas.DataFrame(rows)
         return df

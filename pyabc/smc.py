@@ -257,9 +257,17 @@ class ABCSMC:
             The Epsilon's and distance function's initialize methods are
             not called when an ABCSMC run is loaded.
         """
+
         self.history = History(db)
         self.history.id = abc_id
         self.x_0 = self.history.observed_sum_stat()
+
+        # TODO
+        # after load(), the distance weights are not initialized yet. The best
+        # thing to do would probably be to save the lates distance weights also
+        # to database and import those here.
+
+        return self.history.id
 
     def new(self, db: str,
             observed_sum_stat: dict = None,
@@ -560,10 +568,14 @@ class ABCSMC:
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
         # "ipython_cluster" is not pickable
+
+        # this variable will store the current population
+        population = None
+
         t_max = t0 + max_nr_populations
         for t in range(t0, t_max):
             # get epsilon for generation t
-            current_eps = self.eps(t)
+            current_eps = self.eps(t, self.history, population)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
             # do some adaptations
             self._fit_transitions(t)
@@ -625,9 +637,6 @@ class ABCSMC:
                     def distance_to_ground_truth(x):
                         return self.distance_function(x, self.x_0)
                     population.update_distances(distance_to_ground_truth)
-
-                # update epsilon
-                self.eps.update(t+1, self.history, population)
 
         # end of run loop
         self.history.done()

@@ -44,27 +44,6 @@ class Epsilon(ABC):
         """
         pass
 
-    def update(self, t: int, history: History, latest_population: Population):
-        """
-        Update the epsilon value for time t. Default: Do nothing.
-
-        Parameters
-        ----------
-        t: int
-            The population number. Counting is zero based. So the first
-            population has t=0.
-
-        history: History
-            ABC history object. Can be used to query summary statistics to
-            set the epsilon
-
-        latest_population: Population
-            The latest population, which may be different from the one stored in
-            history.
-        """
-
-        pass
-
     def get_config(self):
         """
         Return configuration of the distance function.
@@ -92,12 +71,25 @@ class Epsilon(ABC):
         return json.dumps(self.get_config())
 
     @abstractmethod
-    def __call__(self, t: int):
+    def __call__(self, t: int,
+                 history: History,
+                 latest_population: Population =None):
         """
         Return current epsilon / epsilon at time t.
 
-        :param t:
-            Time point.
+        Parameters
+        ----------
+        t: int
+            The population number. Counting is zero based. So the first
+            population has t=0.
+
+        history: History
+            ABC history object. Can be used to query summary statistics to
+            set the epsilon
+
+        latest_population: Population
+            The latest population, which may be different from the one stored in
+            history.
 
         :return:
         eps: float
@@ -127,7 +119,9 @@ class ConstantEpsilon(Epsilon):
         config["constant_epsilon_value"] = self.constant_epsilon_value
         return config
 
-    def __call__(self, t):
+    def __call__(self, t: int,
+                 history: History,
+                 latest_population: Population =None):
         return self.constant_epsilon_value
 
 
@@ -152,7 +146,9 @@ class ListEpsilon(Epsilon):
         config["epsilon_values"] = self.epsilon_values
         return config
 
-    def __call__(self, t):
+    def __call__(self, t: int,
+                 history: History,
+                 latest_population: Population =None):
         return self.epsilon_values[t]
 
 
@@ -222,23 +218,35 @@ class MedianEpsilon(Epsilon):
 
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
-    def update(self, t: int, history: History, latest_population: Population):
+    def update(self, t: int,
+               history: History,
+               latest_population: Population =None):
         """
         Compute median of the distances given in population, and use this to
         update epsilon.
         """
-        df_weighted = latest_population.get_weighted_distances()
+
+        # if latest_population is None, e.g. after smc.load(), we need to get
+        if latest_population is None:
+            df_weighted = history.get_weighted_distances(None)
+        else:
+            df_weighted = latest_population.get_weighted_distances()
+
         if self.weighted:
             median = weighted_median(df_weighted.distance.as_matrix(),
-                                     df_weighted.weight.as_matrix())
+                                     df_weighted.w.as_matrix())
         else:
             median = sp.median(df_weighted.distance.as_matrix())
+
         self._look_up[t] = median * self.median_multiplier
         eps_logger.debug("new eps, t={}, eps={}"
                          .format(t, self._look_up[t]))
 
-    def __call__(self, t):
+    def __call__(self, t: int,
+                 history: History,
+                 latest_population: Population =None):
         try:
             return self._look_up[t]
         except KeyError:
-            ValueError("Epsilon for demanded time point does not exist.")
+            self.update(t, history, latest_population)
+            return self._look_up[t]
