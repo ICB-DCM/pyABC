@@ -5,6 +5,7 @@ import numpy as np
 import random
 import logging
 from .multicorebase import MultiCoreSampler
+from .base import Sample
 
 logger = logging.getLogger("MutlicoreSampler")
 
@@ -102,4 +103,11 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
         results, evaluations = zip(*collected_results)
         self.nr_evaluations_ = sum(evaluations)
+
+        # results is a list of samples
+        sample = Sample()
+        for s in results:
+            particles = s.accepted_populationget_list()
+
+
         return sum(results, [])

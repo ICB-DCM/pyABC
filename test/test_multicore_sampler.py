@@ -23,5 +23,4 @@ def sampler(request):
 def test_no_pickle(sampler):
     sampler.sample_until_n_accepted(unpickleable,
                                     unpickleable,
-                                    unpickleable,
                                     10)

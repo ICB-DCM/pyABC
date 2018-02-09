@@ -1,9 +1,8 @@
-import sys
+# import sys
+# sys.path.remove('')
+# sys.path.insert(0, '../../../pyabc')
 
-#sys.path.remove('')
-#sys.path.insert(0, '../../../pyabc')
-
-from pyabc import (ABCSMC, Distribution, RV, MultivariateNormalTransition, #DaskDistributedSampler,
+from pyabc import (ABCSMC, Distribution, RV,
                    PNormDistance, WeightedPNormDistance)
 from pyabc.visualization import plot_kde_1d
 
@@ -22,7 +21,7 @@ def model(p):
 prior = Distribution(theta=RV('uniform', 0, 10))
 
 distance = WeightedPNormDistance(p=2, adaptive=True)
-#distance = PNormDistance(2)
+distance = PNormDistance(2)
 #sampler = SingleCoreSampler();
 abc = ABCSMC(model, prior, distance, 100, lambda x: x, None, None, None, None)
 db_path = ("sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db"))
