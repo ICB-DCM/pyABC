@@ -119,8 +119,11 @@ class Population:
     the weights.
     """
 
-    def __init__(self):
-        self._list = []
+    def __init__(self, particle_list: List[Particle] =None):
+        if particle_list is None:
+            self._list = []
+        else:
+            self._list = particle_list.copy()
         self._is_normalized = False
         self._model_probabilities = None
 
@@ -130,8 +133,9 @@ class Population:
         # works like this for now
 
     def __add__(self, other):
-        if self.is_normalized() or other.is_normalized():
-            ValueError("Cannot add populations after normalization")
+        """
+        Should only be called before normalization.
+        """
 
         population = Population()
         population._list = self.get_list() + other.get_list()
@@ -160,11 +164,8 @@ class Population:
     def normalize_weights(self):
         """
         Normalize the cumulative weight of the particles belonging to a model
-        to 1, and compute the model probabilities.
+        to 1, and compute the model probabilities. Should only be called once.
         """
-
-        if self._is_normalized:
-            ValueError("normalize_weights should only be called once.")
 
         # Create empty dictionary. Keys will be the models.
         store = dict()
@@ -226,9 +227,6 @@ class Population:
             A pandas.DataFrame containing in column 'distance' the distances
             and in column 'weight' the scaled weights.
         """
-        if not self._is_normalized:
-            ValueError("normalize_weights should be called before "
-                       "get_weighted_distances")
 
         # create pandas.DataFrame of distances and weights
         rows = []

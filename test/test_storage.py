@@ -80,14 +80,12 @@ def rand_pop(m: int):
 
 
 def test_single_particle_save_load(history: History):
-    particle = Particle(0,
-                        Parameter({"a": 23, "b": 12}),
-                        .2,
-                        [.1],
-                        [{"ss": .1}])
-    population = Population()
-    population.append(particle)
-    history.append_population(0, 42, population, 2, [""])
+    particle_list = [Particle(0,
+                              Parameter({"a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss": .1}])]
+    history.append_population(0, 42, Population(particle_list), 2, [""])
 
     df, w = history.get_distribution(0, 0)
     assert w[0] == 1
@@ -100,12 +98,12 @@ def test_single_particle_save_load_np_int64(history: History):
     # This is an important test!!!
     m_list = [0, np.int64(0)]
     t_list = [0, np.int64(0)]
-    particle_population = [Particle(0,
-                                    Parameter({"a": 23, "b": 12}),
-                                    .2,
-                                    [.1],
-                                    [{"ss": .1}])]
-    history.append_population(0, 42, particle_population, 2, [""])
+    particle_list = [Particle(0,
+                              Parameter({"a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss": .1}])]
+    history.append_population(0, 42, Population(particle_list), 2, [""])
 
     for m in m_list:
         for t in t_list:
@@ -118,22 +116,20 @@ def test_single_particle_save_load_np_int64(history: History):
 def test_sum_stats_save_load(history: History):
     arr = sp.random.rand(10)
     arr2 = sp.random.rand(10, 2)
-    particle_population = [
-        Particle(0, Parameter({"a": 23, "b": 12}),
-                 .2,
-                 [.1],
-                 [{"ss1": .1, "ss2": arr2,
-                   "ss3": example_df(),
-                   "rdf0": r["iris"]}]),
-        Particle(0,
-                 Parameter({"a": 23, "b": 12}),
-                 .2,
-                 [.1],
-                 [{"ss12": .11, "ss22": arr,
-                   "ss33": example_df(),
-                   "rdf": r["mtcars"]}])
-    ]
-    history.append_population(0, 42, particle_population, 2, ["m1", "m2"])
+    particle_list = [Particle(0, Parameter({"a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss1": .1, "ss2": arr2,
+                                "ss3": example_df(),
+                                "rdf0": r["iris"]}]),
+                     Particle(0, Parameter({
+                         "a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss12": .11, "ss22": arr,
+                                "ss33": example_df(),
+                                "rdf": r["mtcars"]}])]
+    history.append_population(0, 42, Population(particle_list), 2, ["m1", "m2"])
     weights, sum_stats = history.get_sum_stats(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
@@ -147,25 +143,25 @@ def test_sum_stats_save_load(history: History):
 
 
 def test_total_nr_samples(history: History):
-    particle_population = [Particle(0,
-                                    Parameter({"a": 23, "b": 12}),
-                                    .2,
-                                    [.1],
-                                    [{"ss": .1}])]
-    history.append_population(0, 42, particle_population, 4234, ["m1"])
-    history.append_population(0, 42, particle_population, 3, ["m1"])
+    population = Population()
+    population.append(Particle(0,
+                               Parameter({"a": 23, "b": 12}),
+                               .2,
+                               [.1],
+                               [{"ss": .1}]))
+    history.append_population(0, 42, population, 4234, ["m1"])
+    history.append_population(0, 42, population, 3, ["m1"])
 
     assert 4237 == history.total_nr_simulations
 
 
 def test_t_count(history: History):
-    particle_population = [Particle(0,
-                                    Parameter({"a": 23, "b": 12}),
-                                    .2,
-                                    [.1],
-                                    [{"ss": .1}])]
+    particle_list = [Particle(0, Parameter({"a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss": .1}])]
     for t in range(1, 10):
-        history.append_population(t, 42, particle_population, 2, ["m1"])
+        history.append_population(t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
 
 
@@ -183,10 +179,11 @@ def test_dataframe_storage_readout():
     histories = [make_hist() for _ in range(4)]
     for h in histories:
         for t in range(4):
-            population = []
+            population = Population()
             for m in range(5):
                 pops[(h, m, t)] = rand_pop(m)
-                population.extend(pops[(h, m, t)])
+                for particle in pops[(h, m, t)]:
+                    population.append(particle)
             h.append_population(t, .1, population, 2, model_names)
 
     for h in histories:
@@ -211,10 +208,12 @@ def test_dataframe_storage_readout():
 
 
 def test_population_retrieval(history: History):
-    history.append_population(1, .23, rand_pop(0), 234, ["m1"])
-    history.append_population(2, .123, rand_pop(0), 345, ["m1"])
-    history.append_population(2, .1235, rand_pop(5), 20345, ["m1"] * 6)
-    history.append_population(3, .12330, rand_pop(30), 30345, ["m1"] * 31)
+    history.append_population(1, .23, Population(rand_pop(0)), 234, ["m1"])
+    history.append_population(2, .123, Population(rand_pop(0)), 345, ["m1"])
+    history.append_population(2, .1235, Population(rand_pop(5)), 20345, ["m1"] \
+                              * 6)
+    history.append_population(3, .12330, Population(rand_pop(30)), 30345,
+                              ["m1"] * 31)
     df = history.get_all_populations()
 
     assert df[df.t == 1].epsilon.iloc[0] == .23
@@ -239,7 +238,7 @@ def test_population_strategy_storage(history):
 
 
 def test_model_probabilities(history):
-    history.append_population(1, .23, rand_pop(3), 234,
+    history.append_population(1, .23, Population(rand_pop(3)), 234,
                               ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities(1)
     assert probs.p[3] == 1
@@ -247,7 +246,7 @@ def test_model_probabilities(history):
 
 
 def test_model_probabilities_all(history):
-    history.append_population(1, .23, rand_pop(3), 234,
+    history.append_population(1, .23, Population(rand_pop(3)), 234,
                               ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities()
     assert (probs[3].as_matrix() == np.array([1])).all()
@@ -303,12 +302,12 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1"]
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
-    particle_population = [Particle(0,
-                                    Parameter({"a": 23, "b": 12}),
-                                    .2,
-                                    [.1],
-                                    [{"ss": .1}])]
-    h.append_population(0, 42, particle_population, 2, model_names)
+    particle_list = [Particle(0,
+                              Parameter({"a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss": .1}])]
+    h.append_population(0, 42, Population(particle_list), 2, model_names)
 
     h2 = History(h.db_identifier)
     model_names_loaded = h2.model_names()
@@ -319,7 +318,7 @@ def test_population_to_df(history: History):
     # TODO this test is not very good yet
     for t in range(3):
         for m in range(4):
-            history.append_population(t, .23, rand_pop(m), 234,
+            history.append_population(t, .23, Population(rand_pop(m)), 234,
                                       ["m0", "m1", "m2", "m3"])
     df = history.get_population_extended(m=0)
     df_js = sumstat_to_json(df)
