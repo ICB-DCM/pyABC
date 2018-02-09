@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable, TypeVar
-from ..parameters import FullInfoParticle, Population
+from pyabc.population import FullInfoParticle, Population
 
 A = TypeVar('A')
 
@@ -38,6 +38,16 @@ class Sample:
         # keep track of all summary statistics sampled
         self.all_summary_statistics_list.extend(
             full_info_particle.all_summary_statistics_list)
+
+    def __add__(self, other):
+        sample = Sample()
+        sample.accepted_population = self.accepted_population + \
+                                     other.accepted_population
+        sample.all_summary_statistics_list \
+            = self.all_summary_statistics_list \
+              + other.all_summary_statistics_list
+
+        return sample
 
 
 class Sampler(ABC):

@@ -15,7 +15,7 @@ import scipy as sp
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
-from .parameters import FullInfoParticle
+from .population import FullInfoParticle
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -236,7 +236,7 @@ class ABCSMC:
                         gt_par=ground_truth_parameter,
                         meta_info=meta)
 
-    def load(self, db: str, abc_id: int = 1):
+    def load(self, db: str, abc_id: int = 1) -> int:
         """
         Load an ABC-SMC run for continuation.
 
@@ -262,11 +262,6 @@ class ABCSMC:
         self.history.id = abc_id
         self.x_0 = self.history.observed_sum_stat()
 
-        # TODO
-        # after load(), the distance weights are not initialized yet. The best
-        # thing to do would probably be to save the lates distance weights also
-        # to database and import those here.
-
         return self.history.id
 
     def new(self, db: str,
@@ -274,7 +269,7 @@ class ABCSMC:
             *,
             gt_model: int = None,
             gt_par: dict = None,
-            meta_info=None):
+            meta_info=None) -> int:
         """
         Make a new ABCSMC run.
 
@@ -354,7 +349,9 @@ class ABCSMC:
         return self.history.id
 
     def _initialize_dist_and_eps(self):
-        # initialize distance function and epsilon
+        """
+        Initialize distance function and epsilon.
+        """
 
         prior_summary_statistics = self._prior_sample()
 
@@ -375,9 +372,9 @@ class ABCSMC:
         for the distance function or the epsilon to calibrate them.
 
         .. warning::
-
             The sample is cached.
         """
+
         if self._points_sampled_from_prior is None:
 
             def sample_one():
@@ -574,12 +571,15 @@ class ABCSMC:
 
         t_max = t0 + max_nr_populations
         for t in range(t0, t_max):
+
             # get epsilon for generation t
             current_eps = self.eps(t, self.history, population)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
+
             # do some adaptations
             self._fit_transitions(t)
             self._adapt_population(t)
+
             # cache model_probabilities to not query the database so often
             model_probabilities = self.history.get_model_probabilities(
                 self.history.max_t)
@@ -626,12 +626,11 @@ class ABCSMC:
                     or current_acceptance_rate < min_acceptance_rate):
                 break
 
-            # do some updates (of distance_function, epsilon ...)
-            if t < t_max:
-                # adapt distance function
-                distance_function_updated = self.distance_function.update(
-                    sample.all_summary_statistics_list)
+            # adapt distance function
+            distance_function_updated = self.distance_function.update(
+                sample.all_summary_statistics_list)
 
+            if t < t_max:
                 # compute distances with the new distance measure
                 if distance_function_updated:
                     def distance_to_ground_truth(x):

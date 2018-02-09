@@ -14,6 +14,8 @@ from abc import ABC, abstractmethod
 from typing import List
 import math
 import statistics
+import logging
+df_logger = logging.getLogger("DistanceFunction")
 
 
 class DistanceFunction(ABC):
@@ -22,6 +24,41 @@ class DistanceFunction(ABC):
 
     Any other distance function should inherit from this class.
     """
+
+    def initialize(self, sample_from_prior: List[dict]):
+        """
+        This method is called by the ABCSMC framework before the first
+        usage of the distance function
+        and can be used to calibrate it to the statistics of the samples.
+
+        The default implementation is to do nothing.
+
+        This method is not called again when an ABC run is resumed via
+        ABCSCM.run(), so the user has to make sure that custom distance
+        functions are ready for calling the other methods.
+
+        Parameters
+        ----------
+
+        sample_from_prior: List[dict]
+            List of dictionaries containng the summary statistics.
+        """
+
+        pass
+
+    def update(self, simulations_all: List[dict]) -> bool:
+        """
+        Update the distance function. Default: Do nothing.
+
+        :param simulations_all:
+            List of all simulations (summary statistics).
+        :return:
+            True: If distance function has changed.
+            False: If distance function has not changed (default).
+        """
+
+        return False
+
     @abstractmethod
     def __call__(self, x: dict, x_0: dict) -> float:
         """
@@ -47,23 +84,6 @@ class DistanceFunction(ABC):
             Attributes distance of the tentatively sampled particle
             from the measured data.
         """
-
-    def initialize(self, sample_from_prior: List[dict]):
-        """
-        This method is called by the ABCSMC framework before the first
-        usage of the distance function
-        and can be used to calibrate it to the statistics of the samples.
-
-        The default implementation is to do nothing.
-
-        Parameters
-        ----------
-
-        sample_from_prior: List[dict]
-            List of dictionaries containng the summary statistics.
-        """
-
-        pass
 
     def get_config(self) -> dict:
         """
@@ -92,18 +112,6 @@ class DistanceFunction(ABC):
         """
 
         return json.dumps(self.get_config())
-
-    def update(self, simulations_all: List[dict]) -> bool:
-        """
-        Update the distance function. Default: Do nothing.
-        :param simulations_all:
-            List of all simulations (summary statistics).
-        :return:
-            True: If distance function has changed.
-            False: If distance function has not changed (default).
-        """
-
-        return False
 
 
 class NoDistance(DistanceFunction):
@@ -174,9 +182,14 @@ class PNormDistance(DistanceFunction):
 
     def initialize(self, sample_from_prior: List[dict]):
         # init weights with 1, and retrieve keys
-        self.w = {k: 1 for k in sample_from_prior[0].keys()}
+        self._initialize_weights(sample_from_prior[0].keys())
 
     def __call__(self, x: dict, y: dict):
+        # make sure weights are initialized
+        if self.w is None:
+            self._initialize_weights(x.keys())
+
+        # compute p-norm distance
         if self.p == math.inf:
             return max(abs(self.w[key]*(x[key]-y[key]))
                        for key in self.w.keys())
@@ -185,6 +198,10 @@ class PNormDistance(DistanceFunction):
                 sum(pow(abs(self.w[key]*(x[key]-y[key])), self.p)
                     for key in self.w.keys()),
                 1/self.p)
+
+    def _initialize_weights(self, summary_statistics_keys):
+        # init weights with 1, and retrieve keys
+        self.w = {k: 1 for k in summary_statistics_keys}
 
 
 class EuclideanDistance(PNormDistance):
@@ -213,7 +230,6 @@ class WeightedPNormDistance(PNormDistance):
         :param scale_type: int
             As in SCALE constants.
         """
-
         super().__init__(p)
         self.adaptive = adaptive
         self.scale_type = scale_type
@@ -238,8 +254,6 @@ class WeightedPNormDistance(PNormDistance):
             List of all summary statistics (also those rejected).
         """
 
-        print(self.w)
-
         if not self.adaptive:
             return False
 
@@ -255,6 +269,10 @@ class WeightedPNormDistance(PNormDistance):
             List of all summary statistics (also those rejected).
         :return:
         """
+
+        # make sure weights are initialized
+        if self.w is None:
+            self._initialize_weights(all_summary_statistics_list[0].keys())
 
         n = len(all_summary_statistics_list)
 
@@ -277,6 +295,11 @@ class WeightedPNormDistance(PNormDistance):
                 self.w[key] = 1
             else:
                 self.w[key] = 1 / val
+
+        # logging
+        df_logger.debug(
+            "update distance function weights = {}"
+                .format(self.w))
 
 
 class WeightedEuclideanDistance(WeightedPNormDistance):

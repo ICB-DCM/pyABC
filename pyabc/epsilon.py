@@ -14,7 +14,7 @@ import json
 from abc import ABC, abstractmethod
 from .storage import History
 from .weighted_statistics import weighted_median
-from .parameters import Population
+from pyabc.population import Population
 from typing import List, Union
 eps_logger = logging.getLogger("Epsilon")
 
@@ -26,7 +26,7 @@ class Epsilon(ABC):
     This class encapsulates a strategy for setting a new epsilon for
     each new population.
     """
-    def initialize(self, prior_distances: List[float]):
+    def initialize(self, prior_distances):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon
@@ -43,6 +43,33 @@ class Epsilon(ABC):
 
         """
         pass
+
+    @abstractmethod
+    def __call__(self, t: int,
+                 history: History,
+                 latest_population: Population =None) -> float:
+        """
+        Return current epsilon / epsilon at time t.
+
+        Parameters
+        ----------
+        t: int
+            The population number. Counting is zero based. So the first
+            population has t=0.
+
+        history: History
+            ABC history object. Can be used to query summary statistics to
+            set the epsilon
+
+        latest_population: Population
+            The latest population, which may be different from the one stored in
+            history.
+
+        :return:
+        eps: float
+            The new epsilon for population ``t``.
+
+        """
 
     def get_config(self):
         """
@@ -69,33 +96,6 @@ class Epsilon(ABC):
             returned my ``get_config``.
         """
         return json.dumps(self.get_config())
-
-    @abstractmethod
-    def __call__(self, t: int,
-                 history: History,
-                 latest_population: Population =None):
-        """
-        Return current epsilon / epsilon at time t.
-
-        Parameters
-        ----------
-        t: int
-            The population number. Counting is zero based. So the first
-            population has t=0.
-
-        history: History
-            ABC history object. Can be used to query summary statistics to
-            set the epsilon
-
-        latest_population: Population
-            The latest population, which may be different from the one stored in
-            history.
-
-        :return:
-        eps: float
-            The new epsilon for population ``t``.
-
-        """
 
 
 class ConstantEpsilon(Epsilon):
@@ -208,7 +208,7 @@ class MedianEpsilon(Epsilon):
 
     def initialize(self, prior_distances):
         super().initialize(prior_distances)
-        eps_logger.debug("calc initial epsilon")
+
         # calculate initial epsilon if not given
         if self._initial_epsilon == 'from_sample':
             eps_t0 = sp.median(prior_distances) * self.median_multiplier
@@ -218,15 +218,16 @@ class MedianEpsilon(Epsilon):
 
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
-    def update(self, t: int,
-               history: History,
-               latest_population: Population =None):
+    def _update(self, t: int,
+                history: History,
+                latest_population: Population =None):
         """
         Compute median of the distances given in population, and use this to
         update epsilon.
         """
 
-        # if latest_population is None, e.g. after smc.load(), we need to get
+        # if latest_population is None, e.g. after smc.load(), read latest
+        # weighted distances from history, else use the passed population
         if latest_population is None:
             df_weighted = history.get_weighted_distances(None)
         else:
@@ -244,9 +245,12 @@ class MedianEpsilon(Epsilon):
 
     def __call__(self, t: int,
                  history: History,
-                 latest_population: Population =None):
+                 latest_population: Population =None) -> float:
         try:
-            return self._look_up[t]
+            eps = self._look_up[t]
         except KeyError:
-            self.update(t, history, latest_population)
-            return self._look_up[t]
+            # this will be the usual case after the first iteration
+            self._update(t, history, latest_population)
+            eps = self._look_up[t]
+
+        return eps

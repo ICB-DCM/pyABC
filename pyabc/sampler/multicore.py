@@ -104,10 +104,5 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         results, evaluations = zip(*collected_results)
         self.nr_evaluations_ = sum(evaluations)
 
-        # results is a list of samples
-        sample = Sample()
-        for s in results:
-            particles = s.accepted_populationget_list()
-
-
-        return sum(results, [])
+        # results is a list of samples, so combine them to get the whole sample
+        return sum(results)

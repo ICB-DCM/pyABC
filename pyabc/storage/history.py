@@ -391,6 +391,7 @@ class History:
                                model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
+
         # prepare
         abc_smc_simulation = (self._session.query(ABCSMC)
                               .filter(ABCSMC.id == self.id)
@@ -400,6 +401,7 @@ class History:
         population = Population(t=t, nr_samples=nr_simulations,
                                 epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
+
         for m, model_population in store.items():
             model = Model(m=int(m), p_model=float(model_probabilities[m]),
                           name=str(model_names[m]))

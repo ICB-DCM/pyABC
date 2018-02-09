@@ -1,7 +1,8 @@
 from pyabc import History
 import pytest
 import os
-from pyabc.parameters import Parameter, Particle
+from pyabc.parameters import Parameter
+from pyabc.population import Particle
 import numpy as np
 import tempfile
 import scipy as sp

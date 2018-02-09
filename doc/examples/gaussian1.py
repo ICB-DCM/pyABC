@@ -2,9 +2,7 @@
 # sys.path.remove('')
 # sys.path.insert(0, '../../../pyabc')
 
-from pyabc import (ABCSMC, Distribution, RV,
-                   PNormDistance, WeightedPNormDistance)
-from pyabc.visualization import plot_kde_1d
+import pyabc.visualization
 
 import scipy
 import tempfile
@@ -18,12 +16,13 @@ def model(p):
 # ss1 is informative, ss2 is uninformative about theta
 
 
-prior = Distribution(theta=RV('uniform', 0, 10))
+prior = pyabc.Distribution(theta=pyabc.RV('uniform', 0, 10))
 
-distance = WeightedPNormDistance(p=2, adaptive=True)
-distance = PNormDistance(2)
-#sampler = SingleCoreSampler();
-abc = ABCSMC(model, prior, distance, 100, lambda x: x, None, None, None, None)
+distance = pyabc.WeightedPNormDistance(p=2, adaptive=True)
+# distance = pyabc.PNormDistance(2)
+# sampler = pyabc.SingleCoreSampler();
+abc = pyabc.ABCSMC(model, prior, distance, 100, lambda x: x, None, None, None,
+                   None)
 db_path = ("sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db"))
 observation1 = 4
 observation2 = 2
@@ -37,7 +36,7 @@ history = abc.run(minimum_epsilon=.1, max_nr_populations=10)
 fig, ax = pyplot.subplots()
 for t in range(history.max_t + 1):
     df, w = history.get_distribution(m=0, t=t)
-    plot_kde_1d(df, w,
+    pyabc.visualization.plot_kde_1d(df, w,
                 xmin=0, xmax=10,
                 x='theta', ax=ax,
                 label="PDF t={}".format(t))
