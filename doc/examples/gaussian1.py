@@ -21,7 +21,7 @@ def model(p):
 
 prior = Distribution(theta=RV('uniform', 0, 10))
 
-distance = WeightedPNormDistance(p=2, adaptive=True, scale_type=WeightedPNormDistance.SCALE_TYPE_SD)
+distance = WeightedPNormDistance(p=2, adaptive=True)
 #distance = PNormDistance(2)
 #sampler = SingleCoreSampler();
 abc = ABCSMC(model, prior, distance, 100, lambda x: x, None, None, None, None)
