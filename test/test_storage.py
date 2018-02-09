@@ -1,7 +1,7 @@
 from pyabc import History
 import pytest
 import os
-from pyabc.parameters import Parameter, ValidParticle
+from pyabc.parameters import Parameter, Particle
 import numpy as np
 import tempfile
 import scipy as sp
@@ -64,7 +64,7 @@ def rand_pop(m: int):
     -------
 
     """
-    pop = [ValidParticle(m,
+    pop = [Particle(m,
                          Parameter({"a": np.random.randint(10),
                                     "b": np.random.randn()}),
                          sp.rand()*42,
@@ -79,7 +79,7 @@ def rand_pop(m: int):
 
 
 def test_single_particle_save_load(history: History):
-    particle_population = [ValidParticle(0,
+    particle_population = [Particle(0,
                                          Parameter({"a": 23, "b": 12}),
                                          .2,
                                          [.1],
@@ -97,7 +97,7 @@ def test_single_particle_save_load_np_int64(history: History):
     # This is an important test!!!
     m_list = [0, np.int64(0)]
     t_list = [0, np.int64(0)]
-    particle_population = [ValidParticle(0,
+    particle_population = [Particle(0,
                                          Parameter({"a": 23, "b": 12}),
                                          .2,
                                          [.1],
@@ -116,13 +116,13 @@ def test_sum_stats_save_load(history: History):
     arr = sp.random.rand(10)
     arr2 = sp.random.rand(10, 2)
     particle_population = [
-        ValidParticle(0, Parameter({"a": 23, "b": 12}),
+        Particle(0, Parameter({"a": 23, "b": 12}),
                       .2,
                       [.1],
                       [{"ss1": .1, "ss2": arr2,
                         "ss3": example_df(),
                         "rdf0": r["iris"]}]),
-        ValidParticle(0,
+        Particle(0,
                       Parameter({"a": 23, "b": 12}),
                       .2,
                       [.1],
@@ -144,7 +144,7 @@ def test_sum_stats_save_load(history: History):
 
 
 def test_total_nr_samples(history: History):
-    particle_population = [ValidParticle(0,
+    particle_population = [Particle(0,
                                          Parameter({"a": 23, "b": 12}),
                                          .2,
                                          [.1],
@@ -156,7 +156,7 @@ def test_total_nr_samples(history: History):
 
 
 def test_t_count(history: History):
-    particle_population = [ValidParticle(0,
+    particle_population = [Particle(0,
                                          Parameter({"a": 23, "b": 12}),
                                          .2,
                                          [.1],
@@ -300,7 +300,7 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1"]
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
-    particle_population = [ValidParticle(0,
+    particle_population = [Particle(0,
                                          Parameter({"a": 23, "b": 12}),
                                          .2,
                                          [.1],
