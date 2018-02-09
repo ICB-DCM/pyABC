@@ -2,7 +2,7 @@ from pyabc import History
 import pytest
 import os
 from pyabc.parameters import Parameter
-from pyabc.population import Particle
+from pyabc.population import Particle, Population
 import numpy as np
 import tempfile
 import scipy as sp
@@ -80,12 +80,14 @@ def rand_pop(m: int):
 
 
 def test_single_particle_save_load(history: History):
-    particle_population = [Particle(0,
-                                    Parameter({"a": 23, "b": 12}),
-                                    .2,
-                                    [.1],
-                                    [{"ss": .1}])]
-    history.append_population(0, 42, particle_population, 2, [""])
+    particle = Particle(0,
+                        Parameter({"a": 23, "b": 12}),
+                        .2,
+                        [.1],
+                        [{"ss": .1}])
+    population = Population()
+    population.append(particle)
+    history.append_population(0, 42, population, 2, [""])
 
     df, w = history.get_distribution(0, 0)
     assert w[0] == 1

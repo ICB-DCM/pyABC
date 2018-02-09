@@ -437,7 +437,8 @@ class History:
         history_logger.debug("Appended population")
 
     @internal_docstring_warning
-    def append_population(self, t: int, current_epsilon: float,
+    def append_population(self, t: int,
+                          current_epsilon: float,
                           population: Population,
                           nr_simulations: int,
                           model_names):
