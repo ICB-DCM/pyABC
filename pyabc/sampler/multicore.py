@@ -19,7 +19,7 @@ def feed(feed_q, n_jobs, n_proc):
         feed_q.put(SENTINEL)
 
 
-def work(feed_q, result_q, sample_one, simulate_one, accept_one):
+def work(feed_q, result_q, sample_one, simulate_one):
     random.seed()
     np.random.seed()
     single_core_sampler = SingleCoreSampler()
@@ -29,7 +29,7 @@ def work(feed_q, result_q, sample_one, simulate_one, accept_one):
             break
         res = single_core_sampler.sample_until_n_accepted(sample_one,
                                                           simulate_one,
-                                                          accept_one, 1)
+                                                          1)
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
@@ -66,7 +66,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
     """
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+    def sample_until_n_accepted(self, sample_one, simulate_one, n):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
@@ -79,8 +79,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
         worker_processes = [Process(target=work, args=(feed_q, result_q,
                                                        sample_one,
-                                                       simulate_one,
-                                                       accept_one))
+                                                       simulate_one))
                             for _ in range(n_procs)]
 
         for proc in worker_processes:
@@ -98,7 +97,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         for proc in worker_processes:
             proc.join()
 
-        # Queue's get closed automatically on garbage collection
+        # Queues get closed automatically on garbage collection
         # No explicit closing necessary.
 
         results, evaluations = zip(*collected_results)

@@ -4,12 +4,13 @@ from .multicorebase import MultiCoreSampler
 from ..sge import nr_cores_available
 import numpy as np
 import random
+from .base import Sample
 
 
 DONE = "Done"
 
 
-def work(sample, simulate, accept,
+def work(sample_one, simulate_one,
          queue, n_eval: Value, n_particles: Value):
     random.seed()
     np.random.seed()
@@ -19,10 +20,10 @@ def work(sample, simulate, accept,
             particle_id = n_eval.value
             n_eval.value += 1
 
-        new_param = sample()
-        new_sim = simulate(new_param)
+        new_param = sample_one()
+        new_sim = simulate_one(new_param)
 
-        if accept(new_sim):
+        if new_sim.accepted:
             with n_particles.get_lock():
                 n_particles.value -= 1
 
@@ -74,7 +75,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+    def sample_until_n_accepted(self, sample_one, simulate_one, n):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -85,7 +86,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         processes = [
             Process(target=work,
-                    args=(sample_one, simulate_one, accept_one,
+                    args=(sample_one, simulate_one,
                           queue, n_eval, n_particles),
                     daemon=True)
             for _ in range(self.n_procs)
@@ -116,4 +117,9 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         self.nr_evaluations_ = n_eval.value
 
         population = [res[1] for res in id_results]
-        return population
+
+        sample = Sample()
+        for particle in population:
+            sample.append(particle)
+
+        return sample

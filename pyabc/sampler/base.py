@@ -1,18 +1,37 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar, List
-from ..parameters import Particle, FullInfoParticle, Population
+from typing import Callable, TypeVar
+from ..parameters import FullInfoParticle, Population
 
 A = TypeVar('A')
-B = TypeVar('B')
 
 
 class Sample:
+    """
+    A Sample is created and filled during the sampling process by the Sampler.
+
+    Properties
+    ----------
+
+    accepted_population: Population
+        Contains all accepted particles.
+
+    all_summary_statistics_list: List[dict]
+        Contains all summary statistics created during the sampling process.
+    """
 
     def __init__(self):
         self.accepted_population = Population()
-        self.all_summary_statistics_list = []
+        self.all_summary_statistics_list = list()
 
     def append(self, full_info_particle: FullInfoParticle):
+        """
+        Add new particle to sample and handle all_summary_statistics_list.
+        Checks itself based on the particle.accepted flag whether the particle
+        is accepted.
+
+        :param full_info_particle:
+            Sampled particle containing all information needed later.
+        """
         # add to population if accepted
         if full_info_particle.accepted:
             self.accepted_population.append(full_info_particle.to_particle())
@@ -27,7 +46,7 @@ class Sampler(ABC):
 
     Produce valid particles: :class:`pyabc.parameters.ValidParticle`.
 
-    Attributes
+    Properties
     ----------
 
     nr_evaluations_: int

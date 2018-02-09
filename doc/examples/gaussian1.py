@@ -22,9 +22,9 @@ def model(p):
 prior = Distribution(theta=RV('uniform', 0, 10))
 
 distance = WeightedPNormDistance(p=2, adaptive=True, scale_type=WeightedPNormDistance.SCALE_TYPE_SD)
-distance = PNormDistance(2)
+#distance = PNormDistance(2)
 #sampler = SingleCoreSampler();
-abc = ABCSMC(model, prior, distance, 100,lambda x: x, None, None, None, None)
+abc = ABCSMC(model, prior, distance, 100, lambda x: x, None, None, None, None)
 db_path = ("sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db"))
 observation1 = 4
 observation2 = 2

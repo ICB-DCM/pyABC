@@ -109,7 +109,7 @@ class AdaptivePopulationSize(PopulationStrategy):
     Adapt the population size according to the mean coefficient of variation
     error criterion, as detailed in [#klingerhasenaueradaptive]_.
     This strategy tries to respond to the shape of the
-    current posterior approximation by selection the population size such
+    current posterior approximation by selecting the population size such
     that the variation of the density estimates matches the target
     variation given via the mean_cv argument.
 

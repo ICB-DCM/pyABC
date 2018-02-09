@@ -4,7 +4,7 @@ import random
 import dill as pickle
 import numpy as np
 
-from .base import Sampler
+from .base import Sample, Sampler
 
 
 class MappingSampler(Sampler):
@@ -69,27 +69,27 @@ latest/task.html#quick-and-easy-parallelism)
         self.pickle, self.unpickle, self.nr_evaluations_ = state
 
     def map_function(self, sample_simulate_accept, _):
-        sample, simulate, accept = self.unpickle(sample_simulate_accept)
+        sample_one, simulate_one = self.unpickle(sample_simulate_accept)
 
         np.random.seed()
         random.seed()
         nr_simulations = 0
         while True:
-            new_param = sample()
-            new_sim = simulate(new_param)
+            new_param = sample_one()
+            new_sim = simulate_one(new_param)
             nr_simulations += 1
-            if accept(new_sim):
+            if new_sim.accepted:
                 break
         return new_sim, nr_simulations
 
-    def sample_until_n_accepted(self, sample, simualte, accept, n):
+    def sample_until_n_accepted(self, sample_one, simulate_one, n):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.
         # Correct usage of shared references might even be necessary
         # to ensure correct working, depending on the details of the
         # model implementations.
-        sample_simulate_accept = self.pickle((sample, simualte, accept))
+        sample_simulate_accept = self.pickle((sample_one, simulate_one))
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)
 
@@ -98,7 +98,12 @@ latest/task.html#quick-and-easy-parallelism)
                                  counted_results)
         results, evals = zip(*counted_results)
         self.nr_evaluations_ = sum(evals)
-        return results
+
+        sample = Sample()
+        for particle in results:
+            sample.append(particle)
+
+        return sample
 
 
 def identity(x):

@@ -12,11 +12,10 @@ import logging
 from typing import List, Callable, TypeVar
 import pandas as pd
 import scipy as sp
-from .distance_functions import DistanceFunction  # noqa: F401
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
-from .parameters import Particle, FullInfoParticle, Population
+from .parameters import FullInfoParticle
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -26,7 +25,6 @@ from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .sampler import Sample
 import copy
 import warnings
 
@@ -387,6 +385,7 @@ class ABCSMC:
                 all_summary_statistics_list.append(model_result.sum_stats)
                 weight = 0
                 accepted = True
+                # only the all_summary_statistics_list field will be read later
                 full_info_particle = FullInfoParticle(
                     m, theta, weight, [], [], all_summary_statistics_list,
                     accepted)
@@ -415,7 +414,7 @@ class ABCSMC:
 
         Returns
         -------
-# TODO what is m_ss, theta_ss?
+
         """
 
         # first generation
@@ -470,6 +469,7 @@ class ABCSMC:
                 distance_list, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
+
         accepted = len(distance_list) > 0
 
         full_info_particle = FullInfoParticle(
@@ -562,12 +562,13 @@ class ABCSMC:
         # "ipython_cluster" is not pickable
         t_max = t0 + max_nr_populations
         for t in range(t0, t_max):
-            # this is calculated here to avoid double initialization of medians
+            # get epsilon for generation t
             current_eps = self.eps(t)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
+            # do some adaptations
             self._fit_transitions(t)
             self._adapt_population(t)
-            # cache model_probabilities to not to query the database so often
+            # cache model_probabilities to not query the database so often
             model_probabilities = self.history.get_model_probabilities(
                 self.history.max_t)
             abclogger.debug('now submitting population ' + str(t))
@@ -590,12 +591,15 @@ class ABCSMC:
             # retrieve accepted population
             population = sample.accepted_population
 
+            # normalize weights
+            population.normalize_weights()
+
             # save to database before making any changes to the population
             abclogger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
-                t, current_eps, population.get_list(), nr_evaluations,
+                t, current_eps, population, nr_evaluations,
                 model_names)
             abclogger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
@@ -610,7 +614,7 @@ class ABCSMC:
                     or current_acceptance_rate < min_acceptance_rate):
                 break
 
-            # do some updates
+            # do some updates (of distance_function, epsilon ...)
             if t < t_max:
                 # adapt distance function
                 distance_function_updated = self.distance_function.update(
@@ -618,14 +622,14 @@ class ABCSMC:
 
                 # compute distances with the new distance measure
                 if distance_function_updated:
-                    def distance_to_ground_truth_function(x):
+                    def distance_to_ground_truth(x):
                         return self.distance_function(x, self.x_0)
-                    population.update_distances(
-                        distance_to_ground_truth_function)
+                    population.update_distances(distance_to_ground_truth)
 
                 # update epsilon
                 self.eps.update(t+1, self.history, population)
 
+        # end of run loop
         self.history.done()
         return self.history
 

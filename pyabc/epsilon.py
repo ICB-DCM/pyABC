@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from .storage import History
 from .weighted_statistics import weighted_median
 from .parameters import Population
-from typing import List, Callable, Union
+from typing import List, Union
 eps_logger = logging.getLogger("Epsilon")
 
 
@@ -59,7 +59,7 @@ class Epsilon(ABC):
             set the epsilon
 
         latest_population: Population
-            The latest population which may be different from the one stored in
+            The latest population, which may be different from the one stored in
             history.
         """
 
@@ -95,6 +95,7 @@ class Epsilon(ABC):
     def __call__(self, t: int):
         """
         Return current epsilon / epsilon at time t.
+
         :param t:
             Time point.
 
@@ -174,6 +175,9 @@ class MedianEpsilon(Epsilon):
         However, it does **not** apply to the initial median if
         it is given as a number.
 
+    weighted: bool
+        Flag indicating whether the new epsilon should be computed using
+        weighted (True, default) or non-weighted (False) distances.
 
     This strategy works even if the posterior is multi-modal.
     Note that the acceptance threshold calculation is based on the distance
@@ -182,16 +186,22 @@ class MedianEpsilon(Epsilon):
     If completely different parameter sets produce equally good samples,
     the distances of their samples to the ground truth data should be
     comparable.
+    The idea behind weighting is that the probability p_k of obtaining a
+    distance eps_k in the next generation should be proportional to the
+    weight w_k of respective particle k in the current generation. Both
+    weighted and non-weighted median should lead to correct results.
     """
 
     def __init__(self, initial_epsilon: Union[str, int, float]='from_sample',
-                 median_multiplier: float =1):
+                 median_multiplier: float =1,
+                 weighted: bool =True):
         eps_logger.debug(
             "init medianepsilon initial_epsilon={}, median_multiplier={}"
             .format(initial_epsilon, median_multiplier))
         super().__init__()
         self._initial_epsilon = initial_epsilon
         self.median_multiplier = median_multiplier
+        self.weighted = weighted
         self._look_up = {}
 
     def get_config(self):
@@ -213,8 +223,16 @@ class MedianEpsilon(Epsilon):
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
     def update(self, t: int, history: History, latest_population: Population):
-        distances, weights = latest_population.get_weighted_distances()
-        median = weighted_median(distances, weights)
+        """
+        Compute median of the distances given in population, and use this to
+        update epsilon.
+        """
+        df_weighted = latest_population.get_weighted_distances()
+        if self.weighted:
+            median = weighted_median(df_weighted.distance.as_matrix(),
+                                     df_weighted.weight.as_matrix())
+        else:
+            median = sp.median(df_weighted.distance.as_matrix())
         self._look_up[t] = median * self.median_multiplier
         eps_logger.debug("new eps, t={}, eps={}"
                          .format(t, self._look_up[t]))

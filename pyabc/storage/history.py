@@ -8,7 +8,6 @@ import pandas as pd
 import scipy as sp
 from sqlalchemy import func
 
-from ..parameters import Particle
 from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
@@ -437,7 +436,7 @@ class History:
 
     @internal_docstring_warning
     def append_population(self, t: int, current_epsilon: float,
-                          particle_population: List[Particle],
+                          population: Population,
                           nr_simulations: int,
                           model_names):
         """
@@ -452,14 +451,19 @@ class History:
         current_epsilon: float
             Current epsilon value.
 
-        particle_population: list
-            List of sampled particles
+        population: Population
+            List of sampled particles.
 
         nr_simulations: int
-            The number of model evaluations for this population
+            The number of model evaluations for this population.
+
+        model_names: list
+            The model names.
 
         """
-        store, model_probabilities = normalize(particle_population)
+        store = population.to_dict()
+        model_probabilities = population.get_model_probabilities()
+
         self._save_to_population_db(t, current_epsilon,
                                     nr_simulations, store, model_probabilities,
                                     model_names)
@@ -761,37 +765,3 @@ class History:
                 df = df_tidy
 
         return df
-
-
-def normalize(population: List[Particle]):
-    """
-    * Normalize particle weights according to nr of particles in a model
-    * Calculate marginal model probabilities
-    """
-    # TODO: This has a medium ugly side effect... maybe it is ok
-    population = list(population)
-
-    store = {}
-
-    for particle in population:
-        # particle might be none or empty
-        #  if no particle was found within the allowed nr of sample attempts
-        if particle is not None:
-            store.setdefault(particle.m, []).append(particle)
-        else:
-            print("ABC History warning: Empty particle.")
-
-    model_total_weights = {m: sum(particle.weight for particle in model)
-                           for m, model in store.items()}
-    population_total_weight = sum(model_total_weights.values())
-    model_probabilities = {m: w / population_total_weight
-                           for m, w in model_total_weights.items()}
-
-    # normalize within each model
-    for m in store:
-        model_total_weight = model_total_weights[m]
-        model = store[m]
-        for particle in model:
-            particle.weight /= model_total_weight
-
-    return store, model_probabilities
