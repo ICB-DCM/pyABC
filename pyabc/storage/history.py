@@ -48,6 +48,9 @@ def internal_docstring_warning(f):
 def git_hash():
     try:
         import git
+    except ImportError:
+        return "Install pyABC's optional git dependency for git support"
+    try:
         git_hash = git.Repo(os.getcwd()).head.commit.hexsha
     except (git.exc.NoSuchPathError, KeyError,
             git.exc.InvalidGitRepositoryError) as e:
