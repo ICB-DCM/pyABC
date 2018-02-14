@@ -29,7 +29,8 @@ def get_if_worker_healthy(worker: List[Process], queue: Queue):
     ----------
     worker: List[Process]
         List of worker processes which should be in a healthy state,
-        i.e. either terminated with exit code 0 or
+        i.e. either terminated with exit code 0 (success) or are still
+        running (exitcode is None in this case)
     queue: Queue
         A multiprocessing queue which is fed by the workers
 
