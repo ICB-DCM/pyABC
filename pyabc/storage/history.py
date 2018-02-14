@@ -2,7 +2,6 @@ import datetime
 import os
 from typing import List, Union
 import json
-import git
 import numpy as np
 import pandas as pd
 import scipy as sp
@@ -44,6 +43,16 @@ def internal_docstring_warning(f):
 
     f.__doc__ += warning
     return f
+
+
+def git_hash():
+    try:
+        import git
+        git_hash = git.Repo(os.getcwd()).head.commit.hexsha
+    except (git.exc.NoSuchPathError, KeyError,
+            git.exc.InvalidGitRepositoryError) as e:
+        git_hash = str(e)
+    return git_hash
 
 
 class History:
@@ -268,16 +277,11 @@ class History:
 
         """
         # store ground truth to db
-        try:
-            git_hash = git.Repo(os.getcwd()).head.commit.hexsha
-        except (git.exc.NoSuchPathError, KeyError,
-                git.exc.InvalidGitRepositoryError) as e:
-            git_hash = str(e)
 
         abcsmc = ABCSMC(
             json_parameters=str(options),
             start_time=datetime.datetime.now(),
-            git_hash=git_hash,
+            git_hash=git_hash(),
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
             population_strategy=population_strategy_json_str)

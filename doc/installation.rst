@@ -142,3 +142,7 @@ pyABC has an optional interface to the R language. To enable it install
 pyabc via ``pip install pyabc[R]``. All Python based features will work just
 fine if R is not installed. See also
 :ref:`pyABC's external API <external-api>`.
+
+pyABC optionally uses git to store commit hashed in its database leveraging
+the gitpython package. This feature can be installed via
+``pip install pyabc[git]``.

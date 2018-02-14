@@ -527,7 +527,7 @@ class ABCSMC:
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
         # "ipython_cluster" is not pickable
-        for t in range(t0, t0+max_nr_populations):
+        for t in range(t0, t0 + max_nr_populations):
             # this is calculated here to avoid double initialization of medians
             current_eps = self.eps(t, self.history)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
