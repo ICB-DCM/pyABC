@@ -4,7 +4,7 @@ from .multicorebase import MultiCoreSampler
 from ..sge import nr_cores_available
 import numpy as np
 import random
-
+from .multicorebase import get_if_worker_healthy
 
 DONE = "Done"
 
@@ -100,7 +100,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         # and the queue is emptied to prevent deadlocks
         n_done = 0
         while n_done < len(processes):
-            val = queue.get()
+            val = get_if_worker_healthy(processes, queue)
             if val == DONE:
                 n_done += 1
             else:

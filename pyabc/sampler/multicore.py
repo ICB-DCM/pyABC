@@ -1,10 +1,9 @@
 from multiprocessing import Process, Queue
-
 from .singlecore import SingleCoreSampler
 import numpy as np
 import random
 import logging
-from .multicorebase import MultiCoreSampler
+from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 
 logger = logging.getLogger("MutlicoreSampler")
 
@@ -91,7 +90,8 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         collected_results = []
 
         for _ in range(n):
-            collected_results.append(result_q.get())
+            res = get_if_worker_healthy(worker_processes, result_q)
+            collected_results.append(res)
 
         feed_process.join()
 
