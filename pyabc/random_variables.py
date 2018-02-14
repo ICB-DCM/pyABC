@@ -119,8 +119,8 @@ class RV(RVBase):
         Keyword arguments as in ``scipy.stats``
         matching the distribution with name "name".
     """
-    @staticmethod
-    def from_dictionary(dictionary: dict) -> "RV":
+    @classmethod
+    def from_dictionary(cls, dictionary: dict) -> "RV":
         """
         Construct random variable from dictionary.
 
@@ -142,8 +142,8 @@ class RV(RVBase):
 
             Either the "args" or the "kwargs" key has to be present.
         """
-        return RV(dictionary['type'], *dictionary.get('args', []),
-                  **dictionary.get('kwargs', {}))
+        return cls(dictionary['type'], *dictionary.get('args', []),
+                   **dictionary.get('kwargs', {}))
 
     def __init__(self, name: str, *args, **kwargs):
         self.name = name
@@ -168,7 +168,7 @@ class RV(RVBase):
         self.distribution = distribution(*self.args, **self.kwargs)
 
     def copy(self):
-        return RV(self.name, *self.args, **self.kwargs)
+        return self.__class__(self.name, *self.args, **self.kwargs)
 
     def rvs(self, *args, **kwargs):
         return self.distribution.rvs(*args, **kwargs)
@@ -320,6 +320,8 @@ class Distribution(ParameterStructure):
     A distribution is a collection of RVs and/or distributions.
     Essentially something like a dictionary
     of random variables or distributions.
+    The variables from which the distribution is initialized are
+    independent.
 
     This should be used to define a prior.
     """
@@ -327,8 +329,9 @@ class Distribution(ParameterStructure):
         return "<Distribution {keys}>".format(
             keys=str(list(self.get_parameter_names()))[1:-1])
 
-    @staticmethod
-    def from_dictionary_of_dictionaries(dict_of_dicts: dict) -> "Distribution":
+    @classmethod
+    def from_dictionary_of_dictionaries(cls,
+                                        dict_of_dicts: dict) -> "Distribution":
         """
         Create distribution from dictionary of dictionaries
 
@@ -349,7 +352,7 @@ class Distribution(ParameterStructure):
         rv_dictionary = {}
         for key, value in dict_of_dicts.items():
             rv_dictionary[key] = RV.from_dictionary(value)
-        return Distribution(rv_dictionary)
+        return cls(rv_dictionary)
 
     def copy(self) -> "Distribution":
         """
@@ -361,8 +364,8 @@ class Distribution(ParameterStructure):
         copied_distribution: Distribution
             A copy of the distribution.
         """
-        return Distribution(**{key: value.copy()
-                               for key, value in self.items()})
+        return self.__class__(**{key: value.copy()
+                              for key, value in self.items()})
 
     def update_random_variables(self, **random_variables):
         """

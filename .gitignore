@@ -86,3 +86,4 @@ examples/*.err
 examples/*.out
 doc/*.log
 *.kdev*
+.pytest_cache

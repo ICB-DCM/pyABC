@@ -35,3 +35,28 @@ For version numbers, we use ``A.B.C``, where
 
 That is, we follow the versioning scheme suggested
 by the `Python packaging guide <https://packaging.python.org>`_.
+
+
+Uploading to the Python package index PyPI
+------------------------------------------
+
+First, a so called "wheel" is created via
+
+::
+
+    python setup.py bdist_wheel
+
+A wheel is essentially a zip archive which contains the source code
+and the binaries (if any).
+This archive is uploaded using twine
+
+
+::
+
+    twine upload dist/pyabc-x.y.z-py3-non-any.wheel
+
+replacing x.y.z by the appropriate version number.
+
+For a more in depth discussion see also the
+`section on distributing packages <https://packaging.python.org/tutorials/distributing-packages>`_
+of the Python packaging guide
