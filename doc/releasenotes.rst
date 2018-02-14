@@ -5,6 +5,12 @@ Release Notes
 ..........
 
 
+0.8.17
+------
+
+Make git and gitpython an optional dependency.
+
+
 0.8.16
 ------
 
