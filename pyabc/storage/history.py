@@ -543,7 +543,10 @@ class History:
     @with_session
     def get_weighted_distances(self, t: Union[int, None]) -> pd.DataFrame:
         """
-        Median of a population's distances to the measured sample
+        Population's weighted distances to the measured sample.
+        These weights do not necessarily sum up to 1.
+        In case more than one simulation per parameter is performed and
+        accepted the sum might be larger.
 
         Parameters
         ----------

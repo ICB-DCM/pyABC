@@ -75,7 +75,13 @@ def sampler(request):
         pass
 
 
-def test_two_competing_gaussians_multiple_population(db_path, sampler):
+@pytest.fixture(params=[1, 2])
+def n_sim(request):
+    return request.param
+
+
+def test_two_competing_gaussians_multiple_population(
+        db_path, sampler, n_sim):
     # Define a gaussian model
     sigma = .5
 
@@ -97,10 +103,10 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     # We plug all the ABC setup together
     nr_populations = 3
-    population_size = ConstantPopulationSize(40)
+    pop_size = ConstantPopulationSize(40, nr_samples_per_parameter=n_sim)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
-                 population_size,
+                 pop_size,
                  eps=MedianEpsilon(.2),
                  sampler=sampler)
 

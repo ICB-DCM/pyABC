@@ -8,8 +8,11 @@ Release Notes
 0.8.18
 ------
 
-Minor bug fix. Ensure that the multicore samplers raise an Exception if
-and Exception occurs in the worker processes.
+* Minor bug fix. Ensure that the multicore samplers raise an Exception if
+  an Exception occurs in the worker processes.
+* Clarify that weighted distances are not normalized in case of having more
+  than a single simulation per proposed parameter.
+  Also add corresponding tests.
 
 
 0.8.17

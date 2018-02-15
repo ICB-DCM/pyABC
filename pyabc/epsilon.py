@@ -234,8 +234,14 @@ class MedianEpsilon(Epsilon):
             df_weighted = latest_population.get_weighted_distances()
 
         if self.weighted:
-            median = weighted_median(df_weighted.distance.as_matrix(),
-                                     df_weighted.w.as_matrix())
+            distances = df_weighted.distance.as_matrix()
+            # The sum of the weigted distances is larger than 1 if more than
+            # a single simulation per parameter is performed.
+            # Renormalize in this case.
+            weights = df_weighted.w.as_matrix()
+            weights /= weights.sum()
+            median = weighted_median(
+                distances, weights)
         else:
             median = sp.median(df_weighted.distance.as_matrix())
 
