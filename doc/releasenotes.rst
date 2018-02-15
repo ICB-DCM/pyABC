@@ -5,6 +5,13 @@ Release Notes
 ..........
 
 
+0.8.18
+------
+
+Minor bug fix. Ensure that the multicore samplers raise an Exception if
+and Exception occurs in the worker processes.
+
+
 0.8.17
 ------
 

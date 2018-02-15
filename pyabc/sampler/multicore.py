@@ -4,7 +4,7 @@ from .singlecore import SingleCoreSampler
 import numpy as np
 import random
 import logging
-from .multicorebase import MultiCoreSampler
+from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 from .base import Sample
 
 logger = logging.getLogger("MutlicoreSampler")
@@ -91,7 +91,8 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         collected_results = []
 
         for _ in range(n):
-            collected_results.append(result_q.get())
+            res = get_if_worker_healthy(worker_processes, result_q)
+            collected_results.append(res)
 
         feed_process.join()
 
@@ -104,5 +105,6 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         results, evaluations = zip(*collected_results)
         self.nr_evaluations_ = sum(evaluations)
 
-        # results is a list of samples, so combine them to get the whole sample
-        return sum(results)
+        sample = sum(results, Sample())
+
+        return sample

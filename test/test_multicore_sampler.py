@@ -1,6 +1,15 @@
 from pyabc.sampler import (MulticoreParticleParallelSampler,
                            MulticoreEvalParallelSampler)
 import pytest
+from multiprocessing import ProcessError
+
+
+class MockParticle:
+    accepted = True
+    all_summary_statistics_list = []
+
+    def to_particle(self):
+        pass
 
 
 class UnpickleAble:
@@ -8,7 +17,7 @@ class UnpickleAble:
         raise Exception
 
     def __call__(self, *args, **kwargs):
-        return True
+        return MockParticle()
 
 
 unpickleable = UnpickleAble()
@@ -24,3 +33,14 @@ def test_no_pickle(sampler):
     sampler.sample_until_n_accepted(unpickleable,
                                     unpickleable,
                                     10)
+
+def raise_exception(*args):
+    raise Exception("Deliberate exception to be raised in the worker "
+                    "processes and to be propagated to the parent process.")
+
+
+def test_exception_from_worker_propagated(sampler):
+    with pytest.raises(ProcessError):
+        sampler.sample_until_n_accepted(unpickleable,
+                                        raise_exception,
+                                        10)
