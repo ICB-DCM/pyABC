@@ -217,6 +217,9 @@ class Population:
         Get probabilities of the individual models.
         :return:
         """
+        # _model_probabilities are assigned during normalization
+        if not self._is_normalized:
+            self.normalize_weights()
         return self._model_probabilities
 
     def get_weighted_distances(self) -> pandas.DataFrame:
