@@ -46,7 +46,7 @@ into your system's Python distribution. This requires usually root access.
 Install as user into your home directory (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installing pyABC into you system's Python
+Installing pyABC into your system's Python
 distribution can be problematic as you might not want to
 change your system's Python installation or you
 don't have root rights.
