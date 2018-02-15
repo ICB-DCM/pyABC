@@ -210,8 +210,14 @@ class MedianEpsilon(Epsilon):
             return self._look_up[t]
         except KeyError:
             df_weighted = history.get_weighted_distances(None)
+            distances = df_weighted.distance.as_matrix()
+            # The sum of the weigted distances is larger than 1 if more than
+            # a single simulation per parameter is performed.
+            # Renormalize in this case.
+            weights = df_weighted.w.as_matrix()
+            weights /= weights.sum()
             median = weighted_median(
-                df_weighted.distance.as_matrix(), df_weighted.w.as_matrix())
+                distances, weights)
             self._look_up[t] = median * self.median_multiplier
             eps_logger.debug("new eps, t={}, eps={}"
                              .format(t, self._look_up[t]))
