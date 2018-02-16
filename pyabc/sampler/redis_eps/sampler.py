@@ -50,6 +50,17 @@ class RedisEvalParallelSampler(Sampler):
                             .format(host, port))
         self.redis = StrictRedis(host=host, port=port)
 
+    def n_worker(self):
+        """
+        Get the number of connected workers.
+
+        Returns
+        -------
+
+        Number of workers connected.
+        """
+        return self.redis.pubsub_numsub(MSG)[0][-1]
+
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
         self.redis.set(SSA,
                        cloudpickle.dumps(

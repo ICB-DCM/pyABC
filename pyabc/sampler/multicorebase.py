@@ -11,9 +11,10 @@ class MultiCoreSampler(Sampler):
     the number of cores selection functionality used by all the multiprocessing
     samplers.
     """
-    def __init__(self, n_procs=None):
+    def __init__(self, n_procs=None, daemon=True):
         super().__init__()
         self._n_procs = n_procs
+        self.daemon = daemon
 
     @property
     def n_procs(self):
@@ -22,12 +23,16 @@ class MultiCoreSampler(Sampler):
         return nr_cores_available()
 
 
-def get_if_worker_healthy(worker: List[Process], queue: Queue):
+def healthy(worker):
+    return all(worker.exitcode in [0, None] for worker in worker)
+
+
+def get_if_worker_healthy(workers: List[Process], queue: Queue):
     """
 
     Parameters
     ----------
-    worker: List[Process]
+    workers: List[Process]
         List of worker processes which should be in a healthy state,
         i.e. either terminated with exit code 0 (success) or are still
         running (exitcode is None in this case)
@@ -40,11 +45,9 @@ def get_if_worker_healthy(worker: List[Process], queue: Queue):
     item: An item from the queue
 
     """
-    while all(worker.exitcode in [0, None] for worker in worker):
-        try:
-            item = queue.get(True, 1)
-            return item
-        except Empty:
-            pass
-    else:
-        raise ProcessError("At least one worker is dead")
+    try:
+        item = queue.get(True, 5)
+        return item
+    except Empty:
+        if not healthy(workers):
+            raise ProcessError("At least one worker is dead.")
