@@ -42,6 +42,8 @@ class KillHandler:
 def work_on_population(redis: StrictRedis, start_time: int,
                        max_runtime_s: int,
                        kill_handler: KillHandler):
+    population_start_time = time()
+    cumulative_simulation_time = 0
     ssa = redis.get(SSA)
     if ssa is None:
         return
@@ -75,8 +77,11 @@ def work_on_population(redis: StrictRedis, start_time: int,
         particle_id = redis.incr(N_EVAL)
         internal_counter += 1
 
+        this_sim_start = time()
         new_param = sample()
         new_sim = simulate(new_param)
+        cumulative_simulation_time += time() - this_sim_start
+
         if accept(new_sim):
             n_particles = redis.decr(N_PARTICLES)
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, new_sim)))
@@ -85,8 +90,10 @@ def work_on_population(redis: StrictRedis, start_time: int,
 
     redis.decr(N_WORKER)
     kill_handler.exit = True
-    worker_logger.info("Finished population, did {} samples."
-                       .format(internal_counter))
+    population_total_time = time() - population_start_time
+    worker_logger.info(f"Finished population, did {internal_counter} samples. "
+                       f"Simulation time: {cumulative_simulation_time:.2f}s, "
+                       f" total time {population_total_time:.2f}.")
 
 
 @click.command(help="Evaluation parallel redis sampler for pyABC.")
