@@ -1,4 +1,5 @@
 import sys
+import socket
 import signal
 from redis import StrictRedis
 import pickle
@@ -128,8 +129,8 @@ def _work(host="localhost", port=6379, runtime="2h"):
 
     start_time = time()
     max_runtime_s = runtime_parse(runtime)
-    worker_logger.info("Start redis worker. Max run time {}s, PID={}"
-                       .format(max_runtime_s, os.getpid()))
+    worker_logger.info(f"Start redis worker. Max run time {max_runtime_s}s, "
+                       f"HOST={socket.gethostname()}, PID={os.getpid()}")
     redis = StrictRedis(host=host, port=port)
 
     p = redis.pubsub()
