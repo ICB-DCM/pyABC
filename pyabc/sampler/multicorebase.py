@@ -45,9 +45,11 @@ def get_if_worker_healthy(workers: List[Process], queue: Queue):
     item: An item from the queue
 
     """
-    try:
-        item = queue.get(True, 5)
-        return item
-    except Empty:
-        if not healthy(workers):
-            raise ProcessError("At least one worker is dead.")
+    while True:
+        try:
+            item = queue.get(True, 5)
+            return item
+        except Empty:
+            if not healthy(workers):
+                raise ProcessError("At least one worker is dead.")
+    raise Exception("The code should never reach here")
