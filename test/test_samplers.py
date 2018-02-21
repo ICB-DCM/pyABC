@@ -134,3 +134,10 @@ def test_two_competing_gaussians_multiple_population(
     assert history.max_t == nr_populations-1
     # the next line only tests if we obtain correct numerical types
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf
+
+
+def test_in_memory():
+    sampler = RedisEvalParallelSamplerServerStarter()
+    db_path = "sqlite://"
+    n_sim = 1
+    test_two_competing_gaussians_multiple_population(db_path, sampler, n_sim)

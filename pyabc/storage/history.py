@@ -88,6 +88,11 @@ class History:
         return f
 
     @property
+    def inmemory(self):
+        return (self._engine is not None
+                and str(self._engine.url) == "sqlite://")
+
+    @property
     def db_size(self) -> Union[int, str]:
         """
 
@@ -371,10 +376,21 @@ class History:
         return session
 
     def _close_session(self):
+        # don't close in memory database
+        if self.inmemory:
+            return
+        # only close connections to permanent databases
         self._session.close()
         self._engine.dispose()
         self._session = None
         self._engine = None
+
+    def __getstate__(self):
+        dct = self.__dict__.copy()
+        if self.inmemory:
+            dct["_engine"] = None
+            dct["_session"] = None
+        return dct
 
     @with_session
     @internal_docstring_warning
