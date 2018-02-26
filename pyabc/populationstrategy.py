@@ -136,6 +136,10 @@ class AdaptivePopulationSize(PopulationStrategy):
     nr_samples_per_parameter: int, optional
         Defaults to 1.
 
+    n_bootstrap: int, optional
+        Number of bootstrapped populations to use to estimate the CV.
+        Defaults to 10.
+
 
 
 
