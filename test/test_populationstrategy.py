@@ -8,7 +8,9 @@ import scipy as sp
 
 
 def Adaptive():
-    return AdaptivePopulationSize(100)
+    # Only 4 bootstraps for faster testing
+    ada = AdaptivePopulationSize(100, mean_cv=0.18, n_bootstrap=4)
+    return ada
 
 
 def Constant():

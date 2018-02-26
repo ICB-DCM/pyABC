@@ -159,7 +159,7 @@ def test_score(transition: Transition):
 
 def test_grid_search_multivariate_normal():
     m = MultivariateNormalTransition()
-    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)})
+    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, n_jobs=1)
     df, w = data(20)
     m_grid.fit(df, w)
 
@@ -170,7 +170,8 @@ def test_grid_search_two_samples_multivariate_normal():
     """
     cv = 5
     m = MultivariateNormalTransition()
-    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv)
+    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv,
+                          n_jobs=1)
     df, w = data(2)
     m_grid.fit(df, w)
     assert m_grid.cv == cv
@@ -182,7 +183,8 @@ def test_grid_search_single_sample_multivariate_normal():
     """
     cv = 5
     m = MultivariateNormalTransition()
-    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv)
+    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv,
+                          n_jobs=1)
     df, w = data(1)
     m_grid.fit(df, w)
     assert m_grid.cv == cv

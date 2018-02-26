@@ -81,7 +81,8 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
 
 def test_two_competing_gaussians_multiple_population_2_evaluations(
-        db_path, sampler):
+        db_path):
+    sampler = RedisEvalParallelSamplerServerStarter()
     two_competing_gaussians_multiple_population(db_path, sampler, 2)
 
 
@@ -104,12 +105,12 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     ]
 
     # We plug all the ABC setup together
-    nr_populations = 3
+    nr_populations = 2
     pop_size = ConstantPopulationSize(40, nr_samples_per_parameter=n_sim)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
                  pop_size,
-                 eps=MedianEpsilon(.2),
+                 eps=MedianEpsilon(),
                  sampler=sampler)
 
     # Finally we add meta data such as model names and
