@@ -60,7 +60,8 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
                         SingleCoreSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
-                        MappingSampler, DaskDistributedSampler,
+                        MappingSampler,
+                        DaskDistributedSampler,
                         GenericFutureWithThreadPool,
                         GenericFutureWithProcessPool,
                         GenericFutureWithProcessPoolBatch,
@@ -75,15 +76,22 @@ def sampler(request):
         pass
 
 
+@pytest.fixture
+def redis_starter_sampler():
+    s = RedisEvalParallelSamplerServerStarter()
+    yield s
+    s.cleanup()
+
+
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
     two_competing_gaussians_multiple_population(
         db_path, sampler, 1)
 
 
 def test_two_competing_gaussians_multiple_population_2_evaluations(
-        db_path):
-    sampler = RedisEvalParallelSamplerServerStarter()
-    two_competing_gaussians_multiple_population(db_path, sampler, 2)
+        db_path, redis_starter_sampler):
+    two_competing_gaussians_multiple_population(db_path,
+                                                redis_starter_sampler, 2)
 
 
 def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
@@ -141,7 +149,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf
 
 
-def test_in_memory():
-    sampler = RedisEvalParallelSamplerServerStarter()
+def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
-    two_competing_gaussians_multiple_population(db_path, sampler, 1)
+    two_competing_gaussians_multiple_population(db_path,
+                                                redis_starter_sampler, 1)
