@@ -75,20 +75,17 @@ def sampler(request):
         pass
 
 
-def test_two_competing_gaussians_multiple_population(
-        db_path, sampler):
+def test_two_competing_gaussians_multiple_population(db_path, sampler):
     two_competing_gaussians_multiple_population(
         db_path, sampler, 1)
 
 
 def test_two_competing_gaussians_multiple_population_2_evaluations(
         db_path, sampler):
-    two_competing_gaussians_multiple_population(
-        db_path, sampler, 2)
+    two_competing_gaussians_multiple_population(db_path, sampler, 2)
 
 
-def two_competing_gaussians_multiple_population(
-        db_path, sampler, n_sim):
+def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     # Define a gaussian model
     sigma = .5
 
@@ -146,5 +143,4 @@ def two_competing_gaussians_multiple_population(
 def test_in_memory():
     sampler = RedisEvalParallelSamplerServerStarter()
     db_path = "sqlite://"
-    n_sim = 1
-    two_competing_gaussians_multiple_population(db_path, sampler, n_sim)
+    two_competing_gaussians_multiple_population(db_path, sampler, 1)
