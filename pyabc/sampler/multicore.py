@@ -1,5 +1,4 @@
 from multiprocessing import Process, Queue
-
 from .singlecore import SingleCoreSampler
 import numpy as np
 import random
@@ -7,7 +6,8 @@ import logging
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 from .base import Sample
 
-logger = logging.getLogger("MutlicoreSampler")
+
+logger = logging.getLogger("MulticoreSampler")
 
 SENTINEL = None
 

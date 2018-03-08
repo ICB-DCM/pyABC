@@ -10,6 +10,7 @@ import pandas as pd
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
 from pyabc.storage.df_to_file import sumstat_to_json
+import pickle
 
 
 def example_df():
@@ -23,20 +24,25 @@ def path():
     return os.path.join(tempfile.gettempdir(), "history_test.db")
 
 
-@pytest.fixture
-def history():
-    # Don't use memory database for testing.
-    # A real file with disconnect and reconnect is closer to the real scenario
-    this_path = path()
+@pytest.fixture(params=["file", "memory"])
+def history(request):
+    # Test in-memory and filesystem based database
+    if request.param == "file":
+        this_path = "/" + path()
+    elif request.param == "memory":
+        this_path = ""
+    else:
+        raise Exception(f"Bad database type for testing: {request.param}")
     model_names = ["fake_name_{}".format(k) for k in range(50)]
-    h = History("sqlite:///" + this_path)
+    h = History("sqlite://" + this_path)
     h.store_initial_data(0, {}, {}, {}, model_names,
                          "", "", '{"name": "pop_strategy_str_test"}')
     yield h
-    try:
-        os.remove(this_path)
-    except FileNotFoundError:
-        pass
+    if request.param == "file":
+        try:
+            os.remove(this_path)
+        except FileNotFoundError:
+            pass
 
 
 @pytest.fixture
@@ -323,3 +329,7 @@ def test_population_to_df(history: History):
     df = history.get_population_extended(m=0)
     df_js = sumstat_to_json(df)
     assert len(df) == len(df_js)
+
+
+def test_pickle(history: History):
+    pickle.dumps(history)

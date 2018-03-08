@@ -136,6 +136,10 @@ class AdaptivePopulationSize(PopulationStrategy):
     nr_samples_per_parameter: int, optional
         Defaults to 1.
 
+    n_bootstrap: int, optional
+        Number of bootstrapped populations to use to estimate the CV.
+        Defaults to 10.
+
 
 
 
@@ -147,18 +151,19 @@ class AdaptivePopulationSize(PopulationStrategy):
         Springer, Cham, 2017.
         https://doi.org/10.1007/978-3-319-67471-1_8.
     """
-    N_BOOTSTR = 10
 
     def __init__(self, start_nr_particles, mean_cv=0.05,
                  *,
                  max_population_size=float("inf"),
                  min_population_size=10,
-                 nr_samples_per_parameter=1):
+                 nr_samples_per_parameter=1,
+                 n_bootstrap=10):
         super().__init__(start_nr_particles,
                          nr_samples_per_parameter=nr_samples_per_parameter)
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
         self.mean_cv = mean_cv
+        self.n_bootstrap = n_bootstrap
 
     def get_config(self):
         return {"name": self.__class__.__name__,
@@ -175,7 +180,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         cv_estimate = predict_population_size(
             reference_nr_part, target_cv,
             lambda nr_particles: calc_cv(nr_particles, model_weights,
-                                         self.N_BOOTSTR, test_w, transitions,
+                                         self.n_bootstrap, test_w, transitions,
                                          test_X)[0])
 
         if not np.isnan(cv_estimate.n_estimated):

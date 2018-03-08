@@ -60,7 +60,8 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
                         SingleCoreSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
-                        MappingSampler, DaskDistributedSampler,
+                        MappingSampler,
+                        DaskDistributedSampler,
                         GenericFutureWithThreadPool,
                         GenericFutureWithProcessPool,
                         GenericFutureWithProcessPoolBatch,
@@ -75,16 +76,27 @@ def sampler(request):
         pass
 
 
-@pytest.fixture(params=[1, 2])
-def n_sim(request):
-    return request.param
+@pytest.fixture
+def redis_starter_sampler():
+    s = RedisEvalParallelSamplerServerStarter()
+    yield s
+    s.cleanup()
 
 
-def test_two_competing_gaussians_multiple_population(
-        db_path, sampler, n_sim):
+def test_two_competing_gaussians_multiple_population(db_path, sampler):
+    two_competing_gaussians_multiple_population(
+        db_path, sampler, 1)
+
+
+def test_two_competing_gaussians_multiple_population_2_evaluations(
+        db_path, redis_starter_sampler):
+    two_competing_gaussians_multiple_population(db_path,
+                                                redis_starter_sampler, 2)
+
+
+def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     # Define a gaussian model
     sigma = .5
-
 
 
     def model(args):
@@ -102,12 +114,12 @@ def test_two_competing_gaussians_multiple_population(
     ]
 
     # We plug all the ABC setup together
-    nr_populations = 3
+    nr_populations = 2
     pop_size = ConstantPopulationSize(40, nr_samples_per_parameter=n_sim)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
                  pop_size,
-                 eps=MedianEpsilon(.2),
+                 eps=MedianEpsilon(),
                  sampler=sampler)
 
     # Finally we add meta data such as model names and
@@ -136,3 +148,9 @@ def test_two_competing_gaussians_multiple_population(
     assert history.max_t == nr_populations-1
     # the next line only tests if we obtain correct numerical types
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf
+
+
+def test_in_memory(redis_starter_sampler):
+    db_path = "sqlite://"
+    two_competing_gaussians_multiple_population(db_path,
+                                                redis_starter_sampler, 1)

@@ -281,6 +281,13 @@ class ABCSMC:
             This indicates the database to be used (and created if necessary
             and possible) for the ABC-SMC run.
 
+            To use an in-memory database pass "sqlite://".
+            Note that in-memory databases are only available on the master
+            mode. If workers are started on different nodes they won't be
+            able to access the database. This should not be a problem
+            in most scenarios. The in-memory option is mainly useful for
+            benchmarking (and maybe) for testing.
+
         observed_sum_stat : dict, optional
                This is the really important parameter here. It is of the
                form ``{'statistic_1': val_1, 'statistic_2': val_2, ... }``.

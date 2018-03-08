@@ -38,8 +38,13 @@ class Epsilon(ABC):
         Parameters
         ----------
 
+<<<<<<< HEAD
         prior_distances: List[float]
             List containing the distances calculated for the summary statistics
+=======
+        sample_from_prior: List[dict]
+            List of dictionaries containing the summary statistics.
+>>>>>>> master
 
         """
         pass

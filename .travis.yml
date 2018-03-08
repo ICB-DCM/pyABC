@@ -19,4 +19,4 @@ install:
   - pip install --upgrade pytest
 # command to run tests
 script:
-  - travis_wait python -m pytest test
+  - travis_wait 30 python -m pytest test

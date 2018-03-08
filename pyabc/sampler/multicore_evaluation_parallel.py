@@ -65,9 +65,6 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         If set to None, the Number of cores is determined according to
         :func:`pyabc.sge.nr_cores_available`.
     """
-    def __init__(self, n_procs=None):
-        super().__init__()
-        self._n_procs = n_procs
 
     @property
     def n_procs(self):
@@ -88,7 +85,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             Process(target=work,
                     args=(sample_one, simulate_one,
                           queue, n_eval, n_particles),
-                    daemon=True)
+                    daemon=self.daemon)
             for _ in range(self.n_procs)
         ]
 

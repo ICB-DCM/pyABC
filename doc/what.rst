@@ -25,7 +25,7 @@ What you need
 What you don't need
 -------------------
 
-* the likelihood function: p(parameter|data) is *not* required.
+* the likelihood function: p(data|parameter) is *not* required.
 
 
 

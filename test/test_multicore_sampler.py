@@ -4,20 +4,12 @@ import pytest
 from multiprocessing import ProcessError
 
 
-class MockParticle:
-    accepted = True
-    all_summary_statistics_list = []
-
-    def to_particle(self):
-        pass
-
-
 class UnpickleAble:
     def __getstate__(self):
         raise Exception
 
     def __call__(self, *args, **kwargs):
-        return MockParticle()
+        return True
 
 
 unpickleable = UnpickleAble()
@@ -33,6 +25,7 @@ def test_no_pickle(sampler):
     sampler.sample_until_n_accepted(unpickleable,
                                     unpickleable,
                                     10)
+
 
 def raise_exception(*args):
     raise Exception("Deliberate exception to be raised in the worker "

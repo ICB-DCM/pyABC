@@ -13,6 +13,10 @@ Release Notes
 * Clarify that weighted distances are not normalized in case of having more
   than a single simulation per proposed parameter.
   Also add corresponding tests.
+* Add n_worker method to the RedisEvalParallelSampler to enable querying of
+  the number of connected workers.
+* Add in-memory database support. Useful, e.g., for benchmarking on slow
+  filesystems or with rather slow network connections.
 
 
 0.8.17
