@@ -77,7 +77,7 @@ class EPSMixin:
             if num_accepted_sequential >= n:
                 break
 
-            # Update informations on scheduler state
+            # Update information on scheduler state
             # Only submit more jobs if:
             # Number of jobs open < max_jobs
             # Number of jobs open < self.scheduler_workers_running *

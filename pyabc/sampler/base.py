@@ -20,7 +20,7 @@ class Sample:
     """
 
     def __init__(self):
-        self.accepted_population = Population()
+        self.accepted_particles = list()
         self.all_summary_statistics_list = list()
 
     def append(self, full_info_particle: FullInfoParticle):
@@ -34,20 +34,23 @@ class Sample:
         """
         # add to population if accepted
         if full_info_particle.accepted:
-            self.accepted_population.append(full_info_particle.to_particle())
+            self.accepted_particles.append(full_info_particle.to_particle())
         # keep track of all summary statistics sampled
         self.all_summary_statistics_list.extend(
             full_info_particle.all_summary_statistics_list)
 
     def __add__(self, other):
         sample = Sample()
-        sample.accepted_population = self.accepted_population + \
-                                     other.accepted_population
-        sample.all_summary_statistics_list \
-            = self.all_summary_statistics_list \
-              + other.all_summary_statistics_list
+        sample.accepted_particles = self.accepted_particles \
+            + other.accepted_particles
+        sample.all_summary_statistics_list = \
+            self.all_summary_statistics_list \
+            + other.all_summary_statistics_list
 
         return sample
+
+    def get_accepted_population(self):
+        return Population(self.accepted_particles)
 
 
 class Sampler(ABC):

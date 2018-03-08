@@ -62,8 +62,8 @@ class Epsilon(ABC):
             set the epsilon
 
         latest_population: Population
-            The latest population, which may be different from the one stored in
-            history.
+            The latest population, which may be different from the one stored
+            in history.
 
         :return:
         eps: float
@@ -235,9 +235,9 @@ class MedianEpsilon(Epsilon):
 
         if self.weighted:
             distances = df_weighted.distance.as_matrix()
-            # The sum of the weigted distances is larger than 1 if more than
+            # The sum of the weighted distances is larger than 1 if more than
             # a single simulation per parameter is performed.
-            # Renormalize in this case.
+            # Re-normalize in this case.
             weights = df_weighted.w.as_matrix()
             weights /= weights.sum()
             median = weighted_median(

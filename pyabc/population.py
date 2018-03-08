@@ -2,6 +2,7 @@ from typing import List, Callable
 import pandas
 from pyabc.parameters import Parameter
 
+
 class Particle:
     """
     An (accepted) particle, containing the information that will also be
@@ -110,37 +111,14 @@ class Population:
     This class acts as as a wrapper around a list of particles, offering
     standardized interfaces.
 
-    Usage note:
-    First, all particles should be appended to the population, via append().
-    Then, normalize_weights() should be called once to normalize the weights of
-    the particles for each model, and compute the model probabilities.
-    Thereafter, calling get_weighted_distances() makes sense. The function
-    update_distances() can be called as any point as it has no influence on
-    the weights.
+    Upon initialization, the particle weights are normalized and model
+    probabilities computed as described in _normalize_weights.
     """
 
-    def __init__(self, particle_list: List[Particle] =None):
-        if particle_list is None:
-            self._list = []
-        else:
-            self._list = particle_list.copy()
-        self._is_normalized = False
+    def __init__(self, particle_list: List[Particle]):
+        self._list = particle_list.copy()
         self._model_probabilities = None
-
-        # TODO
-        # the is_normalized is not nice, maybe we can split into classes
-        # Population and NormalizedPopulation, making a deep copy, but it
-        # works like this for now
-
-    def __add__(self, other):
-        """
-        Should only be called before normalization.
-        """
-
-        population = Population()
-        population._list = self.get_list() + other.get_list()
-
-        return population
+        self._normalize_weights()
 
     def get_list(self) -> List[Particle]:
         """
@@ -150,18 +128,7 @@ class Population:
         """
         return self._list.copy()
 
-    def is_normalized(self):
-        return self._is_normalized
-
-    def append(self, particle: Particle):
-        """
-        Append a particle to the list.
-        :param particle: Particle
-            Particle to be appended.
-        """
-        self._list.append(particle)
-
-    def normalize_weights(self):
+    def _normalize_weights(self):
         """
         Normalize the cumulative weight of the particles belonging to a model
         to 1, and compute the model probabilities. Should only be called once.
@@ -193,8 +160,6 @@ class Population:
             for particle in plist:
                 particle.weight /= model_total_weight
 
-        self._is_normalized = True
-
     def update_distances(self,
                          distance_to_ground_truth: Callable[[dict], float]):
         """
@@ -218,8 +183,6 @@ class Population:
         :return:
         """
         # _model_probabilities are assigned during normalization
-        if not self._is_normalized:
-            self.normalize_weights()
         return self._model_probabilities
 
     def get_weighted_distances(self) -> pandas.DataFrame:

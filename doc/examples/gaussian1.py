@@ -9,6 +9,24 @@ import tempfile
 import os
 import matplotlib.pyplot as pyplot
 
+import logging
+import sys
+
+logging.basicConfig(level=logging.DEBUG)
+
+df_logger = logging.getLogger('DistanceFunction')
+console = logging.StreamHandler(sys.stdout)
+console.setLevel(logging.DEBUG)
+df_logger.addHandler(console)
+df_logger.setLevel(logging.DEBUG)
+logging.getLogger().addHandler(console)
+
+
+df_logger.info('df_Hoho')
+df_logger.debug('debuggggg')
+
+logging.debug('Hoho')
+
 
 def model(p):
     return {'ss1': p['theta'] + 1 + 0.1*scipy.randn(),

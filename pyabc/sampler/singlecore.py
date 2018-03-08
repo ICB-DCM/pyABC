@@ -19,6 +19,6 @@ class SingleCoreSampler(Sampler):
                 if new_sim.accepted:
                     break
         self.nr_evaluations_ = nr_simulations
-        assert len(sample.accepted_population.get_list()) == n
+        assert len(sample.accepted_particles) == n
 
         return sample

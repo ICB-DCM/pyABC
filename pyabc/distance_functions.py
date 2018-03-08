@@ -296,10 +296,12 @@ class WeightedPNormDistance(PNormDistance):
             else:
                 self.w[key] = 1 / val
 
+        logging.debug('HOHA')
+
         # logging
         df_logger.debug(
             "update distance function weights = {}"
-                .format(self.w))
+            .format(self.w))
 
 
 class WeightedEuclideanDistance(WeightedPNormDistance):

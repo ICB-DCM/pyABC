@@ -601,10 +601,7 @@ class ABCSMC:
                 self.population_strategy.nr_particles)
 
             # retrieve accepted population
-            population = sample.accepted_population
-
-            # normalize weights
-            population.normalize_weights()
+            population = sample.get_accepted_population()
 
             # save to database before making any changes to the population
             abclogger.debug('population ' + str(t) + ' done')

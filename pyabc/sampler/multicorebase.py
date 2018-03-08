@@ -7,7 +7,7 @@ from typing import List
 
 class MultiCoreSampler(Sampler):
     """
-    Multicore sampler base class. This sampler is not functional but provides
+    Multi-core sampler base class. This sampler is not functional but provides
     the number of cores selection functionality used by all the multiprocessing
     samplers.
     """
