@@ -15,6 +15,8 @@ def work(sample_one, simulate_one,
     random.seed()
     np.random.seed()
 
+    sample = Sample()
+
     while n_particles.value > 0:
         with n_eval.get_lock():
             particle_id = n_eval.value
@@ -22,12 +24,12 @@ def work(sample_one, simulate_one,
 
         new_param = sample_one()
         new_sim = simulate_one(new_param)
-
+        sample.append(new_sim)
         if new_sim.accepted:
             with n_particles.get_lock():
                 n_particles.value -= 1
 
-            queue.put((particle_id, new_sim))
+    queue.put(sample)
     queue.put(DONE)
 
 
@@ -113,10 +115,6 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         self.nr_evaluations_ = n_eval.value
 
-        population = [res[1] for res in id_results]
-
-        sample = Sample()
-        for particle in population:
-            sample.append(particle)
+        sample = sum(id_results)
 
         return sample
