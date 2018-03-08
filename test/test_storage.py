@@ -135,7 +135,8 @@ def test_sum_stats_save_load(history: History):
                               [{"ss12": .11, "ss22": arr,
                                 "ss33": example_df(),
                                 "rdf": r["mtcars"]}])]
-    history.append_population(0, 42, Population(particle_list), 2, ["m1", "m2"])
+    history.append_population(0, 42,
+                              Population(particle_list), 2, ["m1", "m2"])
     weights, sum_stats = history.get_sum_stats(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
@@ -216,8 +217,8 @@ def test_dataframe_storage_readout():
 def test_population_retrieval(history: History):
     history.append_population(1, .23, Population(rand_pop(0)), 234, ["m1"])
     history.append_population(2, .123, Population(rand_pop(0)), 345, ["m1"])
-    history.append_population(2, .1235, Population(rand_pop(5)), 20345, ["m1"] \
-                              * 6)
+    history.append_population(2, .1235,
+                              Population(rand_pop(5)), 20345, ["m1"] * 6)
     history.append_population(3, .12330, Population(rand_pop(30)), 30345,
                               ["m1"] * 31)
     df = history.get_all_populations()

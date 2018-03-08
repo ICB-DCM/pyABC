@@ -98,7 +98,6 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     # Define a gaussian model
     sigma = .5
 
-
     def model(args):
         return {"y": st.norm(args['x'], sigma).rvs()}
 
