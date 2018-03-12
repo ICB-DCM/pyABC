@@ -87,11 +87,13 @@ class RedisEvalParallelSampler(Sampler):
         while self.redis.llen(QUEUE) > 0:
             id_results.append(pickle.loads(self.redis.blpop(QUEUE)[1]))
 
+        # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(N_EVAL).decode())
 
         self.redis.delete(SSA)
         self.redis.delete(N_EVAL)
         self.redis.delete(N_PARTICLES)
+
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:n]
