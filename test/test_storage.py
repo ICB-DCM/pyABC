@@ -186,12 +186,13 @@ def test_dataframe_storage_readout():
     histories = [make_hist() for _ in range(4)]
     for h in histories:
         for t in range(4):
-            population = Population()
+            particle_list = []
             for m in range(5):
                 pops[(h, m, t)] = rand_pop(m)
                 for particle in pops[(h, m, t)]:
-                    population.append(particle)
-            h.append_population(t, .1, population, 2, model_names)
+                    particle_list.append(particle)
+            h.append_population(t, .1, Population(particle_list), 2,
+                                model_names)
 
     for h in histories:
         for t in range(4):
