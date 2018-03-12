@@ -5,6 +5,15 @@ Release Notes
 ..........
 
 
+0.8.19
+------
+
+* Bug fix. Fix a race condition in the redis evaluation parallel sampler
+  (dynamic scheduling). An error occured if a worker tried to start to work
+  on a population after the other workers had already terminated the
+  population.
+
+
 0.8.18
 ------
 

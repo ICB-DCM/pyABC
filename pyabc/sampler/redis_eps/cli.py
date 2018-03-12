@@ -45,17 +45,21 @@ def work_on_population(redis: StrictRedis, start_time: int,
                        kill_handler: KillHandler):
     population_start_time = time()
     cumulative_simulation_time = 0
+
     ssa = redis.get(SSA)
     if ssa is None:
         return
+    sample, simulate, accept = pickle.loads(ssa)
     kill_handler.exit = False
+
+    n_particles_bytes = redis.get(N_PARTICLES)
+    if n_particles_bytes is None:
+        return
+    n_particles = int(n_particles_bytes.decode())
+
     n_worker = redis.incr(N_WORKER)
     worker_logger.info("Begin population. I am worker {}"
                        .format(n_worker))
-    sample, simulate, accept = pickle.loads(ssa)
-
-    n_particles = int(redis.get(N_PARTICLES).decode())
-
     internal_counter = 0
     while n_particles > 0:
         if kill_handler.killed:
