@@ -150,12 +150,12 @@ def test_sum_stats_save_load(history: History):
 
 
 def test_total_nr_samples(history: History):
-    population = Population()
-    population.append(Particle(0,
-                               Parameter({"a": 23, "b": 12}),
-                               .2,
-                               [.1],
-                               [{"ss": .1}]))
+    particle_list = [Particle(0,
+                              Parameter({"a": 23, "b": 12}),
+                              .2,
+                              [.1],
+                              [{"ss": .1}])]
+    population = Population(particle_list)
     history.append_population(0, 42, population, 4234, ["m1"])
     history.append_population(0, 42, population, 3, ["m1"])
 

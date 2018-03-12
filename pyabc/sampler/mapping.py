@@ -74,13 +74,17 @@ latest/task.html#quick-and-easy-parallelism)
         np.random.seed()
         random.seed()
         nr_simulations = 0
+        sample = Sample()
+
         while True:
             new_param = sample_one()
             new_sim = simulate_one(new_param)
             nr_simulations += 1
+            sample.append(new_sim)
             if new_sim.accepted:
                 break
-        return new_sim, nr_simulations
+
+        return sample, nr_simulations
 
     def sample_until_n_accepted(self, sample_one, simulate_one, n):
         # pickle them as a tuple instead of individual pickling
@@ -97,11 +101,14 @@ latest/task.html#quick-and-easy-parallelism)
         counted_results = filter(lambda x: not isinstance(x, Exception),
                                  counted_results)
         results, evals = zip(*counted_results)
+
+        #count all evaluations
         self.nr_evaluations_ = sum(evals)
 
+        # aggregate all results to 1 to-be-returned sample
         sample = Sample()
-        for particle in results:
-            sample.append(particle)
+        for result in results:
+            sample += result
 
         return sample
 
