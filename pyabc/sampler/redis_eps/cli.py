@@ -13,6 +13,7 @@ from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
 from multiprocessing import Pool
 import numpy as np
 import random
+from ..base import Sample
 
 
 TIMES = {"s": 1,
@@ -52,11 +53,12 @@ def work_on_population(redis: StrictRedis, start_time: int,
     n_worker = redis.incr(N_WORKER)
     worker_logger.info("Begin population. I am worker {}"
                        .format(n_worker))
-    sample, simulate, accept = pickle.loads(ssa)
+    sample_one, simulate_one = pickle.loads(ssa)
 
     n_particles = int(redis.get(N_PARTICLES).decode())
 
     internal_counter = 0
+    sample = Sample()
     while n_particles > 0:
         if kill_handler.killed:
             worker_logger.info("Worker {} received stop signal. "
@@ -79,13 +81,15 @@ def work_on_population(redis: StrictRedis, start_time: int,
         internal_counter += 1
 
         this_sim_start = time()
-        new_param = sample()
-        new_sim = simulate(new_param)
+        new_param = sample_one()
+        new_sim = simulate_one(new_param)
+        sample.append(new_sim)
         cumulative_simulation_time += time() - this_sim_start
 
-        if accept(new_sim):
+        if new_sim.accepted:
             n_particles = redis.decr(N_PARTICLES)
-            redis.rpush(QUEUE, cloudpickle.dumps((particle_id, new_sim)))
+            redis.rpush(QUEUE, cloudpickle.dumps((particle_id, sample)))
+            sample = Sample()
         else:
             n_particles = int(redis.get(N_PARTICLES).decode())
 

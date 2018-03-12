@@ -102,7 +102,7 @@ latest/task.html#quick-and-easy-parallelism)
                                  counted_results)
         results, evals = zip(*counted_results)
 
-        #count all evaluations
+        # count all evaluations
         self.nr_evaluations_ = sum(evals)
 
         # aggregate all results to 1 to-be-returned sample
