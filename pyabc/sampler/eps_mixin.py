@@ -6,11 +6,11 @@ from .base import Sample
 
 class EPSMixin:
     def full_submit_function_pickle(self, param, job_id):
-        simulate_one, accept_one = pickle.loads(self.simulate_accept_one)
+        simulate_one = pickle.loads(self.simulate_accept_one)
         result_batch = []
         for j in range(self.batchsize):
             eval_result = simulate_one(param[j])
-            eval_accept = accept_one(eval_result)
+            eval_accept = eval_result.accepted
             result_batch.append((eval_result, eval_accept, job_id[j]))
         return result_batch
 
@@ -30,10 +30,11 @@ class EPSMixin:
                 return result_batch
 
         num_accepted_total = 0
+        num_accepted_sequential = 0
         next_job_id = 0
         running_jobs = []
-        accepted_results = SortedListWithKey(key=lambda x: x[0])
         unprocessed_results = SortedListWithKey(key=lambda x: x[0])
+        all_results = SortedListWithKey(key=lambda x: x[0])
         next_valid_index = -1
 
         # Main Loop, leave once we have enough material
@@ -63,17 +64,19 @@ class EPSMixin:
                 next_index = np.nan
             while next_index == next_valid_index+1:
                 seq_evaluated = unprocessed_results.pop(0)
+                # add to all_results
+                all_results.add((seq_evaluated[0], seq_evaluated[2]))
+                # update accepted counter
                 if seq_evaluated[1]:
-                    accepted_results.add((seq_evaluated[0], seq_evaluated[2]))
+                    num_accepted_sequential += 1
                 next_valid_index += 1
                 if len(unprocessed_results) > 0:
                     next_index = unprocessed_results[0][0]
                 else:
                     next_index = np.nan
 
-            # If num_accepted_sequential >= n
+            # If num_accepted >= n
             # return the first n accepted results
-            num_accepted_sequential = len(accepted_results)
             if num_accepted_sequential >= n:
                 break
 
@@ -102,17 +105,19 @@ class EPSMixin:
                                               para_batch,
                                               job_id_batch))
 
-        # Cancel all unfinished jobs
+        # cancel all unfinished jobs
         for curJob in running_jobs:
             curJob.cancel()
-        returned_results = []
-        while len(returned_results) < n:
-            cur_res = accepted_results.pop(0)
-            returned_results.append(cur_res[1])
-            self.nr_evaluations_ = cur_res[0]
 
+        # create and to-be-returned sample from all results
         sample = Sample()
-        for particle in returned_results:
-            sample.append(particle)
+        counter_accepted = 0
+        while counter_accepted < n:
+            cur_res = all_results.pop(0)
+            particle = cur_res[1]
+            sample.append(cur_res[1])
+            if particle.accepted:
+                counter_accepted += 1
+            self.nr_evaluations_ = cur_res[0]
 
         return sample

@@ -119,7 +119,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         population = [res[1] for res in id_results]
 
-        # create one sample out of all data
+        # create 1 to-be-returned sample from populations
         sample = Sample()
         for j in range(n):
             sample += population[j]
