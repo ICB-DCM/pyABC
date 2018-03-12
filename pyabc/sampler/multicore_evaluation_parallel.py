@@ -29,7 +29,9 @@ def work(sample_one, simulate_one,
             with n_particles.get_lock():
                 n_particles.value -= 1
 
-    queue.put(sample)
+            queue.put((particle_id, sample))
+            sample = Sample()
+
     queue.put(DONE)
 
 
@@ -115,6 +117,11 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         self.nr_evaluations_ = n_eval.value
 
-        sample = sum(id_results)
+        population = [res[1] for res in id_results]
+
+        # create one sample out of all data
+        sample = Sample()
+        for j in range(n):
+            sample += population[j]
 
         return sample
