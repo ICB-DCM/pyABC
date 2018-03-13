@@ -50,12 +50,16 @@ def work_on_population(redis: StrictRedis, start_time: int,
     if ssa is None:
         return
     kill_handler.exit = False
+
+    n_particles_bytes = redis.get(N_PARTICLES)
+    if n_particles_bytes is None:
+        return
+    n_particles = int(n_particles_bytes.decode())
+
     n_worker = redis.incr(N_WORKER)
     worker_logger.info("Begin population. I am worker {}"
                        .format(n_worker))
     sample_one, simulate_one = pickle.loads(ssa)
-
-    n_particles = int(redis.get(N_PARTICLES).decode())
 
     internal_counter = 0
     sample = Sample()
