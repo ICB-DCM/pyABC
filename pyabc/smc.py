@@ -396,14 +396,17 @@ class ABCSMC:
                     theta, self.summary_statistics)
                 all_summary_statistics_list.append(model_result.sum_stats)
                 weight = 0
+                distance_list = []
+                summary_statistics_list = []
                 accepted = True
                 # only the all_summary_statistics_list field will be read later
                 full_info_particle = FullInfoParticle(
-                    m, theta, weight, [], [], all_summary_statistics_list,
+                    m, theta, weight, distance_list,
+                    summary_statistics_list, all_summary_statistics_list,
                     accepted)
                 return full_info_particle
 
-            # sample
+            # call sampler
             sample = self.sampler.sample_until_n_accepted(
                 sample_one, simulate_one,
                 self.population_strategy.nr_particles)
@@ -455,9 +458,10 @@ class ABCSMC:
                 return m_ss, theta_ss
 
     def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
-                           model_probabilities):
+                           model_probabilities,
+                           record_all_summary_statistics):
         """
-        Corresponds to Sampler.simulate_one.
+        Corresponds to Sampler.simulate_eval_one.
         This is where the actual model evaluation happens.
         """
 
@@ -471,7 +475,8 @@ class ABCSMC:
             model_result = self.models[m_ss].accept(
                 theta_ss, self.summary_statistics,
                 lambda x: self.distance_function(x, self.x_0), current_eps)
-            all_summary_statistics_list.append(model_result.sum_stats)
+            if record_all_summary_statistics:
+                all_summary_statistics_list.append(model_result.sum_stats)
             if model_result.accepted:
                 distance_list.append(model_result.distance)
                 summary_statistics_list.append(model_result.sum_stats)
@@ -598,13 +603,14 @@ class ABCSMC:
             def sample_one():
                 return self._generate_valid_proposal(t, m, p)
 
-            def eval_one(par):
+            def simulate_eval_one(par):
                 return self._evaluate_proposal(*par, current_eps, t,
-                                               model_probabilities)
+                                               model_probabilities,
+                                               self.distance_function.adaptive)
 
             # sample
             sample = self.sampler.sample_until_n_accepted(
-                sample_one, eval_one,
+                sample_one, simulate_eval_one,
                 self.population_strategy.nr_particles)
 
             # retrieve accepted population

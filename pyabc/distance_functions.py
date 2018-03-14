@@ -23,7 +23,21 @@ class DistanceFunction(ABC):
     Abstract case class for distance functions.
 
     Any other distance function should inherit from this class.
+
+    Properties
+    ----------
+
+    adaptive: Bool
+        True if the distance adapts over the iterations. Then in the SMC run
+        all summary statistics will need to be recorded, because they are used
+        in the update() method.
     """
+
+    def __init__(self):
+        """
+        Default constructor.
+        """
+        self.adaptive = False
 
     def initialize(self, sample_from_prior: List[dict]):
         """
@@ -132,6 +146,7 @@ class SimpleFunctionDistance(DistanceFunction):
     """
 
     def __init__(self, func):
+        super().__init__()
         self.function = func
 
     def __call__(self, x, y):
@@ -175,6 +190,7 @@ class PNormDistance(DistanceFunction):
     """
 
     def __init__(self, p: float):
+        super().__init__()
         if p < 1:
             raise Exception("pyabc:distance_function: p must be >= 1")
         self.p = p
@@ -296,8 +312,6 @@ class WeightedPNormDistance(PNormDistance):
             else:
                 self.w[key] = 1 / val
 
-        logging.debug('HOHA')
-
         # logging
         df_logger.debug(
             "update distance function weights = {}"
@@ -361,6 +375,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
     """
 
     def __init__(self, measures_to_use='all'):
+        super().__init__()
         self._measures_to_use_passed_to_init = measures_to_use
         #: The measures (summary statistics) to use for distance calculation.
         self.measures_to_use = None

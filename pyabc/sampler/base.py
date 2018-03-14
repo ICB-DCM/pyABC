@@ -72,7 +72,8 @@ class Sampler(ABC):
 
     @abstractmethod
     def sample_until_n_accepted(self, sample_one: Callable[[], A],
-                                simulate_one: Callable[[A], FullInfoParticle],
+                                simulate_eval_one: Callable[[A],
+                                                            FullInfoParticle],
                                 n: int) -> Sample:
         """
         Parameters
@@ -81,18 +82,18 @@ class Sampler(ABC):
             A function which takes no arguments and returns
             a proposal parameter :math:`\\theta`.
 
-        simulate_one: Callable[[A], ValidParticle]
+        simulate_eval_one: Callable[[A], ValidParticle]
             A function which takes as sole argument a proposal
             parameter :math:`\\theta` as returned by `sample_one`.
             It returns a :class:`FullInfoParticle` containing the summary
-            statistics.
+            statistics. In a field accepted, this particle returns also the
+            information whether it got accepted.
 
         n: int
-            The number of samples to be accepted. I.e. the population size.
+            The number of samples to be accepted, i.e. the population size.
 
         Returns
         -------
         sample: :class:`Sample`
-            The generated sample, in which accepted and rejected particles are
-            distinguished
+            The generated sample.
         """
