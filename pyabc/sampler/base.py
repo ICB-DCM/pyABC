@@ -5,6 +5,15 @@ from pyabc.population import FullInfoParticle, Population
 A = TypeVar('A')
 
 
+class SampleOptions:
+
+    def __init__(self):
+        self.sample_one = None # Callable[[], A]
+        self.simulate_eval_one = None # Callable[[A], FullInfoParticle]
+        self.n = None # int
+        self.record_all_summary_statistics = False
+
+
 class Sample:
     """
     A Sample is created and filled during the sampling process by the Sampler.
@@ -19,9 +28,10 @@ class Sample:
         Contains all summary statistics created during the sampling process.
     """
 
-    def __init__(self):
+    def __init__(self, sample_options: SampleOptions):
         self.accepted_particles = list()
         self.all_summary_statistics_list = list()
+        self.sample_options = sample_options
 
     def append(self, full_info_particle: FullInfoParticle):
         """
@@ -36,11 +46,12 @@ class Sample:
         if full_info_particle.accepted:
             self.accepted_particles.append(full_info_particle.to_particle())
         # keep track of all summary statistics sampled
-        self.all_summary_statistics_list.extend(
-            full_info_particle.all_summary_statistics_list)
+        if self.sample_options.record_all_summary_statistics:
+            self.all_summary_statistics_list.extend(
+                full_info_particle.all_summary_statistics_list)
 
     def __add__(self, other):
-        sample = Sample()
+        sample = Sample(self.sample_options)
         sample.accepted_particles = self.accepted_particles \
             + other.accepted_particles
         sample.all_summary_statistics_list = \
@@ -71,10 +82,7 @@ class Sampler(ABC):
         self.nr_evaluations_ = 0
 
     @abstractmethod
-    def sample_until_n_accepted(self, sample_one: Callable[[], A],
-                                simulate_eval_one: Callable[[A],
-                                                            FullInfoParticle],
-                                n: int) -> Sample:
+    def sample_until_n_accepted(self, sample_options: SampleOptions) -> Sample:
         """
         Parameters
         ----------
@@ -88,6 +96,10 @@ class Sampler(ABC):
             It returns a :class:`FullInfoParticle` containing the summary
             statistics. In a field accepted, this particle returns also the
             information whether it got accepted.
+
+        record_all_particles: bool
+            True if all particles should be recorded, False if only record
+            accepted particles.
 
         n: int
             The number of samples to be accepted, i.e. the population size.
