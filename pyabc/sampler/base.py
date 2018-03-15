@@ -37,7 +37,7 @@ class SamplingOptions:
         self.n = None
         self.sample_one = None
         self.simulate_eval_one = None
-        self.sample_options = SampleOptions
+        self.sample_options = SampleOptions()
 
 
 class Sample:
