@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar
+from typing import TypeVar
 from pyabc.population import FullInfoParticle, Population
 
 A = TypeVar('A')

@@ -237,7 +237,8 @@ class ABCSMC:
                         gt_par=ground_truth_parameter,
                         meta_info=meta)
 
-    def load(self, db: str, abc_id: int = 1) -> int:
+    def load(self, db: str,
+             abc_id: int = 1) -> int:
         """
         Load an ABC-SMC run for continuation.
 
@@ -463,7 +464,10 @@ class ABCSMC:
                     * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
-    def _evaluate_proposal(self, m_ss, theta_ss, current_eps, t,
+    def _evaluate_proposal(self, m_ss,
+                           theta_ss,
+                           current_eps,
+                           t,
                            model_probabilities,
                            record_all_summary_statistics):
         """
@@ -502,7 +506,10 @@ class ABCSMC:
 
         return full_info_particle
 
-    def _calc_proposal_weight(self, distance_list, m_ss, theta_ss,
+    def _calc_proposal_weight(self,
+                              distance_list,
+                              m_ss,
+                              theta_ss,
                               t, model_probabilities):
         if t == 0:
             weight = (len(distance_list)

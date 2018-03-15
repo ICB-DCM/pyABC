@@ -1,5 +1,6 @@
 from pyabc.sampler import (MulticoreParticleParallelSampler,
-                           MulticoreEvalParallelSampler)
+                           MulticoreEvalParallelSampler,
+                           SamplingOptions)
 from pyabc.population import FullInfoParticle
 import pytest
 from multiprocessing import ProcessError
@@ -19,7 +20,7 @@ class UnpickleAble:
 unpickleable = UnpickleAble()
 
 
-def simulate_one(par):
+def simulate_eval_one(par):
     return FullInfoParticle([], [], [], [], [], [], True)
 
 
@@ -30,9 +31,12 @@ def sampler(request):
 
 
 def test_no_pickle(sampler):
-    sampler.sample_until_n_accepted(unpickleable,
-                                    simulate_one,
-                                    10)
+    sampling_options = SamplingOptions()
+    sampling_options.n = 10
+    sampling_options.sample_one = unpickleable
+    sampling_options.simulate_eval_one = simulate_eval_one
+
+    sampler.sample_until_n_accepted(sampling_options)
 
 
 def raise_exception(*args):
@@ -42,6 +46,9 @@ def raise_exception(*args):
 
 def test_exception_from_worker_propagated(sampler):
     with pytest.raises(ProcessError):
-        sampler.sample_until_n_accepted(unpickleable,
-                                        raise_exception,
-                                        10)
+        sampling_options = SamplingOptions()
+        sampling_options.n = 10
+        sampling_options.sample_one = unpickleable
+        sampling_options.simulate_eval_one = raise_exception
+
+        sampler.sample_until_n_accepted(sampling_options)
