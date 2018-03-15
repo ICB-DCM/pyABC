@@ -41,7 +41,8 @@ class KillHandler:
             sys.exit(0)
 
 
-def work_on_population(redis: StrictRedis, start_time: int,
+def work_on_population(redis: StrictRedis,
+                       start_time: int,
                        max_runtime_s: int,
                        kill_handler: KillHandler):
     population_start_time = time()
@@ -62,7 +63,7 @@ def work_on_population(redis: StrictRedis, start_time: int,
     sampling_options = pickle.loads(ssa)
 
     internal_counter = 0
-    sample = Sample(sampling_options.sampler_options)
+    sample = Sample(sampling_options.sample_options)
     while n_particles > 0:
         if kill_handler.killed:
             worker_logger.info("Worker {} received stop signal. "
