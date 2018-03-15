@@ -87,7 +87,7 @@ def work_on_population(redis: StrictRedis,
 
         this_sim_start = time()
         new_param = sampling_options.sample_one()
-        new_sim = sampling_options.simulate_one(new_param)
+        new_sim = sampling_options.simulate_eval_one(new_param)
         sample.append(new_sim)
         cumulative_simulation_time += time() - this_sim_start
 
