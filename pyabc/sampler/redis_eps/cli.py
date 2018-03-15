@@ -94,7 +94,7 @@ def work_on_population(redis: StrictRedis,
         if new_sim.accepted:
             n_particles = redis.decr(N_PARTICLES)
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, sample)))
-            sample = Sample(sampling_options.sampler_options)
+            sample = Sample(sampling_options.sample_options)
         else:
             n_particles = int(redis.get(N_PARTICLES).decode())
 
