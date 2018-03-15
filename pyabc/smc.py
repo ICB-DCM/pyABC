@@ -16,6 +16,7 @@ from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import FullInfoParticle
+from .sampler import SamplingOptions
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -389,7 +390,7 @@ class ABCSMC:
                 par = self.parameter_priors[m].rvs()
                 return m, par
 
-            def simulate_one(para):
+            def simulate_eval_one(para):
                 all_summary_statistics_list = []
                 m, theta = para
                 model_result = self.models[m].summary_statistics(
@@ -406,10 +407,15 @@ class ABCSMC:
                     accepted)
                 return full_info_particle
 
+            # set sampling options
+            sampling_options = SamplingOptions()
+            sampling_options.n = self.population_strategy.nr_particles
+            sampling_options.sample_one = sample_one
+            sampling_options.simulate_eval_one = simulate_eval_one
+            sampling_options.sample_options.record_all_particles = True
+
             # call sampler
-            sample = self.sampler.sample_until_n_accepted(
-                sample_one, simulate_one,
-                self.population_strategy.nr_particles)
+            sample = self.sampler.sample_until_n_accepted(sampling_options)
 
             # extract summary statistics list
             self._points_sampled_from_prior = \
@@ -608,10 +614,16 @@ class ABCSMC:
                                                model_probabilities,
                                                self.distance_function.adaptive)
 
+            # set sampling options
+            sampling_options = SamplingOptions()
+            sampling_options.n = self.population_strategy.nr_particles
+            sampling_options.sample_one = sample_one
+            sampling_options.simulate_eval_one = simulate_eval_one
+            sampling_options.sample_options.record_all_particles \
+                = self.distance_function.adaptive
+
             # sample
-            sample = self.sampler.sample_until_n_accepted(
-                sample_one, simulate_eval_one,
-                self.population_strategy.nr_particles)
+            sample = self.sampler.sample_until_n_accepted(sampling_options)
 
             # retrieve accepted population
             population = sample.get_accepted_population()

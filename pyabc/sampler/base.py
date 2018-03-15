@@ -6,12 +6,38 @@ A = TypeVar('A')
 
 
 class SampleOptions:
+    """
+    Options passed to a Sample.
+
+    Properties
+    ----------
+    record_all_particles: bool
+    """
+    def __init__(self):
+        self.record_all_particles = False
+
+
+class SamplingOptions:
+    """
+    Options passed to a sampler.
+
+    Properties
+    ----------
+    sample_one: Callable[[], A]
+
+    simulate_eval_one: Callable[[A], FullInfoParticle]
+
+    n: int
+        number of particles
+
+    sample_options: SampleOptions
+    """
 
     def __init__(self):
-        self.sample_one = None # Callable[[], A]
-        self.simulate_eval_one = None # Callable[[A], FullInfoParticle]
-        self.n = None # int
-        self.record_all_summary_statistics = False
+        self.n = None
+        self.sample_one = None
+        self.simulate_eval_one = None
+        self.sample_options = SampleOptions
 
 
 class Sample:
@@ -42,15 +68,22 @@ class Sample:
         :param full_info_particle:
             Sampled particle containing all information needed later.
         """
+
         # add to population if accepted
         if full_info_particle.accepted:
             self.accepted_particles.append(full_info_particle.to_particle())
+
         # keep track of all summary statistics sampled
-        if self.sample_options.record_all_summary_statistics:
+        if self.sample_options.record_all_particles:
             self.all_summary_statistics_list.extend(
                 full_info_particle.all_summary_statistics_list)
 
     def __add__(self, other):
+        """
+        Sum function.
+        :param other:
+        :return:
+        """
         sample = Sample(self.sample_options)
         sample.accepted_particles = self.accepted_particles \
             + other.accepted_particles
@@ -82,13 +115,17 @@ class Sampler(ABC):
         self.nr_evaluations_ = 0
 
     @abstractmethod
-    def sample_until_n_accepted(self, sample_options: SampleOptions) -> Sample:
+    def sample_until_n_accepted(self,
+                                sampling_options: SamplingOptions) -> Sample:
         """
         Parameters
         ----------
         sample_one: Callable[[], A]
             A function which takes no arguments and returns
             a proposal parameter :math:`\\theta`.
+
+        sampling_options: SamplingOptions
+            Contains all options needed to customize the sampling process.
 
         simulate_eval_one: Callable[[A], ValidParticle]
             A function which takes as sole argument a proposal

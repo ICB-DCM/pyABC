@@ -4,33 +4,33 @@ from .multicorebase import MultiCoreSampler
 from ..sge import nr_cores_available
 import numpy as np
 import random
-from .base import Sample
+from .base import Sample, SamplingOptions
 from .multicorebase import get_if_worker_healthy
 
 DONE = "Done"
 
 
-def work(sample_one, simulate_one,
+def work(sampling_options: SamplingOptions,
          queue, n_eval: Value, n_particles: Value):
     random.seed()
     np.random.seed()
 
-    sample = Sample()
+    sample = Sample(sampling_options.sample_options)
 
     while n_particles.value > 0:
         with n_eval.get_lock():
             particle_id = n_eval.value
             n_eval.value += 1
 
-        new_param = sample_one()
-        new_sim = simulate_one(new_param)
+        new_param = sampling_options.sample_one()
+        new_sim = sampling_options.simulate_eval_one(new_param)
         sample.append(new_sim)
         if new_sim.accepted:
             with n_particles.get_lock():
                 n_particles.value -= 1
 
             queue.put((particle_id, sample))
-            sample = Sample()
+            sample = Sample(sampling_options.sample_options)
 
     queue.put(DONE)
 
@@ -76,18 +76,18 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, n):
+    def sample_until_n_accepted(self, sampling_options):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
         n_particles = Value(c_longlong)
-        n_particles.value = n
+        n_particles.value = sampling_options.n
 
         queue = Queue()
 
         processes = [
             Process(target=work,
-                    args=(sample_one, simulate_one,
+                    args=(sampling_options,
                           queue, n_eval, n_particles),
                     daemon=self.daemon)
             for _ in range(self.n_procs)
@@ -113,15 +113,15 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
-        id_results = id_results[:n]
+        id_results = id_results[:sampling_options.n]
 
         self.nr_evaluations_ = n_eval.value
 
         population = [res[1] for res in id_results]
 
         # create 1 to-be-returned sample from populations
-        sample = Sample()
-        for j in range(n):
+        sample = Sample(sampling_options.sample_options)
+        for j in range(sampling_options.n):
             sample += population[j]
 
         return sample

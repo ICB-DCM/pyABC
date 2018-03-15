@@ -14,17 +14,18 @@ class EPSMixin:
             result_batch.append((eval_result, eval_accept, job_id[j]))
         return result_batch
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, n):
+    def sample_until_n_accepted(self, sampling_options):
         # For default pickling
         if self.default_pickle:
-            self.simulate_accept_one = pickle.dumps((simulate_one))
+            self.simulate_accept_one = pickle.dumps(
+                sampling_options.simulate_eval_one)
             full_submit_function = self.full_submit_function_pickle
         else:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(param, job_id):
                 result_batch = []
                 for j in range(self.batchsize):
-                    eval_result = simulate_one(param[j])
+                    eval_result = sampling_options.simulate_eval_one(param[j])
                     eval_accept = eval_result.accepted
                     result_batch.append((eval_result, eval_accept, job_id[j]))
                 return result_batch
@@ -88,7 +89,7 @@ class EPSMixin:
             # num_accepted_total < jobs required
             if (len(running_jobs) < self.client_max_jobs) and \
                     (len(running_jobs) < self.client_cores()) and \
-                    (num_accepted_total < n):
+                    (num_accepted_total < sampling_options.n):
                 for _ in range(0,
                                np.minimum(self.client_max_jobs,
                                           self.client_cores()).astype(int)
@@ -96,7 +97,7 @@ class EPSMixin:
                     para_batch = []
                     job_id_batch = []
                     for i in range(self.batchsize):
-                        para_batch.append(sample_one())
+                        para_batch.append(sampling_options.sample_one())
                         job_id_batch.append(next_job_id)
                         next_job_id += 1
 
@@ -110,9 +111,9 @@ class EPSMixin:
             curJob.cancel()
 
         # create and to-be-returned sample from all results
-        sample = Sample()
+        sample = Sample(sampling_options.sample_options)
         counter_accepted = 0
-        while counter_accepted < n:
+        while counter_accepted < sampling_options.n:
             cur_res = all_results.pop(0)
             particle = cur_res[1]
             sample.append(cur_res[1])
