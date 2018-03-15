@@ -78,7 +78,7 @@ latest/task.html#quick-and-easy-parallelism)
 
         while True:
             new_param = sampling_options.sample_one()
-            new_sim = sampling_options.simulate_one(new_param)
+            new_sim = sampling_options.simulate_eval_one(new_param)
             nr_simulations += 1
             sample.append(new_sim)
             if new_sim.accepted:
