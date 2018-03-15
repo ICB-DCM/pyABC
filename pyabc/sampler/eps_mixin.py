@@ -78,7 +78,7 @@ class EPSMixin:
 
             # If num_accepted >= n
             # return the first n accepted results
-            if num_accepted_sequential >= n:
+            if num_accepted_sequential >= sampling_options.n:
                 break
 
             # Update information on scheduler state
