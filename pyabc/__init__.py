@@ -26,7 +26,7 @@ from .distance_functions import (DistanceFunction,
                                  PercentileDistanceFunction,
                                  RangeEstimatorDistanceFunction,
                                  DistanceFunctionWithMeasureList)
-from .epsilon import Epsilon, ConstantEpsilon, MedianEpsilon, ListEpsilon
+from .epsilon import Epsilon, ConstantEpsilon, QuantileEpsilon, MedianEpsilon, ListEpsilon
 from .smc import ABCSMC
 from .storage import History
 from .model import Model, SimpleModel, ModelResult, IntegratedModel

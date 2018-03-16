@@ -14,12 +14,25 @@ def weight_checked(function):
 
 @weight_checked
 def weighted_median(points, weights):
-        sorted_indices = sp.argsort(points)
-        points = points[sorted_indices]
+    sorted_indices = sp.argsort(points)
+    points = points[sorted_indices]
+    weights = weights[sorted_indices]
+    cs = sp.cumsum(weights)
+    median = sp.interp(.5, cs - .5 * weights, points)
+    return median
+
+
+def weighted_quantile(points, weights=None, alpha=0.5):
+    sorted_indices = sp.argsort(points)
+    points = points[sorted_indices]
+    if weights is None:
+        len_points = len(points)
+        weights = sp.ones(len_points) / len_points
+    else:
         weights = weights[sorted_indices]
-        cs = sp.cumsum(weights)
-        median = sp.interp(.5, cs - .5*weights, points)
-        return median
+    cs = sp.cumsum(weights)
+    quantile = sp.interp(alpha, cs, points)
+    return quantile
 
 
 @weight_checked
