@@ -69,16 +69,16 @@ latest/task.html#quick-and-easy-parallelism)
         self.pickle, self.unpickle, self.nr_evaluations_ = state
 
     def map_function(self, sample_simulate_accept, _):
-        sampling_options = self.unpickle(sample_simulate_accept)
+        sampler_options = self.unpickle(sample_simulate_accept)
 
         np.random.seed()
         random.seed()
         nr_simulations = 0
-        sample = Sample(sampling_options.sample_options)
+        sample = Sample(sampler_options.sample_options)
 
         while True:
-            new_param = sampling_options.sample_one()
-            new_sim = sampling_options.simulate_eval_one(new_param)
+            new_param = sampler_options.sample_one()
+            new_sim = sampler_options.simulate_eval_one(new_param)
             nr_simulations += 1
             sample.append(new_sim)
             if new_sim.accepted:
@@ -86,19 +86,19 @@ latest/task.html#quick-and-easy-parallelism)
 
         return sample, nr_simulations
 
-    def sample_until_n_accepted(self, sampling_options):
+    def sample_until_n_accepted(self, sampler_options):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.
         # Correct usage of shared references might even be necessary
         # to ensure correct working, depending on the details of the
         # model implementations.
-        sample_simulate_accept = self.pickle(sampling_options)
+        sample_simulate_accept = self.pickle(sampler_options)
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)
 
         counted_results = list(self.map(map_function,
-                                        [None] * sampling_options.n))
+                                        [None] * sampler_options.n))
         counted_results = filter(lambda x: not isinstance(x, Exception),
                                  counted_results)
         results, evals = zip(*counted_results)
@@ -107,7 +107,7 @@ latest/task.html#quick-and-easy-parallelism)
         self.nr_evaluations_ = sum(evals)
 
         # aggregate all results to 1 to-be-returned sample
-        sample = Sample(sampling_options.sample_options)
+        sample = Sample(sampler_options.sample_options)
         for result in results:
             sample += result
 

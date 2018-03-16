@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TypeVar
+from typing import Callable, TypeVar
 from pyabc.population import FullInfoParticle, Population
 
 A = TypeVar('A')
@@ -13,11 +13,12 @@ class SampleOptions:
     ----------
     record_all_particles: bool
     """
-    def __init__(self):
-        self.record_all_particles = False
+    def __init__(self,
+                 record_all_particles: bool =False):
+        self.record_all_particles = record_all_particles
 
 
-class SamplingOptions:
+class SamplerOptions:
     """
     Options passed to a sampler.
 
@@ -33,11 +34,15 @@ class SamplingOptions:
     sample_options: SampleOptions
     """
 
-    def __init__(self):
-        self.n = None
-        self.sample_one = None
-        self.simulate_eval_one = None
-        self.sample_options = SampleOptions()
+    def __init__(self,
+                 n: int,
+                 sample_one: Callable[[], A],
+                 simulate_eval_one: Callable[[A], FullInfoParticle],
+                 sample_options: SampleOptions =SampleOptions()):
+        self.n = n
+        self.sample_one = sample_one
+        self.simulate_eval_one = simulate_eval_one
+        self.sample_options = sample_options
 
 
 class Sample:
@@ -116,7 +121,7 @@ class Sampler(ABC):
 
     @abstractmethod
     def sample_until_n_accepted(self,
-                                sampling_options: SamplingOptions) -> Sample:
+                                sampler_options: SamplerOptions) -> Sample:
         """
         Parameters
         ----------
@@ -124,7 +129,7 @@ class Sampler(ABC):
             A function which takes no arguments and returns
             a proposal parameter :math:`\\theta`.
 
-        sampling_options: SamplingOptions
+        sampler_options: SamplerOptions
             Contains all options needed to customize the sampling process.
 
         simulate_eval_one: Callable[[A], ValidParticle]

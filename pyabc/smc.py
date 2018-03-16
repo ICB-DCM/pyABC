@@ -16,7 +16,7 @@ from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import FullInfoParticle
-from .sampler import SamplingOptions
+from .sampler import SampleOptions, SamplerOptions
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -409,14 +409,14 @@ class ABCSMC:
                 return full_info_particle
 
             # set sampling options
-            sampling_options = SamplingOptions()
-            sampling_options.n = self.population_strategy.nr_particles
-            sampling_options.sample_one = sample_one
-            sampling_options.simulate_eval_one = simulate_eval_one
-            sampling_options.sample_options.record_all_particles = True
+            sampler_options = SamplerOptions(
+                n=self.population_strategy.nr_particles,
+                sample_one=sample_one,
+                simulate_eval_one=simulate_eval_one,
+                sample_options=SampleOptions(True))
 
             # call sampler
-            sample = self.sampler.sample_until_n_accepted(sampling_options)
+            sample = self.sampler.sample_until_n_accepted(sampler_options)
 
             # extract summary statistics list
             self._points_sampled_from_prior = \
@@ -622,15 +622,14 @@ class ABCSMC:
                                                self.distance_function.adaptive)
 
             # set sampling options
-            sampling_options = SamplingOptions()
-            sampling_options.n = self.population_strategy.nr_particles
-            sampling_options.sample_one = sample_one
-            sampling_options.simulate_eval_one = simulate_eval_one
-            sampling_options.sample_options.record_all_particles \
-                = self.distance_function.adaptive
+            sampler_options = SamplerOptions(
+                n=self.population_strategy.nr_particles,
+                sample_one=sample_one,
+                simulate_eval_one=simulate_eval_one,
+                sample_options=SampleOptions(self.distance_function.adaptive))
 
             # sample
-            sample = self.sampler.sample_until_n_accepted(sampling_options)
+            sample = self.sampler.sample_until_n_accepted(sampler_options)
 
             # retrieve accepted population
             population = sample.get_accepted_population()
