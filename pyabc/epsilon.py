@@ -9,14 +9,13 @@ a user-defined implementation.
 
 
 import scipy as sp
-import pandas
 import logging
 import json
 from abc import ABC, abstractmethod
 from .storage import History
 from .weighted_statistics import weighted_median, weighted_quantile
 from pyabc.population import Population
-from typing import List, Union
+from typing import Callable, List, Union
 eps_logger = logging.getLogger("Epsilon")
 
 
@@ -27,7 +26,8 @@ class Epsilon(ABC):
     This class encapsulates a strategy for setting a new epsilon for
     each new population.
     """
-    def initialize(self, prior_distances):
+    def initialize(self, sample_from_prior: List[dict],
+                   distance_to_ground_truth_function: Callable[[dict], float]):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon
@@ -39,8 +39,13 @@ class Epsilon(ABC):
         Parameters
         ----------
 
-        prior_distances: List[float]
-            List containing the distances calculated for the summary statistics
+        sample_from_prior: List[dict]
+            List of dictionaries containing the summary statistics.
+
+        distance_to_ground_truth_function: Callable[[dict], float]
+            One of the distance functions pre evaluated at its second argument
+            (the one representing the measured data).
+            E.g. something like lambda x: distance_function(x, x_measured)
 
         """
         pass
@@ -218,12 +223,15 @@ class QuantileEpsilon(Epsilon):
                        "quantile_multiplier": self.quantile_multiplier})
         return config
 
-    def initialize(self, prior_distances):
-        super().initialize(prior_distances)
+    def initialize(self, sample_from_prior, distance_to_ground_truth_function):
+        super().initialize(sample_from_prior,
+                           distance_to_ground_truth_function)
 
         # calculate initial epsilon if not given
         if self._initial_epsilon == 'from_sample':
-            eps_t0 = weighted_quantile(points=prior_distances,
+            distances = sp.asarray([distance_to_ground_truth_function(x)
+                                    for x in sample_from_prior])
+            eps_t0 = weighted_quantile(points=distances,
                                        alpha=self.alpha) \
                      * self.quantile_multiplier
             self._look_up = {0: eps_t0}
@@ -333,12 +341,15 @@ class MedianEpsilon(Epsilon):
                        "median_multiplier": self.median_multiplier})
         return config
 
-    def initialize(self, prior_distances):
-        super().initialize(prior_distances)
+    def initialize(self, sample_from_prior, distance_to_ground_truth_function):
+        super().initialize(sample_from_prior,
+                           distance_to_ground_truth_function)
 
         # calculate initial epsilon if not given
         if self._initial_epsilon == 'from_sample':
-            eps_t0 = sp.median(prior_distances) * self.median_multiplier
+            distances = sp.asarray([distance_to_ground_truth_function(x)
+                                    for x in sample_from_prior])
+            eps_t0 = sp.median(distances) * self.median_multiplier
             self._look_up = {0: eps_t0}
         else:
             self._look_up = {0: self._initial_epsilon}

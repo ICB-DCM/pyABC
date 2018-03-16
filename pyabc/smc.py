@@ -362,17 +362,13 @@ class ABCSMC:
         Initialize distance function and epsilon.
         """
 
-        prior_summary_statistics = self._prior_sample()
-
-        self.distance_function.initialize(prior_summary_statistics)
+        self.distance_function.initialize(self._prior_sample())
 
         def distance_to_ground_truth_function(x):
             return self.distance_function(x, self.x_0)
 
-        prior_distances = sp.asarray([distance_to_ground_truth_function(x)
-                                      for x in prior_summary_statistics])
-
-        self.eps.initialize(prior_distances)
+        self.eps.initialize(self._prior_sample(),
+                            distance_to_ground_truth_function)
 
     def _prior_sample(self) -> List[dict]:
         """
