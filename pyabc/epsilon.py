@@ -231,9 +231,8 @@ class QuantileEpsilon(Epsilon):
         if self._initial_epsilon == 'from_sample':
             distances = sp.asarray([distance_to_ground_truth_function(x)
                                     for x in sample_from_prior])
-            eps_t0 = weighted_quantile(points=distances,
-                                       alpha=self.alpha) \
-                     * self.quantile_multiplier
+            eps_t0 = weighted_quantile(points=distances, alpha=self.alpha) * \
+                     self.quantile_multiplier
             self._look_up = {0: eps_t0}
         else:
             self._look_up = {0: self._initial_epsilon}

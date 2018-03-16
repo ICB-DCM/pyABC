@@ -28,7 +28,7 @@ def work(feed_q, result_q, sampler_options):
     # create copy of sampling options with n=1
     sampler_options_worker = SamplerOptions(
         n=1,
-        sample_one=sampler_options.sampler_one,
+        sample_one=sampler_options.sample_one,
         simulate_eval_one=sampler_options.simulate_eval_one,
         sample_options=sampler_options.sample_options)
 

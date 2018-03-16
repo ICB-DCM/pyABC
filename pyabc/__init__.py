@@ -26,11 +26,19 @@ from .distance_functions import (DistanceFunction,
                                  PercentileDistanceFunction,
                                  RangeEstimatorDistanceFunction,
                                  DistanceFunctionWithMeasureList)
-from .epsilon import Epsilon, ConstantEpsilon, QuantileEpsilon, MedianEpsilon, ListEpsilon
+from .epsilon import (Epsilon,
+                      ConstantEpsilon,
+                      QuantileEpsilon,
+                      MedianEpsilon,
+                      ListEpsilon)
 from .smc import ABCSMC
 from .storage import History
-from .model import Model, SimpleModel, ModelResult, IntegratedModel
-from .transition import MultivariateNormalTransition, LocalTransition
+from .model import (Model,
+                    SimpleModel,
+                    ModelResult,
+                    IntegratedModel)
+from .transition import (MultivariateNormalTransition,
+                         LocalTransition)
 from .populationstrategy import (AdaptivePopulationSize,
                                  ConstantPopulationSize)
 from .transition import GridSearchCV
@@ -53,7 +61,11 @@ __all__ = [
     "MinMaxDistanceFunction",
     "PercentileDistanceFunction",
     # Distance end
-    "Epsilon", "ConstantEpsilon", "ListEpsilon", "MedianEpsilon",
+    "Epsilon",
+    "ConstantEpsilon",
+    "ListEpsilon",
+    "QuantileEpsilon",
+    "MedianEpsilon",
     # random_variables start
     "RVBase",
     "RV",
