@@ -31,7 +31,7 @@ def weighted_quantile(points, weights=None, alpha=0.5):
     else:
         weights = weights[sorted_indices]
     cs = sp.cumsum(weights)
-    quantile = sp.interp(alpha, cs, points)
+    quantile = sp.interp(alpha, cs - (1-alpha)*weights, points)
     return quantile
 
 
