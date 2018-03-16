@@ -312,6 +312,11 @@ class WeightedPNormDistance(PNormDistance):
             else:
                 self.w[key] = 1 / val
 
+        # normalize weights to have mean 1
+        mean_weight = statistics.mean(list(self.w.values()))
+        for key in self.w.keys():
+            self.w[key] /= mean_weight
+
         # logging
         df_logger.debug(
             "update distance function weights = {}"
