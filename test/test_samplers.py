@@ -55,7 +55,11 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
         super().__init__(batchsize=batchsize)
 
 
-@pytest.fixture(params=[RedisEvalParallelSamplerServerStarter,
+def RedisEvalParallelSamplerServerStarterWrapper():
+    return RedisEvalParallelSamplerServerStarter(batch_size=5)
+
+
+@pytest.fixture(params=[RedisEvalParallelSamplerServerStarterWrapper,
                         MulticoreEvalParallelSampler,
                         SingleCoreSampler,
                         MultiProcessingMappingSampler,
@@ -78,7 +82,7 @@ def sampler(request):
 
 @pytest.fixture
 def redis_starter_sampler():
-    s = RedisEvalParallelSamplerServerStarter()
+    s = RedisEvalParallelSamplerServerStarter(batch_size=5)
     yield s
     s.cleanup()
 

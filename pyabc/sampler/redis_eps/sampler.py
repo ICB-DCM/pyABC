@@ -4,7 +4,7 @@ import cloudpickle
 from redis import StrictRedis
 from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_PARTICLES, N_WORKER, QUEUE, MSG, START,
-                  SLEEP_TIME)
+                  SLEEP_TIME, BATCH_SIZE)
 from .redis_logging import worker_logger
 
 
@@ -38,17 +38,24 @@ class RedisEvalParallelSampler(Sampler):
 
     host: str, optional
         IP address or name of the Redis server.
-        Default is "localhost"
+        Default is "localhost".
 
     port: int, optional
         Port of the Redis server.
-        Default if 6379.
+        Default is 6379.
+
+    batch_size: int, optional
+        Number of model evaluations the workers perform before contacting
+        the REDIS server. Defaults to 1. Increase this value if model
+        evaluation times are short or the number of workers is large
+        to reduce communication overhead.
     """
-    def __init__(self, host="localhost", port=6379):
+    def __init__(self, host="localhost", port=6379, batch_size=1):
         super().__init__()
         worker_logger.debug("Redis sampler: host={} port={}"
                             .format(host, port))
         self.redis = StrictRedis(host=host, port=port)
+        self.batch_size = batch_size
 
     def n_worker(self):
         """
@@ -62,13 +69,16 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
-        self.redis.set(SSA,
-                       cloudpickle.dumps(
+        pipeline = self.redis.pipeline()
+        pipeline.set(SSA,
+                     cloudpickle.dumps(
                            (sample_one, simulate_one, accept_one)))
-        self.redis.set(N_EVAL, 0)
-        self.redis.set(N_PARTICLES, n)
-        self.redis.set(N_WORKER, 0)
-        self.redis.delete(QUEUE)
+        pipeline.set(N_EVAL, 0)
+        pipeline.set(N_PARTICLES, n)
+        pipeline.set(N_WORKER, 0)
+        pipeline.set(BATCH_SIZE, self.batch_size)
+        pipeline.delete(QUEUE)
+        pipeline.execute()
 
         id_results = []
 
@@ -88,9 +98,12 @@ class RedisEvalParallelSampler(Sampler):
 
         self.nr_evaluations_ = int(self.redis.get(N_EVAL).decode())
 
-        self.redis.delete(SSA)
-        self.redis.delete(N_EVAL)
-        self.redis.delete(N_PARTICLES)
+        pipeline = self.redis.pipeline()
+        pipeline.delete(SSA)
+        pipeline.delete(N_EVAL)
+        pipeline.delete(N_PARTICLES)
+        pipeline.delete(BATCH_SIZE)
+        pipeline.execute()
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:n]

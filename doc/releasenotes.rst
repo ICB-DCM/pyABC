@@ -5,6 +5,13 @@ Release Notes
 ..........
 
 
+0.8.20
+------
+
+* Add batch sampling now also to the REDIS evaluation parallel sampler
+  (dynamic scheduling)
+
+
 0.8.19
 ------
 
