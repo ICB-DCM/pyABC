@@ -308,6 +308,8 @@ class WeightedPNormDistance(PNormDistance):
                     "pyabc:distance_function: scale_type not recognized.")
 
             if val == 0:
+                # in practise, this case should be rare (if only for numeric
+                # reasons, so setting the weight to 1 should be safe)
                 self.w[key] = 1
             else:
                 self.w[key] = 1 / val
