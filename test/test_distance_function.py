@@ -59,10 +59,10 @@ def test_adaptive_distance():
                zip(list(dist_f.w.values()), [1, 1, 1])) < 0.01
 
     # now test that the weights adapt correctly for a weighted distance
+    scale_type = WeightedPNormDistance.SCALE_TYPE_MAD
     dist_f = WeightedPNormDistance(p=2,
                                    adaptive=True,
-                                   scale_type=
-                                   WeightedPNormDistance.SCALE_TYPE_MAD)
+                                   scale_type=scale_type)
     dist_f.initialize(abc.sample_from_prior())
     # the weights are adapted using MAD, and then divided by the mean
     # here mean = 4/3, so (noting that in addition the MAD of 0 in s1 is set to
