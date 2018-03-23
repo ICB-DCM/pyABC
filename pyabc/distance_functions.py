@@ -2,7 +2,7 @@
 Distance functions
 ==================
 
-Distance functions which measure closeness of observed and sampled data.
+Distance functions measure closeness of observed and sampled data.
 For custom distance functions, either pass a plain function to ABCSMC or
 subclass the DistanceFunction class if finer grained configuration is required.
 """
