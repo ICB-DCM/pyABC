@@ -41,7 +41,7 @@ class SamplerOptions:
                  sample_options: SampleOptions =SampleOptions()):
         self.n = n
         self.sample_one = sample_one
-        self.simulate_eval_one = simul_eval_one
+        self.simul_eval_one = simul_eval_one
         self.sample_options = sample_options
 
 
@@ -132,7 +132,7 @@ class Sampler(ABC):
         sampler_options: SamplerOptions
             Contains all options needed to customize the sampling process.
 
-        simulate_eval_one: Callable[[A], ValidParticle]
+        simul_eval_one: Callable[[A], ValidParticle]
             A function which takes as sole argument a proposal
             parameter :math:`\\theta` as returned by `sample_one`.
             It returns a :class:`FullInfoParticle` containing the summary
