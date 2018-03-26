@@ -66,6 +66,7 @@ class DistanceFunction(ABC):
 
         :param simulations_all:
             List of all simulations (summary statistics).
+
         :return:
             True: If distance function has changed.
             False: If distance function has not changed (default).
@@ -198,7 +199,7 @@ class PNormDistance(DistanceFunction):
     def __init__(self, p: float):
         super().__init__()
         if p < 1:
-            raise ValueError("pyabc:distance_function: p must be >= 1")
+            raise ValueError("It must be p be >= 1")
         self.p = p
         self.w = None
 

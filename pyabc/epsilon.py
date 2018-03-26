@@ -1,9 +1,9 @@
 """
+Acceptance threshold scheduling strategies
+==========================================
 
-Acceptance threshold scheduling strategies.
-
-Acceptance thresholds can be calculated based on the distances from the
-observed data, can follow a pre-defined list, can be constant, or can have
+Acceptance thresholds (= epsilon) can be calculated based on the distances from
+the observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
@@ -13,7 +13,7 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from .storage import History
-from .weighted_statistics import weighted_median, weighted_quantile
+from .weighted_statistics import weighted_quantile
 from pyabc.population import Population
 from typing import Callable, List, Union
 eps_logger = logging.getLogger("Epsilon")
@@ -55,7 +55,7 @@ class Epsilon(ABC):
                  history: History,
                  latest_population: Population =None) -> float:
         """
-        Return current epsilon / epsilon at time t.
+        Possibly calculate and return current epsilon / epsilon at time t.
 
         Parameters
         ----------
@@ -221,9 +221,11 @@ class QuantileEpsilon(Epsilon):
         config = super().get_config()
         config.update({"initial_epsilon": self._initial_epsilon,
                        "quantile_multiplier": self.quantile_multiplier})
+
         return config
 
-    def initialize(self, sample_from_prior, distance_to_ground_truth_function):
+    def initialize(self,
+                   sample_from_prior, distance_to_ground_truth_function):
         super().initialize(sample_from_prior,
                            distance_to_ground_truth_function)
 
@@ -237,18 +239,35 @@ class QuantileEpsilon(Epsilon):
         else:
             self._look_up = {0: self._initial_epsilon}
 
+        # logging
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
+
+    def __call__(self, t: int,
+                 history: History,
+                 latest_population: Population =None) -> float:
+        """
+        Compute new epsilon from input, and return it.
+        """
+        try:
+            eps = self._look_up[t]
+        except KeyError:
+            # this will be the usual case after the first iteration
+            self._update(t, history, latest_population)
+            eps = self._look_up[t]
+
+        return eps
 
     def _update(self, t: int,
                 history: History,
                 latest_population: Population =None):
         """
-        Compute median of the distances given in population, and use this to
-        update epsilon.
+        Compute quantile of the (weighted) distances given in population,
+        and use this to update epsilon.
         """
 
-        # if latest_population is None, e.g. after smc.load(), read latest
-        # weighted distances from history, else use the passed population
+        # If latest_population is None, e.g. after smc.load(), read latest
+        # weighted distances from history, else use the passed latest
+        # population.
         if latest_population is None:
             df_weighted = history.get_weighted_distances(None)
         else:
@@ -270,20 +289,9 @@ class QuantileEpsilon(Epsilon):
             points=distances, weights=weights, alpha=self.alpha)
 
         self._look_up[t] = quantile * self.quantile_multiplier
-        eps_logger.debug("new eps, t={}, eps={}"
-                         .format(t, self._look_up[t]))
 
-    def __call__(self, t: int,
-                 history: History,
-                 latest_population: Population =None) -> float:
-        try:
-            eps = self._look_up[t]
-        except KeyError:
-            # this will be the usual case after the first iteration
-            self._update(t, history, latest_population)
-            eps = self._look_up[t]
-
-        return eps
+        # logger
+        eps_logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
 
 
 class MedianEpsilon(Epsilon):
@@ -377,8 +385,7 @@ class MedianEpsilon(Epsilon):
             # Re-normalize in this case.
             weights = df_weighted.w.as_matrix()
             weights /= weights.sum()
-            median = weighted_median(
-                distances, weights)
+            median = weighted_quantile(distances, weights, 0.5)
         else:
             median = sp.median(df_weighted.distance.as_matrix())
 

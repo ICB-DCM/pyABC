@@ -12,6 +12,17 @@ def weight_checked(function):
     return function_with_checking
 
 
+def weight_checked2(function):
+    """
+    Function decorator to check normalization of weights.
+    """
+    def function_with_checking(points, weights, alpha):
+        assert abs(weights.sum() - 1) < 1e-5, \
+            ("Weights not normalized", weights.sum())
+        return function(points, weights, alpha)
+    return function_with_checking
+
+
 @weight_checked
 def weighted_median(points, weights):
     sorted_indices = sp.argsort(points)
@@ -22,6 +33,7 @@ def weighted_median(points, weights):
     return median
 
 
+@weight_checked2
 def weighted_quantile(points, weights=None, alpha=0.5):
     sorted_indices = sp.argsort(points)
     points = points[sorted_indices]
