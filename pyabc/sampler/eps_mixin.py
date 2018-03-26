@@ -18,14 +18,14 @@ class EPSMixin:
         # For default pickling
         if self.default_pickle:
             self.simulate_accept_one = pickle.dumps(
-                sampler_options.simulate_eval_one)
+                sampler_options.simul_eval_one)
             full_submit_function = self.full_submit_function_pickle
         else:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(param, job_id):
                 result_batch = []
                 for j in range(self.batchsize):
-                    eval_result = sampler_options.simulate_eval_one(param[j])
+                    eval_result = sampler_options.simul_eval_one(param[j])
                     eval_accept = eval_result.accepted
                     result_batch.append((eval_result, eval_accept, job_id[j]))
                 return result_batch

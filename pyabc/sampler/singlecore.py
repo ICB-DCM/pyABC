@@ -13,7 +13,7 @@ class SingleCoreSampler(Sampler):
         for _ in range(sampler_options.n):
             while True:
                 new_param = sampler_options.sample_one()
-                new_sim = sampler_options.simulate_eval_one(new_param)
+                new_sim = sampler_options.simul_eval_one(new_param)
                 sample.append(new_sim)
                 nr_simulations += 1
                 if new_sim.accepted:

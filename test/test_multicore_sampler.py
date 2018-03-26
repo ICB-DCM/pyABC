@@ -20,7 +20,7 @@ class UnpickleAble:
 unpickleable = UnpickleAble()
 
 
-def simulate_eval_one(par):
+def simul_eval_one(par):
     return FullInfoParticle([], [], [], [], [], [], True)
 
 
@@ -34,7 +34,7 @@ def test_no_pickle(sampler):
     sampler_options = SamplerOptions(
         n=10,
         sample_one=unpickleable,
-        simulate_eval_one=simulate_eval_one)
+        simul_eval_one=simul_eval_one)
 
     sampler.sample_until_n_accepted(sampler_options)
 
@@ -49,6 +49,6 @@ def test_exception_from_worker_propagated(sampler):
         sampler_options = SamplerOptions(
             n=10,
             sample_one=unpickleable,
-            simulate_eval_one=raise_exception)
+            simul_eval_one=raise_exception)
 
         sampler.sample_until_n_accepted(sampler_options)

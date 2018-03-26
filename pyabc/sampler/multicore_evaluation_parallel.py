@@ -23,7 +23,7 @@ def work(sampler_options: SamplerOptions,
             n_eval.value += 1
 
         new_param = sampler_options.sample_one()
-        new_sim = sampler_options.simulate_eval_one(new_param)
+        new_sim = sampler_options.simul_eval_one(new_param)
         sample.append(new_sim)
         if new_sim.accepted:
             with n_particles.get_lock():

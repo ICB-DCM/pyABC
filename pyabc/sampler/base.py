@@ -26,7 +26,7 @@ class SamplerOptions:
     ----------
     sample_one: Callable[[], A]
 
-    simulate_eval_one: Callable[[A], FullInfoParticle]
+    simul_eval_one: Callable[[A], FullInfoParticle]
 
     n: int
         number of particles
@@ -37,11 +37,11 @@ class SamplerOptions:
     def __init__(self,
                  n: int,
                  sample_one: Callable[[], A],
-                 simulate_eval_one: Callable[[A], FullInfoParticle],
+                 simul_eval_one: Callable[[A], FullInfoParticle],
                  sample_options: SampleOptions =SampleOptions()):
         self.n = n
         self.sample_one = sample_one
-        self.simulate_eval_one = simulate_eval_one
+        self.simulate_eval_one = simul_eval_one
         self.sample_options = sample_options
 
 

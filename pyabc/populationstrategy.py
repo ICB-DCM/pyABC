@@ -1,6 +1,6 @@
 """
-Population stratgy
-==================
+Population strategy
+===================
 
 Strategies to choose the population size.
 
@@ -39,6 +39,7 @@ class PopulationStrategy:
         Number of samples to draw for a proposed parameter.
         Default is 1.
     """
+
     def __init__(self, nr_particles: int, *, nr_samples_per_parameter: int=1):
         self.nr_particles = nr_particles
         self.nr_samples_per_parameter = nr_samples_per_parameter
@@ -100,6 +101,7 @@ class ConstantPopulationSize(PopulationStrategy):
     nr_samples_per_parameter: int
         Number of samples to draw for a proposed parameter
     """
+
     def adapt_population_size(self, transitions, model_weights):
         pass
 
@@ -139,7 +141,6 @@ class AdaptivePopulationSize(PopulationStrategy):
     n_bootstrap: int, optional
         Number of bootstrapped populations to use to estimate the CV.
         Defaults to 10.
-
 
 
 

@@ -5,6 +5,17 @@ Release Notes
 ..........
 
 
+0.8.20
+------
+
+* Add Adaptive Distance feature. All distance functions can implement an
+  update() method.
+* In particular add WeightedPNormDistance.
+* Change interface of Sampler.sample_until_n_accepted to allow passing
+  more information.
+* Add QuantileEpsilon feature.
+
+
 0.8.19
 ------
 

@@ -125,12 +125,14 @@ class ABCSMC:
         automatically as soon as only a single model has survived.
 
 
+
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
                   Systems in Systems and Population Biology.”
                   Bioinformatics 26, no. 1 (2010):
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
+
     def __init__(self, models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
@@ -219,6 +221,7 @@ class ABCSMC:
 
            The method "set_data" is deprecated.
         """
+
         warnings.warn("The method \"set_data\" is deprecated "
                       "and to be removed "
                       "in pyABC 0.10.0 "
@@ -387,7 +390,7 @@ class ABCSMC:
                 par = self.parameter_priors[m].rvs()
                 return m, par
 
-            def simulate_eval_one(para):
+            def simul_eval_one(para):
                 all_summary_statistics_list = []
                 m, theta = para
                 model_result = self.models[m].summary_statistics(
@@ -408,8 +411,8 @@ class ABCSMC:
             sampler_options = SamplerOptions(
                 n=self.population_strategy.nr_particles,
                 sample_one=sample_one,
-                simulate_eval_one=simulate_eval_one,
-                sample_options=SampleOptions(True))
+                simul_eval_one=simul_eval_one,
+                sample_options=SampleOptions(record_all_particles=True))
 
             # call sampler
             sample = self.sampler.sample_until_n_accepted(sampler_options)
@@ -467,7 +470,8 @@ class ABCSMC:
                            model_probabilities,
                            record_all_summary_statistics):
         """
-        Corresponds to Sampler.simulate_eval_one.
+        Corresponds to Sampler.simul_eval_one.
+
         This is where the actual model evaluation happens.
         """
 
@@ -572,9 +576,10 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
+
+        # argument handling
         if len(kwargs) > 1:
             raise TypeError("Keyword arguments are not allowed.")
-
         if "acceptance_rate" in kwargs:
             warnings.warn("The acceptance_rate argument is deprecated and "
                           "removed in pyABc 0.9.0. "
@@ -612,7 +617,7 @@ class ABCSMC:
             def sample_one():
                 return self._generate_valid_proposal(t, m, p)
 
-            def simulate_eval_one(par):
+            def simul_eval_one(par):
                 return self._evaluate_proposal(*par, current_eps, t,
                                                model_probabilities,
                                                self.distance_function.adaptive)
@@ -621,7 +626,7 @@ class ABCSMC:
             sampler_options = SamplerOptions(
                 n=self.population_strategy.nr_particles,
                 sample_one=sample_one,
-                simulate_eval_one=simulate_eval_one,
+                simul_eval_one=simul_eval_one,
                 sample_options=SampleOptions(self.distance_function.adaptive))
 
             # sample
@@ -651,17 +656,18 @@ class ABCSMC:
                 break
 
             # adapt distance function
-            distance_function_updated = self.distance_function.update(
+            df_updated = self.distance_function.update(
                 sample.all_summary_statistics_list)
 
             if t < t_max:
                 # compute distances with the new distance measure
-                if distance_function_updated:
+                if df_updated:
                     def distance_to_ground_truth(x):
                         return self.distance_function(x, self.x_0)
                     population.update_distances(distance_to_ground_truth)
 
         # end of run loop
+
         self.history.done()
         return self.history
 
@@ -671,6 +677,7 @@ class ABCSMC:
 
         w = self.history.get_model_probabilities(
             self.history.max_t)["p"].as_matrix()
+
         # make a copy in case the population strategy messes with
         # the transitions
         # WARNING: the deepcopy also copies the random states of scipy.stats

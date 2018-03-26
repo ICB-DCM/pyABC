@@ -55,6 +55,7 @@ latest/task.html#quick-and-easy-parallelism)
         :class:`pyabc.sge.SGE` mapper, this option should be set to
         `True` for better performance.
     """
+
     def __init__(self, map=map, mapper_pickles=False):
         super().__init__()
         self.map = map
@@ -78,7 +79,7 @@ latest/task.html#quick-and-easy-parallelism)
 
         while True:
             new_param = sampler_options.sample_one()
-            new_sim = sampler_options.simulate_eval_one(new_param)
+            new_sim = sampler_options.simul_eval_one(new_param)
             nr_simulations += 1
             sample.append(new_sim)
             if new_sim.accepted:
