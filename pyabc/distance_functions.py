@@ -20,7 +20,7 @@ df_logger = logging.getLogger("DistanceFunction")
 
 class DistanceFunction(ABC):
     """
-    Abstract case class for distance functions.
+    Abstract base class for distance functions.
 
     Any other distance function should inherit from this class.
 
@@ -55,7 +55,7 @@ class DistanceFunction(ABC):
         ----------
 
         sample_from_prior: List[dict]
-            List of dictionaries containng the summary statistics.
+            List of dictionaries containing the summary statistics.
         """
 
         pass
@@ -186,18 +186,24 @@ def to_distance(maybe_distance_function):
 
 class PNormDistance(DistanceFunction):
     """
-    Compute the p-norm of the summary statistics.
+    Use p-norm to compute distances between sets of summary statistics.
+
+    Parameters
+    ----------
+
+    p: float
+        p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
     """
 
     def __init__(self, p: float):
         super().__init__()
         if p < 1:
-            raise Exception("pyabc:distance_function: p must be >= 1")
+            raise ValueError("pyabc:distance_function: p must be >= 1")
         self.p = p
         self.w = None
 
     def initialize(self, sample_from_prior: List[dict]):
-        # init weights with 1, and retrieve keys
+        # retrieve keys, and init weights with 1
         self._initialize_weights(sample_from_prior[0].keys())
 
     def __call__(self, x: dict, y: dict):
@@ -210,7 +216,7 @@ class PNormDistance(DistanceFunction):
             return max(abs(self.w[key]*(x[key]-y[key]))
                        for key in self.w.keys())
         else:
-            return math.pow(
+            return pow(
                 sum(pow(abs(self.w[key]*(x[key]-y[key])), self.p)
                     for key in self.w.keys()),
                 1/self.p)
@@ -221,6 +227,9 @@ class PNormDistance(DistanceFunction):
 
 
 class EuclideanDistance(PNormDistance):
+    """
+    Comfort class to use Euclidean norm as p-norm in PNormDistance.
+    """
 
     def __init__(self):
         super().__init__(2)
@@ -228,8 +237,11 @@ class EuclideanDistance(PNormDistance):
 
 class WeightedPNormDistance(PNormDistance):
 
-    SCALE_TYPE_MAD = 0  # mean absolute deviation
-    SCALE_TYPE_SD = 1   # standard deviation
+    # mean absolute deviation
+    SCALE_TYPE_MAD = 0
+
+    # standard deviation
+    SCALE_TYPE_SD = 1
 
     def __init__(self,
                  p: float,
@@ -244,8 +256,9 @@ class WeightedPNormDistance(PNormDistance):
             True:  Adapt distance after each iteration,
             False: Adapt distance only once at the beginning.
         :param scale_type: int
-            As in SCALE constants.
+            What measure to use for deviation. Values as in SCALE constants.
         """
+
         super().__init__(p)
         self.adaptive = adaptive
         self.scale_type = scale_type
@@ -314,18 +327,20 @@ class WeightedPNormDistance(PNormDistance):
             else:
                 self.w[key] = 1 / val
 
-        # normalize weights to have mean 1
+        # normalize weights to have mean 1. This has just the effect that the
+        # epsilon will decrease more smoothly, but is not important otherwise.
         mean_weight = statistics.mean(list(self.w.values()))
         for key in self.w.keys():
             self.w[key] /= mean_weight
 
         # logging
-        df_logger.debug(
-            "update distance function weights = {}"
-            .format(self.w))
+        df_logger.debug("update distance weights = {}".format(self.w))
 
 
 class WeightedEuclideanDistance(WeightedPNormDistance):
+    """
+    Comfort class to use Euclidean norm as p-norm in WeightedPNormDistance.
+    """
 
     def __init__(self,
                  adaptive: bool = True,
@@ -357,6 +372,7 @@ def standard_deviation(data: List):
     """
     Calculate the ` sample standard deviation (SD)
     <https://en.wikipedia.org/wiki/Standard_deviation>`_.
+
     :param data: List
         List of data points.
     :return: sd
