@@ -82,8 +82,10 @@ class FullInfoParticle(Particle):
                  summary_statistics_list: List[dict] = None,
                  all_summary_statistics_list: List[dict] = None,
                  accepted: bool = True):
+
         super().__init__(m, parameter, weight, distance_list,
                          summary_statistics_list)
+
         self.all_summary_statistics_list = all_summary_statistics_list
         self.accepted = accepted
 
@@ -101,15 +103,17 @@ class FullInfoParticle(Particle):
         particle: Particle
             The reduced representation.
         """
+
         particle = Particle(self.m, self.parameter, self.weight,
                             self.distance_list, self.summary_statistics_list)
+
         return particle
 
 
 class Population:
     """
     This class acts as as a wrapper around a list of particles, offering
-    standardized interfaces.
+    standardized access.
 
     Upon initialization, the particle weights are normalized and model
     probabilities computed as described in _normalize_weights.
@@ -123,9 +127,11 @@ class Population:
     def get_list(self) -> List[Particle]:
         """
         Get a copy of the underlying particle list.
+
         :return:
             A copied particle list.
         """
+
         return self._list.copy()
 
     def _normalize_weights(self):
@@ -134,15 +140,7 @@ class Population:
         to 1, and compute the model probabilities. Should only be called once.
         """
 
-        # Create empty dictionary. Keys will be the models.
-        store = dict()
-        for particle in self._list:
-            if particle is not None:
-                # setdefault: similar to get(), sets dict[key] = default if key
-                # is not in dict yet.
-                store.setdefault(particle.m, []).append(particle)
-            else:
-                print("ABC History warning: Empty particle")
+        store = self.to_dict()
 
         model_total_weights = {m: sum(particle.weight for particle in plist)
                                for m, plist in store.items()}
@@ -171,23 +169,24 @@ class Population:
         :param distance_to_ground_truth:
             Distance function to the observed summary statistics.
         """
+
         for particle in self._list:
             for i in range(len(particle.distance_list)):
-                particle.distance_list[i] = \
-                    distance_to_ground_truth(
-                        particle.summary_statistics_list[i])
+                particle.distance_list[i] = distance_to_ground_truth(
+                    particle.summary_statistics_list[i])
 
     def get_model_probabilities(self) -> dict:
         """
         Get probabilities of the individual models.
         :return:
         """
+
         # _model_probabilities are assigned during normalization
         return self._model_probabilities
 
     def get_weighted_distances(self) -> pandas.DataFrame:
         """
-        Create iteration of distances and weights. All weights will sum to 1.
+        Create iteration of distances and weights. All weights sum to 1.
 
         :return:
             A pandas.DataFrame containing in column 'distance' the distances
@@ -216,14 +215,13 @@ class Population:
         """
 
         store = dict()
-        population = self._list.copy()
 
-        for particle in population:
+        for particle in self._list:
             if particle is not None:
                 # setdefault: similar to get(), sets dict[key] = default if key
                 # is not in dict yet.
                 store.setdefault(particle.m, []).append(particle)
             else:
-                print("ABC History warning: Empty particle")
+                print("Warning: Empty particle.")
 
         return store
