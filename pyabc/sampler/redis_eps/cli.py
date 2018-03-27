@@ -62,8 +62,7 @@ def work_on_population(redis: StrictRedis,
                        .format(n_worker))
 
     # load sampler options
-    sampler_options = pickle.loads(ssa)
-    sample_factory = sampler_options.sample_factory
+    simulate_one, sample_factory = pickle.loads(ssa)
 
     internal_counter = 0
 
@@ -92,8 +91,7 @@ def work_on_population(redis: StrictRedis,
         internal_counter += 1
 
         this_sim_start = time()
-        new_param = sampler_options.sample_one()
-        new_sim = sampler_options.simul_eval_one(new_param)
+        new_sim = simulate_one()
         sample.append(new_sim)
         cumulative_simulation_time += time() - this_sim_start
 

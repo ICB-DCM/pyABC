@@ -6,7 +6,7 @@ from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_PARTICLES, N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME)
 from .redis_logging import worker_logger
-from ..base import Sample, SamplerOptions
+from ..base import Sample
 
 
 class SampleFactory:
@@ -70,14 +70,14 @@ class RedisEvalParallelSampler(Sampler):
         """
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
-    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+    def sample_until_n_accepted(self, n, simulate_one):
         # this is a workaround to avoid pickling issues
-        sampler_options.sample_factory = SampleFactory(self._record_all_sum_stats)
+        sample_factory = SampleFactory(self._record_all_sum_stats)
 
         self.redis.set(SSA,
-                       cloudpickle.dumps(sampler_options))
+                       cloudpickle.dumps((simulate_one, sample_factory)))
         self.redis.set(N_EVAL, 0)
-        self.redis.set(N_PARTICLES, sampler_options.n)
+        self.redis.set(N_PARTICLES, n)
         self.redis.set(N_WORKER, 0)
         self.redis.delete(QUEUE)
 
@@ -85,7 +85,7 @@ class RedisEvalParallelSampler(Sampler):
 
         self.redis.publish(MSG, START)
 
-        while len(id_results) < sampler_options.n:
+        while len(id_results) < n:
             dump = self.redis.blpop(QUEUE)[1]
             particle_with_id = pickle.loads(dump)
             id_results.append(particle_with_id)
@@ -106,13 +106,13 @@ class RedisEvalParallelSampler(Sampler):
 
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
-        id_results = id_results[:sampler_options.n]
+        id_results = id_results[:n]
 
         results = [res[1] for res in id_results]
 
         # create 1 to-be-returned sample from results
         sample = self._create_empty_sample()
-        for j in range(sampler_options.n):
+        for j in range(n):
             sample += results[j]
 
         return sample

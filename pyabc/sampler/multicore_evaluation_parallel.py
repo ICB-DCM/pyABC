@@ -4,13 +4,12 @@ from .multicorebase import MultiCoreSampler
 from ..sge import nr_cores_available
 import numpy as np
 import random
-from .base import SamplerOptions
 from .multicorebase import get_if_worker_healthy
 
 DONE = "Done"
 
 
-def work(sampler_options: SamplerOptions,
+def work(simulate_one,
          queue, n_eval: Value, n_particles: Value, sample_factory):
     random.seed()
     np.random.seed()
@@ -22,8 +21,7 @@ def work(sampler_options: SamplerOptions,
             particle_id = n_eval.value
             n_eval.value += 1
 
-        new_param = sampler_options.sample_one()
-        new_sim = sampler_options.simul_eval_one(new_param)
+        new_sim = simulate_one()
         sample.append(new_sim)
 
         if new_sim.accepted:
@@ -83,18 +81,18 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+    def sample_until_n_accepted(self, n, simulate_one):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
         n_particles = Value(c_longlong)
-        n_particles.value = sampler_options.n
+        n_particles.value = n
 
         queue = Queue()
 
         processes = [
             Process(target=work,
-                    args=(sampler_options,
+                    args=(simulate_one,
                           queue, n_eval, n_particles, self._create_empty_sample),
                     daemon=self.daemon)
             for _ in range(self.n_procs)
@@ -120,7 +118,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
-        id_results = id_results[:sampler_options.n]
+        id_results = id_results[:n]
 
         self.nr_evaluations_ = n_eval.value
 
@@ -128,7 +126,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         # create 1 to-be-returned sample from results
         sample = self._create_empty_sample()
-        for j in range(sampler_options.n):
+        for j in range(n):
             sample += results[j]
 
         return sample

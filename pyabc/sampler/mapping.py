@@ -4,7 +4,7 @@ import random
 import dill as pickle
 import numpy as np
 
-from .base import Sampler, SamplerOptions
+from .base import Sampler
 
 
 class MappingSampler(Sampler):
@@ -69,8 +69,8 @@ latest/task.html#quick-and-easy-parallelism)
     def __setstate__(self, state):
         self.pickle, self.unpickle, self.nr_evaluations_, self._record_all_sum_stats = state
 
-    def map_function(self, sample_simulate_accept, _):
-        sampler_options = self.unpickle(sample_simulate_accept)
+    def map_function(self, simulate_one, _):
+        simulate_one = self.unpickle(simulate_one)
 
         np.random.seed()
         random.seed()
@@ -78,8 +78,7 @@ latest/task.html#quick-and-easy-parallelism)
         sample = self._create_empty_sample()
 
         while True:
-            new_param = sampler_options.sample_one()
-            new_sim = sampler_options.simul_eval_one(new_param)
+            new_sim = simulate_one()
             nr_simulations += 1
             sample.append(new_sim)
             if new_sim.accepted:
@@ -87,19 +86,19 @@ latest/task.html#quick-and-easy-parallelism)
 
         return sample, nr_simulations
 
-    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+    def sample_until_n_accepted(self, n, simulate_one):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.
         # Correct usage of shared references might even be necessary
         # to ensure correct working, depending on the details of the
         # model implementations.
-        sample_simulate_accept = self.pickle(sampler_options)
+        sample_simulate_accept = self.pickle(simulate_one)
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)
 
         counted_results = list(self.map(map_function,
-                                        [None] * sampler_options.n))
+                                        [None] * n))
         counted_results = filter(lambda x: not isinstance(x, Exception),
                                  counted_results)
         results, evals = zip(*counted_results)

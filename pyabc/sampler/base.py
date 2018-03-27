@@ -1,43 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Callable, TypeVar
 from pyabc.population import FullInfoParticle, Population
-
-A = TypeVar('A')
-
-
-class SamplerOptions:
-    """
-    Options passed to a sampler.
-
-    Properties
-    ----------
-
-    n: int
-        The number of samples to be accepted, i.e. the population size.
-
-    sample_one: Callable[[], A]
-        A function which takes no arguments and returns
-        a proposal parameter :math:`\\theta`.
-
-    simul_eval_one: Callable[[A], FullInfoParticle]
-        A function which takes as sole argument a proposal
-        parameter :math:`\\theta` as returned by `sample_one`.
-        It returns a :class:`FullInfoParticle` containing the summary
-        statistics. In a field accepted, this particle returns also the
-        information whether it got accepted.
-
-    sample_options: SampleOptions
-        Options passed to the samples created during sampling process.
-
-    """
-
-    def __init__(self,
-                 n: int,
-                 sample_one: Callable[[], A],
-                 simul_eval_one: Callable[[A], FullInfoParticle]):
-        self.n = n
-        self.sample_one = sample_one
-        self.simul_eval_one = simul_eval_one
 
 
 class Sample:
@@ -144,14 +106,10 @@ class Sampler(ABC):
         return Sample(self._record_all_sum_stats)
 
     @abstractmethod
-    def sample_until_n_accepted(self,
-                                sampler_options: SamplerOptions) -> Sample:
+    def sample_until_n_accepted(self, n, simulate_one) -> Sample:
         """
         Parameters
         ----------
-
-        sampler_options: SamplerOptions
-            Contains all options needed to customize the sampling process.
 
         Returns
         -------

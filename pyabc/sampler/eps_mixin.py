@@ -1,31 +1,29 @@
 import numpy as np
 import cloudpickle as pickle
 from sortedcontainers import SortedListWithKey
-from .base import SamplerOptions
 
 
 class EPSMixin:
-    def full_submit_function_pickle(self, param, job_id):
+    def full_submit_function_pickle(self, job_id):
         simulate_one = pickle.loads(self.simulate_accept_one)
         result_batch = []
         for j in range(self.batchsize):
-            eval_result = simulate_one(param[j])
+            eval_result = simulate_one()
             eval_accept = eval_result.accepted
             result_batch.append((eval_result, eval_accept, job_id[j]))
         return result_batch
 
-    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+    def sample_until_n_accepted(self, n, simulate_one):
         # For default pickling
         if self.default_pickle:
-            self.simulate_accept_one = pickle.dumps(
-                sampler_options.simul_eval_one)
+            self.simulate_accept_one = pickle.dumps(simulate_one)
             full_submit_function = self.full_submit_function_pickle
         else:
             # For advanced pickling, e.g. cloudpickle
-            def full_submit_function(param, job_id):
+            def full_submit_function(job_id):
                 result_batch = []
                 for j in range(self.batchsize):
-                    eval_result = sampler_options.simul_eval_one(param[j])
+                    eval_result = simulate_one()
                     eval_accept = eval_result.accepted
                     result_batch.append((eval_result, eval_accept, job_id[j]))
                 return result_batch
@@ -78,7 +76,7 @@ class EPSMixin:
 
             # If num_accepted >= n
             # return the first n accepted results
-            if num_accepted_sequential >= sampler_options.n:
+            if num_accepted_sequential >= n:
                 break
 
             # Update information on scheduler state
@@ -89,21 +87,18 @@ class EPSMixin:
             # num_accepted_total < jobs required
             if (len(running_jobs) < self.client_max_jobs) and \
                     (len(running_jobs) < self.client_cores()) and \
-                    (num_accepted_total < sampler_options.n):
+                    (num_accepted_total < n):
                 for _ in range(0,
                                np.minimum(self.client_max_jobs,
                                           self.client_cores()).astype(int)
                                - len(running_jobs)):
-                    para_batch = []
                     job_id_batch = []
                     for i in range(self.batchsize):
-                        para_batch.append(sampler_options.sample_one())
                         job_id_batch.append(next_job_id)
                         next_job_id += 1
 
                     running_jobs.append(
                         self.my_client.submit(full_submit_function,
-                                              para_batch,
                                               job_id_batch))
 
         # cancel all unfinished jobs
@@ -113,7 +108,7 @@ class EPSMixin:
         # create and to-be-returned sample from all results
         sample = self._create_empty_sample()
         counter_accepted = 0
-        while counter_accepted < sampler_options.n:
+        while counter_accepted < n:
             cur_res = all_results.pop(0)
             particle = cur_res[1]
             sample.append(particle)

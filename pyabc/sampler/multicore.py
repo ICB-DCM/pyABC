@@ -4,7 +4,6 @@ import numpy as np
 import random
 import logging
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
-from .base import SamplerOptions
 
 
 logger = logging.getLogger("MulticoreSampler")
@@ -20,15 +19,9 @@ def feed(feed_q, n_jobs, n_proc):
         feed_q.put(SENTINEL)
 
 
-def work(feed_q, result_q, sampler_options: SamplerOptions, single_core_sampler):
+def work(feed_q, result_q, simulate_one, single_core_sampler):
     random.seed()
     np.random.seed()
-
-    # create copy of sampling options with n=1
-    sampler_options_worker = SamplerOptions(
-        n=1,
-        sample_one=sampler_options.sample_one,
-        simul_eval_one=sampler_options.simul_eval_one)
 
     while True:
         arg = feed_q.get()
@@ -36,7 +29,7 @@ def work(feed_q, result_q, sampler_options: SamplerOptions, single_core_sampler)
             break
 
         res = single_core_sampler.sample_until_n_accepted(
-            sampler_options_worker)
+            1, simulate_one)
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
@@ -73,16 +66,16 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
     """
 
-    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+    def sample_until_n_accepted(self, n, simulate_one):
         # starting more than n jobs
         # does not help in this parallelization scheme
-        n_procs = min(sampler_options.n, self.n_procs)
+        n_procs = min(n, self.n_procs)
         logger.debug("Start sampling on {} cores ({} requested)"
                      .format(n_procs, self.n_procs))
         feed_q = Queue()
         result_q = Queue()
 
-        feed_process = Process(target=feed, args=(feed_q, sampler_options.n,
+        feed_process = Process(target=feed, args=(feed_q, n,
                                                   n_procs))
 
         single_core_sampler = SingleCoreSampler()
@@ -90,7 +83,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
             single_core_sampler.require_all_sum_stats()
 
         worker_processes = [Process(target=work, args=(feed_q, result_q,
-                                                       sampler_options,
+                                                       simulate_one,
                                                        single_core_sampler))
                             for _ in range(n_procs)]
 
@@ -101,7 +94,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
         collected_results = []
 
-        for _ in range(sampler_options.n):
+        for _ in range(n):
             res = get_if_worker_healthy(worker_processes, result_q)
             collected_results.append(res)
 

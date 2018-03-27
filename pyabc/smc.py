@@ -16,7 +16,6 @@ from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import FullInfoParticle
-from .sampler import SamplerOptions
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -384,15 +383,10 @@ class ABCSMC:
         """
 
         if self._points_sampled_from_prior is None:
-
-            def sample_one():
+            def create_one():
                 m = self.model_prior.rvs()
-                par = self.parameter_priors[m].rvs()
-                return m, par
-
-            def simul_eval_one(para):
+                theta = self.parameter_priors[m].rvs()
                 all_summary_statistics_list = []
-                m, theta = para
                 model_result = self.models[m].summary_statistics(
                     theta, self.summary_statistics)
                 all_summary_statistics_list.append(model_result.sum_stats)
@@ -407,14 +401,9 @@ class ABCSMC:
                     accepted)
                 return full_info_particle
 
-            # set sampling options
-            sampler_options = SamplerOptions(
-                n=self.population_strategy.nr_particles,
-                sample_one=sample_one,
-                simul_eval_one=simul_eval_one)
-
             # call sampler
-            sample = self.sampler.sample_until_n_accepted(sampler_options)
+            sample = self.sampler.sample_until_n_accepted(
+                self.population_strategy.nr_particles, create_one)
 
             # extract summary statistics list
             self._points_sampled_from_prior = \
@@ -614,22 +603,17 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
-            def sample_one():
-                return self._generate_valid_proposal(t, m, p)
 
-            def simul_eval_one(par):
+            def simulate_one():
+                par = self._generate_valid_proposal(t, m, p)
                 return self._evaluate_proposal(*par, current_eps, t,
                                                model_probabilities,
                                                self.distance_function.adaptive)
 
-            # set sampling options
-            sampler_options = SamplerOptions(
-                n=self.population_strategy.nr_particles,
-                sample_one=sample_one,
-                simul_eval_one=simul_eval_one)
 
             # sample
-            sample = self.sampler.sample_until_n_accepted(sampler_options)
+            sample = self.sampler.sample_until_n_accepted(
+                self.population_strategy.nr_particles, simulate_one)
 
             # retrieve accepted population
             population = sample.get_accepted_population()
