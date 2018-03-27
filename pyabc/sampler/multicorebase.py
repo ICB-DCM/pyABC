@@ -11,7 +11,7 @@ class MultiCoreSampler(Sampler):
     the number of cores selection functionality used by all the multiprocessing
     samplers.
     """
-    
+
     def __init__(self, n_procs=None, daemon=True):
         super().__init__()
         self._n_procs = n_procs
