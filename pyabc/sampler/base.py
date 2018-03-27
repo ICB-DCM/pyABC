@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pyabc.population import Particle, Population
+from typing import List
 
 
 class Sample:
@@ -16,72 +17,74 @@ class Sample:
     Properties
     ----------
 
-    accepted_population: Population
-        Contains all accepted particles.
-
-    all_summary_statistics_list: List[dict]
-        Contains all summary statistics created during the sampling process.
-
     record_rejected_sum_stat: bool
         Whether to record summary statistics of the rejected samples as well.
     """
 
     def __init__(self, record_rejected_sum_stat: bool):
-        self.accepted_particles = []
-        self._all_summary_statistics_list = []
+        self._particles = []
         self.record_rejected_sum_stat = record_rejected_sum_stat
 
     @property
-    def all_summary_statistics_list(self):
-        if self.record_rejected_sum_stat:
-            return self._all_summary_statistics_list
-        return sum((particle.accepted_sum_stats
-                    for particle in self.accepted_particles), [])
+    def all_summary_statistics(self):
+        """
+
+        Returns
+        -------
+
+        List of all summary statistics, of accepted and rejected particles.
+        """
+        return sum((particle.all_sum_stats
+                    for particle in self._particles), [])
+
+    @property
+    def _accepted_particles(self) -> List[Particle]:
+        """
+
+        Returns
+        -------
+
+        List of only the accepted particles.
+        """
+        return [particle.copy()
+                for particle in self._particles if particle.accepted]
 
     def append(self, particle: Particle):
         """
-        Add new particle to sample and handle all_summary_statistics_list.
-        Checks itself based on the particle.accepted flag whether the particle
-        is accepted.
+        Add new particle to the sample.
 
-        :param particle:
+
+        Parameters
+        ----------
+
+        particle: Particle
             Sampled particle containing all information needed later.
         """
 
         # add to population if accepted
-        if particle.accepted:
-            self.accepted_particles.append(particle)
+        if particle.accepted or self.record_rejected_sum_stat:
+            self._particles.append(particle)
 
-        # keep track of all summary statistics sampled
-        if self.record_rejected_sum_stat:
-            self._all_summary_statistics_list.extend(
-                particle.all_sum_stats)
-
-    def __add__(self, other):
-        """
-        Sum function.
-        :param other:
-        :return:
-        """
+    def __add__(self, other: "Sample"):
         sample = self.__class__(self.record_rejected_sum_stat)
-        sample.accepted_particles = self.accepted_particles \
-            + other.accepted_particles
-        sample._all_summary_statistics_list = \
-            self._all_summary_statistics_list \
-            + other.all_summary_statistics_list
-
+        sample._particles = self._particles + other._particles
         return sample
 
-    def get_accepted_population(self):
+    @property
+    def n_accepted(self):
+        return len(self._accepted_particles)
+
+    def get_accepted_population(self) -> Population:
         """
-        Create and return a population from the internal list of accepted
-        particles.
+        Returns
+        -------
+
+        A population of only the accepted particles.
 
         :return:
             A Population object.
         """
-
-        return Population(self.accepted_particles)
+        return Population(self._accepted_particles)
 
 
 class Sampler(ABC):

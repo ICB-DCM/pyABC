@@ -47,14 +47,14 @@ class Particle:
     def __init__(self, m: int,
                  parameter: Parameter,
                  weight: float = 0,
-                 distances: List[float] = None,
+                 accepted_distances: List[float] = None,
                  accepted_sum_stats: List[dict] = None,
                  all_sum_stats: List[dict] = None):
 
         self.m = m
         self.parameter = parameter
         self.weight = weight
-        self.accepted_distances = distances
+        self.accepted_distances = accepted_distances
         self.accepted_sum_stats = accepted_sum_stats
         self.all_sum_stats = all_sum_stats
 
@@ -69,11 +69,16 @@ class Particle:
         setattr(self, key, value)
 
     def __eq__(self, other):
-        for key in ["m", "parameter", "weight", "distance_list",
-                    "summary_statistics_list", "all_summary_statistics_list"]:
+        for key in ["m", "parameter", "weight", "accepted_distances",
+                    "accepted_sum_stats", "all_sum_stats"]:
             if self[key] != other[key]:
                 return False
         return True
+
+    def copy(self):
+        return self.__class__(self.m, self.parameter, self.weight,
+                              self.accepted_distances,
+                              self.accepted_sum_stats, self.all_sum_stats)
 
 
 class Population:
@@ -85,10 +90,13 @@ class Population:
     probabilities computed as described in _normalize_weights.
     """
 
-    def __init__(self, particle_list: List[Particle]):
-        self._list = particle_list.copy()
+    def __init__(self, particles: List[Particle]):
+        self._list = [particle.copy() for particle in particles]
         self._model_probabilities = None
         self._normalize_weights()
+
+    def __len__(self):
+        return len(self._list)
 
     def get_list(self) -> List[Particle]:
         """

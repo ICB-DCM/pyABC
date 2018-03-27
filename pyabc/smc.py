@@ -393,7 +393,7 @@ class ABCSMC:
                 weight = 0
                 distance_list = []
                 summary_statistics_list = all_summary_statistics_list
-                # only the all_summary_statistics_list field will be read later
+                # only the all_summary_statistics field will be read later
                 return Particle(
                     m, theta, weight, distance_list,
                     summary_statistics_list, all_summary_statistics_list)
@@ -404,7 +404,7 @@ class ABCSMC:
 
             # extract summary statistics list
             self._points_sampled_from_prior = \
-                sample.all_summary_statistics_list
+                sample.all_summary_statistics
 
         return self._points_sampled_from_prior
 
@@ -627,7 +627,7 @@ class ABCSMC:
 
             # adapt distance function
             df_updated = self.distance_function.update(
-                sample.all_summary_statistics_list)
+                sample.all_summary_statistics)
 
             if t < t_max:
                 # compute distances with the new distance measure
