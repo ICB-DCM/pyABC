@@ -6,7 +6,7 @@ from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_PARTICLES, N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME)
 from .redis_logging import worker_logger
-from ..base import Sample
+from ..base import Sample, SamplerOptions
 
 
 class RedisEvalParallelSampler(Sampler):
@@ -62,7 +62,7 @@ class RedisEvalParallelSampler(Sampler):
         """
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
-    def sample_until_n_accepted(self, sampler_options):
+    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
         self.redis.set(SSA,
                        cloudpickle.dumps(sampler_options))
         self.redis.set(N_EVAL, 0)
@@ -97,11 +97,11 @@ class RedisEvalParallelSampler(Sampler):
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:sampler_options.n]
 
-        population = [res[1] for res in id_results]
+        results = [res[1] for res in id_results]
 
-        # create 1 to-be-returned sample from populations
+        # create 1 to-be-returned sample from results
         sample = Sample(sampler_options.sample_options)
         for j in range(sampler_options.n):
-            sample += population[j]
+            sample += results[j]
 
         return sample

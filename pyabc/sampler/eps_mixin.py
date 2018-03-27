@@ -1,7 +1,7 @@
 import numpy as np
 import cloudpickle as pickle
 from sortedcontainers import SortedListWithKey
-from .base import Sample
+from .base import Sample, SamplerOptions
 
 
 class EPSMixin:
@@ -14,7 +14,7 @@ class EPSMixin:
             result_batch.append((eval_result, eval_accept, job_id[j]))
         return result_batch
 
-    def sample_until_n_accepted(self, sampler_options):
+    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
         # For default pickling
         if self.default_pickle:
             self.simulate_accept_one = pickle.dumps(
@@ -116,7 +116,7 @@ class EPSMixin:
         while counter_accepted < sampler_options.n:
             cur_res = all_results.pop(0)
             particle = cur_res[1]
-            sample.append(cur_res[1])
+            sample.append(particle)
             if particle.accepted:
                 counter_accepted += 1
             self.nr_evaluations_ = cur_res[0]

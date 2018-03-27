@@ -20,7 +20,7 @@ def feed(feed_q, n_jobs, n_proc):
         feed_q.put(SENTINEL)
 
 
-def work(feed_q, result_q, sampler_options):
+def work(feed_q, result_q, sampler_options: SamplerOptions):
     random.seed()
     np.random.seed()
     single_core_sampler = SingleCoreSampler()
@@ -75,7 +75,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
     """
 
-    def sample_until_n_accepted(self, sampler_options):
+    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(sampler_options.n, self.n_procs)
@@ -113,6 +113,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         results, evaluations = zip(*collected_results)
         self.nr_evaluations_ = sum(evaluations)
 
+        # create 1 to-be-returned sample from results
         sample = Sample(sampler_options.sample_options)
         for result in results:
             sample += result

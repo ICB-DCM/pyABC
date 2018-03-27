@@ -4,7 +4,7 @@ import random
 import dill as pickle
 import numpy as np
 
-from .base import Sample, Sampler
+from .base import Sample, Sampler, SamplerOptions
 
 
 class MappingSampler(Sampler):
@@ -87,7 +87,7 @@ latest/task.html#quick-and-easy-parallelism)
 
         return sample, nr_simulations
 
-    def sample_until_n_accepted(self, sampler_options):
+    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.

@@ -11,6 +11,7 @@ class MultiCoreSampler(Sampler):
     the number of cores selection functionality used by all the multiprocessing
     samplers.
     """
+    
     def __init__(self, n_procs=None, daemon=True):
         super().__init__()
         self._n_procs = n_procs
@@ -32,10 +33,12 @@ def get_if_worker_healthy(workers: List[Process], queue: Queue):
 
     Parameters
     ----------
+
     workers: List[Process]
         List of worker processes which should be in a healthy state,
         i.e. either terminated with exit code 0 (success) or are still
         running (exitcode is None in this case)
+
     queue: Queue
         A multiprocessing queue which is fed by the workers
 

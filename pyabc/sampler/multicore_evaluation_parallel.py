@@ -25,13 +25,20 @@ def work(sampler_options: SamplerOptions,
         new_param = sampler_options.sample_one()
         new_sim = sampler_options.simul_eval_one(new_param)
         sample.append(new_sim)
+
         if new_sim.accepted:
+
+            # reduce number of required particles
             with n_particles.get_lock():
                 n_particles.value -= 1
 
+            # put into queue
             queue.put((particle_id, sample))
+
+            # create empty sample and record until next accepted
             sample = Sample(sampler_options.sample_options)
 
+    # indicate worker finished
     queue.put(DONE)
 
 
@@ -76,7 +83,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, sampler_options):
+    def sample_until_n_accepted(self, sampler_options: SamplerOptions):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -117,11 +124,11 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         self.nr_evaluations_ = n_eval.value
 
-        population = [res[1] for res in id_results]
+        results = [res[1] for res in id_results]
 
-        # create 1 to-be-returned sample from populations
+        # create 1 to-be-returned sample from results
         sample = Sample(sampler_options.sample_options)
         for j in range(sampler_options.n):
-            sample += population[j]
+            sample += results[j]
 
         return sample

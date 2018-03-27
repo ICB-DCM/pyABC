@@ -60,10 +60,15 @@ def work_on_population(redis: StrictRedis,
     n_worker = redis.incr(N_WORKER)
     worker_logger.info("Begin population. I am worker {}"
                        .format(n_worker))
+
+    # load sampler options
     sampler_options = pickle.loads(ssa)
 
     internal_counter = 0
+
+    # create empty sample
     sample = Sample(sampler_options.sample_options)
+
     while n_particles > 0:
         if kill_handler.killed:
             worker_logger.info("Worker {} received stop signal. "
@@ -92,8 +97,13 @@ def work_on_population(redis: StrictRedis,
         cumulative_simulation_time += time() - this_sim_start
 
         if new_sim.accepted:
+            # decrease counter
             n_particles = redis.decr(N_PARTICLES)
+
+            # add sample to queue
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, sample)))
+
+            # create new sample to be filled until next accepted
             sample = Sample(sampler_options.sample_options)
         else:
             n_particles = int(redis.get(N_PARTICLES).decode())

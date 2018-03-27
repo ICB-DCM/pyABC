@@ -7,11 +7,15 @@ A = TypeVar('A')
 
 class SampleOptions:
     """
-    Options passed to a Sample.
+    Options passed to a Sample. Contains all information that should be
+    passed to the sample to guide e.g. storing summary statistics.
 
     Properties
     ----------
+
     record_all_particles: bool
+        True: Record also non-accepted particles. False (default): Only store
+        accepted particles.
     """
     def __init__(self,
                  record_all_particles: bool =False):
@@ -24,14 +28,24 @@ class SamplerOptions:
 
     Properties
     ----------
-    sample_one: Callable[[], A]
-
-    simul_eval_one: Callable[[A], FullInfoParticle]
 
     n: int
-        number of particles
+        The number of samples to be accepted, i.e. the population size.
+
+    sample_one: Callable[[], A]
+        A function which takes no arguments and returns
+        a proposal parameter :math:`\\theta`.
+
+    simul_eval_one: Callable[[A], FullInfoParticle]
+        A function which takes as sole argument a proposal
+        parameter :math:`\\theta` as returned by `sample_one`.
+        It returns a :class:`FullInfoParticle` containing the summary
+        statistics. In a field accepted, this particle returns also the
+        information whether it got accepted.
 
     sample_options: SampleOptions
+        Options passed to the samples created during sampling process.
+
     """
 
     def __init__(self,
@@ -99,6 +113,14 @@ class Sample:
         return sample
 
     def get_accepted_population(self):
+        """
+        Create and return a population from the internal list of accepted
+        particles.
+
+        :return:
+            A Population object.
+        """
+
         return Population(self.accepted_particles)
 
 
@@ -125,29 +147,13 @@ class Sampler(ABC):
         """
         Parameters
         ----------
-        sample_one: Callable[[], A]
-            A function which takes no arguments and returns
-            a proposal parameter :math:`\\theta`.
 
         sampler_options: SamplerOptions
             Contains all options needed to customize the sampling process.
 
-        simul_eval_one: Callable[[A], ValidParticle]
-            A function which takes as sole argument a proposal
-            parameter :math:`\\theta` as returned by `sample_one`.
-            It returns a :class:`FullInfoParticle` containing the summary
-            statistics. In a field accepted, this particle returns also the
-            information whether it got accepted.
-
-        record_all_particles: bool
-            True if all particles should be recorded, False if only record
-            accepted particles.
-
-        n: int
-            The number of samples to be accepted, i.e. the population size.
-
         Returns
         -------
+
         sample: :class:`Sample`
             The generated sample.
         """
