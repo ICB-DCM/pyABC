@@ -38,24 +38,24 @@ class Sample:
         return sum((particle.accepted_sum_stats
                     for particle in self.accepted_particles), [])
 
-    def append(self, full_info_particle: Particle):
+    def append(self, particle: Particle):
         """
         Add new particle to sample and handle all_summary_statistics_list.
         Checks itself based on the particle.accepted flag whether the particle
         is accepted.
 
-        :param full_info_particle:
+        :param particle:
             Sampled particle containing all information needed later.
         """
 
         # add to population if accepted
-        if full_info_particle.accepted:
-            self.accepted_particles.append(full_info_particle)
+        if particle.accepted:
+            self.accepted_particles.append(particle)
 
         # keep track of all summary statistics sampled
         if self.record_rejected_sum_stat:
             self._all_summary_statistics_list.extend(
-                full_info_particle.all_sum_stats)
+                particle.all_sum_stats)
 
     def __add__(self, other):
         """

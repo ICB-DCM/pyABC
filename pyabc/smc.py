@@ -394,10 +394,9 @@ class ABCSMC:
                 distance_list = []
                 summary_statistics_list = all_summary_statistics_list
                 # only the all_summary_statistics_list field will be read later
-                full_info_particle = Particle(
+                return Particle(
                     m, theta, weight, distance_list,
                     summary_statistics_list, all_summary_statistics_list)
-                return full_info_particle
 
             # call sampler
             sample = self.sampler.sample_until_n_accepted(
@@ -481,11 +480,9 @@ class ABCSMC:
         else:
             weight = 0
 
-        full_info_particle = Particle(
+        return Particle(
             m_ss, theta_ss, weight, distance_list,
             summary_statistics_list, all_summary_statistics_list)
-
-        return full_info_particle
 
     def _calc_proposal_weight(self,
                               distance_list,
