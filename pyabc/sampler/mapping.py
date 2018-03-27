@@ -4,7 +4,7 @@ import random
 import dill as pickle
 import numpy as np
 
-from .base import Sample, Sampler, SamplerOptions
+from .base import Sampler, SamplerOptions
 
 
 class MappingSampler(Sampler):

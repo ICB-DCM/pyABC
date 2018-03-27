@@ -4,7 +4,7 @@ import numpy as np
 import random
 import logging
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
-from .base import Sample, SamplerOptions
+from .base import SamplerOptions
 
 
 logger = logging.getLogger("MulticoreSampler")

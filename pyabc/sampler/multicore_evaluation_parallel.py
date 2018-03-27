@@ -4,7 +4,7 @@ from .multicorebase import MultiCoreSampler
 from ..sge import nr_cores_available
 import numpy as np
 import random
-from .base import Sample, SamplerOptions
+from .base import SamplerOptions
 from .multicorebase import get_if_worker_healthy
 
 DONE = "Done"

@@ -1,7 +1,7 @@
 import numpy as np
 import cloudpickle as pickle
 from sortedcontainers import SortedListWithKey
-from .base import Sample, SamplerOptions
+from .base import SamplerOptions
 
 
 class EPSMixin:

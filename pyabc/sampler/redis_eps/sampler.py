@@ -71,6 +71,7 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+        # this is a workaround to avoid pickling issues
         sampler_options.sample_factory = SampleFactory(self._record_all_sum_stats)
 
         self.redis.set(SSA,

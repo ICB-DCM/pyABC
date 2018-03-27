@@ -13,7 +13,7 @@ from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
 from multiprocessing import Pool
 import numpy as np
 import random
-from ..base import Sample
+
 
 
 TIMES = {"s": 1,

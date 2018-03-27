@@ -4,6 +4,7 @@ from pyabc.population import FullInfoParticle, Population
 
 A = TypeVar('A')
 
+
 class SamplerOptions:
     """
     Options passed to a sampler.
@@ -71,7 +72,8 @@ class Sample:
     def all_summary_statistics_list(self):
         if self.record_rejected_sum_stat:
             return self._all_summary_statistics_list
-        return sum((particle.summary_statistics_list for particle in self.accepted_particles), [])
+        return sum((particle.summary_statistics_list
+                    for particle in self.accepted_particles), [])
 
     def append(self, full_info_particle: FullInfoParticle):
         """
