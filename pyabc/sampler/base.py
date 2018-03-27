@@ -21,6 +21,9 @@ class Sample:
 
     all_summary_statistics_list: List[dict]
         Contains all summary statistics created during the sampling process.
+
+    record_rejected_sum_stat: bool
+        Whether to record summary statistics of the rejected samples as well.
     """
 
     def __init__(self, record_rejected_sum_stat: bool):

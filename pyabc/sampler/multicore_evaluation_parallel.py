@@ -93,7 +93,8 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         processes = [
             Process(target=work,
                     args=(simulate_one,
-                          queue, n_eval, n_particles, self._create_empty_sample),
+                          queue, n_eval, n_particles,
+                          self._create_empty_sample),
                     daemon=self.daemon)
             for _ in range(self.n_procs)
         ]

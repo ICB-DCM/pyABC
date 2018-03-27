@@ -64,10 +64,12 @@ latest/task.html#quick-and-easy-parallelism)
                                       else (pickle.dumps, pickle.loads))
 
     def __getstate__(self):
-        return self.pickle, self.unpickle, self.nr_evaluations_, self._record_all_sum_stats
+        return (self.pickle, self.unpickle,
+                self.nr_evaluations_, self._record_all_sum_stats)
 
     def __setstate__(self, state):
-        self.pickle, self.unpickle, self.nr_evaluations_, self._record_all_sum_stats = state
+        (self.pickle, self.unpickle, self.nr_evaluations_,
+         self._record_all_sum_stats) = state
 
     def map_function(self, simulate_one, _):
         simulate_one = self.unpickle(simulate_one)

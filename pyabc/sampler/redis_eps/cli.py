@@ -15,7 +15,6 @@ import numpy as np
 import random
 
 
-
 TIMES = {"s": 1,
          "m": 60,
          "h": 3600,

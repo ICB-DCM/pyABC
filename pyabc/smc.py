@@ -603,13 +603,11 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
-
             def simulate_one():
                 par = self._generate_valid_proposal(t, m, p)
                 return self._evaluate_proposal(*par, current_eps, t,
                                                model_probabilities,
                                                self.distance_function.adaptive)
-
 
             # sample
             sample = self.sampler.sample_until_n_accepted(

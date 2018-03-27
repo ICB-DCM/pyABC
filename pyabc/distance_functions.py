@@ -285,7 +285,6 @@ class WeightedPNormDistance(PNormDistance):
         super().configure_sampler(sampler)
         sampler.require_all_sum_stats()
 
-
     def initialize(self, sample_from_prior: List[dict]):
         """
         Initialize weights.
