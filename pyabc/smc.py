@@ -455,8 +455,7 @@ class ABCSMC:
                            theta_ss,
                            current_eps,
                            t,
-                           model_probabilities,
-                           record_all_summary_statistics):
+                           model_probabilities):
         """
         Corresponds to Sampler.simul_eval_one.
 
@@ -473,8 +472,7 @@ class ABCSMC:
             model_result = self.models[m_ss].accept(
                 theta_ss, self.summary_statistics,
                 lambda x: self.distance_function(x, self.x_0), current_eps)
-            if record_all_summary_statistics:
-                all_summary_statistics_list.append(model_result.sum_stats)
+            all_summary_statistics_list.append(model_result.sum_stats)
             if model_result.accepted:
                 distance_list.append(model_result.distance)
                 summary_statistics_list.append(model_result.sum_stats)
@@ -606,8 +604,7 @@ class ABCSMC:
             def simulate_one():
                 par = self._generate_valid_proposal(t, m, p)
                 return self._evaluate_proposal(*par, current_eps, t,
-                                               model_probabilities,
-                                               self.distance_function.adaptive)
+                                               model_probabilities)
 
             # sample
             sample = self.sampler.sample_until_n_accepted(

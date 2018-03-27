@@ -34,12 +34,6 @@ class DistanceFunction(ABC):
         in the update() method.
     """
 
-    def __init__(self):
-        """
-        Default constructor.
-        """
-        self.adaptive = False
-
     def initialize(self, sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
@@ -58,8 +52,6 @@ class DistanceFunction(ABC):
         sample_from_prior: List[dict]
             List of dictionaries containing the summary statistics.
         """
-
-        pass
 
     def configure_sampler(self, sampler: Sampler):
         """
@@ -88,7 +80,6 @@ class DistanceFunction(ABC):
             True: If distance function has changed.
             False: If distance function has not changed (default).
         """
-
         return False
 
     @abstractmethod
