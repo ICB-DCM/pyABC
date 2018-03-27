@@ -64,8 +64,14 @@ class Sample:
 
     def __init__(self, record_rejected_sum_stat: bool):
         self.accepted_particles = []
-        self.all_summary_statistics_list = []
+        self._all_summary_statistics_list = []
         self.record_rejected_sum_stat = record_rejected_sum_stat
+
+    @property
+    def all_summary_statistics_list(self):
+        if self.record_rejected_sum_stat:
+            return self._all_summary_statistics_list
+        return sum((particle.summary_statistics_list for particle in self.accepted_particles), [])
 
     def append(self, full_info_particle: FullInfoParticle):
         """
@@ -83,7 +89,7 @@ class Sample:
 
         # keep track of all summary statistics sampled
         if self.record_rejected_sum_stat:
-            self.all_summary_statistics_list.extend(
+            self._all_summary_statistics_list.extend(
                 full_info_particle.all_summary_statistics_list)
 
     def __add__(self, other):
@@ -95,8 +101,8 @@ class Sample:
         sample = self.__class__(self.record_rejected_sum_stat)
         sample.accepted_particles = self.accepted_particles \
             + other.accepted_particles
-        sample.all_summary_statistics_list = \
-            self.all_summary_statistics_list \
+        sample._all_summary_statistics_list = \
+            self._all_summary_statistics_list \
             + other.all_summary_statistics_list
 
         return sample
@@ -129,12 +135,12 @@ class Sampler(ABC):
     """
     def __init__(self):
         self.nr_evaluations_ = 0
-        self._record_all_sum_stats = True
+        self._record_all_sum_stats = False
 
     def require_all_sum_stats(self):
         self._record_all_sum_stats = True
 
-    def _create_empty_sample(self):
+    def _create_empty_sample(self) -> Sample:
         return Sample(self._record_all_sum_stats)
 
     @abstractmethod

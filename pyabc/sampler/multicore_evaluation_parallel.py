@@ -11,11 +11,11 @@ DONE = "Done"
 
 
 def work(sampler_options: SamplerOptions,
-         queue, n_eval: Value, n_particles: Value):
+         queue, n_eval: Value, n_particles: Value, sample_factory):
     random.seed()
     np.random.seed()
 
-    sample = Sample(sampler_options.record_rejected_sum_stat)
+    sample = sample_factory()
 
     while n_particles.value > 0:
         with n_eval.get_lock():
@@ -36,7 +36,7 @@ def work(sampler_options: SamplerOptions,
             queue.put((particle_id, sample))
 
             # create empty sample and record until next accepted
-            sample = Sample(sampler_options.record_rejected_sum_stat)
+            sample = sample_factory()
 
     # indicate worker finished
     queue.put(DONE)
@@ -95,7 +95,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         processes = [
             Process(target=work,
                     args=(sampler_options,
-                          queue, n_eval, n_particles),
+                          queue, n_eval, n_particles, self._create_empty_sample),
                     daemon=self.daemon)
             for _ in range(self.n_procs)
         ]
@@ -127,7 +127,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         results = [res[1] for res in id_results]
 
         # create 1 to-be-returned sample from results
-        sample = Sample(sampler_options.record_rejected_sum_stat)
+        sample = self._create_empty_sample()
         for j in range(sampler_options.n):
             sample += results[j]
 

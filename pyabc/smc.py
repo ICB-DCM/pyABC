@@ -398,7 +398,7 @@ class ABCSMC:
                 all_summary_statistics_list.append(model_result.sum_stats)
                 weight = 0
                 distance_list = []
-                summary_statistics_list = []
+                summary_statistics_list = all_summary_statistics_list
                 accepted = True
                 # only the all_summary_statistics_list field will be read later
                 full_info_particle = FullInfoParticle(
@@ -411,8 +411,7 @@ class ABCSMC:
             sampler_options = SamplerOptions(
                 n=self.population_strategy.nr_particles,
                 sample_one=sample_one,
-                simul_eval_one=simul_eval_one,
-                record_rejected_sum_stat=True)
+                simul_eval_one=simul_eval_one)
 
             # call sampler
             sample = self.sampler.sample_until_n_accepted(sampler_options)

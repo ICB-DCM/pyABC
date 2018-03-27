@@ -9,6 +9,14 @@ from .redis_logging import worker_logger
 from ..base import Sample, SamplerOptions
 
 
+class SampleFactory:
+    def __init__(self, record_all_sum_stats):
+        self.record_all_sum_stats = record_all_sum_stats
+
+    def __call__(self):
+        return Sample(self.record_all_sum_stats)
+
+
 class RedisEvalParallelSampler(Sampler):
     """
     Redis based low latency sampler.
@@ -63,6 +71,8 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(self, sampler_options: SamplerOptions):
+        sampler_options.sample_factory = SampleFactory(self._record_all_sum_stats)
+
         self.redis.set(SSA,
                        cloudpickle.dumps(sampler_options))
         self.redis.set(N_EVAL, 0)
