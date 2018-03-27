@@ -1,6 +1,6 @@
 from pyabc.sampler import (MulticoreParticleParallelSampler,
                            MulticoreEvalParallelSampler)
-from pyabc.population import FullInfoParticle
+from pyabc.population import Particle
 import pytest
 from multiprocessing import ProcessError
 
@@ -13,7 +13,7 @@ class UnpickleAble:
         raise Exception
 
     def __call__(self, *args, **kwargs):
-        return FullInfoParticle([], [], [], [], [], [], True)
+        return Particle(0, {}, 1, [1], [1], [])
 
 
 unpickleable = UnpickleAble()

@@ -5,8 +5,11 @@ from pyabc.parameters import Parameter
 
 class Particle:
     """
-    An (accepted) particle, containing the information that will also be
-    stored in the database.
+    An (accepted or rejected) particle, containing the information that will
+    also be stored in the database.
+    Stores all summary statistics that
+    were generated during the creation of this particle, and a flag
+    indicating whether this particle was accepted or not.
 
     Properties
     ----------
@@ -20,29 +23,44 @@ class Particle:
     weight: float, 0 < weight < 1
         The weight of the particle
 
-    distance_list: List[float]
+    distances: List[float]
         A particle can contain more than one sample.
         If so, the distances of the individual samples
         are stored in this list. In the most common case of a single
         sample, this list has length 1.
 
-    summary_statistics_list
-        List of summary statistics which describe the sample
+    accepted_sum_stats
+        List of accepted summary statistics which describe the particle
         This list is usually of length 1. This list is longer only if more
         than one sample is taken for a particle.
+        This list has length 0 if the particle is rejected.
 
+    all_sum_stats: List[dict]
+        List of all summary statistics generated during the creation of this
+        particle (also when they led to rejection).
+        This list is non-empty also for rejected particles.
+
+    accepted: bool
+        True if particle was accepted, False if not.
     """
 
     def __init__(self, m: int,
                  parameter: Parameter,
                  weight: float = 0,
-                 distance_list: List[float] = None,
-                 summary_statistics_list: List[dict] = None):
+                 distances: List[float] = None,
+                 accepted_sum_stats: List[dict] = None,
+                 all_sum_stats: List[dict] = None):
+
         self.m = m
         self.parameter = parameter
         self.weight = weight
-        self.distance_list = distance_list
-        self.summary_statistics_list = summary_statistics_list
+        self.accepted_distances = distances
+        self.accepted_sum_stats = accepted_sum_stats
+        self.all_sum_stats = all_sum_stats
+
+    @property
+    def accepted(self):
+        return len(self.accepted_sum_stats) > 0
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -52,62 +70,10 @@ class Particle:
 
     def __eq__(self, other):
         for key in ["m", "parameter", "weight", "distance_list",
-                    "summary_statistics_list"]:
+                    "summary_statistics_list", "all_summary_statistics_list"]:
             if self[key] != other[key]:
                 return False
         return True
-
-
-class FullInfoParticle(Particle):
-    """
-    Derives from Particle and in addition stores all summary statistics that
-    were generated during the creation of this particle, and a flag
-    indicating whether this particle was accepted or not.
-
-    Properties
-    ----------
-
-    all_summary_statistics_list: List[dict]
-        List of all summary statistics generated during the creation of this
-        particle (also when they led to rejection).
-
-    accepted: bool
-        True if particle was accepted, False if not.
-    """
-
-    def __init__(self, m: int,
-                 parameter: Parameter,
-                 weight: float = 0,
-                 distance_list: List[float] = None,
-                 summary_statistics_list: List[dict] = None,
-                 all_summary_statistics_list: List[dict] = None,
-                 accepted: bool = True):
-
-        super().__init__(m, parameter, weight, distance_list,
-                         summary_statistics_list)
-
-        self.all_summary_statistics_list = all_summary_statistics_list
-        self.accepted = accepted
-
-    def __eq__(self, other):
-        return (super().__eq__(other) and
-                self["all_summary_statistics_list"]
-                == other["all_summary_statistics_list"])
-
-    def to_particle(self) -> Particle:
-        """
-        Reduce to Particle by forgetting all_summary_statistics_list and
-        accepted flag.
-
-        :return:
-        particle: Particle
-            The reduced representation.
-        """
-
-        particle = Particle(self.m, self.parameter, self.weight,
-                            self.distance_list, self.summary_statistics_list)
-
-        return particle
 
 
 class Population:
@@ -171,9 +137,9 @@ class Population:
         """
 
         for particle in self._list:
-            for i in range(len(particle.distance_list)):
-                particle.distance_list[i] = distance_to_ground_truth(
-                    particle.summary_statistics_list[i])
+            for i in range(len(particle.accepted_distances)):
+                particle.accepted_distances[i] = distance_to_ground_truth(
+                    particle.accepted_sum_stats[i])
 
     def get_model_probabilities(self) -> dict:
         """
@@ -197,7 +163,7 @@ class Population:
         rows = []
         for particle in self._list:
             model_probability = self._model_probabilities[particle.m]
-            for distance in particle.distance_list:
+            for distance in particle.accepted_distances:
                 rows.append({'distance': distance,
                              'w': particle.weight * model_probability})
 

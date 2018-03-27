@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from pyabc.population import FullInfoParticle, Population
+from pyabc.population import Particle, Population
 
 
 class Sample:
@@ -35,10 +35,10 @@ class Sample:
     def all_summary_statistics_list(self):
         if self.record_rejected_sum_stat:
             return self._all_summary_statistics_list
-        return sum((particle.summary_statistics_list
+        return sum((particle.accepted_sum_stats
                     for particle in self.accepted_particles), [])
 
-    def append(self, full_info_particle: FullInfoParticle):
+    def append(self, full_info_particle: Particle):
         """
         Add new particle to sample and handle all_summary_statistics_list.
         Checks itself based on the particle.accepted flag whether the particle
@@ -50,12 +50,12 @@ class Sample:
 
         # add to population if accepted
         if full_info_particle.accepted:
-            self.accepted_particles.append(full_info_particle.to_particle())
+            self.accepted_particles.append(full_info_particle)
 
         # keep track of all summary statistics sampled
         if self.record_rejected_sum_stat:
             self._all_summary_statistics_list.extend(
-                full_info_particle.all_summary_statistics_list)
+                full_info_particle.all_sum_stats)
 
     def __add__(self, other):
         """

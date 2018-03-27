@@ -15,7 +15,7 @@ import scipy as sp
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
-from .population import FullInfoParticle
+from .population import Particle
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -393,12 +393,10 @@ class ABCSMC:
                 weight = 0
                 distance_list = []
                 summary_statistics_list = all_summary_statistics_list
-                accepted = True
                 # only the all_summary_statistics_list field will be read later
-                full_info_particle = FullInfoParticle(
+                full_info_particle = Particle(
                     m, theta, weight, distance_list,
-                    summary_statistics_list, all_summary_statistics_list,
-                    accepted)
+                    summary_statistics_list, all_summary_statistics_list)
                 return full_info_particle
 
             # call sampler
@@ -483,12 +481,9 @@ class ABCSMC:
         else:
             weight = 0
 
-        accepted = len(distance_list) > 0
-
-        full_info_particle = FullInfoParticle(
+        full_info_particle = Particle(
             m_ss, theta_ss, weight, distance_list,
-            summary_statistics_list, all_summary_statistics_list,
-            accepted)
+            summary_statistics_list, all_summary_statistics_list)
 
         return full_info_particle
 

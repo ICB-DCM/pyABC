@@ -10,7 +10,6 @@ from sqlalchemy import func
 from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
-
 import logging
 history_logger = logging.getLogger("History")
 
@@ -429,12 +428,13 @@ class History:
             model = Model(m=int(m), p_model=float(model_probabilities[m]),
                           name=str(model_names[m]))
             population.models.append(model)
+
             for store_item in model_population:
                 # a store_item is a Particle
-                weight = store_item['weight']
-                distance_list = store_item['distance_list']
-                parameter = store_item['parameter']
-                summary_statistics_list = store_item['summary_statistics_list']
+                weight = store_item.weight
+                distance_list = store_item.accepted_distances
+                parameter = store_item.parameter
+                summary_statistics_list = store_item.accepted_sum_stats
                 particle = Particle(w=weight)
                 model.particles.append(particle)
                 for key, value in parameter.items():
