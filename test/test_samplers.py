@@ -146,7 +146,17 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
                                               + p2_expected_unnormalized)
     assert history.max_t == nr_populations-1
     # the next line only tests if we obtain correct numerical types
-    assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < sp.inf
+    try:
+        mp0 = mp.p[0]
+    except KeyError:
+        mp0 = 0
+
+    try:
+        mp1 = mp.p[1]
+    except KeyError:
+        mp1 = 0
+
+    assert abs(mp0 - p1_expected) + abs(mp1 - p2_expected) < sp.inf
 
 
 def test_in_memory(redis_starter_sampler):
