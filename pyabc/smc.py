@@ -16,7 +16,7 @@ from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import FullInfoParticle
-from .sampler import SampleOptions, SamplerOptions
+from .sampler import SamplerOptions
 from .transition import Transition, MultivariateNormalTransition
 from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
@@ -412,7 +412,7 @@ class ABCSMC:
                 n=self.population_strategy.nr_particles,
                 sample_one=sample_one,
                 simul_eval_one=simul_eval_one,
-                sample_options=SampleOptions(record_all_particles=True))
+                record_rejected_sum_stat=True)
 
             # call sampler
             sample = self.sampler.sample_until_n_accepted(sampler_options)
@@ -627,7 +627,7 @@ class ABCSMC:
                 n=self.population_strategy.nr_particles,
                 sample_one=sample_one,
                 simul_eval_one=simul_eval_one,
-                sample_options=SampleOptions(self.distance_function.adaptive))
+                record_rejected_sum_stat=self.distance_function.adaptive)
 
             # sample
             sample = self.sampler.sample_until_n_accepted(sampler_options)

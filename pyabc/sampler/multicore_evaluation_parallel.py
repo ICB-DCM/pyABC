@@ -15,7 +15,7 @@ def work(sampler_options: SamplerOptions,
     random.seed()
     np.random.seed()
 
-    sample = Sample(sampler_options.sample_options)
+    sample = Sample(sampler_options.record_rejected_sum_stat)
 
     while n_particles.value > 0:
         with n_eval.get_lock():
@@ -36,7 +36,7 @@ def work(sampler_options: SamplerOptions,
             queue.put((particle_id, sample))
 
             # create empty sample and record until next accepted
-            sample = Sample(sampler_options.sample_options)
+            sample = Sample(sampler_options.record_rejected_sum_stat)
 
     # indicate worker finished
     queue.put(DONE)
@@ -127,7 +127,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         results = [res[1] for res in id_results]
 
         # create 1 to-be-returned sample from results
-        sample = Sample(sampler_options.sample_options)
+        sample = Sample(sampler_options.record_rejected_sum_stat)
         for j in range(sampler_options.n):
             sample += results[j]
 

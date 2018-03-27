@@ -8,7 +8,7 @@ class SingleCoreSampler(Sampler):
 
     def sample_until_n_accepted(self, sampler_options: SamplerOptions):
         nr_simulations = 0
-        sample = Sample(sampler_options.sample_options)
+        sample = self._create_empty_sample()
 
         for _ in range(sampler_options.n):
             while True:

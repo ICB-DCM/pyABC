@@ -30,7 +30,7 @@ def work(feed_q, result_q, sampler_options: SamplerOptions):
         n=1,
         sample_one=sampler_options.sample_one,
         simul_eval_one=sampler_options.simul_eval_one,
-        sample_options=sampler_options.sample_options)
+        record_rejected_sum_stat=sampler_options.record_rejected_sum_stat)
 
     while True:
         arg = feed_q.get()
@@ -114,7 +114,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         self.nr_evaluations_ = sum(evaluations)
 
         # create 1 to-be-returned sample from results
-        sample = Sample(sampler_options.sample_options)
+        sample = self._create_empty_sample()
         for result in results:
             sample += result
 

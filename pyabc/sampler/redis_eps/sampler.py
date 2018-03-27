@@ -100,7 +100,7 @@ class RedisEvalParallelSampler(Sampler):
         results = [res[1] for res in id_results]
 
         # create 1 to-be-returned sample from results
-        sample = Sample(sampler_options.sample_options)
+        sample = self._create_empty_sample()
         for j in range(sampler_options.n):
             sample += results[j]
 

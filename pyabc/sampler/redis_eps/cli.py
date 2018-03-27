@@ -67,7 +67,7 @@ def work_on_population(redis: StrictRedis,
     internal_counter = 0
 
     # create empty sample
-    sample = Sample(sampler_options.sample_options)
+    sample = Sample(sampler_options.record_rejected_sum_stat)
 
     while n_particles > 0:
         if kill_handler.killed:
@@ -104,7 +104,7 @@ def work_on_population(redis: StrictRedis,
             redis.rpush(QUEUE, cloudpickle.dumps((particle_id, sample)))
 
             # create new sample to be filled until next accepted
-            sample = Sample(sampler_options.sample_options)
+            sample = Sample(sampler_options.record_rejected_sum_stat)
         else:
             n_particles = int(redis.get(N_PARTICLES).decode())
 

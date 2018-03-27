@@ -64,10 +64,10 @@ latest/task.html#quick-and-easy-parallelism)
                                       else (pickle.dumps, pickle.loads))
 
     def __getstate__(self):
-        return self.pickle, self.unpickle, self.nr_evaluations_
+        return self.pickle, self.unpickle, self.nr_evaluations_, self._record_all_sum_stats
 
     def __setstate__(self, state):
-        self.pickle, self.unpickle, self.nr_evaluations_ = state
+        self.pickle, self.unpickle, self.nr_evaluations_, self._record_all_sum_stats = state
 
     def map_function(self, sample_simulate_accept, _):
         sampler_options = self.unpickle(sample_simulate_accept)
@@ -75,7 +75,7 @@ latest/task.html#quick-and-easy-parallelism)
         np.random.seed()
         random.seed()
         nr_simulations = 0
-        sample = Sample(sampler_options.sample_options)
+        sample = self._create_empty_sample()
 
         while True:
             new_param = sampler_options.sample_one()
@@ -108,7 +108,7 @@ latest/task.html#quick-and-easy-parallelism)
         self.nr_evaluations_ = sum(evals)
 
         # aggregate all results to 1 to-be-returned sample
-        sample = Sample(sampler_options.sample_options)
+        sample = self._create_empty_sample()
         for result in results:
             sample += result
 
