@@ -595,6 +595,7 @@ class ABCSMC:
         population = None
 
         t_max = t0 + max_nr_populations
+        self.distance_function.configure_sampler(self.sampler)
         for t in range(t0, t_max):
 
             # get epsilon for generation t
@@ -625,8 +626,7 @@ class ABCSMC:
             sampler_options = SamplerOptions(
                 n=self.population_strategy.nr_particles,
                 sample_one=sample_one,
-                simul_eval_one=simul_eval_one,
-                record_rejected_sum_stat=self.distance_function.adaptive)
+                simul_eval_one=simul_eval_one)
 
             # sample
             sample = self.sampler.sample_until_n_accepted(sampler_options)

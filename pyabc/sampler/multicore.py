@@ -20,17 +20,15 @@ def feed(feed_q, n_jobs, n_proc):
         feed_q.put(SENTINEL)
 
 
-def work(feed_q, result_q, sampler_options: SamplerOptions):
+def work(feed_q, result_q, sampler_options: SamplerOptions, single_core_sampler):
     random.seed()
     np.random.seed()
-    single_core_sampler = SingleCoreSampler()
 
     # create copy of sampling options with n=1
     sampler_options_worker = SamplerOptions(
         n=1,
         sample_one=sampler_options.sample_one,
-        simul_eval_one=sampler_options.simul_eval_one,
-        record_rejected_sum_stat=sampler_options.record_rejected_sum_stat)
+        simul_eval_one=sampler_options.simul_eval_one)
 
     while True:
         arg = feed_q.get()
@@ -87,8 +85,13 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         feed_process = Process(target=feed, args=(feed_q, sampler_options.n,
                                                   n_procs))
 
+        single_core_sampler = SingleCoreSampler()
+        if self._record_all_sum_stats:
+            single_core_sampler.require_all_sum_stats()
+
         worker_processes = [Process(target=work, args=(feed_q, result_q,
-                                                       sampler_options))
+                                                       sampler_options,
+                                                       single_core_sampler))
                             for _ in range(n_procs)]
 
         for proc in worker_processes:

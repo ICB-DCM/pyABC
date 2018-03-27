@@ -34,12 +34,10 @@ class SamplerOptions:
     def __init__(self,
                  n: int,
                  sample_one: Callable[[], A],
-                 simul_eval_one: Callable[[A], FullInfoParticle],
-                 record_rejected_sum_stat: bool = False):
+                 simul_eval_one: Callable[[A], FullInfoParticle]):
         self.n = n
         self.sample_one = sample_one
         self.simul_eval_one = simul_eval_one
-        self.record_rejected_sum_stat = record_rejected_sum_stat
 
 
 class Sample:

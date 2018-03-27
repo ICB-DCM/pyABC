@@ -15,6 +15,7 @@ from typing import List
 import math
 import statistics
 import logging
+from .sampler import Sampler
 df_logger = logging.getLogger("DistanceFunction")
 
 
@@ -59,6 +60,22 @@ class DistanceFunction(ABC):
         """
 
         pass
+
+    def configure_sampler(self, sampler: Sampler):
+        """
+        This is called by the ABCSMC class and give the distance function
+        the opportunity to configure the sampler.
+        For example, the distance function might request the sampler
+        to also return rejected particles and there summary statistics
+        in order to adapt the distance functions to the statistics
+        of the sample.
+        The default is to do nothing.
+
+        Parameters
+        ----------
+        Sampler: Sampler
+            The Sampler.
+        """
 
     def update(self, simulations_all: List[dict]) -> bool:
         """
@@ -263,6 +280,11 @@ class WeightedPNormDistance(PNormDistance):
         super().__init__(p)
         self.adaptive = adaptive
         self.scale_type = scale_type
+
+    def configure_sampler(self, sampler: Sampler):
+        super().configure_sampler(sampler)
+        sampler.require_all_sum_stats()
+
 
     def initialize(self, sample_from_prior: List[dict]):
         """
