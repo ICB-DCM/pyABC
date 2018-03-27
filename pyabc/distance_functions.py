@@ -55,12 +55,13 @@ class DistanceFunction(ABC):
 
     def configure_sampler(self, sampler: Sampler):
         """
-        This is called by the ABCSMC class and give the distance function
+        This is called by the ABCSMC class and gives the distance function
         the opportunity to configure the sampler.
         For example, the distance function might request the sampler
-        to also return rejected particles and there summary statistics
+        to also return rejected particles and their summary statistics
         in order to adapt the distance functions to the statistics
         of the sample.
+
         The default is to do nothing.
 
         Parameters
