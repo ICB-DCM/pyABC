@@ -410,7 +410,7 @@ class ABCSMC:
 
     def _generate_valid_proposal(self, t, m, p):
         """
-        Corresponds to Sampler.sample_one.
+        Sample a parameter for a model.
 
         Parameters
         ----------
@@ -420,6 +420,8 @@ class ABCSMC:
 
         Returns
         -------
+
+        Model, parameter.
 
         """
 
@@ -452,9 +454,10 @@ class ABCSMC:
                            theta_ss,
                            current_eps,
                            t,
-                           model_probabilities):
+                           model_probabilities) -> Particle:
         """
-        Corresponds to Sampler.simul_eval_one.
+        Corresponds to Sampler.simulate_one. Data for the given parameters
+        theta_ss are simulated, summary statistics computed and evaluated.
 
         This is where the actual model evaluation happens.
         """
@@ -489,6 +492,10 @@ class ABCSMC:
                               m_ss,
                               theta_ss,
                               t, model_probabilities):
+        """
+        Calculate the weight for the generated parameter.
+        """
+
         if t == 0:
             weight = (len(distance_list)
                       / self.population_strategy.nr_samples_per_parameter)
@@ -583,7 +590,7 @@ class ABCSMC:
 
             # do some adaptations
             self._fit_transitions(t)
-            self._adapt_population(t)
+            self._adapt_population_size(t)
 
             # cache model_probabilities to not query the database so often
             model_probabilities = self.history.get_model_probabilities(
@@ -641,7 +648,14 @@ class ABCSMC:
         self.history.done()
         return self.history
 
-    def _adapt_population(self, t):
+    def _adapt_population_size(self, t):
+        """
+        Adapt population size based on the employed population strategy.
+
+        :param t:
+            time
+        """
+
         if t == 0:  # we need a particle population to do the fitting
             return
 
@@ -656,6 +670,13 @@ class ABCSMC:
         self.population_strategy.adapt_population_size(copied_transitions, w)
 
     def _fit_transitions(self, t):
+        """
+        Fit the density estimator.
+
+        :param t:
+            time
+        """
+
         if t == 0:  # we need a particle population to do the fitting
             return
 

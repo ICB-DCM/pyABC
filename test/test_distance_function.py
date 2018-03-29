@@ -48,15 +48,21 @@ def test_single_parameter_percentile():
     assert expected == d
 
 
-def test_adaptive_distance():
+def test_pnormdistance():
     abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
                    {'s1': -1, 's2': 0, 's3': 1}])
 
-    # fist test that for PNormDistance, the weights stay constant
+    # first test that for PNormDistance, the weights stay constant
     dist_f = PNormDistance(p=2)
     dist_f.initialize(abc.sample_from_prior())
+
     assert sum(abs(a-b) for a, b in
                zip(list(dist_f.w.values()), [1, 1, 1])) < 0.01
+
+
+def test_weightedpnormdistance():
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1}])
 
     # now test that the weights adapt correctly for a weighted distance
     scale_type = WeightedPNormDistance.SCALE_TYPE_MAD
@@ -67,6 +73,6 @@ def test_adaptive_distance():
     # the weights are adapted using MAD, and then divided by the mean
     # here mean = 4/3, so (noting that in addition the MAD of 0 in s1 is set to
     # 1) we expect the following
-    print(dist_f.w)
+
     assert sum(abs(a-b) for a, b in
                zip(list(dist_f.w.values()), [0.75, 1.5, 0.75])) < 0.01

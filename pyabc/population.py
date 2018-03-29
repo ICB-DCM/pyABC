@@ -83,10 +83,8 @@ class Particle:
 
 class Population:
     """
-    This class acts as as a wrapper around a list of particles, offering
-    standardized access.
-
-    Upon initialization, the particle weights are normalized and model
+    A population contains a list of particles and offers standardized access
+    to them. Upon initialization, the particle weights are normalized and model
     probabilities computed as described in _normalize_weights.
     """
 
