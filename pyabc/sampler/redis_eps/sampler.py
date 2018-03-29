@@ -6,15 +6,6 @@ from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_PARTICLES, N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME)
 from .redis_logging import worker_logger
-from ..base import Sample
-
-
-class SampleFactory:
-    def __init__(self, record_all_sum_stats):
-        self.record_all_sum_stats = record_all_sum_stats
-
-    def __call__(self):
-        return Sample(self.record_all_sum_stats)
 
 
 class RedisEvalParallelSampler(Sampler):
@@ -72,10 +63,9 @@ class RedisEvalParallelSampler(Sampler):
 
     def sample_until_n_accepted(self, n, simulate_one):
         # this is a workaround to avoid pickling issues
-        sample_factory = SampleFactory(self._record_all_sum_stats)
 
         self.redis.set(SSA,
-                       cloudpickle.dumps((simulate_one, sample_factory)))
+                       cloudpickle.dumps((simulate_one, self.sample_factory)))
         self.redis.set(N_EVAL, 0)
         self.redis.set(N_PARTICLES, n)
         self.redis.set(N_WORKER, 0)

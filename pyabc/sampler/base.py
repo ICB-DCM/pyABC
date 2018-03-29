@@ -14,6 +14,7 @@ class Sample:
         Whether to record the summary statistics of rejected particles as well.
 
 
+
     Properties
     ----------
 
@@ -87,6 +88,17 @@ class Sample:
         return Population(self._accepted_particles)
 
 
+class SampleFactory:
+    def __init__(self, record_all_sum_stats):
+        self.record_all_sum_stats = record_all_sum_stats
+
+    def __call__(self):
+        return Sample(self.record_all_sum_stats)
+
+    def require_all_sum_stats(self):
+        self.record_all_sum_stats = True
+
+
 class Sampler(ABC):
     """
     Abstract Sampler base class.
@@ -103,13 +115,13 @@ class Sampler(ABC):
     """
     def __init__(self):
         self.nr_evaluations_ = 0
-        self._record_all_sum_stats = False
+        self.sample_factory = SampleFactory(False)
 
     def require_all_sum_stats(self):
-        self._record_all_sum_stats = True
+        self.sample_factory.require_all_sum_stats()
 
     def _create_empty_sample(self) -> Sample:
-        return Sample(self._record_all_sum_stats)
+        return self.sample_factory()
 
     @abstractmethod
     def sample_until_n_accepted(self, n, simulate_one) -> Sample:

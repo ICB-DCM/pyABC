@@ -65,11 +65,11 @@ latest/task.html#quick-and-easy-parallelism)
 
     def __getstate__(self):
         return (self.pickle, self.unpickle,
-                self.nr_evaluations_, self._record_all_sum_stats)
+                self.nr_evaluations_, self.sample_factory)
 
     def __setstate__(self, state):
         (self.pickle, self.unpickle, self.nr_evaluations_,
-         self._record_all_sum_stats) = state
+         self.sample_factory) = state
 
     def map_function(self, simulate_one, _):
         simulate_one = self.unpickle(simulate_one)

@@ -79,8 +79,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
                                                   n_procs))
 
         single_core_sampler = SingleCoreSampler()
-        if self._record_all_sum_stats:
-            single_core_sampler.require_all_sum_stats()
+        single_core_sampler.sample_factory = self.sample_factory
 
         worker_processes = [Process(target=work, args=(feed_q, result_q,
                                                        simulate_one,
