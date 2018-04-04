@@ -10,14 +10,6 @@ class Sample:
     Parameters
     ----------
 
-    record_rejected_summary_statistics: bool
-        Whether to record the summary statistics of rejected particles as well.
-
-
-
-    Properties
-    ----------
-
     record_rejected_sum_stat: bool
         Whether to record summary statistics of the rejected samples as well.
     """
@@ -105,7 +97,7 @@ class Sampler(ABC):
 
     Produce valid particles: :class:`pyabc.parameters.ValidParticle`.
 
-    Properties
+    Parameters
     ----------
 
     nr_evaluations_: int

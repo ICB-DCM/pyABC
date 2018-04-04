@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
-
 from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
@@ -68,6 +67,7 @@ class History:
 
     db: str
         SQLAlchemy database identifier.
+
     """
     DB_TIMEOUT = 120
 
@@ -93,14 +93,17 @@ class History:
     @property
     def db_size(self) -> Union[int, str]:
         """
+        Size of the database.
 
         Returns
         -------
+
         db_size: int, str
             Size of the SQLite database in MB.
             Currently this only works for SQLite databases.
 
             Returns an error string if the DB size cannot be calculated.
+        
         """
         try:
             return os.path.getsize(self.db_file()) / 10**6
@@ -139,6 +142,7 @@ class History:
         alive: List
             A list which contains the indices of those
             models which are still alive
+
         """
         t = int(t)
         alive = (self._session.query(Model.m)

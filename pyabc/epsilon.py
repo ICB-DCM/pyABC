@@ -71,7 +71,8 @@ class Epsilon(ABC):
             The latest population, which may be different from the one stored
             in history.
 
-        :return:
+        Return
+        ------
         eps: float
             The new epsilon for population ``t``.
 

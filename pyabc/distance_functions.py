@@ -25,7 +25,7 @@ class DistanceFunction(ABC):
 
     Any other distance function should inherit from this class.
 
-    Properties
+    Parameters
     ----------
 
     adaptive: Bool
@@ -365,13 +365,21 @@ class WeightedEuclideanDistance(WeightedPNormDistance):
 def median_absolute_deviation(data: List):
     """
     Calculate the `sample median absolute deviation (MAD)
-    <https://en.wikipedia.org/wiki/Median_absolute_deviation>'_, defined as
+    <https://en.wikipedia.org/wiki/Median_absolute_deviation>`_, defined as
     ``median(abs(data - median(data))''.
 
-    :param data: List
+    Parameters
+    ----------
+    
+    data: List
         List of data points.
-    :return: mad
+    
+    Returns
+    -------
+    
+    mad
         The median absolute deviation of the data.
+    
     """
 
     data_median = statistics.median(data)
@@ -387,9 +395,16 @@ def standard_deviation(data: List):
     Calculate the ` sample standard deviation (SD)
     <https://en.wikipedia.org/wiki/Standard_deviation>`_.
 
-    :param data: List
+    Parameters
+    ----------
+    
+    data: List
         List of data points.
-    :return: sd
+    
+    Returns
+    -------
+    
+    sd
         The standard deviation of the data points.
     """
 
