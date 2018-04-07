@@ -364,9 +364,9 @@ class WeightedEuclideanDistance(WeightedPNormDistance):
 
 def median_absolute_deviation(data: List):
     """
-    Calculate the `sample median absolute deviation (MAD)
-    <https://en.wikipedia.org/wiki/Median_absolute_deviation>`_, defined as
-    ``median(abs(data - median(data))''.
+    Calculate the sample `median absolute deviation (MAD)
+    <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_, defined as
+    median(abs(data - median(data)).
 
     Parameters
     ----------
@@ -392,8 +392,8 @@ def median_absolute_deviation(data: List):
 
 def standard_deviation(data: List):
     """
-    Calculate the ` sample standard deviation (SD)
-    <https://en.wikipedia.org/wiki/Standard_deviation>`_.
+    Calculate the sample `standard deviation (SD)
+    <https://en.wikipedia.org/wiki/Standard_deviation/>`_.
 
     Parameters
     ----------
