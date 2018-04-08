@@ -7,4 +7,5 @@ N_WORKER = "n_workers"
 MSG = "msg_pubsub"
 START = "start"
 STOP = "stop"
+BATCH_SIZE = "batch_size"
 SLEEP_TIME = .1

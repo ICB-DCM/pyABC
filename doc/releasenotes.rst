@@ -5,15 +5,22 @@ Release Notes
 ..........
 
 
+0.8.21
+------
+
+* All distance functions can be adaptive via implementing an
+  update() method.
+* In particular add WeightedPNormDistance (special case: EuclideanDistance).
+* Simplify Sampler.sample_until_n_accepted interface.
+* Add properties and methods to Sampler class to allow for customization.
+* Add QuantileEpsilon feature.
+
+
 0.8.20
 ------
 
-* Add Adaptive Distance feature. All distance functions can implement an
-  update() method.
-* In particular add WeightedPNormDistance.
-* Change interface of Sampler.sample_until_n_accepted to allow passing
-  more information.
-* Add QuantileEpsilon feature.
+* Add batch sampling now also to the REDIS evaluation parallel sampler
+  (dynamic scheduling)
 
 
 0.8.19

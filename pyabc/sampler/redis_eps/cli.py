@@ -9,7 +9,7 @@ from time import time
 import click
 from .redis_logging import worker_logger
 from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
-                  MSG)
+                  MSG, BATCH_SIZE)
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -46,15 +46,23 @@ def work_on_population(redis: StrictRedis,
                        kill_handler: KillHandler):
     population_start_time = time()
     cumulative_simulation_time = 0
-    ssa = redis.get(SSA)
+
+    pipeline = redis.pipeline()
+    pipeline.get(SSA)
+    pipeline.get(N_PARTICLES)
+    pipeline.get(BATCH_SIZE)
+    ssa, n_particles_bytes, batch_size_bytes = pipeline.execute()
+
     if ssa is None:
         return
+
     kill_handler.exit = False
 
     n_particles_bytes = redis.get(N_PARTICLES)
     if n_particles_bytes is None:
         return
     n_particles = int(n_particles_bytes.decode())
+    batch_size = int(batch_size_bytes.decode())
 
     n_worker = redis.incr(N_WORKER)
     worker_logger.info("Begin population. I am worker {}"
@@ -63,6 +71,10 @@ def work_on_population(redis: StrictRedis,
     # load sampler options
     simulate_one, sample_factory = pickle.loads(ssa)
 
+    n_worker = redis.incr(N_WORKER)
+    worker_logger.info(f"Begin population, "
+                       f"batch size {batch_size}. "
+                       f"I am worker {n_worker}")
     internal_counter = 0
 
     # create empty sample
@@ -86,23 +98,25 @@ def work_on_population(redis: StrictRedis,
             redis.decr(N_WORKER)
             return
 
-        particle_id = redis.incr(N_EVAL)
-        internal_counter += 1
+        particle_max_id = redis.incr(N_EVAL, batch_size)
 
         this_sim_start = time()
-        new_sim = simulate_one()
-        sample.append(new_sim)
+        accepted_samples = []
+        for n_batched in range(batch_size):
+            new_sim = simulate_one()
+            sample.append(new_sim)
+            internal_counter += 1
+            if new_sim.accepted:
+                accepted_samples.append(cloudpickle.dumps((particle_max_id -
+                                                           n_batched, sample)))
+                sample = sample_factory()
         cumulative_simulation_time += time() - this_sim_start
 
-        if new_sim.accepted:
-            # decrease counter
-            n_particles = redis.decr(N_PARTICLES)
-
-            # add sample to queue
-            redis.rpush(QUEUE, cloudpickle.dumps((particle_id, sample)))
-
-            # create new sample to be filled until next accepted
-            sample = sample_factory()
+        if len(accepted_samples) > 0:
+            pipeline = redis.pipeline()
+            pipeline.decr(N_PARTICLES, len(accepted_samples))
+            pipeline.rpush(QUEUE, *accepted_samples)
+            n_particles, _ = pipeline.execute()
         else:
             n_particles = int(redis.get(N_PARTICLES).decode())
 
@@ -154,12 +168,12 @@ def _work(host="localhost", port=6379, runtime="2h"):
     p.subscribe(MSG)
     listener = p.listen()
     for msg in listener:
-        # check if it is int to run at least once
         try:
             data = msg["data"].decode()
         except AttributeError:
             data = msg["data"]
 
+        # check if it is int to (first iteration) run at least once
         if data == START or isinstance(data, int):
             work_on_population(redis, start_time, max_runtime_s, kill_handler)
 

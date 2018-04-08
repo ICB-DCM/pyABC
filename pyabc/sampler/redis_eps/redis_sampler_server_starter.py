@@ -7,13 +7,16 @@ from .sampler import RedisEvalParallelSampler
 
 
 class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
-    def __init__(self, host="localhost", port=6379):
+    def __init__(self, host="localhost", port=6379, batch_size=1):
         conn = psutil.net_connections()
         ports = [c.laddr[1] for c in conn]
         port = max(ports) + 1
         self.__port = port
         self.__redis_server = Popen(["redis-server", "--port", str(port)])
         sleep(1)
+
+        super().__init__(host, port, batch_size=batch_size)
+
         self.__worker = [
             Process(target=work,
                     args=(["--host", "localhost", "--port", str(port)],),
@@ -22,7 +25,6 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         ]
         for p in self.__worker:
             p.start()
-        super().__init__(host, port)
 
     def cleanup(self):
         _manage("stop", port=self.__port)
