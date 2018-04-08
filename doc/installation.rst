@@ -118,11 +118,11 @@ page which one it is.
 .. note::
 
     The Anaconda installer asks you at the end of the installation whether
-    you want to use Anaconda Python as your default Python::
+    you want to use Anaconda Python as your default Python:: bash
 
-        Do you wish the installer to prepend the Anaconda3 install location
-        to PATH in your /home/username/.bashrc ? [yes|no]
-        [no] >>>
+       Do you wish the installer to prepend the Anaconda3 install location
+       to PATH in your /home/username/.bashrc ? [yes|no]
+       [no] >>>
 
     If you answer yes, the path to the Anaconda installation is prepended to
     your ``PATH`` environment variable and subsequent calls to ``pip``

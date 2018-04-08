@@ -119,6 +119,7 @@ authentication:
 You should get an output looking similar to the one below:
 
 .. literalinclude:: redis_setup/redis_start_output.txt
+   :language: bash
 
 If you're on Linux, you can install redis either via your package manager
 of if you're using anaconda via
