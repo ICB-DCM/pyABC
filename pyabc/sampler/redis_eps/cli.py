@@ -107,6 +107,9 @@ def work_on_population(redis: StrictRedis,
             sample.append(new_sim)
             internal_counter += 1
             if new_sim.accepted:
+                # the order of the IDs is reversed, but this does not
+                # matter. Important is only that the IDs are specified
+                # before the simulation starts
                 accepted_samples.append(cloudpickle.dumps((particle_max_id -
                                                            n_batched, sample)))
                 sample = sample_factory()
