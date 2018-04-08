@@ -103,7 +103,7 @@ class History:
             Currently this only works for SQLite databases.
 
             Returns an error string if the DB size cannot be calculated.
-        
+
         """
         try:
             return os.path.getsize(self.db_file()) / 10**6

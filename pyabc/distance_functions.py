@@ -370,16 +370,16 @@ def median_absolute_deviation(data: List):
 
     Parameters
     ----------
-    
+
     data: List
         List of data points.
-    
+
     Returns
     -------
-    
+
     mad
         The median absolute deviation of the data.
-    
+
     """
 
     data_median = statistics.median(data)
@@ -397,13 +397,13 @@ def standard_deviation(data: List):
 
     Parameters
     ----------
-    
+
     data: List
         List of data points.
-    
+
     Returns
     -------
-    
+
     sd
         The standard deviation of the data points.
     """
