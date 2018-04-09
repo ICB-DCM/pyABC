@@ -130,8 +130,8 @@ class Sampler(ABC):
         simulate_one: Callable[[A], Particle]
             A function which internally performs the whole process of
             sampling parameters, simulating data, and comparing to observed
-            data to check for acceptance, as indicated via the particle.accepted
-            flag.
+            data to check for acceptance, as indicated via the
+            particle.accepted flag.
 
         Returns
         -------
