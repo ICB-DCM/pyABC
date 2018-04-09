@@ -118,12 +118,24 @@ class Sampler(ABC):
     @abstractmethod
     def sample_until_n_accepted(self, n, simulate_one) -> Sample:
         """
+        Performs the sampling, i.e. creation of a new generation, i.e. a new
+        population, of particles.
+
         Parameters
         ----------
+
+        n: int
+            The number of samples to be accepted. I.e. the population size.
+
+        simulate_one: Callable[[A], Particle]
+            A function which internally performs the whole process of
+            sampling parameters, simulating data, and comparing to observed
+            data to check for acceptance, as indicated via the particle.accepted
+            flag.
 
         Returns
         -------
 
         sample: :class:`Sample`
-            The generated sample.
+            The generated sample, which contains the new population.
         """
