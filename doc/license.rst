@@ -20,7 +20,7 @@ Contributions
 
 Dennis Rickert contributed through discussions and code.
 Lukas Sandmeir and Elba Raimundez contributed to the examples.
-
+Yannik Schälte contributed further features and examples.
 
 
 .. _license-text:

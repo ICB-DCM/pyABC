@@ -2,9 +2,11 @@ Welcome to pyABC's documentation!
 =================================
 
 .. image:: https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master
-    :target: https://travis-ci.org/ICB-DCM/pyABC
+   :target: https://travis-ci.org/ICB-DCM/pyABC
 
 Version: |version|
+
+Source code: https://github.com/icb-dcm/pyabc
 
 
 pyABC is a framework for distributed, likelihood-free inference.
@@ -22,7 +24,7 @@ pyABC runs efficiently on multi-core machines and distributed cluster setups.
 It is easy to use and flexibly extensible.
 
 If you're interested in using it, you can cite the preprint available here:
-https://doi.org/10.1101/162552
+https://doi.org/10.1101/162552.
 
 User's Guide
 ------------

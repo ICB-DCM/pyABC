@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'pyABC'
-copyright = '2017, The pyABC developers'
+copyright = '2018, The pyABC developers'
 author = 'The pyABC developers'
 
 # The version info for the project you're documenting, acts as replacement for
