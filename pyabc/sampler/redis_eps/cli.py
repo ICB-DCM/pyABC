@@ -64,10 +64,6 @@ def work_on_population(redis: StrictRedis,
     n_particles = int(n_particles_bytes.decode())
     batch_size = int(batch_size_bytes.decode())
 
-    n_worker = redis.incr(N_WORKER)
-    worker_logger.info("Begin population. I am worker {}"
-                       .format(n_worker))
-
     # load sampler options
     simulate_one, sample_factory = pickle.loads(ssa)
 
