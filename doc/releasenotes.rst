@@ -8,12 +8,14 @@ Release Notes
 0.8.21
 ------
 
-* All distance functions can be adaptive via implementing an
-  update() method.
+* Implementation of adaptive distances feature. Distance functions can adapt
+  via an update() method.
 * In particular add WeightedPNormDistance (special case: EuclideanDistance).
 * Simplify Sampler.sample_until_n_accepted interface.
-* Add properties and methods to Sampler class to allow for customization.
-* Add QuantileEpsilon feature.
+* Extend Sampler class to allow for customization, e.g. by the distance
+  functions.
+* Generalize MedianEpsilon to QuantileEpsilon.
+* Make Viserver work with latest bokeh version.
 
 
 0.8.20
