@@ -16,7 +16,6 @@ helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
                            '#0072b2',
                            '#d55e00',
                            '#cc79a7']
-from bkcharts import Line  # noqa: E402
 from bokeh.embed import components  # noqa: E402
 from bokeh.resources import INLINE  # noqa: E402
 from bokeh.models.widgets import Panel, Tabs  # noqa: E402
@@ -146,8 +145,9 @@ def abc_model(abc_id, model_id, t):
         plot_df = df[["CDF", parameter]].sort_values(parameter)
         plot_df_cumsum = plot_df.cumsum()
         plot_df_cumsum[parameter] = plot_df[parameter]
-        p = Panel(child=Line(x=parameter, y="CDF", data=plot_df_cumsum),
-                  title=parameter)
+        f = figure()
+        f.line(x=plot_df_cumsum[parameter], y=plot_df_cumsum["CDF"])
+        p = Panel(child=f, title=parameter)
         tabs.append(p)
     if len(tabs) == 0:
         plot = PlotScriptDiv("", "This model has no Parameters")
