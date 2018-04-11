@@ -315,7 +315,7 @@ class ABCSMC:
 
         gt_model: int, optional
             This is only meta data stored to the database, but not actually
-            used for the ABCSMC algorithm If you want to predict your ABCSMC
+            used for the ABCSMC algorithm. If you want to predict your ABCSMC
             procedure against synthetic samples, you can use
             this parameter to indicate the ground truth model number.
             This helps with further analysis. If you use actually measured data
