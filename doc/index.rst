@@ -44,7 +44,7 @@ the usage of this package.
    export_db
    web_visualization
    releasenotes
-   license
+   about
 
 
 

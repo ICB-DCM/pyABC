@@ -5,12 +5,12 @@ Quick start
 -----------
 
 The pyabc.sge package provides as most important class
-the :class:`SGE <pyabc.sge.SGE>`. It's ``map`` method
+the :class:`SGE <pyabc.sge.SGE>`. Its ``map`` method
 automatically parallelizes across an SGE/UGE cluster.
-The SGE class can be used in standalone mode or in comgination
+The SGE class can be used in standalone mode or in combination
 with the ABCSMC class (see below :ref:`sge-abcsmc`).
 
-Usage of the parallel package is fairly easy. For example
+Usage of the parallel package is fairly easy. For example:
 
 .. code-block:: python
 
@@ -32,7 +32,7 @@ Usage of the parallel package is fairly easy. For example
    [2, 4, 6, 8]
 
 
-The job scheduling is either done via a SQLite database or a REDIS instance.
+The job scheduling is either done via an SQLite database or a REDIS instance.
 REDIS is recommended as it works more robustly, in particular in cases
 where distributed file systems are rather slow.
 
@@ -65,4 +65,4 @@ convenient parallelization of jobs across a cluster, completely independent
 of the rest of the pyABC package.
 The :class:`SGE <pyabc.sge.SGE>` class can also be combined, for instance, with
 the :class:`pyabc.sampler.MappingSampler` class for simple parallelization
-of ABC-SCM runs across a SGE cluster.
+of ABC-SCM runs across an SGE cluster.
