@@ -74,7 +74,7 @@ class History:
     def __init__(self, db: str):
         """
         Only counts the simulations which appear in particles.
-        If a simulation terminated prematurely it is not counted.
+        If a simulation terminated prematurely, it is not counted.
         """
         self.db_identifier = db
         self._session = None
@@ -221,13 +221,13 @@ class History:
     @with_session
     def get_all_populations(self):
         """
-        Returns a pandas Dataframe with columns
+        Returns a pandas DataFrame with columns
 
-        * `t`: Popultion number
+        * `t`: Population number
         * `population_end_time`: The end time of the population
         * `samples`: The number of sample attempts performed
            for a population
-        * `epsilon`: The acceptence threshold for the population.
+        * `epsilon`: The acceptance threshold for the population.
 
         Returns
         -------
@@ -364,8 +364,8 @@ class History:
 
     def _make_session(self):
         # TODO: check if the session creation and closing is still necessary
-        # I think I did this funnny construction due to some pickling issues
-        #  but I'm not quite sure anymore
+        # I think I did this funny construction due to some pickling issues
+        # but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         engine = create_engine(self.db_identifier,

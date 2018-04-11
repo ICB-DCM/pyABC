@@ -200,7 +200,7 @@ class QuantileEpsilon(Epsilon):
     """
 
     def __init__(self,
-                 initial_epsilon: Union[str, int, float]='from_sample',
+                 initial_epsilon: Union[str, int, float] ='from_sample',
                  alpha: float =0.5,
                  quantile_multiplier: float =1,
                  weighted: bool =True):
