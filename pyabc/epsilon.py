@@ -169,7 +169,7 @@ class QuantileEpsilon(Epsilon):
 
     initial_epsilon: Union[str, int]
 
-        * If 'from_sample', then the initial quantilee is calculated from
+        * If 'from_sample', then the initial quantile is calculated from
           a sample of the current population size from the prior distribution.
         * If a number is given, this number is used.
 
@@ -303,7 +303,6 @@ class MedianEpsilon(QuantileEpsilon):
     def __init__(self, initial_epsilon: Union[str, int, float]='from_sample',
                  median_multiplier: float =1,
                  weighted: bool =True):
-
         super().__init__(initial_epsilon=initial_epsilon,
                          alpha=0.5,
                          quantile_multiplier=median_multiplier,

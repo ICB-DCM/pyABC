@@ -24,14 +24,6 @@ class DistanceFunction(ABC):
     Abstract base class for distance functions.
 
     Any other distance function should inherit from this class.
-
-    Parameters
-    ----------
-
-    adaptive: Bool
-        True if the distance adapts over the iterations. Then in the SMC run
-        all summary statistics will need to be recorded, because they are used
-        in the update() method.
     """
 
     def initialize(self, sample_from_prior: List[dict]):
@@ -155,9 +147,9 @@ class SimpleFunctionDistance(DistanceFunction):
     an instance of the SimpleFunctionDistance class.
     """
 
-    def __init__(self, func):
+    def __init__(self, function):
         super().__init__()
-        self.function = func
+        self.function = function
 
     def __call__(self, x, y):
         return self.function(x, y)
