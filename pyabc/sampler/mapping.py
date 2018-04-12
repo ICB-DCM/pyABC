@@ -55,6 +55,7 @@ latest/task.html#quick-and-easy-parallelism)
         :class:`pyabc.sge.SGE` mapper, this option should be set to
         `True` for better performance.
     """
+
     def __init__(self, map=map, mapper_pickles=False):
         super().__init__()
         self.map = map
@@ -63,42 +64,56 @@ latest/task.html#quick-and-easy-parallelism)
                                       else (pickle.dumps, pickle.loads))
 
     def __getstate__(self):
-        return self.pickle, self.unpickle, self.nr_evaluations_
+        return (self.pickle, self.unpickle,
+                self.nr_evaluations_, self.sample_factory)
 
     def __setstate__(self, state):
-        self.pickle, self.unpickle, self.nr_evaluations_ = state
+        (self.pickle, self.unpickle, self.nr_evaluations_,
+         self.sample_factory) = state
 
-    def map_function(self, sample_simulate_accept, _):
-        sample, simulate, accept = self.unpickle(sample_simulate_accept)
+    def map_function(self, simulate_one, _):
+        simulate_one = self.unpickle(simulate_one)
 
         np.random.seed()
         random.seed()
         nr_simulations = 0
-        while True:
-            new_param = sample()
-            new_sim = simulate(new_param)
-            nr_simulations += 1
-            if accept(new_sim):
-                break
-        return new_sim, nr_simulations
+        sample = self._create_empty_sample()
 
-    def sample_until_n_accepted(self, sample, simualte, accept, n):
+        while True:
+            new_sim = simulate_one()
+            nr_simulations += 1
+            sample.append(new_sim)
+            if new_sim.accepted:
+                break
+
+        return sample, nr_simulations
+
+    def sample_until_n_accepted(self, n, simulate_one):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.
         # Correct usage of shared references might even be necessary
         # to ensure correct working, depending on the details of the
         # model implementations.
-        sample_simulate_accept = self.pickle((sample, simualte, accept))
+        sample_simulate_accept = self.pickle(simulate_one)
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)
 
-        counted_results = list(self.map(map_function, [None] * n))
+        counted_results = list(self.map(map_function,
+                                        [None] * n))
         counted_results = filter(lambda x: not isinstance(x, Exception),
                                  counted_results)
         results, evals = zip(*counted_results)
+
+        # count all evaluations
         self.nr_evaluations_ = sum(evals)
-        return results
+
+        # aggregate all results to 1 to-be-returned sample
+        sample = self._create_empty_sample()
+        for result in results:
+            sample += result
+
+        return sample
 
 
 def identity(x):

@@ -119,6 +119,7 @@ authentication:
 You should get an output looking similar to the one below:
 
 .. literalinclude:: redis_setup/redis_start_output.txt
+   :language: bash
 
 If you're on Linux, you can install redis either via your package manager
 of if you're using anaconda via
@@ -176,7 +177,7 @@ Again, 111.111.111.111 is the IP address of the machine running the Redis
 server. You should get an output similar to
 
 
-.. parsed-literal::
+.. code:: bash
 
    INFO:REDIS-WORKER:Start redis worker. Max run time 7200.0s, PID=2731
 
@@ -202,12 +203,12 @@ To monitor the ongoing sampling, execute
 
 .. code:: bash
 
-  abc-redis-manager info --host=111.111.111.111
+   abc-redis-manager info --host=111.111.111.111
 
 again, assuming 111.111.111.111 is the IP of the Redis server. If no sampling
 has happened yet, the output should look like
 
-.. parsed-literal::
+.. code:: bash
 
    Workers=None Evaluations=None Particles=None
 

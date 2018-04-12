@@ -40,7 +40,8 @@ class KillHandler:
             sys.exit(0)
 
 
-def work_on_population(redis: StrictRedis, start_time: int,
+def work_on_population(redis: StrictRedis,
+                       start_time: int,
                        max_runtime_s: int,
                        kill_handler: KillHandler):
     population_start_time = time()
@@ -54,19 +55,27 @@ def work_on_population(redis: StrictRedis, start_time: int,
 
     if ssa is None:
         return
-    sample, simulate, accept = pickle.loads(ssa)
+
     kill_handler.exit = False
 
+    n_particles_bytes = redis.get(N_PARTICLES)
     if n_particles_bytes is None:
         return
     n_particles = int(n_particles_bytes.decode())
     batch_size = int(batch_size_bytes.decode())
+
+    # load sampler options
+    simulate_one, sample_factory = pickle.loads(ssa)
 
     n_worker = redis.incr(N_WORKER)
     worker_logger.info(f"Begin population, "
                        f"batch size {batch_size}. "
                        f"I am worker {n_worker}")
     internal_counter = 0
+
+    # create empty sample
+    sample = sample_factory()
+
     while n_particles > 0:
         if kill_handler.killed:
             worker_logger.info("Worker {} received stop signal. "
@@ -88,23 +97,24 @@ def work_on_population(redis: StrictRedis, start_time: int,
         particle_max_id = redis.incr(N_EVAL, batch_size)
 
         this_sim_start = time()
-        accepted_particles = []
+        accepted_samples = []
         for n_batched in range(batch_size):
-            new_param = sample()
-            new_sim = simulate(new_param)
+            new_sim = simulate_one()
+            sample.append(new_sim)
             internal_counter += 1
-            if accept(new_sim):
+            if new_sim.accepted:
                 # the order of the IDs is reversed, but this does not
                 # matter. Important is only that the IDs are specified
                 # before the simulation starts
-                accepted_particles.append(
-                    cloudpickle.dumps((particle_max_id - n_batched, new_sim)))
+                accepted_samples.append(cloudpickle.dumps((particle_max_id -
+                                                           n_batched, sample)))
+                sample = sample_factory()
         cumulative_simulation_time += time() - this_sim_start
 
-        if len(accepted_particles) > 0:
+        if len(accepted_samples) > 0:
             pipeline = redis.pipeline()
-            pipeline.decr(N_PARTICLES, len(accepted_particles))
-            pipeline.rpush(QUEUE, *accepted_particles)
+            pipeline.decr(N_PARTICLES, len(accepted_samples))
+            pipeline.rpush(QUEUE, *accepted_samples)
             n_particles, _ = pipeline.execute()
         else:
             n_particles = int(redis.get(N_PARTICLES).decode())

@@ -1,5 +1,4 @@
 from collections import UserDict
-from typing import List
 
 
 class ParameterStructure(UserDict):
@@ -20,9 +19,9 @@ class ParameterStructure(UserDict):
             raise Exception("Only keyword or dictionary allowed")
         if len(args) > 0:
             flattened = ParameterStructure.flatten_dict(args[0])
-        if len(kwargs) > 0:
+        elif len(kwargs) > 0:
             flattened = ParameterStructure.flatten_dict(kwargs)
-        if len(args) == 0 and len(kwargs) == 0:
+        else:  # len(args) == 0 and len(kwargs) == 0:
             flattened = {}
         super().__init__(flattened)
 
@@ -82,53 +81,3 @@ class Parameter(ParameterStructure):
         Copy the parameter.
         """
         return Parameter(**self)
-
-
-class ValidParticle:
-    """
-    A valid (accepted) particle.
-
-    Parameters
-    ----------
-
-    m: int
-        The model nr
-
-    parameter: Parameter
-        The model specific parameter
-
-    weight: float, 0 < weight < 1
-        The weight of the particle
-
-    distance_list: List[float]
-        A particle can contain more than one sample.
-        If so, the distances of the individual samples
-        are stored in this list. In the most common case of a single
-        sample, this list has length 1.
-
-    summary_statistics_list
-        List of summary statistics which describe the sample
-        This list is usually of length 1. This list is longer only if more
-        than one sample is taken for a particle.
-    """
-    def __init__(self, m: int, parameter: Parameter,
-                 weight: float, distance_list: List[float],
-                 summary_statistics_list: List[dict]):
-        self.m = m
-        self.parameter = parameter
-        self.weight = weight
-        self.distance_list = distance_list
-        self.summary_statistics_list = summary_statistics_list
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-
-    def __eq__(self, other):
-        for key in ["m", "parameter", "weight", "distance_list",
-                    "summary_statistics_list"]:
-            if self[key] != other[key]:
-                return False
-        return True

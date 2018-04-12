@@ -9,24 +9,34 @@ from .multicorebase import get_if_worker_healthy
 DONE = "Done"
 
 
-def work(sample, simulate, accept,
-         queue, n_eval: Value, n_particles: Value):
+def work(simulate_one,
+         queue, n_eval: Value, n_particles: Value, sample_factory):
     random.seed()
     np.random.seed()
+
+    sample = sample_factory()
 
     while n_particles.value > 0:
         with n_eval.get_lock():
             particle_id = n_eval.value
             n_eval.value += 1
 
-        new_param = sample()
-        new_sim = simulate(new_param)
+        new_sim = simulate_one()
+        sample.append(new_sim)
 
-        if accept(new_sim):
+        if new_sim.accepted:
+
+            # reduce number of required particles
             with n_particles.get_lock():
                 n_particles.value -= 1
 
-            queue.put((particle_id, new_sim))
+            # put into queue
+            queue.put((particle_id, sample))
+
+            # create empty sample and record until next accepted
+            sample = sample_factory()
+
+    # indicate worker finished
     queue.put(DONE)
 
 
@@ -71,7 +81,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+    def sample_until_n_accepted(self, n, simulate_one):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -82,8 +92,9 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         processes = [
             Process(target=work,
-                    args=(sample_one, simulate_one, accept_one,
-                          queue, n_eval, n_particles),
+                    args=(simulate_one,
+                          queue, n_eval, n_particles,
+                          self._create_empty_sample),
                     daemon=self.daemon)
             for _ in range(self.n_procs)
         ]
@@ -112,5 +123,11 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         self.nr_evaluations_ = n_eval.value
 
-        population = [res[1] for res in id_results]
-        return population
+        results = [res[1] for res in id_results]
+
+        # create 1 to-be-returned sample from results
+        sample = self._create_empty_sample()
+        for j in range(n):
+            sample += results[j]
+
+        return sample

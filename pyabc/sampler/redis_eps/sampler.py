@@ -68,11 +68,10 @@ class RedisEvalParallelSampler(Sampler):
         """
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+    def sample_until_n_accepted(self, n, simulate_one):
         pipeline = self.redis.pipeline()
-        pipeline.set(SSA,
-                     cloudpickle.dumps(
-                           (sample_one, simulate_one, accept_one)))
+        self.redis.set(SSA,
+                       cloudpickle.dumps((simulate_one, self.sample_factory)))
         pipeline.set(N_EVAL, 0)
         pipeline.set(N_PARTICLES, n)
         pipeline.set(N_WORKER, 0)
@@ -96,6 +95,7 @@ class RedisEvalParallelSampler(Sampler):
         while self.redis.llen(QUEUE) > 0:
             id_results.append(pickle.loads(self.redis.blpop(QUEUE)[1]))
 
+        # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(N_EVAL).decode())
 
         pipeline = self.redis.pipeline()
@@ -104,9 +104,16 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.delete(N_PARTICLES)
         pipeline.delete(BATCH_SIZE)
         pipeline.execute()
+
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:n]
 
-        population = [res[1] for res in id_results]
-        return population
+        results = [res[1] for res in id_results]
+
+        # create 1 to-be-returned sample from results
+        sample = self._create_empty_sample()
+        for j in range(n):
+            sample += results[j]
+
+        return sample

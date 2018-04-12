@@ -1,5 +1,8 @@
 import scipy as sp
-from pyabc import PercentileDistanceFunction, MinMaxDistanceFunction
+from pyabc import (PercentileDistanceFunction,
+                   MinMaxDistanceFunction,
+                   PNormDistance,
+                   WeightedPNormDistance)
 
 
 class MockABC:
@@ -43,3 +46,33 @@ def test_single_parameter_percentile():
         1 / (sp.percentile([-3, 3, 10], 80) - sp.percentile([-3, 3, 10], 20))
     )
     assert expected == d
+
+
+def test_pnormdistance():
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1}])
+
+    # first test that for PNormDistance, the weights stay constant
+    dist_f = PNormDistance(p=2)
+    dist_f.initialize(abc.sample_from_prior())
+
+    assert sum(abs(a-b) for a, b in
+               zip(list(dist_f.w.values()), [1, 1, 1])) < 0.01
+
+
+def test_weightedpnormdistance():
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1}])
+
+    # now test that the weights adapt correctly for a weighted distance
+    scale_type = WeightedPNormDistance.SCALE_TYPE_MAD
+    dist_f = WeightedPNormDistance(p=2,
+                                   adaptive=True,
+                                   scale_type=scale_type)
+    dist_f.initialize(abc.sample_from_prior())
+    # the weights are adapted using MAD, and then divided by the mean
+    # here mean = 4/3, so (noting that in addition the MAD of 0 in s1 is set to
+    # 1) we expect the following
+
+    assert sum(abs(a-b) for a, b in
+               zip(list(dist_f.w.values()), [0.75, 1.5, 0.75])) < 0.01

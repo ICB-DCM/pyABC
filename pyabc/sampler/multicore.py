@@ -5,7 +5,8 @@ import random
 import logging
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 
-logger = logging.getLogger("MutlicoreSampler")
+
+logger = logging.getLogger("MulticoreSampler")
 
 SENTINEL = None
 
@@ -18,17 +19,17 @@ def feed(feed_q, n_jobs, n_proc):
         feed_q.put(SENTINEL)
 
 
-def work(feed_q, result_q, sample_one, simulate_one, accept_one):
+def work(feed_q, result_q, simulate_one, single_core_sampler):
     random.seed()
     np.random.seed()
-    single_core_sampler = SingleCoreSampler()
+
     while True:
         arg = feed_q.get()
         if arg == SENTINEL:
             break
-        res = single_core_sampler.sample_until_n_accepted(sample_one,
-                                                          simulate_one,
-                                                          accept_one, 1)
+
+        res = single_core_sampler.sample_until_n_accepted(
+            1, simulate_one)
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
@@ -65,7 +66,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
     """
 
-    def sample_until_n_accepted(self, sample_one, simulate_one, accept_one, n):
+    def sample_until_n_accepted(self, n, simulate_one):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
@@ -74,12 +75,15 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         feed_q = Queue()
         result_q = Queue()
 
-        feed_process = Process(target=feed, args=(feed_q, n, n_procs))
+        feed_process = Process(target=feed, args=(feed_q, n,
+                                                  n_procs))
+
+        single_core_sampler = SingleCoreSampler()
+        single_core_sampler.sample_factory = self.sample_factory
 
         worker_processes = [Process(target=work, args=(feed_q, result_q,
-                                                       sample_one,
                                                        simulate_one,
-                                                       accept_one))
+                                                       single_core_sampler))
                             for _ in range(n_procs)]
 
         for proc in worker_processes:
@@ -98,9 +102,15 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         for proc in worker_processes:
             proc.join()
 
-        # Queue's get closed automatically on garbage collection
+        # Queues get closed automatically on garbage collection
         # No explicit closing necessary.
 
         results, evaluations = zip(*collected_results)
         self.nr_evaluations_ = sum(evaluations)
-        return sum(results, [])
+
+        # create 1 to-be-returned sample from results
+        sample = self._create_empty_sample()
+        for result in results:
+            sample += result
+
+        return sample

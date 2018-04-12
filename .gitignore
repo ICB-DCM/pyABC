@@ -87,4 +87,5 @@ examples/*.out
 doc/*.log
 *.kdev*
 .pytest_cache
+dask-worker-space
 *.lock

@@ -119,6 +119,7 @@ class RV(RVBase):
         Keyword arguments as in ``scipy.stats``
         matching the distribution with name "name".
     """
+
     @classmethod
     def from_dictionary(cls, dictionary: dict) -> "RV":
         """
@@ -142,6 +143,7 @@ class RV(RVBase):
 
             Either the "args" or the "kwargs" key has to be present.
         """
+
         return cls(dictionary['type'], *dictionary.get('args', []),
                    **dictionary.get('kwargs', {}))
 
@@ -207,6 +209,7 @@ class RVDecorator(RVBase):
     component: RVBase
         The random variable to be decorated.
     """
+
     def __init__(self, component: RVBase):
         self.component = component  #: The decorated random variable
 
@@ -241,6 +244,7 @@ class RVDecorator(RVBase):
         decorator_repr: str
             A string representing the decorator only.
         """
+
         return "Decorator"
 
     def __repr__(self):
@@ -271,6 +275,7 @@ class LowerBoundDecorator(RVDecorator):
     lower_bound: float
         The lower bound.
     """
+
     MAX_TRIES = 10000
 
     def __init__(self, component: RV, lower_bound: float):
@@ -325,6 +330,7 @@ class Distribution(ParameterStructure):
 
     This should be used to define a prior.
     """
+
     def __repr__(self):
         return "<Distribution {keys}>".format(
             keys=str(list(self.get_parameter_names()))[1:-1])
@@ -349,6 +355,7 @@ class Distribution(ParameterStructure):
         distribution: Distribution
             Created distribution.
         """
+
         rv_dictionary = {}
         for key, value in dict_of_dicts.items():
             rv_dictionary[key] = RV.from_dictionary(value)
@@ -364,6 +371,7 @@ class Distribution(ParameterStructure):
         copied_distribution: Distribution
             A copy of the distribution.
         """
+
         return self.__class__(**{key: value.copy()
                               for key, value in self.items()})
 
@@ -378,6 +386,7 @@ class Distribution(ParameterStructure):
             keywords are the parameters' names, the values are random variable.
 
         """
+
         self.update(random_variables)
 
     def get_parameter_names(self) -> list:
@@ -390,6 +399,7 @@ class Distribution(ParameterStructure):
         sorted_names: list
             Sorted list of parameter names.
         """
+
         return sorted(self.keys())
 
     def rvs(self) -> Parameter:
@@ -402,6 +412,7 @@ class Distribution(ParameterStructure):
         parameter: Parameter
             A parameter which was sampled.
         """
+
         return Parameter(**{key: val.rvs() for key, val in self.items()})
 
     def pdf(self, x: Union[Parameter, dict]):
@@ -448,6 +459,7 @@ class ModelPerturbationKernel:
         If ``None``, probability to stay is set to 1/nr_of_models.
         Otherwise, the supplied value is used.
     """
+
     def __init__(self, nr_of_models: int,
                  probability_to_stay: Union[float, None]=None):
         self.nr_of_models = nr_of_models
@@ -483,6 +495,7 @@ class ModelPerturbationKernel:
         target: int
             Target model nr.
         """
+
         if not 0 <= m <= self.nr_of_models-1:
             raise Exception('m has to be between 0 and nr_of_models - 1')
         if self.nr_of_models == 1:
@@ -507,6 +520,7 @@ class ModelPerturbationKernel:
         probability: float
             Probability with which to jump from ``m`` to ``n``.
         """
+
         if not (0 <= n <= self.nr_of_models
                 and 0 <= m <= self.nr_of_models-1):
             raise Exception(

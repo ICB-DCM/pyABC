@@ -6,12 +6,9 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
-
-from ..parameters import ValidParticle
 from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
-
 import logging
 history_logger = logging.getLogger("History")
 
@@ -70,6 +67,7 @@ class History:
 
     db: str
         SQLAlchemy database identifier.
+
     """
     DB_TIMEOUT = 120
 
@@ -95,14 +93,17 @@ class History:
     @property
     def db_size(self) -> Union[int, str]:
         """
+        Size of the database.
 
         Returns
         -------
+
         db_size: int, str
             Size of the SQLite database in MB.
             Currently this only works for SQLite databases.
 
             Returns an error string if the DB size cannot be calculated.
+
         """
         try:
             return os.path.getsize(self.db_file()) / 10**6
@@ -141,6 +142,7 @@ class History:
         alive: List
             A list which contains the indices of those
             models which are still alive
+
         """
         t = int(t)
         alive = (self._session.query(Model.m)
@@ -415,6 +417,7 @@ class History:
                                model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
+
         # prepare
         abc_smc_simulation = (self._session.query(ABCSMC)
                               .filter(ABCSMC.id == self.id)
@@ -424,15 +427,18 @@ class History:
         population = Population(t=t, nr_samples=nr_simulations,
                                 epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
+
         for m, model_population in store.items():
             model = Model(m=int(m), p_model=float(model_probabilities[m]),
                           name=str(model_names[m]))
             population.models.append(model)
+
             for store_item in model_population:
-                weight = store_item['weight']
-                distance_list = store_item['distance_list']
-                parameter = store_item['parameter']
-                summary_statistics_list = store_item['summary_statistics_list']
+                # a store_item is a Particle
+                weight = store_item.weight
+                distance_list = store_item.accepted_distances
+                parameter = store_item.parameter
+                summary_statistics_list = store_item.accepted_sum_stats
                 particle = Particle(w=weight)
                 model.particles.append(particle)
                 for key, value in parameter.items():
@@ -458,8 +464,9 @@ class History:
         history_logger.debug("Appended population")
 
     @internal_docstring_warning
-    def append_population(self, t: int, current_epsilon: float,
-                          particle_population: List[ValidParticle],
+    def append_population(self, t: int,
+                          current_epsilon: float,
+                          population: Population,
                           nr_simulations: int,
                           model_names):
         """
@@ -474,14 +481,19 @@ class History:
         current_epsilon: float
             Current epsilon value.
 
-        particle_population: list
-            List of sampled particles
+        population: Population
+            List of sampled particles.
 
         nr_simulations: int
-            The number of model evaluations for this population
+            The number of model evaluations for this population.
+
+        model_names: list
+            The model names.
 
         """
-        store, model_probabilities = normalize(particle_population)
+        store = population.to_dict()
+        model_probabilities = population.get_model_probabilities()
+
         self._save_to_population_db(t, current_epsilon,
                                     nr_simulations, store, model_probabilities,
                                     model_names)
@@ -786,37 +798,3 @@ class History:
                 df = df_tidy
 
         return df
-
-
-def normalize(population: List[ValidParticle]):
-    """
-    * Normalize particle weights according to nr of particles in a model
-    * Calculate marginal model probabilities
-    """
-    # TODO: This has a medium ugly side effect... maybe it is ok
-    population = list(population)
-
-    store = {}
-
-    for particle in population:
-        # particle might be none or empty
-        #  if no particle was found within the allowed nr of sample attempts
-        if particle is not None:
-            store.setdefault(particle.m, []).append(particle)
-        else:
-            print("ABC History warning: Empty particle.")
-
-    model_total_weights = {m: sum(particle.weight for particle in model)
-                           for m, model in store.items()}
-    population_total_weight = sum(model_total_weights.values())
-    model_probabilities = {m: w / population_total_weight
-                           for m, w in model_total_weights.items()}
-
-    # normalize within each model
-    for m in store:
-        model_total_weight = model_total_weights[m]
-        model = store[m]
-        for particle in model:
-            particle.weight /= model_total_weight
-
-    return store, model_probabilities

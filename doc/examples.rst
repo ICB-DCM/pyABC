@@ -16,21 +16,24 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/chemical_reaction.ipynb
    examples/multiscale_agent_based.ipynb
    examples/sde_ion_channels.ipynb
+   examples/adaptive_distances.ipynb
 
 
 
 Download the examples as notebooks
 ----------------------------------
 
+* :download:`Quickstart <examples/quickstart.ipynb>`
 * :download:`Parameter inference <examples/parameter_inference.ipynb>`
 * :download:`Model selection (Quickstart) <examples/quickstart.ipynb>`
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
-* :download:`Ordinary Differential Equations: Conversion reaction <examples/conversion_reaction.ipynb>`
+* :download:`Ordinary Differential Equations: Conversion Reaction <examples/conversion_reaction.ipynb>`
 * :download:`Markov Jump Process: Reaction Network <examples/chemical_reaction.ipynb>`
 * :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
 * :download:`Stochastic Differential Equation: Ion channel noise in Hodgkin-Huxley neurons <examples/sde_ion_channels.ipynb>`
+* :download:`Adaptive Distances <examples/adaptive_distances.ipynb>`
 
 
 .. warning::
