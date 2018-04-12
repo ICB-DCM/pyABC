@@ -105,7 +105,7 @@ class EPSMixin:
         for curJob in running_jobs:
             curJob.cancel()
 
-        # create and to-be-returned sample from all results
+        # create 1 to-be-returned sample from all results
         sample = self._create_empty_sample()
         counter_accepted = 0
         while counter_accepted < n:
