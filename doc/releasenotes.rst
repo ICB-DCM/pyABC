@@ -10,7 +10,8 @@ Release Notes
 
 * Implementation of adaptive distances feature. Distance functions can adapt
   via an update() method.
-* In particular add WeightedPNormDistance (special case: EuclideanDistance).
+* In particular add WeightedPNormDistance (special case:
+  WeightedEuclideanDistance). Also add non-weighted versions.
 * Simplify Sampler.sample_until_n_accepted interface.
 * Extend Sampler class to allow for customization, e.g. by the distance
   functions.
