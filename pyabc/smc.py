@@ -358,11 +358,12 @@ class ABCSMC:
         self._initialize_dist_and_eps()
 
         # save configuration data to database
+        model_names = [model.name for model in self.models]
         self.history.store_initial_data(gt_model,
                                         meta_info,
                                         observed_sum_stat,
                                         gt_par,
-                                        [model.name for model in self.models],
+                                        model_names,
                                         self.distance_function.to_json(),
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
