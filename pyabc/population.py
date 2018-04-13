@@ -46,10 +46,11 @@ class Particle:
 
     def __init__(self, m: int,
                  parameter: Parameter,
-                 weight: float = 0,
-                 accepted_distances: List[float] = None,
-                 accepted_sum_stats: List[dict] = None,
-                 all_sum_stats: List[dict] = None):
+                 weight: float,
+                 accepted_distances: List[float],
+                 accepted_sum_stats: List[dict],
+                 all_sum_stats: List[dict],
+                 accepted: bool):
 
         self.m = m
         self.parameter = parameter
@@ -57,10 +58,7 @@ class Particle:
         self.accepted_distances = accepted_distances
         self.accepted_sum_stats = accepted_sum_stats
         self.all_sum_stats = all_sum_stats
-
-    @property
-    def accepted(self):
-        return len(self.accepted_sum_stats) > 0
+        self.accepted = accepted
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -78,7 +76,8 @@ class Particle:
     def copy(self):
         return self.__class__(self.m, self.parameter, self.weight,
                               self.accepted_distances,
-                              self.accepted_sum_stats, self.all_sum_stats)
+                              self.accepted_sum_stats, self.all_sum_stats,
+                              self.accepted)
 
 
 class Population:
@@ -98,10 +97,10 @@ class Population:
 
     def get_list(self) -> List[Particle]:
         """
-        Get a copy of the underlying particle list.
+        Returns
+        -------
 
-        :return:
-            A copied particle list.
+        A copy of the underlying particle list.
         """
 
         return self._list.copy()
