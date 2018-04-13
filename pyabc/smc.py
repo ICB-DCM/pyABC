@@ -343,32 +343,38 @@ class ABCSMC:
             run entry in the database can be identified.
         """
 
-        # initialize
+        # record observed summary statistics
         if observed_sum_stat is None:
             observed_sum_stat = {}
-
         self.x_0 = observed_sum_stat
-        model_names = [model.name for model in self.models]
 
+        # initialize history object
         self.history = History(db)
 
         if gt_par is None:
             gt_par = {}
 
+        # sample from prior to calibrate distance function and epsilon
         self._initialize_dist_and_eps()
+
+        # save configuration data to database
         self.history.store_initial_data(gt_model,
                                         meta_info,
                                         observed_sum_stat,
                                         gt_par,
-                                        model_names,
+                                        [model.name for model in self.models],
                                         self.distance_function.to_json(),
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
+
+        # return id generated in previous step
         return self.history.id
 
     def _initialize_dist_and_eps(self):
         """
-        Initialize distance function and epsilon.
+        Initialize distance function and epsilon. This function generates a
+        sample population from the prior and calls the initialized functions
+        of the distance function and the epsilon.
         """
 
         self.distance_function.initialize(self._prior_sample())
@@ -382,34 +388,35 @@ class ABCSMC:
     def _prior_sample(self) -> List[dict]:
         """
         Only sample from prior and return results without changing
-        the history of the Epsilon. This can be used to get initial samples
-        for the distance function or the epsilon to calibrate them.
+        the history of the Epsilon. This can be used to calibrate the distance
+        function or the epsilon.
 
         .. warning::
             The sample is cached.
         """
 
         if self._points_sampled_from_prior is None:
-            def create_one():
+            def simulate_one():
                 m = self.model_prior.rvs()
                 theta = self.parameter_priors[m].rvs()
-                all_summary_statistics_list = []
+                sum_stats = []
+                all_sum_stats = []
                 model_result = self.models[m].summary_statistics(
                     theta, self.summary_statistics)
-                all_summary_statistics_list.append(model_result.sum_stats)
+                all_sum_stats.append(model_result.sum_stats)
                 weight = 0
-                distance_list = []
-                summary_statistics_list = all_summary_statistics_list
+                accepted_distances = []
+                accepted = True
                 # only the all_summary_statistics field will be read later
                 return Particle(
-                    m, theta, weight, distance_list,
-                    summary_statistics_list, all_summary_statistics_list)
+                    m, theta, weight, accepted_distances,
+                    sum_stats, all_sum_stats, accepted)
 
             # call sampler
             sample = self.sampler.sample_until_n_accepted(
-                self.population_strategy.nr_particles, create_one)
+                self.population_strategy.nr_particles, simulate_one)
 
-            # extract summary statistics list
+            # extract all summary statistics list
             self._points_sampled_from_prior = \
                 sample.all_summary_statistics
 
@@ -461,7 +468,8 @@ class ABCSMC:
                            theta_ss,
                            current_eps,
                            t,
-                           model_probabilities) -> Particle:
+                           model_probabilities,
+                           record_all_sum_stats) -> Particle:
         """
         Corresponds to Sampler.simulate_one. Data for the given parameters
         theta_ss are simulated, summary statistics computed and evaluated.
@@ -471,28 +479,31 @@ class ABCSMC:
 
         # from here, theta_ss is valid according to the prior
 
-        distance_list = []
-        summary_statistics_list = []
-        all_summary_statistics_list = []
+        accepted_distances = []
+        accepted_sum_stats = []
+        all_sum_stats = []
 
         for _ in range(self.population_strategy.nr_samples_per_parameter):
             model_result = self.models[m_ss].accept(
                 theta_ss, self.summary_statistics,
                 lambda x: self.distance_function(x, self.x_0), current_eps)
-            all_summary_statistics_list.append(model_result.sum_stats)
+            if record_all_sum_stats:
+                all_sum_stats.append(model_result.sum_stats)
             if model_result.accepted:
-                distance_list.append(model_result.distance)
-                summary_statistics_list.append(model_result.sum_stats)
+                accepted_distances.append(model_result.distance)
+                accepted_sum_stats.append(model_result.sum_stats)
 
-        if len(distance_list) > 0:
+        accepted = len(accepted_sum_stats) > 0
+
+        if accepted:
             weight = self._calc_proposal_weight(
-                distance_list, m_ss, theta_ss, t, model_probabilities)
+                accepted_distances, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
 
         return Particle(
-            m_ss, theta_ss, weight, distance_list,
-            summary_statistics_list, all_summary_statistics_list)
+            m_ss, theta_ss, weight, accepted_distances,
+            accepted_sum_stats, all_sum_stats, accepted)
 
     def _calc_proposal_weight(self,
                               distance_list,
@@ -582,13 +593,15 @@ class ABCSMC:
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
-        # "ipython_cluster" is not pickable
+        # "ipython_cluster" is not pickleable
+
+        # configure sampler by whoever wants to
+        self.distance_function.configure_sampler(self.sampler)
 
         # this variable will store the current population
         population = None
 
         t_max = t0 + max_nr_populations
-        self.distance_function.configure_sampler(self.sampler)
         for t in range(t0, t_max):
 
             # get epsilon for generation t
@@ -607,12 +620,16 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
+            # simulation function
             def simulate_one():
                 par = self._generate_valid_proposal(t, m, p)
-                return self._evaluate_proposal(*par, current_eps, t,
-                                               model_probabilities)
+                return self._evaluate_proposal(
+                    *par,
+                    current_eps, t,
+                    model_probabilities,
+                    self.sampler.sample_factory.record_all_sum_stats)
 
-            # sample
+            # sample for new population
             sample = self.sampler.sample_until_n_accepted(
                 self.population_strategy.nr_particles, simulate_one)
 
