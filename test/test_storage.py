@@ -80,7 +80,9 @@ def rand_pop(m: int):
                       "ss_int": 42,
                       "ss_str": "foo bar string",
                       "ss_np": sp.rand(13, 42),
-                      "ss_df": example_df()}])
+                      "ss_df": example_df()}],
+                    [],
+                    True)
            for _ in range(np.random.randint(10) + 3)]
     return pop
 
@@ -131,14 +133,18 @@ def test_sum_stats_save_load(history: History):
                               [.1],
                               [{"ss1": .1, "ss2": arr2,
                                 "ss3": example_df(),
-                                "rdf0": r["iris"]}]),
+                                "rdf0": r["iris"]}],
+                              [],
+                              True),
                      Particle(0, Parameter({
                          "a": 23, "b": 12}),
                               .2,
                               [.1],
                               [{"ss12": .11, "ss22": arr,
                                 "ss33": example_df(),
-                                "rdf": r["mtcars"]}])]
+                                "rdf": r["mtcars"]}],
+                              [],
+                              True)]
     history.append_population(0, 42,
                               Population(particle_list), 2, ["m1", "m2"])
     weights, sum_stats = history.get_sum_stats(0, 0)
