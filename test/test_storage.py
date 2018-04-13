@@ -154,7 +154,9 @@ def test_total_nr_samples(history: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     population = Population(particle_list)
     history.append_population(0, 42, population, 4234, ["m1"])
     history.append_population(0, 42, population, 3, ["m1"])
@@ -166,7 +168,9 @@ def test_t_count(history: History):
     particle_list = [Particle(0, Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     for t in range(1, 10):
         history.append_population(t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
@@ -314,7 +318,9 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     h.append_population(0, 42, Population(particle_list), 2, model_names)
 
     h2 = History(h.db_identifier)
