@@ -26,6 +26,11 @@ class DistanceFunction(ABC):
     Any other distance function should inherit from this class.
     """
 
+    def __init__(self):
+        """
+        Default constructor.
+        """
+
     def initialize(self, sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
@@ -238,6 +243,23 @@ class EuclideanDistance(PNormDistance):
 
 
 class WeightedPNormDistance(PNormDistance):
+    """
+    Use a weighted p-norm to compute distances between sets of summary
+    statistics.
+
+    Parameters
+    ----------
+
+    p: float
+        p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
+
+    adaptive: bool
+        True: Adapt distance after each iteration,
+        False: Adapt distance only once at the beginning.
+
+    scale_type: int
+        What measure to use for deviation. Values as in SCALE_... constants.
+    """
 
     # mean absolute deviation
     SCALE_TYPE_MAD = 0
@@ -249,25 +271,17 @@ class WeightedPNormDistance(PNormDistance):
                  p: float,
                  adaptive: bool=True,
                  scale_type: int=SCALE_TYPE_MAD):
-        """
-        Create new instance of a weighted p-norm distance
-
-        :param p: float
-            p as in p-norm.
-        :param adaptive: bool
-            True:  Adapt distance after each iteration,
-            False: Adapt distance only once at the beginning.
-        :param scale_type: int
-            What measure to use for deviation. Values as in SCALE constants.
-        """
-
+        # call p-norm constructor
         super().__init__(p)
+
         self.adaptive = adaptive
         self.scale_type = scale_type
 
     def configure_sampler(self, sampler: Sampler):
         super().configure_sampler(sampler)
-        sampler.require_all_sum_stats()
+        # make sampler record all summary statistics if required
+        if self.adaptive:
+            sampler.sample_factory.record_all_sum_stats = True
 
     def initialize(self, sample_from_prior: List[dict]):
         """
