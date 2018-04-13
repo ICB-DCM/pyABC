@@ -621,6 +621,9 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
+            record_all_sum_stats = self.sampler.sample_factory.\
+                record_all_sum_stats
+
             # simulation function
             def simulate_one():
                 par = self._generate_valid_proposal(t, m, p)
@@ -628,7 +631,7 @@ class ABCSMC:
                     *par,
                     current_eps, t,
                     model_probabilities,
-                    self.sampler.sample_factory.record_all_sum_stats)
+                    record_all_sum_stats)
 
             # sample for new population
             sample = self.sampler.sample_until_n_accepted(
