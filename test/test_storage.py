@@ -90,7 +90,9 @@ def test_single_particle_save_load(history: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     df, w = history.get_distribution(0, 0)
@@ -108,7 +110,9 @@ def test_single_particle_save_load_np_int64(history: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     for m in m_list:
