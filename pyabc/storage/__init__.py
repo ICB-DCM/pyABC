@@ -1,20 +1,20 @@
 """
-Datastore
-=========
+Data store
+==========
 
 
-Purpose of the datastore
-------------------------
+Purpose of the data store
+-------------------------
 
 The most important class here is the History class. The History class
 is the interface to the database in which pyABC stores and logs information
 during the ABC-SMC run, but also the interface which allows you to query that
 information later on.
 
-Initializing the databse interface from a file
+Initializing the database interface from a file
 ----------------------------------------------
 
-For querying, you initialize a History object with a valid SQLAlchmey
+For querying, you initialize a History object with a valid SQLAlchemy
 database identifier. For example, if you ABC-SMC data is stored in a file
 "data.db", you initialize the History with:
 
@@ -25,15 +25,13 @@ database identifier. For example, if you ABC-SMC data is stored in a file
 Don't mind the three slashes. This is SQLAlchemy syntax.
 
 If more than one ABC-SMC run is stored in your database file, these runs will
-have IDs. The first run has ID=1, the second run ID=2 and so on. Per default,
+have ids. The first run has id=1, the second run id=2, and so on. Per default,
 the first run found in the database is automatically selected. To select a
-specific run by manually, do
+specific run n (e.g. n=3), do
 
 .. code-block:: python
 
     history.id = n
-
-if n is the run number, e.g. n=3.
 
 
 Querying the database
@@ -65,9 +63,8 @@ example,
 
 will return a DataFrame df of parameters and an array w of weights of the
 particles of model m in the last available population.
-If you're interested in intermediate
-populations, add the optional t parameter, which indicates the population
-number (the first population is t=0)
+If you're interested in intermediate populations, add the optional t parameter,
+which indicates the population number (the first population is t=0)
 
 .. code-block:: python
 
@@ -77,9 +74,9 @@ number (the first population is t=0)
 What can be stored as summary statistics
 ----------------------------------------
 
-Currently, integers, floats, strings and in general everything that can be
-converted to a numpy array can be stored.
-In addition it is also possible to store pandas DataFrames.
+Currently, integers, floats, strings, and in general everything that can be
+converted to a numpy array, can be stored.
+In addition, it is also possible to store pandas DataFrames.
 
 .. warning::
 

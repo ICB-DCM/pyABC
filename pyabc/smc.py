@@ -334,6 +334,13 @@ class ABCSMC:
             meta information in this dictionary. Can be used for really
             anything.
             This dictionary is stored in the database.
+
+        Returns
+        -------
+
+        run_id: int
+            The history.id, which is the id under which the generated ABCSMC
+            run entry in the database can be identified.
         """
 
         # initialize
