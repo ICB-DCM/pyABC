@@ -193,25 +193,32 @@ def to_distance(maybe_distance_function):
 
 class PNormDistance(DistanceFunction):
     """
-    Use p-norm to compute distances between sets of summary statistics.
+    Use weighted p-norm
+
+    .. math::
+
+        d(x, y) =\
+         \\left[\\sum_{i} \\left w_i| x_i-y_i \\right|^{p} \\right]^{1/p}
+
+    to compute distances between sets of summary statistics.
 
     Parameters
     ----------
 
     p: float
         p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
+
+    w: dict
+        Numeric weights associated with summary statistics. If none is
+        passed, a weight of 1 is considered for every summary statistic.
     """
 
-    def __init__(self, p: float):
+    def __init__(self, p: float, w: dict=None):
         super().__init__()
         if p < 1:
-            raise ValueError("It must be p be >= 1")
+            raise ValueError("It must be p >= 1")
         self.p = p
-        self.w = None
-
-    def initialize(self, sample_from_prior: List[dict]):
-        # retrieve keys, and init weights with 1
-        self._initialize_weights(sample_from_prior[0].keys())
+        self.w = w
 
     def __call__(self, x: dict, y: dict):
         # make sure weights are initialized
@@ -229,7 +236,9 @@ class PNormDistance(DistanceFunction):
                 1/self.p)
 
     def _initialize_weights(self, summary_statistics_keys):
-        # init weights with 1, and retrieve keys
+        """
+        Init weights to 1 for every summary statistic.
+        """
         self.w = {k: 1 for k in summary_statistics_keys}
 
 
@@ -242,7 +251,7 @@ class EuclideanDistance(PNormDistance):
         super().__init__(2)
 
 
-class WeightedPNormDistance(PNormDistance):
+class AdaptivePNormDistance(PNormDistance):
     """
     Use a weighted p-norm to compute distances between sets of summary
     statistics.
@@ -254,8 +263,8 @@ class WeightedPNormDistance(PNormDistance):
         p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
 
     adaptive: bool
-        True: Adapt distance after each iteration,
-        False: Adapt distance only once at the beginning.
+        True: Adapt distance after each iteration.
+        False: Adapt distance only once at the beginning in initialize().
 
     scale_type: int
         What measure to use for deviation. Values as in SCALE_... constants.
@@ -278,8 +287,19 @@ class WeightedPNormDistance(PNormDistance):
         self.scale_type = scale_type
 
     def configure_sampler(self, sampler: Sampler):
+        """
+        Make the sampler return also rejected summary statistics if required,
+        because these are needed to get a better estimate of the summary
+        statistic variabilities.
+
+        Parameters
+        ----------
+
+        sampler: Sampler
+            The sampler employed.
+        """
+
         super().configure_sampler(sampler)
-        # make sampler record all summary statistics if required
         if self.adaptive:
             sampler.sample_factory.record_all_sum_stats = True
 
@@ -287,7 +307,11 @@ class WeightedPNormDistance(PNormDistance):
         """
         Initialize weights.
 
-        :param sample_from_prior:
+        Parameters
+        ----------
+
+        sample_from_prior: List[dict]
+            A sample from the prior distribution.
         """
 
         super().initialize(sample_from_prior)
@@ -332,9 +356,9 @@ class WeightedPNormDistance(PNormDistance):
                 current_list.append(all_summary_statistics_list[j][key])
 
             # compute weighting
-            if self.scale_type == WeightedPNormDistance.SCALE_TYPE_MAD:
+            if self.scale_type == AdaptivePNormDistance.SCALE_TYPE_MAD:
                 val = median_absolute_deviation(current_list)
-            elif self.scale_type == WeightedPNormDistance.SCALE_TYPE_SD:
+            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
                 val = standard_deviation(current_list)
             else:
                 raise Exception(
@@ -357,14 +381,14 @@ class WeightedPNormDistance(PNormDistance):
         df_logger.debug("update distance weights = {}".format(self.w))
 
 
-class WeightedEuclideanDistance(WeightedPNormDistance):
+class AdaptiveEuclideanDistance(AdaptivePNormDistance):
     """
     Comfort class to use Euclidean norm as p-norm in WeightedPNormDistance.
     """
 
     def __init__(self,
                  adaptive: bool = True,
-                 scale_type: int = WeightedPNormDistance.SCALE_TYPE_MAD):
+                 scale_type: int = AdaptivePNormDistance.SCALE_TYPE_MAD):
         super().__init__(2, adaptive, scale_type)
 
 
