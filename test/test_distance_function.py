@@ -2,7 +2,7 @@ import scipy as sp
 from pyabc import (PercentileDistanceFunction,
                    MinMaxDistanceFunction,
                    PNormDistance,
-                   WeightedPNormDistance)
+                   AdaptivePNormDistance)
 
 
 class MockABC:
@@ -65,8 +65,8 @@ def test_weightedpnormdistance():
                    {'s1': -1, 's2': 0, 's3': 1}])
 
     # now test that the weights adapt correctly for a weighted distance
-    scale_type = WeightedPNormDistance.SCALE_TYPE_MAD
-    dist_f = WeightedPNormDistance(p=2,
+    scale_type = AdaptivePNormDistance.SCALE_TYPE_MAD
+    dist_f = AdaptivePNormDistance(p=2,
                                    adaptive=True,
                                    scale_type=scale_type)
     dist_f.initialize(abc.sample_from_prior())
