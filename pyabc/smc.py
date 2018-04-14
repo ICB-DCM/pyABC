@@ -187,9 +187,8 @@ class ABCSMC:
         self.population_strategy = population_size
 
         if sampler is None:
-            self.sampler = DefaultSampler()
-        else:
-            self.sampler = sampler
+            sampler = DefaultSampler()
+        self.sampler = sampler
 
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
@@ -621,6 +620,7 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
+            # whether to record all sum stats in simulate function
             record_all_sum_stats = self.sampler.sample_factory.\
                 record_all_sum_stats
 
