@@ -26,15 +26,21 @@ class Epsilon(ABC):
     This class encapsulates a strategy for setting a new epsilon for
     each new population.
     """
+
+    def __init__(self, require_initialize: bool=True):
+        self.require_initialize = require_initialize
+
     def initialize(self, sample_from_prior: List[dict],
                    distance_to_ground_truth_function: Callable[[dict], float]):
         """
         This method is called by the ABCSMC framework before the first usage
-        of the epsilon
-        and can be used to calibrate it to the statistics of the samples.
+        of the epsilon and can be used to calibrate it to the statistics of the
+        samples.
 
         The default implementation is to do nothing. It is not necessary
         to implement this method.
+
+        This function is only called if require_initialize == True.
 
         Parameters
         ----------
@@ -118,7 +124,7 @@ class ConstantEpsilon(Epsilon):
         The epsilon value for all populations
     """
     def __init__(self, constant_epsilon_value: float):
-        super().__init__()
+        super().__init__(require_initialize=False)
         self.constant_epsilon_value = constant_epsilon_value
 
     def get_config(self):
@@ -145,7 +151,7 @@ class ListEpsilon(Epsilon):
     """
 
     def __init__(self, values: List[float]):
-        super().__init__()
+        super().__init__(require_initialize=False)
         self.epsilon_values = list(values)
 
     def get_config(self):
@@ -207,7 +213,7 @@ class QuantileEpsilon(Epsilon):
         eps_logger.debug(
             "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
             .format(initial_epsilon, quantile_multiplier))
-        super().__init__()
+        super().__init__(require_initialize=True)
         self.alpha = alpha
         self._initial_epsilon = initial_epsilon
         self.quantile_multiplier = quantile_multiplier

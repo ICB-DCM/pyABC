@@ -26,10 +26,11 @@ class DistanceFunction(ABC):
     Any other distance function should inherit from this class.
     """
 
-    def __init__(self):
+    def __init__(self, require_initialize: bool=True):
         """
         Default constructor.
         """
+        self.require_initialize = require_initialize
 
     def initialize(self, sample_from_prior: List[dict]):
         """
@@ -153,7 +154,7 @@ class SimpleFunctionDistance(DistanceFunction):
     """
 
     def __init__(self, function):
-        super().__init__()
+        super().__init__(require_initialize=False)
         self.function = function
 
     def __call__(self, x, y):
@@ -214,7 +215,7 @@ class PNormDistance(DistanceFunction):
     """
 
     def __init__(self, p: float, w: dict=None):
-        super().__init__()
+        super().__init__(require_initialize=False)
         if p < 1:
             raise ValueError("It must be p >= 1")
         self.p = p
@@ -283,6 +284,7 @@ class AdaptivePNormDistance(PNormDistance):
         # call p-norm constructor
         super().__init__(p)
 
+        self.require_initialize = True
         self.adaptive = adaptive
         self.scale_type = scale_type
 
@@ -457,7 +459,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
     """
 
     def __init__(self, measures_to_use='all'):
-        super().__init__()
+        super().__init__(require_initialize=True)
         self._measures_to_use_passed_to_init = measures_to_use
         #: The measures (summary statistics) to use for distance calculation.
         self.measures_to_use = None

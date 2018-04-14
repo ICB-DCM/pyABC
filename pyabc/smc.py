@@ -373,17 +373,19 @@ class ABCSMC:
     def _initialize_dist_and_eps(self):
         """
         Initialize distance function and epsilon. This function generates a
-        sample population from the prior and calls the initialized functions
-        of the distance function and the epsilon.
+        sample population from the prior and calls the initialize() functions
+        of the distance function and the epsilon, if respectively the flag
+        require_initialize is set.
         """
 
-        self.distance_function.initialize(self._prior_sample())
+        if self.distance_function.require_initialize:
+            self.distance_function.initialize(self._prior_sample())
 
-        def distance_to_ground_truth_function(x):
-            return self.distance_function(x, self.x_0)
-
-        self.eps.initialize(self._prior_sample(),
-                            distance_to_ground_truth_function)
+        if self.eps.require_initialize:
+            def distance_to_ground_truth_function(x):
+                return self.distance_function(x, self.x_0)
+            self.eps.initialize(self._prior_sample(),
+                                distance_to_ground_truth_function)
 
     def _prior_sample(self) -> List[dict]:
         """
