@@ -116,7 +116,7 @@ class Sampler(ABC):
 
     Produce valid particles: :class:`pyabc.parameters.ValidParticle`.
 
-    Properties
+    Parameters
     ----------
 
     nr_evaluations_: int
