@@ -209,38 +209,62 @@ class PNormDistance(DistanceFunction):
     p: float
         p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
 
-    w: dict
-        Numeric weights associated with summary statistics. If none is
-        passed, a weight of 1 is considered for every summary statistic.
+    w_list: list[dict]
+        Each list contains numeric weights associated with summary
+        statistics. If none is passed, a weight of 1 is considered for every
+        summary statistic.
+
+    use_all_w: bool
+        True: The returned distance is the maximum over the distances in the
+        list.
+        False: Only the distance computed using the weights in the last list
+        entry are used.
     """
 
-    def __init__(self, p: float, w: dict=None):
+    def __init__(self, p: float,
+                 w_list: List[dict]=None,
+                 use_all_w: bool=True):
         super().__init__(require_initialize=False)
         if p < 1:
             raise ValueError("It must be p >= 1")
         self.p = p
-        self.w = w
+        self.w_list = w_list
+        self.use_all_w = use_all_w
 
     def __call__(self, x: dict, y: dict):
+
         # make sure weights are initialized
-        if self.w is None:
-            self._initialize_weights(x.keys())
+        if self.w_list is None:
+            self._set_default_weights(x.keys())
 
         # compute p-norm distance
-        if self.p == math.inf:
-            return max(abs(self.w[key]*(x[key]-y[key]))
-                       for key in self.w.keys())
-        else:
-            return pow(
-                sum(pow(abs(self.w[key]*(x[key]-y[key])), self.p)
-                    for key in self.w.keys()),
-                1/self.p)
 
-    def _initialize_weights(self, summary_statistics_keys):
+        # get weights to consider
+        distances = []
+        if self.use_all_w:
+            w_list = self.w_list
+        else:
+            w_list = [self.w_list[-1]]
+
+        for w in w_list:
+            if self.p == math.inf:
+                d = max(abs(w[key]*(x[key]-y[key]))
+                        for key in w.keys())
+            else:
+                d = pow(
+                    sum(pow(abs(w[key]*(x[key]-y[key])), self.p)
+                        for key in w.keys()),
+                    1/self.p)
+            distances.append(d)
+
+        # return the maximal distance
+        return max(distances)
+
+    def _set_default_weights(self, summary_statistics_keys):
         """
         Init weights to 1 for every summary statistic.
         """
-        self.w = {k: 1 for k in summary_statistics_keys}
+        self.w_list = [{k: 1 for k in summary_statistics_keys}]
 
 
 class EuclideanDistance(PNormDistance):
@@ -279,10 +303,13 @@ class AdaptivePNormDistance(PNormDistance):
 
     def __init__(self,
                  p: float,
+                 use_all_w: bool=True,
                  adaptive: bool=True,
                  scale_type: int=SCALE_TYPE_MAD):
         # call p-norm constructor
-        super().__init__(p)
+        super().__init__(p=p,
+                         w_list=None,
+                         use_all_w=use_all_w)
 
         self.require_initialize = True
         self.adaptive = adaptive
@@ -345,13 +372,19 @@ class AdaptivePNormDistance(PNormDistance):
         :return:
         """
 
-        # make sure weights are initialized
-        if self.w is None:
-            self._initialize_weights(all_summary_statistics_list[0].keys())
+        # retrieve keys
+        keys = all_summary_statistics_list[0].keys()
+
+        # make sure w_list is initialized
+        if self.w_list is None:
+            self.w_list = []
 
         n = len(all_summary_statistics_list)
 
-        for key in self.w.keys():
+        # to-be-filled-and-appended weights dictionary
+        w = {}
+
+        for key in keys:
             # prepare list for key
             current_list = []
             for j in range(n):
@@ -369,18 +402,20 @@ class AdaptivePNormDistance(PNormDistance):
             if val == 0:
                 # in practise, this case should be rare (if only for numeric
                 # reasons, so setting the weight to 1 should be safe)
-                self.w[key] = 1
+                w[key] = 1
             else:
-                self.w[key] = 1 / val
+                w[key] = 1 / val
 
         # normalize weights to have mean 1. This has just the effect that the
         # epsilon will decrease more smoothly, but is not important otherwise.
-        mean_weight = statistics.mean(list(self.w.values()))
-        for key in self.w.keys():
-            self.w[key] /= mean_weight
+        # mean_weight = statistics.mean(list(self.w.values()))
+        # for key in self.w.keys():
+        #     self.w[key] /= mean_weight
+
+        self.w_list.append(w)
 
         # logging
-        df_logger.debug("update distance weights = {}".format(self.w))
+        df_logger.debug("update distance weights = {}".format(w))
 
 
 class AdaptiveEuclideanDistance(AdaptivePNormDistance):
@@ -389,9 +424,13 @@ class AdaptiveEuclideanDistance(AdaptivePNormDistance):
     """
 
     def __init__(self,
+                 use_all_w: bool=True,
                  adaptive: bool = True,
                  scale_type: int = AdaptivePNormDistance.SCALE_TYPE_MAD):
-        super().__init__(2, adaptive, scale_type)
+        super().__init__(p=2,
+                         use_all_w=use_all_w,
+                         adaptive=adaptive,
+                         scale_type=scale_type)
 
 
 def median_absolute_deviation(data: List):
