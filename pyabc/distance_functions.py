@@ -16,6 +16,7 @@ import math
 import statistics
 import logging
 from .sampler import Sampler
+from pyabc import Epsilon
 df_logger = logging.getLogger("DistanceFunction")
 
 
@@ -201,7 +202,8 @@ class PNormDistance(DistanceFunction):
         d(x, y) =\
          \\left[\\sum_{i} \\left w_i| x_i-y_i \\right|^{p} \\right]^{1/p}
 
-    to compute distances between sets of summary statistics.
+    to compute distances between sets of summary statistics. E.g. set p=2 to
+    get a Euclidean distance.
 
     Parameters
     ----------
@@ -221,7 +223,7 @@ class PNormDistance(DistanceFunction):
         entry are used.
     """
 
-    def __init__(self, p: float,
+    def __init__(self, p: float=2,
                  w_list: List[dict]=None,
                  use_all_w: bool=True):
         super().__init__(require_initialize=False)
@@ -267,15 +269,6 @@ class PNormDistance(DistanceFunction):
         self.w_list = [{k: 1 for k in summary_statistics_keys}]
 
 
-class EuclideanDistance(PNormDistance):
-    """
-    Comfort class to use Euclidean norm as p-norm in PNormDistance.
-    """
-
-    def __init__(self):
-        super().__init__(2)
-
-
 class AdaptivePNormDistance(PNormDistance):
     """
     Use a weighted p-norm to compute distances between sets of summary
@@ -302,7 +295,7 @@ class AdaptivePNormDistance(PNormDistance):
     SCALE_TYPE_SD = 1
 
     def __init__(self,
-                 p: float,
+                 p: float=2,
                  use_all_w: bool=True,
                  adaptive: bool=True,
                  scale_type: int=SCALE_TYPE_MAD):
@@ -416,21 +409,6 @@ class AdaptivePNormDistance(PNormDistance):
 
         # logging
         df_logger.debug("update distance weights = {}".format(w))
-
-
-class AdaptiveEuclideanDistance(AdaptivePNormDistance):
-    """
-    Comfort class to use Euclidean norm as p-norm in WeightedPNormDistance.
-    """
-
-    def __init__(self,
-                 use_all_w: bool=True,
-                 adaptive: bool = True,
-                 scale_type: int = AdaptivePNormDistance.SCALE_TYPE_MAD):
-        super().__init__(p=2,
-                         use_all_w=use_all_w,
-                         adaptive=adaptive,
-                         scale_type=scale_type)
 
 
 def median_absolute_deviation(data: List):
