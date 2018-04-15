@@ -68,6 +68,7 @@ class Model:
 
         Parameters
         ----------
+
         pars: dictionary of parameters
 
         Returns
@@ -84,7 +85,9 @@ class Model:
 
         Parameters
         ----------
+
         pars: Model parameters
+
         sum_stats_calculator: A function which calculates summary statistics
             the user is free to use or ignore this function
 
@@ -105,9 +108,12 @@ class Model:
 
         Parameters
         ----------
+
         pars: Model parameters
+
         sum_stats_calculator: A function which calculates summary statistics.
             The user is free to use or ignore this function.
+
         distance_calculator: A function which calculates the distance.
             The user is free to use or ignore this function.
 
@@ -129,11 +135,15 @@ class Model:
 
         Parameters
         ----------
+
         pars: Model parameters
+
         sum_stats_calculator: A function which calculates summary statistics.
             The user is free to use or ignore this function.
+
         distance_calculator: A function which calculates the distance.
             The user is free to use or ignore this function.
+
         eps: float
             Acceptance threshold
 
@@ -224,6 +234,7 @@ class IntegratedModel(Model):
 
         Parameters
         ----------
+
         pars: dict
             Parameters at which to evaluate the model
 
@@ -238,8 +249,8 @@ class IntegratedModel(Model):
             should simply return ``ModelResult(accepted=False)``.
             If the parameter was accepted, this method should return either
             ``ModelResult(accepted=True, distance=distance)`` or
-            ``ModelResult(accepted=True, distance=distance, \
-sum_stats=sum_stats)``
+            ``ModelResult(accepted=True, distance=distance,
+            sum_stats=sum_stats)``
             in which ``distance`` denotes the achieved
             distance and ``sum_stats`` the summary statistics (e.g. simulated
             data) of the run. Note that providing the summary statistics
