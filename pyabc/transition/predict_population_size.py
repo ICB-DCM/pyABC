@@ -8,7 +8,7 @@ logger = logging.getLogger("CV Estimation")
 CVEstimate = namedtuple("CVEstimate", "n_estimated n_samples_list cvs f popt")
 
 
-def predict_population_size(current_poop_size: int,
+def predict_population_size(current_pop_size: int,
                             target_cv: float, calc_cv,
                             n_steps=10, first_step_factor=3) -> CVEstimate:
     """
@@ -17,6 +17,7 @@ def predict_population_size(current_poop_size: int,
 
     Parameters
     ----------
+
     current_pop_size: int
     target_cv: float
     calc_cv: A function mapping population_size -> cv
@@ -26,12 +27,12 @@ def predict_population_size(current_poop_size: int,
 
     suggested_pop_size: int
     """
-    if current_poop_size == 1:
+    if current_pop_size == 1:
         return CVEstimate(1, [], [], None, None)
 
-    start = max(current_poop_size // first_step_factor, 1)
-    stop = current_poop_size * 2
-    step = max(current_poop_size // n_steps, 1)
+    start = max(current_pop_size // first_step_factor, 1)
+    stop = current_pop_size * 2
+    step = max(current_pop_size // n_steps, 1)
 
     n_samples_list = list(range(start, stop, step))
     cvs = list(map(calc_cv, n_samples_list))
@@ -43,5 +44,5 @@ def predict_population_size(current_poop_size: int,
     except RuntimeError:
         logger.warning("Power law fit failed. "
                        "Falling back to current nr particles {}"
-                       .format(current_poop_size))
-        return CVEstimate(current_poop_size, n_samples_list, cvs, None, None)
+                       .format(current_pop_size))
+        return CVEstimate(current_pop_size, n_samples_list, cvs, None, None)

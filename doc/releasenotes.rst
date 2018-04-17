@@ -1,6 +1,28 @@
 Release Notes
 =============
 
+
+0.9 series
+..........
+
+
+0.9.0
+-----
+
+* DistanceFunction given an accept() method. This is so as to allow adaptive
+  distance functions, and allow acceptance to depend also on previous
+  thresholds.
+* Update of distance and epsilon synchronized after each iteration and moved
+  to update() methods.
+* initialize() for DistanceFunction and Epsilon also called in load method,
+  given a time point to initialize for, and made optional via a
+  require_initialize flag.
+* PNormDistance and AdaptivePNormDistance (prev. WeightedPNormDistance)
+  improved to allow for more customization (e.g. make use of complete history
+  when checking for acceptance).
+* API breaks for DistanceFunction, Epsilon, Model.
+
+
 0.8 series
 ..........
 

@@ -12,25 +12,27 @@ import scipy as sp
 import logging
 import json
 from abc import ABC, abstractmethod
-from .storage import History
 from .weighted_statistics import weighted_quantile
-from pyabc.population import Population
 from typing import Callable, List, Union
+import pandas
 eps_logger = logging.getLogger("Epsilon")
 
 
 class Epsilon(ABC):
     """
-    Abstract epsilon base class.
-
     This class encapsulates a strategy for setting a new epsilon for
     each new population.
+
+    Abstract epsilon base class.
     """
 
-    def __init__(self, require_initialize: bool=True):
+    def __init__(self,
+                 require_initialize: bool=True):
         self.require_initialize = require_initialize
 
-    def initialize(self, sample_from_prior: List[dict],
+    def initialize(self,
+                   t: int,
+                   sample_from_prior: List[dict],
                    distance_to_ground_truth_function: Callable[[dict], float]):
         """
         This method is called by the ABCSMC framework before the first usage
@@ -45,6 +47,9 @@ class Epsilon(ABC):
         Parameters
         ----------
 
+        t: int
+            The time point to initialize the epsilon for.
+
         sample_from_prior: List[dict]
             List of dictionaries containing the summary statistics.
 
@@ -56,31 +61,42 @@ class Epsilon(ABC):
         """
         pass
 
-    @abstractmethod
-    def __call__(self, t: int,
-                 history: History,
-                 latest_population: Population =None) -> float:
+    def update(self,
+               t: int,
+               weighted_distances: pandas.DataFrame):
         """
-        Possibly calculate and return current epsilon / epsilon at time t.
+        Update epsilon value to be used as acceptance criterion for
+        population t.
 
         Parameters
         ----------
+
         t: int
-            The population number. Counting is zero based. So the first
+            The population number. Counting is zero-based. So the first
             population has t=0.
 
-        history: History
-            ABC history object. Can be used to query summary statistics to
-            set the epsilon
+        weighted_distances: pandas.DataFrame
+            The distances that should be used to update epsilon, as returned
+            by Population.get_weighted_distances().
+        """
 
-        latest_population: Population
-            The latest population, which may be different from the one stored
-            in history.
+    @abstractmethod
+    def __call__(self,
+                 t: int) -> float:
+        """
+        Get epsilon value for generation t.
 
-        Return
-        ------
+        Parameters
+        ----------
+
+        t: int
+            The time point to get the threshold for.
+
+        Returns
+        -------
+
         eps: float
-            The new epsilon for population ``t``.
+            The epsilon for population ``t``.
 
         """
 
@@ -123,7 +139,8 @@ class ConstantEpsilon(Epsilon):
     constant_epsilon_value: float
         The epsilon value for all populations
     """
-    def __init__(self, constant_epsilon_value: float):
+    def __init__(self,
+                 constant_epsilon_value: float):
         super().__init__(require_initialize=False)
         self.constant_epsilon_value = constant_epsilon_value
 
@@ -132,9 +149,7 @@ class ConstantEpsilon(Epsilon):
         config["constant_epsilon_value"] = self.constant_epsilon_value
         return config
 
-    def __call__(self, t: int,
-                 history: History,
-                 latest_population: Population =None):
+    def __call__(self, t: int):
         return self.constant_epsilon_value
 
 
@@ -150,7 +165,8 @@ class ListEpsilon(Epsilon):
         ``values[t]`` is the value for population t.
     """
 
-    def __init__(self, values: List[float]):
+    def __init__(self,
+                 values: List[float]):
         super().__init__(require_initialize=False)
         self.epsilon_values = list(values)
 
@@ -159,9 +175,8 @@ class ListEpsilon(Epsilon):
         config["epsilon_values"] = self.epsilon_values
         return config
 
-    def __call__(self, t: int,
-                 history: History,
-                 latest_population: Population =None):
+    def __call__(self,
+                 t: int):
         return self.epsilon_values[t]
 
 
@@ -196,9 +211,11 @@ class QuantileEpsilon(Epsilon):
     Note that the acceptance threshold calculation is based on the distance
     to the observation, not on the parameters which generated data with that
     distance.
+
     If completely different parameter sets produce equally good samples,
     the distances of their samples to the ground truth data should be
     comparable.
+
     The idea behind weighting is that the probability p_k of obtaining a
     distance eps_k in the next generation should be proportional to the
     weight w_k of respective particle k in the current generation. Both
@@ -232,8 +249,10 @@ class QuantileEpsilon(Epsilon):
         return config
 
     def initialize(self,
+                   t: int,
                    sample_from_prior, distance_to_ground_truth_function):
-        super().initialize(sample_from_prior,
+        super().initialize(t,
+                           sample_from_prior,
                            distance_to_ground_truth_function)
 
         # calculate initial epsilon if not given
@@ -242,59 +261,48 @@ class QuantileEpsilon(Epsilon):
                                     for x in sample_from_prior])
             eps_t0 = weighted_quantile(points=distances, alpha=self.alpha)\
                 * self.quantile_multiplier
-            self._look_up = {0: eps_t0}
+            self._look_up[t] = eps_t0
         else:
-            self._look_up = {0: self._initial_epsilon}
+            self._look_up[t] = self._initial_epsilon
 
         # logging
         eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
 
-    def __call__(self, t: int,
-                 history: History,
-                 latest_population: Population =None) -> float:
+    def __call__(self,
+                 t: int) -> float:
         """
         Compute new epsilon from input, and return it.
         """
-        try:
-            eps = self._look_up[t]
-        except KeyError:
-            # this will be the usual case after the first iteration
-            self._update(t, history, latest_population)
-            eps = self._look_up[t]
-
+        eps = self._look_up[t]
         return eps
 
-    def _update(self, t: int,
-                history: History,
-                latest_population: Population =None):
+    def update(self,
+               t: int,
+               weighted_distances: pandas.DataFrame):
         """
         Compute quantile of the (weighted) distances given in population,
         and use this to update epsilon.
         """
 
-        # If latest_population is None, e.g. after smc.load(), read latest
-        # weighted distances from history, else use the passed latest
-        # population.
-        if latest_population is None:
-            df_weighted = history.get_weighted_distances(None)
-        else:
-            df_weighted = latest_population.get_weighted_distances()
+        # extract distances
+        distances = weighted_distances.distance.as_matrix()
 
-        distances = df_weighted.distance.as_matrix()
-        len_distances = len(distances)
-
+        # extract weights
         if self.weighted:
-            weights = df_weighted.w.as_matrix()
+            weights = weighted_distances.w.as_matrix()
             # The sum of the weighted distances is larger than 1 if more than
             # a single simulation per parameter is performed.
             # Re-normalize in this case.
             weights /= weights.sum()
         else:
+            len_distances = len(distances)
             weights = sp.ones(len_distances) / len_distances
 
+        # compute weighted quantile
         quantile = weighted_quantile(
             points=distances, weights=weights, alpha=self.alpha)
 
+        # save
         self._look_up[t] = quantile * self.quantile_multiplier
 
         # logger
@@ -306,7 +314,8 @@ class MedianEpsilon(QuantileEpsilon):
     Calculate epsilon as median of the distances from the last population.
     """
 
-    def __init__(self, initial_epsilon: Union[str, int, float]='from_sample',
+    def __init__(self,
+                 initial_epsilon: Union[str, int, float]='from_sample',
                  median_multiplier: float =1,
                  weighted: bool =True):
         super().__init__(initial_epsilon=initial_epsilon,

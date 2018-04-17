@@ -286,6 +286,7 @@ class History:
             The population strategy represented as json string
 
         """
+
         # store ground truth to db
 
         abcsmc = ABCSMC(

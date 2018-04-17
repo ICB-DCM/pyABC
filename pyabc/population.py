@@ -157,10 +157,16 @@ class Population:
 
     def get_weighted_distances(self) -> pandas.DataFrame:
         """
-        Create iteration of distances and weights. All weights sum to 1.
+        Create DataFrame of (distance, weight)'s. The particle weights are
+        multiplied by the model probabilities. If one simulation per particle
+        was performed, the weights thus sum to 1. If more than one simulation
+        per particle was performed, this does not have to be the case,
+        and post-normalizing may be necessary.
 
-        :return:
-            A pandas.DataFrame containing in column 'distance' the distances
+        Returns
+        -------
+
+        A pandas.DataFrame containing in column 'distance' the distances
             and in column 'weight' the scaled weights.
         """
 
@@ -173,6 +179,7 @@ class Population:
                              'w': particle.weight * model_probability})
 
         df = pandas.DataFrame(rows)
+
         return df
 
     def to_dict(self) -> dict:

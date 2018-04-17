@@ -16,7 +16,7 @@ import math
 import statistics
 import logging
 from .sampler import Sampler
-from pyabc import Epsilon
+from .epsilon import Epsilon
 df_logger = logging.getLogger("DistanceFunction")
 
 
@@ -33,7 +33,9 @@ class DistanceFunction(ABC):
         """
         self.require_initialize = require_initialize
 
-    def initialize(self, sample_from_prior: List[dict]):
+    def initialize(self,
+                   t: int,
+                   sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
         usage of the distance function
@@ -41,12 +43,13 @@ class DistanceFunction(ABC):
 
         The default implementation is to do nothing.
 
-        This method is not called again when an ABC run is resumed via
-        ABCSCM.run(), so the user has to make sure that custom distance
-        functions are ready for calling the other methods.
+        This function is only called if require_initialize == True.
 
         Parameters
         ----------
+
+        t: int
+            Time point for which to initialize the distance function.
 
         sample_from_prior: List[dict]
             List of dictionaries containing the summary statistics.
@@ -65,34 +68,53 @@ class DistanceFunction(ABC):
 
         Parameters
         ----------
-        Sampler: Sampler
+
+        sampler: Sampler
             The Sampler.
         """
 
-    def update(self, simulations_all: List[dict]) -> bool:
+    def update(self,
+               t: int,
+               all_sum_stats: List[dict]) -> bool:
         """
         Update the distance function. Default: Do nothing.
 
-        :param simulations_all:
-            List of all simulations (summary statistics).
+        Parameters
+        ----------
 
-        :return:
-            True: If distance function has changed.
+        t: int
+            Time point for which to update/create the distance measure.
+
+        all_sum_stats: List[dict]
+            List of all summary statistics that should be used to update the
+            distance (in particular also rejected ones).
+
+        Returns
+        -------
+
+        is_updated: bool
+            True: If distance function has changed compared to hitherto.
             False: If distance function has not changed (default).
         """
         return False
 
     @abstractmethod
-    def __call__(self, x: dict, x_0: dict) -> float:
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 x_0: dict) -> float:
         """
+        Evaluate, at time point t, the distance of the tentatively sampled
+        particle to the measured data.
+
         Abstract method. This method has to be overwritten by
         all concrete implementations.
 
-        Evaluate the distance of the tentatively samples particle to the
-        measured data.
-
         Parameters
         ----------
+
+        t: int
+            Time point at which to evaluate the distance.
 
         x: dict
             Summary statistics of the tentatively sampled parameter.
@@ -107,6 +129,53 @@ class DistanceFunction(ABC):
             Attributes distance of the tentatively sampled particle
             from the measured data.
         """
+
+    def accept(self,
+               t: int,
+               eps: Epsilon,
+               x: dict,
+               x_0: dict) -> (float, bool):
+        """
+        This function is called to check for acceptance.
+
+        Default: Call distance function at time point t and compare to
+        epsilon value at time point t.
+
+        Parameters
+        ----------
+
+        t: int
+            Time point for which to check.
+
+        eps: pyabc.Epsilon
+            The epsilon method encoding the threshold for different time
+            points. It must know about thresholds for time points required in
+            this function, up to and including time t.
+
+        x: dict
+            Summary statistics of the tentatively sampled parameter.
+
+        x_0: dict
+            Summary statistics of the measured data.
+
+        Returns
+        -------
+
+        (distance, accept): (float, bool)
+            True: The distance function is below the epsilon threshold.
+            False: The distance function is above the epsilon threshold.
+
+        .. note:
+            Currently, there is intended to be only one distance to be
+            returned, namely that at time t, even if also other distances
+            have an impact on the acceptance decision. This is because the
+            last distance is likely to be most informative for the further
+            process.
+        """
+
+        d = self(t, x, x_0)
+        accept = d <= eps(t)
+        return d, accept
 
     def get_config(self) -> dict:
         """
@@ -142,7 +211,10 @@ class NoDistance(DistanceFunction):
     Implements a kind of null object as distance function.
     """
 
-    def __call__(self, x: dict, x_0: dict) -> float:
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 x_0: dict) -> float:
         raise Exception("{} is not intended to be called."
                         .format(self.__class__.__name__))
 
@@ -154,11 +226,15 @@ class SimpleFunctionDistance(DistanceFunction):
     an instance of the SimpleFunctionDistance class.
     """
 
-    def __init__(self, function):
+    def __init__(self,
+                 function):
         super().__init__(require_initialize=False)
         self.function = function
 
-    def __call__(self, x, y):
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict) -> float:
         return self.function(x, y)
 
     def get_config(self):
@@ -211,62 +287,82 @@ class PNormDistance(DistanceFunction):
     p: float
         p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
 
-    w_list: list[dict]
-        Each list contains numeric weights associated with summary
-        statistics. If none is passed, a weight of 1 is considered for every
-        summary statistic.
+    w: dict
+        Weights. Dictionary indexed by time points. Each entry contains a
+        dictionary of numeric weights, indexed by summary statistics labels.
+        If none is passed, a weight of 1 is considered for every summary
+        statistic. If no entry is available in w for a given time point,
+        the maximum available time point is selected.
 
     use_all_w: bool
-        True: The returned distance is the maximum over the distances in the
-        list.
-        False: Only the distance computed using the weights in the last list
-        entry are used.
+        True: When checking for acceptance, check against all distances encoded.
+        False: Only check against the distance at the passed time point.
     """
 
-    def __init__(self, p: float=2,
-                 w_list: List[dict]=None,
+    def __init__(self,
+                 p: float=2,
+                 w: dict=None,
                  use_all_w: bool=True):
         super().__init__(require_initialize=False)
+
         if p < 1:
             raise ValueError("It must be p >= 1")
         self.p = p
-        self.w_list = w_list
+        self.w = w
         self.use_all_w = use_all_w
 
-    def __call__(self, x: dict, y: dict):
-
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict) -> float:
         # make sure weights are initialized
-        if self.w_list is None:
-            self._set_default_weights(x.keys())
+        if self.w is None:
+            self._set_default_weights(t, x.keys())
 
-        # compute p-norm distance
+        # select time point
+        if t not in self.w.keys():
+            t = max(self.w.keys())
 
-        # get weights to consider
-        distances = []
-        if self.use_all_w:
-            w_list = self.w_list
+        # extract for time point
+        w = self.w[t]
+
+        if self.p == math.inf:
+            d = max(abs(w[key]*(x[key]-y[key]))
+                    for key in w.keys())
         else:
-            w_list = [self.w_list[-1]]
+            d = pow(
+                sum(pow(abs(w[key]*(x[key]-y[key])), self.p)
+                    for key in w.keys()),
+                1/self.p)
 
-        for w in w_list:
-            if self.p == math.inf:
-                d = max(abs(w[key]*(x[key]-y[key]))
-                        for key in w.keys())
-            else:
-                d = pow(
-                    sum(pow(abs(w[key]*(x[key]-y[key])), self.p)
-                        for key in w.keys()),
-                    1/self.p)
-            distances.append(d)
+        return d
 
-        # return the maximal distance
-        return max(distances)
+    def accept(self,
+               t: int,
+               eps: Epsilon,
+               x: dict,
+               x_0: dict) -> (float, bool):
+        d = self(t, x, x_0)
+        accept = d < eps(t)
 
-    def _set_default_weights(self, summary_statistics_keys):
+        if accept and self.use_all_w:
+            # also check against all previous distances and acceptance criteria
+            for t_prev in self.w.keys():
+                if t_prev < t:
+                    d_prev = self(t_prev, x, x_0)
+                    accept = d_prev < eps(t_prev)
+                    if not accept:
+                        break
+
+        return d, accept
+
+    def _set_default_weights(self,
+                             t: int,
+                             summary_statistics_keys):
         """
         Init weights to 1 for every summary statistic.
         """
-        self.w_list = [{k: 1 for k in summary_statistics_keys}]
+        self.w = {t: {k: 1 for k in summary_statistics_keys}}
 
 
 class AdaptivePNormDistance(PNormDistance):
@@ -283,6 +379,7 @@ class AdaptivePNormDistance(PNormDistance):
     adaptive: bool
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
+            This corresponds to a pre-calibration.
 
     scale_type: int
         What measure to use for deviation. Values as in SCALE_... constants.
@@ -301,14 +398,14 @@ class AdaptivePNormDistance(PNormDistance):
                  scale_type: int=SCALE_TYPE_MAD):
         # call p-norm constructor
         super().__init__(p=p,
-                         w_list=None,
+                         w=None,
                          use_all_w=use_all_w)
-
         self.require_initialize = True
         self.adaptive = adaptive
         self.scale_type = scale_type
 
-    def configure_sampler(self, sampler: Sampler):
+    def configure_sampler(self,
+                          sampler: Sampler):
         """
         Make the sampler return also rejected summary statistics if required,
         because these are needed to get a better estimate of the summary
@@ -325,54 +422,46 @@ class AdaptivePNormDistance(PNormDistance):
         if self.adaptive:
             sampler.sample_factory.record_all_sum_stats = True
 
-    def initialize(self, sample_from_prior: List[dict]):
+    def initialize(self,
+                   t: int,
+                   sample_from_prior: List[dict]):
         """
         Initialize weights.
-
-        Parameters
-        ----------
-
-        sample_from_prior: List[dict]
-            A sample from the prior distribution.
         """
 
-        super().initialize(sample_from_prior)
+        super().initialize(t, sample_from_prior)
         # update weights from samples
-        self._update(sample_from_prior)
+        self._update(t, sample_from_prior)
 
-    def update(self, all_summary_statistics_list: List[dict]):
+    def update(self,
+               t: int,
+               all_sum_stats: List[dict]):
         """
-        Update weights based on all simulations. Usually called in
-        each iteration.
-
-        :param all_summary_statistics_list: List[dict]
-            List of all summary statistics (also those rejected).
+        Update weights based on all simulations.
         """
 
         if not self.adaptive:
             return False
 
-        self._update(all_summary_statistics_list)
+        self._update(t, all_sum_stats)
 
         return True
 
-    def _update(self, all_summary_statistics_list: List[dict]):
+    def _update(self,
+                t: int,
+                all_sum_stats: List[dict]):
         """
         Here the real update of weights happens.
-
-        :param all_summary_statistics_list: List[dict]
-            List of all summary statistics (also those rejected).
-        :return:
         """
 
         # retrieve keys
-        keys = all_summary_statistics_list[0].keys()
+        keys = all_sum_stats[0].keys()
 
         # make sure w_list is initialized
-        if self.w_list is None:
-            self.w_list = []
+        if self.w is None:
+            self.w = {}
 
-        n = len(all_summary_statistics_list)
+        n = len(all_sum_stats)
 
         # to-be-filled-and-appended weights dictionary
         w = {}
@@ -381,7 +470,7 @@ class AdaptivePNormDistance(PNormDistance):
             # prepare list for key
             current_list = []
             for j in range(n):
-                current_list.append(all_summary_statistics_list[j][key])
+                current_list.append(all_sum_stats[j][key])
 
             # compute weighting
             if self.scale_type == AdaptivePNormDistance.SCALE_TYPE_MAD:
@@ -405,7 +494,7 @@ class AdaptivePNormDistance(PNormDistance):
         # for key in self.w.keys():
         #     self.w[key] /= mean_weight
 
-        self.w_list.append(w)
+        self.w[t] = w
 
         # logging
         df_logger.debug("update distance weights = {}".format(w))
@@ -475,14 +564,17 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
         * measures refers to the summary statistics.
     """
 
-    def __init__(self, measures_to_use='all'):
+    def __init__(self,
+                 measures_to_use='all'):
         super().__init__(require_initialize=True)
         self._measures_to_use_passed_to_init = measures_to_use
         #: The measures (summary statistics) to use for distance calculation.
         self.measures_to_use = None
 
-    def initialize(self, sample_from_prior):
-        super().initialize(sample_from_prior)
+    def initialize(self,
+                   t: int,
+                   sample_from_prior):
+        super().initialize(t, sample_from_prior)
         if self._measures_to_use_passed_to_init == 'all':
             self.measures_to_use = sample_from_prior[0].keys()
             raise Exception(
@@ -508,7 +600,10 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
         d(x, y) =\
          \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """
-    def __call__(self, x, y):
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict) -> float:
         return sum(abs((x[key]-y[key])/y[key]) if y[key] != 0 else
                    (0 if x[key] == 0 else sp.inf)
                    for key in self.measures_to_use) / len(self.measures_to_use)
@@ -544,11 +639,16 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
         self._whitening_transformation_matrix = (
             v.dot(sp.diag(1. / sp.sqrt(w))).dot(v.T))
 
-    def initialize(self, sample_from_prior):
-        super().initialize(sample_from_prior)
+    def initialize(self,
+                   t: int,
+                   sample_from_prior):
+        super().initialize(t, sample_from_prior)
         self._calculate_whitening_transformation_matrix(sample_from_prior)
 
-    def __call__(self, x, y):
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict) -> float:
         x_vec, y_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(y)
         distance = la.norm(
             self._whitening_transformation_matrix.dot(x_vec - y_vec), 2)
@@ -626,11 +726,16 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
                               - self.lower(measures[measure])
                               for measure in self.measures_to_use}
 
-    def initialize(self, sample_from_prior):
-        super().initialize(sample_from_prior)
+    def initialize(self,
+                   t: int,
+                   sample_from_prior):
+        super().initialize(t, sample_from_prior)
         self._calculate_normalization(sample_from_prior)
 
-    def __call__(self, x, y):
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict) -> float:
         distance = sum(abs((x[key]-y[key])/self.normalization[key])
                        for key in self.measures_to_use)
         return distance
@@ -681,26 +786,23 @@ class AcceptAllDistance(DistanceFunction):
 
     Can be used for testing.
     """
-    def __call__(self, x, y):
-        """
-        Parameters
-        ----------
-        x: dictionary
-            sample point
-        y: dictionary
-            measured point
-        """
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict) -> float:
         return -1
 
 
 class IdentityFakeDistance(DistanceFunction):
     """
-    A fake distance function, which just passes
-    the summary statistics on. This class assumes, that
-    the model already returns the distance. This can be useful
-    in cases where simulating can be stopped early when
-    during the simulation some condition is reached which
-    makes it impossible to accept the particle.
+    A fake distance function, which just passes the summary statistics on.
+    This class assumes that the model already returns the distance. This can be
+    useful in cases where simulating can be stopped early, when during the
+    simulation some condition is reached which makes it impossible to accept
+    the particle.
     """
-    def __call__(self, x, y):
+    def __call__(self,
+                 t: int,
+                 x: dict,
+                 y: dict):
         return x
