@@ -343,14 +343,14 @@ class PNormDistance(DistanceFunction):
                x: dict,
                x_0: dict) -> (float, bool):
         d = self(t, x, x_0)
-        accept = d < eps(t)
+        accept = d <= eps(t)
 
         if accept and self.use_all_w:
             # also check against all previous distances and acceptance criteria
             for t_prev in self.w.keys():
                 if t_prev < t:
                     d_prev = self(t_prev, x, x_0)
-                    accept = d_prev < eps(t_prev)
+                    accept = d_prev <= eps(t_prev)
                     if not accept:
                         break
 
@@ -490,9 +490,9 @@ class AdaptivePNormDistance(PNormDistance):
 
         # normalize weights to have mean 1. This has just the effect that the
         # epsilon will decrease more smoothly, but is not important otherwise.
-        # mean_weight = statistics.mean(list(self.w.values()))
-        # for key in self.w.keys():
-        #     self.w[key] /= mean_weight
+        mean_weight = statistics.mean(list(w.values()))
+        for key in w.keys():
+            w[key] /= mean_weight
 
         self.w[t] = w
 
