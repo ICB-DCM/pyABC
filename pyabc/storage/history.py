@@ -401,7 +401,6 @@ class History:
         """
         Close database sessions and store end time of population.
 
-
         """
 
         abc_smc_simulation = (self._session.query(ABCSMC)

@@ -662,7 +662,24 @@ class ABCSMC:
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 
+            # prepare next iteration
+
+            # update distance function
+            df_updated = self.distance_function.update(
+                t + 1, sample.all_summary_statistics)
+
+            # compute distances with the new distance measure
+            if df_updated:
+                def distance_to_ground_truth(x):
+                    return self.distance_function(t + 1, x, self.x_0)
+
+                population.update_distances(distance_to_ground_truth)
+
+            # update epsilon
+            self.eps.update(t + 1, population.get_weighted_distances())
+
             # check early termination conditions
+
             current_acceptance_rate = \
                 len(population.get_list()) / nr_evaluations
             if (current_eps <= minimum_epsilon
@@ -671,30 +688,23 @@ class ABCSMC:
                     or current_acceptance_rate < min_acceptance_rate):
                 break
 
-            # update distance function
-            df_updated = self.distance_function.update(
-                t+1, sample.all_summary_statistics)
-
-            # compute distances with the new distance measure
-            if df_updated:
-                def distance_to_ground_truth(x):
-                    return self.distance_function(t+1, x, self.x_0)
-                population.update_distances(distance_to_ground_truth)
-
-            # update epsilon
-            self.eps.update(t+1, population.get_weighted_distances())
-
         # end of run loop
 
+        # close session and store end time
         self.history.done()
+
+        # return used history object
         return self.history
 
     def _adapt_population_size(self, t):
         """
         Adapt population size based on the employed population strategy.
 
-        :param t:
-            time
+        Parameters
+        ----------
+
+        t: int
+            Time for which to adapt the population size.
         """
 
         if t == 0:  # we need a particle population to do the fitting
@@ -714,8 +724,11 @@ class ABCSMC:
         """
         Fit the density estimator.
 
-        :param t:
-            time
+        Parameters
+        ----------
+
+        t: int
+            Time for which to update the kernel density estimator.
         """
 
         if t == 0:  # we need a particle population to do the fitting

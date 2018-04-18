@@ -36,7 +36,7 @@ def silverman_rule_of_thumb(n_samples, dimension):
 
 class MultivariateNormalTransition(Transition):
     """
-    Transition vis a multivariate Gaussian KDE estimate.
+    Transition via a multivariate Gaussian KDE estimate.
 
     Parameters
     ----------
