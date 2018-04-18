@@ -13,7 +13,7 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from .weighted_statistics import weighted_quantile
-from typing import Callable, List, Union
+from typing import List, Union
 import pandas
 eps_logger = logging.getLogger("Epsilon")
 

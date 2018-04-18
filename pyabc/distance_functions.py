@@ -295,7 +295,8 @@ class PNormDistance(DistanceFunction):
         the maximum available time point is selected.
 
     use_all_w: bool
-        True: When checking for acceptance, check against all distances encoded.
+        True: When checking for acceptance, check against all distances
+        encoded.
         False: Only check against the distance at the passed time point.
     """
 

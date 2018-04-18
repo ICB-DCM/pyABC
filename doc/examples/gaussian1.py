@@ -1,4 +1,4 @@
-from pyabc import (ABCSMC, Distribution, RV, MultivariateNormalTransition,
+from pyabc import (ABCSMC, Distribution, RV,
                    PNormDistance, AdaptivePNormDistance)
 from pyabc.visualization import plot_kde_1d
 import scipy
@@ -14,9 +14,11 @@ def model(p):
 
 # ss1 is informative, ss2 is uninformative about theta
 prior = Distribution(theta=RV('uniform', 0, 10))
-distance = AdaptivePNormDistance(p=2, use_all_w=True, adaptive=True,
-                                 scale_type=AdaptivePNormDistance.SCALE_TYPE_MAD)
-#distance = PNormDistance(p=2, w=None, use_all_w=False)
+distance = AdaptivePNormDistance(p=2,
+                                 use_all_w=True, adaptive=True,
+                                 scale_type=
+                                 AdaptivePNormDistance.SCALE_TYPE_MAD)
+distance = PNormDistance(p=2, w=None, use_all_w=False)
 abc = ABCSMC(model, prior, distance)
 db_path = ("sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db"))
 observation1 = 4
@@ -26,7 +28,7 @@ observation2 = 2
 abc.new(db_path, {'ss1': observation1, 'ss2': observation2})
 
 # run
-history = abc.run(minimum_epsilon=.1, max_nr_populations=1)
+history = abc.run(minimum_epsilon=.1, max_nr_populations=8)
 
 # df, w = history.get_distribution(0,history.max_t)
 # df["CDF"] = w
@@ -47,4 +49,5 @@ for t in range(history.max_t + 1):
 ax.axvline(observation1-1, color="k", linestyle="dashed")
 ax.legend()
 pyplot.show()
+
 print("done test1")
