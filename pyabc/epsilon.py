@@ -32,8 +32,7 @@ class Epsilon(ABC):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict],
-                   distance_to_ground_truth_function: Callable[[dict], float]):
+                   weighted_distances: pandas.DataFrame):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon and can be used to calibrate it to the statistics of the
@@ -50,13 +49,9 @@ class Epsilon(ABC):
         t: int
             The time point to initialize the epsilon for.
 
-        sample_from_prior: List[dict]
-            List of dictionaries containing the summary statistics.
-
-        distance_to_ground_truth_function: Callable[[dict], float]
-            One of the distance functions pre evaluated at its second argument
-            (the one representing the measured data).
-            E.g. something like lambda x: distance_function(x, x_measured)
+        weighted_distances: pandas.DataFrame
+            The distances that should be used to initialize epsilon, as
+            returned by Population.get_weighted_distances().
 
         """
         pass
@@ -97,7 +92,6 @@ class Epsilon(ABC):
 
         eps: float
             The epsilon for population ``t``.
-
         """
 
     def get_config(self):
@@ -250,18 +244,11 @@ class QuantileEpsilon(Epsilon):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior, distance_to_ground_truth_function):
-        super().initialize(t,
-                           sample_from_prior,
-                           distance_to_ground_truth_function)
+                   weighted_distances: pandas.DataFrame):
+        super().initialize(t, weighted_distances)
 
-        # calculate initial epsilon if not given
         if self._initial_epsilon == 'from_sample':
-            distances = sp.asarray([distance_to_ground_truth_function(x)
-                                    for x in sample_from_prior])
-            eps_t0 = weighted_quantile(points=distances, alpha=self.alpha)\
-                * self.quantile_multiplier
-            self._look_up[t] = eps_t0
+            self._update(t, weighted_distances)
         else:
             self._look_up[t] = self._initial_epsilon
 
@@ -272,8 +259,18 @@ class QuantileEpsilon(Epsilon):
                  t: int) -> float:
         """
         Compute new epsilon from input, and return it.
+
+        Returns
+        -------
+
+        eps: float
+            The epsilon value for time t (throws error if not existent!).
         """
-        eps = self._look_up[t]
+        try:
+            eps = self._look_up[t]
+        except KeyError as e:
+            raise KeyError(
+                "The epsilon value for time {} does not exist: " + repr(e), t)
         return eps
 
     def update(self,
@@ -283,6 +280,15 @@ class QuantileEpsilon(Epsilon):
         Compute quantile of the (weighted) distances given in population,
         and use this to update epsilon.
         """
+
+        self._update(t, weighted_distances)
+
+        # logger
+        eps_logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
+
+    def _update(self,
+                t: int,
+                weighted_distances: pandas.DataFrame):
 
         # extract distances
         distances = weighted_distances.distance.as_matrix()
@@ -304,9 +310,6 @@ class QuantileEpsilon(Epsilon):
 
         # save
         self._look_up[t] = quantile * self.quantile_multiplier
-
-        # logger
-        eps_logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
 
 
 class MedianEpsilon(QuantileEpsilon):

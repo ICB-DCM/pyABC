@@ -27,6 +27,7 @@ from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
 import copy
 import warnings
+import pandas
 
 abclogger = logging.getLogger("ABC")
 
@@ -193,7 +194,8 @@ class ABCSMC:
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
         self.history = None  # type: History
-        self._points_sampled_from_prior = None
+        self._initial_sum_stats = None
+        self._initial_weights = None
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -356,52 +358,80 @@ class ABCSMC:
         """
 
         if self.distance_function.require_initialize:
+            # initialize distance
             self.distance_function.initialize(t,
-                                              self._prior_sample())
+                                              self._get_initial_samples()[1])
 
         if self.eps.require_initialize:
             def distance_to_ground_truth(x):
                 return self.distance_function(t, x, self.x_0)
-            self.eps.initialize(t,
-                                self._prior_sample(),
-                                distance_to_ground_truth)
 
-    def _prior_sample(self) -> List[dict]:
+            # create data frame from weights and new distances
+            weights, sum_stats = self._get_initial_samples()
+            rows = []
+            for i in range(len(weights)):
+                weight = weights[i]
+                distance = distance_to_ground_truth(sum_stats[i])
+                rows.append({'distance': distance,
+                             'w': weight})
+            weighted_distances = pandas.DataFrame(rows)
+
+            # initialize epsilon
+            self.eps.initialize(t, weighted_distances)
+
+    def _get_initial_samples(self) -> (List[float], List[dict]):
         """
-        Only sample from prior and return results without changing
-        the history of the Epsilon. This can be used to calibrate the distance
-        function or the epsilon.
+        Get initial samples either from the last population stored in history,
+        or via sampling sum stats from the prior. This can be used to calibrate
+        the distance function or the epsilon.
+
+        The history must have been initialized already. This function fills the
+        private properties _initial_weights and _initial_sum_stats.
 
         .. warning::
             The sample is cached.
         """
 
-        if self._points_sampled_from_prior is None:
-            def simulate_one():
-                m = self.model_prior.rvs()
-                theta = self.parameter_priors[m].rvs()
-                sum_stats = []
-                all_sum_stats = []
-                model_result = self.models[m].summary_statistics(
-                    theta, self.summary_statistics)
-                all_sum_stats.append(model_result.sum_stats)
-                weight = 0
-                accepted_distances = []
-                accepted = True
-                # only the all_summary_statistics field will be read later
-                return Particle(
-                    m, theta, weight, accepted_distances,
-                    sum_stats, all_sum_stats, accepted)
+        if self._initial_weights is None or self._initial_sum_stats is None:
+            if self.history.n_populations > 0:
+                weights, sum_stats = self.history.get_weighted_sum_stats()
+                self._initial_weights = weights
+                self._initial_sum_stats = sum_stats
+            else:
+                self._initial_sum_stats = self._sample_from_prior()
+                self._initial_weights = [1.0 for _ in self._initial_sum_stats]
 
-            # call sampler
-            sample = self.sampler.sample_until_n_accepted(
-                self.population_strategy.nr_particles, simulate_one)
+        return self._initial_weights, self._initial_sum_stats
 
-            # extract all summary statistics list
-            self._points_sampled_from_prior = \
-                sample.all_summary_statistics
+    def _sample_from_prior(self) -> List[dict]:
+        """
+        Only sample from prior and return results without changing
+        the history of the distance function or the epsilon.
+        """
 
-        return self._points_sampled_from_prior
+        # simulation function, simplifying some parts compared to later
+        def simulate_one():
+            m = self.model_prior.rvs()
+            theta = self.parameter_priors[m].rvs()
+            sum_stats = []
+            all_sum_stats = []
+            model_result = self.models[m].summary_statistics(
+                theta, self.summary_statistics)
+            all_sum_stats.append(model_result.sum_stats)
+            weight = 0
+            accepted_distances = []
+            accepted = True
+            # only the all_summary_statistics field will be read later
+            return Particle(
+                m, theta, weight, accepted_distances,
+                sum_stats, all_sum_stats, accepted)
+
+        # call sampler
+        sample = self.sampler.sample_until_n_accepted(
+            self.population_strategy.nr_particles, simulate_one)
+
+        # return all generated summary statistics
+        return sample.all_summary_statistics
 
     def _generate_valid_proposal(self, t, m, p):
         """

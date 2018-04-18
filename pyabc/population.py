@@ -42,6 +42,18 @@ class Particle:
 
     accepted: bool
         True if particle was accepted, False if not.
+
+    .. note::
+        There are two different ways of weighting particles: First, the weights
+        can be calculated as emerges from the importance sampling. Second, the
+        weights of particles belonging to one model can be summed to, after
+        normalization, find model probabilities. Then, the weights of all
+        particles belonging to one model can be summed to one.
+        Weighting is transferred to the second way in _normalize_weights() in
+        order to also have access to model probabilities. This mode is also
+        stored in the database. If one needs access to the first weighting
+        scheme later on again, one has to perform backwards transformation,
+        multiplying the weights with the model probabilities.
     """
 
     def __init__(self, m: int,
