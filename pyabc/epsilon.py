@@ -266,7 +266,7 @@ class QuantileEpsilon(Epsilon):
             self._look_up[t] = self._initial_epsilon
 
         # logging
-        eps_logger.info("initial epsilon is {}".format(self._look_up[0]))
+        eps_logger.info("initial epsilon is {}".format(self._look_up[t]))
 
     def __call__(self,
                  t: int) -> float:
