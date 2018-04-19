@@ -71,8 +71,6 @@ __all__ = [
     "Distribution",
     "ModelPerturbationKernel",
     # random_variables end
-    "SQLDataStore",
-    "ABCLoader",
     "GridSearchCV",
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
