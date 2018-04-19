@@ -329,11 +329,13 @@ class PNormDistance(DistanceFunction):
 
         if self.p == math.inf:
             d = max(abs(w[key]*(x[key]-y[key]))
-                    for key in w.keys())
+                    if key in x and key in y else 0
+                    for key in w)
         else:
             d = pow(
                 sum(pow(abs(w[key]*(x[key]-y[key])), self.p)
-                    for key in w.keys()),
+                    if key in x and key in y else 0
+                    for key in w),
                 1/self.p)
 
         return d
