@@ -19,8 +19,20 @@ def predict_population_size(current_pop_size: int,
     ----------
 
     current_pop_size: int
+        Current population size.
+
     target_cv: float
-    calc_cv: A function mapping population_size -> cv
+        Target coefficient of variation.
+
+    calc_cv:
+        A function mapping population_size -> cv.
+
+    n_steps: int
+        The number of steps
+
+    first_step_factor: float
+        Factor by which to divide the current population size, to give the
+        lower bound for the next population size.
 
     Returns
     -------

@@ -367,6 +367,11 @@ class PNormDistance(DistanceFunction):
         """
         self.w = {t: {k: 1 for k in summary_statistics_keys}}
 
+    def get_config(self) -> dict:
+        return {"name": self.__class__.__name__,
+                "p": self.p,
+                "use_all_w": self.use_all_w}
+
 
 class AdaptivePNormDistance(PNormDistance):
     """
@@ -398,7 +403,7 @@ class AdaptivePNormDistance(PNormDistance):
                  p: float=2,
                  use_all_w: bool=True,
                  adaptive: bool=True,
-                 scale_type: int=SCALE_TYPE_MAD):
+                 scale_type: int=SCALE_TYPE_SD):
         # call p-norm constructor
         super().__init__(p=p,
                          w=None,
