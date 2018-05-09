@@ -9,14 +9,13 @@ subclass the DistanceFunction class if finer grained configuration is required.
 
 import json
 import scipy as sp
+import numpy as np
 from scipy import linalg as la
 from abc import ABC, abstractmethod
 from typing import List
-import math
 import statistics
 import logging
 from .sampler import Sampler
-from .epsilon import Epsilon
 df_logger = logging.getLogger("DistanceFunction")
 
 
@@ -38,7 +37,7 @@ class DistanceFunction(ABC):
                    sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
-        usage of the distance function
+        usage of the distance function (in ``new`` and ``load``)
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -70,7 +69,7 @@ class DistanceFunction(ABC):
         ----------
 
         sampler: Sampler
-            The Sampler.
+            The Sampler used in ABCSMC.
         """
 
     def update(self,
@@ -162,6 +161,14 @@ class DistanceFunction(ABC):
 class NoDistance(DistanceFunction):
     """
     Implements a kind of null object as distance function.
+
+    This can be used as a dummy distance function if e.g. integrated modeling
+    is used.
+
+    .. note::
+        This distance function cannot be evaluated, so currently it is in
+        particular not possible to use an epsilon threshold which requires
+        initialization (i.e. eps.require_initialize==True is not possible).
     """
 
     def __init__(self):
@@ -241,7 +248,7 @@ class PNormDistance(DistanceFunction):
     ----------
 
     p: float
-        p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
+        p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
     w: dict
         Weights. Dictionary indexed by time points. Each entry contains a
@@ -270,13 +277,13 @@ class PNormDistance(DistanceFunction):
             self._set_default_weights(t, x.keys())
 
         # select time point
-        if t not in self.w.keys():
+        if t not in self.w:
             t = max(self.w.keys())
 
         # extract for time point
         w = self.w[t]
 
-        if self.p == math.inf:
+        if self.p == np.inf:
             d = max(abs(w[key]*(x[key]-y[key]))
                     if key in x and key in y else 0
                     for key in w)
@@ -304,14 +311,14 @@ class PNormDistance(DistanceFunction):
 
 class AdaptivePNormDistance(PNormDistance):
     """
-    Use a weighted p-norm to compute distances between sets of summary
-    statistics.
+    In the p-norm distance, adapt the weights for each generation, based on
+    the previous simulations.
 
     Parameters
     ----------
 
     p: float
-        p for p-norm. Required p >= 1, p = math.inf allowed (infinity-norm).
+        p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
     adaptive: bool
         True: Adapt distance after each iteration.
@@ -319,7 +326,8 @@ class AdaptivePNormDistance(PNormDistance):
             This corresponds to a pre-calibration.
 
     scale_type: int
-        What measure to use for deviation. Values as in SCALE_... constants.
+        What measure to use for deviation. Values as in the
+        SCALE_... constants.
     """
 
     # mean absolute deviation
@@ -337,6 +345,11 @@ class AdaptivePNormDistance(PNormDistance):
                          w=None)
         self.require_initialize = True
         self.adaptive = adaptive
+
+        if scale_type not in [AdaptivePNormDistance.SCALE_TYPE_MAD,
+                              AdaptivePNormDistance.SCALE_TYPE_SD]:
+            raise Exception(
+                "pyabc:distance_function: scale_type not recognized.")
         self.scale_type = scale_type
 
     def configure_sampler(self,
@@ -363,8 +376,6 @@ class AdaptivePNormDistance(PNormDistance):
         """
         Initialize weights.
         """
-
-        super().initialize(t, sample_from_prior)
         # update weights from samples
         self._update(t, sample_from_prior)
 
@@ -410,16 +421,15 @@ class AdaptivePNormDistance(PNormDistance):
             # compute weighting
             if self.scale_type == AdaptivePNormDistance.SCALE_TYPE_MAD:
                 val = median_absolute_deviation(current_list)
-            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
-                val = standard_deviation(current_list)
             else:
-                raise Exception(
-                    "pyabc:distance_function: scale_type not recognized.")
+                # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
+                val = standard_deviation(current_list)
 
-            if val == 0:
-                # in practise, this case should be rare (if only for numeric
-                # reasons, so setting the weight to 1 should be safe)
-                w[key] = 1
+            if np.isclose(val,0):
+                # In practice, this should be rare (if only for numeric
+                # reasons), but a different handling than ignoring such points
+                # might be necessary sometimes.
+                w[key] = 0
             else:
                 w[key] = 1 / val
 
@@ -509,7 +519,6 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
     def initialize(self,
                    t: int,
                    sample_from_prior):
-        super().initialize(t, sample_from_prior)
         if self._measures_to_use_passed_to_init == 'all':
             self.measures_to_use = sample_from_prior[0].keys()
             raise Exception(
@@ -540,7 +549,7 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
                  x: dict,
                  y: dict) -> float:
         return sum(abs((x[key]-y[key])/y[key]) if y[key] != 0 else
-                   (0 if x[key] == 0 else sp.inf)
+                   (0 if x[key] == 0 else np.inf)
                    for key in self.measures_to_use) / len(self.measures_to_use)
 
 
