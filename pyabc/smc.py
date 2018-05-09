@@ -48,7 +48,7 @@ class ABCSMC:
     Parameters
     ----------
 
-    models: list of models, single model, single function or list of functions
+    models: list of models, single model, list of functions, or single function
        * If models is a function, then the function should have a single
          parameter, which is of dictionary type, and should return a single
          dictionary, which contains the simulated data.
@@ -60,7 +60,10 @@ class ABCSMC:
        This model's output is passed to the summary statistics calculation.
        Per default, the model is assumed to already return the calculated
        summary statistics. Accordingly, the default summary_statistics
-       function is just the identity.
+       function is just the identity. Note that the sampling and evaluation of
+       particles happens in the model's methods, so overriding these offers a
+       great deal of flexibility, in particular the freedom to use or ignore
+       the distance_function, summary_statistics, and eps parameters here.
 
     parameter_priors: List[Distribution]
         A list of prior distributions for the models' parameters.
@@ -133,7 +136,8 @@ class ABCSMC:
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
 
-    def __init__(self, models: Union[List[Model], Model],
+    def __init__(self,
+                 models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function,

@@ -31,6 +31,10 @@ from .epsilon import (Epsilon,
                       ListEpsilon)
 from .smc import ABCSMC
 from .storage import History
+from .acceptor import (Acceptor,
+                       SimpleAcceptor,
+                       accept_use_current_time,
+                       accept_use_complete_history)
 from .model import (Model,
                     SimpleModel,
                     ModelResult,
@@ -76,9 +80,13 @@ __all__ = [
     "AdaptivePopulationSize",
     "MultivariateNormalTransition",
     "LocalTransition",
-    "SimpleModel",
+    "Acceptor",
+    "SimpleAcceptor",
+    "accept_use_current_time",
+    "accept_use_complete_history",
     "ModelResult",
     "Model",
+    "SimpleModel",
     "IntegratedModel",
     "History"
 ]

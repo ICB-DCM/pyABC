@@ -130,53 +130,6 @@ class DistanceFunction(ABC):
             from the measured data.
         """
 
-    def accept(self,
-               t: int,
-               eps: Epsilon,
-               x: dict,
-               x_0: dict) -> (float, bool):
-        """
-        This function is called to check for acceptance.
-
-        Default: Call distance function at time point t and compare to
-        epsilon value at time point t.
-
-        Parameters
-        ----------
-
-        t: int
-            Time point for which to check.
-
-        eps: pyabc.Epsilon
-            The epsilon method encoding the threshold for different time
-            points. It must know about thresholds for time points required in
-            this function, up to and including time t.
-
-        x: dict
-            Summary statistics of the tentatively sampled parameter.
-
-        x_0: dict
-            Summary statistics of the measured data.
-
-        Returns
-        -------
-
-        (distance, accept): (float, bool)
-            True: The distance function is below the epsilon threshold.
-            False: The distance function is above the epsilon threshold.
-
-        .. note:
-            Currently, there is intended to be only one distance to be
-            returned, namely that at time t, even if also other distances
-            have an impact on the acceptance decision. This is because the
-            last distance is likely to be most informative for the further
-            process.
-        """
-
-        d = self(t, x, x_0)
-        accept = d <= eps(t)
-        return d, accept
-
     def get_config(self) -> dict:
         """
         Return configuration of the distance function.
@@ -339,25 +292,6 @@ class PNormDistance(DistanceFunction):
                 1/self.p)
 
         return d
-
-    def accept(self,
-               t: int,
-               eps: Epsilon,
-               x: dict,
-               x_0: dict) -> (float, bool):
-        d = self(t, x, x_0)
-        accept = d <= eps(t)
-
-        if accept and self.use_all_w:
-            # also check against all previous distances and acceptance criteria
-            for t_prev in self.w.keys():
-                if t_prev < t:
-                    d_prev = self(t_prev, x, x_0)
-                    accept = d_prev <= eps(t_prev)
-                    if not accept:
-                        break
-
-        return d, accept
 
     def _set_default_weights(self,
                              t: int,
