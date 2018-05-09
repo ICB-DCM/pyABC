@@ -81,6 +81,27 @@ class SimpleAcceptor(Acceptor):
     def __call__(self, t, distance_function, eps, x, x_0):
         return self.fun(t, distance_function, eps, x, x_0)
 
+    @staticmethod
+    def assert_acceptor(acceptor):
+        """
+        Parameters
+        ----------
+
+        acceptor: Acceptor or Callable
+            Either pass a full acceptor, or a callable which is then filled
+            into a SimpleAcceptor.
+
+        Returns
+        -------
+
+        acceptor: Acceptor
+            An Acceptor object in either case.
+        """
+        if isinstance(acceptor, Acceptor):
+            return acceptor
+        else:
+            return SimpleAcceptor(acceptor)
+
 
 def accept_use_current_time(t, distance_function, eps, x, x_0):
     """

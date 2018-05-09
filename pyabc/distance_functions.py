@@ -164,6 +164,9 @@ class NoDistance(DistanceFunction):
     Implements a kind of null object as distance function.
     """
 
+    def __init__(self):
+        super().__init__(require_initialize=False)
+
     def __call__(self,
                  t: int,
                  x: dict,
@@ -246,24 +249,17 @@ class PNormDistance(DistanceFunction):
         If none is passed, a weight of 1 is considered for every summary
         statistic. If no entry is available in w for a given time point,
         the maximum available time point is selected.
-
-    use_all_w: bool
-        True: When checking for acceptance, check against all distances
-        encoded.
-        False: Only check against the distance at the passed time point.
     """
 
     def __init__(self,
                  p: float=2,
-                 w: dict=None,
-                 use_all_w: bool=True):
+                 w: dict=None):
         super().__init__(require_initialize=False)
 
         if p < 1:
             raise ValueError("It must be p >= 1")
         self.p = p
         self.w = w
-        self.use_all_w = use_all_w
 
     def __call__(self,
                  t: int,
@@ -303,8 +299,7 @@ class PNormDistance(DistanceFunction):
 
     def get_config(self) -> dict:
         return {"name": self.__class__.__name__,
-                "p": self.p,
-                "use_all_w": self.use_all_w}
+                "p": self.p}
 
 
 class AdaptivePNormDistance(PNormDistance):
@@ -335,13 +330,11 @@ class AdaptivePNormDistance(PNormDistance):
 
     def __init__(self,
                  p: float=2,
-                 use_all_w: bool=True,
                  adaptive: bool=True,
                  scale_type: int=SCALE_TYPE_SD):
         # call p-norm constructor
         super().__init__(p=p,
-                         w=None,
-                         use_all_w=use_all_w)
+                         w=None)
         self.require_initialize = True
         self.adaptive = adaptive
         self.scale_type = scale_type

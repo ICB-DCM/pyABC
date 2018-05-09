@@ -65,7 +65,7 @@ class Model:
 
         if acceptor is None:
             acceptor = SimpleAcceptor()
-        self.acceptor = acceptor
+        self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
 
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, self.name)
@@ -133,8 +133,7 @@ class Model:
         """
         Sample, calculate summary statistics, and then calculate the distance.
 
-        Not required in the current ABCSMC implementation, only used internally
-        in the Model class.
+        Not required in the current implementation.
 
         Parameters
         ----------
@@ -164,6 +163,7 @@ class Model:
         model_result: ModelResult
             The result with filled distance.
         """
+
         sum_stats_result = self.summary_statistics(t,
                                                    pars,
                                                    sum_stats_calculator)
@@ -171,6 +171,7 @@ class Model:
                                        sum_stats_result.sum_stats,
                                        x_0)
         sum_stats_result.distance = distance
+
         return sum_stats_result
 
     def accept(self,
