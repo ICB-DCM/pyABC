@@ -255,7 +255,9 @@ class QuantileEpsilon(Epsilon):
     def get_config(self):
         config = super().get_config()
         config.update({"initial_epsilon": self._initial_epsilon,
-                       "quantile_multiplier": self.quantile_multiplier})
+                       "alpha": self.alpha,
+                       "quantile_multiplier": self.quantile_multiplier,
+                       "weighted": self.weighted})
 
         return config
 
