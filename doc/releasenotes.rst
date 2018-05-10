@@ -9,7 +9,7 @@ Release Notes
 0.9.0
 -----
 
-* Acceptance has been transfered to an Acceptor object to allow for more
+* Acceptance has been transferred to an Acceptor object to allow for more
   flexibility (e.g. based on complete history).
 * Update of distance and epsilon synchronized after each iteration and moved
   to update() methods.
