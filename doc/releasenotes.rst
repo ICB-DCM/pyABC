@@ -9,14 +9,14 @@ Release Notes
 0.9.0
 -----
 
-* Acceptance has been transferred to an Acceptor object to allow for more
-  flexibility (e.g. based on complete history).
+* Acceptance transferred to an Acceptor object to allow for more
+  flexibility (i.e. not only on a single comparison as per default).
 * Update of distance and epsilon synchronized after each iteration and moved
   to update() methods.
-* initialize() for DistanceFunction and Epsilon also called in load method,
+* initialize() for DistanceFunction and Epsilon also called in load() method,
   given a time point to initialize for, and made optional via a
   require_initialize flag. This makes sure these objects are always correctly
-  initialized, the flags allow for greater flexibility.
+  initialized.
 * PNormDistance and AdaptivePNormDistance (prev. WeightedPNormDistance)
   improved to allow for more customization.
 * API breaks for DistanceFunction, Epsilon, Model.
