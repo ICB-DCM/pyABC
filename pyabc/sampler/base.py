@@ -20,15 +20,14 @@ class Sample:
         self.record_all_sum_stats = record_all_sum_stats
 
     @property
-    def all_summary_statistics(self):
+    def all_sum_stats(self):
         """
-
         Get all summary statistics.
 
         Returns
         -------
 
-        Concatenation of all the all_summary_statistics lists of all
+        Concatenation of all the all_sum_stats lists of all
         particles added and accepted to this sample via append().
         """
         return sum((particle.all_sum_stats
@@ -127,6 +126,7 @@ class Sampler(ABC):
     sample_factory: SampleFactory
         A factory to create empty samples.
     """
+
     def __init__(self):
         self.nr_evaluations_ = 0
         self.sample_factory = SampleFactory(
@@ -138,8 +138,8 @@ class Sampler(ABC):
     @abstractmethod
     def sample_until_n_accepted(self, n, simulate_one) -> Sample:
         """
-        Performs the sampling, i.e. creation of a new generation, i.e. a new
-        population, of particles.
+        Performs the sampling, i.e. creation of a new generation (i.e.
+        population) of particles.
 
         Parameters
         ----------
@@ -156,6 +156,6 @@ class Sampler(ABC):
         Returns
         -------
 
-        sample: :class:`Sample`
+        sample: :class:`pyabc.sampler.Sample`
             The generated sample, which contains the new population.
         """

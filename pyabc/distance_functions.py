@@ -37,7 +37,7 @@ class DistanceFunction(ABC):
                    sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
-        usage of the distance function (in ``new`` and ``load``)
+        use of the distance function (in ``new`` and ``load``)
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -187,6 +187,12 @@ class SimpleFunctionDistance(DistanceFunction):
     This is a wrapper around a simple function which calculates the distance.
     If a function is passed to the ABCSMC class, then it is converted to
     an instance of the SimpleFunctionDistance class.
+
+    Parameters
+    ----------
+
+    function: Callable
+        A Callable accepting two parameters, namely summary statistics x and y.
     """
 
     def __init__(self,
@@ -217,18 +223,20 @@ def to_distance(maybe_distance_function):
 
     Parameters
     ----------
-    maybe_distance_function: either a callable, which takes two arguments or
-    a DistanceFunction instance
+    maybe_distance_function: either a Callable, which takes two arguments, or
+    a DistanceFunction instance.
 
     Returns
     -------
 
     """
+
     if maybe_distance_function is None:
         return NoDistance()
 
     if isinstance(maybe_distance_function, DistanceFunction):
         return maybe_distance_function
+
     return SimpleFunctionDistance(maybe_distance_function)
 
 
@@ -276,13 +284,14 @@ class PNormDistance(DistanceFunction):
         if self.w is None:
             self._set_default_weights(t, x.keys())
 
-        # select time point
+        # select last available time point
         if t not in self.w:
-            t = max(self.w.keys())
+            t = max(self.w)
 
-        # extract for time point
+        # extract weights for time point
         w = self.w[t]
 
+        # compute distance
         if self.p == np.inf:
             d = max(abs(w[key]*(x[key]-y[key]))
                     if key in x and key in y else 0
@@ -306,7 +315,8 @@ class PNormDistance(DistanceFunction):
 
     def get_config(self) -> dict:
         return {"name": self.__class__.__name__,
-                "p": self.p}
+                "p": self.p,
+                "w": self.w}
 
 
 class AdaptivePNormDistance(PNormDistance):
@@ -326,11 +336,12 @@ class AdaptivePNormDistance(PNormDistance):
             This corresponds to a pre-calibration.
 
     scale_type: int
-        What measure to use for deviation. Values as in the
-        SCALE_... constants.
+        What measure to use for deviation. Currently supports SCALE_TYPE_MAD
+        for the median absolute deviation (might be more tolerant to outliers),
+        and SCALE_TYPE_SD for the standard deviation.
     """
 
-    # mean absolute deviation
+    # median absolute deviation
     SCALE_TYPE_MAD = 0
 
     # standard deviation
@@ -365,8 +376,6 @@ class AdaptivePNormDistance(PNormDistance):
         sampler: Sampler
             The sampler employed.
         """
-
-        super().configure_sampler(sampler)
         if self.adaptive:
             sampler.sample_factory.record_all_sum_stats = True
 
@@ -425,7 +434,7 @@ class AdaptivePNormDistance(PNormDistance):
                 # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
                 val = standard_deviation(current_list)
 
-            if np.isclose(val,0):
+            if np.isclose(val, 0):
                 # In practice, this should be rare (if only for numeric
                 # reasons), but a different handling than ignoring such points
                 # might be necessary sometimes.
@@ -436,13 +445,14 @@ class AdaptivePNormDistance(PNormDistance):
         # normalize weights to have mean 1. This has just the effect that the
         # epsilon will decrease more smoothly, but is not important otherwise.
         mean_weight = statistics.mean(list(w.values()))
-        for key in w.keys():
+        for key in w:
             w[key] /= mean_weight
 
+        # add to w property
         self.w[t] = w
 
         # logging
-        df_logger.debug("update distance weights = {}".format(w))
+        df_logger.debug("update distance weights = {}".format(self.w[t]))
 
 
 def median_absolute_deviation(data: List):
@@ -460,7 +470,7 @@ def median_absolute_deviation(data: List):
     Returns
     -------
 
-    mad
+    mad: float
         The median absolute deviation of the data.
 
     """
@@ -487,7 +497,7 @@ def standard_deviation(data: List):
     Returns
     -------
 
-    sd
+    sd: float
         The standard deviation of the data points.
     """
 
@@ -504,7 +514,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
     ----------
 
     measures_to_use: Union[str, List[str]].
-        * If set to "all", all measures are used. This is the default
+        * If set to "all", all measures are used. This is the default.
         * If a list is provided, the measures in the list are used.
         * measures refers to the summary statistics.
     """

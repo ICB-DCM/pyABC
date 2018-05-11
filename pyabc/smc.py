@@ -482,8 +482,7 @@ class ABCSMC:
     def _evaluate_proposal(self, m_ss,
                            theta_ss,
                            t,
-                           model_probabilities,
-                           record_all_sum_stats) -> Particle:
+                           model_probabilities) -> Particle:
         """
         Corresponds to Sampler.simulate_one. Data for the given parameters
         theta_ss are simulated, summary statistics computed and evaluated.
@@ -505,8 +504,10 @@ class ABCSMC:
                 self.distance_function,
                 self.eps,
                 self.x_0)
-            if record_all_sum_stats:
-                all_sum_stats.append(model_result.sum_stats)
+            # append to all_sum_stats in either case to allow for the situation
+            # that in population.all_sum_stats() one is only interested in
+            # accepted particles
+            all_sum_stats.append(model_result.sum_stats)
             if model_result.accepted:
                 accepted_distances.append(model_result.distance)
                 accepted_sum_stats.append(model_result.sum_stats)
@@ -635,18 +636,13 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
-            # whether to record all sum stats in simulate function
-            record_all_sum_stats = self.sampler.sample_factory.\
-                record_all_sum_stats
-
             # simulation function
             def simulate_one():
                 par = self._generate_valid_proposal(t, m, p)
                 return self._evaluate_proposal(
                     *par,
                     t,
-                    model_probabilities,
-                    record_all_sum_stats)
+                    model_probabilities)
 
             # sample for new population
             sample = self.sampler.sample_until_n_accepted(
@@ -670,7 +666,7 @@ class ABCSMC:
 
             # update distance function
             df_updated = self.distance_function.update(
-                t + 1, sample.all_summary_statistics)
+                t + 1, sample.all_sum_stats)
 
             # compute distances with the new distance measure
             if df_updated:
