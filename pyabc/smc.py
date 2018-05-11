@@ -437,7 +437,7 @@ class ABCSMC:
             self.population_strategy.nr_particles, simulate_one)
 
         # return all generated summary statistics
-        return sample.all_summary_statistics
+        return sample.all_sum_stats
 
     def _generate_valid_proposal(self, t, m, p):
         """
