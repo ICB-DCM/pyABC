@@ -8,7 +8,7 @@ Acceptance criteria.
 
 class Acceptor:
     """
-    This class can be used to encode the acceptance step.
+    This class encodes the acceptance step.
     """
 
     def __init__(self):
@@ -22,7 +22,8 @@ class Acceptor:
         Compute distance between summary statistics and evaluate whether to
         accept or reject.
 
-        This class is abstract and cannot be used on its own.
+        This class is abstract and cannot be used on its own. The simplest
+        usable class is the derived SimpleAcceptor.
 
         Parameters
         ----------
@@ -51,7 +52,8 @@ class Acceptor:
             False: The distance function is above the epsilon threshold.
 
         .. note::
-            Currently, only one value encoding the distance is returned,
+            Currently, only one value encoding the distance is returned
+            (and stored in the database),
             namely that at time t, even if also other distances affect the
             acceptance decision, e.g. distances from previous iterations. This
             is because the last distance is likely to be most informative for
@@ -141,6 +143,6 @@ def accept_use_complete_history(t, distance_function, eps, x, x_0):
                     break
             except Exception:
                 # ignore as of now
-                pass
+                accept = True
 
     return d, accept
