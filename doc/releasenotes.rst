@@ -19,6 +19,7 @@ Release Notes
   initialized.
 * PNormDistance and AdaptivePNormDistance (prev. WeightedPNormDistance)
   improved to allow for more customization.
+* ABCSMC.set_date() method removed.
 * API breaks for DistanceFunction, Epsilon, Model.
 
 
