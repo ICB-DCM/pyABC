@@ -243,11 +243,14 @@ class QuantileEpsilon(Epsilon):
         require_initialize = initial_epsilon == 'from_sample'
         super().__init__(require_initialize=require_initialize)
         self.alpha = alpha
-        self._initial_epsilon = initial_epsilon
         self.quantile_multiplier = quantile_multiplier
 
         self.weighted = weighted
-        self._look_up = {}
+
+        if self.require_initialize:
+            self._look_up = {}
+        else:
+            self._look_up = {0: initial_epsilon}
 
         if self.alpha > 1 or self.alpha <= 0:
             raise ValueError("It must be 0 < alpha <= 1")
@@ -265,10 +268,7 @@ class QuantileEpsilon(Epsilon):
                    t: int,
                    weighted_distances: pandas.DataFrame):
 
-        if self._initial_epsilon == 'from_sample':
-            self._update(t, weighted_distances)
-        else:
-            self._look_up[t] = self._initial_epsilon
+        self._update(t, weighted_distances)
 
         # logging
         eps_logger.info("initial epsilon is {}".format(self._look_up[t]))
