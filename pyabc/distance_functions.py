@@ -34,7 +34,8 @@ class DistanceFunction(ABC):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict]):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance function (in ``new`` and ``load``)
@@ -52,6 +53,9 @@ class DistanceFunction(ABC):
 
         sample_from_prior: List[dict]
             List of dictionaries containing the summary statistics.
+
+        x_0: dict
+            The observed summary statistics.
         """
 
     def configure_sampler(self, sampler: Sampler):
@@ -74,7 +78,8 @@ class DistanceFunction(ABC):
 
     def update(self,
                t: int,
-               all_sum_stats: List[dict]) -> bool:
+               all_sum_stats: List[dict],
+               x_0: dict) -> bool:
         """
         Update the distance function. Default: Do nothing.
 
@@ -87,6 +92,9 @@ class DistanceFunction(ABC):
         all_sum_stats: List[dict]
             List of all summary statistics that should be used to update the
             distance (in particular also rejected ones).
+
+        x_0: dict
+            The observed summary statistics.
 
         Returns
         -------
@@ -381,7 +389,8 @@ class AdaptivePNormDistance(PNormDistance):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict]):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         """
         Initialize weights.
         """
@@ -390,7 +399,8 @@ class AdaptivePNormDistance(PNormDistance):
 
     def update(self,
                t: int,
-               all_sum_stats: List[dict]):
+               all_sum_stats: List[dict],
+               x_0: dict):
         """
         Update weights based on all simulations.
         """
@@ -528,7 +538,8 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         if self._measures_to_use_passed_to_init == 'all':
             self.measures_to_use = sample_from_prior[0].keys()
             raise Exception(
@@ -595,7 +606,8 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         super().initialize(t, sample_from_prior)
         self._calculate_whitening_transformation_matrix(sample_from_prior)
 
@@ -682,7 +694,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         super().initialize(t, sample_from_prior)
         self._calculate_normalization(sample_from_prior)
 

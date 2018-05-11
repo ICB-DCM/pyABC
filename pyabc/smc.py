@@ -365,7 +365,8 @@ class ABCSMC:
         if self.distance_function.require_initialize:
             # initialize distance
             self.distance_function.initialize(t,
-                                              self._get_initial_samples(t)[1])
+                                              self._get_initial_samples(t)[1],
+                                              self.x_0)
 
         if self.eps.require_initialize:
             def distance_to_ground_truth(x):
@@ -669,7 +670,7 @@ class ABCSMC:
 
             # update distance function
             df_updated = self.distance_function.update(
-                t + 1, sample.all_sum_stats)
+                t + 1, sample.all_sum_stats, self.x_0)
 
             # compute distances with the new distance measure
             if df_updated:
