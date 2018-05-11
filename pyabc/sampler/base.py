@@ -15,7 +15,7 @@ class Sample:
         False: Only record accepted particles.
     """
 
-    def __init__(self, record_all_sum_stats: bool):
+    def __init__(self, record_all_sum_stats: bool=False):
         self._particles = []
         self.record_all_sum_stats = record_all_sum_stats
 
@@ -27,8 +27,9 @@ class Sample:
         Returns
         -------
 
-        Concatenation of all the all_sum_stats lists of all
-        particles added and accepted to this sample via append().
+        all_sum_stats: List
+            Concatenation of all the all_sum_stats lists of all
+            particles added and accepted to this sample via append().
         """
         return sum((particle.all_sum_stats
                     for particle in self._particles), [])
@@ -71,7 +72,8 @@ class Sample:
         Returns
         -------
 
-        Number of accepted particles.
+        n_accepted: int
+            Number of accepted particles.
         """
         return len(self._accepted_particles)
 
@@ -80,7 +82,8 @@ class Sample:
         Returns
         -------
 
-        A population of only the accepted particles.
+        population: Population
+            A population of only the accepted particles.
         """
         return Population(self._accepted_particles)
 
@@ -99,7 +102,7 @@ class SampleFactory:
     record_all_sum_stats: bool
         Corresponds to Sample.record_all_sum_stats.
     """
-    def __init__(self, record_all_sum_stats):
+    def __init__(self, record_all_sum_stats: bool=False):
         self.record_all_sum_stats = record_all_sum_stats
 
     def __call__(self):

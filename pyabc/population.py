@@ -86,9 +86,12 @@ class Particle:
         return True
 
     def copy(self):
-        return self.__class__(self.m, self.parameter, self.weight,
+        return self.__class__(self.m,
+                              self.parameter,
+                              self.weight,
                               self.accepted_distances,
-                              self.accepted_sum_stats, self.all_sum_stats,
+                              self.accepted_sum_stats,
+                              self.all_sum_stats,
                               self.accepted)
 
 
@@ -161,7 +164,12 @@ class Population:
     def get_model_probabilities(self) -> dict:
         """
         Get probabilities of the individual models.
-        :return:
+
+        Returns
+        -------
+
+        model_probabilities: List
+            The model probabilities.
         """
 
         # _model_probabilities are assigned during normalization
@@ -178,11 +186,10 @@ class Population:
         Returns
         -------
 
-        A pandas.DataFrame containing in column 'distance' the distances
-            and in column 'weight' the scaled weights.
+        weighted_distances: pandas.DataFrame:
+            A pandas.DataFrame containing in column 'distance' the distances
+            and in column 'w' the scaled weights.
         """
-
-        # create pandas.DataFrame of distances and weights
         rows = []
         for particle in self._list:
             model_probability = self._model_probabilities[particle.m]
@@ -190,16 +197,19 @@ class Population:
                 rows.append({'distance': distance,
                              'w': particle.weight * model_probability})
 
-        df = pandas.DataFrame(rows)
+        weighted_distances = pandas.DataFrame(rows)
 
-        return df
+        return weighted_distances
 
     def to_dict(self) -> dict:
         """
         Create a dictionary representation, creating a list of particles for
         each model.
 
-        :return:
+        Returns
+        -------
+
+        store: dict
             A dictionary with the models as keys and a list of particles for
             each model as values.
         """

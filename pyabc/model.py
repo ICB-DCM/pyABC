@@ -214,7 +214,7 @@ class Model:
         -------
 
         model_result: ModelResult
-            Result with filled accepted field.
+            The result with filled accepted field.
 
         """
         result = self.summary_statistics(t,
@@ -234,8 +234,8 @@ class SimpleModel(Model):
     """
     A model which is initialized with a function which generates the samples.
     For most cases this class will be adequate.
-    Note that you can also pass a plain function to the ABCSMC class.
-    This function gets automatically converted to a SimpleModel.
+    Note that you can also pass a plain function to the ABCSMC class, which
+    then gets automatically converted to a SimpleModel.
 
     Parameters
     ----------

@@ -356,7 +356,7 @@ class History:
         Returns
         -------
 
-        int
+        nr_sim: int
             Total nr of sample attempts for the ABC run.
         """
         nr_sim = (self._session.query(func.sum(Population.nr_samples))
@@ -580,10 +580,10 @@ class History:
         Returns
         -------
 
-        median: DataFrame
+        df_weighted: pd.DataFrame
             Weighted distances.
-            The data frame has column "w" for the weights
-            and column distance for the distances
+            The dataframe has column "w" for the weights
+            and column "distance" for the distances.
         """
         if t is None:
             t = self.max_t
@@ -696,7 +696,7 @@ class History:
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
         In case more than one simulation per parameter is performed and
-        accepted the sum might be larger.
+        accepted, the sum might be larger.
 
         Parameters
         ----------

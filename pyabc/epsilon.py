@@ -329,7 +329,7 @@ class QuantileEpsilon(Epsilon):
         quantile = weighted_quantile(
             points=distances, weights=weights, alpha=self.alpha)
 
-        # save
+        # append to look_up property
         self._look_up[t] = quantile * self.quantile_multiplier
 
 
