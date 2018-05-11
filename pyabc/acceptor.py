@@ -2,7 +2,16 @@
 Acceptor
 --------
 
-Acceptance criteria.
+After summary statistics for samples for given parameters have 
+been generated, it must be checked whether these are to be
+accepted or not. This happens in the Acceptor class.
+
+The most typical and simple way is to compute the distance
+between simulated and observed summary statistics, and accept
+if this distance is below some epsilon threshold. However, also
+more complex acceptance criteria are possible, in particular 
+when the distance measure and epsilon criteria develop over
+time.
 """
 
 

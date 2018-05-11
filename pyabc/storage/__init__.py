@@ -12,7 +12,7 @@ during the ABC-SMC run, but also the interface which allows you to query that
 information later on.
 
 Initializing the database interface from a file
-----------------------------------------------
+-----------------------------------------------
 
 For querying, you initialize a History object with a valid SQLAlchemy
 database identifier. For example, if you ABC-SMC data is stored in a file

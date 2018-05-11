@@ -333,7 +333,7 @@ class AdaptivePNormDistance(PNormDistance):
     adaptive: bool
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
-            This corresponds to a pre-calibration.
+        This corresponds to a pre-calibration.
 
     scale_type: int
         What measure to use for deviation. Currently supports SCALE_TYPE_MAD
