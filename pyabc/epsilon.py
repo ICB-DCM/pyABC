@@ -289,8 +289,9 @@ class QuantileEpsilon(Epsilon):
         try:
             eps = self._look_up[t]
         except KeyError as e:
-            raise KeyError(
-                "The epsilon value for time {} does not exist: " + repr(e), t)
+            raise KeyError("The epsilon value for time {} does not exist: {} "
+                           .format(t, repr(e)))
+
         return eps
 
     def _set_initial_value(self, t: int):
