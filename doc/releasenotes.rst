@@ -6,6 +6,15 @@ Release Notes
 ..........
 
 
+0.9.1
+-----
+
+* Passing observed summary statistics to distance function update method
+  possible.
+* Centering of distance function weights at observed summary statistics
+  introduced in AdaptivePNormDistance.
+
+
 0.9.0
 -----
 
