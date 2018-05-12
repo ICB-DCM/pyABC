@@ -358,6 +358,9 @@ class AdaptivePNormDistance(PNormDistance):
     # centered median absolute deviation
     SCALE_TYPE_C_MAD = 2
 
+    # centered standard deviation
+    SCALE_TYPE_C_SD = 3
+
     def __init__(self,
                  p: float=2,
                  adaptive: bool=True,
@@ -370,7 +373,8 @@ class AdaptivePNormDistance(PNormDistance):
 
         if scale_type not in [AdaptivePNormDistance.SCALE_TYPE_MAD,
                               AdaptivePNormDistance.SCALE_TYPE_SD,
-                              AdaptivePNormDistance.SCALE_TYPE_C_MAD]:
+                              AdaptivePNormDistance.SCALE_TYPE_C_MAD,
+                              AdaptivePNormDistance.SCALE_TYPE_C_SD]:
             raise Exception(
                 "pyabc:distance_function: scale_type not recognized.")
         self.scale_type = scale_type
@@ -447,9 +451,11 @@ class AdaptivePNormDistance(PNormDistance):
                 val = median_absolute_deviation(current_list)
             elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
                 val = standard_deviation(current_list)
-            else:
-                # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_MAD
+            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_MAD:
                 val = centered_median_absolute_deviation(current_list, x_0[key])
+            else:
+                # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_SD:
+                val = centered_standard_deviation(current_list, x_0[key])
 
             if np.isclose(val, 0):
                 # In practice, this should be rare (if only for numeric
@@ -527,6 +533,13 @@ def centered_median_absolute_deviation(data: List, x_0: float):
     deviations = np.abs(data - x_0)
     mad = np.median(deviations)
     return mad
+
+
+def centered_standard_deviation(data: List, x_0: float):
+    data = np.asarray(data)
+    deviations = np.abs(data - x_0)
+    sd = np.std(deviations)
+    return sd
 
 
 class DistanceFunctionWithMeasureList(DistanceFunction):
