@@ -477,6 +477,12 @@ class AdaptivePNormDistance(PNormDistance):
         # logging
         df_logger.debug("update distance weights = {}".format(self.w[t]))
 
+    def get_config(self) -> dict:
+        return {"name": self.__class__.__name__,
+                "p": self.p,
+                "adaptive": self.adaptive,
+                "scale_type": self.scale_type}
+
 
 def median_absolute_deviation(data: List):
     """
