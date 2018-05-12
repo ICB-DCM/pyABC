@@ -444,18 +444,32 @@ class AdaptivePNormDistance(PNormDistance):
             # prepare list for key
             current_list = []
             for j in range(n):
-                current_list.append(all_sum_stats[j][key])
-
+                try:
+                    current_list.append(all_sum_stats[j][key])
+                except KeyError:
+                    # regard as non-existent
+                    pass
             # compute weighting
             if self.scale_type == AdaptivePNormDistance.SCALE_TYPE_MAD:
                 val = median_absolute_deviation(current_list)
             elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
                 val = standard_deviation(current_list)
             elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_MAD:
-                val = centered_median_absolute_deviation(current_list, x_0[key])
+                try:
+                    val = centered_median_absolute_deviation(current_list,
+                                                             x_0[key])
+                except KeyError:
+                    # value not existent in observed summary statistics
+                    # can safely be ignored
+                    val = 0
             else:
                 # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_SD:
-                val = centered_standard_deviation(current_list, x_0[key])
+                try:
+                    val = centered_standard_deviation(current_list, x_0[key])
+                except KeyError:
+                    # value not existent in observed summary statistics
+                    # can safely be ignored
+                    val = 0
 
             if np.isclose(val, 0):
                 # In practice, this should be rare (if only for numeric
