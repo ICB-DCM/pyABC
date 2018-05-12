@@ -242,15 +242,11 @@ class QuantileEpsilon(Epsilon):
             .format(initial_epsilon, quantile_multiplier))
         require_initialize = initial_epsilon == 'from_sample'
         super().__init__(require_initialize=require_initialize)
+        self._initial_epsilon = initial_epsilon
         self.alpha = alpha
         self.quantile_multiplier = quantile_multiplier
-
         self.weighted = weighted
-
-        if self.require_initialize:
-            self._look_up = {}
-        else:
-            self._look_up = {0: initial_epsilon}
+        self._look_up = {}
 
         if self.alpha > 1 or self.alpha <= 0:
             raise ValueError("It must be 0 < alpha <= 1")
@@ -267,6 +263,7 @@ class QuantileEpsilon(Epsilon):
     def initialize(self,
                    t: int,
                    weighted_distances: pandas.DataFrame):
+        # called only if require_initialize == True, i.e. if not 'from_sample'
 
         self._update(t, weighted_distances)
 
@@ -284,12 +281,21 @@ class QuantileEpsilon(Epsilon):
         eps: float
             The epsilon value for time t (throws error if not existent).
         """
+
+        # initialize if necessary
+        if not self._look_up:
+            self._set_initial_value(t)
+
         try:
             eps = self._look_up[t]
         except KeyError as e:
-            raise KeyError(
-                "The epsilon value for time {} does not exist: " + repr(e), t)
+            raise KeyError("The epsilon value for time {} does not exist: {} "
+                           .format(t, repr(e)))
+
         return eps
+
+    def _set_initial_value(self, t: int):
+        self._look_up = {t: self._initial_epsilon}
 
     def update(self,
                t: int,
