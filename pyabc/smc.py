@@ -516,6 +516,7 @@ class ABCSMC:
                 self.summary_statistics,
                 self.distance_function,
                 self.eps,
+                self.acceptor,
                 self.x_0)
             # append to all_sum_stats in either case to allow for the situation
             # that in population.all_sum_stats() one is only interested in

@@ -9,7 +9,7 @@ from .parameters import Parameter
 from typing import Callable, Any
 from .epsilon import Epsilon
 from .distance_functions import DistanceFunction
-from .acceptor import SimpleAcceptor
+from .acceptor import Acceptor
 
 
 class ModelResult:
@@ -54,18 +54,10 @@ class Model:
     name: str, optional
         A descriptive name of the model. This name can simplify further
         analysis for the user as it is stored in the database.
-
-    acceptor: Acceptor, optional
-        The acceptor to use. Default: Only use the distance measure and the
-        epsilon value at the current iteration as criterion for acceptance.
     """
-    def __init__(self, name: str="model", acceptor=None):
+    def __init__(self, name: str="model"):
 
         self.name = name
-
-        if acceptor is None:
-            acceptor = SimpleAcceptor()
-        self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
 
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, self.name)
@@ -180,6 +172,7 @@ class Model:
                sum_stats_calculator,
                distance_calculator: DistanceFunction,
                eps_calculator: Epsilon,
+               acceptor: Acceptor,
                x_0):
         """
         Sample, calculate summary statistics, calculate distance, and then
@@ -220,10 +213,10 @@ class Model:
         result = self.summary_statistics(t,
                                          pars,
                                          sum_stats_calculator)
-        distance, accepted = self.acceptor(t,
-                                           distance_calculator,
-                                           eps_calculator,
-                                           result.sum_stats, x_0)
+        distance, accepted = acceptor(t,
+                                      distance_calculator,
+                                      eps_calculator,
+                                      result.sum_stats, x_0)
         result.distance = distance
         result.accepted = accepted
 
@@ -250,11 +243,10 @@ class SimpleModel(Model):
     """
     def __init__(self,
                  sample_function: Callable[[Parameter], Any],
-                 name=None,
-                 acceptor=None):
+                 name=None):
         if name is None:
             name = sample_function.__name__
-        super().__init__(name, acceptor)
+        super().__init__(name)
         self.sample_function = sample_function
 
     def sample(self, pars):
@@ -339,5 +331,6 @@ class IntegratedModel(Model):
                sum_stats_calculator,
                distance_calculator: DistanceFunction,
                eps_calculator: Epsilon,
+               acceptor: Acceptor,
                x_0: dict):
         return self.integrated_simulate(pars, eps_calculator(t))
