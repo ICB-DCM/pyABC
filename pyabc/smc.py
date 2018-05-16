@@ -25,6 +25,7 @@ from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
+from .acceptor import accept_use_current_time
 import copy
 import warnings
 
@@ -118,6 +119,11 @@ class ABCSMC:
         will parallelize across the cores of a single
         machine only.
 
+    acceptor: Acceptor, optional
+        Takes a distance function, summary statistics and an epsilon treshold
+        to decide about acceptance of a particle. Argument accepts any subclass
+        of :class:`pyabc.acceptor.Acceptor` or a function convertible into an
+        acceptor.
 
     Attributes
     ----------
@@ -146,7 +152,8 @@ class ABCSMC:
                  model_perturbation_kernel: ModelPerturbationKernel = None,
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
-                 sampler=None):
+                 sampler=None,
+                 acceptor=None):
 
         if not isinstance(models, list):
             models = [models]
@@ -193,6 +200,10 @@ class ABCSMC:
         if sampler is None:
             sampler = DefaultSampler()
         self.sampler = sampler
+
+        if acceptor is None:
+            acceptor = accept_use_current_time
+        self.acceptor = acceptor
 
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
