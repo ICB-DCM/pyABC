@@ -34,7 +34,8 @@ class DistanceFunction(ABC):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict]):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance function (in ``new`` and ``load``)
@@ -52,6 +53,9 @@ class DistanceFunction(ABC):
 
         sample_from_prior: List[dict]
             List of dictionaries containing the summary statistics.
+
+        x_0: dict
+            The observed summary statistics.
         """
 
     def configure_sampler(self, sampler: Sampler):
@@ -74,7 +78,8 @@ class DistanceFunction(ABC):
 
     def update(self,
                t: int,
-               all_sum_stats: List[dict]) -> bool:
+               all_sum_stats: List[dict],
+               x_0: dict) -> bool:
         """
         Update the distance function. Default: Do nothing.
 
@@ -87,6 +92,9 @@ class DistanceFunction(ABC):
         all_sum_stats: List[dict]
             List of all summary statistics that should be used to update the
             distance (in particular also rejected ones).
+
+        x_0: dict
+            The observed summary statistics.
 
         Returns
         -------
@@ -347,6 +355,12 @@ class AdaptivePNormDistance(PNormDistance):
     # standard deviation
     SCALE_TYPE_SD = 1
 
+    # centered median absolute deviation
+    SCALE_TYPE_C_MAD = 2
+
+    # centered standard deviation
+    SCALE_TYPE_C_SD = 3
+
     def __init__(self,
                  p: float=2,
                  adaptive: bool=True,
@@ -358,7 +372,9 @@ class AdaptivePNormDistance(PNormDistance):
         self.adaptive = adaptive
 
         if scale_type not in [AdaptivePNormDistance.SCALE_TYPE_MAD,
-                              AdaptivePNormDistance.SCALE_TYPE_SD]:
+                              AdaptivePNormDistance.SCALE_TYPE_SD,
+                              AdaptivePNormDistance.SCALE_TYPE_C_MAD,
+                              AdaptivePNormDistance.SCALE_TYPE_C_SD]:
             raise Exception(
                 "pyabc:distance_function: scale_type not recognized.")
         self.scale_type = scale_type
@@ -381,16 +397,18 @@ class AdaptivePNormDistance(PNormDistance):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict]):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         """
         Initialize weights.
         """
         # update weights from samples
-        self._update(t, sample_from_prior)
+        self._update(t, sample_from_prior, x_0)
 
     def update(self,
                t: int,
-               all_sum_stats: List[dict]):
+               all_sum_stats: List[dict],
+               x_0: dict):
         """
         Update weights based on all simulations.
         """
@@ -398,13 +416,14 @@ class AdaptivePNormDistance(PNormDistance):
         if not self.adaptive:
             return False
 
-        self._update(t, all_sum_stats)
+        self._update(t, all_sum_stats, x_0)
 
         return True
 
     def _update(self,
                 t: int,
-                all_sum_stats: List[dict]):
+                all_sum_stats: List[dict],
+                x_0: dict):
         """
         Here the real update of weights happens.
         """
@@ -425,14 +444,32 @@ class AdaptivePNormDistance(PNormDistance):
             # prepare list for key
             current_list = []
             for j in range(n):
-                current_list.append(all_sum_stats[j][key])
-
+                try:
+                    current_list.append(all_sum_stats[j][key])
+                except KeyError:
+                    # regard as non-existent
+                    pass
             # compute weighting
             if self.scale_type == AdaptivePNormDistance.SCALE_TYPE_MAD:
                 val = median_absolute_deviation(current_list)
-            else:
-                # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
+            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
                 val = standard_deviation(current_list)
+            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_MAD:
+                try:
+                    val = centered_median_absolute_deviation(current_list,
+                                                             x_0[key])
+                except KeyError:
+                    # value not existent in observed summary statistics
+                    # can safely be ignored
+                    val = 0
+            else:
+                # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_SD:
+                try:
+                    val = centered_standard_deviation(current_list, x_0[key])
+                except KeyError:
+                    # value not existent in observed summary statistics
+                    # can safely be ignored
+                    val = 0
 
             if np.isclose(val, 0):
                 # In practice, this should be rare (if only for numeric
@@ -453,6 +490,12 @@ class AdaptivePNormDistance(PNormDistance):
 
         # logging
         df_logger.debug("update distance weights = {}".format(self.w[t]))
+
+    def get_config(self) -> dict:
+        return {"name": self.__class__.__name__,
+                "p": self.p,
+                "adaptive": self.adaptive,
+                "scale_type": self.scale_type}
 
 
 def median_absolute_deviation(data: List):
@@ -505,6 +548,20 @@ def standard_deviation(data: List):
     return sd
 
 
+def centered_median_absolute_deviation(data: List, x_0: float):
+    data = np.asarray(data)
+    deviations = np.abs(data - x_0)
+    mad = np.median(deviations)
+    return mad
+
+
+def centered_standard_deviation(data: List, x_0: float):
+    data = np.asarray(data)
+    deviations = np.abs(data - x_0)
+    sd = np.std(deviations)
+    return sd
+
+
 class DistanceFunctionWithMeasureList(DistanceFunction):
     """
     Base class for distance functions with measure list.
@@ -528,7 +585,8 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         if self._measures_to_use_passed_to_init == 'all':
             self.measures_to_use = sample_from_prior[0].keys()
             raise Exception(
@@ -595,7 +653,8 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         super().initialize(t, sample_from_prior)
         self._calculate_whitening_transformation_matrix(sample_from_prior)
 
@@ -682,7 +741,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior):
+                   sample_from_prior: List[dict],
+                   x_0: dict):
         super().initialize(t, sample_from_prior)
         self._calculate_normalization(sample_from_prior)
 
