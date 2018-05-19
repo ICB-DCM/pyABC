@@ -1,10 +1,8 @@
-import scipy
-import scipy.stats
-import scipy.special
 import numpy
-import pyabc
+import pyabc.visualization
 import os
 import tempfile
+import matplotlib.pyplot as plt
 
 
 # model
@@ -63,7 +61,8 @@ obs_data = data_gk(theta0)
 obs_sum_stats = ordered_statistics_gk(obs_data)
 
 # prior
-prior = pyabc.Distribution(**{key: pyabc.RV('uniform', 0, 10) for key in theta0})
+prior = pyabc.Distribution(**{key: pyabc.RV('uniform', 0, 10)
+                              for key in theta0})
 
 # distance
 distance = pyabc.AdaptivePNormDistance()
@@ -75,11 +74,18 @@ acceptor = pyabc.accept_use_complete_history
 
 db_name = "sqlite:///" + os.path.join(tempfile.gettempdir(), "tmp.db")
 
-abc = pyabc.ABCSMC(models=data_gk,
+abc = pyabc.ABCSMC(models=pyabc.SimpleModel(data_gk),
                    parameter_priors=prior,
                    distance_function=distance,
                    summary_statistics=ordered_statistics_gk,
-                   population_size=10,
+                   population_size=100,
                    acceptor=acceptor)
 abc.new(db=db_name, observed_sum_stat=obs_sum_stats)
 abc.run(minimum_epsilon=0, max_nr_populations=10)
+
+# visualization
+
+df, w = abc.history.get_distribution(m=0)
+pyabc.visualization.plot_kde_matrix(df, w, limits={key: (0,10)
+                                                   for key in theta0})
+plt.show()
