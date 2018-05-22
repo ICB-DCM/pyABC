@@ -135,7 +135,8 @@ def accept_use_complete_history(t, distance_function, eps, x, x_0):
     available. If either the distance function or the epsilon criterion cannot
     handle any time point in this interval, the resulting error is simply
     intercepted and the respective time not used for evaluation. This situation
-    can frequently occur when continuing a stopped run.
+    can frequently occur when continuing a stopped run. A different behavior
+    is easy to implement.
     """
 
     # first test current criterion, which is most likely to fail
