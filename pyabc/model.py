@@ -203,6 +203,10 @@ class Model:
         x_0: dict
             The observed summary statistics.
 
+        acceptor: Acceptor
+            The acceptor judging whether to accept, based on distance and
+            epsilon.
+
         Returns
         -------
 

@@ -120,10 +120,11 @@ class ABCSMC:
         machine only.
 
     acceptor: Acceptor, optional
-        Takes a distance function, summary statistics and an epsilon treshold
+        Takes a distance function, summary statistics and an epsilon threshold
         to decide about acceptance of a particle. Argument accepts any subclass
-        of :class:`pyabc.acceptor.Acceptor` or a function convertible into an
+        of :class:`pyabc.acceptor.Acceptor` or a function convertible to an
         acceptor.
+
 
     Attributes
     ----------
