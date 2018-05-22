@@ -180,6 +180,7 @@ class Model:
 
         Called from within ABCSMC in each iteration to evaluate a parameter.
 
+
         Parameters
         ----------
 
@@ -200,12 +201,13 @@ class Model:
         eps_calculator: pyabc.Epsilon
             The acceptance thresholds.
 
-        x_0: dict
-            The observed summary statistics.
-
         acceptor: Acceptor
             The acceptor judging whether to accept, based on distance and
             epsilon.
+
+        x_0: dict
+            The observed summary statistics.
+
 
         Returns
         -------
