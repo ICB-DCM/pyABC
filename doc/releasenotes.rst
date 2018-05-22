@@ -11,6 +11,7 @@ Release Notes
 
 * Acceptance transferred to an Acceptor object to allow for more
   flexibility (i.e. not only on a single comparison as per default).
+* This acceptor is passed to the ABCSMC object.
 * Update of distance and epsilon synchronized after each iteration and moved
   to update() methods.
 * initialize() for DistanceFunction and Epsilon also called in load() method,
