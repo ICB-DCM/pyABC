@@ -655,7 +655,7 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
                    t: int,
                    sample_from_prior: List[dict],
                    x_0: dict):
-        super().initialize(t, sample_from_prior)
+        super().initialize(t, sample_from_prior, x_0)
         self._calculate_whitening_transformation_matrix(sample_from_prior)
 
     def __call__(self,
@@ -743,7 +743,7 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
                    t: int,
                    sample_from_prior: List[dict],
                    x_0: dict):
-        super().initialize(t, sample_from_prior)
+        super().initialize(t, sample_from_prior, x_0)
         self._calculate_normalization(sample_from_prior)
 
     def __call__(self,
