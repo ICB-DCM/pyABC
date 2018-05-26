@@ -13,7 +13,6 @@ import numpy as np
 from scipy import linalg as la
 from abc import ABC, abstractmethod
 from typing import List
-import statistics
 import logging
 from .sampler import Sampler
 df_logger = logging.getLogger("DistanceFunction")
@@ -481,7 +480,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         # normalize weights to have mean 1. This has just the effect that the
         # epsilon will decrease more smoothly, but is not important otherwise.
-        mean_weight = statistics.mean(list(w.values()))
+        mean_weight = np.mean(list(w.values()))
         for key in w:
             w[key] /= mean_weight
 
@@ -517,12 +516,8 @@ def median_absolute_deviation(data: List):
         The median absolute deviation of the data.
 
     """
-
-    data_median = statistics.median(data)
-    normalized_data = []
-    for item in data:
-        normalized_data.append(abs(item - data_median))
-    mad = statistics.median(normalized_data)
+    data = np.asarray(data)
+    mad = np.median(np.abs(data - np.median(data)))
     return mad
 
 
@@ -543,22 +538,56 @@ def standard_deviation(data: List):
     sd: float
         The standard deviation of the data points.
     """
-
-    sd = statistics.stdev(data)
+    data = np.asarray(data)
+    sd = np.std(data)
     return sd
 
 
 def centered_median_absolute_deviation(data: List, x_0: float):
+    """
+    Median absolute deviation to observation.
+
+    Parameters
+    ----------
+
+    data: List
+        List of data points.
+
+    x_0: float
+        Observed value for the given summary statistic.
+
+    Returns
+    -------
+
+    mad: float
+        The median absolute deviation of data w.r.t. x_0.
+    """
     data = np.asarray(data)
-    deviations = np.abs(data - x_0)
-    mad = np.median(deviations)
+    mad = np.median(np.abs(data - x_0))
     return mad
 
 
 def centered_standard_deviation(data: List, x_0: float):
+    """
+    Standard absolute deviation to observation.
+
+    Parameters
+    ----------
+
+    data: List
+        List of data points.
+
+    x_0: float
+        Observed value for the given summary statistic.
+
+    Returns
+    -------
+
+    sd: float
+        The standard absolute deviation of data w.r.t. x_0.
+    """
     data = np.asarray(data)
-    deviations = np.abs(data - x_0)
-    sd = np.std(deviations)
+    sd = np.std(np.abs(data - x_0))
     return sd
 
 
