@@ -342,41 +342,30 @@ class AdaptivePNormDistance(PNormDistance):
         False: Adapt distance only once at the beginning in initialize().
         This corresponds to a pre-calibration.
 
-    scale_type: int
-        What measure to use for deviation. Currently supports SCALE_TYPE_MAD
-        for the median absolute deviation (might be more tolerant to outliers),
-        and SCALE_TYPE_SD for the standard deviation.
+    scale_function: Callable
+        (data: List, x_0: float) -> scale: float. Computes the scale (i.e.
+        inverse weight s = 1 / w) for a given summary statistic. Here, data
+        denotes the list of simulated summary statistics, and x_0 the observed
+        summary statistic. Implemented are absolute_median_deviation,
+        standard_deviation, centered_absolute_median_deviation,
+        centered_standard_deviation.
     """
-
-    # median absolute deviation
-    SCALE_TYPE_MAD = 0
-
-    # standard deviation
-    SCALE_TYPE_SD = 1
-
-    # centered median absolute deviation
-    SCALE_TYPE_C_MAD = 2
-
-    # centered standard deviation
-    SCALE_TYPE_C_SD = 3
 
     def __init__(self,
                  p: float=2,
                  adaptive: bool=True,
-                 scale_type: int=SCALE_TYPE_SD):
+                 scale_function=None):
         # call p-norm constructor
         super().__init__(p=p,
                          w=None)
+
         self.require_initialize = True
+
         self.adaptive = adaptive
 
-        if scale_type not in [AdaptivePNormDistance.SCALE_TYPE_MAD,
-                              AdaptivePNormDistance.SCALE_TYPE_SD,
-                              AdaptivePNormDistance.SCALE_TYPE_C_MAD,
-                              AdaptivePNormDistance.SCALE_TYPE_C_SD]:
-            raise Exception(
-                "pyabc:distance_function: scale_type not recognized.")
-        self.scale_type = scale_type
+        if scale_function is None:
+            scale_function = median_absolute_deviation
+        self.scale_function = scale_function
 
     def configure_sampler(self,
                           sampler: Sampler):
@@ -440,46 +429,30 @@ class AdaptivePNormDistance(PNormDistance):
         w = {}
 
         for key in keys:
-            # prepare list for key
-            current_list = []
-            for j in range(n):
-                try:
-                    current_list.append(all_sum_stats[j][key])
-                except KeyError:
-                    # regard as non-existent
-                    pass
-            # compute weighting
-            if self.scale_type == AdaptivePNormDistance.SCALE_TYPE_MAD:
-                val = median_absolute_deviation(current_list)
-            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_SD:
-                val = standard_deviation(current_list)
-            elif self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_MAD:
-                try:
-                    val = centered_median_absolute_deviation(current_list,
-                                                             x_0[key])
-                except KeyError:
-                    # value not existent in observed summary statistics
-                    # can safely be ignored
-                    val = 0
+            if key not in x_0:
+                scale = 0
             else:
-                # self.scale_type == AdaptivePNormDistance.SCALE_TYPE_C_SD:
-                try:
-                    val = centered_standard_deviation(current_list, x_0[key])
-                except KeyError:
-                    # value not existent in observed summary statistics
-                    # can safely be ignored
-                    val = 0
+                # prepare list for key
+                current_list = []
+                for j in range(n):
+                    if key in all_sum_stats[j]:
+                        current_list.append(all_sum_stats[j][key])
 
-            if np.isclose(val, 0):
-                # In practice, this should be rare (if only for numeric
-                # reasons), but a different handling than ignoring such points
-                # might be necessary sometimes.
+                # compute scaling
+                scale = self.scale_function(data=current_list, x_0=x_0[key])
+
+            # compute weight (inverted scale)
+            if np.isclose(scale, 0):
+                # This means that either that the summary statistic was not
+                # observed, or the simulations were all identical. In either
+                # case, it should be safe to ignore this summary statistic.
                 w[key] = 0
             else:
-                w[key] = 1 / val
+                w[key] = 1 / scale
 
-        # normalize weights to have mean 1. This has just the effect that the
-        # epsilon will decrease more smoothly, but is not important otherwise.
+        # normalize weights to have mean 1
+        # This has just the effect that eps will decrease more smoothly, but is
+        # not important otherwise.
         mean_weight = np.mean(list(w.values()))
         for key in w:
             w[key] /= mean_weight
@@ -494,10 +467,10 @@ class AdaptivePNormDistance(PNormDistance):
         return {"name": self.__class__.__name__,
                 "p": self.p,
                 "adaptive": self.adaptive,
-                "scale_type": self.scale_type}
+                "scale_type": self.scale_function.__name__}
 
 
-def median_absolute_deviation(data: List):
+def median_absolute_deviation(**kwargs):
     """
     Calculate the sample `median absolute deviation (MAD)
     <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_, defined as
@@ -506,8 +479,9 @@ def median_absolute_deviation(data: List):
     Parameters
     ----------
 
-    data: List
-        List of data points.
+    kwargs:
+        data: List
+            List of data points.
 
     Returns
     -------
@@ -516,12 +490,12 @@ def median_absolute_deviation(data: List):
         The median absolute deviation of the data.
 
     """
-    data = np.asarray(data)
+    data = np.asarray(kwargs['data'])
     mad = np.median(np.abs(data - np.median(data)))
     return mad
 
 
-def standard_deviation(data: List):
+def standard_deviation(**kwargs):
     """
     Calculate the sample `standard deviation (SD)
     <https://en.wikipedia.org/wiki/Standard_deviation/>`_.
@@ -529,8 +503,9 @@ def standard_deviation(data: List):
     Parameters
     ----------
 
-    data: List
-        List of data points.
+    kwargs:
+        data: List
+            List of data points.
 
     Returns
     -------
@@ -538,23 +513,23 @@ def standard_deviation(data: List):
     sd: float
         The standard deviation of the data points.
     """
-    data = np.asarray(data)
+    data = np.asarray(kwargs['data'])
     sd = np.std(data)
     return sd
 
 
-def centered_median_absolute_deviation(data: List, x_0: float):
+def centered_median_absolute_deviation(**kwargs):
     """
     Median absolute deviation to observation.
 
     Parameters
     ----------
 
-    data: List
-        List of data points.
-
-    x_0: float
-        Observed value for the given summary statistic.
+    **kwargs:
+        data: List
+            List of data points.
+        x_0: float
+            Observed value for the given summary statistic.
 
     Returns
     -------
@@ -562,23 +537,24 @@ def centered_median_absolute_deviation(data: List, x_0: float):
     mad: float
         The median absolute deviation of data w.r.t. x_0.
     """
-    data = np.asarray(data)
+    data = np.asarray(kwargs['data'])
+    x_0 = kwargs['x_0']
     mad = np.median(np.abs(data - x_0))
     return mad
 
 
-def centered_standard_deviation(data: List, x_0: float):
+def centered_standard_deviation(**kwargs):
     """
-    Standard absolute deviation to observation.
+    Standard deviation of absolute deviations to observation.
 
     Parameters
     ----------
 
-    data: List
-        List of data points.
-
-    x_0: float
-        Observed value for the given summary statistic.
+    kwargs:
+        data: List
+            List of data points.
+        x_0: float
+            Observed value for the given summary statistic.
 
     Returns
     -------
@@ -586,7 +562,8 @@ def centered_standard_deviation(data: List, x_0: float):
     sd: float
         The standard absolute deviation of data w.r.t. x_0.
     """
-    data = np.asarray(data)
+    data = np.asarray(kwargs['data'])
+    x_0 = kwargs['x_0']
     sd = np.std(np.abs(data - x_0))
     return sd
 
