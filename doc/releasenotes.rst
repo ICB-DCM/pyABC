@@ -13,7 +13,8 @@ Release Notes
   possible.
 * Centering of distance function weights at observed summary statistics
   introduced in AdaptivePNormDistance.
-
+* AdaptivePNormDistance accepts a Callable as scaling scheme, allowing
+  for more flexibility.
 
 0.9.0
 -----
