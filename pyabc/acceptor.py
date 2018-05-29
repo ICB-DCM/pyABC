@@ -14,6 +14,10 @@ when the distance measure and epsilon criteria develop over
 time.
 """
 
+import numpy as np
+import scipy as sp
+from scipy import stats
+
 
 class Acceptor:
     """
@@ -26,7 +30,7 @@ class Acceptor:
         """
         pass
 
-    def __call__(self, t, distance_function, eps, x, x_0):
+    def __call__(self, t, distance_function, eps, x, x_0, pars):
         """
         Compute distance between summary statistics and evaluate whether to
         accept or reject.
@@ -52,6 +56,9 @@ class Acceptor:
 
         x_0: dict
             The observed summary statistics.
+
+        pars: dict
+            The model parameters.
 
         Returns
         -------
@@ -89,8 +96,8 @@ class SimpleAcceptor(Acceptor):
             fun = accept_use_current_time
         self.fun = fun
 
-    def __call__(self, t, distance_function, eps, x, x_0):
-        return self.fun(t, distance_function, eps, x, x_0)
+    def __call__(self, t, distance_function, eps, x, x_0, pars):
+        return self.fun(t, distance_function, eps, x, x_0, pars)
 
     @staticmethod
     def assert_acceptor(acceptor):
@@ -114,7 +121,7 @@ class SimpleAcceptor(Acceptor):
             return SimpleAcceptor(acceptor)
 
 
-def accept_use_current_time(t, distance_function, eps, x, x_0):
+def accept_use_current_time(t, distance_function, eps, x, x_0, pars):
     """
     Use only the distance function and epsilon criterion at the current time
     point to evaluate whether to accept or reject.
@@ -126,7 +133,7 @@ def accept_use_current_time(t, distance_function, eps, x, x_0):
     return d, accept
 
 
-def accept_use_complete_history(t, distance_function, eps, x, x_0):
+def accept_use_complete_history(t, distance_function, eps, x, x_0, pars):
     """
     Use the acceptance criteria from the complete history to evaluate whether
     to accept or reject.
@@ -156,3 +163,33 @@ def accept_use_complete_history(t, distance_function, eps, x, x_0):
                 accept = True
 
     return d, accept
+
+
+class StochasticAcceptor(Acceptor):
+
+    def __call__(self, t, distance_function, eps, x, x_0, pars):
+        # extract summary statistics as array
+        x = np.asarray(list(x.values()))
+        x_0 = np.asarray(list(x_0.values()))
+        dim = len(x)
+
+        # noise distribution
+        distr = stats.multivariate_normal(mean=np.zeros(dim),cov=np.eye(dim))
+
+        # mode
+        c = distr.pdf(np.zeros(dim))
+
+        # pdf
+        pdf = distr.pdf(x - x_0)
+
+        # acceptance probability
+        acceptance_probability = pdf / c
+
+        # accept
+        threshold = np.random.uniform(low=0, high=1)
+        if acceptance_probability >= threshold:
+            accept = True
+        else:
+            accept = False
+
+        return np.inf, accept
