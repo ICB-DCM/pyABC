@@ -42,14 +42,27 @@ class Particle:
 
     accepted: bool
         True if particle was accepted, False if not.
+
+    .. note::
+        There are two different ways of weighting particles: First, the weights
+        can be calculated as emerges from the importance sampling. Second, the
+        weights of particles belonging to one model can be summed to, after
+        normalization, find model probabilities. Then, the weights of all
+        particles belonging to one model can be summed to one.
+        Weighting is transferred to the second way in _normalize_weights() in
+        order to also have access to model probabilities. This mode is also
+        stored in the database. If one needs access to the first weighting
+        scheme later on again, one has to perform backwards transformation,
+        multiplying the weights with the model probabilities.
     """
 
     def __init__(self, m: int,
                  parameter: Parameter,
-                 weight: float = 0,
-                 accepted_distances: List[float] = None,
-                 accepted_sum_stats: List[dict] = None,
-                 all_sum_stats: List[dict] = None):
+                 weight: float,
+                 accepted_distances: List[float],
+                 accepted_sum_stats: List[dict],
+                 all_sum_stats: List[dict],
+                 accepted: bool):
 
         self.m = m
         self.parameter = parameter
@@ -57,10 +70,7 @@ class Particle:
         self.accepted_distances = accepted_distances
         self.accepted_sum_stats = accepted_sum_stats
         self.all_sum_stats = all_sum_stats
-
-    @property
-    def accepted(self):
-        return len(self.accepted_sum_stats) > 0
+        self.accepted = accepted
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -76,9 +86,13 @@ class Particle:
         return True
 
     def copy(self):
-        return self.__class__(self.m, self.parameter, self.weight,
+        return self.__class__(self.m,
+                              self.parameter,
+                              self.weight,
                               self.accepted_distances,
-                              self.accepted_sum_stats, self.all_sum_stats)
+                              self.accepted_sum_stats,
+                              self.all_sum_stats,
+                              self.accepted)
 
 
 class Population:
@@ -98,10 +112,10 @@ class Population:
 
     def get_list(self) -> List[Particle]:
         """
-        Get a copy of the underlying particle list.
+        Returns
+        -------
 
-        :return:
-            A copied particle list.
+        A copy of the underlying particle list.
         """
 
         return self._list.copy()
@@ -150,7 +164,12 @@ class Population:
     def get_model_probabilities(self) -> dict:
         """
         Get probabilities of the individual models.
-        :return:
+
+        Returns
+        -------
+
+        model_probabilities: List
+            The model probabilities.
         """
 
         # _model_probabilities are assigned during normalization
@@ -158,14 +177,19 @@ class Population:
 
     def get_weighted_distances(self) -> pandas.DataFrame:
         """
-        Create iteration of distances and weights. All weights sum to 1.
+        Create DataFrame of (distance, weight)'s. The particle weights are
+        multiplied by the model probabilities. If one simulation per particle
+        was performed, the weights thus sum to 1. If more than one simulation
+        per particle was performed, this does not have to be the case,
+        and post-normalizing may be necessary.
 
-        :return:
+        Returns
+        -------
+
+        weighted_distances: pandas.DataFrame:
             A pandas.DataFrame containing in column 'distance' the distances
-            and in column 'weight' the scaled weights.
+            and in column 'w' the scaled weights.
         """
-
-        # create pandas.DataFrame of distances and weights
         rows = []
         for particle in self._list:
             model_probability = self._model_probabilities[particle.m]
@@ -173,15 +197,19 @@ class Population:
                 rows.append({'distance': distance,
                              'w': particle.weight * model_probability})
 
-        df = pandas.DataFrame(rows)
-        return df
+        weighted_distances = pandas.DataFrame(rows)
+
+        return weighted_distances
 
     def to_dict(self) -> dict:
         """
         Create a dictionary representation, creating a list of particles for
         each model.
 
-        :return:
+        Returns
+        -------
+
+        store: dict
             A dictionary with the models as keys and a list of particles for
             each model as values.
         """

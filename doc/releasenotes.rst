@@ -1,6 +1,29 @@
 Release Notes
 =============
 
+
+0.9 series
+..........
+
+
+0.9.0
+-----
+
+* Acceptance transferred to an Acceptor object to allow for more
+  flexibility (i.e. not only on a single comparison as per default).
+* This acceptor is passed to the ABCSMC object.
+* Update of distance and epsilon synchronized after each iteration and moved
+  to update() methods.
+* initialize() for DistanceFunction and Epsilon also called in load() method,
+  given a time point to initialize for, and made optional via a
+  require_initialize flag. This makes sure these objects are always correctly
+  initialized.
+* PNormDistance and AdaptivePNormDistance (prev. WeightedPNormDistance)
+  improved to allow for more customization.
+* ABCSMC.set_data() method removed.
+* API breaks for DistanceFunction, Epsilon, Model.
+
+
 0.8 series
 ..........
 

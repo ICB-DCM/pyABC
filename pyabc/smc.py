@@ -25,6 +25,7 @@ from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
+from .acceptor import accept_use_current_time, SimpleAcceptor
 import copy
 import warnings
 
@@ -47,7 +48,7 @@ class ABCSMC:
     Parameters
     ----------
 
-    models: list of models, single model, single function or list of functions
+    models: list of models, single model, list of functions, or single function
        * If models is a function, then the function should have a single
          parameter, which is of dictionary type, and should return a single
          dictionary, which contains the simulated data.
@@ -59,7 +60,10 @@ class ABCSMC:
        This model's output is passed to the summary statistics calculation.
        Per default, the model is assumed to already return the calculated
        summary statistics. Accordingly, the default summary_statistics
-       function is just the identity.
+       function is just the identity. Note that the sampling and evaluation of
+       particles happens in the model's methods, so overriding these offers a
+       great deal of flexibility, in particular the freedom to use or ignore
+       the distance_function, summary_statistics, and eps parameters here.
 
     parameter_priors: List[Distribution]
         A list of prior distributions for the models' parameters.
@@ -115,6 +119,12 @@ class ABCSMC:
         will parallelize across the cores of a single
         machine only.
 
+    acceptor: Acceptor, optional
+        Takes a distance function, summary statistics and an epsilon threshold
+        to decide about acceptance of a particle. Argument accepts any subclass
+        of :class:`pyabc.acceptor.Acceptor` or a function convertible to an
+        acceptor.
+
 
     Attributes
     ----------
@@ -132,7 +142,8 @@ class ABCSMC:
                   104–10. doi:10.1093/bioinformatics/btp619.
     """
 
-    def __init__(self, models: Union[List[Model], Model],
+    def __init__(self,
+                 models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function,
@@ -142,7 +153,8 @@ class ABCSMC:
                  model_perturbation_kernel: ModelPerturbationKernel = None,
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
-                 sampler=None):
+                 sampler=None,
+                 acceptor=None):
 
         if not isinstance(models, list):
             models = [models]
@@ -187,14 +199,18 @@ class ABCSMC:
         self.population_strategy = population_size
 
         if sampler is None:
-            self.sampler = DefaultSampler()
-        else:
-            self.sampler = sampler
+            sampler = DefaultSampler()
+        self.sampler = sampler
+
+        if acceptor is None:
+            acceptor = accept_use_current_time
+        self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
 
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
         self.history = None  # type: History
-        self._points_sampled_from_prior = None
+        self._initial_sum_stats = None
+        self._initial_weights = None
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -205,39 +221,6 @@ class ABCSMC:
         warnings.warn("This method is deprecated and removed "
                       "in pyABC 1.0.0", DeprecationWarning, stacklevel=2)
         self.stop_if_only_single_model_alive = False
-
-    def set_data(self, observed_summary_statistics: dict,
-                 abc_options: Union[dict, str],
-                 ground_truth_model: int = -1,
-                 ground_truth_parameter: dict = None):
-        """
-        This method is an alias for the ``new`` method.
-        This method is deprecated and to be removed in future releases.
-        Use the ``new`` method instead.
-        Note that the argument order has changed!
-
-        .. warning::
-
-           The method "set_data" is deprecated.
-        """
-
-        warnings.warn("The method \"set_data\" is deprecated "
-                      "and to be removed "
-                      "in pyABC 0.10.0 "
-                      "Use the method \"new\" instead. "
-                      "Note that the API has changed slightly!",
-                      DeprecationWarning, stacklevel=2)
-        if not isinstance(abc_options, str):
-            db = abc_options["db_path"]
-            meta = abc_options
-        else:
-            db = abc_options
-            meta = {}
-        return self.new(db,
-                        observed_sum_stat=observed_summary_statistics,
-                        gt_model=ground_truth_model,
-                        gt_par=ground_truth_parameter,
-                        meta_info=meta)
 
     def load(self, db: str,
              abc_id: int = 1) -> int:
@@ -258,13 +241,15 @@ class ABCSMC:
 
         .. note::
 
-            The Epsilon's and distance function's initialize methods are
+            The epsilon's and distance function's initialize methods are
             not called when an ABCSMC run is loaded.
         """
 
         self.history = History(db)
         self.history.id = abc_id
         self.x_0 = self.history.observed_sum_stat()
+
+        self._initialize_dist_and_eps(self.history.max_t+1)
 
         return self.history.id
 
@@ -293,29 +278,29 @@ class ABCSMC:
             benchmarking (and maybe) for testing.
 
         observed_sum_stat : dict, optional
-               This is the really important parameter here. It is of the
-               form ``{'statistic_1': val_1, 'statistic_2': val_2, ... }``.
+            This is the really important parameter here. It is of the
+            form ``{'statistic_1': val_1, 'statistic_2': val_2, ... }``.
 
-               The dictionary provided here represents the measured data.
-               Particle during ABCSMC sampling are compared against the
-               summary statistics provided here.
+            The dictionary provided here represents the measured data.
+            Particle during ABCSMC sampling are compared against the
+            summary statistics provided here.
 
-               The summary statistics' values can be integers, floats,
-               strings and everything which is a numpy array or can be
-               converted to one (e.g. lists).
-               In addition, pandas.DataFrames can also be used as summary
-               statistics.
-               **Note that storage of pandas DataFrames in pyABC's database
-               is still considered experimental.**
+            The summary statistics' values can be integers, floats,
+            strings and everything which is a numpy array or can be
+            converted to one (e.g. lists).
+            In addition, pandas.DataFrames can also be used as summary
+            statistics.
+            **Note that storage of pandas DataFrames in pyABC's database
+            is still considered experimental.**
 
-               This parameter is optional, as the distance function might
-               implement comparison to the observed data on its own.
-               Not giving this parameter is equivalent to passing an empty
-               dictionary ``{}``.
+            This parameter is optional, as the distance function might
+            implement comparison to the observed data on its own.
+            Not giving this parameter is equivalent to passing an empty
+            dictionary ``{}``.
 
         gt_model: int, optional
             This is only meta data stored to the database, but not actually
-            used for the ABCSMC algorithm If you want to predict your ABCSMC
+            used for the ABCSMC algorithm. If you want to predict your ABCSMC
             procedure against synthetic samples, you can use
             this parameter to indicate the ground truth model number.
             This helps with further analysis. If you use actually measured data
@@ -334,21 +319,28 @@ class ABCSMC:
             meta information in this dictionary. Can be used for really
             anything.
             This dictionary is stored in the database.
+
+        Returns
+        -------
+
+        run_id: int
+            The history.id, which is the id under which the generated ABCSMC
+            run entry in the database can be identified.
         """
 
-        # initialize
+        # record observed summary statistics
         if observed_sum_stat is None:
             observed_sum_stat = {}
-
         self.x_0 = observed_sum_stat
-        model_names = [model.name for model in self.models]
 
+        # initialize history object
         self.history = History(db)
 
         if gt_par is None:
             gt_par = {}
 
-        self._initialize_dist_and_eps()
+        # save configuration data to database
+        model_names = [model.name for model in self.models]
         self.history.store_initial_data(gt_model,
                                         meta_info,
                                         observed_sum_stat,
@@ -357,56 +349,107 @@ class ABCSMC:
                                         self.distance_function.to_json(),
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
+
+        # sample from prior to calibrate distance function and epsilon
+        self._initialize_dist_and_eps(self.history.max_t+1)
+
+        # return id generated in store_initial_data
         return self.history.id
 
-    def _initialize_dist_and_eps(self):
+    def _initialize_dist_and_eps(self, t: int):
         """
-        Initialize distance function and epsilon.
+        Called once in new() and load(). This function either, if available,
+        takes the last population from the history, or generates a
+        sample population from the prior,
+         and calls the initialize() functions
+        of the distance function and the epsilon, if respectively the
+        require_initialize flags are set (unset the respective flags if no
+        initialization is required for the first population).
+
+        Parameters
+        ----------
+
+        t: int
+            Time point for which to initialize (i.e. the time point at which
+            to do the first population). Usually 0 or history.max_t + 1.
         """
 
-        self.distance_function.initialize(self._prior_sample())
+        if self.distance_function.require_initialize:
+            # initialize distance
+            self.distance_function.initialize(t,
+                                              self._get_initial_samples(t)[1])
 
-        def distance_to_ground_truth_function(x):
-            return self.distance_function(x, self.x_0)
+        if self.eps.require_initialize:
+            def distance_to_ground_truth(x):
+                return self.distance_function(t, x, self.x_0)
 
-        self.eps.initialize(self._prior_sample(),
-                            distance_to_ground_truth_function)
+            # create dataframe from weights and new distances
+            weights, sum_stats = self._get_initial_samples(t)
+            rows = []
+            for i in range(len(weights)):
+                weight = weights[i]
+                distance = distance_to_ground_truth(sum_stats[i])
+                rows.append({'distance': distance,
+                             'w': weight})
+            weighted_distances = pd.DataFrame(rows)
 
-    def _prior_sample(self) -> List[dict]:
+            # initialize epsilon
+            self.eps.initialize(t, weighted_distances)
+
+    def _get_initial_samples(self, t: int) -> (List[float], List[dict]):
         """
-        Only sample from prior and return results without changing
-        the history of the Epsilon. This can be used to get initial samples
-        for the distance function or the epsilon to calibrate them.
+        Get initial samples, either from the last population stored in history,
+        or via sampling sum stats from the prior. This can be used to calibrate
+        the distance function or the epsilon.
+
+        The history must have been initialized already. This function fills the
+        private properties _initial_weights and _initial_sum_stats.
 
         .. warning::
             The sample is cached.
         """
 
-        if self._points_sampled_from_prior is None:
-            def create_one():
-                m = self.model_prior.rvs()
-                theta = self.parameter_priors[m].rvs()
-                all_summary_statistics_list = []
-                model_result = self.models[m].summary_statistics(
-                    theta, self.summary_statistics)
-                all_summary_statistics_list.append(model_result.sum_stats)
-                weight = 0
-                distance_list = []
-                summary_statistics_list = all_summary_statistics_list
-                # only the all_summary_statistics field will be read later
-                return Particle(
-                    m, theta, weight, distance_list,
-                    summary_statistics_list, all_summary_statistics_list)
+        if self._initial_weights is None or self._initial_sum_stats is None:
+            if self.history.n_populations > 0:
+                weights, sum_stats = self.history.get_weighted_sum_stats()
+                self._initial_weights = weights
+                self._initial_sum_stats = sum_stats
+            else:
+                self._initial_sum_stats = self._sample_from_prior(t)
+                self._initial_weights = [1.0 / len(self._initial_sum_stats)
+                                         for _ in self._initial_sum_stats]
 
-            # call sampler
-            sample = self.sampler.sample_until_n_accepted(
-                self.population_strategy.nr_particles, create_one)
+        return self._initial_weights, self._initial_sum_stats
 
-            # extract summary statistics list
-            self._points_sampled_from_prior = \
-                sample.all_summary_statistics
+    def _sample_from_prior(self, t: int) -> List[dict]:
+        """
+        Only sample from prior and return results without changing
+        the history of the distance function or the epsilon.
+        """
 
-        return self._points_sampled_from_prior
+        # simulation function, simplifying some parts compared to later
+        def simulate_one():
+            m = int(self.model_prior.rvs())
+            theta = self.parameter_priors[m].rvs()
+            sum_stats = []
+            all_sum_stats = []
+            model_result = self.models[m].summary_statistics(
+                t, theta, self.summary_statistics)
+            all_sum_stats.append(model_result.sum_stats)
+            weight = 0
+            accepted_distances = []
+            accepted = True
+            # only the all_summary_statistics field will be read later
+            return Particle(
+                m, theta, weight, accepted_distances,
+                sum_stats, all_sum_stats, accepted)
+
+        # call sampler
+        sample = self.sampler.sample_until_n_accepted(
+            self.population_strategy.nr_particles, simulate_one)
+
+        # return all generated summary statistics
+        return sample.all_sum_stats
 
     def _generate_valid_proposal(self, t, m, p):
         """
@@ -427,7 +470,7 @@ class ABCSMC:
 
         # first generation
         if t == 0:  # sample from prior
-            m_ss = self.model_prior.rvs()
+            m_ss = int(self.model_prior.rvs())
             theta_ss = self.parameter_priors[m_ss].rvs()
             return m_ss, theta_ss
 
@@ -452,7 +495,6 @@ class ABCSMC:
 
     def _evaluate_proposal(self, m_ss,
                            theta_ss,
-                           current_eps,
                            t,
                            model_probabilities) -> Particle:
         """
@@ -464,28 +506,38 @@ class ABCSMC:
 
         # from here, theta_ss is valid according to the prior
 
-        distance_list = []
-        summary_statistics_list = []
-        all_summary_statistics_list = []
+        accepted_distances = []
+        accepted_sum_stats = []
+        all_sum_stats = []
 
         for _ in range(self.population_strategy.nr_samples_per_parameter):
             model_result = self.models[m_ss].accept(
-                theta_ss, self.summary_statistics,
-                lambda x: self.distance_function(x, self.x_0), current_eps)
-            all_summary_statistics_list.append(model_result.sum_stats)
+                t,
+                theta_ss,
+                self.summary_statistics,
+                self.distance_function,
+                self.eps,
+                self.acceptor,
+                self.x_0)
+            # append to all_sum_stats in either case to allow for the situation
+            # that in population.all_sum_stats() one is only interested in
+            # accepted particles
+            all_sum_stats.append(model_result.sum_stats)
             if model_result.accepted:
-                distance_list.append(model_result.distance)
-                summary_statistics_list.append(model_result.sum_stats)
+                accepted_distances.append(model_result.distance)
+                accepted_sum_stats.append(model_result.sum_stats)
 
-        if len(distance_list) > 0:
+        accepted = len(accepted_sum_stats) > 0
+
+        if accepted:
             weight = self._calc_proposal_weight(
-                distance_list, m_ss, theta_ss, t, model_probabilities)
+                accepted_distances, m_ss, theta_ss, t, model_probabilities)
         else:
             weight = 0
 
         return Particle(
-            m_ss, theta_ss, weight, distance_list,
-            summary_statistics_list, all_summary_statistics_list)
+            m_ss, theta_ss, weight, accepted_distances,
+            accepted_sum_stats, all_sum_stats, accepted)
 
     def _calc_proposal_weight(self,
                               distance_list,
@@ -575,17 +627,17 @@ class ABCSMC:
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
-        # "ipython_cluster" is not pickable
+        # "ipython_cluster" is not pickleable
 
-        # this variable will store the current population
-        population = None
-
-        t_max = t0 + max_nr_populations
+        # configure sampler by whoever wants to
         self.distance_function.configure_sampler(self.sampler)
+
+        # run loop over time points
+        t_max = t0 + max_nr_populations
         for t in range(t0, t_max):
 
             # get epsilon for generation t
-            current_eps = self.eps(t, self.history, population)
+            current_eps = self.eps(t)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
 
             # do some adaptations
@@ -600,12 +652,15 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
 
+            # simulation function
             def simulate_one():
                 par = self._generate_valid_proposal(t, m, p)
-                return self._evaluate_proposal(*par, current_eps, t,
-                                               model_probabilities)
+                return self._evaluate_proposal(
+                    *par,
+                    t,
+                    model_probabilities)
 
-            # sample
+            # sample for new population
             sample = self.sampler.sample_until_n_accepted(
                 self.population_strategy.nr_particles, simulate_one)
 
@@ -623,7 +678,23 @@ class ABCSMC:
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 
+            # prepare next iteration
+
+            # update distance function
+            df_updated = self.distance_function.update(
+                t + 1, sample.all_sum_stats)
+
+            # compute distances with the new distance measure
+            if df_updated:
+                def distance_to_ground_truth(x):
+                    return self.distance_function(t + 1, x, self.x_0)
+                population.update_distances(distance_to_ground_truth)
+
+            # update epsilon
+            self.eps.update(t + 1, population.get_weighted_distances())
+
             # check early termination conditions
+
             current_acceptance_rate = \
                 len(population.get_list()) / nr_evaluations
             if (current_eps <= minimum_epsilon
@@ -632,28 +703,23 @@ class ABCSMC:
                     or current_acceptance_rate < min_acceptance_rate):
                 break
 
-            # adapt distance function
-            df_updated = self.distance_function.update(
-                sample.all_summary_statistics)
-
-            if t < t_max:
-                # compute distances with the new distance measure
-                if df_updated:
-                    def distance_to_ground_truth(x):
-                        return self.distance_function(x, self.x_0)
-                    population.update_distances(distance_to_ground_truth)
-
         # end of run loop
 
+        # close session and store end time
         self.history.done()
+
+        # return used history object
         return self.history
 
     def _adapt_population_size(self, t):
         """
         Adapt population size based on the employed population strategy.
 
-        :param t:
-            time
+        Parameters
+        ----------
+
+        t: int
+            Time for which to adapt the population size.
         """
 
         if t == 0:  # we need a particle population to do the fitting
@@ -673,8 +739,11 @@ class ABCSMC:
         """
         Fit the density estimator.
 
-        :param t:
-            time
+        Parameters
+        ----------
+
+        t: int
+            Time for which to update the kernel density estimator.
         """
 
         if t == 0:  # we need a particle population to do the fitting

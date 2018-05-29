@@ -80,7 +80,9 @@ def rand_pop(m: int):
                       "ss_int": 42,
                       "ss_str": "foo bar string",
                       "ss_np": sp.rand(13, 42),
-                      "ss_df": example_df()}])
+                      "ss_df": example_df()}],
+                    [],
+                    True)
            for _ in range(np.random.randint(10) + 3)]
     return pop
 
@@ -90,7 +92,9 @@ def test_single_particle_save_load(history: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     df, w = history.get_distribution(0, 0)
@@ -108,7 +112,9 @@ def test_single_particle_save_load_np_int64(history: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     for m in m_list:
@@ -127,14 +133,18 @@ def test_sum_stats_save_load(history: History):
                               [.1],
                               [{"ss1": .1, "ss2": arr2,
                                 "ss3": example_df(),
-                                "rdf0": r["iris"]}]),
+                                "rdf0": r["iris"]}],
+                              [],
+                              True),
                      Particle(0, Parameter({
                          "a": 23, "b": 12}),
                               .2,
                               [.1],
                               [{"ss12": .11, "ss22": arr,
                                 "ss33": example_df(),
-                                "rdf": r["mtcars"]}])]
+                                "rdf": r["mtcars"]}],
+                              [],
+                              True)]
     history.append_population(0, 42,
                               Population(particle_list), 2, ["m1", "m2"])
     weights, sum_stats = history.get_sum_stats(0, 0)
@@ -154,7 +164,9 @@ def test_total_nr_samples(history: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     population = Population(particle_list)
     history.append_population(0, 42, population, 4234, ["m1"])
     history.append_population(0, 42, population, 3, ["m1"])
@@ -166,7 +178,9 @@ def test_t_count(history: History):
     particle_list = [Particle(0, Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     for t in range(1, 10):
         history.append_population(t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
@@ -314,7 +328,9 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
                               Parameter({"a": 23, "b": 12}),
                               .2,
                               [.1],
-                              [{"ss": .1}])]
+                              [{"ss": .1}],
+                              [],
+                              True)]
     h.append_population(0, 42, Population(particle_list), 2, model_names)
 
     h2 = History(h.db_identifier)

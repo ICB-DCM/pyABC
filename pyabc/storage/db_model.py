@@ -1,3 +1,16 @@
+"""
+Database model
+==============
+
+We use SQLAlchemy to associate python classes with database tables,
+and instances of the classes with rows in the corresponding tables.
+SQLAlchemy includes a system that synchronizes state changes, and a system
+for expressing database queries in terms of the user-defined classes and
+the relationships defined between them.
+
+For further information see also http://docs.sqlalchemy.org.
+"""
+
 import datetime
 import sqlalchemy.types as types
 from sqlalchemy import (Column, Integer, DateTime, String,

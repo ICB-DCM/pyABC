@@ -2,20 +2,21 @@
 Models
 ======
 
-Models for ABCSMC
+Models for ABCSMC.
 """
 
 from .parameters import Parameter
 from typing import Callable, Any
-
-__all__ = ["Model", "SimpleModel", "ModelResult", "IntegratedModel"]
+from .epsilon import Epsilon
+from .distance_functions import DistanceFunction
+from .acceptor import Acceptor
 
 
 class ModelResult:
     """
     Result of a model evaluation.
-    Allows to flexibly return everything from summary_statistics to
-    accepted/rejected.
+    Allows to flexibly return summary statistics,
+    distances and accepted/rejected.
     """
     def __init__(self, sum_stats=None, distance=None, accepted=None):
         self.sum_stats = sum_stats if sum_stats is not None else {}
@@ -50,11 +51,12 @@ class Model:
     Parameters
     ----------
 
-        name: str
-            A descriptive name of the model. This name can simplify further
-            analysis for the user as it is stored in the database.
+    name: str, optional
+        A descriptive name of the model. This name can simplify further
+        analysis for the user as it is stored in the database.
     """
     def __init__(self, name: str="model"):
+
         self.name = name
 
     def __repr__(self):
@@ -62,13 +64,16 @@ class Model:
 
     def sample(self, pars):
         """
-        Return a sample from the model evaluated ar parameters ``pars``.
+        Return a sample from the model evaluated ar parameters ``pars``. This
+        can be raw data, or already summarized statistics thereof.
 
         This method has to be implemented by any subclass.
 
         Parameters
         ----------
-        pars: dictionary of parameters
+
+        pars: Parameter
+            Dictionary of parameters.
 
         Returns
         -------
@@ -78,85 +83,158 @@ class Model:
         """
         raise NotImplementedError()
 
-    def summary_statistics(self, pars, sum_stats_calculator) -> ModelResult:
+    def summary_statistics(self,
+                           t,
+                           pars,
+                           sum_stats_calculator) -> ModelResult:
         """
-        Calculate the summary statistics.
+        Sample, and then calculate the summary statistics.
+
+        Called from within ABCSMC during the initialization process.
 
         Parameters
         ----------
-        pars: Model parameters
-        sum_stats_calculator: A function which calculates summary statistics
-            the user is free to use or ignore this function
+
+        t: int
+            Current time point.
+
+        pars: Parameter
+            Model parameters.
+
+        sum_stats_calculator: Callable
+            A function which calculates summary statistics, as passed to
+            :class:`pyabc.smc.ABCSMC`.
+            The user is free to use or ignore this function.
 
         Returns
         -------
 
         model_result: ModelResult
-            The result filled with summary statistics
+            The result with filled summary statistics.
         """
         raw_data = self.sample(pars)
         sum_stats = sum_stats_calculator(raw_data)
         return ModelResult(sum_stats=sum_stats)
 
-    def distance(self, pars, sum_stats_calculator, distance_calculator) \
-            -> ModelResult:
+    def distance(self,
+                 t,
+                 pars,
+                 sum_stats_calculator,
+                 distance_calculator: DistanceFunction,
+                 x_0) -> ModelResult:
         """
-        Calculate the distance
+        Sample, calculate summary statistics, and then calculate the distance.
+
+        Not required in the current implementation.
 
         Parameters
         ----------
-        pars: Model parameters
-        sum_stats_calculator: A function which calculates summary statistics.
+
+        t: int
+            Current time point.
+
+        pars: Parameter
+            Model parameters.
+
+        sum_stats_calculator: Callable
+            A function which calculates summary statistics, as passed to
+            :class:`pyabc.smc.ABCSMC`.
             The user is free to use or ignore this function.
-        distance_calculator: A function which calculates the distance.
+
+        distance_calculator: Callable
+            A function which calculates the distance, as passed to
+            :class:`pyabc.smc.ABCSMC`.
             The user is free to use or ignore this function.
+
+        x_0: dict
+            Observed summary statistics.
 
         Returns
         -------
 
         model_result: ModelResult
-            The result filled with the distance
+            The result with filled distance.
         """
-        sum_stats_result = self.summary_statistics(pars, sum_stats_calculator)
-        distance = distance_calculator(sum_stats_result.sum_stats)
+
+        sum_stats_result = self.summary_statistics(t,
+                                                   pars,
+                                                   sum_stats_calculator)
+        distance = distance_calculator(t,
+                                       sum_stats_result.sum_stats,
+                                       x_0)
         sum_stats_result.distance = distance
+
         return sum_stats_result
 
-    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) \
-            -> ModelResult:
+    def accept(self,
+               t,
+               pars,
+               sum_stats_calculator,
+               distance_calculator: DistanceFunction,
+               eps_calculator: Epsilon,
+               acceptor: Acceptor,
+               x_0):
         """
-        Accept or not accept a parameter.
+        Sample, calculate summary statistics, calculate distance, and then
+        accept or not accept a parameter.
+
+        Called from within ABCSMC in each iteration to evaluate a parameter.
+
 
         Parameters
         ----------
-        pars: Model parameters
-        sum_stats_calculator: A function which calculates summary statistics.
+
+        t: int
+            Current time point.
+
+        pars: Parameter
+            The model parameters.
+
+        sum_stats_calculator:
+            A function which calculates summary statistics.
             The user is free to use or ignore this function.
-        distance_calculator: A function which calculates the distance.
+
+        distance_calculator: pyabc.DistanceFunction
+            The distance function.
             The user is free to use or ignore this function.
-        eps: float
-            Acceptance threshold
+
+        eps_calculator: pyabc.Epsilon
+            The acceptance thresholds.
+
+        acceptor: Acceptor
+            The acceptor judging whether to accept, based on distance and
+            epsilon.
+
+        x_0: dict
+            The observed summary statistics.
+
 
         Returns
         -------
 
         model_result: ModelResult
-            Result filled with the accepted field.
+            The result with filled accepted field.
 
         """
-        distance_result = self.distance(pars, sum_stats_calculator,
-                                        distance_calculator)
-        accepted = distance_result.distance <= eps
-        distance_result.accepted = accepted
-        return distance_result
+        result = self.summary_statistics(t,
+                                         pars,
+                                         sum_stats_calculator)
+        distance, accepted = acceptor(t,
+                                      distance_calculator,
+                                      eps_calculator,
+                                      result.sum_stats, x_0)
+        result.distance = distance
+        result.accepted = accepted
+
+        return result
 
 
 class SimpleModel(Model):
     """
     A model which is initialized with a function which generates the samples.
-    For most cases this class is to be used.
-    Note that you can also pass a plain function to the ABCSMC class.
-    This function get automatically converted to a SimpleModel.
+    For most cases this class will be adequate.
+    Note that you can also pass a plain function to the ABCSMC class, which
+    then gets automatically converted to a SimpleModel.
 
     Parameters
     ----------
@@ -169,7 +247,9 @@ class SimpleModel(Model):
         The name of the model. If not provided, the names if inferred from
         the function name of `sample_function`.
     """
-    def __init__(self, sample_function: Callable[[Parameter], Any], name=None):
+    def __init__(self,
+                 sample_function: Callable[[Parameter], Any],
+                 name=None):
         if name is None:
             name = sample_function.__name__
         super().__init__(name)
@@ -224,11 +304,14 @@ class IntegratedModel(Model):
 
         Parameters
         ----------
-        pars: dict
+
+        pars: Parameter
             Parameters at which to evaluate the model
 
         eps: float
-            Current acceptance threshold
+            Current acceptance threshold. If required, it is effortlessly
+            possible to instead use the entire epsilon_calculator object
+            passed to accept().
 
         Returns
         -------
@@ -238,8 +321,8 @@ class IntegratedModel(Model):
             should simply return ``ModelResult(accepted=False)``.
             If the parameter was accepted, this method should return either
             ``ModelResult(accepted=True, distance=distance)`` or
-            ``ModelResult(accepted=True, distance=distance, \
-sum_stats=sum_stats)``
+            ``ModelResult(accepted=True, distance=distance,
+            sum_stats=sum_stats)``
             in which ``distance`` denotes the achieved
             distance and ``sum_stats`` the summary statistics (e.g. simulated
             data) of the run. Note that providing the summary statistics
@@ -248,8 +331,12 @@ sum_stats=sum_stats)``
         """
         raise NotImplementedError()
 
-    def summary_statistics(self, pars, sum_stats_calculator):
-        return ModelResult()
-
-    def accept(self, pars, sum_stats_calculator, distance_calculator, eps):
-        return self.integrated_simulate(pars, eps)
+    def accept(self,
+               t: int,
+               pars,
+               sum_stats_calculator,
+               distance_calculator: DistanceFunction,
+               eps_calculator: Epsilon,
+               acceptor: Acceptor,
+               x_0: dict):
+        return self.integrated_simulate(pars, eps_calculator(t))

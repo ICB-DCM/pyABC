@@ -13,7 +13,7 @@ class UnpickleAble:
         raise Exception
 
     def __call__(self, *args, **kwargs):
-        return Particle(0, {}, 1, [1], [1], [])
+        return Particle(0, {}, 1, [1], [1], [], True)
 
 
 unpickleable = UnpickleAble()

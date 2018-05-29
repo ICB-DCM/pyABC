@@ -74,7 +74,7 @@ class History:
     def __init__(self, db: str):
         """
         Only counts the simulations which appear in particles.
-        If a simulation terminated prematurely it is not counted.
+        If a simulation terminated prematurely, it is not counted.
         """
         self.db_identifier = db
         self._session = None
@@ -221,13 +221,13 @@ class History:
     @with_session
     def get_all_populations(self):
         """
-        Returns a pandas Dataframe with columns
+        Returns a pandas DataFrame with columns
 
-        * `t`: Popultion number
+        * `t`: Population number
         * `population_end_time`: The end time of the population
         * `samples`: The number of sample attempts performed
            for a population
-        * `epsilon`: The acceptence threshold for the population.
+        * `epsilon`: The acceptance threshold for the population.
 
         Returns
         -------
@@ -286,6 +286,7 @@ class History:
             The population strategy represented as json string
 
         """
+
         # store ground truth to db
 
         abcsmc = ABCSMC(
@@ -355,7 +356,7 @@ class History:
         Returns
         -------
 
-        int
+        nr_sim: int
             Total nr of sample attempts for the ABC run.
         """
         nr_sim = (self._session.query(func.sum(Population.nr_samples))
@@ -364,8 +365,8 @@ class History:
 
     def _make_session(self):
         # TODO: check if the session creation and closing is still necessary
-        # I think I did this funnny construction due to some pickling issues
-        #  but I'm not quite sure anymore
+        # I think I did this funny construction due to some pickling issues
+        # but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
         engine = create_engine(self.db_identifier,
@@ -399,7 +400,6 @@ class History:
     def done(self):
         """
         Close database sessions and store end time of population.
-
 
         """
 
@@ -513,8 +513,10 @@ class History:
         probabilities: np.ndarray
             Model probabilities
         """
+
         if t is not None:
             t = int(t)
+
         p_models = (
             self._session
             .query(Model.p_model, Model.m, Population.t)
@@ -570,6 +572,7 @@ class History:
 
         Parameters
         ----------
+
         t: int, None
             Population number.
             If t is None the last population is selected.
@@ -577,10 +580,10 @@ class History:
         Returns
         -------
 
-        median: DataFrame
+        df_weighted: pd.DataFrame
             Weighted distances.
             The dataframe has column "w" for the weights
-            and column distance for the distances
+            and column "distance" for the distances.
         """
         if t is None:
             t = self.max_t
@@ -605,6 +608,7 @@ class History:
 
         Returns
         -------
+
         nr_particles_per_population: pd.DataFrame
             A pandas DataFrame containing the number
             of particles for each population
@@ -641,12 +645,14 @@ class History:
     @with_session
     def get_sum_stats(self, t: int, m: int) -> (np.ndarray, List):
         """
-        Summary statistics
+        Summary statistics.
 
         Parameters
         ----------
+
         t: int
             Population number
+
         m: int
             Model index
 
@@ -657,6 +663,9 @@ class History:
             * w: the weights associated with the summary statistics
             * sum_stats: list of summary statistics
         """
+
+        # TODO: Is the first output, "weights", needed for anything?
+
         m = int(m)
         if t is None:
             t = self.max_t
@@ -680,6 +689,58 @@ class History:
                     sum_stats[ss.name] = ss.value
                 results.append(sum_stats)
         return sp.array(weights), results
+
+    @with_session
+    def get_weighted_sum_stats(self, t: int=None) -> (List[float], List[dict]):
+        """
+        Population's weighted summary statistics.
+        These weights do not necessarily sum up to 1.
+        In case more than one simulation per parameter is performed and
+        accepted, the sum might be larger.
+
+        Parameters
+        ----------
+
+        t: int, None
+            Population number.
+            If t is None, the latest population is selected.
+
+
+        Returns
+        -------
+
+        (weights, sum_stats): (List[float], List[dict])
+            In the same order in the first array the weights (multiplied by
+            the model probabilities), and tin the second array the summary
+            statistics.
+        """
+
+        if t is None:
+            t = self.max_t
+        else:
+            t = int(t)
+
+        models = (self._session.query(Model)
+                  .join(Population).join(ABCSMC)
+                  .filter(ABCSMC.id == self.id)
+                  .filter(Population.t == t)
+                  .all())
+
+        all_weights = []
+        all_sum_stats = []
+
+        for model in models:
+            for particle in model.particles:
+                weight = particle.w * model.p_model
+                for sample in particle.samples:
+                    # extract sum stats
+                    sum_stats = {}
+                    for ss in sample.summary_statistics:
+                        sum_stats[ss.name] = ss.value
+                    all_weights.append(weight)
+                    all_sum_stats.append(sum_stats)
+
+        return all_weights, all_sum_stats
 
     @with_session
     def get_population_strategy(self):

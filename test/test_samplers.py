@@ -59,17 +59,17 @@ def RedisEvalParallelSamplerServerStarterWrapper():
     return RedisEvalParallelSamplerServerStarter(batch_size=5)
 
 
-@pytest.fixture(params=[RedisEvalParallelSamplerServerStarterWrapper,
+@pytest.fixture(params=[SingleCoreSampler,
+                        RedisEvalParallelSamplerServerStarterWrapper,
                         MulticoreEvalParallelSampler,
-                        SingleCoreSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
                         MappingSampler,
                         DaskDistributedSampler,
+                        DaskDistributedSamplerBatch,
                         GenericFutureWithThreadPool,
                         GenericFutureWithProcessPool,
-                        GenericFutureWithProcessPoolBatch,
-                        DaskDistributedSamplerBatch
+                        GenericFutureWithProcessPoolBatch
                         ])
 def sampler(request):
     s = request.param()

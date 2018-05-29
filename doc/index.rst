@@ -59,6 +59,7 @@ modules and packages.
 
    abcsmc_api
    distance_api
+   acceptor_api
    model_api
    epsilon_api
    datastore_api
