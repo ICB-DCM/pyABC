@@ -85,6 +85,7 @@ __all__ = [
     "SimpleAcceptor",
     "accept_use_current_time",
     "accept_use_complete_history",
+    "StochasticAcceptor",
     "ModelResult",
     "Model",
     "SimpleModel",
