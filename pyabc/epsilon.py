@@ -135,6 +135,22 @@ class Epsilon(ABC):
         return json.dumps(self.get_config())
 
 
+class NoEpsilon(Epsilon):
+    """
+    Implements a kind of null object as epsilon.
+
+    This can be used as a dummy epsilon if e.g. stochastic acceptance is used.
+    """
+
+    def __init__(self):
+        super().__init__(require_initialize=False)
+        
+    def __call__(self,
+                 t: int) -> float:
+        raise Exception("{} is not intended to be called."
+                        .format(self.__class__.__name__))
+
+
 class ConstantEpsilon(Epsilon):
     """
     Keep epsilon constant over all populations.
