@@ -34,7 +34,8 @@ from .storage import History
 from .acceptor import (Acceptor,
                        SimpleAcceptor,
                        accept_use_current_time,
-                       accept_use_complete_history)
+                       accept_use_complete_history,
+                       StochasticAcceptor)
 from .model import (Model,
                     SimpleModel,
                     ModelResult,

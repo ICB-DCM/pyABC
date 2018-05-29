@@ -144,7 +144,7 @@ class NoEpsilon(Epsilon):
 
     def __init__(self):
         super().__init__(require_initialize=False)
-        
+
     def __call__(self,
                  t: int) -> float:
         raise Exception("{} is not intended to be called."
