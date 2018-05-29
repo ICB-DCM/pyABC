@@ -166,18 +166,29 @@ def accept_use_complete_history(t, distance_function, eps, x, x_0, pars):
 
 
 class StochasticAcceptor(Acceptor):
+    """
+    TODO: Develop a concept of how to pass different distributions and how to
+    account for parametrized noise models.
+    """
+
+    def __init__(self, distr=None):
+        super().__init__()
+        self.distr = distr
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # extract summary statistics as array
         x = np.asarray(list(x.values()))
         x_0 = np.asarray(list(x_0.values()))
-        dim = len(x)
+        n = len(x)
 
         # noise distribution
-        distr = stats.multivariate_normal(mean=np.zeros(dim),cov=np.eye(dim))
+        if self.distr is None:
+            distr = stats.multivariate_normal(mean=np.zeros(n), cov=np.eye(n))
+        else:
+            distr = self.distr
 
         # mode
-        c = distr.pdf(np.zeros(dim))
+        c = distr.pdf(np.zeros(n))
 
         # pdf
         pdf = distr.pdf(x - x_0)
