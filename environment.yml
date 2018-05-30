@@ -5,7 +5,7 @@ dependencies:
   - scipy
   - bokeh
   - pandas
-  - flask
+  - flask>=0.12.2
   - scikit-learn
   - distributed
   - matplotlib
