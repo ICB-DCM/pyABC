@@ -1,8 +1,8 @@
 cloudpickle
 gitpython
 sqlalchemy
-flask
 flask_bootstrap
+flask
 sortedcontainers
 numpy
 scipy
