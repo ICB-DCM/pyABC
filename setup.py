@@ -12,7 +12,7 @@ with open(os.path.join(os.path.dirname(__file__), "pyabc", "version.py")) as f:
     version = f.read().split("\n")[0].split("=")[-1].strip(' ').strip('"')
 
 setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
-                        "flask", "flask_bootstrap", "bokeh", "redis",
+                        "flask_bootstrap", "flask>=0.12.2", "bokeh", "redis",
                         "dill",
                         'gitpython', 'seaborn', 'scikit-learn',
                         'matplotlib', 'sqlalchemy', 'click',
