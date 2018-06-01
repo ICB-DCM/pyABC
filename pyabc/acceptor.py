@@ -170,9 +170,25 @@ class StochasticAcceptor(Acceptor):
     account for parametrized noise models.
     """
 
-    def __init__(self, distr=None):
+    def __init__(self, distr=None, max_pd=None):
+        """
+        Parameters
+        ----------
+
+        distribution: optional
+            A distribution object having a method .pdf(x) allowing to evaluate
+            the probability density function. If None is passed, a standard
+            multivariate normal distribution is assumed. The distribution is
+            assumed to be given as P(x-x_0).
+
+        max_pd: float, optional
+            The highest mode of the distribution. If None is passed, it is
+            assumed to be at (0,...,0).
+        """
+
         super().__init__()
         self.distr = distr
+        self.max_pd = max_pd
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # extract summary statistics as array
@@ -184,16 +200,19 @@ class StochasticAcceptor(Acceptor):
         if self.distr is None:
             distr = stats.multivariate_normal(mean=np.zeros(n), cov=np.eye(n))
         else:
-            distr = self.distr
+            distr = self.distribution
 
         # mode
-        c = distr.pdf(np.zeros(n))
+        if self.max_pd is None:
+            max_pd = distr.pdf(np.zeros(n))
+        else:
+            max_pd = self.max_pd
 
         # pdf
-        pdf = distr.pdf(x - x_0)
+        pd = distr.pdf(x - x_0)
 
         # acceptance probability
-        acceptance_probability = pdf / c
+        acceptance_probability = pd / max_pd
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
