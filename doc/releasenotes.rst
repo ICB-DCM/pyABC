@@ -6,6 +6,12 @@ Release Notes
 ..........
 
 
+0.9.2
+-----
+
+* Stochastic acceptance criteria introduced.
+
+
 0.9.1
 -----
 
