@@ -25,6 +25,7 @@ from .distance_functions import (DistanceFunction,
                                  RangeEstimatorDistanceFunction,
                                  DistanceFunctionWithMeasureList)
 from .epsilon import (Epsilon,
+                      NoEpsilon,
                       ConstantEpsilon,
                       QuantileEpsilon,
                       MedianEpsilon,
@@ -49,7 +50,7 @@ from .version import __version__  # noqa: F401
 
 __all__ = [
     "ABCSMC",
-    # Distance start
+    # Distance
     "DistanceFunction",
     "NoDistance",
     "SimpleFunctionDistance",
@@ -61,13 +62,14 @@ __all__ = [
     "RangeEstimatorDistanceFunction",
     "MinMaxDistanceFunction",
     "PercentileDistanceFunction",
-    # Distance end
+    # Epsilon
     "Epsilon",
+    "NoEpsilon",
     "ConstantEpsilon",
     "ListEpsilon",
     "QuantileEpsilon",
     "MedianEpsilon",
-    # random_variables start
+    # random_variables
     "RVBase",
     "RV",
     "RVDecorator",
@@ -75,21 +77,24 @@ __all__ = [
     "Parameter",
     "Distribution",
     "ModelPerturbationKernel",
-    # random_variables end
+    # random_variables
     "GridSearchCV",
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
     "MultivariateNormalTransition",
     "LocalTransition",
+    # Acceptor
     "Acceptor",
     "SimpleAcceptor",
     "accept_use_current_time",
     "accept_use_complete_history",
     "StochasticAcceptor",
+    # Model
     "ModelResult",
     "Model",
     "SimpleModel",
     "IntegratedModel",
+    # History
     "History"
 ]
 

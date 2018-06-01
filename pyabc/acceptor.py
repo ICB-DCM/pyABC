@@ -202,13 +202,13 @@ class StochasticAcceptor(Acceptor):
         else:
             distr = self.distribution
 
-        # mode
+        # maximum probability density
         if self.max_pd is None:
             max_pd = distr.pdf(np.zeros(n))
         else:
             max_pd = self.max_pd
 
-        # pdf
+        # compute probability density
         pd = distr.pdf(x - x_0)
 
         # acceptance probability
