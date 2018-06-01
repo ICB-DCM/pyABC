@@ -153,8 +153,8 @@ class ABCSMC:
                  model_perturbation_kernel: ModelPerturbationKernel = None,
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
-                 sampler=None,
-                 acceptor=None):
+                 sampler = None,
+                 acceptor = None):
 
         if not isinstance(models, list):
             models = [models]

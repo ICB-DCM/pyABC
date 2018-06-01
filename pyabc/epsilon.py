@@ -7,7 +7,7 @@ the observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
-
+import numpy as np
 import scipy as sp
 import logging
 import json
@@ -147,8 +147,7 @@ class NoEpsilon(Epsilon):
 
     def __call__(self,
                  t: int) -> float:
-        raise Exception("{} is not intended to be called."
-                        .format(self.__class__.__name__))
+        return np.nan
 
 
 class ConstantEpsilon(Epsilon):

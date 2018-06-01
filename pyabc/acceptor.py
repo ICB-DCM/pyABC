@@ -15,7 +15,7 @@ time.
 """
 
 import numpy as np
-from scipy import stats
+import scipy.stats as sp_stats
 
 
 class Acceptor:
@@ -198,9 +198,10 @@ class StochasticAcceptor(Acceptor):
 
         # noise distribution
         if self.distr is None:
-            distr = stats.multivariate_normal(mean=np.zeros(n), cov=np.eye(n))
+            distr = sp_stats.multivariate_normal(
+                        mean=np.zeros(n), cov=np.eye(n))
         else:
-            distr = self.distribution
+            distr = self.distr
 
         # maximum probability density
         if self.max_pd is None:
@@ -221,4 +222,4 @@ class StochasticAcceptor(Acceptor):
         else:
             accept = False
 
-        return np.inf, accept
+        return np.nan, accept
