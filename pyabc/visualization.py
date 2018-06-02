@@ -41,7 +41,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
         variable to be plotted as x.
     numx: int, optional
         The number of bins in x direction.
-        Defaults tp 50.
+        Defaults to 50.
 
     Returns
     -------
@@ -66,7 +66,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
     return x_vals, pdf
 
 
-def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, **kwargs):
+def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, refval=None, **kwargs):
     """
     Plots a 1d histogram.
 
@@ -89,6 +89,9 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, **kwargs):
     numx: int, optional
         The number of bins in x direction.
         Defaults tp 50.
+    refval: dict, optional
+        A reference value for x. If not None, the value will be
+        highlighted in the plot.
 
     Returns
     -------
@@ -103,6 +106,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, **kwargs):
     ax.plot(x_vals, pdf, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
+    if refval is not None:
+        ax.axvline(refval[x], color='C1', linestyle='dashed')
     return ax
 
 
@@ -182,7 +187,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                 numx=50, numy=50, ax=None, colorbar=True,
-                title=True, **kwargs):
+                title=True, refval=None, **kwargs):
     """
     Plots a 2d histogram.
 
@@ -244,10 +249,12 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     if colorbar:
         cbar = fig.colorbar(mesh)
         cbar.set_label("PDF")
+    if refval is not None:
+        ax.scatter([refval[x]], [refval[y]], color='C1')
     return ax
 
 
-def plot_kde_matrix(df, w, limits=None, colorbar=True):
+def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
     """
     Plot a KDE matrix.
 
@@ -276,13 +283,15 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True):
                     xmax=limits.get(x.name, default)[1],
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
-                    ax=plt.gca(), title=False, colorbar=colorbar)
+                    ax=plt.gca(), title=False, colorbar=colorbar, refval=refval)
 
     def scatter(x, y, **kwargs):
         alpha = w / w.max()
         colors = np.zeros((alpha.size, 4))
         colors[:, 3] = alpha
         plt.gca().scatter(x, y, color="k")
+        if refval is not None:
+            plt.gca().scatter([refval[x.name]], [refval[y.name]], color='C1')
         plt.gca().set_xlim(*limits.get(x.name, default))
         plt.gca().set_ylim(*limits.get(y.name, default))
 
@@ -291,7 +300,7 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True):
         plot_kde_1d(df, w, x.name,
                     xmin=limits.get(x.name, default)[0],
                     xmax=limits.get(x.name, default)[1],
-                    ax=plt.gca())
+                    ax=plt.gca(), refval=refval)
 
     grid.map_diag(diagonal)
     grid.map_upper(scatter)
