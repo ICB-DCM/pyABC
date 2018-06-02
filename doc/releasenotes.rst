@@ -6,13 +6,13 @@ Release Notes
 ..........
 
 
-0.9.2
+0.9.3
 -----
 
 * Stochastic acceptance criteria introduced.
 
 
-0.9.1
+0.9.2
 -----
 
 * Passing observed summary statistics to distance function update method
@@ -21,6 +21,14 @@ Release Notes
   introduced in AdaptivePNormDistance.
 * AdaptivePNormDistance accepts a Callable as scaling scheme, allowing
   for more flexibility.
+
+
+0.9.1
+-----
+
+* Default visualizations like plot_kde_matrix() can plot reference values,
+  useful for testing purposes.
+
 
 0.9.0
 -----
