@@ -66,7 +66,10 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
     return x_vals, pdf
 
 
-def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, refval=None, **kwargs):
+def plot_kde_1d(df, w, x, xmin=None, xmax=None,
+                numx=50, ax=None,
+                refval=None,
+                **kwargs):
     """
     Plots a 1d histogram.
 
@@ -90,8 +93,9 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None, numx=50, ax=None, refval=None, *
         The number of bins in x direction.
         Defaults tp 50.
     refval: dict, optional
-        A reference value for x. If not None, the value will be
-        highlighted in the plot.
+        A reference value for x (as refval[x]: float).
+        If not None, the value will be highlighted in the plot.
+        Default: None.
 
     Returns
     -------
@@ -154,7 +158,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Defaults tp 50.
     numy int, optional
         The number of bins in y direction.
-        Defaults tp 50.
+        Defaults to 50.
 
     Returns
     -------
@@ -226,7 +230,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Whether to plot a colorbar. Defaults to True.
     title: bool, optional
         Whether to put a title on the plot. Defaults to True.
-
+    refval: dict, optional
+        A reference parameter to be shown in the plots. Default: None.
     Returns
     -------
 
@@ -268,6 +273,10 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
         Whether to plot the colorbars or not.
     limits: dictionary, optional
         Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
+    refval: dict, optional
+        A reference parameter to be shown in the plots (e.g. the
+        underlying ground truth parameter used to simulate the data
+        for testing purposes). Default: None.
     """
     grid = sns.PairGrid(df, diag_sharey=False)
     if limits is None:
@@ -283,7 +292,8 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
                     xmax=limits.get(x.name, default)[1],
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
-                    ax=plt.gca(), title=False, colorbar=colorbar, refval=refval)
+                    ax=plt.gca(), title=False, colorbar=colorbar,
+                    refval=refval)
 
     def scatter(x, y, **kwargs):
         alpha = w / w.max()
