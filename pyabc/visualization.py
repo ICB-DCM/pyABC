@@ -68,12 +68,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
 
 def plot_kde_1d(df, w, x, xmin=None, xmax=None,
                 numx=50, ax=None,
-<<<<<<< HEAD
-                refval=None,
-                **kwargs):
-=======
                 refval=None, **kwargs):
->>>>>>> feature_viztruevalues
     """
     Plots a 1d histogram.
 
@@ -97,11 +92,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         The number of bins in x direction.
         Defaults tp 50.
     refval: dict, optional
-<<<<<<< HEAD
         A reference value for x (as refval[x]: float).
-=======
-        A reference value for x (as refval[x]: float].
->>>>>>> feature_viztruevalues
         If not None, the value will be highlighted in the plot.
         Default: None.
 
