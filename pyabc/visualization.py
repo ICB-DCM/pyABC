@@ -265,6 +265,7 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
 
     Parameters
     ----------
+
     df: Pandas Dataframe
         The rows are the observations, the columns the variables.
     w: np.narray
