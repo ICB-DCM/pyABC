@@ -6,7 +6,7 @@ Release Notes
 ..........
 
 
-0.9.1
+0.9.2
 -----
 
 * Passing observed summary statistics to distance function update method
