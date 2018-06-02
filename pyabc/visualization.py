@@ -92,7 +92,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         The number of bins in x direction.
         Defaults tp 50.
     refval: dict, optional
-        A reference value for x (as refval[x]: float].
+        A reference value for x (as refval[x]: float).
         If not None, the value will be highlighted in the plot.
         Default: None.
 
@@ -265,6 +265,7 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
 
     Parameters
     ----------
+
     df: Pandas Dataframe
         The rows are the observations, the columns the variables.
     w: np.narray
