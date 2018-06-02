@@ -16,6 +16,14 @@ Release Notes
 * AdaptivePNormDistance accepts a Callable as scaling scheme, allowing
   for more flexibility.
 
+
+0.9.1
+-----
+
+* Default visualizations like plot_kde_matrix() can plot reference values,
+  useful for testing purposes.
+
+
 0.9.0
 -----
 
