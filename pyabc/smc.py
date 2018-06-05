@@ -147,12 +147,12 @@ class ABCSMC:
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function,
-                 population_size: Union[PopulationStrategy, int] = 100,
-                 summary_statistics: Callable[[model_output], dict] = identity,
-                 model_prior: RV = None,
-                 model_perturbation_kernel: ModelPerturbationKernel = None,
-                 transitions: List[Transition] = None,
-                 eps: Epsilon = None,
+                 population_size: Union[PopulationStrategy, int]=100,
+                 summary_statistics: Callable[[model_output], dict]=identity,
+                 model_prior: RV=None,
+                 model_perturbation_kernel: ModelPerturbationKernel=None,
+                 transitions: List[Transition]=None,
+                 eps: Epsilon=None,
                  sampler=None,
                  acceptor=None):
 
