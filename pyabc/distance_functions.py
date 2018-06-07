@@ -467,7 +467,7 @@ class AdaptivePNormDistance(PNormDistance):
         return {"name": self.__class__.__name__,
                 "p": self.p,
                 "adaptive": self.adaptive,
-                "scale_type": self.scale_function.__name__}
+                "scale_function": self.scale_function.__name__}
 
 
 def median_absolute_deviation(**kwargs):
