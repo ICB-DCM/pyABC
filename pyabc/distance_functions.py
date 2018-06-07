@@ -518,6 +518,29 @@ def standard_deviation(**kwargs):
     return sd
 
 
+def absolute_bias(**kwargs):
+    """
+    Bias of sample to observed value.
+    """
+    data = np.asarray(kwargs['data'])
+    x_0 = kwargs['x_0']
+    mean = np.mean(data)
+    bias = np.abs(mean - x_0)
+    return bias
+
+
+def sqrt_mean_squared_error(**kwargs):
+    """
+    Square root of the mean squared error, i.e.
+    of the bias squared plus the variance.
+    """
+    sd = standard_deviation(kwargs)
+    bias = bias(kwargs)
+    mse = bias**2 + sd**2
+    smse = np.sqrt(mse)
+    return smse
+
+
 def centered_median_absolute_deviation(**kwargs):
     """
     Median absolute deviation to observation.
