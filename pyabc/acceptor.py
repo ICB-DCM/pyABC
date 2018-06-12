@@ -170,25 +170,25 @@ class StochasticAcceptor(Acceptor):
     account for parametrized noise models.
     """
 
-    def __init__(self, distr=None, max_pd=None):
+    def __init__(self, distribution=None, max_density=None):
         """
         Parameters
         ----------
 
         distribution: optional
-            A distribution object having a method .pdf(x) allowing to evaluate
-            the probability density function. If None is passed, a standard
-            multivariate normal distribution is assumed. The distribution is
-            assumed to be given as P(x-x_0).
+            A distribution object having a method .pdf(x-x_0), allowing to 
+            evaluate the probability density function at x-x_0.
+            If None is passed, a standard multivariate normal distribution 
+            is assumed.
 
-        max_pd: float, optional
+        max_density: float, optional
             The highest mode of the distribution. If None is passed, it is
-            assumed to be at (0,...,0).
+            computed, assumed to be at (0,...,0).
         """
 
         super().__init__()
-        self.distr = distr
-        self.max_pd = max_pd
+        self.distribution = distribution
+        self.max_density = max_density
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # extract summary statistics as array
@@ -197,23 +197,23 @@ class StochasticAcceptor(Acceptor):
         n = len(x)
 
         # noise distribution
-        if self.distr is None:
-            distr = sp_stats.multivariate_normal(
-                        mean=np.zeros(n), cov=np.eye(n))
+        if self.distribution is None:
+            distribution = sp_stats.multivariate_normal(
+                               mean=np.zeros(n), cov=np.eye(n))
         else:
-            distr = self.distr
+            distribution = self.distribution
 
         # maximum probability density
-        if self.max_pd is None:
-            max_pd = distr.pdf(np.zeros(n))
+        if self.max_density is None:
+            max_density = distribution.pdf(np.zeros(n))
         else:
-            max_pd = self.max_pd
+            max_density = self.max_density
 
         # compute probability density
-        pd = distr.pdf(x - x_0)
+        density = distribution.pdf(x - x_0)
 
         # acceptance probability
-        acceptance_probability = pd / max_pd
+        acceptance_probability = density / max_density
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
