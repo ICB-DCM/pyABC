@@ -170,7 +170,7 @@ class StochasticAcceptor(Acceptor):
     account for parametrized noise models.
     """
 
-    def __init__(self, distribution=None, max_density=None):
+    def __init__(self, distribution=None, max_density=None, nr_populations=1):
         """
         Parameters
         ----------
@@ -189,8 +189,19 @@ class StochasticAcceptor(Acceptor):
         super().__init__()
         self.distribution = distribution
         self.max_density = max_density
+        self.nr_populations = nr_populations
+        self.max_temp = 42
+        self.exp = 4
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
+        if t >= self.nr_populations:
+            raise ValueError("PFUI!")
+        temps = np.linspace(1,
+                            self.max_temp**(1/self.exp),
+                            self.nr_populations) ** self.exp
+        temp = temps[self.nr_populations - 1 - t]
+        beta = 1 / temp
+        
         # extract summary statistics as array
         x = np.asarray(list(x.values()))
         x_0 = np.asarray(list(x_0.values()))
@@ -213,12 +224,13 @@ class StochasticAcceptor(Acceptor):
         density = distribution.pdf(x - x_0)
 
         # acceptance probability
-        acceptance_probability = density / max_density
+        acceptance_probability = density**beta / max_density**beta
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
         if acceptance_probability >= threshold:
             accept = True
+            print(acceptance_probability, threshold)
         else:
             accept = False
 
