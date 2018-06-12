@@ -230,7 +230,7 @@ class StochasticAcceptor(Acceptor):
         threshold = np.random.uniform(low=0, high=1)
         if acceptance_probability >= threshold:
             accept = True
-            print(acceptance_probability, threshold)
+            # print(acceptance_probability, threshold)
         else:
             accept = False
 
