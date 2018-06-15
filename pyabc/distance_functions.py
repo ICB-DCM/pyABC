@@ -585,6 +585,17 @@ def combined_median_absolute_deviation(**kwargs):
     return cmad
 
 
+def combined_mean_absolute_deviation(**kwargs):
+    """
+    Compute the sum of the mean absolute deviations to the
+    mean of the samples and to the observed value.
+    """
+    mad = mean_absolute_deviation(**kwargs)
+    mado = mean_absolute_deviation_to_observation(**kwargs)
+    cmad = mad + mado
+    return cmad
+
+
 def standard_deviation_to_observation(**kwargs):
     """
     Standard deviation of absolute deviations to observation.
