@@ -297,7 +297,7 @@ class PNormDistance(DistanceFunction):
 
         # extract weights for time point
         w = self.w[t]
-
+    
         # compute distance
         if self.p == np.inf:
             d = max(abs(w[key]*(x[key]-y[key]))
@@ -473,7 +473,8 @@ class AdaptivePNormDistance(PNormDistance):
 def median_absolute_deviation(**kwargs):
     """
     Calculate the sample `median absolute deviation (MAD)
-    <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_, defined as
+    <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_
+    from the median, defined as
     median(abs(data - median(data)).
 
     Parameters
@@ -495,6 +496,14 @@ def median_absolute_deviation(**kwargs):
     return mad
 
 
+def mean_absolute_deviation(**kwargs):
+    """
+    Calculate the mean absolute deviation from the mean.
+    """
+    data = np.asarray(kwargs['data'])
+    mad = np.mean(np.abs(data - np.mean(data)))
+
+
 def standard_deviation(**kwargs):
     """
     Calculate the sample `standard deviation (SD)
@@ -514,34 +523,33 @@ def standard_deviation(**kwargs):
         The standard deviation of the data points.
     """
     data = np.asarray(kwargs['data'])
-    sd = np.std(data)
-    return sd
+    std = np.std(data)
+    return std
 
 
-def absolute_bias(**kwargs):
+def bias(**kwargs):
     """
     Bias of sample to observed value.
     """
     data = np.asarray(kwargs['data'])
     x_0 = kwargs['x_0']
-    mean = np.mean(data)
-    bias = np.abs(mean - x_0)
+    bias = np.abs(np.mean(data) - x_0)
     return bias
 
 
-def sqrt_mean_squared_error(**kwargs):
+def root_mean_square_deviation(**kwargs):
     """
     Square root of the mean squared error, i.e.
     of the bias squared plus the variance.
     """
-    sd = standard_deviation(kwargs)
-    bias = bias(kwargs)
-    mse = bias**2 + sd**2
-    smse = np.sqrt(mse)
-    return smse
+    bs = bias(**kwargs)
+    std = standard_deviation(**kwargs)
+    mse = bs**2 + std**2
+    rmse = np.sqrt(mse)
+    return rmse
 
 
-def centered_median_absolute_deviation(**kwargs):
+def median_absolute_deviation_to_observation(**kwargs):
     """
     Median absolute deviation to observation.
 
@@ -562,11 +570,22 @@ def centered_median_absolute_deviation(**kwargs):
     """
     data = np.asarray(kwargs['data'])
     x_0 = kwargs['x_0']
-    mad = np.median(np.abs(data - x_0))
-    return mad
+    mado = np.median(np.abs(data - x_0))
+    return mado
 
 
-def centered_standard_deviation(**kwargs):
+def combined_median_absolute_deviation(**kwargs):
+    """
+    Compute the sum of the median absolute deviations to the
+    median of the samples and to the observed value.
+    """
+    mad = median_absolute_deviation(**kwargs)
+    mado = median_absolute_deviation_to_observation(**kwargs)
+    cmad = mad + mado
+    return cmad
+
+
+def standard_deviation_to_observation(**kwargs):
     """
     Standard deviation of absolute deviations to observation.
 
