@@ -574,6 +574,16 @@ def median_absolute_deviation_to_observation(**kwargs):
     return mado
 
 
+def mean_absolute_deviation_to_observation(**kwargs):
+    """
+    Compute the mean absolute deviation to the observation.
+    """
+    data = np.asarray(kwargs['data'])
+    x_0 = kwargs['x_0']
+    mado = np.mean(np.abs(data - x_0))
+    return mado
+
+
 def combined_median_absolute_deviation(**kwargs):
     """
     Compute the sum of the median absolute deviations to the
@@ -581,6 +591,17 @@ def combined_median_absolute_deviation(**kwargs):
     """
     mad = median_absolute_deviation(**kwargs)
     mado = median_absolute_deviation_to_observation(**kwargs)
+    cmad = mad + mado
+    return cmad
+
+
+def combined_mean_absolute_deviation(**kwargs):
+    """
+    Compute the sum of the mean absolute deviations to the
+    mean of the samples and to the observed value.
+    """
+    mad = mean_absolute_deviation(**kwargs)
+    mado = mean_absolute_deviation_to_observation(**kwargs)
     cmad = mad + mado
     return cmad
 
