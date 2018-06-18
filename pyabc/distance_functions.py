@@ -502,7 +502,7 @@ def mean_absolute_deviation(**kwargs):
     """
     data = np.asarray(kwargs['data'])
     mad = np.mean(np.abs(data - np.mean(data)))
-
+    return mad
 
 def standard_deviation(**kwargs):
     """
