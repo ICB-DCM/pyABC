@@ -10,8 +10,8 @@ Release Notes
 -----
 
 2018-09-10
-* Error and warning fixes due to API changes in pandas, seaborn, and change
-  of the R installation on travis.
+* Minor error and warning fixes due to API changes in pandas, seaborn (not
+  used any more), and change of the R installation on travis.
 
 0.9.1
 -----
