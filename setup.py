@@ -14,7 +14,7 @@ with open(os.path.join(os.path.dirname(__file__), "pyabc", "version.py")) as f:
 setup(install_requires=['numpy', 'scipy', 'pandas', 'cloudpickle',
                         "flask_bootstrap", "flask", "bokeh", "redis",
                         "dill",
-                        'gitpython', 'seaborn', 'scikit-learn',
+                        'gitpython', 'scikit-learn',
                         'matplotlib', 'sqlalchemy', 'click',
                         'feather-format', 'bkcharts',
                         'distributed', 'pygments', 'IPython'],
