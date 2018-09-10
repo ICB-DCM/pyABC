@@ -13,7 +13,6 @@ bkcharts
 redis
 dill
 gitpython
-seaborn
 scikit-learn
 matplotlib
 sqlalchemy
