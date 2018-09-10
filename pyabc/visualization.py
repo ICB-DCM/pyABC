@@ -7,6 +7,7 @@ Helper functions to visualize results of ABCSMC runs.
 import numpy as np
 from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 
 
@@ -259,6 +260,65 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 
 def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
+    """
+    Plot a KDE matrix.
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables.
+    w: np.narray
+        The corresponding weights.
+    colorbar: bool
+        Whether to plot the colorbars or not.
+    limits: dictionary, optional
+        Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
+    refval: dict, optional
+        A reference parameter to be shown in the plots (e.g. the
+        underlying ground truth parameter used to simulate the data
+        for testing purposes). Default: None.
+    """
+    grid = sns.PairGrid(df, diag_sharey=False)
+    if limits is None:
+        limits = {}
+
+    default = (None, None)
+
+    def off_diagonal(x, y, **kwargs):
+        df = pd.concat((x, y), axis=1)
+        plot_kde_2d(df, w,
+                    x.name, y.name,
+                    xmin=limits.get(x.name, default)[0],
+                    xmax=limits.get(x.name, default)[1],
+                    ymin=limits.get(y.name, default)[0],
+                    ymax=limits.get(y.name, default)[1],
+                    ax=plt.gca(), title=False, colorbar=colorbar,
+                    refval=refval)
+
+    def scatter(x, y, **kwargs):
+        alpha = w / w.max()
+        colors = np.zeros((alpha.size, 4))
+        colors[:, 3] = alpha
+        plt.gca().scatter(x, y, color="k")
+        if refval is not None:
+            plt.gca().scatter([refval[x.name]], [refval[y.name]], color='C1')
+        plt.gca().set_xlim(*limits.get(x.name, default))
+        plt.gca().set_ylim(*limits.get(y.name, default))
+
+    def diagonal(_, **kwargs):
+        x_name = kwargs['label']
+        # df = pd.concat((df[x_name],), axis=1)
+        plot_kde_1d(df, w, x_name,
+                    xmin=limits.get(x_name, default)[0],
+                    xmax=limits.get(x_name, default)[1],
+                    ax=plt.gca(), refval=refval)
+
+    grid.map_diag(diagonal)
+    grid.map_upper(scatter)
+    grid.map_lower(off_diagonal)
+    return grid
+
+
+def _plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
     """
     Plot a KDE matrix.
 

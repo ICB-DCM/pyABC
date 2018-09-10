@@ -4,10 +4,12 @@ python:
 
 sudo: true
 
+# environment
+
 os:
   - linux
 dist:
-  - trusty
+  - trusty  # take the latest supported LTS version
 
 # install dependencies
 
@@ -36,5 +38,7 @@ install:
 
 script:
   - travis_wait 30 python -m pytest test
+
+# cache
 
 cache: pip
