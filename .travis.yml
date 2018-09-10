@@ -1,22 +1,31 @@
-sudo: true
 language: python
 python:
   - "3.6"
-# command to install dependencies
+
+sudo: true
+
+# install dependencies
+
+before_install:
+  - sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
+  - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
+  - gpg -a --export E084DAB9 | sudo apt-key add -
+
 addons:
   apt:
-    sources:
-    # - sourceline: 'deb http://cran.rstudio.com/bin/linux/ubuntu trusty/'
     packages:
     - redis-server
     - r-base
     - r-base-dev
     - r-base-core
     - r-recommended
+
 install:
   - pip install .
   - pip install -r requirements.txt
   - pip install --upgrade pytest
-# command to run tests
+
+# run tests
+
 script:
   - travis_wait 30 python -m pytest test
