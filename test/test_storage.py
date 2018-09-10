@@ -271,7 +271,7 @@ def test_model_probabilities_all(history):
     history.append_population(1, .23, Population(rand_pop(3)), 234,
                               ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities()
-    assert (probs[3].as_matrix() == np.array([1])).all()
+    assert (probs[3].values == np.array([1])).all()
 
 
 @pytest.fixture(params=[0, None], ids=["GT=0", "GT=None"])
