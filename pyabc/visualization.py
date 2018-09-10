@@ -242,16 +242,14 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                        xmin=xmin, xmax=xmax,
                        ymin=ymin, ymax=ymax, numx=numx, numy=numy)
     if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.figure
+        _, ax = plt.subplots()
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
     if title:
         ax.set_title("Posterior")
     if colorbar:
-        cbar = plt.colorbar(mesh, ax=ax)
+        plt.colorbar(mesh, ax=ax)
         # cbar.set_label("PDF")
     if refval is not None:
         ax.scatter([refval[x]], [refval[y]], color='C1')
@@ -288,8 +286,8 @@ def plot_kde_matrix(df, w,
     n_par = df.shape[1]
     par_names = list(df.columns.values)
     fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par,
-                             sharex=False, sharey=False,
-                             figsize=(height * n_par, height * n_par))
+                               sharex=False, sharey=False,
+                               figsize=(height * n_par, height * n_par))
 
     if limits is None:
         limits = {}
