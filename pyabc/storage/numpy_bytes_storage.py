@@ -47,7 +47,7 @@ def np_from_bytes(arr_bytes):
     f.close()
     for type_ in _primitive_types:
         try:
-            if type_(arr) == arr:
+            if all(type_(arr) == arr):
                 return type_(arr)
         except (TypeError, ValueError):
             pass
