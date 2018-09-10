@@ -304,9 +304,13 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
         plt.gca().set_xlim(*limits.get(x.name, default))
         plt.gca().set_ylim(*limits.get(y.name, default))
 
-    def diagonal(_, **kwargs):
-        x_name = kwargs['label']
-        # df = pd.concat((df[x_name],), axis=1)
+    def diagonal(x, **kwargs):
+        if type(x) == np.ndarray:
+            x_name = 'var'
+            df = pd.DataFrame({x_name: x})
+        else:
+            x_name = x.name
+            df = pd.concat((x,), axis=1)
         plot_kde_1d(df, w, x_name,
                     xmin=limits.get(x_name, default)[0],
                     xmax=limits.get(x_name, default)[1],
