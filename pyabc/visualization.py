@@ -108,6 +108,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     ax.plot(x_vals, pdf, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
+    ax.set_xlim(xmin, xmax)
     if refval is not None:
         ax.axvline(refval[x], color='C1', linestyle='dashed')
     return ax
@@ -323,16 +324,16 @@ def plot_kde_matrix(df, w,
 
     # fill all subplots
     for i in range(0, n_par):
-        x_name = par_names[i]
-        x = df[x_name]
+        y_name = par_names[i]
+        y = df[y_name]
 
         # diagonal
         ax = arr_ax[i, i]
-        hist_1d(x, ax)
+        hist_1d(y, ax)
 
         for j in range(0, i):
-            y_name = par_names[j]
-            y = df[y_name]
+            x_name = par_names[j]
+            x = df[x_name]
 
             # lower
             ax = arr_ax[i, j]
