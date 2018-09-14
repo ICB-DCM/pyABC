@@ -77,7 +77,7 @@ class LocalTransition(Transition):
     def fit(self, X, w):
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
-        self.X_arr = X.as_matrix()
+        self.X_arr = X.values
 
         ctree = cKDTree(X)
         _, indices = ctree.query(X, k=min(self.k + 1, X.shape[0]))
@@ -96,7 +96,7 @@ class LocalTransition(Transition):
         self.normalization = sp.real(self.normalization)
 
     def pdf(self, x):
-        x = x[self.X.columns].as_matrix()
+        x = x[self.X.columns].values
         if len(x.shape) == 1:
             return self._pdf_single(x)
         else:
