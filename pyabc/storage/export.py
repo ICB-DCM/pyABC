@@ -25,15 +25,18 @@ from .history import History
               help="The ABC-SMC run id which to dump. "
                    "Defaults to 1")
 @click.option("--tidy", default=True, type=bool,
-              help="If true, the individual parameter and summary statistic "
+              help="If True, the individual parameter and summary statistic "
                    "names are pivoted. Only works for a single model and "
                    "time point.")
 def main(db, out, format, generation="last", model=None, id=1, tidy=True):
     """
     Export from the SQLite database to different table formats.
+    The function pyabc.History.get_population_extended() is used
+    to extract the data to export from the database, see there for
+    further details.
     """
-    # parse database
-    if ":///" not in db:  # check if db is a file or SQLAlchemy identifier
+    # check if db is a file or SQLAlchemy identifier
+    if ":///" not in db:
         db = "sqlite:///" + db
 
     # parse model
