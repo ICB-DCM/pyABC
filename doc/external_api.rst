@@ -1,5 +1,7 @@
-.. automodule:: pyabc.epsilon
+External
+--------
+
+.. automodule:: pyabc.external
    :members:
    :special-members: __call__
    :show-inheritance:
-
