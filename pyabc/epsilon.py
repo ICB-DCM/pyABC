@@ -333,11 +333,11 @@ class QuantileEpsilon(Epsilon):
         """
 
         # extract distances
-        distances = data.distance.as_matrix()
+        distances = data.distance.values
 
         # extract weights
         if self.weighted:
-            weights = data.w.as_matrix()
+            weights = data.w.values
             # The sum of the weighted distances is larger than 1 if more than
             # a single simulation per parameter is performed.
             # Re-normalize in this case.

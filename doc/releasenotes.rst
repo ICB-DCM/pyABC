@@ -6,15 +6,17 @@ Release Notes
 ..........
 
 
-0.9.3
+0.9.4
 -----
 
+2018-09-29
 * Stochastic acceptance criteria introduced.
 
 
-0.9.2
+0.9.3
 -----
 
+2018-09-21
 * Passing observed summary statistics to distance function update method
   possible.
 * Centering of distance function weights at observed summary statistics
@@ -23,9 +25,18 @@ Release Notes
   for more flexibility.
 
 
+0.9.2
+-----
+
+2018-09-10
+* Minor error and warning fixes due to API changes in pandas, seaborn (not
+  used any more), and change of the R installation on travis.
+
+
 0.9.1
 -----
 
+2018-06-05
 * Default visualizations like plot_kde_matrix() can plot reference values,
   useful for testing purposes.
 

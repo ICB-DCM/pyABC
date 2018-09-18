@@ -7,7 +7,6 @@ Helper functions to visualize results of ABCSMC runs.
 import numpy as np
 from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
 import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
 
 
@@ -109,6 +108,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     ax.plot(x_vals, pdf, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
+    ax.set_xlim(xmin, xmax)
     if refval is not None:
         ax.axvline(refval[x], color='C1', linestyle='dashed')
     return ax
@@ -243,23 +243,25 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                        xmin=xmin, xmax=xmax,
                        ymin=ymin, ymax=ymax, numx=numx, numy=numy)
     if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.figure
+        _, ax = plt.subplots()
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
     if title:
         ax.set_title("Posterior")
     if colorbar:
-        cbar = fig.colorbar(mesh)
-        cbar.set_label("PDF")
+        plt.colorbar(mesh, ax=ax)
+        # cbar.set_label("PDF")
     if refval is not None:
         ax.scatter([refval[x]], [refval[y]], color='C1')
     return ax
 
 
-def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
+def plot_kde_matrix(df, w,
+                    limits=None,
+                    colorbar=True,
+                    height=2.5,
+                    refval=None):
     """
     Plot a KDE matrix.
 
@@ -274,18 +276,25 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
         Whether to plot the colorbars or not.
     limits: dictionary, optional
         Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
+    height: float, optional
+        Height of each subplot in inches. Default: 2.5.
     refval: dict, optional
         A reference parameter to be shown in the plots (e.g. the
         underlying ground truth parameter used to simulate the data
         for testing purposes). Default: None.
     """
-    grid = sns.PairGrid(df, diag_sharey=False)
+
+    n_par = df.shape[1]
+    par_names = list(df.columns.values)
+    fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par,
+                               sharex=False, sharey=False,
+                               figsize=(height * n_par, height * n_par))
+
     if limits is None:
         limits = {}
-
     default = (None, None)
 
-    def off_diagonal(x, y, **kwargs):
+    def hist_2d(x, y, ax):
         df = pd.concat((x, y), axis=1)
         plot_kde_2d(df, w,
                     x.name, y.name,
@@ -293,27 +302,86 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, refval=None):
                     xmax=limits.get(x.name, default)[1],
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
-                    ax=plt.gca(), title=False, colorbar=colorbar,
+                    ax=ax, title=False, colorbar=colorbar,
                     refval=refval)
 
-    def scatter(x, y, **kwargs):
+    def scatter(x, y, ax):
         alpha = w / w.max()
         colors = np.zeros((alpha.size, 4))
         colors[:, 3] = alpha
-        plt.gca().scatter(x, y, color="k")
+        ax.scatter(x, y, color="k")
         if refval is not None:
-            plt.gca().scatter([refval[x.name]], [refval[y.name]], color='C1')
-        plt.gca().set_xlim(*limits.get(x.name, default))
-        plt.gca().set_ylim(*limits.get(y.name, default))
+            ax.scatter([refval[x.name]], [refval[y.name]], color='C1')
+        ax.set_xlim(*limits.get(x.name, default))
+        ax.set_ylim(*limits.get(y.name, default))
 
-    def diagonal(x, **kwargs):
+    def hist_1d(x, ax):
         df = pd.concat((x,), axis=1)
         plot_kde_1d(df, w, x.name,
                     xmin=limits.get(x.name, default)[0],
                     xmax=limits.get(x.name, default)[1],
-                    ax=plt.gca(), refval=refval)
+                    ax=ax, refval=refval)
 
-    grid.map_diag(diagonal)
-    grid.map_upper(scatter)
-    grid.map_lower(off_diagonal)
-    return grid
+    # fill all subplots
+    for i in range(0, n_par):
+        y_name = par_names[i]
+        y = df[y_name]
+
+        # diagonal
+        ax = arr_ax[i, i]
+        hist_1d(y, ax)
+
+        for j in range(0, i):
+            x_name = par_names[j]
+            x = df[x_name]
+
+            # lower
+            ax = arr_ax[i, j]
+            hist_2d(x, y, ax)
+
+            # upper
+            ax = arr_ax[j, i]
+            scatter(y, x, ax)
+
+    # format
+    _format_kde_matrix(arr_ax, par_names)
+
+    # adjust subplots to fit
+    fig.tight_layout()
+
+    return arr_ax
+
+
+def _format_kde_matrix(arr_ax, par_names):
+    """
+    Clear all labels and legends, and set the left-most and bottom-most
+    labels to the parameter names.
+
+    Parameters
+    ----------
+
+    arr_ax: array of matplotlib.axes.Axes
+        Shape (n_par, n_par) where len(par_names) == n_par.
+    par_names: list of str
+        Parameter names to be used as labels.
+    """
+    n_par = len(par_names)
+
+    for i in range(0, n_par):
+        for j in range(0, n_par):
+            # clear labels
+            arr_ax[i, j].set_xlabel("")
+            arr_ax[i, j].set_ylabel("")
+
+            # clear legends
+            arr_ax[i, j].legend = None
+
+            # remove spines
+            arr_ax[i, j].spines['right'].set_visible(False)
+            arr_ax[i, j].spines['top'].set_visible(False)
+
+    # set left-most and bottom-most labels to parameter names
+    for ax, label in zip(arr_ax[-1, :], par_names):
+        ax.set_xlabel(label)
+    for ax, label in zip(arr_ax[:, 0], par_names):
+        ax.set_ylabel(label)

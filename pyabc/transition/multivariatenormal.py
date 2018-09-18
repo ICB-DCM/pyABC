@@ -61,7 +61,7 @@ class MultivariateNormalTransition(Transition):
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
-        self._X_arr = X.as_matrix()
+        self._X_arr = X.values
         sample_cov = smart_cov(self._X_arr, w)
         dim = sample_cov.shape[0]
         eff_sample_size = 1 / (w**2).sum()
