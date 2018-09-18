@@ -727,7 +727,7 @@ class ABCSMC:
             return
 
         w = self.history.get_model_probabilities(
-            self.history.max_t)["p"].as_matrix()
+            self.history.max_t)["p"].values
 
         # make a copy in case the population strategy messes with
         # the transitions
