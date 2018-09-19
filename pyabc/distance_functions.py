@@ -297,7 +297,7 @@ class PNormDistance(DistanceFunction):
 
         # extract weights for time point
         w = self.w[t]
-    
+
         # compute distance
         if self.p == np.inf:
             d = max(abs(w[key]*(x[key]-y[key]))
@@ -476,20 +476,6 @@ def median_absolute_deviation(**kwargs):
     <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_
     from the median, defined as
     median(abs(data - median(data)).
-
-    Parameters
-    ----------
-
-    kwargs:
-        data: List
-            List of data points.
-
-    Returns
-    -------
-
-    mad: float
-        The median absolute deviation of the data.
-
     """
     data = np.asarray(kwargs['data'])
     mad = np.median(np.abs(data - np.median(data)))
@@ -504,23 +490,11 @@ def mean_absolute_deviation(**kwargs):
     mad = np.mean(np.abs(data - np.mean(data)))
     return mad
 
+
 def standard_deviation(**kwargs):
     """
     Calculate the sample `standard deviation (SD)
     <https://en.wikipedia.org/wiki/Standard_deviation/>`_.
-
-    Parameters
-    ----------
-
-    kwargs:
-        data: List
-            List of data points.
-
-    Returns
-    -------
-
-    sd: float
-        The standard deviation of the data points.
     """
     data = np.asarray(kwargs['data'])
     std = np.std(data)
@@ -551,26 +525,21 @@ def root_mean_square_deviation(**kwargs):
 
 def median_absolute_deviation_to_observation(**kwargs):
     """
-    Median absolute deviation to observation.
-
-    Parameters
-    ----------
-
-    **kwargs:
-        data: List
-            List of data points.
-        x_0: float
-            Observed value for the given summary statistic.
-
-    Returns
-    -------
-
-    mad: float
-        The median absolute deviation of data w.r.t. x_0.
+    Median absolute deviation of data w.r.t. the observation x_0.
     """
     data = np.asarray(kwargs['data'])
     x_0 = kwargs['x_0']
     mado = np.median(np.abs(data - x_0))
+    return mado
+
+
+def mean_absolute_deviation_to_observation(**kwargs):
+    """
+    Mean absolute deviation of data w.r.t. the observation x_0.
+    """
+    data = np.asarray(kwargs['data'])
+    x_0 = kwargs['x_0']
+    mado = np.mean(np.abs(data - x_0))
     return mado
 
 
@@ -598,22 +567,8 @@ def combined_mean_absolute_deviation(**kwargs):
 
 def standard_deviation_to_observation(**kwargs):
     """
-    Standard deviation of absolute deviations to observation.
-
-    Parameters
-    ----------
-
-    kwargs:
-        data: List
-            List of data points.
-        x_0: float
-            Observed value for the given summary statistic.
-
-    Returns
-    -------
-
-    sd: float
-        The standard absolute deviation of data w.r.t. x_0.
+    Standard deviation of absolute deviations of the data w.r.t.
+    the observation x_0.
     """
     data = np.asarray(kwargs['data'])
     x_0 = kwargs['x_0']
