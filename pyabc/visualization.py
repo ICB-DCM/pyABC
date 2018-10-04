@@ -358,7 +358,7 @@ def plot_kde_matrix(df, w,
         plot_kde_1d(df, w, x.name,
                     xmin=limits.get(x.name, default)[0],
                     xmax=limits.get(x.name, default)[1],
-                    numx=numx, numy=numy,
+                    numx=numx,
                     ax=ax, refval=refval, kde=kde)
 
     # fill all subplots
