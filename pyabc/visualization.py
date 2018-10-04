@@ -5,12 +5,14 @@ Visualizations
 Helper functions to visualize results of ABCSMC runs.
 """
 import numpy as np
-from .transition import MultivariateNormalTransition, silverman_rule_of_thumb
+from .transition import (MultivariateNormalTransition,
+                         silverman_rule_of_thumb,
+                         GridSearchCV)
 import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
+def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
     """
     Calculates a 1 dimensional histogram from a Dataframe and weights.
 
@@ -41,6 +43,10 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
     numx: int, optional
         The number of bins in x direction.
         Defaults to 50.
+    kde: pyabc.Transition, optional
+        The kernel density estimator to use for creating a smooth density
+        from the sample. If None, a multivariate normal kde with
+        cross-validated scaling is used.
 
     Returns
     -------
@@ -51,10 +57,13 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
         plt.plot(x, pdf)
 
     """
-    kde = MultivariateNormalTransition(
-        scaling=1,
-        bandwidth_selector=silverman_rule_of_thumb)
+    if kde is None:
+        kde = MultivariateNormalTransition(
+            scaling=1,
+            bandwidth_selector=silverman_rule_of_thumb)
+        kde = GridSearchCV(kde, {'scaling': np.linspace(0.05, 1.0, 5)}, cv=5)
     kde.fit(df[[x]], w)
+
     if xmin is None:
         xmin = df[x].min()
     if xmax is None:
@@ -67,7 +76,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50):
 
 def plot_kde_1d(df, w, x, xmin=None, xmax=None,
                 numx=50, ax=None,
-                refval=None, **kwargs):
+                refval=None, kde=None, **kwargs):
     """
     Plots a 1d histogram.
 
@@ -94,6 +103,10 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         A reference value for x (as refval[x]: float).
         If not None, the value will be highlighted in the plot.
         Default: None.
+    kde: pyabc.Transition, optional
+        The kernel density estimator to use for creating a smooth density
+        from the sample. If None, a multivariate normal kde with
+        cross-validated scaling is used.
 
     Returns
     -------
@@ -102,7 +115,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         axis of the plot
 
     """
-    x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx)
+    x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx, kde=kde)
     if ax is None:
         fig, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
@@ -115,7 +128,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
 
 
 def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-           numx=50, numy=50):
+           numx=50, numy=50, kde=None):
     """
     Calculates a 2 dimensional histogram from a Dataframe and weights.
 
@@ -158,6 +171,10 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     numy int, optional
         The number of bins in y direction.
         Defaults to 50.
+    kde: pyabc.Transition, optional
+        The kernel density estimator to use for creating a smooth density
+        from the sample. If None, a multivariate normal kde with
+        cross-validated scaling is used.
 
     Returns
     -------
@@ -168,9 +185,11 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         plt.pcolormesh(X, Y, PDF)
 
     """
-    kde = MultivariateNormalTransition(
-        scaling=1,
-        bandwidth_selector=silverman_rule_of_thumb)
+    if kde is None:
+        kde = MultivariateNormalTransition(
+            scaling=1,
+            bandwidth_selector=silverman_rule_of_thumb)
+        kde = GridSearchCV(kde, {'scaling': np.linspace(0.05, 1, 5)}, cv=5)
     kde.fit(df[[x, y]], w)
     if xmin is None:
         xmin = df[x].min()
@@ -190,7 +209,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                 numx=50, numy=50, ax=None, colorbar=True,
-                title=True, refval=None, **kwargs):
+                title=False, refval=None, kde=None, **kwargs):
     """
     Plots a 2d histogram.
 
@@ -231,6 +250,10 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Whether to put a title on the plot. Defaults to True.
     refval: dict, optional
         A reference parameter to be shown in the plots. Default: None.
+    kde: pyabc.Transition, optional
+        The kernel density estimator to use for creating a smooth density
+        from the sample. If None, a multivariate normal kde with
+        cross-validated scaling is used.
 
     Returns
     -------
@@ -241,7 +264,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     """
     X, Y, PDF = kde_2d(df, w, x, y,
                        xmin=xmin, xmax=xmax,
-                       ymin=ymin, ymax=ymax, numx=numx, numy=numy)
+                       ymin=ymin, ymax=ymax, numx=numx, numy=numy,
+                       kde=kde)
     if ax is None:
         _, ax = plt.subplots()
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
@@ -261,7 +285,8 @@ def plot_kde_matrix(df, w,
                     limits=None,
                     colorbar=True,
                     height=2.5,
-                    refval=None):
+                    refval=None,
+                    kde=None):
     """
     Plot a KDE matrix.
 
@@ -282,6 +307,10 @@ def plot_kde_matrix(df, w,
         A reference parameter to be shown in the plots (e.g. the
         underlying ground truth parameter used to simulate the data
         for testing purposes). Default: None.
+    kde: pyabc.Transition, optional
+        The kernel density estimator to use for creating a smooth density
+        from the sample. If None, a multivariate normal kde with
+        cross-validated scaling is used.
     """
 
     n_par = df.shape[1]
@@ -303,7 +332,7 @@ def plot_kde_matrix(df, w,
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
                     ax=ax, title=False, colorbar=colorbar,
-                    refval=refval)
+                    refval=refval, kde=kde)
 
     def scatter(x, y, ax):
         alpha = w / w.max()
@@ -320,7 +349,7 @@ def plot_kde_matrix(df, w,
         plot_kde_1d(df, w, x.name,
                     xmin=limits.get(x.name, default)[0],
                     xmax=limits.get(x.name, default)[1],
-                    ax=ax, refval=refval)
+                    ax=ax, refval=refval, kde=kde)
 
     # fill all subplots
     for i in range(0, n_par):
