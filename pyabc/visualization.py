@@ -285,6 +285,8 @@ def plot_kde_matrix(df, w,
                     limits=None,
                     colorbar=True,
                     height=2.5,
+                    numx=50,
+                    numy=50,
                     refval=None,
                     kde=None):
     """
@@ -303,6 +305,12 @@ def plot_kde_matrix(df, w,
         Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
     height: float, optional
         Height of each subplot in inches. Default: 2.5.
+    numx: int, optional
+        The number of bins in x direction.
+        Defaults to 50.
+    numy: int, optional
+        The number of bins in y direction.
+        Defaults to 50.
     refval: dict, optional
         A reference parameter to be shown in the plots (e.g. the
         underlying ground truth parameter used to simulate the data
@@ -331,6 +339,7 @@ def plot_kde_matrix(df, w,
                     xmax=limits.get(x.name, default)[1],
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
+                    numx=numx, numy=numy,
                     ax=ax, title=False, colorbar=colorbar,
                     refval=refval, kde=kde)
 
@@ -349,6 +358,7 @@ def plot_kde_matrix(df, w,
         plot_kde_1d(df, w, x.name,
                     xmin=limits.get(x.name, default)[0],
                     xmax=limits.get(x.name, default)[1],
+                    numx=numx, numy=numy,
                     ax=ax, refval=refval, kde=kde)
 
     # fill all subplots
