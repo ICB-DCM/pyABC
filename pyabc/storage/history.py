@@ -454,11 +454,13 @@ class History:
                                                summary_statistics_list):
                     sample = Sample(distance=distance)
                     particle.samples.append(sample)
-                    for name, value in summ_stat.items():
-                        if name is None:
-                            raise Exception("Summary statistics need names.")
-                        sample.summary_statistics.append(
-                            SummaryStatistic(name=name, value=value))
+                    sample.summary_statistics.append(
+                        SummaryStatistic(name='ss_dummy', value=42)) 
+                    #for name, value in summ_stat.items():
+                    #    if name is None:
+                    #        raise Exception("Summary statistics need names.")
+                    #    sample.summary_statistics.append(
+                    #        SummaryStatistic(name=name, value=value))
 
         self._session.commit()
         history_logger.debug("Appended population")
