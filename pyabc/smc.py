@@ -686,7 +686,7 @@ class ABCSMC:
             model_perturbation_kernel = self.model_perturbation_kernel
             transitions = self.transitions
             nr_samples_per_parameter = self.population_strategy.nr_samples_per_parameter
-            models = self.models,
+            models = self.models
             summary_statistics = self.summary_statistics
             distance_function = self.distance_function
             eps = self.eps
