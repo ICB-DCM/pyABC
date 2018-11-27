@@ -681,28 +681,39 @@ class ABCSMC:
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
             print("self: ", len(cloudpickle.dumps(self)))
+            model_prior = self.model_prior
+            parameter_priors = self.parameter_priors
+            model_perturbation_kernel = self.model_perturbation_kernel
+            transitions = self.transitions
+            nr_samples_per_parameter = self.population_strategy.nr_samples_per_parameter
+            models = self.models,
+            summary_statistics = self.summary_statistics
+            distance_function = self.distance_function
+            eps = self.eps
+            acceptor = self.acceptor
+            x_0 = self.x_0
             # simulation function
             def simulate_one():
                 par = ABCSMC._generate_valid_proposal(t, m, p,
-                    self.model_prior,
-                    self.parameter_priors,
-                    self.model_perturbation_kernel,
-                    self.transitions)
+                    model_prior,
+                    parameter_priors,
+                    model_perturbation_kernel,
+                    transitions)
                 return ABCSMC._evaluate_proposal(
                     *par,
                     t,
                     model_probabilities,
-                    self.nr_samples_per_parameter,
-                    self.models,
-                    self.summary_statistics,
-                    self.distance_function,
-                    self.eps,
-                    self.acceptor,
-                    self.x_0,
-                    self.model_prior,
-                    self.parameter_priors,
-                    self.model_perturbation_kernel,
-                    self.transitions)
+                    nr_samples_per_parameter,
+                    models,
+                    summary_statistics,
+                    distance_function,
+                    eps,
+                    acceptor,
+                    x_0,
+                    model_prior,
+                    parameter_priors,
+                    model_perturbation_kernel,
+                    transitions)
             print("simulate: ", len(cloudpickle.dumps(simulate_one)))
             print("evaluate: ", len(cloudpickle.dumps(ABCSMC._evaluate_proposal)))
             #  sample for new population
