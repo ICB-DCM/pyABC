@@ -28,6 +28,7 @@ from .platform_factory import DefaultSampler
 from .acceptor import accept_use_current_time, SimpleAcceptor
 import copy
 import warnings
+import cloudpickle
 
 abclogger = logging.getLogger("ABC")
 
