@@ -512,7 +512,6 @@ class ABCSMC:
                            x_0,
                            model_prior,
                            parameter_priors,
-                           nr_samples_per_parameter,
                            model_perturbation_kernel,
                            transitions) -> Particle:
         """
@@ -701,7 +700,6 @@ class ABCSMC:
                     self.x_0,
                     self.model_prior,
                     self.parameter_priors,
-                    self.nr_samples_per_parameter,
                     self.model_perturbation_kernel,
                     self.transitions)
             print("simulate: ", len(cloudpickle.dumps(simulate_one)))
