@@ -451,7 +451,12 @@ class ABCSMC:
         # return all generated summary statistics
         return sample.all_sum_stats
 
-    def _generate_valid_proposal(self, t, m, p):
+    @staticmethod
+    def _generate_valid_proposal(t, m, p,
+            model_prior,
+            parameter_priors,
+            model_perturbation_kernel,
+            transitions):
         """
         Sample a parameter for a model.
 
@@ -470,8 +475,8 @@ class ABCSMC:
 
         # first generation
         if t == 0:  # sample from prior
-            m_ss = int(self.model_prior.rvs())
-            theta_ss = self.parameter_priors[m_ss].rvs()
+            m_ss = int(model_prior.rvs())
+            theta_ss = parameter_priors[m_ss].rvs()
             return m_ss, theta_ss
 
         # later generation
@@ -479,7 +484,7 @@ class ABCSMC:
             if len(m) > 1:
                 index = fast_random_choice(p)
                 m_s = m[index]
-                m_ss = self.model_perturbation_kernel.rvs(m_s)
+                m_ss = model_perturbation_kernel.rvs(m_s)
                 # theta_s is None if the population m_ss has died out.
                 # This can happen since the model_perturbation
                 # _kernel can return  a model nr which has died out.
@@ -487,16 +492,29 @@ class ABCSMC:
                     continue
             else:
                 m_ss = m[0]
-            theta_ss = self.transitions[m_ss].rvs()
+            theta_ss = transitions[m_ss].rvs()
 
-            if (self.model_prior.pmf(m_ss)
-                    * self.parameter_priors[m_ss].pdf(theta_ss) > 0):
+            if (model_prior.pmf(m_ss)
+                    * parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
 
-    def _evaluate_proposal(self, m_ss,
+    @staticmethod
+    def _evaluate_proposal(m_ss,
                            theta_ss,
                            t,
-                           model_probabilities) -> Particle:
+                           model_probabilities,
+                           nr_samples_per_parameter,
+                           models,
+                           summary_statistics,
+                           distance_function,
+                           eps,
+                           acceptor,
+                           x_0,
+                           model_prior,
+                           parameter_priors,
+                           nr_samples_per_parameter,
+                           model_perturbation_kernel,
+                           transitions) -> Particle:
         """
         Corresponds to Sampler.simulate_one. Data for the given parameters
         theta_ss are simulated, summary statistics computed and evaluated.
@@ -510,15 +528,15 @@ class ABCSMC:
         accepted_sum_stats = []
         all_sum_stats = []
 
-        for _ in range(self.population_strategy.nr_samples_per_parameter):
-            model_result = self.models[m_ss].accept(
+        for _ in range(nr_samples_per_parameter):
+            model_result = models[m_ss].accept(
                 t,
                 theta_ss,
-                self.summary_statistics,
-                self.distance_function,
-                self.eps,
-                self.acceptor,
-                self.x_0)
+                summary_statistics,
+                distance_function,
+                eps,
+                acceptor,
+                x_0)
             # append to all_sum_stats in either case to allow for the situation
             # that in population.all_sum_stats() one is only interested in
             # accepted particles
@@ -530,8 +548,13 @@ class ABCSMC:
         accepted = len(accepted_sum_stats) > 0
 
         if accepted:
-            weight = self._calc_proposal_weight(
-                accepted_distances, m_ss, theta_ss, t, model_probabilities)
+            weight = ABCSMC._calc_proposal_weight(
+                accepted_distances, m_ss, theta_ss, t, model_probabilities,
+                model_prior,
+                parameter_priors,
+                nr_samples_per_parameter,
+                model_perturbation_kernel,
+                transitions)
         else:
             weight = 0
 
@@ -539,23 +562,29 @@ class ABCSMC:
             m_ss, theta_ss, weight, accepted_distances,
             accepted_sum_stats, all_sum_stats, accepted)
 
-    def _calc_proposal_weight(self,
-                              distance_list,
+    @staticmethod
+    def _calc_proposal_weight(distance_list,
                               m_ss,
                               theta_ss,
-                              t, model_probabilities):
+                              t,
+                              model_probabilities,
+                              model_prior,
+                              parameter_priors,
+                              nr_samples_per_parameter,
+                              model_perturbation_kernel,
+                              transitions):
         """
         Calculate the weight for the generated parameter.
         """
 
         if t == 0:
             weight = (len(distance_list)
-                      / self.population_strategy.nr_samples_per_parameter)
+                      / nr_samples_per_parameter)
         else:
             model_factor = sum(
-                row.p * self.model_perturbation_kernel.pmf(m_ss, m)
+                row.p * model_perturbation_kernel.pmf(m_ss, m)
                 for m, row in model_probabilities.iterrows())
-            particle_factor = self.transitions[m_ss].pdf(
+            particle_factor = transitions[m_ss].pdf(
                 pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
             if normalization == 0:
@@ -563,9 +592,9 @@ class ABCSMC:
             # reflects stochasticity of the model
             fraction_accepted_runs_for_single_parameter = (
                 len(distance_list)
-                / self.population_strategy.nr_samples_per_parameter)
-            weight = (self.model_prior.pmf(m_ss)
-                      * self.parameter_priors[m_ss].pdf(theta_ss)
+                / nr_samples_per_parameter)
+            weight = (model_prior.pmf(m_ss)
+                      * parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
                       / normalization)
         return weight
@@ -651,19 +680,36 @@ class ABCSMC:
 
             m = sp.array(model_probabilities.index)
             p = sp.array(model_probabilities.p)
-
+            print("self: ", len(cloudpickle.dumps(self)))
             # simulation function
             def simulate_one():
-                par = self._generate_valid_proposal(t, m, p)
-                return self._evaluate_proposal(
+                par = ABCSMC._generate_valid_proposal(t, m, p,
+                    self.model_prior,
+                    self.parameter_priors,
+                    self.model_perturbation_kernel,
+                    self.transitions)
+                return ABCSMC._evaluate_proposal(
                     *par,
                     t,
-                    model_probabilities)
-
-            # sample for new population
+                    model_probabilities,
+                    self.nr_samples_per_parameter,
+                    self.models,
+                    self.summary_statistics,
+                    self.distance_function,
+                    self.eps,
+                    self.acceptor,
+                    self.x_0,
+                    self.model_prior,
+                    self.parameter_priors,
+                    self.nr_samples_per_parameter,
+                    self.model_perturbation_kernel,
+                    self.transitions)
+            print("simulate: ", len(cloudpickle.dumps(simulate_one)))
+            print("evaluate: ", len(cloudpickle.dumps(ABCSMC._evaluate_proposal)))
+            #  sample for new population
             sample = self.sampler.sample_until_n_accepted(
                 self.population_strategy.nr_particles, simulate_one)
-
+        
             # retrieve accepted population
             population = sample.get_accepted_population()
 
