@@ -272,8 +272,9 @@ class SGE:
         # store the array
         for task_nr, start_index in enumerate(range(0, len(array),
                                                     self.chunk_size)):
-            with open(os.path.join(jobs_dir, str(task_nr + 1) + '.job'), 'wb') \
-                    as my_file:
+            with open(os.path.join(jobs_dir,
+                                   str(task_nr + 1) + '.job'),
+                      'wb') as my_file:
                 cloudpickle.dump(
                     list(array[start_index:start_index + self.chunk_size]),
                     my_file)

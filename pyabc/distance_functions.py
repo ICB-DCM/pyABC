@@ -680,8 +680,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
             for measure in self.measures_to_use:
                 measures[measure].append(sample[measure])
         self.normalization = {measure:
-                                  self.upper(measures[measure])
-                                  - self.lower(measures[measure])
+                              self.upper(measures[measure])
+                              - self.lower(measures[measure])
                               for measure in self.measures_to_use}
 
     def initialize(self,

@@ -362,7 +362,7 @@ class History:
             Total nr of sample attempts for the ABC run.
         """
         nr_sim = (self._session.query(func.sum(Population.nr_samples))
-            .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
+                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return nr_sim
 
     def _make_session(self):
@@ -521,14 +521,13 @@ class History:
 
         p_models = (
             self._session
-                .query(Model.p_model, Model.m, Population.t)
-                .join(Population)
-                .join(ABCSMC)
-                .filter(ABCSMC.id == self.id)
-                .filter(
-                Population.t == t if t is not None else Population.t >= 0)
-                .order_by(Model.m)
-                .all())
+            .query(Model.p_model, Model.m, Population.t)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t if t is not None else Population.t >= 0)
+            .order_by(Model.m)
+            .all())
         # TODO this is a mess
         if t is not None:
             p_models_df = pd.DataFrame([p[:2] for p in p_models],
@@ -634,7 +633,7 @@ class History:
         This is equivalent to ``n_populations - 1``.
         """
         max_t = (self._session.query(func.max(Population.t))
-            .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
+                 .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return max_t
 
     @property
@@ -695,7 +694,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats(self, t: int = None) -> (
-    List[float], List[dict]):
+            List[float], List[dict]):
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.

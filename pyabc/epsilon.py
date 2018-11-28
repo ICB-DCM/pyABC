@@ -240,7 +240,7 @@ class QuantileEpsilon(Epsilon):
 
         eps_logger.debug(
             "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
-                .format(initial_epsilon, quantile_multiplier))
+            .format(initial_epsilon, quantile_multiplier))
         require_initialize = initial_epsilon == 'from_sample'
         super().__init__(require_initialize=require_initialize)
         self._initial_epsilon = initial_epsilon
