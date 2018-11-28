@@ -422,20 +422,26 @@ class ABCSMC:
 
         return self._initial_weights, self._initial_sum_stats
 
-    def _sample_from_prior(self, t: int) -> List[dict]:
+    def _create_simulate_from_prior_function(self, t):
         """
-        Only sample from prior and return results without changing
-        the history of the distance function or the epsilon.
+        Similar to _create_simulate_function, apart here we sample from the
+        prior and accept always.
         """
 
+        model_prior = self.model_prior
+        parameter_priors = self.parameter_priors
+        models = self.models
+        summary_statistics = self.summary_statistics
+
         # simulation function, simplifying some parts compared to later
+
         def simulate_one():
-            m = int(self.model_prior.rvs())
-            theta = self.parameter_priors[m].rvs()
+            m = int(model_prior.rvs())
+            theta = parameter_priors[m].rvs()
             sum_stats = []
             all_sum_stats = []
-            model_result = self.models[m].summary_statistics(
-                t, theta, self.summary_statistics)
+            model_result = models[m].summary_statistics(
+                t, theta, summary_statistics)
             all_sum_stats.append(model_result.sum_stats)
             weight = 0
             accepted_distances = []
@@ -445,6 +451,17 @@ class ABCSMC:
                 m, theta, weight, accepted_distances,
                 sum_stats, all_sum_stats, accepted)
 
+        return simulate_one
+
+    def _sample_from_prior(self, t: int) -> List[dict]:
+        """
+        Only sample from prior and return results without changing
+        the history of the distance function or the epsilon.
+        """
+
+        # create simulate function
+        simulate_one = self._create_simulate_from_prior_function(t)
+
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             self.population_strategy.nr_particles, simulate_one)
@@ -452,8 +469,80 @@ class ABCSMC:
         # return all generated summary statistics
         return sample.all_sum_stats
 
+    def _create_simulate_function(self, t):
+        """
+        Create a simulation function which performs the sampling of parameters,
+        simulation of data and acceptance checking, and which is then passed
+        to the sampler.
+
+        Parameters
+        ----------
+        t: int
+            Time index
+
+        Returns
+        -------
+        simulate_one: callable
+            Function that samples parameters, simulates data, and checks
+            acceptance.
+
+        .. note::
+            For some of the samplers, the sampling function needs to be
+            serialized in order to be transported to where the sampling
+            happens. Therefore, the returned function should be light, and
+            in particular not contain references to the ABCSMC class.
+        """
+
+        # cache model_probabilities to not query the database so often
+        model_probabilities = self.history.get_model_probabilities(
+            self.history.max_t)
+
+        m = sp.array(model_probabilities.index)
+        p = sp.array(model_probabilities.p)
+
+        model_prior = self.model_prior
+        parameter_priors = self.parameter_priors
+        model_perturbation_kernel = self.model_perturbation_kernel
+        transitions = self.transitions
+        nr_samples_per_parameter = \
+            self.population_strategy.nr_samples_per_parameter
+        models = self.models
+        summary_statistics = self.summary_statistics
+        distance_function = self.distance_function
+        eps = self.eps
+        acceptor = self.acceptor
+        x_0 = self.x_0
+
+        # simulation function
+        def simulate_one():
+            parameter = ABCSMC._generate_valid_proposal(
+                t, m, p,
+                model_prior,
+                parameter_priors,
+                model_perturbation_kernel,
+                transitions)
+            particle = ABCSMC._evaluate_proposal(
+                *parameter,
+                t,
+                model_probabilities,
+                nr_samples_per_parameter,
+                models,
+                summary_statistics,
+                distance_function,
+                eps,
+                acceptor,
+                x_0,
+                model_prior,
+                parameter_priors,
+                model_perturbation_kernel,
+                transitions)
+            return particle
+
+        return simulate_one
+
     @staticmethod
-    def _generate_valid_proposal(t, m, p,
+    def _generate_valid_proposal(
+            t, m, p,
             model_prior,
             parameter_priors,
             model_perturbation_kernel,
@@ -500,21 +589,21 @@ class ABCSMC:
                 return m_ss, theta_ss
 
     @staticmethod
-    def _evaluate_proposal(m_ss,
-                           theta_ss,
-                           t,
-                           model_probabilities,
-                           nr_samples_per_parameter,
-                           models,
-                           summary_statistics,
-                           distance_function,
-                           eps,
-                           acceptor,
-                           x_0,
-                           model_prior,
-                           parameter_priors,
-                           model_perturbation_kernel,
-                           transitions) -> Particle:
+    def _evaluate_proposal(
+            m_ss, theta_ss,
+            t,
+            model_probabilities,
+            nr_samples_per_parameter,
+            models,
+            summary_statistics,
+            distance_function,
+            eps,
+            acceptor,
+            x_0,
+            model_prior,
+            parameter_priors,
+            model_perturbation_kernel,
+            transitions) -> Particle:
         """
         Corresponds to Sampler.simulate_one. Data for the given parameters
         theta_ss are simulated, summary statistics computed and evaluated.
@@ -563,16 +652,17 @@ class ABCSMC:
             accepted_sum_stats, all_sum_stats, accepted)
 
     @staticmethod
-    def _calc_proposal_weight(distance_list,
-                              m_ss,
-                              theta_ss,
-                              t,
-                              model_probabilities,
-                              model_prior,
-                              parameter_priors,
-                              nr_samples_per_parameter,
-                              model_perturbation_kernel,
-                              transitions):
+    def _calc_proposal_weight(
+            distance_list,
+            m_ss,
+            theta_ss,
+            t,
+            model_probabilities,
+            model_prior,
+            parameter_priors,
+            nr_samples_per_parameter,
+            model_perturbation_kernel,
+            transitions):
         """
         Calculate the weight for the generated parameter.
         """
@@ -673,50 +763,12 @@ class ABCSMC:
             self._fit_transitions(t)
             self._adapt_population_size(t)
 
-            # cache model_probabilities to not query the database so often
-            model_probabilities = self.history.get_model_probabilities(
-                self.history.max_t)
+            # create simulate function
+            simulate_one = self._create_simulate_function(t)
+
             abclogger.debug('now submitting population ' + str(t))
 
-            m = sp.array(model_probabilities.index)
-            p = sp.array(model_probabilities.p)
-            print("self: ", len(cloudpickle.dumps(self)))
-            model_prior = self.model_prior
-            parameter_priors = self.parameter_priors
-            model_perturbation_kernel = self.model_perturbation_kernel
-            transitions = self.transitions
-            nr_samples_per_parameter = self.population_strategy.nr_samples_per_parameter
-            models = self.models
-            summary_statistics = self.summary_statistics
-            distance_function = self.distance_function
-            eps = self.eps
-            acceptor = self.acceptor
-            x_0 = self.x_0
-            # simulation function
-            def simulate_one():
-                par = ABCSMC._generate_valid_proposal(t, m, p,
-                    model_prior,
-                    parameter_priors,
-                    model_perturbation_kernel,
-                    transitions)
-                return ABCSMC._evaluate_proposal(
-                    *par,
-                    t,
-                    model_probabilities,
-                    nr_samples_per_parameter,
-                    models,
-                    summary_statistics,
-                    distance_function,
-                    eps,
-                    acceptor,
-                    x_0,
-                    model_prior,
-                    parameter_priors,
-                    model_perturbation_kernel,
-                    transitions)
-            print("simulate: ", len(cloudpickle.dumps(simulate_one)))
-            print("evaluate: ", len(cloudpickle.dumps(ABCSMC._evaluate_proposal)))
-            #  sample for new population
+            # perform the sampling
             sample = self.sampler.sample_until_n_accepted(
                 self.population_strategy.nr_particles, simulate_one)
         
