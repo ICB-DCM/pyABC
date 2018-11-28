@@ -1,9 +1,7 @@
-# ![pyABC](https://github.com/icb-dcm/pyabc/tree/master/doc/logo.png)
+![pyABC](doc/logo.png)
 
-
-[![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
 [![Build Status](https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master)](https://travis-ci.org/ICB-DCM/pyABC)
-
+[![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
 
 Massively parallel, distributed and scalable ABC-SMC
 (Approximate Bayesian Computation - Sequential Monte Carlo)
@@ -17,7 +15,6 @@ Implemented in Python with support of the R language.
 
 
 ## Examples
-
 
 Many examples are available as Jupyter Notebooks in the
 [examples directory](https://github.com/icb-dcm/pyabc/tree/master/doc/examples)
