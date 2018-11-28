@@ -12,6 +12,8 @@ Release Notes
 2018-12-01
 * Fix serious memory problem resulting from pickling more than necessary
   for parallel sampling.
+* Update logo, readme.
+* Make tidying optional in abc-export (default behavior not changed).
 
 
 0.9.2
