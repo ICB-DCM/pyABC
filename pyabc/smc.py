@@ -148,12 +148,12 @@ class ABCSMC:
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function,
-                 population_size: Union[PopulationStrategy, int]=100,
-                 summary_statistics: Callable[[model_output], dict]=identity,
-                 model_prior: RV=None,
-                 model_perturbation_kernel: ModelPerturbationKernel=None,
-                 transitions: List[Transition]=None,
-                 eps: Epsilon=None,
+                 population_size: Union[PopulationStrategy, int] = 100,
+                 summary_statistics: Callable[[model_output], dict] = identity,
+                 model_prior: RV = None,
+                 model_perturbation_kernel: ModelPerturbationKernel = None,
+                 transitions: List[Transition] = None,
+                 eps: Epsilon = None,
                  sampler=None,
                  acceptor=None):
 
@@ -250,7 +250,7 @@ class ABCSMC:
         self.history.id = abc_id
         self.x_0 = self.history.observed_sum_stat()
 
-        self._initialize_dist_and_eps(self.history.max_t+1)
+        self._initialize_dist_and_eps(self.history.max_t + 1)
 
         return self.history.id
 
@@ -352,7 +352,7 @@ class ABCSMC:
                                         self.population_strategy.to_json())
 
         # sample from prior to calibrate distance function and epsilon
-        self._initialize_dist_and_eps(self.history.max_t+1)
+        self._initialize_dist_and_eps(self.history.max_t + 1)
 
         # return id generated in store_initial_data
         return self.history.id
@@ -681,8 +681,8 @@ class ABCSMC:
                 print('normalization is zero!')
             # reflects stochasticity of the model
             fraction_accepted_runs_for_single_parameter = (
-                len(distance_list)
-                / nr_samples_per_parameter)
+                    len(distance_list)
+                    / nr_samples_per_parameter)
             weight = (model_prior.pmf(m_ss)
                       * parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
@@ -771,7 +771,7 @@ class ABCSMC:
             # perform the sampling
             sample = self.sampler.sample_until_n_accepted(
                 self.population_strategy.nr_particles, simulate_one)
-        
+
             # retrieve accepted population
             population = sample.get_accepted_population()
 
@@ -796,6 +796,7 @@ class ABCSMC:
             if df_updated:
                 def distance_to_ground_truth(x):
                     return self.distance_function(t + 1, x, self.x_0)
+
                 population.update_distances(distance_to_ground_truth)
 
             # update epsilon
