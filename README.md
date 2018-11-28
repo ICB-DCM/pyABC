@@ -1,3 +1,5 @@
+# pyABC
+
 ![pyABC](doc/logo.png)
 
 [![Build Status](https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master)](https://travis-ci.org/ICB-DCM/pyABC)
