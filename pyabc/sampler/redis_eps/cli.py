@@ -104,7 +104,7 @@ def work_on_population(redis: StrictRedis,
             worker_logger.info(
                 f"Worker {n_worker} stops during population because "
                 f"runtime {current_runtime} exceeds "
-                f"max runtime {max_runtime}")
+                f"max runtime {max_runtime_s}")
             # notify quit
             redis.decr(N_WORKER)
             return
@@ -153,7 +153,7 @@ def work_on_population(redis: StrictRedis,
         else:
             # update particles counter in case other workers were successful
             n_particles = int(redis.get(N_PARTICLES).decode())
-    
+
     # end of n_particles > 0 loop
 
     # notify quit
