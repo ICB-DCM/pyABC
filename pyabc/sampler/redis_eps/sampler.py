@@ -52,8 +52,9 @@ class RedisEvalParallelSampler(Sampler):
     """
     def __init__(self, host="localhost", port=6379, batch_size=1):
         super().__init__()
-        worker_logger.debug("Redis sampler: host={} port={}"
-                            .format(host, port))
+        worker_logger.debug(
+            f"Redis sampler: host={host} port={port}")
+        # handles the connection to the redis-server
         self.redis = StrictRedis(host=host, port=port)
         self.batch_size = batch_size
 
@@ -69,25 +70,36 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(self, n, simulate_one):
+        # open pipeline
         pipeline = self.redis.pipeline()
-        self.redis.set(SSA,
-                       cloudpickle.dumps((simulate_one, self.sample_factory)))
+        
+        # write initial values to pipeline
+        self.redis.set(
+            SSA, cloudpickle.dumps((simulate_one, self.sample_factory)))
         pipeline.set(N_EVAL, 0)
         pipeline.set(N_PARTICLES, n)
         pipeline.set(N_WORKER, 0)
         pipeline.set(BATCH_SIZE, self.batch_size)
+        # delete previous results
         pipeline.delete(QUEUE)
+        # execute all commands
         pipeline.execute()
 
         id_results = []
 
+        # publish start message
         self.redis.publish(MSG, START)
 
+        # wait until n acceptances
         while len(id_results) < n:
+            # pop result from queue, block until one is available
             dump = self.redis.blpop(QUEUE)[1]
+            # extract pickled object
             particle_with_id = pickle.loads(dump)
+            # append to collected results
             id_results.append(particle_with_id)
 
+        # wait until all workers done
         while int(self.redis.get(N_WORKER).decode()) > 0:
             sleep(SLEEP_TIME)
 
@@ -98,6 +110,7 @@ class RedisEvalParallelSampler(Sampler):
         # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(N_EVAL).decode())
 
+        # delete keys from pipeline
         pipeline = self.redis.pipeline()
         pipeline.delete(SSA)
         pipeline.delete(N_EVAL)
@@ -105,7 +118,8 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.delete(BATCH_SIZE)
         pipeline.execute()
 
-        # avoid bias toward short running evaluations
+        # avoid bias toward short running evaluations (for
+        # dynamic scheduling)
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:n]
 
