@@ -72,7 +72,7 @@ class RedisEvalParallelSampler(Sampler):
     def sample_until_n_accepted(self, n, simulate_one):
         # open pipeline
         pipeline = self.redis.pipeline()
-        
+
         # write initial values to pipeline
         self.redis.set(
             SSA, cloudpickle.dumps((simulate_one, self.sample_factory)))
