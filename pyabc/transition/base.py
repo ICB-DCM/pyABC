@@ -119,7 +119,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
     def no_meaningful_particles(self) -> bool:
         return len(self.X) == 0 or self.no_parameters
 
-    def mean_cv(self, n_samples: Union[None, int]=None) \
+    def mean_cv(self, n_samples: Union[None, int] = None) \
             -> float:
         """
         Estimate the uncertainty on the KDE.
