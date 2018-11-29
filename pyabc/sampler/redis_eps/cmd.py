@@ -1,3 +1,5 @@
+# mostly redis keys
+
 QUEUE = "queue"
 N_EVAL = "n_eval"
 N_PARTICLES = "n_particles"
