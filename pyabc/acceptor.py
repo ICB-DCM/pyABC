@@ -88,6 +88,7 @@ class SimpleAcceptor(Acceptor):
         Callable with the same signature as the __call__ method. Per default,
         accept_use_current_time is used.
     """
+
     def __init__(self, fun=None):
         super().__init__()
 
@@ -176,9 +177,9 @@ class StochasticAcceptor(Acceptor):
         ----------
 
         distribution: optional
-            A distribution object having a method .pdf(x-x_0), allowing to 
+            A distribution object having a method .pdf(x-x_0), allowing to
             evaluate the probability density function at x-x_0.
-            If None is passed, a standard multivariate normal distribution 
+            If None is passed, a standard multivariate normal distribution
             is assumed.
 
         max_density: float, optional
@@ -197,11 +198,11 @@ class StochasticAcceptor(Acceptor):
         if t >= self.nr_populations:
             raise ValueError("PFUI!")
         temps = np.linspace(1,
-                            self.max_temp**(1/self.exp),
+                            self.max_temp**(1 / self.exp),
                             self.nr_populations) ** self.exp
         temp = temps[self.nr_populations - 1 - t]
         beta = 1 / temp
-        
+
         # extract summary statistics as array
         x = np.asarray(list(x.values()))
         x_0 = np.asarray(list(x_0.values()))
@@ -210,7 +211,7 @@ class StochasticAcceptor(Acceptor):
         # noise distribution
         if self.distribution is None:
             distribution = sp_stats.multivariate_normal(
-                               mean=np.zeros(n), cov=np.eye(n))
+                mean=np.zeros(n), cov=np.eye(n))
         else:
             distribution = self.distribution
 

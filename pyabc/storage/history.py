@@ -34,11 +34,11 @@ def internal_docstring_warning(f):
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
     warning = (
-            "\n" + indent +
-            "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
-            "class internally. "
-            "You should most likely not find it necessary to call "
-            "this method under normal circumstances.")
+        "\n" + indent +
+        "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
+        "class internally. "
+        "You should most likely not find it necessary to call "
+        "this method under normal circumstances.")
 
     f.__doc__ += warning
     return f
@@ -605,19 +605,21 @@ class History:
         return df_weighted
 
     @with_session
-    def get_weighted_distances_and_sumstats(self ,t):
+    def get_weighted_distances_and_sumstats(self, t):
         if t is None:
             t = self.max_t
         else:
             t = int(t)
 
-        query = (self._session.query(Sample.distance, Sample.summary_statistics, Particle.w, Model.m)
+        query = (self._session.query(Sample.distance,
+                                     Sample.summary_statistics,
+                                     Particle.w, Model.m)
                  .join(Particle)
                  .joint(Model).join(Population).join(ABCSMC)
                  .filter(ABCSMC.id == self.id)
                  .filter(Population.t == t))
         df = pd.read_sql_query(query.statement, self._engine)
-        
+
         model_probabilities = self.get_model_probabilities(t).reset_index()
         df_weighted = df.merge(model_probabilities)
         df_weighted["w"] *= df_weighted["p"]

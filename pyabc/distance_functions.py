@@ -298,7 +298,7 @@ class PNormDistance(DistanceFunction):
 
         # extract weights for time point
         w = self.w[t]
-    
+
         # compute distance
         if self.p == np.inf:
             d = max(abs(w[key] * (x[key] - y[key]))
@@ -355,7 +355,7 @@ class AdaptivePNormDistance(PNormDistance):
     def __init__(self,
                  p: float = 2,
                  adaptive: bool = True,
-                 scale_function = None):
+                 scale_function=None):
         # call p-norm constructor
         super().__init__(p=p,
                          w=None)
@@ -504,6 +504,7 @@ def mean_absolute_deviation(**kwargs):
     data = np.asarray(kwargs['data'])
     mad = np.mean(np.abs(data - np.mean(data)))
     return mad
+
 
 def standard_deviation(**kwargs):
     """

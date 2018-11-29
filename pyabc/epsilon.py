@@ -61,7 +61,8 @@ class Epsilon(ABC):
 
         data: pandas.DataFrame
             The distances for initializing the epsilon, as
-            returned by Population.get_weighted_summary_statistics_and_distances().
+            returned by
+            Population.get_weighted_summary_statistics_and_distances().
         """
         pass
 
