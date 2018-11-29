@@ -240,7 +240,7 @@ class ABCSMC:
             The default is 1. If more than one ABC-SMC run is stored, use
             the ``abc_id`` parameter to indicate which one to continue.
 
-        observed_sum_stats: dict, optional
+        observed_sum_stat: dict, optional
             The observed summary statistics. This field should be used only if
             the summary statistics cannot be reproduced exactly from the
             database (in particular when they are no numpy or pandas objects,
