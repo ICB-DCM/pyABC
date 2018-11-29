@@ -128,12 +128,14 @@ class SGE:
     sge: SGE
         configured sge mapper
     """
-    def __init__(self, tmp_directory: str =None, memory: str = '3G',
-                 time_h: int =100,
-                 python_executable_path: str =None, sge_error_file: str =None,
-                 sge_output_file: str =None,
+
+    def __init__(self, tmp_directory: str = None, memory: str = '3G',
+                 time_h: int = 100,
+                 python_executable_path: str = None,
+                 sge_error_file: str = None,
+                 sge_output_file: str = None,
                  parallel_environment=None, name="map",
-                 queue=None, priority=None, num_threads: int =1,
+                 queue=None, priority=None, num_threads: int = 1,
                  execution_context=DefaultContext, chunk_size=1):
 
         # simple assignments
@@ -270,10 +272,11 @@ class SGE:
         # store the array
         for task_nr, start_index in enumerate(range(0, len(array),
                                                     self.chunk_size)):
-            with open(os.path.join(jobs_dir, str(task_nr+1) + '.job'), 'wb') \
-                    as my_file:
+            with open(os.path.join(jobs_dir,
+                                   str(task_nr + 1) + '.job'),
+                      'wb') as my_file:
                 cloudpickle.dump(
-                    list(array[start_index:start_index+self.chunk_size]),
+                    list(array[start_index:start_index + self.chunk_size]),
                     my_file)
 
         nr_tasks = task_nr + 1
@@ -297,7 +300,7 @@ class SGE:
             time.sleep(5)
             for k in range(nr_tasks)[::-1]:  # check from last to first job
                 # +1 offset for k b/c SGE array jobs start at 1, not at 0
-                if job_db.wait_for_job(k+1, self.time_h):
+                if job_db.wait_for_job(k + 1, self.time_h):
                     break
             else:
                 finished = True
@@ -311,8 +314,9 @@ class SGE:
         had_exception = False
         for task_nr in range(nr_tasks):
             try:
-                my_file = open(os.path.join(tmp_dir, 'results', str(task_nr+1)
-                                            + '.result'), 'rb')
+                my_file = open(
+                    os.path.join(tmp_dir, 'results', str(task_nr + 1)
+                                 + '.result'), 'rb')
                 single_result = pickle.load(my_file)
                 results += single_result
                 my_file.close()

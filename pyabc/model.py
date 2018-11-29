@@ -18,6 +18,7 @@ class ModelResult:
     Allows to flexibly return summary statistics,
     distances and accepted/rejected.
     """
+
     def __init__(self, sum_stats=None, distance=None, accepted=None):
         self.sum_stats = sum_stats if sum_stats is not None else {}
         self.distance = distance
@@ -55,8 +56,8 @@ class Model:
         A descriptive name of the model. This name can simplify further
         analysis for the user as it is stored in the database.
     """
-    def __init__(self, name: str="model"):
 
+    def __init__(self, name: str = "model"):
         self.name = name
 
     def __repr__(self):
@@ -249,6 +250,7 @@ class SimpleModel(Model):
         The name of the model. If not provided, the names if inferred from
         the function name of `sample_function`.
     """
+
     def __init__(self,
                  sample_function: Callable[[Parameter], Any],
                  name=None):
@@ -299,6 +301,7 @@ class IntegratedModel(Model):
     Subclass this model and implement ``integrated_simulate`` to define
     your own integrated model..
     """
+
     def integrated_simulate(self, pars, eps: float) -> ModelResult:
         """
         Method which integrates simulation and acceptance/rejection

@@ -1,6 +1,3 @@
-External
---------
-
 .. automodule:: pyabc.external
    :members:
    :special-members: __call__

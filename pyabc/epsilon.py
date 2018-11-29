@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 from .weighted_statistics import weighted_quantile
 from typing import List, Union
 import pandas
+
 eps_logger = logging.getLogger("Epsilon")
 
 
@@ -27,7 +28,7 @@ class Epsilon(ABC):
     """
 
     def __init__(self,
-                 require_initialize: bool=True):
+                 require_initialize: bool = True):
         """
         Constructor.
 
@@ -162,6 +163,7 @@ class ConstantEpsilon(Epsilon):
     constant_epsilon_value: float
         The epsilon value for all populations
     """
+
     def __init__(self,
                  constant_epsilon_value: float):
         super().__init__(require_initialize=False)
@@ -247,10 +249,10 @@ class QuantileEpsilon(Epsilon):
     """
 
     def __init__(self,
-                 initial_epsilon: Union[str, int, float] ='from_sample',
-                 alpha: float =0.5,
-                 quantile_multiplier: float =1,
-                 weighted: bool =True):
+                 initial_epsilon: Union[str, int, float] = 'from_sample',
+                 alpha: float = 0.5,
+                 quantile_multiplier: float = 1,
+                 weighted: bool = True):
 
         eps_logger.debug(
             "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
@@ -360,9 +362,9 @@ class MedianEpsilon(QuantileEpsilon):
     """
 
     def __init__(self,
-                 initial_epsilon: Union[str, int, float]='from_sample',
-                 median_multiplier: float =1,
-                 weighted: bool =True):
+                 initial_epsilon: Union[str, int, float] = 'from_sample',
+                 median_multiplier: float = 1,
+                 weighted: bool = True):
         super().__init__(initial_epsilon=initial_epsilon,
                          alpha=0.5,
                          quantile_multiplier=median_multiplier,

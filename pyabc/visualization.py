@@ -5,9 +5,7 @@ Visualizations
 Helper functions to visualize results of ABCSMC runs.
 """
 import numpy as np
-from .transition import (MultivariateNormalTransition,
-                         silverman_rule_of_thumb,
-                         GridSearchCV)
+from .transition import MultivariateNormalTransition
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -58,10 +56,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
     """
     if kde is None:
-        kde = MultivariateNormalTransition(
-            scaling=1,
-            bandwidth_selector=silverman_rule_of_thumb)
-        kde = GridSearchCV(kde, {'scaling': np.linspace(0.05, 1.0, 5)}, cv=5)
+        kde = MultivariateNormalTransition(scaling=0.5)
     kde.fit(df[[x]], w)
 
     if xmin is None:
@@ -186,11 +181,9 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
     """
     if kde is None:
-        kde = MultivariateNormalTransition(
-            scaling=1,
-            bandwidth_selector=silverman_rule_of_thumb)
-        kde = GridSearchCV(kde, {'scaling': np.linspace(0.05, 1, 5)}, cv=5)
+        kde = MultivariateNormalTransition(scaling=0.5)
     kde.fit(df[[x, y]], w)
+
     if xmin is None:
         xmin = df[x].min()
     if xmax is None:

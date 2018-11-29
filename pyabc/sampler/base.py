@@ -15,7 +15,7 @@ class Sample:
         False: Only record accepted particles.
     """
 
-    def __init__(self, record_all_sum_stats: bool=False):
+    def __init__(self, record_all_sum_stats: bool = False):
         self._particles = []
         self.record_all_sum_stats = record_all_sum_stats
 
@@ -102,7 +102,8 @@ class SampleFactory:
     record_all_sum_stats: bool
         Corresponds to Sample.record_all_sum_stats.
     """
-    def __init__(self, record_all_sum_stats: bool=False):
+
+    def __init__(self, record_all_sum_stats: bool = False):
         self.record_all_sum_stats = record_all_sum_stats
 
     def __call__(self):
