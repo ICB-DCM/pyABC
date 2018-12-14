@@ -10,6 +10,7 @@ from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
 import logging
+
 history_logger = logging.getLogger("History")
 
 
@@ -24,6 +25,7 @@ def with_session(f):
         if no_session:
             self._close_session()
         return res
+
     return f_wrapper
 
 
@@ -32,11 +34,11 @@ def internal_docstring_warning(f):
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
     warning = (
-        "\n" + indent +
-        "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
-        "class internally. "
-        "You should most likely not find it necessary to call "
-        "this method under normal circumstances.")
+            "\n" + indent +
+            "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
+            "class internally. "
+            "You should most likely not find it necessary to call "
+            "this method under normal circumstances.")
 
     f.__doc__ += warning
     return f
@@ -106,7 +108,7 @@ class History:
 
         """
         try:
-            return os.path.getsize(self.db_file()) / 10**6
+            return os.path.getsize(self.db_file()) / 10 ** 6
         except FileNotFoundError:
             return "Cannot calculate size"
 
@@ -153,7 +155,7 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-    def get_distribution(self, m: int, t: int=None) \
+    def get_distribution(self, m: int, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample as pandas DataFrame.
@@ -198,7 +200,7 @@ class History:
         pars = df.pivot("id", "name", "value").sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
-        assert w_arr.size == 0 or np.isclose(w_arr.sum(), 1),\
+        assert w_arr.size == 0 or np.isclose(w_arr.sum(), 1), \
             "weight not close to 1, w.sum()={}".format(w_arr.sum())
         return pars, w_arr
 
@@ -691,7 +693,8 @@ class History:
         return sp.array(weights), results
 
     @with_session
-    def get_weighted_sum_stats(self, t: int=None) -> (List[float], List[dict]):
+    def get_weighted_sum_stats(self, t: int = None) -> (
+            List[float], List[dict]):
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.

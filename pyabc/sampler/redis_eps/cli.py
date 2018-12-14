@@ -44,87 +44,126 @@ def work_on_population(redis: StrictRedis,
                        start_time: int,
                        max_runtime_s: int,
                        kill_handler: KillHandler):
+    """
+    Here the actual sampling happens.
+    """
+
+    # set timers
     population_start_time = time()
     cumulative_simulation_time = 0
 
+    # read from pipeline
     pipeline = redis.pipeline()
-    pipeline.get(SSA)
-    pipeline.get(N_PARTICLES)
-    pipeline.get(BATCH_SIZE)
-    ssa, n_particles_bytes, batch_size_bytes = pipeline.execute()
+
+    # extract ssa, batch_size_bytes
+    ssa, batch_size_bytes = pipeline.get(SSA).get(BATCH_SIZE).execute()
 
     if ssa is None:
         return
 
     kill_handler.exit = False
 
+    # extract n_particles
     n_particles_bytes = redis.get(N_PARTICLES)
     if n_particles_bytes is None:
         return
+
+    # convert from bytes
     n_particles = int(n_particles_bytes.decode())
     batch_size = int(batch_size_bytes.decode())
 
-    # load sampler options
+    # extract sampling routine
     simulate_one, sample_factory = pickle.loads(ssa)
 
+    # notify sign up as worker
     n_worker = redis.incr(N_WORKER)
-    worker_logger.info(f"Begin population, "
-                       f"batch size {batch_size}. "
-                       f"I am worker {n_worker}")
+    worker_logger.info(
+        f"Begin population, batch size {batch_size}. "
+        f"I am worker {n_worker}")
+
+    # counter for number of simulations
     internal_counter = 0
 
     # create empty sample
     sample = sample_factory()
 
+    # loop until no more particles required
     while n_particles > 0:
         if kill_handler.killed:
-            worker_logger.info("Worker {} received stop signal. "
-                               "Terminating in the middle of a population"
-                               " after {} samples."
-                               .format(n_worker, internal_counter))
+            worker_logger.info(
+                f"Worker {n_worker} received stop signal. "
+                f"Terminating in the middle of a population "
+                f"after {internal_counter} samples.")
+            # notify quit
             redis.decr(N_WORKER)
             sys.exit(0)
 
+        # check whether time's up
         current_runtime = time() - start_time
         if current_runtime > max_runtime_s:
-            worker_logger.info("Worker {} stops during population because "
-                               "max runtime {} is exceeded {}"
-                               .format(n_worker, max_runtime_s,
-                                       current_runtime))
+            worker_logger.info(
+                f"Worker {n_worker} stops during population because "
+                f"runtime {current_runtime} exceeds "
+                f"max runtime {max_runtime_s}")
+            # notify quit
             redis.decr(N_WORKER)
             return
 
+        # increase global number of evaluations counter
         particle_max_id = redis.incr(N_EVAL, batch_size)
 
+        # timer for current simulation until batch_size acceptances
         this_sim_start = time()
+        # collect accepted particles
         accepted_samples = []
+
+        # make batch_size attempts
         for n_batched in range(batch_size):
+            # simulate
             new_sim = simulate_one()
+            # append to current sample
             sample.append(new_sim)
+            # increase evaluation counter
             internal_counter += 1
+            # check for acceptance
             if new_sim.accepted:
                 # the order of the IDs is reversed, but this does not
                 # matter. Important is only that the IDs are specified
                 # before the simulation starts
-                accepted_samples.append(cloudpickle.dumps((particle_max_id -
-                                                           n_batched, sample)))
+
+                # append to accepted list
+                accepted_samples.append(
+                    cloudpickle.dumps((particle_max_id - n_batched, sample)))
+                # initialize new sample
                 sample = sample_factory()
+
+        # update total simulation-specific time
         cumulative_simulation_time += time() - this_sim_start
 
+        # push to pipeline if at least one sample got accepted
         if len(accepted_samples) > 0:
+            # new pipeline
             pipeline = redis.pipeline()
+            # update particles counter
             pipeline.decr(N_PARTICLES, len(accepted_samples))
+            # note: samples are appended 1-by-1
             pipeline.rpush(QUEUE, *accepted_samples)
+            # execute all commands
             n_particles, _ = pipeline.execute()
         else:
+            # update particles counter in case other workers were successful
             n_particles = int(redis.get(N_PARTICLES).decode())
 
+    # end of n_particles > 0 loop
+
+    # notify quit
     redis.decr(N_WORKER)
     kill_handler.exit = True
     population_total_time = time() - population_start_time
-    worker_logger.info(f"Finished population, did {internal_counter} samples. "
-                       f"Simulation time: {cumulative_simulation_time:.2f}s, "
-                       f" total time {population_total_time:.2f}.")
+    worker_logger.info(
+        f"Finished population, did {internal_counter} samples. "
+        f"Simulation time: {cumulative_simulation_time:.2f}s, "
+        f"total time {population_total_time:.2f}.")
 
 
 @click.command(help="Evaluation parallel redis sampler for pyABC.")
@@ -140,10 +179,13 @@ def work_on_population(redis: StrictRedis,
 @click.option('--processes', type=int, default=1, help="The number of worker "
                                                        "processes to start")
 def work(host="localhost", port=6379, runtime="2h", processes=1):
-    # start a single process right here, not within pool
-    # this handles the problem of starting a daemon process within a
-    # daemon process
+    """
+    Corresponds to the entry point abc-redis-worker.
+    """
     if processes == 1:
+        # start a single process right here, not within pool
+        # this handles the problem of starting a daemon process within a
+        # daemon process
         return _work(host, port, runtime)
 
     with Pool(processes) as pool:
@@ -159,8 +201,9 @@ def _work(host="localhost", port=6379, runtime="2h"):
 
     start_time = time()
     max_runtime_s = runtime_parse(runtime)
-    worker_logger.info(f"Start redis worker. Max run time {max_runtime_s}s, "
-                       f"HOST={socket.gethostname()}, PID={os.getpid()}")
+    worker_logger.info(
+        f"Start redis worker. Max run time {max_runtime_s}s, "
+        f"HOST={socket.gethostname()}, PID={os.getpid()}")
     redis = StrictRedis(host=host, port=port)
 
     p = redis.pubsub()
@@ -182,8 +225,9 @@ def _work(host="localhost", port=6379, runtime="2h"):
 
         elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
-            worker_logger.info("Shutdown redis worker. Max runtime {}s reached"
-                               .format(max_runtime_s))
+            worker_logger.info(
+                "Shutdown redis worker. Max runtime {}s reached"
+                .format(max_runtime_s))
             return
 
 
@@ -201,6 +245,9 @@ def _work(host="localhost", port=6379, runtime="2h"):
 @click.option('--port', default=6379, type=int, help='Redis port.')
 @click.argument('command', type=str)
 def manage(command, host="localhost", port=6379):
+    """
+    Corresponds to the entry point abc-redis-manager.
+    """
     return _manage(command, host=host, port=port)
 
 
