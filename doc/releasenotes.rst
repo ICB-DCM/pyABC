@@ -6,6 +6,14 @@ Release Notes
 ..........
 
 
+0.9.4 (2018-12-18)
+------------------
+
+* Can specify kde and number of bins for all visualization routines.
+* Can re-submit observed sum stats to ABCSMC.load() function in case
+  it cannot be read correctly from the db.
+
+
 0.9.3 (2018-12-01)
 ------------------
 
