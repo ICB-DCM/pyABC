@@ -70,7 +70,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
 
 def plot_kde_1d(df, w, x, xmin=None, xmax=None,
-                numx=50, ax=None,
+                numx=50, ax=None, title: str = None,
                 refval=None, kde=None, **kwargs):
     """
     Plots a 1d histogram.
@@ -94,6 +94,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     numx: int, optional
         The number of bins in x direction.
         Defaults tp 50.
+    title: str, optiona.
+        Title for the plot. Defaults to None.
     refval: dict, optional
         A reference value for x (as refval[x]: float).
         If not None, the value will be highlighted in the plot.
@@ -117,6 +119,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
     ax.set_xlim(xmin, xmax)
+    if title is not None:
+        ax.set_title(title)
     if refval is not None:
         ax.axvline(refval[x], color='C1', linestyle='dashed')
     return ax
@@ -202,7 +206,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                 numx=50, numy=50, ax=None, colorbar=True,
-                title=False, refval=None, kde=None, **kwargs):
+                title: str = None, refval=None, kde=None, **kwargs):
     """
     Plots a 2d histogram.
 
@@ -239,8 +243,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Defaults tp 50.
     colorbar: bool, optional
         Whether to plot a colorbar. Defaults to True.
-    title: bool, optional
-        Whether to put a title on the plot. Defaults to True.
+    title: str, optional
+        Title for the plot. Defaults to None.
     refval: dict, optional
         A reference parameter to be shown in the plots. Default: None.
     kde: pyabc.Transition, optional
@@ -264,8 +268,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
-    if title:
-        ax.set_title("Posterior")
+    if title is not None:
+        ax.set_title(title)
     if colorbar:
         plt.colorbar(mesh, ax=ax)
         # cbar.set_label("PDF")
