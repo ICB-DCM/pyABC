@@ -8,7 +8,8 @@ To plot densities from the weighted importance samples, the visualization
 routines employ a kernel density estimate. Note that this can "over-smoothen"
 so that local structure is lost. If this could be the case, it makes sense
 to in the argument `kde` reduce the `scaling` in the default
-MultivariateNormalTransition(), or to replace it by a GridSearchCV().
+MultivariateNormalTransition(), or to replace it by a GridSearchCV() to
+automatically find a visually good level of smoothness.
 
 """
 import numpy as np
