@@ -247,10 +247,11 @@ class ABCSMC:
             e.g. when they were generated in R). If None, then the summary
             statistics are read from the history.
 
+
         .. note::
 
             The epsilon's and distance function's initialize methods are
-            not called when an ABCSMC run is loaded.
+            not called when an ABCSMC run is loaded.        
         """
 
         self.history = History(db)
