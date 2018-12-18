@@ -251,7 +251,7 @@ class ABCSMC:
         .. note::
 
             The epsilon's and distance function's initialize methods are
-            not called when an ABCSMC run is loaded.        
+            not called when an ABCSMC run is loaded.
         """
 
         self.history = History(db)
