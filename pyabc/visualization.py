@@ -102,7 +102,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     numx: int, optional
         The number of bins in x direction.
         Defaults tp 50.
-    title: str, optiona.
+    title: str, optional
         Title for the plot. Defaults to None.
     refval: dict, optional
         A reference value for x (as refval[x]: float).
