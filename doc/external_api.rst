@@ -1,5 +1,4 @@
-External
---------
+.. _external_api:
 
 .. automodule:: pyabc.external
    :members:

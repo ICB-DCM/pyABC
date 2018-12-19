@@ -26,7 +26,7 @@ It is easy to use and flexibly extensible.
 If you're interested in using it, you can cite the paper:
 
     Emmanuel Klinger, Dennis Rickert, Jan Hasenauer; pyABC: distributed, likelihood-free inference;
-    Bioinformatics; https://doi.org/10.1093/bioinformatics/bty361
+    Bioinformatics 2018; https://doi.org/10.1093/bioinformatics/bty361
 
 
 User's Guide

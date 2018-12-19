@@ -223,12 +223,14 @@ class ABCSMC:
         self.stop_if_only_single_model_alive = False
 
     def load(self, db: str,
-             abc_id: int = 1) -> int:
+             abc_id: int = 1,
+             observed_sum_stat: dict = None) -> int:
         """
         Load an ABC-SMC run for continuation.
 
         Parameters
         ----------
+
         db: str
             A SQLAlchemy database identifier pointing to the database from
             which to continue a run.
@@ -237,6 +239,13 @@ class ABCSMC:
             The id of the ABC-SMC run in the database which is to be continued.
             The default is 1. If more than one ABC-SMC run is stored, use
             the ``abc_id`` parameter to indicate which one to continue.
+
+        observed_sum_stat: dict, optional
+            The observed summary statistics. This field should be used only if
+            the summary statistics cannot be reproduced exactly from the
+            database (in particular when they are no numpy or pandas objects,
+            e.g. when they were generated in R). If None, then the summary
+            statistics are read from the history.
 
 
         .. note::
@@ -247,7 +256,10 @@ class ABCSMC:
 
         self.history = History(db)
         self.history.id = abc_id
-        self.x_0 = self.history.observed_sum_stat()
+
+        if observed_sum_stat is None:
+            observed_sum_stat = self.history.observed_sum_stat()
+        self.x_0 = observed_sum_stat
 
         self._initialize_dist_and_eps(self.history.max_t + 1)
 
