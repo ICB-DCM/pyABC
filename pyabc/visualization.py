@@ -64,7 +64,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
     """
     if kde is None:
-        kde = MultivariateNormalTransition(scaling=0.5)
+        kde = MultivariateNormalTransition(scaling=1)
     kde.fit(df[[x]], w)
 
     if xmin is None:
@@ -193,7 +193,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
     """
     if kde is None:
-        kde = MultivariateNormalTransition(scaling=0.5)
+        kde = MultivariateNormalTransition(scaling=1)
     kde.fit(df[[x, y]], w)
 
     if xmin is None:
