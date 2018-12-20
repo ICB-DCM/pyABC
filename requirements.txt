@@ -21,6 +21,7 @@ pytest
 flake8
 click
 nbsphinx
+sphinxcontrib-svg2pdfconverter
 ipykernel
 rpy2
 pygments
