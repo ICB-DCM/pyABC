@@ -6,8 +6,8 @@ Release Notes
 ..........
 
 
-0.9.3
------
+0.9.5 (2018-12-21)
+------------------
 
 2018-09-21
 * Passing observed summary statistics to distance function update method
@@ -18,18 +18,33 @@ Release Notes
   for more flexibility.
 
 
-0.9.2
------
+0.9.4 (2018-12-18)
+------------------
 
-2018-09-10
+* Can specify kde and number of bins for all visualization routines.
+* Can re-submit observed sum stats to ABCSMC.load() function in case
+  it cannot be read correctly from the db.
+
+
+0.9.3 (2018-12-01)
+------------------
+
+* Fix serious memory problem resulting from pickling more than necessary
+  for parallel sampling.
+* Update logo, readme.
+* Make tidying optional in abc-export (default behavior not changed).
+
+
+0.9.2 (2018-09-10)
+------------------
+
 * Minor error and warning fixes due to API changes in pandas, seaborn (not
   used any more), and change of the R installation on travis.
 
 
-0.9.1
------
+0.9.1 (2018-06-05)
+------------------
 
-2018-06-05
 * Default visualizations like plot_kde_matrix() can plot reference values,
   useful for testing purposes.
 

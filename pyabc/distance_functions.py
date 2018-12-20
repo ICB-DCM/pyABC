@@ -15,6 +15,7 @@ from abc import ABC, abstractmethod
 from typing import List
 import logging
 from .sampler import Sampler
+
 df_logger = logging.getLogger("DistanceFunction")
 
 
@@ -25,7 +26,7 @@ class DistanceFunction(ABC):
     Any other distance function should inherit from this class.
     """
 
-    def __init__(self, require_initialize: bool=True):
+    def __init__(self, require_initialize: bool = True):
         """
         Default constructor.
         """
@@ -274,8 +275,8 @@ class PNormDistance(DistanceFunction):
     """
 
     def __init__(self,
-                 p: float=2,
-                 w: dict=None):
+                 p: float = 2,
+                 w: dict = None):
         super().__init__(require_initialize=False)
 
         if p < 1:
@@ -300,15 +301,15 @@ class PNormDistance(DistanceFunction):
 
         # compute distance
         if self.p == np.inf:
-            d = max(abs(w[key]*(x[key]-y[key]))
+            d = max(abs(w[key] * (x[key] - y[key]))
                     if key in x and key in y else 0
                     for key in w)
         else:
             d = pow(
-                sum(pow(abs(w[key]*(x[key]-y[key])), self.p)
+                sum(pow(abs(w[key] * (x[key] - y[key])), self.p)
                     if key in x and key in y else 0
                     for key in w),
-                1/self.p)
+                1 / self.p)
 
         return d
 
@@ -352,7 +353,7 @@ class AdaptivePNormDistance(PNormDistance):
     """
 
     def __init__(self,
-                 p: float=2,
+                 p: float = 2,
                  adaptive: bool=True,
                  scale_function=None):
         # call p-norm constructor
@@ -626,11 +627,12 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
         d(x, y) =\
          \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """
+
     def __call__(self,
                  t: int,
                  x: dict,
                  y: dict) -> float:
-        return sum(abs((x[key]-y[key])/y[key]) if y[key] != 0 else
+        return sum(abs((x[key] - y[key]) / y[key]) if y[key] != 0 else
                    (0 if x[key] == 0 else np.inf)
                    for key in self.measures_to_use) / len(self.measures_to_use)
 
@@ -647,6 +649,7 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
 
         d(x,y) = \\| Wx - Wy \\|
     """
+
     def __init__(self, measures_to_use='all'):
         super().__init__(measures_to_use)
         self._whitening_transformation_matrix = None
@@ -700,6 +703,7 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
     where :math:`l_i` and :math:`u_i` are the lower and upper
     margin for measure :math:`i`.
     """
+
     @staticmethod
     def lower(parameter_list: List[float]):
         """
@@ -764,7 +768,7 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
                  t: int,
                  x: dict,
                  y: dict) -> float:
-        distance = sum(abs((x[key]-y[key])/self.normalization[key])
+        distance = sum(abs((x[key] - y[key]) / self.normalization[key])
                        for key in self.measures_to_use)
         return distance
 
@@ -774,6 +778,7 @@ class MinMaxDistanceFunction(RangeEstimatorDistanceFunction):
     Calculate upper and lower margins as max and min of the parameters.
     This works surprisingly well for normalization in simple cases
     """
+
     @staticmethod
     def upper(parameter_list):
         return max(parameter_list)
@@ -814,6 +819,7 @@ class AcceptAllDistance(DistanceFunction):
 
     Can be used for testing.
     """
+
     def __call__(self,
                  t: int,
                  x: dict,
@@ -829,6 +835,7 @@ class IdentityFakeDistance(DistanceFunction):
     simulation some condition is reached which makes it impossible to accept
     the particle.
     """
+
     def __call__(self,
                  t: int,
                  x: dict,
