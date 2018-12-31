@@ -17,7 +17,7 @@ history_logger = logging.getLogger("History")
 def with_session(f):
     @wraps(f)
     def f_wrapper(self: "History", *args, **kwargs):
-        history_logger.debug('Database access through "{}"'.format(f.__name__))
+        history_logger.debug(f"Database access through {f.__name__}")
         no_session = self._session is None and self._engine is None
         if no_session:
             self._make_session()
