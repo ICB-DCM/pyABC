@@ -15,7 +15,7 @@ Initializing the database interface from a file
 -----------------------------------------------
 
 For querying, you initialize a History object with a valid SQLAlchemy
-database identifier. For example, if you ABC-SMC data is stored in a file
+database identifier. For example, if your ABC-SMC data is stored in a file
 "data.db", you initialize the History with:
 
 .. code-block:: python
