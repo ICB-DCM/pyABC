@@ -8,7 +8,7 @@ from .history import History
                            "is stored and from from which we want to to dump "
                            "to a file")
 @click.option("--out", help="The file to which to dump")
-@click.option("--format", default="feather",
+@click.option("--format", 'out_format', default="feather",
               help="The format to which to dump, e.g. feather, "
                    "csv, hdf, json, html, msgpack, stata")
 @click.option("--generation", default="last",
@@ -28,7 +28,7 @@ from .history import History
               help="If True, the individual parameter and summary statistic "
                    "names are pivoted. Only works for a single model and "
                    "time point.")
-def main(db, out, format, generation="last", model=None, id=1, tidy=True):
+def main(db, out, out_format, generation="last", model=None, id=1, tidy=True):
     """
     Export from the SQLite database to different table formats.
     The function pyabc.History.get_population_extended() is used
@@ -60,7 +60,7 @@ def main(db, out, format, generation="last", model=None, id=1, tidy=True):
     df = history.get_population_extended(m=m, t=t, tidy=tidy)
 
     # convert dataframe to output file format
-    to_file(df, out, file_format=format)
+    to_file(df, out, file_format=out_format)
 
 
 if __name__ == "__main__":

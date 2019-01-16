@@ -247,6 +247,7 @@ class ABCSMC:
             e.g. when they were generated in R). If None, then the summary
             statistics are read from the history.
 
+
         .. note::
 
             The epsilon's and distance function's initialize methods are

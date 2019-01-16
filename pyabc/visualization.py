@@ -3,6 +3,14 @@ Visualizations
 --------------
 
 Helper functions to visualize results of ABCSMC runs.
+
+To plot densities from the weighted importance samples, the visualization
+routines employ a kernel density estimate. Note that this can "over-smoothen"
+so that local structure is lost. If this could be the case, it makes sense
+to in the argument `kde` reduce the `scaling` in the default
+MultivariateNormalTransition(), or to replace it by a GridSearchCV() to
+automatically find a visually good level of smoothness.
+
 """
 import numpy as np
 from .transition import MultivariateNormalTransition
@@ -56,7 +64,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
     """
     if kde is None:
-        kde = MultivariateNormalTransition(scaling=0.5)
+        kde = MultivariateNormalTransition(scaling=1)
     kde.fit(df[[x]], w)
 
     if xmin is None:
@@ -70,7 +78,7 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
 
 def plot_kde_1d(df, w, x, xmin=None, xmax=None,
-                numx=50, ax=None,
+                numx=50, ax=None, title: str = None,
                 refval=None, kde=None, **kwargs):
     """
     Plots a 1d histogram.
@@ -94,6 +102,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     numx: int, optional
         The number of bins in x direction.
         Defaults tp 50.
+    title: str, optional
+        Title for the plot. Defaults to None.
     refval: dict, optional
         A reference value for x (as refval[x]: float).
         If not None, the value will be highlighted in the plot.
@@ -117,6 +127,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
     ax.set_xlim(xmin, xmax)
+    if title is not None:
+        ax.set_title(title)
     if refval is not None:
         ax.axvline(refval[x], color='C1', linestyle='dashed')
     return ax
@@ -181,7 +193,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
     """
     if kde is None:
-        kde = MultivariateNormalTransition(scaling=0.5)
+        kde = MultivariateNormalTransition(scaling=1)
     kde.fit(df[[x, y]], w)
 
     if xmin is None:
@@ -202,7 +214,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                 numx=50, numy=50, ax=None, colorbar=True,
-                title=False, refval=None, kde=None, **kwargs):
+                title: str = None, refval=None, kde=None, **kwargs):
     """
     Plots a 2d histogram.
 
@@ -239,8 +251,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Defaults tp 50.
     colorbar: bool, optional
         Whether to plot a colorbar. Defaults to True.
-    title: bool, optional
-        Whether to put a title on the plot. Defaults to True.
+    title: str, optional
+        Title for the plot. Defaults to None.
     refval: dict, optional
         A reference parameter to be shown in the plots. Default: None.
     kde: pyabc.Transition, optional
@@ -264,8 +276,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
-    if title:
-        ax.set_title("Posterior")
+    if title is not None:
+        ax.set_title(title)
     if colorbar:
         plt.colorbar(mesh, ax=ax)
         # cbar.set_label("PDF")
