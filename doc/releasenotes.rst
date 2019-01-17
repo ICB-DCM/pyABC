@@ -6,14 +6,14 @@ Release Notes
 ..........
 
 
-0.9.5 (2018-12-21)
+0.9.5 (2019-01-17)
 ------------------
 
-2018-09-21
-* Passing observed summary statistics to distance function update method
-  possible.
-* Centering of distance function weights at observed summary statistics
-  introduced in AdaptivePNormDistance.
+* Passing observed summary statistics to AdaptivePNormDistance distance
+  function required (required for some scale functions, and to make the
+  method robust to volatile summary statistics).
+* Implementation of more scale functions (distance_functions.scales), in
+  particular some taking into account the bias to the observed data.
 * AdaptivePNormDistance accepts a Callable as scaling scheme, allowing
   for more flexibility.
 
