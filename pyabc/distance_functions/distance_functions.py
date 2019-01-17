@@ -36,8 +36,7 @@ class DistanceFunction(ABC):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict],
-                   x_0: dict):
+                   sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance function (in ``new`` and ``load``)
@@ -55,9 +54,6 @@ class DistanceFunction(ABC):
 
         sample_from_prior: List[dict]
             List of dictionaries containing the summary statistics.
-
-        x_0: dict
-            The observed summary statistics.
         """
 
     def configure_sampler(self, sampler: Sampler):
@@ -80,8 +76,7 @@ class DistanceFunction(ABC):
 
     def update(self,
                t: int,
-               all_sum_stats: List[dict],
-               x_0: dict) -> bool:
+               all_sum_stats: List[dict]) -> bool:
         """
         Update the distance function. Default: Do nothing.
 
@@ -95,9 +90,6 @@ class DistanceFunction(ABC):
             List of all summary statistics that should be used to update the
             distance (in particular also rejected ones).
 
-        x_0: dict
-            The observed summary statistics.
-
         Returns
         -------
 
@@ -110,8 +102,7 @@ class DistanceFunction(ABC):
     @abstractmethod
     def __call__(self,
                  t: int,
-                 x: dict,
-                 x_0: dict) -> float:
+                 x: dict) -> float:
         """
         Evaluate, at time point t, the distance of the tentatively sampled
         particle to the measured data.
@@ -186,8 +177,7 @@ class NoDistance(DistanceFunction):
 
     def __call__(self,
                  t: int,
-                 x: dict,
-                 x_0: dict) -> float:
+                 x: dict) -> float:
         raise Exception("{} is not intended to be called."
                         .format(self.__class__.__name__))
 
@@ -338,6 +328,12 @@ class AdaptivePNormDistance(PNormDistance):
     Parameters
     ----------
 
+    x_0: dict
+        The observed summary statistics. Some scale functions require x_0.
+        In addition, x_0 is always used to generate a list of summary
+        statistics (which is important when the generated statistics are
+        volatile over simulations).
+
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
@@ -361,12 +357,15 @@ class AdaptivePNormDistance(PNormDistance):
     """
 
     def __init__(self,
+                 x_0: dict,
                  p: float = 2,
                  adaptive: bool = True,
                  scale_function=None,
                  normalize_weights: bool = True):
         # call p-norm constructor
         super().__init__(p=p, w=None)
+
+        self.x_0 = x_0
 
         self.require_initialize = True
 
@@ -396,18 +395,16 @@ class AdaptivePNormDistance(PNormDistance):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict],
-                   x_0: dict):
+                   sample_from_prior: List[dict]):
         """
         Initialize weights.
         """
         # update weights from samples
-        self._update(t, sample_from_prior, x_0)
+        self._update(t, sample_from_prior)
 
     def update(self,
                t: int,
-               all_sum_stats: List[dict],
-               x_0: dict):
+               all_sum_stats: List[dict]):
         """
         Update weights based on all simulations.
         """
@@ -415,20 +412,19 @@ class AdaptivePNormDistance(PNormDistance):
         if not self.adaptive:
             return False
 
-        self._update(t, all_sum_stats, x_0)
+        self._update(t, all_sum_stats)
 
         return True
 
     def _update(self,
                 t: int,
-                all_sum_stats: List[dict],
-                x_0: dict):
+                all_sum_stats: List[dict]):
         """
         Here the real update of weights happens.
         """
 
         # retrieve keys
-        keys = x_0.keys()
+        keys = self.x_0.keys()
 
         # number of samples
         n_samples = len(all_sum_stats)
@@ -448,7 +444,7 @@ class AdaptivePNormDistance(PNormDistance):
                     current_list.append(all_sum_stats[j][key])
 
             # compute scaling
-            scale = self.scale_function(data=current_list, x_0=x_0[key])
+            scale = self.scale_function(data=current_list, x_0=self.x_0[key])
 
             # compute weight (inverted scale)
             if np.isclose(scale, 0):
@@ -504,8 +500,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict],
-                   x_0: dict):
+                   sample_from_prior: List[dict]):
         if self._measures_to_use_passed_to_init == 'all':
             self.measures_to_use = sample_from_prior[0].keys()
             raise Exception(
@@ -574,9 +569,8 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict],
-                   x_0: dict):
-        super().initialize(t, sample_from_prior, x_0)
+                   sample_from_prior: List[dict]):
+        super().initialize(t, sample_from_prior)
         self._calculate_whitening_transformation_matrix(sample_from_prior)
 
     def __call__(self,
@@ -663,9 +657,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   sample_from_prior: List[dict],
-                   x_0: dict):
-        super().initialize(t, sample_from_prior, x_0)
+                   sample_from_prior: List[dict]):
+        super().initialize(t, sample_from_prior)
         self._calculate_normalization(sample_from_prior)
 
     def __call__(self,
