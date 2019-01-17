@@ -14,7 +14,9 @@ from scipy import linalg as la
 from abc import ABC, abstractmethod
 from typing import List
 import logging
-from .sampler import Sampler
+from ..sampler import Sampler
+from .scales import standard_deviation
+
 
 df_logger = logging.getLogger("DistanceFunction")
 
@@ -282,6 +284,7 @@ class PNormDistance(DistanceFunction):
         if p < 1:
             raise ValueError("It must be p >= 1")
         self.p = p
+
         self.w = w
 
     def __call__(self,
@@ -292,7 +295,7 @@ class PNormDistance(DistanceFunction):
         if self.w is None:
             self._set_default_weights(t, x.keys())
 
-        # select last available time point
+        # select last time point for which weights exist
         if t not in self.w:
             t = max(self.w)
 
@@ -315,11 +318,11 @@ class PNormDistance(DistanceFunction):
 
     def _set_default_weights(self,
                              t: int,
-                             summary_statistics_keys):
+                             sum_stat_keys):
         """
         Init weights to 1 for every summary statistic.
         """
-        self.w = {t: {k: 1 for k in summary_statistics_keys}}
+        self.w = {t: {k: 1 for k in sum_stat_keys}}
 
     def get_config(self) -> dict:
         return {"name": self.__class__.__name__,
@@ -335,38 +338,45 @@ class AdaptivePNormDistance(PNormDistance):
     Parameters
     ----------
 
-    p: float
+    p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
-    adaptive: bool
+    adaptive: bool, optional (default = standard_deviation)
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
         This corresponds to a pre-calibration.
 
     scale_function: Callable
-        (data: List, x_0: float) -> scale: float. Computes the scale (i.e.
+        (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
         denotes the list of simulated summary statistics, and x_0 the observed
         summary statistic. Implemented are absolute_median_deviation,
         standard_deviation, centered_absolute_median_deviation,
         centered_standard_deviation.
+
+    normalize_weights: bool, optional (default = True)
+        Whether to normalize the weights to have mean 1. This just possibly
+        smoothes the decrease of epsilon and might aid numeric stability, but
+        is not strictly necessary.
     """
 
     def __init__(self,
                  p: float = 2,
-                 adaptive: bool=True,
-                 scale_function=None):
+                 adaptive: bool = True,
+                 scale_function=None,
+                 normalize_weights: bool = True):
         # call p-norm constructor
-        super().__init__(p=p,
-                         w=None)
+        super().__init__(p=p, w=None)
 
         self.require_initialize = True
 
         self.adaptive = adaptive
 
         if scale_function is None:
-            scale_function = median_absolute_deviation
+            scale_function = standard_deviation
         self.scale_function = scale_function
+
+        self.normalize_weights = normalize_weights
 
     def configure_sampler(self,
                           sampler: Sampler):
@@ -418,34 +428,32 @@ class AdaptivePNormDistance(PNormDistance):
         """
 
         # retrieve keys
-        keys = all_sum_stats[0].keys()
+        keys = x_0.keys()
+
+        # number of samples
+        n_samples = len(all_sum_stats)
 
         # make sure w_list is initialized
         if self.w is None:
             self.w = {}
 
-        n = len(all_sum_stats)
-
         # to-be-filled-and-appended weights dictionary
         w = {}
 
         for key in keys:
-            if key not in x_0:
-                scale = 0
-            else:
-                # prepare list for key
-                current_list = []
-                for j in range(n):
-                    if key in all_sum_stats[j]:
-                        current_list.append(all_sum_stats[j][key])
+            # prepare list for key
+            current_list = []
+            for j in range(n_samples):
+                if key in all_sum_stats[j]:
+                    current_list.append(all_sum_stats[j][key])
 
-                # compute scaling
-                scale = self.scale_function(data=current_list, x_0=x_0[key])
+            # compute scaling
+            scale = self.scale_function(data=current_list, x_0=x_0[key])
 
             # compute weight (inverted scale)
             if np.isclose(scale, 0):
-                # This means that either that the summary statistic was not
-                # observed, or the simulations were all identical. In either
+                # This means that either the summary statistic is not in the
+                # samples, or that all simulations were identical. In either
                 # case, it should be safe to ignore this summary statistic.
                 w[key] = 0
             else:
@@ -454,11 +462,12 @@ class AdaptivePNormDistance(PNormDistance):
         # normalize weights to have mean 1
         # This has just the effect that eps will decrease more smoothly, but is
         # not important otherwise.
-        mean_weight = np.mean(list(w.values()))
-        for key in w:
-            w[key] /= mean_weight
+        if self.normalize_weights:
+            mean_weight = np.mean(list(w.values()))
+            for key in w:
+                w[key] /= mean_weight
 
-        # add to w property
+        # add to w attribute, at time t
         self.w[t] = w
 
         # logging
@@ -468,113 +477,8 @@ class AdaptivePNormDistance(PNormDistance):
         return {"name": self.__class__.__name__,
                 "p": self.p,
                 "adaptive": self.adaptive,
-                "scale_function": self.scale_function.__name__}
-
-
-def median_absolute_deviation(**kwargs):
-    """
-    Calculate the sample `median absolute deviation (MAD)
-    <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_
-    from the median, defined as
-    median(abs(data - median(data)).
-    """
-    data = np.asarray(kwargs['data'])
-    mad = np.median(np.abs(data - np.median(data)))
-    return mad
-
-
-def mean_absolute_deviation(**kwargs):
-    """
-    Calculate the mean absolute deviation from the mean.
-    """
-    data = np.asarray(kwargs['data'])
-    mad = np.mean(np.abs(data - np.mean(data)))
-    return mad
-
-
-def standard_deviation(**kwargs):
-    """
-    Calculate the sample `standard deviation (SD)
-    <https://en.wikipedia.org/wiki/Standard_deviation/>`_.
-    """
-    data = np.asarray(kwargs['data'])
-    std = np.std(data)
-    return std
-
-
-def bias(**kwargs):
-    """
-    Bias of sample to observed value.
-    """
-    data = np.asarray(kwargs['data'])
-    x_0 = kwargs['x_0']
-    bias = np.abs(np.mean(data) - x_0)
-    return bias
-
-
-def root_mean_square_deviation(**kwargs):
-    """
-    Square root of the mean squared error, i.e.
-    of the bias squared plus the variance.
-    """
-    bs = bias(**kwargs)
-    std = standard_deviation(**kwargs)
-    mse = bs**2 + std**2
-    rmse = np.sqrt(mse)
-    return rmse
-
-
-def median_absolute_deviation_to_observation(**kwargs):
-    """
-    Median absolute deviation of data w.r.t. the observation x_0.
-    """
-    data = np.asarray(kwargs['data'])
-    x_0 = kwargs['x_0']
-    mado = np.median(np.abs(data - x_0))
-    return mado
-
-
-def mean_absolute_deviation_to_observation(**kwargs):
-    """
-    Mean absolute deviation of data w.r.t. the observation x_0.
-    """
-    data = np.asarray(kwargs['data'])
-    x_0 = kwargs['x_0']
-    mado = np.mean(np.abs(data - x_0))
-    return mado
-
-
-def combined_median_absolute_deviation(**kwargs):
-    """
-    Compute the sum of the median absolute deviations to the
-    median of the samples and to the observed value.
-    """
-    mad = median_absolute_deviation(**kwargs)
-    mado = median_absolute_deviation_to_observation(**kwargs)
-    cmad = mad + mado
-    return cmad
-
-
-def combined_mean_absolute_deviation(**kwargs):
-    """
-    Compute the sum of the mean absolute deviations to the
-    mean of the samples and to the observed value.
-    """
-    mad = mean_absolute_deviation(**kwargs)
-    mado = mean_absolute_deviation_to_observation(**kwargs)
-    cmad = mad + mado
-    return cmad
-
-
-def standard_deviation_to_observation(**kwargs):
-    """
-    Standard deviation of absolute deviations of the data w.r.t.
-    the observation x_0.
-    """
-    data = np.asarray(kwargs['data'])
-    x_0 = kwargs['x_0']
-    sd = np.std(np.abs(data - x_0))
-    return sd
+                "scale_function": self.scale_function.__name__,
+                "normalize_weights": self.normalize_weights}
 
 
 class DistanceFunctionWithMeasureList(DistanceFunction):
