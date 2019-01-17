@@ -34,12 +34,33 @@ class DistanceFunction(ABC):
         """
         self.require_initialize = require_initialize
 
+    def handle_x_0(self, x_0: dict):
+        """
+        This method is called by the ABCSMC framework before the first
+        use of the distance function (in `new` and ``load``)
+        to handle observed summary statistics x_0. This is a convenience,
+        since some implementations require x_0, and this way the user
+        does not need to pass it twice to pyabc.
+
+        Parameters
+        ----------
+
+        x_0: dict
+            The observed summary statistics.
+
+        The default implementation is to do nothing.
+
+        This function is called irrespective of require_initialize.
+        """
+        pass
+
     def initialize(self,
                    t: int,
                    sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
-        use of the distance function (in ``new`` and ``load``)
+        use of the distance function (in ``new`` and ``load``),
+        directly after set_
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -328,12 +349,6 @@ class AdaptivePNormDistance(PNormDistance):
     Parameters
     ----------
 
-    x_0: dict
-        The observed summary statistics. Some scale functions require x_0.
-        In addition, x_0 is always used to generate a list of summary
-        statistics (which is important when the generated statistics are
-        volatile over simulations).
-
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
@@ -357,15 +372,12 @@ class AdaptivePNormDistance(PNormDistance):
     """
 
     def __init__(self,
-                 x_0: dict,
                  p: float = 2,
                  adaptive: bool = True,
                  scale_function=None,
                  normalize_weights: bool = True):
         # call p-norm constructor
         super().__init__(p=p, w=None)
-
-        self.x_0 = x_0
 
         self.require_initialize = True
 
@@ -376,6 +388,17 @@ class AdaptivePNormDistance(PNormDistance):
         self.scale_function = scale_function
 
         self.normalize_weights = normalize_weights
+
+        self.x_0 = None
+
+    def handle_x_0(self, x_0: dict):
+        """
+        Some scale functions require the observed summary statistics x_0.
+        In addition, x_0 is always used to generate a list of summary
+        statistics (which is important when the generated statistics are
+        volatilve over simulations).
+        """
+        self.x_0 = x_0
 
     def configure_sampler(self,
                           sampler: Sampler):
