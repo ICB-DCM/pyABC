@@ -25,7 +25,7 @@ from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import accept_use_current_time, SimpleAcceptor
+from .acceptor import UniformAcceptor, SimpleAcceptor
 import copy
 import warnings
 
@@ -203,7 +203,7 @@ class ABCSMC:
         self.sampler = sampler
 
         if acceptor is None:
-            acceptor = accept_use_current_time
+            acceptor = UniformAcceptor()
         self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
 
         self.stop_if_only_single_model_alive = False

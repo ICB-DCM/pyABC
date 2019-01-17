@@ -85,15 +85,12 @@ class SimpleAcceptor(Acceptor):
     ----------
 
     fun: Callable, optional
-        Callable with the same signature as the __call__ method. Per default,
-        accept_use_current_time is used.
+        Callable with the same signature as the __call__ method.
     """
 
-    def __init__(self, fun=None):
+    def __init__(self, fun):
         super().__init__()
 
-        if fun is None:
-            fun = accept_use_current_time
         self.fun = fun
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
@@ -121,7 +118,8 @@ class SimpleAcceptor(Acceptor):
             return SimpleAcceptor(acceptor)
 
 
-def accept_use_current_time(t, distance_function, eps, x, x_0, pars):
+def accept_uniform_use_current_time(
+        t, distance_function, eps, x, x_0, pars):
     """
     Use only the distance function and epsilon criterion at the current time
     point to evaluate whether to accept or reject.
@@ -133,7 +131,8 @@ def accept_use_current_time(t, distance_function, eps, x, x_0, pars):
     return d, accept
 
 
-def accept_use_complete_history(t, distance_function, eps, x, x_0, pars):
+def accept_uniform_use_complete_history(
+        t, distance_function, eps, x, x_0, pars):
     """
     Use the acceptance criteria from the complete history to evaluate whether
     to accept or reject.
@@ -163,6 +162,34 @@ def accept_use_complete_history(t, distance_function, eps, x, x_0, pars):
                 accept = True
 
     return d, accept
+
+
+class UniformAcceptor(Acceptor):
+    """
+    Base acceptance on the distance function and a uniform error distribution
+    between -eps and eps.
+    """
+
+    def __init__(self, use_complete_history: bool = False):
+        """
+        Parameters
+        ----------
+
+        use_complete_history: bool, optional
+            Whether to compare to all previous distances and epsilons, or use
+            only the current distance time (default). This can be of interest
+            with adaptive distances, in order to guarantee nested acceptance
+            regions.
+        """
+        self.use_complete_history = use_complete_history
+
+    def __call__(self, t, distance_function, eps, x, x_0, pars):
+        if self.use_complete_history:
+            return accept_uniform_use_complete_history(
+                t, distance_function, eps, x, x_0, pars)
+        else:  # use only current time
+            return accept_uniform_use_current_time(
+                t, distance_function, eps, x, x_0, pars)
 
 
 class StochasticAcceptor(Acceptor):
