@@ -56,13 +56,13 @@ __all__ = [
     "SimpleFunctionDistance",
     "PNormDistance",
     "AdaptivePNormDistance",
-    "DistanceFunctionWithMeasureList",
     "ZScoreDistanceFunction",
     "PCADistanceFunction",
-    "RangeEstimatorDistanceFunction",
     "MinMaxDistanceFunction",
     "PercentileDistanceFunction",
-    # Epsilon
+    "RangeEstimatorDistanceFunction",
+    "DistanceFunctionWithMeasureList",
+    # Distance end
     "Epsilon",
     "NoEpsilon",
     "ConstantEpsilon",
