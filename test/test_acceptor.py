@@ -1,6 +1,4 @@
-from pyabc import (SimpleAcceptor,
-                   UniformAcceptor,
-                   StochasticAcceptor)
+from pyabc import (SimpleAcceptor)
 
 
 def test_simple_acceptor():
@@ -14,3 +12,11 @@ def test_simple_acceptor():
     y = {'s0': 2, 's1': 2}
 
     dist, accept = acceptor(0, None, None, x, y, None)
+
+
+def test_uniform_acceptor():
+    pass
+
+
+def test_stochastic_acceptr():
+    pass
