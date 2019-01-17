@@ -194,8 +194,16 @@ class UniformAcceptor(Acceptor):
 
 class StochasticAcceptor(Acceptor):
     """
-    TODO: Develop a concept of how to pass different distributions and how to
-    account for parametrized noise models.
+    The stochastic acceptor uses a flexible kernel in the acceptance step
+    (generalizing from the uniform kernel), e.g. a Gaussian one, or other
+    probability distributions.
+    
+    The concept is based on [#wilkinson_exactnoise]_.
+
+    .. [#wilkinson_exactnoise] Wilkinson, Richard David;
+           "Approximate Bayesian computation (ABC) gives exact results under
+           the assumption of model error"; Statistical applications in
+           genetics and molecular biology 12.2 (2013): 129-141.
     """
 
     def __init__(self, distribution=None, max_density=None, nr_populations=1):
