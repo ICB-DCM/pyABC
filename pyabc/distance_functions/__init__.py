@@ -1,3 +1,11 @@
+"""
+Distance functions
+==================
+
+Commonly used distance functions for ABC, implementing a few advanced
+features.
+"""
+
 
 from .distance_functions import (DistanceFunction,
                                  NoDistance,
