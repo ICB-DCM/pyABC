@@ -194,32 +194,65 @@ class UniformAcceptor(Acceptor):
 
 class StochasticAcceptor(Acceptor):
     """
-    TODO: Develop a concept of how to pass different distributions and how to
-    account for parametrized noise models.
+    This acceptor implements a stochastic acceptance step based on a
+    probability density, generalizing from the uniform acceptance kernel.
+    A particle is accepted, if for the simulated summary statistics x,
+    and the observed summary statistics x_0 holds
+
+    .. math::
+
+       \\frac{pdf(x_0|x)}{c}\geq u
+
+    where u ~ U[0,1], and c is a normalizing constant.
+
+    The implementation is based on [#wilkinson].
+
+    .. [#wilkinson] Wilkinson, Richard David; "Approximate Bayesian
+       computation (ABC) gives exact results under the assumption of model
+       error"; Statistical applications in genetics and molecular biology
+       12.2 (2013): 129-141.
     """
 
-    def __init__(self, distribution=None, max_density=None, nr_populations=1):
+    def __init__(
+            self,
+            pdf=None,
+            c=None,
+            t_max=None,
+            exponent=3):
         """
         Parameters
         ----------
 
-        distribution: optional
-            A distribution object having a method .pdf(x-x_0), allowing to
-            evaluate the probability density function at x-x_0.
-            If None is passed, a standard multivariate normal distribution
-            is assumed.
+        pdf: callable, optional
+            A probability density function
 
-        max_density: float, optional
-            The highest mode of the distribution. If None is passed, it is
-            computed, assumed to be at (0,...,0).
+            .. math::
+
+               pdf(x_0|x)
+
+            of the observed summary statistics given the simulated
+            summary statistics. If None is passed, a standard multivariate
+            normal distribution is assumed.
+
+        c: float, optional
+            The normalization value the density is divided by. To have
+            acceptance from the desired distribution, c should be
+            at least (and as precisely as possible for higher acceptance
+            rates) the highest mode of the distribution.
+            If None is passed, it is computed, assumed to be for x=x_0.
+
+        t_max: float, optional
+        exponent: int, optional
         """
 
         super().__init__()
-        self.distribution = distribution
-        self.max_density = max_density
-        self.nr_populations = nr_populations
-        self.max_temp = 42
-        self.exp = 4
+        self.pdf = pdf
+        self.c = c
+
+        if t_max is None:
+            t_max = 42
+        self.t_max = t_max
+        self.exponent = exponent
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         if t >= self.nr_populations:
