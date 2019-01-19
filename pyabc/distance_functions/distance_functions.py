@@ -60,7 +60,7 @@ class DistanceFunction(ABC):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance function (in ``new`` and ``load``),
-        directly after set_
+        directly after handle_x_0.
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -263,12 +263,12 @@ def to_distance(maybe_distance_function):
 
 class PNormDistance(DistanceFunction):
     """
-    Use weighted p-norm
+    Use a weighted p-norm
 
     .. math::
 
         d(x, y) =\
-         \\left[\\sum_{i} \\left w_i| x_i-y_i \\right|^{p} \\right]^{1/p}
+         \\left [\\sum_{i} \\left |w_i ( x_i-y_i ) \\right |^{p} \\right ]^{1/p}
 
     to compute distances between sets of summary statistics. E.g. set p=2 to
     get a Euclidean distance.
@@ -546,7 +546,7 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
 
     .. math::
 
-        d(x, y) =\
+        d(x, y) =
          \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """
 
