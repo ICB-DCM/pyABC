@@ -205,7 +205,7 @@ class StochasticAcceptor(Acceptor):
 
     where u ~ U[0,1], and c is a normalizing constant.
 
-    The implementation is based on [#wilkinson].
+    The concept is based on [#wilkinson]_.
 
     .. [#wilkinson] Wilkinson, Richard David; "Approximate Bayesian
        computation (ABC) gives exact results under the assumption of model
