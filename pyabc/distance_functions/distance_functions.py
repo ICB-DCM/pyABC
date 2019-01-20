@@ -59,8 +59,8 @@ class DistanceFunction(ABC):
                    sample_from_prior: List[dict]):
         """
         This method is called by the ABCSMC framework before the first
-        use of the distance function (in ``new`` and ``load``),
-        directly after handle_x_0.
+        use of the distance function (at the beginning of run()),
+        directly after handle_x_0,
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
