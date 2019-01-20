@@ -374,10 +374,7 @@ class ABCSMC:
         Called once at the start of run(). This function either, if available,
         takes the last population from the history, or generates a
         sample population from the prior. Then it calls the initialize()
-        functions of the distance, epsilon, and acceptor,
-        if respectively the require_initialize flags are set 
-        (unset the respective flags if no initialization is required for the
-        first population).
+        functions of the distance, epsilon, and acceptor.
 
         Parameters
         ----------
@@ -387,14 +384,11 @@ class ABCSMC:
             to do the first population). Usually 0 or history.max_t + 1.
         """
 
-        self.distance_function.handle_x_0(self.x_0)
+        def get_initial_sum_stats():
+            sum_stats = self._get_initial_samples(t)[1]
+            return sum_stats
 
-        if self.distance_function.require_initialize:
-            # initialize distance
-            self.distance_function.initialize(t,
-                                              self._get_initial_samples(t)[1])
-
-        if self.eps.require_initialize:
+        def get_initial_weighted_distances():
             def distance_to_ground_truth(x):
                 return self.distance_function(t, x, self.x_0)
 
@@ -404,19 +398,15 @@ class ABCSMC:
             for i in range(len(weights)):
                 weight = weights[i]
                 distance = distance_to_ground_truth(sum_stats[i])
-                rows.append({'distance': distance,
-                             'w': weight})
+                rows.append({'distance': distance, 'w': weight})
             weighted_distances = pd.DataFrame(rows)
+            return weighted_samples
 
-            # initialize epsilon
-            self.eps.initialize(t,
-                                weighted_distances)
-
-        if self.acceptor.require_initialize:
-            self.acceptor.initialize(t,
-                                     self._get_initial_samples(t)[1],
-                                     self.max_nr_populations,
-                                     self.x_0)
+        # initialize dist, eps, acc
+        self.distance_function.initialize(t, get_initial_sum_stats, self.x_0)
+        self.eps.initialize(t, get_initial_weighted_distances)
+        self.acceptor.initialize(t, get_initial_sum_stats,
+                                 self.max_nr_populations, self.x_0)
 
     def _get_initial_samples(self, t: int) -> (List[float], List[dict]):
         """

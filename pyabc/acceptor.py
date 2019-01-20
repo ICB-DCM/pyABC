@@ -17,7 +17,7 @@ time.
 import numpy as np
 import scipy as sp
 import scipy.stats as sp_stats
-from typing import List
+from typing import Callable, List
 
 class Acceptor:
     """
@@ -28,20 +28,17 @@ class Acceptor:
         """
         Default constructor.
         """
-        self.require_initialize = False
 
     def initialize(self,
                    t: int,
-                   initial_sum_stats: List[dict],
+                   get_sum_stats: Callable[[], List[dict]],
                    max_nr_populations: int,
                    x_0: dict):
         """
         Initialize. This method is called by the ABCSMC framework initially,
         and can be used to calibrate the acceptor to initial statistics.
 
-        The defaul implrmentation is to do nothing.
-
-        This function is only called if require_initialize == True.
+        The defaul implementation is to do nothing.
         """
         pass
 
@@ -273,8 +270,6 @@ class StochasticAcceptor(Acceptor):
 
         super().__init__()
 
-        self.require_initialize = temp_max == None
-
         self.pdf = pdf
         self.c = c
         self.target_acceptance_rate = target_acceptance_rate
@@ -288,7 +283,7 @@ class StochasticAcceptor(Acceptor):
 
     def initialize(self,
                    t: int,
-                   initial_sum_stats: List[dict],
+                   get_sum_stats: Callable[[], List[dict]],
                    max_nr_populations: int,
                    x_0):
         """
@@ -296,6 +291,11 @@ class StochasticAcceptor(Acceptor):
         """
         self.x_0 = x_0
         self.max_nr_populations = max_nr_populations
+
+        # execute function
+        initial_sum_stats = get_sum_stats()
+
+        # update
         self._update(t, initial_sum_stats)
 
     def update(self,
@@ -372,9 +372,6 @@ class StochasticAcceptor(Acceptor):
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # temperature
-        if t not in self.temperatures:
-            self.temperatures[t] = self.temp_max
-
         temp = self.temperatures[t]
         
         # compute probability density

@@ -13,8 +13,8 @@ import logging
 import json
 from abc import ABC, abstractmethod
 from .weighted_statistics import weighted_quantile
-from typing import List, Union
-import pandas
+from typing import Callable, List, Union
+import pandas as pd
 
 eps_logger = logging.getLogger("Epsilon")
 
@@ -27,29 +27,19 @@ class Epsilon(ABC):
     each new population.
     """
 
-    def __init__(self,
-                 require_initialize: bool = True):
+    def __init__(self):
         """
         Constructor.
-
-        Parameters
-        ----------
-
-        require_initialize: bool, optional
-            Whether the initialize() method should be called.
-
         """
-        self.require_initialize = require_initialize
+        pass
 
     def initialize(self,
                    t: int,
-                   data: pandas.DataFrame):
+                   get_weighted_distances: Callable[[], pd.DataFrame]):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon and can be used to calibrate it to the statistics of the
         samples.
-
-        This method is only called if require_initialize == True.
 
         Default: Do nothing.
 
@@ -59,8 +49,8 @@ class Epsilon(ABC):
         t: int
             The time point to initialize the epsilon for.
 
-        data: pandas.DataFrame
-            The distances for initializing the epsilon, as
+        get_weighted_distances: Callable[[], pd.DataFrame]
+            Returns on demand the distances for initializing the epsilon, as
             returned by
             Population.get_weighted_summary_statistics_and_distances().
         """
@@ -68,7 +58,7 @@ class Epsilon(ABC):
 
     def update(self,
                t: int,
-               data: pandas.DataFrame):
+               weighted_distances: pd.DataFrame):
         """
         Update epsilon value to be used as acceptance criterion for
         generation t.
@@ -82,7 +72,7 @@ class Epsilon(ABC):
             The generation index to update / set epsilon for. Counting is
             zero-based. So the first population has t=0.
 
-        data: pandas.DataFrame
+        weighted_distances: pd.DataFrame
             The distances that should be used to update epsilon, as returned
             by Population.get_weighted_distances(). These are usually the
             distances of samples accepted in population t-1. The distances may
@@ -145,7 +135,7 @@ class NoEpsilon(Epsilon):
     """
 
     def __init__(self):
-        super().__init__(require_initialize=False)
+        super().__init__()
 
     def __call__(self,
                  t: int) -> float:
@@ -167,7 +157,7 @@ class ConstantEpsilon(Epsilon):
 
     def __init__(self,
                  constant_epsilon_value: float):
-        super().__init__(require_initialize=False)
+        super().__init__()
         self.constant_epsilon_value = constant_epsilon_value
 
     def get_config(self):
@@ -195,7 +185,7 @@ class ListEpsilon(Epsilon):
 
     def __init__(self,
                  values: List[float]):
-        super().__init__(require_initialize=False)
+        super().__init__()
         self.epsilon_values = list(values)
 
     def get_config(self):
@@ -258,8 +248,9 @@ class QuantileEpsilon(Epsilon):
         eps_logger.debug(
             "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
             .format(initial_epsilon, quantile_multiplier))
-        require_initialize = initial_epsilon == 'from_sample'
-        super().__init__(require_initialize=require_initialize)
+
+        super().__init__()
+
         self._initial_epsilon = initial_epsilon
         self.alpha = alpha
         self.quantile_multiplier = quantile_multiplier
@@ -280,10 +271,16 @@ class QuantileEpsilon(Epsilon):
 
     def initialize(self,
                    t: int,
-                   data: pandas.DataFrame):
-        # called only if require_initialize == True, i.e. if not 'from_sample'
+                   get_weighted_distances: Callable[[], pd.DataFrame]):
+        if self._initial_epsilon != 'from_sample':
+            # safety check in __call__
+            return
 
-        self._update(t, data)
+        # execute function
+        weighted_distances = get_weighted_distances()
+        
+        # initialize epsilon
+        self._update(t, weighted_distances)
 
         # logging
         eps_logger.info("initial epsilon is {}".format(self._look_up[t]))
@@ -303,7 +300,6 @@ class QuantileEpsilon(Epsilon):
         # initialize if necessary
         if not self._look_up:
             self._set_initial_value(t)
-
         try:
             eps = self._look_up[t]
         except KeyError as e:
@@ -317,30 +313,30 @@ class QuantileEpsilon(Epsilon):
 
     def update(self,
                t: int,
-               data: pandas.DataFrame):
+               weighted_distances: pd.DataFrame):
         """
         Compute quantile of the (weighted) distances given in population,
         and use this to update epsilon.
         """
 
-        self._update(t, data)
+        self._update(t, weighted_distances)
 
         # logger
         eps_logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
 
     def _update(self,
                 t: int,
-                data: pandas.DataFrame):
+                weighted_distances: pd.DataFrame):
         """
         Here the real update happens, based on the weighted distances.
         """
 
         # extract distances
-        distances = data.distance.values
+        distances = weighted_distances.distance.values
 
         # extract weights
         if self.weighted:
-            weights = data.w.values
+            weights = weighted_distances.w.values
             # The sum of the weighted distances is larger than 1 if more than
             # a single simulation per parameter is performed.
             # Re-normalize in this case.
