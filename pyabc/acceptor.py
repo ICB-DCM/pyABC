@@ -372,6 +372,9 @@ class StochasticAcceptor(Acceptor):
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # temperature
+        if t not in self.temperatures:
+            self.temperatures[t] = self.temp_max
+
         temp = self.temperatures[t]
         
         # compute probability density
