@@ -400,7 +400,7 @@ class ABCSMC:
                 distance = distance_to_ground_truth(sum_stats[i])
                 rows.append({'distance': distance, 'w': weight})
             weighted_distances = pd.DataFrame(rows)
-            return weighted_samples
+            return weighted_distances
 
         # initialize dist, eps, acc
         self.distance_function.initialize(t, get_initial_sum_stats, self.x_0)
@@ -692,8 +692,8 @@ class ABCSMC:
                 print('normalization is zero!')
             # reflects stochasticity of the model
             fraction_accepted_runs_for_single_parameter = (
-                    len(distance_list)
-                    / nr_samples_per_parameter)
+                len(distance_list)
+                / nr_samples_per_parameter)
             weight = (model_prior.pmf(m_ss)
                       * parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
@@ -753,10 +753,10 @@ class ABCSMC:
         self.minimum_epsilon = minimum_epsilon
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
-         
+
         # sample from prior to calibrate distance, epsilon, and acceptor
         self._initialize_dist_eps_acc(self.history.max_t + 1)
-        
+
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
@@ -816,7 +816,7 @@ class ABCSMC:
 
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances())
-            
+
             # update acceptor
             self.acceptor.update(t + 1, population.get_accepted_sum_stats())
 

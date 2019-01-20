@@ -278,7 +278,7 @@ class QuantileEpsilon(Epsilon):
 
         # execute function
         weighted_distances = get_weighted_distances()
-        
+
         # initialize epsilon
         self._update(t, weighted_distances)
 

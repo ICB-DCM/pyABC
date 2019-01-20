@@ -16,8 +16,8 @@ time.
 
 import numpy as np
 import scipy as sp
-import scipy.stats as sp_stats
 from typing import Callable, List
+
 
 class Acceptor:
     """
@@ -223,16 +223,17 @@ class StochasticAcceptor(Acceptor):
 
     .. math::
 
-       \\frac{pdf(x_0|x)}{c}\geq u
+       \\frac{pdf(x_0|x)}{c}\\geq u
 
     where u ~ U[0,1], and c is a normalizing constant.
 
     The concept is based on [#wilkinson]_.
 
     .. [#wilkinson] Wilkinson, Richard David; "Approximate Bayesian
-       computation (ABC) gives exact results under the assumption of model
-       error"; Statistical applications in genetics and molecular biology
-       12.2 (2013): 129-141.
+        computation (ABC) gives exact results under the assumption of model
+        error"; Statistical applications in genetics and molecular biology
+        12.2 (2013): 129-141.
+
     """
 
     def __init__(
@@ -276,7 +277,7 @@ class StochasticAcceptor(Acceptor):
 
         self.temp_max = temp_max
         self.temp_decay_exp = temp_decay_exp
-        
+
         self.x_0 = None
         self.temperatures = {}
         self.max_nr_populations = None
@@ -326,13 +327,13 @@ class StochasticAcceptor(Acceptor):
         self.temperatures[t] = temp
 
     def _compute_acceptance_rate_step(self, values):
-        
+
         # objective function which we wish to find a root for
         def obj(beta):
-            val = np.sum(values**beta) / values.size - self.target_acceptance_rate
+            val = np.sum(values**beta) / values.size - \
+                self.target_acceptance_rate
             return val
-        
-        obj_1 = obj(1)
+
         if obj(1) > 0:
             beta_opt = 1
         else:
@@ -358,7 +359,7 @@ class StochasticAcceptor(Acceptor):
         else:
             # need to take the acceptance rate step
             return np.inf
-        
+
         # how many steps left?
         t_to_go = self.max_nr_populations - (t - 1)
         if t_to_go < 2:
@@ -373,7 +374,7 @@ class StochasticAcceptor(Acceptor):
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # temperature
         temp = self.temperatures[t]
-        
+
         # compute probability density
         pd = self.pdf(x_0, x)
 

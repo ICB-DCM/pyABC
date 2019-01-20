@@ -32,7 +32,7 @@ def test_single_parameter():
     abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}], {"a": 0, "b": 0})
     dist_f.initialize(0, abc.sample_from_prior, abc.x_0)
     d = dist_f(0, {"a": 1}, {"a": 2})
-    assert 1/13 == d
+    assert 1 / 13 == d
 
 
 def test_two_parameters_but_only_one_used():
@@ -41,7 +41,7 @@ def test_two_parameters_but_only_one_used():
                   {"a": 0, "b": 0})
     dist_f.initialize(0, abc.sample_from_prior, abc.x_0)
     d = dist_f(0, {"a": 1, "b": 10}, {"a": 2, "b": 12})
-    assert 1/13 == d
+    assert 1 / 13 == d
 
 
 def test_two_parameters_and_two_used():
@@ -50,7 +50,7 @@ def test_two_parameters_and_two_used():
                   {"a": 0, "b": 0})
     dist_f.initialize(0, abc.sample_from_prior, abc.x_0)
     d = dist_f(0, {"a": 1, "b": 10}, {"a": 2, "b": 12})
-    assert 1/13 + 2/2 == d
+    assert 1 / 13 + 2 / 2 == d
 
 
 def test_single_parameter_percentile():
@@ -67,7 +67,7 @@ def test_single_parameter_percentile():
 def test_pnormdistance():
     abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
                    {'s1': -1, 's2': 0, 's3': 1}],
-                   {'s1': 0, 's2': 0, 's3': 0})
+                  {'s1': 0, 's2': 0, 's3': 0})
 
     # first test that for PNormDistance, the weights stay constant
     dist_f = PNormDistance(p=2)
@@ -75,10 +75,10 @@ def test_pnormdistance():
 
     # call distance function, also to initialize w
     d = dist_f(0, abc.sample_from_prior()[0], abc.sample_from_prior()[1])
-    expected = pow(1**2+2**2, 1/2)
+    expected = pow(1**2 + 2**2, 1 / 2)
     assert expected == d
 
-    assert sum(abs(a-b) for a, b in
+    assert sum(abs(a - b) for a, b in
                zip(list(dist_f.w[0].values()), [1, 1, 1])) < 0.01
 
 

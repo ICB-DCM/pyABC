@@ -254,7 +254,7 @@ class PNormDistance(DistanceFunction):
     .. math::
 
         d(x, y) =\
-         \\left [\\sum_{i} \\left |w_i ( x_i-y_i ) \\right |^{p} \\right ]^{1/p}
+        \\left [\\sum_{i} \\left |w_i ( x_i-y_i ) \\right |^{p} \\right ]^{1/p}
 
     to compute distances between sets of summary statistics. E.g. set p=2 to
     get a Euclidean distance.
