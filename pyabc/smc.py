@@ -13,7 +13,7 @@ from typing import List, Callable, TypeVar
 import pandas as pd
 import scipy as sp
 from .distance_functions import to_distance
-from .epsilon import Epsilon, MedianEpsilon
+from .epsilon import Epsilon, MedianEpsilon, NoEpsilon
 from .model import Model
 from .population import Particle
 from .transition import Transition, MultivariateNormalTransition
@@ -28,6 +28,8 @@ from .platform_factory import DefaultSampler
 from .acceptor import UniformAcceptor, SimpleAcceptor
 import copy
 import warnings
+import numpy as np
+
 
 abclogger = logging.getLogger("ABC")
 
@@ -206,11 +208,15 @@ class ABCSMC:
             acceptor = UniformAcceptor()
         self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
 
+        # will be set later
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
         self.history = None  # type: History
         self._initial_sum_stats = None
         self._initial_weights = None
+        self.minimum_epsilon = None
+        self.max_nr_populations = None
+        self.min_acceptance_rate = None
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -260,8 +266,6 @@ class ABCSMC:
         if observed_sum_stat is None:
             observed_sum_stat = self.history.observed_sum_stat()
         self.x_0 = observed_sum_stat
-
-        self._initialize_dist_and_eps(self.history.max_t + 1)
 
         return self.history.id
 
@@ -362,21 +366,18 @@ class ABCSMC:
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
 
-        # sample from prior to calibrate distance function and epsilon
-        self._initialize_dist_and_eps(self.history.max_t + 1)
-
         # return id generated in store_initial_data
         return self.history.id
 
-    def _initialize_dist_and_eps(self, t: int):
+    def _initialize_dist_eps_acc(self, t: int):
         """
-        Called once in new() and load(). This function either, if available,
+        Called once at the start of run(). This function either, if available,
         takes the last population from the history, or generates a
-        sample population from the prior,
-         and calls the initialize() functions
-        of the distance function and the epsilon, if respectively the
-        require_initialize flags are set (unset the respective flags if no
-        initialization is required for the first population).
+        sample population from the prior. Then it calls the initialize()
+        functions of the distance, epsilon, and acceptor,
+        if respectively the require_initialize flags are set 
+        (unset the respective flags if no initialization is required for the
+        first population).
 
         Parameters
         ----------
@@ -408,7 +409,14 @@ class ABCSMC:
             weighted_distances = pd.DataFrame(rows)
 
             # initialize epsilon
-            self.eps.initialize(t, weighted_distances)
+            self.eps.initialize(t,
+                                weighted_distances)
+
+        if self.acceptor.require_initialize:
+            self.acceptor.initialize(t,
+                                     self._get_initial_samples(t)[1],
+                                     self.max_nr_populations,
+                                     self.x_0)
 
     def _get_initial_samples(self, t: int) -> (List[float], List[dict]):
         """
@@ -702,8 +710,11 @@ class ABCSMC:
                       / normalization)
         return weight
 
-    def run(self, minimum_epsilon: float, max_nr_populations: int,
-            min_acceptance_rate: float = 0., **kwargs) -> History:
+    def run(self,
+            minimum_epsilon: float = 0,
+            max_nr_populations: int = np.inf,
+            min_acceptance_rate: float = 0.,
+            **kwargs) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -749,13 +760,13 @@ class ABCSMC:
         # argument handling
         if len(kwargs) > 1:
             raise TypeError("Keyword arguments are not allowed.")
-        if "acceptance_rate" in kwargs:
-            warnings.warn("The acceptance_rate argument is deprecated and "
-                          "removed in pyABc 0.9.0. "
-                          "Use min_acceptance_rate instead.",
-                          DeprecationWarning, stacklevel=2)
-            min_acceptance_rate = kwargs["acceptance_rate"]
-
+        self.minimum_epsilon = minimum_epsilon
+        self.max_nr_populations = max_nr_populations
+        self.min_acceptance_rate = min_acceptance_rate
+         
+        # sample from prior to calibrate distance, epsilon, and acceptor
+        self._initialize_dist_eps_acc(self.history.max_t + 1)
+        
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
@@ -769,7 +780,8 @@ class ABCSMC:
         for t in range(t0, t_max):
 
             # get epsilon for generation t
-            current_eps = self.eps(t)
+            current_eps = self.acceptor.get_epsilon_equivalent(t) \
+                if isinstance(self.eps, NoEpsilon) else self.eps(t)
             abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
 
             # do some adaptations
@@ -814,6 +826,9 @@ class ABCSMC:
 
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances())
+            
+            # update acceptor
+            self.acceptor.update(t + 1, population.get_accepted_sum_stats())
 
             # check early termination conditions
 
