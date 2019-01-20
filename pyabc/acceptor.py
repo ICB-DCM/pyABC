@@ -15,8 +15,9 @@ time.
 """
 
 import numpy as np
+import scipy as sp
 import scipy.stats as sp_stats
-
+from typing import List
 
 class Acceptor:
     """
@@ -26,6 +27,21 @@ class Acceptor:
     def __init__(self):
         """
         Default constructor.
+        """
+        self.require_initialize = False
+
+    def initialize(self,
+                   t: int,
+                   initial_sum_stats: List[dict],
+                   max_nr_populations: int,
+                   x_0: dict):
+        """
+        Initialize. This method is called by the ABCSMC framework initially,
+        and can be used to calibrate the acceptor to initial statistics.
+
+        The defaul implrmentation is to do nothing.
+
+        This function is only called if require_initialize == True.
         """
         pass
 
@@ -75,6 +91,14 @@ class Acceptor:
             the further process.
         """
         raise NotImplementedError()
+
+    def get_epsilon_equivalent(self, t: int):
+        """
+        Return acceptance criterion for time t. An acceptor should implement
+        this if it manages the acceptance criterion itself, i.e. when it is
+        used together with a NoEpsilon.
+        """
+        return np.inf
 
 
 class SimpleAcceptor(Acceptor):
@@ -181,6 +205,7 @@ class UniformAcceptor(Acceptor):
             with adaptive distances, in order to guarantee nested acceptance
             regions.
         """
+        super().__init__()
         self.use_complete_history = use_complete_history
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
@@ -217,8 +242,9 @@ class StochasticAcceptor(Acceptor):
             self,
             pdf=None,
             c=None,
-            t_max=None,
-            exponent=3):
+            target_acceptance_rate=0.5,
+            temp_max=None,
+            temp_decay_exp=3):
         """
         Parameters
         ----------
@@ -246,53 +272,125 @@ class StochasticAcceptor(Acceptor):
         """
 
         super().__init__()
+
+        self.require_initialize = temp_max == None
+
         self.pdf = pdf
         self.c = c
+        self.target_acceptance_rate = target_acceptance_rate
 
-        if t_max is None:
-            t_max = 42
-        self.t_max = t_max
-        self.exponent = exponent
+        self.temp_max = temp_max
+        self.temp_decay_exp = temp_decay_exp
+        
+        self.x_0 = None
+        self.temperatures = {}
+        self.max_nr_populations = None
+
+    def initialize(self,
+                   t: int,
+                   initial_sum_stats: List[dict],
+                   max_nr_populations: int,
+                   x_0):
+        """
+        Initialize temperature.
+        """
+        self.x_0 = x_0
+        self.max_nr_populations = max_nr_populations
+        self._update(t, initial_sum_stats)
+
+    def update(self,
+               t: int,
+               accepted_sum_stats: List[dict]):
+        self._update(t, accepted_sum_stats)
+
+    def _update(self,
+                t: int,
+                sum_stats: List[dict]):
+        if self.c is None:
+            self.c = self.pdf(self.x_0, self.x_0)
+
+        values = [self.pdf(self.x_0, x) / self.c
+                  for x in sum_stats]
+        values = np.array(values)
+
+        # compute optimal temperature for target acceptance rate
+        acceptance_rate_temp = self._compute_acceptance_rate_step(values)
+
+        # compute fall-back step according to decay scheme
+        decay_temp = self._compute_decay_step(t, values)
+
+        # take minimum
+        temp = min(acceptance_rate_temp, decay_temp)
+
+        # fill into temperatures list
+        self.temperatures[t] = temp
+
+    def _compute_acceptance_rate_step(self, values):
+        
+        # objective function which we wish to find a root for
+        def obj(beta):
+            val = np.sum(values**beta) / values.size - self.target_acceptance_rate
+            return val
+        
+        obj_1 = obj(1)
+        if obj(1) > 0:
+            beta_opt = 1
+        else:
+            # perform binary search
+            # TODO: take a more efficient optimization approach?
+            beta_opt = sp.optimize.bisect(obj, 0, 1)
+
+        # temperature is inverse beta
+        temp_opt = 1 / beta_opt
+        return temp_opt
+
+    def _compute_decay_step(self, t, values):
+        # check if we can compute a decay step
+        if self.max_nr_populations == np.inf:
+            # always take the acceptance rate step
+            return np.inf
+
+        # get temperature to start with
+        if t - 1 in self.temperatures:
+            temp_base = self.temperatures[t - 1]
+        elif self.temp_max is not None:
+            temp_base = self.temp_max
+        else:
+            # need to take the acceptance rate step
+            return np.inf
+        
+        # how many steps left?
+        t_to_go = self.max_nr_populations - (t - 1)
+        if t_to_go < 2:
+            # have to take exact step, i.e. a temperature of 1, next
+            return 1.0
+        temps = np.linspace(1, temp_base**(1 / self.temp_decay_exp),
+                            t_to_go) ** self.temp_decay_exp
+
+        temp = temps[-2]
+        return temp
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
-        if t >= self.nr_populations:
-            raise ValueError("PFUI!")
-        temps = np.linspace(1,
-                            self.max_temp**(1 / self.exp),
-                            self.nr_populations) ** self.exp
-        temp = temps[self.nr_populations - 1 - t]
-        beta = 1 / temp
-
-        # extract summary statistics as array
-        x = np.asarray(list(x.values()))
-        x_0 = np.asarray(list(x_0.values()))
-        n = len(x)
-
-        # noise distribution
-        if self.distribution is None:
-            distribution = sp_stats.multivariate_normal(
-                mean=np.zeros(n), cov=np.eye(n))
-        else:
-            distribution = self.distribution
-
-        # maximum probability density
-        if self.max_density is None:
-            max_density = distribution.pdf(np.zeros(n))
-        else:
-            max_density = self.max_density
-
+        # temperature
+        temp = self.temperatures[t]
+        
         # compute probability density
-        density = distribution.pdf(x - x_0)
+        pd = self.pdf(x_0, x)
+
+        # rescale
+        pd_rescaled = pd / self.c
 
         # acceptance probability
-        acceptance_probability = density**beta / max_density**beta
+        acceptance_probability = pd_rescaled ** (1 / temp)
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
         if acceptance_probability >= threshold:
             accept = True
-            # print(acceptance_probability, threshold)
         else:
             accept = False
 
-        return np.nan, accept
+        return pd_rescaled, accept
+
+    def get_epsilon_equivalent(self, t: int):
+        return self.temperatures[t]
