@@ -42,6 +42,14 @@ class Acceptor:
         """
         pass
 
+    def update(self,
+               t: int,
+               sum_stats: List[dict]):
+        """
+        Update the acceptance criterion.
+        """
+        pass
+
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         """
         Compute distance between summary statistics and evaluate whether to
@@ -301,8 +309,8 @@ class StochasticAcceptor(Acceptor):
 
     def update(self,
                t: int,
-               accepted_sum_stats: List[dict]):
-        self._update(t, accepted_sum_stats)
+               sum_stats: List[dict]):
+        self._update(t, sum_stats)
 
     def _update(self,
                 t: int,
