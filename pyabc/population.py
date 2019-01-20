@@ -201,6 +201,16 @@ class Population:
 
         return weighted_distances
 
+    def get_accepted_sum_stats(self) -> List[dict]:
+        """
+        Return a list of all summary statistics.
+        """
+        sum_stats = []
+        for particle in self._list:
+            sum_stats.extend(particle.accepted_sum_stats)
+
+        return sum_stats
+
     def to_dict(self) -> dict:
         """
         Create a dictionary representation, creating a list of particles for
