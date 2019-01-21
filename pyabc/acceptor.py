@@ -310,47 +310,54 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = x_0
         self.max_nr_populations = max_nr_populations
 
-        # execute function
-        initial_sum_stats = get_sum_stats()
-
         # update
-        self._update(t, initial_sum_stats)
+        self._update(t, get_sum_stats)
 
     def update(self,
                t: int,
                sum_stats: List[dict]):
-        self._update(t, sum_stats)
+        self._update(t, lambda: sum_stats)
 
     def _update(self,
                 t: int,
-                sum_stats: List[dict]):
-        if self.c is None:
-            self.c = self.pdf(self.x_0, self.x_0)
+                get_sum_stats: Callable[[], List[dict]]):
 
-        values = [self.pdf(self.x_0, x) / self.c
-                  for x in sum_stats]
-        values = np.array(values)
+        if t == self.max_nr_populations - 1:
+            self.temperatures[t] = 1.0
+            return
 
         # compute optimal temperature for target acceptance rate
-        if self.use_target_acceptance_rate or (not self.temperatures and self.temp_max is None):
-            acceptance_rate_temp = self._compute_acceptance_rate_step(values)
+        if self.use_target_acceptance_rate or \
+                (not self.temperatures and self.temp_max is None):
+            acceptance_rate_temp = self._compute_acceptance_rate_step(
+                get_sum_stats)
         else:
             acceptance_rate_temp = np.inf
 
         # compute fall-back step according to decay scheme
         if self.use_temp_decay_exp:
-            decay_temp = self._compute_decay_step(t, values)
+            decay_temp = self._compute_decay_step(t)
         else:
             decay_temp = np.inf
 
-        # take minimum
         print(acceptance_rate_temp, decay_temp)
-        temp = min(acceptance_rate_temp, decay_temp)
+
+        # take minimum
+        temp = max(min(acceptance_rate_temp, decay_temp), 1.0)
 
         # fill into temperatures list
         self.temperatures[t] = temp
 
-    def _compute_acceptance_rate_step(self, values):
+    def _compute_acceptance_rate_step(self, get_sum_stats):
+        # execute function
+        sum_stats = get_sum_stats()
+
+        # compute rescaled posterior densities
+        if self.c is None:
+            self.c = self.pdf(self.x_0, self.x_0)
+        values = [self.pdf(self.x_0, x) / self.c
+                  for x in sum_stats]
+        values = np.array(values)
 
         # objective function which we wish to find a root for
         def obj(beta):
@@ -369,7 +376,7 @@ class StochasticAcceptor(Acceptor):
         temp_opt = 1 / beta_opt
         return temp_opt
 
-    def _compute_decay_step(self, t, values):
+    def _compute_decay_step(self, t):
         # check if we can compute a decay step
         if self.max_nr_populations == np.inf:
             # always take the acceptance rate step
