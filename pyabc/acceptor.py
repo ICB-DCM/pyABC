@@ -252,7 +252,9 @@ class StochasticAcceptor(Acceptor):
             temp_max=None,
             temp_decay_exp: float = 3.0,
             use_target_acceptance_rate: bool = True,
-            use_temp_decay_exp: bool = True):
+            use_temp_decay_exp: bool = True,
+            use_daly2017: bool = False,
+            **kwargs):
         """
         Parameters
         ----------
@@ -290,6 +292,7 @@ class StochasticAcceptor(Acceptor):
 
         self.use_target_acceptance_rate = use_target_acceptance_rate
         self.use_temp_decay_exp = use_temp_decay_exp
+        self.use_daly2017 = use_daly2017
 
         if not use_target_acceptance_rate and not use_temp_decay_exp:
             raise ValueError("No method to generate a temperature scheme "
@@ -298,6 +301,10 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = None
         self.temperatures = {}
         self.max_nr_populations = None
+        self.kwargs = kwargs
+
+        if self.use_daly2017:
+            self.k = self.temp_max
 
     def initialize(self,
                    t: int,
@@ -403,6 +410,15 @@ class StochasticAcceptor(Acceptor):
 
         temp = temps[-2]
         return temp
+
+    def _compute_daly2017(t):
+        if t - 1 in self.temperatures:
+            temp = self.temperatures[t - 1]
+        else:
+            temp = self.temp_max
+
+        self.kwargs['k'] = min(self.kwargs['k'], self.kwargs['alpha'] * temp)
+        return temp - self.kwargs['k']
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # temperature
