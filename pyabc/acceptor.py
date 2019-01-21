@@ -344,6 +344,7 @@ class StochasticAcceptor(Acceptor):
             decay_temp = np.inf
 
         # take minimum
+        print(acceptance_rate_temp, decay_temp)
         temp = min(acceptance_rate_temp, decay_temp)
 
         # fill into temperatures list
@@ -388,7 +389,7 @@ class StochasticAcceptor(Acceptor):
         if t_to_go < 2:
             # have to take exact step, i.e. a temperature of 1, next
             return 1.0
-        temps = np.linspace(1, temp_base**(1 / self.temp_decay_exp),
+        temps = 1 + np.linspace(0, (temp_base - 1)**(1 / self.temp_decay_exp),
                                 t_to_go) ** self.temp_decay_exp
 
         temp = temps[-2]
