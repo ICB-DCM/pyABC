@@ -420,7 +420,6 @@ class ABCSMC:
         .. warning::
             The sample is cached.
         """
-
         if self._initial_weights is None or self._initial_sum_stats is None:
             if self.history.n_populations > 0:
                 weights, sum_stats = self.history.get_weighted_sum_stats()
