@@ -428,3 +428,42 @@ class StochasticAcceptor(Acceptor):
 
     def get_epsilon_equivalent(self, t: int):
         return self.temperatures[t]
+
+
+def get_pdf_normal(mean, cov):
+    """
+    Generate a normal probability density function for given
+    mean and covariance.
+    """
+    def pdf(x_0, x):
+        v_0 = np.array(list(x_0.values()))
+        v = np.array(list(x.values()))
+        
+        return sp.stats.multivariate_normal.pdf(v_0 - v, mean=mean, cov=cov)
+
+    c = sp.stats.multivariate_normal.pdf(np.zeros(len(v)), mean=mean, cov=cov)
+
+    return pdf, c
+
+
+def get_pmf_binomial(p):
+    """
+    Generate a binomial probability mass function
+    for a given success probability p.
+    """
+    def pdf(x_0, x):
+        v_0 = np.array(list(x_0.values()))
+        v = np.array(list(x.values()))
+
+        pmf = 1
+        for j in range(len(v)):
+            pmf *= sp.stats.binom.pmf(k=v_0[j], n=v[j], p=p) \
+                   if v[j] > 0 else 1
+
+        return pmf
+
+    c = 1
+    # if we have a better bound on n, we can improve the guess of c
+
+    return pdf, c
+
