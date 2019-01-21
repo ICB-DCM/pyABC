@@ -16,7 +16,7 @@ time.
 
 import numpy as np
 import scipy as sp
-from typing import Callable, List
+from typing import Callable, List, Union
 
 
 class Acceptor:
@@ -248,12 +248,7 @@ class StochasticAcceptor(Acceptor):
             self,
             pdf=None,
             c=None,
-            target_acceptance_rate: float = 0.5,
-            temp_max=None,
-            temp_decay_exp: float = 3.0,
-            use_target_acceptance_rate: bool = True,
-            use_temp_decay_exp: bool = True,
-            use_daly2017: bool = False,
+            temp_schedules: Union[Callable, List[Callable]] = None,
             **kwargs):
         """
         Parameters
@@ -277,34 +272,38 @@ class StochasticAcceptor(Acceptor):
             rates) the highest mode of the distribution.
             If None is passed, it is computed, assumed to be for x=x_0.
 
-        t_max: float, optional
-        exponent: int, optional
+        temp_schedules: Union[Callable, List[Callable]], optional
+            Temperature schedules of the form Callable[**kwargs, float]
+            returning proposed temperatures for the next time point. If
+            multiple are passed, the minimum computed temperature is used.
+
+        kwargs: dict, optional
+            Suppported arguments that have a default value:
+            * target_acceptance_rate
+            * temp_max
+            * temp_decay_exponent: temperature decay exponent
         """
 
         super().__init__()
 
         self.pdf = pdf
         self.c = c
-        self.target_acceptance_rate = target_acceptance_rate
 
-        self.temp_max = temp_max
-        self.temp_decay_exp = temp_decay_exp
-
-        self.use_target_acceptance_rate = use_target_acceptance_rate
-        self.use_temp_decay_exp = use_temp_decay_exp
-        self.use_daly2017 = use_daly2017
-
-        if not use_target_acceptance_rate and not use_temp_decay_exp:
-            raise ValueError("No method to generate a temperature scheme "
-                             "passed.")
-
-        self.x_0 = None
-        self.temperatures = {}
-        self.max_nr_populations = None
+        if temp_schedules is None:
+            temp_schedules = [schedule_acceptance_rate, schedule_decay]
+        elif not len(temp_schedules):
+            raise ValueError("At least one temperature scheduling method "
+                             "is required.")
+        self.temp_scheduls = temp_schedules
+        
         self.kwargs = kwargs
 
-        if self.use_daly2017:
-            self.k = self.temp_max
+        # temepratures, indexed by time
+        self.temperatures = {}
+
+        # fields to be filled later
+        self.x_0 = None
+        self.max_nr_populations = None
 
     def initialize(self,
                    t: int,
@@ -317,7 +316,7 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = x_0
         self.max_nr_populations = max_nr_populations
 
-        # init divisor c
+        # init normalization c
         if self.c is None:
             self.c = self.pdf(self.x_0, self.x_0)
         
@@ -333,92 +332,104 @@ class StochasticAcceptor(Acceptor):
                 t: int,
                 get_sum_stats: Callable[[], List[dict]]):
 
+        # check if final time point reached
         if t == self.max_nr_populations - 1:
             self.temperatures[t] = 1.0
             return
 
-        # compute optimal temperature for target acceptance rate
-        if self.use_target_acceptance_rate or \
-                (not self.temperatures and self.temp_max is None):
-            acceptance_rate_temp = self._compute_acceptance_rate_step(
-                get_sum_stats)
-        else:
-            acceptance_rate_temp = np.inf
+        # evaluate schedulers
+        temps = []
+        for schedule in self.temp_schedules:
+            temp = schedule(t=t,
+                            get_sum_stats=get_sum_stats,
+                            x_0=self.x_0,
+                            pdf=self.pdf,
+                            c=self.c,
+                            temperatures=self.temperatures,
+                            max_nr_populations=self.max_nr_populations,
+                            **kwargs)
+            temps.append(temp)
 
-        # compute fall-back step according to decay scheme
-        if self.use_temp_decay_exp:
-            decay_temp = self._compute_decay_step(t)
-        else:
-            decay_temp = np.inf
-
-        print(acceptance_rate_temp, decay_temp)
-
-        # take minimum
-        temp = max(min(acceptance_rate_temp, decay_temp), 1.0)
+        # take reasonable minimum temperature
+        temp = max(min(temps), 1.0)
 
         # fill into temperatures list
         self.temperatures[t] = temp
 
-    def _compute_acceptance_rate_step(self, get_sum_stats):
-        # execute function
-        sum_stats = get_sum_stats()
+def schedule_acceptance_rate(**kwargs):
+    # required fields
+    get_sum_stats = kwargs['get_sum_stats']
+    x_0 = kwargs['x_0']
+    pdf = kwargs['pdf']
+    c = kwargs['c']
+    target_acceptance_rate = kwargs['target_acceptance_rate']
 
-        # compute rescaled posterior densities
-        values = [self.pdf(self.x_0, x) / self.c
-                  for x in sum_stats]
-        values = np.array(values)
+    # execute function
+    sum_stats = get_sum_stats()
 
-        # objective function which we wish to find a root for
-        def obj(beta):
-            val = np.sum(values**beta) / values.size - \
-                self.target_acceptance_rate
-            return val
+    # compute rescaled posterior densities
+    values = [pdf(x_0, x) / c
+              for x in sum_stats]
+    values = np.array(values)
 
-        if obj(1) > 0:
-            beta_opt = 1
-        else:
-            # perform binary search
-            # TODO: take a more efficient optimization approach?
-            beta_opt = sp.optimize.bisect(obj, 0, 1)
+    # objective function which we wish to find a root for
+    def obj(beta):
+        val = np.sum(values**beta) / values.size - \
+            target_acceptance_rate
+        return val
 
-        # temperature is inverse beta
-        temp_opt = 1 / beta_opt
-        return temp_opt
+    if obj(1) > 0:
+        beta_opt = 1
+    else:
+        # perform binary search
+        # TODO: take a more efficient optimization approach?
+        beta_opt = sp.optimize.bisect(obj, 0, 1)
 
-    def _compute_decay_step(self, t):
-        # check if we can compute a decay step
-        if self.max_nr_populations == np.inf:
-            # always take the acceptance rate step
-            return np.inf
+    # temperature is inverse beta
+    temp_opt = 1 / beta_opt
+    return temp_opt
 
-        # get temperature to start with
-        if t - 1 in self.temperatures:
-            temp_base = self.temperatures[t - 1]
-        elif self.temp_max is not None:
-            temp_base = self.temp_max
-        else:
-            # need to take the acceptance rate step
-            return np.inf
 
-        # how many steps left?
-        t_to_go = self.max_nr_populations - (t - 1)
-        if t_to_go < 2:
-            # have to take exact step, i.e. a temperature of 1, next
-            return 1.0
-        temps = 1 + np.linspace(0, (temp_base - 1)**(1 / self.temp_decay_exp),
-                                t_to_go) ** self.temp_decay_exp
+def schedule_decay(**kwargs):
+    # required fields
+    temperatures = kwargs['temperatures']
+    max_nr_populations = kwargs['max_nr_populations']
+    temp_max = kwargs['temp_max']
+    temp_decay_exponent = kwargs['temp_decay_exponent']
+    do_initial_acceptance_step = kwargs['do_initial_acceptance_step']
 
-        temp = temps[-2]
-        return temp
+    # check if we can compute a decay step
+    if max_nr_populations == np.inf:
+        raise ValueError("Can only perform decay step with a finite "
+                         "max_nr_populations".)
 
-    def _compute_daly2017(t):
-        if t - 1 in self.temperatures:
-            temp = self.temperatures[t - 1]
-        else:
-            temp = self.temp_max
+    # get temperature to start with
+    if t - 1 in temperatures:
+        temp_base = temperatures[t - 1]
+    elif temp_max is not None:
+        temp_base = temp_max
+    elif do_initial_acceptance_step:
+        temp_base = schedule_accdeptance(**kwargs)
 
-        self.kwargs['k'] = min(self.kwargs['k'], self.kwargs['alpha'] * temp)
-        return temp - self.kwargs['k']
+    # how many steps left?
+    t_to_go = max_nr_populations - (t - 1)
+    if t_to_go < 2:
+        # have to take exact step, i.e. a temperature of 1, next
+        return 1.0
+    temps = 1 + np.linspace(0, (temp_base - 1)**(1 / temp_decay_exp),
+                            t_to_go) ** temp_decay_exp
+
+    temp = temps[-2]
+    return temp
+
+def _compute_daly2017(t):
+    if t - 1 in self.temperatures:
+        temp = self.temperatures[t - 1]
+    else:
+        temp = self.temp_max
+
+    self.kwargs['k'] = min(self.kwargs['k'], self.kwargs['alpha'] * temp)
+    return temp - self.kwargs['k']
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         # temperature
