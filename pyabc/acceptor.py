@@ -310,6 +310,10 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = x_0
         self.max_nr_populations = max_nr_populations
 
+        # init divisor c
+        if self.c is None:
+            self.c = self.pdf(self.x_0, self.x_0)
+        
         # update
         self._update(t, get_sum_stats)
 
@@ -353,8 +357,6 @@ class StochasticAcceptor(Acceptor):
         sum_stats = get_sum_stats()
 
         # compute rescaled posterior densities
-        if self.c is None:
-            self.c = self.pdf(self.x_0, self.x_0)
         values = [self.pdf(self.x_0, x) / self.c
                   for x in sum_stats]
         values = np.array(values)
