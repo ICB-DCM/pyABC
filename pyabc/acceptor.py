@@ -338,7 +338,7 @@ class StochasticAcceptor(Acceptor):
             acceptance_rate_temp = np.inf
 
         # compute fall-back step according to decay scheme
-        if self.use_decay_temp_exp:
+        if self.use_temp_decay_exp:
             decay_temp = self._compute_decay_step(t, values)
         else:
             decay_temp = np.inf
