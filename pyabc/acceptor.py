@@ -248,9 +248,11 @@ class StochasticAcceptor(Acceptor):
             self,
             pdf=None,
             c=None,
-            target_acceptance_rate=0.5,
+            target_acceptance_rate: float = 0.5,
             temp_max=None,
-            temp_decay_exp=3):
+            temp_decay_exp: float = 3.0,
+            use_target_acceptance_rate: bool = True,
+            use_temp_decay_exp: bool = True):
         """
         Parameters
         ----------
@@ -285,6 +287,13 @@ class StochasticAcceptor(Acceptor):
 
         self.temp_max = temp_max
         self.temp_decay_exp = temp_decay_exp
+
+        self.use_target_acceptance_rate = use_target_acceptance_rate
+        self.use_temp_decay_exp = use_temp_decay_exp
+
+        if not use_target_acceptance_rate and not use_temp_decay_exp:
+            raise ValueError("No method to generate a temperature scheme "
+                             "passed.")
 
         self.x_0 = None
         self.temperatures = {}
@@ -323,10 +332,16 @@ class StochasticAcceptor(Acceptor):
         values = np.array(values)
 
         # compute optimal temperature for target acceptance rate
-        acceptance_rate_temp = self._compute_acceptance_rate_step(values)
+        if self.use_target_acceptance_rate:
+            acceptance_rate_temp = self._compute_acceptance_rate_step(values)
+        else:
+            acceptance_rate_temp = np.inf
 
         # compute fall-back step according to decay scheme
-        decay_temp = self._compute_decay_step(t, values)
+        if self.use_decay_temp_exp:
+            decay_temp = self._compute_decay_step(t, values)
+        else:
+            decay_temp = np.inf
 
         # take minimum
         temp = min(acceptance_rate_temp, decay_temp)
