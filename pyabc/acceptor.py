@@ -332,7 +332,7 @@ class StochasticAcceptor(Acceptor):
         values = np.array(values)
 
         # compute optimal temperature for target acceptance rate
-        if self.use_target_acceptance_rate:
+        if self.use_target_acceptance_rate or (not self.temperatures and self.temp_max is None:
             acceptance_rate_temp = self._compute_acceptance_rate_step(values)
         else:
             acceptance_rate_temp = np.inf
@@ -389,7 +389,7 @@ class StochasticAcceptor(Acceptor):
             # have to take exact step, i.e. a temperature of 1, next
             return 1.0
         temps = np.linspace(1, temp_base**(1 / self.temp_decay_exp),
-                            t_to_go) ** self.temp_decay_exp
+                                t_to_go) ** self.temp_decay_exp
 
         temp = temps[-2]
         return temp
