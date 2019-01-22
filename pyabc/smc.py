@@ -802,6 +802,9 @@ class ABCSMC:
 
             # prepare next iteration
 
+            # acceptance rate
+            acceptance_rate = len(population.get_list()) / nr_evaluations
+
             # update distance function
             df_updated = self.distance_function.update(
                 t + 1, sample.all_sum_stats)
@@ -817,16 +820,14 @@ class ABCSMC:
             self.eps.update(t + 1, population.get_weighted_distances())
 
             # update acceptor
-            self.acceptor.update(t + 1, population.get_accepted_sum_stats())
+            self.acceptor.update(t + 1, population.get_accepted_sum_stats(),
+                                 acceptance_rate)
 
             # check early termination conditions
-
-            current_acceptance_rate = \
-                len(population.get_list()) / nr_evaluations
             if (current_eps <= minimum_epsilon
                     or (self.stop_if_only_single_model_alive
                         and self.history.nr_of_models_alive() <= 1)
-                    or current_acceptance_rate < min_acceptance_rate):
+                    or acceptance_rate < min_acceptance_rate):
                 break
 
         # end of run loop
