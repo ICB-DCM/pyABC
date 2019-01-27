@@ -37,10 +37,8 @@ class DistanceFunction(ABC):
     def handle_x_0(self, x_0: dict):
         """
         This method is called by the ABCSMC framework before the first
-        use of the distance function (in `new` and ``load``)
-        to handle observed summary statistics x_0. This is a convenience,
-        since some implementations require x_0, and this way the user
-        does not need to pass it twice to pyabc.
+        use of the distance function (in ``new`` and ``load``)
+        to handle observed summary statistics x_0.
 
         Parameters
         ----------
@@ -352,17 +350,17 @@ class AdaptivePNormDistance(PNormDistance):
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
-    adaptive: bool, optional (default = standard_deviation)
+    adaptive: bool, optional (default = True)
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
         This corresponds to a pre-calibration.
 
-    scale_function: Callable
+    scale_function: Callable, optional (default = standard_deviation)
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
         denotes the list of simulated summary statistics, and x_0 the observed
         summary statistic. Implemented are absolute_median_deviation,
-        standard_deviation, centered_absolute_median_deviation,
+        standard_deviation (default), centered_absolute_median_deviation,
         centered_standard_deviation.
 
     normalize_weights: bool, optional (default = True)

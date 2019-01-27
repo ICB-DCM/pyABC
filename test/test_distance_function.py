@@ -66,7 +66,7 @@ def test_pnormdistance():
                    {'s1': -1, 's2': 0, 's3': 1}])
 
     # first test that for PNormDistance, the weights stay constant
-    dist_f = PNormDistance(p=2)
+    dist_f = PNormDistance()
     dist_f.initialize(0, abc.sample_from_prior())
 
     # call distance function, also to initialize w
@@ -80,7 +80,7 @@ def test_pnormdistance():
 
 def test_adaptivepnormdistance():
     """
-    So far only tests basic running.
+    Only tests basic running.
     """
     abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
                    {'s1': -1, 's2': 0, 's3': 1}])
@@ -101,7 +101,7 @@ def test_adaptivepnormdistance():
 
     for scale_function in scale_functions:
         dist_f = AdaptivePNormDistance(
-            p=2, scale_function=scale_function)
+            scale_function=scale_function)
         dist_f.handle_x_0(x_0)
         dist_f.initialize(0, abc.sample_from_prior())
         dist_f(0, abc.sample_from_prior()[0], abc.sample_from_prior()[1])
