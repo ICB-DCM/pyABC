@@ -10,7 +10,7 @@ Release Notes
 ------------------
 
 * ABCSMC can pass observed summary statistics to distance functions
-  via handle_x_0 method (required for some scale functions, and to make the
+  (required for some scale functions, and to make the
   methods robust to volatile summary statistics).
 * Implementation of more scale functions (distance_functions.scales), in
   particular some taking into account the bias to the observed data.
