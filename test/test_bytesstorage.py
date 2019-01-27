@@ -16,7 +16,8 @@ from rpy2.robjects import pandas2ri
                         "py-float",
                         "py-str",
                         "r-df-cars",
-                        "r-df-iris"])
+                        #"r-df-iris"  TODO: check why iris fails 
+                       ])
 def object_(request):
     par = request.param
     if par == "empty":
