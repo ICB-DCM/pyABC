@@ -16,8 +16,8 @@ from rpy2.robjects import pandas2ri
                         "py-float",
                         "py-str",
                         "r-df-cars",
-                        #"r-df-iris"  TODO: check why iris fails 
-                       ])
+                        # "r-df-iris"  # TODO: check why iris fails
+                        ])
 def object_(request):
     par = request.param
     if par == "empty":
@@ -74,7 +74,7 @@ def test_storage(object_):
     rebuilt = from_bytes(serial)
 
     if not isinstance(object_, robjects.DataFrame):
-        assert type(object_) == type(rebuilt)
+        assert isinstance(object_, type(rebuilt))
 
     if isinstance(object_, int):
         assert object_ == rebuilt

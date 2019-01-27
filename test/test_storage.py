@@ -133,7 +133,8 @@ def test_sum_stats_save_load(history: History):
                               [.1],
                               [{"ss1": .1, "ss2": arr2,
                                 "ss3": example_df(),
-                                "rdf0": r["faithful"]}],  # TODO: check why iris fails
+                                "rdf0": r["faithful"]}],
+                              # TODO: check why iris fails
                               [],
                               True),
                      Particle(0, Parameter({"a": 23, "b": 12}),
