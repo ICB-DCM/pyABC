@@ -127,5 +127,5 @@ def standard_deviation_to_observation(**kwargs):
     """
     data = np.asarray(kwargs['data'])
     x_0 = kwargs['x_0']
-    sd = np.std(np.abs(data - x_0))
-    return sd
+    stdo = np.std(np.abs(data - x_0))
+    return stdo

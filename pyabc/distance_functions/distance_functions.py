@@ -338,17 +338,17 @@ class AdaptivePNormDistance(PNormDistance):
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
 
-    adaptive: bool, optional (default = standard_deviation)
+    adaptive: bool, optional (default = True)
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
         This corresponds to a pre-calibration.
 
-    scale_function: Callable
+    scale_function: Callable, optional (default = standard_deviation)
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
         denotes the list of simulated summary statistics, and x_0 the observed
         summary statistic. Implemented are absolute_median_deviation,
-        standard_deviation, centered_absolute_median_deviation,
+        standard_deviation (default), centered_absolute_median_deviation,
         centered_standard_deviation.
 
     normalize_weights: bool, optional (default = True)
