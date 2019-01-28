@@ -121,7 +121,8 @@ class DistanceFunction(ABC):
     @abstractmethod
     def __call__(self,
                  t: int,
-                 x: dict) -> float:
+                 x: dict,
+                 x_0: dict) -> float:
         """
         Evaluate, at time point t, the distance of the tentatively sampled
         particle to the measured data.
@@ -196,7 +197,8 @@ class NoDistance(DistanceFunction):
 
     def __call__(self,
                  t: int,
-                 x: dict) -> float:
+                 x: dict,
+                 x_0: dict) -> float:
         raise Exception("{} is not intended to be called."
                         .format(self.__class__.__name__))
 
@@ -222,8 +224,8 @@ class SimpleFunctionDistance(DistanceFunction):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict) -> float:
-        return self.function(x, y)
+                 x_0: dict) -> float:
+        return self.function(x, x_0)
 
     def get_config(self):
         conf = super().get_config()
@@ -299,7 +301,7 @@ class PNormDistance(DistanceFunction):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict) -> float:
+                 x_0: dict) -> float:
         # make sure weights are initialized
         if self.w is None:
             self._set_default_weights(t, x.keys())
@@ -313,13 +315,13 @@ class PNormDistance(DistanceFunction):
 
         # compute distance
         if self.p == np.inf:
-            d = max(abs(w[key] * (x[key] - y[key]))
-                    if key in x and key in y else 0
+            d = max(abs(w[key] * (x[key] - x_0[key]))
+                    if key in x and key in x_0 else 0
                     for key in w)
         else:
             d = pow(
-                sum(pow(abs(w[key] * (x[key] - y[key])), self.p)
-                    if key in x and key in y else 0
+                sum(pow(abs(w[key] * (x[key] - x_0[key])), self.p)
+                    if key in x and key in x_0 else 0
                     for key in w),
                 1 / self.p)
 
@@ -551,8 +553,8 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict) -> float:
-        return sum(abs((x[key] - y[key]) / y[key]) if y[key] != 0 else
+                 x_0: dict) -> float:
+        return sum(abs((x[key] - x_0[key]) / x_0[key]) if x_0[key] != 0 else
                    (0 if x[key] == 0 else np.inf)
                    for key in self.measures_to_use) / len(self.measures_to_use)
 
@@ -597,10 +599,10 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict) -> float:
-        x_vec, y_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(y)
+                 x_0: dict) -> float:
+        x_vec, x_0_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(x_0)
         distance = la.norm(
-            self._whitening_transformation_matrix.dot(x_vec - y_vec), 2)
+            self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
         return distance
 
 
@@ -685,8 +687,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict) -> float:
-        distance = sum(abs((x[key] - y[key]) / self.normalization[key])
+                 x_0: dict) -> float:
+        distance = sum(abs((x[key] - x_0[key]) / self.normalization[key])
                        for key in self.measures_to_use)
         return distance
 
@@ -741,7 +743,7 @@ class AcceptAllDistance(DistanceFunction):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict) -> float:
+                 x_0: dict) -> float:
         return -1
 
 
@@ -757,5 +759,5 @@ class IdentityFakeDistance(DistanceFunction):
     def __call__(self,
                  t: int,
                  x: dict,
-                 y: dict):
+                 x_0: dict):
         return x
