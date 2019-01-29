@@ -40,7 +40,8 @@ class PopulationStrategy:
         Default is 1.
     """
 
-    def __init__(self, nr_particles: int, *, nr_samples_per_parameter: int=1):
+    def __init__(self, nr_particles: int, *,
+                 nr_samples_per_parameter: int = 1):
         self.nr_particles = nr_particles
         self.nr_samples_per_parameter = nr_samples_per_parameter
 

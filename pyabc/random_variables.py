@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Union
 from .parameters import Parameter, ParameterStructure
+
 rv_logger = logging.getLogger("RV")
 
 
@@ -373,7 +374,7 @@ class Distribution(ParameterStructure):
         """
 
         return self.__class__(**{key: value.copy()
-                              for key, value in self.items()})
+                                 for key, value in self.items()})
 
     def update_random_variables(self, **random_variables):
         """
@@ -440,7 +441,7 @@ class Distribution(ParameterStructure):
                 except AttributeError:
                     # discrete variables do not have a pdf but a pmf
                     res.append(self[key].pmf(val))
-            return reduce(lambda s, t: s*t, res)
+            return reduce(lambda s, t: s * t, res)
         else:
             return 1
 
@@ -461,7 +462,7 @@ class ModelPerturbationKernel:
     """
 
     def __init__(self, nr_of_models: int,
-                 probability_to_stay: Union[float, None]=None):
+                 probability_to_stay: Union[float, None] = None):
         self.nr_of_models = nr_of_models
         if nr_of_models == 1:
             self.probability_to_stay = 1
@@ -474,7 +475,7 @@ class ModelPerturbationKernel:
 
     def _get_discrete_rv(self, m):
         p_stay = self.probability_to_stay
-        p_move = (1 - p_stay) / (self.nr_of_models-1)
+        p_move = (1 - p_stay) / (self.nr_of_models - 1)
         probabilities = [p_stay if n == m else p_move
                          for n in range(self.nr_of_models)]
         return RV('rv_discrete',
@@ -496,7 +497,7 @@ class ModelPerturbationKernel:
             Target model nr.
         """
 
-        if not 0 <= m <= self.nr_of_models-1:
+        if not 0 <= m <= self.nr_of_models - 1:
             raise Exception('m has to be between 0 and nr_of_models - 1')
         if self.nr_of_models == 1:
             return 0  # always stay, no other choice
@@ -522,7 +523,7 @@ class ModelPerturbationKernel:
         """
 
         if not (0 <= n <= self.nr_of_models
-                and 0 <= m <= self.nr_of_models-1):
+                and 0 <= m <= self.nr_of_models - 1):
             raise Exception(
                 'n and m have to be between 0 and nr_of_models - 1')
         if self.nr_of_models == 1:
