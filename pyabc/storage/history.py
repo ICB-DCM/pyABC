@@ -687,8 +687,6 @@ class History:
             * sum_stats: list of summary statistics
         """
 
-        # TODO: Is the first output, "weights", needed for anything?
-
         m = int(m)
         if t is None:
             t = self.max_t
