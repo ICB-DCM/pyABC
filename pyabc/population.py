@@ -1,5 +1,5 @@
 from typing import List, Callable
-import pandas
+import pandas as pd
 from pyabc.parameters import Parameter
 
 
@@ -175,7 +175,7 @@ class Population:
         # _model_probabilities are assigned during normalization
         return self._model_probabilities
 
-    def get_weighted_distances(self) -> pandas.DataFrame:
+    def get_weighted_distances(self) -> pd.DataFrame:
         """
         Create DataFrame of (distance, weight)'s. The particle weights are
         multiplied by the model probabilities. If one simulation per particle
@@ -186,8 +186,8 @@ class Population:
         Returns
         -------
 
-        weighted_distances: pandas.DataFrame:
-            A pandas.DataFrame containing in column 'distance' the distances
+        weighted_distances: pd.DataFrame:
+            A pd.DataFrame containing in column 'distance' the distances
             and in column 'w' the scaled weights.
         """
         rows = []
@@ -197,7 +197,7 @@ class Population:
                 rows.append({'distance': distance,
                              'w': particle.weight * model_probability})
 
-        weighted_distances = pandas.DataFrame(rows)
+        weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
 
