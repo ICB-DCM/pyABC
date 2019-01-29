@@ -128,7 +128,7 @@ class History:
         return None
 
     @with_session
-    def alive_models(self, t) -> List:
+    def alive_models(self, t: int = None) -> List:
         """
         Get the models which are still alive at time `t`.
 
@@ -136,7 +136,7 @@ class History:
         ----------
 
         t: int
-            Population nr
+            Population index.
 
         Returns
         -------
@@ -146,28 +146,34 @@ class History:
             models which are still alive
 
         """
-        t = int(t)
+        if t is None:
+            t = self.max_t
+        else:
+            t = int(t)
+
         alive = (self._session.query(Model.m)
                  .join(Population)
                  .join(ABCSMC)
                  .filter(ABCSMC.id == self.id)
                  .filter(Population.t == t)).all()
+
         return sorted([a[0] for a in alive])
 
     @with_session
     def get_distribution(self, m: int = 0, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
-        Returns the weighted population sample as pandas DataFrame.
+        Returns the weighted population sample for model m and timepoint t
+        as a pd.DataFrame.
 
         Parameters
         ----------
 
-        m: int
-            model index
+        m: int, optional (default = 0)
+            Model index.
 
-        t: int, optional
-            Population number.
+        t: int, optional (default = self.max_t)
+            Population index.
             If t is not specified, then the last population is returned.
 
 
@@ -205,7 +211,22 @@ class History:
         return pars, w_arr
 
     @with_session
-    def model_names(self, t=-1):
+    def model_names(self, t: int = -1):
+        """
+        List of model names at time t.
+
+        Parameters
+        ----------
+
+        t: int, optional (default = -1)
+            Population index.
+
+        Returnes
+        --------
+
+        model_names: List[str]
+            List of model names.
+        """
         res = (self._session.query(Model.name)
                .join(Population)
                .join(ABCSMC)
@@ -334,6 +355,15 @@ class History:
 
     @with_session
     def observed_sum_stat(self):
+        """
+        Get the observed summary statistics.
+
+        Returns
+        -------
+
+        sum_stats_dct: dict
+            The observed summary statistics.
+        """
         sum_stats = (self._session
                      .query(SummaryStatistic)
                      .join(Sample)
@@ -501,7 +531,7 @@ class History:
                                     model_names)
 
     @with_session
-    def get_model_probabilities(self, t=None) -> pd.DataFrame:
+    def get_model_probabilities(self, t: int = None) -> pd.DataFrame:
         """
         Model probabilities.
 
@@ -542,17 +572,19 @@ class History:
                            .fillna(0))
             return p_models_df
 
-    def nr_of_models_alive(self, t=None) -> int:
+    def nr_of_models_alive(self, t: int = None) -> int:
         """
         Number of models still alive.
 
         Parameters
         ----------
-        t: int
-            Population number
+
+        t: int, optional (default = self.max_t)
+            Population index.
 
         Returns
         -------
+
         nr_alive: int >= 0 or None
             Number of models still alive.
             None is for the last population
@@ -575,8 +607,8 @@ class History:
         Parameters
         ----------
 
-        t: int, None
-            Population number.
+        t: int, optional (default = self.max_t)
+            Population index.
             If t is None the last population is selected.
 
         Returns
@@ -607,6 +639,7 @@ class History:
     @with_session
     def get_nr_particles_per_population(self) -> pd.Series:
         """
+        Get the number of particles per population.
 
         Returns
         -------
@@ -652,11 +685,11 @@ class History:
         Parameters
         ----------
 
-        m: int
-            Model index
+        m: int, optional (default = 0)
+            Model index.
 
-        t: int
-            Population number
+        t: int, optional (default = self.max_t)
+            Population index.
 
         Returns
         -------
@@ -702,10 +735,9 @@ class History:
         Parameters
         ----------
 
-        t: int, None
-            Population number.
+        t: int, optional (default = self.max_t)
+            Population index.
             If t is None, the latest population is selected.
-
 
         Returns
         -------
