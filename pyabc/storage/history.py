@@ -6,18 +6,20 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
-from .db_model import (ABCSMC, Population, Model, Particle,
-                       Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
 import logging
 
-history_logger = logging.getLogger("History")
+from .db_model import (ABCSMC, Population, Model, Particle,
+                       Parameter, Sample, SummaryStatistic, Base)
+
+
+logger = logging.getLogger("History")
 
 
 def with_session(f):
     @wraps(f)
     def f_wrapper(self: "History", *args, **kwargs):
-        history_logger.debug('Database access through "{}"'.format(f.__name__))
+        logger.debug('Database access through "{}"'.format(f.__name__))
         no_session = self._session is None and self._engine is None
         if no_session:
             self._make_session()
@@ -79,7 +81,7 @@ class History:
         purposes (i.e. to speed up the writing to the file system),
         as it can not be guaranteed that all methods of pyabc work
         correctly if the summary statistics are not stored.
-
+    
     id: int
         The id of the ABCSMC analysis that is currently in use.
         If there are analyses in the database already, this defaults
@@ -357,7 +359,7 @@ class History:
         self._session.add(abcsmc)
         self._session.commit()
         self.id = abcsmc.id
-        history_logger.info("Start {}".format(abcsmc))
+        logger.info("Start {}".format(abcsmc))
 
     @with_session
     def observed_sum_stat(self):
@@ -437,7 +439,7 @@ class History:
                               .one())
         abc_smc_simulation.end_time = datetime.datetime.now()
         self._session.commit()
-        history_logger.info("Done {}".format(abc_smc_simulation))
+        logger.info("Done {}".format(abc_smc_simulation))
 
     @with_session
     def _save_to_population_db(self,
@@ -515,7 +517,7 @@ class History:
         self._session.commit()
 
         # log
-        history_logger.debug("Appended population")
+        logger.debug("Appended population")
 
     @internal_docstring_warning
     def append_population(self,
