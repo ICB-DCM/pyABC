@@ -218,8 +218,8 @@ class Population:
 
         for particle in self._list:
             if particle is not None:
-                # setdefault: similar to get(), sets dict[key] = default if key
-                # is not in dict yet.
+                # append particle for key particle.m, create empty list
+                # if key not yet existent
                 store.setdefault(particle.m, []).append(particle)
             else:
                 print("Warning: Empty particle.")
