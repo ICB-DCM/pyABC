@@ -34,11 +34,11 @@ def internal_docstring_warning(f):
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
     warning = (
-            "\n" + indent +
-            "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
-            "class internally. "
-            "You should most likely not find it necessary to call "
-            "this method under normal circumstances.")
+        "\n" + indent +
+        "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
+        "class internally. "
+        "You should most likely not find it necessary to call "
+        "this method under normal circumstances.")
 
     f.__doc__ += warning
     return f
@@ -93,7 +93,7 @@ class History:
         """
         self.db_identifier = db
         self.stores_sum_stats = stores_sum_stats
-        
+
         # to be filled using the session wrappers
         self._session = None
         self._engine = None
@@ -178,7 +178,6 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-
     def get_distribution(self, m: int = 0, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
@@ -441,7 +440,7 @@ class History:
         history_logger.info("Done {}".format(abc_smc_simulation))
 
     @with_session
-    def _save_to_population_db(self, 
+    def _save_to_population_db(self,
                                t: int,
                                current_epsilon: float,
                                nr_simulations: int,
@@ -476,12 +475,12 @@ class History:
                 distance_list = store_item.accepted_distances
                 parameter = store_item.parameter
                 summary_statistics_list = store_item.accepted_sum_stats
-                
+
                 # create new particle
                 particle = Particle(w=weight)
                 # append particle to model
                 model.particles.append(particle)
-                
+
                 # append parameter dimensions to particle
                 for key, value in parameter.items():
                     if isinstance(value, dict):
@@ -750,7 +749,6 @@ class History:
         return sp.array(weights), results
 
     @with_session
-
     def get_weighted_sum_stats(self, t: int = None) \
             -> (List[float], List[dict]):
         """
