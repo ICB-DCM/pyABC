@@ -147,7 +147,7 @@ def test_sum_stats_save_load(history: History):
                               True)]
     history.append_population(0, 42,
                               Population(particle_list), 2, ["m1", "m2"])
-    weights, sum_stats = history.get_sum_stats(0, 0)
+    weights, sum_stats = history.get_weighted_sum_stats_for_model(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
