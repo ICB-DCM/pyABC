@@ -61,34 +61,41 @@ class History:
 
     This class records the evolution of the populations
     and stores the ABCSMC results.
+
+    Attributes
+    ----------
+
+    db: str
+        SQLalchemy database identifier. For a relative path use the
+        template "sqlite:///file.db", for an absolute path
+        "sqlite:////path/to/file.db", and for an in-memory database
+        "sqlite://".
+
+    stores_sum_stats: bool, optional (default = True)
+        Whether to store summary statistics to the database. Note: this
+        is True by default, and should be set to False only for testing
+        purposes (i.e. to speed up the writing to the file system),
+        as it can not be guaranteed that all methods of pyabc work
+        correctly if the summary statistics are not stored.
+
+    id: int
+        The id of the ABCSMC analysis that is currently in use.
+        If there are analyses in the database already, this defaults
+        to the latest id. Manually set if another run is wanted.
     """
     DB_TIMEOUT = 120
 
     def __init__(self, db: str, stores_sum_stats: bool = True):
         """
         Initialize history object.
-
-        Parameters
-        ----------
-
-        db: str
-            SQLalchemy database identifier. For a relative path use the
-            template "sqlite:///file.db", for an absolute path
-            "sqlite:////path/to/file.db", and for an in-memory database
-            "sqlite://".
-
-        stores_sum_stats: bool, optional (default = True)
-            Whether to store summary statistics to the database. Note: this
-            is True by default, and should be set to False only for testing
-            purposes (i.e. to speed up the writing to the file system),
-            as it can not be guaranteed that all methods of pyabc work
-            correctly if the summary statistics are not stored.
         """
         self.db = db
-        self._session = None
-        self._engine = None
         self.id = self._pre_calculate_id()
         self.stores_sum_stats = stores_sum_stats
+        
+        # to be filled using the session wrappers
+        self._session = None
+        self._engine = None
 
     def db_file(self):
         f = self.db.split(":")[-1][3:]
