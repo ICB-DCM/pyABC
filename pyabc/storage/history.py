@@ -61,28 +61,37 @@ class History:
 
     This class records the evolution of the populations
     and stores the ABCSMC results.
-
-    Parameters
-    ----------
-
-    db: str
-        SQLAlchemy database identifier.
-
     """
     DB_TIMEOUT = 120
 
-    def __init__(self, db: str):
+    def __init__(self, db: str, stores_sum_stats: bool = True):
         """
-        Only counts the simulations which appear in particles.
-        If a simulation terminated prematurely, it is not counted.
+        Initialize history object.
+
+        Parameters
+        ----------
+
+        db: str
+            SQLalchemy database identifier. For a relative path use the
+            template "sqlite:///file.db", for an absolute path
+            "sqlite:////path/to/file.db", and for an in-memory database
+            "sqlite://".
+
+        stores_sum_stats: bool, optional (default = True)
+            Whether to store summary statistics to the database. Note: this
+            is True by default, and should be set to False only for testing
+            purposes (i.e. to speed up the writing to the file system),
+            as it can not be guaranteed that all methods of pyabc work
+            correctly if the summary statistics are not stored.
         """
-        self.db_identifier = db
+        self.db = db
         self._session = None
         self._engine = None
         self.id = self._pre_calculate_id()
+        self.stores_sum_stats = stores_sum_stats
 
     def db_file(self):
-        f = self.db_identifier.split(":")[-1][3:]
+        f = self.db.split(":")[-1][3:]
         return f
 
     @property
@@ -121,8 +130,8 @@ class History:
     @with_session
     def _pre_calculate_id(self):
         abcs = self._session.query(ABCSMC).all()
-        if len(abcs) == 1:
-            return abcs[0].id
+        if len(abcs) > 0:
+            return abcs[-1].id
         return None
 
     @with_session
@@ -369,7 +378,7 @@ class History:
         # but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db_identifier,
+        engine = create_engine(self.db,
                                connect_args={'timeout': self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
