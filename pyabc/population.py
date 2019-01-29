@@ -61,8 +61,8 @@ class Particle:
                  weight: float,
                  accepted_distances: List[float],
                  accepted_sum_stats: List[dict],
-                 all_sum_stats: List[dict],
-                 accepted: bool):
+                 all_sum_stats: List[dict] = None,
+                 accepted: bool = True):
 
         self.m = m
         self.parameter = parameter
