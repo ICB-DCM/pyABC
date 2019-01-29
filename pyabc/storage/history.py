@@ -155,7 +155,7 @@ class History:
         return sorted([a[0] for a in alive])
 
     @with_session
-    def get_distribution(self, m: int, t: int = None) \
+    def get_distribution(self, m: int = 0, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample as pandas DataFrame.
@@ -565,7 +565,7 @@ class History:
         return int((model_probs.p > 0).sum())
 
     @with_session
-    def get_weighted_distances(self, t: Union[int, None]) -> pd.DataFrame:
+    def get_weighted_distances(self, t: int = None) -> pd.DataFrame:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
@@ -605,7 +605,7 @@ class History:
         return df_weighted
 
     @with_session
-    def get_weighted_distances_and_sumstats(self, t):
+    def get_weighted_distances_and_sumstats(self, t: int = None):
         if t is None:
             t = self.max_t
         else:
@@ -666,18 +666,18 @@ class History:
         return self.max_t + 1
 
     @with_session
-    def get_sum_stats(self, t: int, m: int) -> (np.ndarray, List):
+    def get_sum_stats(self, m: int = 0, t: int = None) -> (np.ndarray, List):
         """
         Summary statistics.
 
         Parameters
         ----------
 
-        t: int
-            Population number
-
         m: int
             Model index
+
+        t: int
+            Population number
 
         Returns
         -------
