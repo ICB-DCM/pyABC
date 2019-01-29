@@ -217,11 +217,6 @@ class ABCSMC:
         del state_red_dict['sampler']
         return state_red_dict
 
-    def do_not_stop_when_only_single_model_alive(self):
-        warnings.warn("This method is deprecated and removed "
-                      "in pyABC 1.0.0", DeprecationWarning, stacklevel=2)
-        self.stop_if_only_single_model_alive = False
-
     def load(self, db: str,
              abc_id: int = 1,
              observed_sum_stat: dict = None) -> int:
