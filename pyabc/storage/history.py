@@ -65,7 +65,7 @@ class History:
     Attributes
     ----------
 
-    db: str
+    db_identifier: str
         SQLalchemy database identifier. For a relative path use the
         template "sqlite:///file.db", for an absolute path
         "sqlite:////path/to/file.db", and for an in-memory database
@@ -89,16 +89,18 @@ class History:
         """
         Initialize history object.
         """
-        self.db = db
-        self.id = self._pre_calculate_id()
+        self.db_identifier = db
         self.stores_sum_stats = stores_sum_stats
         
         # to be filled using the session wrappers
         self._session = None
         self._engine = None
 
+        # find id in database
+        self.id = self._pre_calculate_id()
+
     def db_file(self):
-        f = self.db.split(":")[-1][3:]
+        f = self.db_identifier.split(":")[-1][3:]
         return f
 
     @property
@@ -394,7 +396,7 @@ class History:
         # but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db,
+        engine = create_engine(self.db_identifier,
                                connect_args={'timeout': self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
