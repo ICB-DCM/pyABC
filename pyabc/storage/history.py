@@ -444,41 +444,61 @@ class History:
                                 epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
 
+        # iterate over models
         for m, model_population in store.items():
+            # create new model
             model = Model(m=int(m), p_model=float(model_probabilities[m]),
                           name=str(model_names[m]))
+            # append model
             population.models.append(model)
 
+            # iterate over model population of particles
             for store_item in model_population:
                 # a store_item is a Particle
                 weight = store_item.weight
                 distance_list = store_item.accepted_distances
                 parameter = store_item.parameter
                 summary_statistics_list = store_item.accepted_sum_stats
+                
+                # create new particle
                 particle = Particle(w=weight)
+                # append particle to model
                 model.particles.append(particle)
+                
+                # append parameter dimensions to particle
                 for key, value in parameter.items():
                     if isinstance(value, dict):
+                        # parameter entry is itself a dictionary
                         for key_dict, value_dict in value.items():
+                            # append nested dimension to parameter
                             particle.parameters.append(
                                 Parameter(name=key + "_" + key_dict,
                                           value=value_dict))
                     else:
+                        # append dimension to parameter
                         particle.parameters.append(
                             Parameter(name=key, value=value))
-                for distance, summ_stat in zip(distance_list,
-                                               summary_statistics_list):
-                    sample = Sample(distance=distance)
-                    particle.samples.append(sample)
-                    sample.summary_statistics.append(
-                        SummaryStatistic(name='ss_dummy', value=42)) 
-                    #for name, value in summ_stat.items():
-                    #    if name is None:
-                    #        raise Exception("Summary statistics need names.")
-                    #    sample.summary_statistics.append(
-                    #        SummaryStatistic(name=name, value=value))
 
+                # append samples to particle
+                for distance, sum_stat in zip(distance_list,
+                                              summary_statistics_list):
+                    # create new sample from distance
+                    sample = Sample(distance=distance)
+                    # append to particle
+                    particle.samples.append(sample)
+                    # append sum stat dimensions to sample
+                    if self.stores_sum_stats:
+                        for name, value in sum_stat.items():
+                            if name is None:
+                                raise Exception(
+                                    "Summary statistics need names.")
+                            sample.summary_statistics.append(
+                                SummaryStatistic(name=name, value=value))
+
+        # commit changes
         self._session.commit()
+
+        # log
         history_logger.debug("Appended population")
 
     @internal_docstring_warning
