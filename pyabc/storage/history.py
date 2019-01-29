@@ -634,7 +634,7 @@ class History:
         Parameters
         ----------
 
-        t: int, optonal (default = self.max_t)
+        t: int, optional (default = self.max_t)
             Population index.
             If t is None, the last population is selected.
 
