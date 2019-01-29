@@ -176,17 +176,12 @@ class History:
             Population index.
             If t is not specified, then the last population is returned.
 
-
-
         Returns
         -------
 
         df, w: pandas.DataFrame, np.ndarray
-
-        df:
-            is a DataFrame of parameters
-        w:
-            are the weights associated with each parameter
+            Here, df is a pd.DataFrame of parameters, and
+            w are the weights associated with each parameter.
         """
         m = int(m)
         if t is None:
