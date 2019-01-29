@@ -81,7 +81,7 @@ class History:
         purposes (i.e. to speed up the writing to the file system),
         as it can not be guaranteed that all methods of pyabc work
         correctly if the summary statistics are not stored.
-    
+
     id: int
         The id of the ABCSMC analysis that is currently in use.
         If there are analyses in the database already, this defaults

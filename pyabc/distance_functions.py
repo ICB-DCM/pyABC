@@ -17,7 +17,7 @@ import statistics
 import logging
 from .sampler import Sampler
 
-df_logger = logging.getLogger("DistanceFunction")
+logger = logging.getLogger("DistanceFunction")
 
 
 class DistanceFunction(ABC):
@@ -453,7 +453,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.w[t] = w
 
         # logging
-        df_logger.debug("update distance weights = {}".format(self.w[t]))
+        logger.debug("update distance weights = {}".format(self.w[t]))
 
 
 def median_absolute_deviation(data: List):

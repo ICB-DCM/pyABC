@@ -7,7 +7,7 @@ import os
 import cloudpickle
 from time import time
 import click
-from .redis_logging import worker_logger
+from .redis_logging import logger
 from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
                   MSG, BATCH_SIZE)
 from multiprocessing import Pool
@@ -77,7 +77,7 @@ def work_on_population(redis: StrictRedis,
 
     # notify sign up as worker
     n_worker = redis.incr(N_WORKER)
-    worker_logger.info(
+    logger.info(
         f"Begin population, batch size {batch_size}. "
         f"I am worker {n_worker}")
 
@@ -90,7 +90,7 @@ def work_on_population(redis: StrictRedis,
     # loop until no more particles required
     while n_particles > 0:
         if kill_handler.killed:
-            worker_logger.info(
+            logger.info(
                 f"Worker {n_worker} received stop signal. "
                 f"Terminating in the middle of a population "
                 f"after {internal_counter} samples.")
@@ -101,7 +101,7 @@ def work_on_population(redis: StrictRedis,
         # check whether time's up
         current_runtime = time() - start_time
         if current_runtime > max_runtime_s:
-            worker_logger.info(
+            logger.info(
                 f"Worker {n_worker} stops during population because "
                 f"runtime {current_runtime} exceeds "
                 f"max runtime {max_runtime_s}")
@@ -160,7 +160,7 @@ def work_on_population(redis: StrictRedis,
     redis.decr(N_WORKER)
     kill_handler.exit = True
     population_total_time = time() - population_start_time
-    worker_logger.info(
+    logger.info(
         f"Finished population, did {internal_counter} samples. "
         f"Simulation time: {cumulative_simulation_time:.2f}s, "
         f"total time {population_total_time:.2f}.")
@@ -201,7 +201,7 @@ def _work(host="localhost", port=6379, runtime="2h"):
 
     start_time = time()
     max_runtime_s = runtime_parse(runtime)
-    worker_logger.info(
+    logger.info(
         f"Start redis worker. Max run time {max_runtime_s}s, "
         f"HOST={socket.gethostname()}, PID={os.getpid()}")
     redis = StrictRedis(host=host, port=port)
@@ -220,12 +220,12 @@ def _work(host="localhost", port=6379, runtime="2h"):
             work_on_population(redis, start_time, max_runtime_s, kill_handler)
 
         if data == STOP:
-            worker_logger.info("Received stop signal. Shutdown redis worker.")
+            logger.info("Received stop signal. Shutdown redis worker.")
             return
 
         elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
-            worker_logger.info(
+            logger.info(
                 "Shutdown redis worker. Max runtime {}s reached"
                 .format(max_runtime_s))
             return
