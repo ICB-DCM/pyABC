@@ -133,7 +133,7 @@ def test_sum_stats_save_load(history: History):
                               [.1],
                               [{"ss1": .1, "ss2": arr2,
                                 "ss3": example_df(),
-                                "rdf0": r["iris"]}],
+                                "rdf0": r["faithful"]}],
                               [],
                               True),
                      Particle(0, Parameter({
@@ -152,7 +152,7 @@ def test_sum_stats_save_load(history: History):
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
     assert (sum_stats[0]["ss3"] == example_df()).all().all()
-    assert (sum_stats[0]["rdf0"] == pandas2ri.ri2py(r["iris"])).all().all()
+    assert (sum_stats[0]["rdf0"] == pandas2ri.ri2py(r["faithful"])).all().all()
     assert sum_stats[1]["ss12"] == .11
     assert (sum_stats[1]["ss22"] == arr).all()
     assert (sum_stats[1]["ss33"] == example_df()).all().all()
