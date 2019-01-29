@@ -142,34 +142,39 @@ class History:
         return None
 
     @with_session
-    def alive_models(self, t) -> List:
+    def alive_models(self, t: int = None) -> List:
         """
         Get the models which are still alive at time `t`.
 
         Parameters
         ----------
 
-        t: int
-            Population nr
+        t: int, optional (default = self.max_t)
+            Population index.
 
         Returns
         -------
 
         alive: List
             A list which contains the indices of those
-            models which are still alive
+            models which are still alive.
 
         """
-        t = int(t)
+        if t is None:
+            t = self.max_t
+        else:
+            t = int(t)
+
         alive = (self._session.query(Model.m)
                  .join(Population)
                  .join(ABCSMC)
                  .filter(ABCSMC.id == self.id)
                  .filter(Population.t == t)).all()
+
         return sorted([a[0] for a in alive])
 
     @with_session
-    def get_distribution(self, m: int, t: int=None) \
+    def get_distribution(self, m: int = 0, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample as pandas DataFrame.
@@ -177,24 +182,19 @@ class History:
         Parameters
         ----------
 
-        m: int
-            model index
+        m: int, optional (default = 0)
+            Model index.
 
-        t: int, optional
-            Population number.
+        t: int, optional (default = self.max_t)
+            Population index.
             If t is not specified, then the last population is returned.
-
-
 
         Returns
         -------
 
         df, w: pandas.DataFrame, np.ndarray
-
-        df:
-            is a DataFrame of parameters
-        w:
-            are the weights associated with each parameter
+            * df: a DataFrame of parameters
+            * w:  are the weights associated with each parameter
         """
         m = int(m)
         if t is None:
@@ -219,7 +219,16 @@ class History:
         return pars, w_arr
 
     @with_session
-    def model_names(self, t=-1):
+    def model_names(self, t: int = -1):
+        """
+        Get the names of alive models for population `t`.
+
+        Parameters
+        ----------
+
+        t: int, optional (default = -1)
+            Population index.
+        """
         res = (self._session.query(Model.name)
                .join(Population)
                .join(ABCSMC)
@@ -427,9 +436,12 @@ class History:
         history_logger.info("Done {}".format(abc_smc_simulation))
 
     @with_session
-    def _save_to_population_db(self, t: int, current_epsilon: float,
+    def _save_to_population_db(self, 
+                               t: int,
+                               current_epsilon: float,
                                nr_simulations: int,
-                               store: dict, model_probabilities: dict,
+                               store: dict,
+                               model_probabilities: dict,
                                model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
@@ -502,7 +514,8 @@ class History:
         history_logger.debug("Appended population")
 
     @internal_docstring_warning
-    def append_population(self, t: int,
+    def append_population(self,
+                          t: int,
                           current_epsilon: float,
                           population: Population,
                           nr_simulations: int,
@@ -537,19 +550,21 @@ class History:
                                     model_names)
 
     @with_session
-    def get_model_probabilities(self, t=None) -> pd.DataFrame:
+    def get_model_probabilities(self, t: Union[int, None] = None) \
+            -> pd.DataFrame:
         """
         Model probabilities.
 
         Parameters
         ----------
-        t: int or None
-            Population. Defaults to None, i.e. the last population.
+        t: int or None (default = None)
+            Population index. If None, all populations of indices >= 0 are
+            considered.
 
         Returns
         -------
         probabilities: np.ndarray
-            Model probabilities
+            Model probabilities.
         """
 
         if t is not None:
@@ -578,14 +593,14 @@ class History:
                            .fillna(0))
             return p_models_df
 
-    def nr_of_models_alive(self, t=None) -> int:
+    def nr_of_models_alive(self, t: int = None) -> int:
         """
         Number of models still alive.
 
         Parameters
         ----------
-        t: int
-            Population number
+        t: int, optional (default = self.max_t)
+            Population index.
 
         Returns
         -------
@@ -597,11 +612,13 @@ class History:
             t = self.max_t
         else:
             t = int(t)
+
         model_probs = self.get_model_probabilities(t)
+
         return int((model_probs.p > 0).sum())
 
     @with_session
-    def get_weighted_distances(self, t: Union[int, None]) -> pd.DataFrame:
+    def get_weighted_distances(self, t: int = None) -> pd.DataFrame:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
@@ -611,9 +628,9 @@ class History:
         Parameters
         ----------
 
-        t: int, None
-            Population number.
-            If t is None the last population is selected.
+        t: int, optonal (default = self.max_t)
+            Population index.
+            If t is None, the last population is selected.
 
         Returns
         -------
@@ -638,6 +655,7 @@ class History:
         model_probabilities = self.get_model_probabilities(t).reset_index()
         df_weighted = df.merge(model_probabilities)
         df_weighted["w"] *= df_weighted["p"]
+
         return df_weighted
 
     @with_session
@@ -681,18 +699,19 @@ class History:
         return self.max_t + 1
 
     @with_session
-    def get_sum_stats(self, t: int, m: int) -> (np.ndarray, List):
+    def get_weighted_sum_stats_for_model(self, m: int = 0, t: int = None) \
+            -> (np.ndarray, List):
         """
         Summary statistics.
 
         Parameters
         ----------
 
-        t: int
-            Population number
+        m: int, optional (default = 0)
+            Model index.
 
-        m: int
-            Model index
+        t: int, optional (default = self.max_t)
+            Population index.
 
         Returns
         -------
@@ -701,9 +720,6 @@ class History:
             * w: the weights associated with the summary statistics
             * sum_stats: list of summary statistics
         """
-
-        # TODO: Is the first output, "weights", needed for anything?
-
         m = int(m)
         if t is None:
             t = self.max_t
@@ -729,7 +745,8 @@ class History:
         return sp.array(weights), results
 
     @with_session
-    def get_weighted_sum_stats(self, t: int=None) -> (List[float], List[dict]):
+    def get_weighted_sum_stats(self, t: int = None) \
+            -> (List[float], List[dict]):
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
@@ -739,10 +756,9 @@ class History:
         Parameters
         ----------
 
-        t: int, None
-            Population number.
+        t: int, optional (default = self.max_t)
+            Population index.
             If t is None, the latest population is selected.
-
 
         Returns
         -------
@@ -793,7 +809,9 @@ class History:
         return json.loads(abc.population_strategy)
 
     @with_session
-    def get_population_extended(self, *, m=None, t="last", tidy=True) \
+    def get_population_extended(self, *, m: Union[int, None] = None,
+                                t: Union[int, str] = "last",
+                                tidy: bool = True) \
             -> pd.DataFrame:
         """
         Get extended population information, including parameters, distances,
@@ -801,13 +819,16 @@ class History:
 
         Parameters
         ----------
-        m: int, optional
-            The model to query.
-            If omitted, all models are returned
-        t: str, optional
-            Can be "last" or "all"
+
+        m: int or None, optional (default = None)
+            The model to query. If omitted, all models are returned
+
+        t: int or str, optional (default = "last")
+            Can be "last" or "all", or a population index.
             In case of "all", all populations are returned.
-            If "last", only the last population is returned.
+            If "last", only the last population is returned, for an int value
+            only the corresponding population at that time index.
+
         tidy: bool, optional
             If True, try to return a tidy DataFrame, where the individual
             parameters and summary statistics are pivoted.
@@ -843,11 +864,14 @@ class History:
                  .join(Parameter)
                  .filter(ABCSMC.id == self.id)
                  )
+
         if m is not None:
             query = query.filter(Model.m == m)
 
         if t == "last":
             t = self.max_t
+
+        # if t is not "all", filter for time point t
         if t != "all":
             query = query.filter(Population.t == t)
 
