@@ -102,7 +102,7 @@ class History:
         return f
 
     @property
-    def inmemory(self):
+    def in_memory(self):
         return (self._engine is not None
                 and str(self._engine.url) == "sqlite://")
 
@@ -396,7 +396,7 @@ class History:
 
     def _close_session(self):
         # don't close in memory database
-        if self.inmemory:
+        if self.in_memory:
             return
         # only close connections to permanent databases
         self._session.close()
@@ -406,7 +406,7 @@ class History:
 
     def __getstate__(self):
         dct = self.__dict__.copy()
-        if self.inmemory:
+        if self.in_memory:
             dct["_engine"] = None
             dct["_session"] = None
         return dct
