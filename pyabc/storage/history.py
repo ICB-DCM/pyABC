@@ -605,27 +605,6 @@ class History:
         return df_weighted
 
     @with_session
-    def get_weighted_distances_and_sumstats(self, t: int = None):
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
-
-        query = (self._session.query(Sample.distance,
-                                     Sample.summary_statistics,
-                                     Particle.w, Model.m)
-                 .join(Particle)
-                 .joint(Model).join(Population).join(ABCSMC)
-                 .filter(ABCSMC.id == self.id)
-                 .filter(Population.t == t))
-        df = pd.read_sql_query(query.statement, self._engine)
-
-        model_probabilities = self.get_model_probabilities(t).reset_index()
-        df_weighted = df.merge(model_probabilities)
-        df_weighted["w"] *= df_weighted["p"]
-        return df_weighted
-
-    @with_session
     def get_nr_particles_per_population(self) -> pd.Series:
         """
 
