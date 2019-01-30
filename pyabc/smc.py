@@ -386,6 +386,8 @@ class ABCSMC:
             to do the first population). Usually 0 or history.max_t + 1.
         """
 
+        self.distance_function.handle_x_0(self.x_0)
+
         if self.distance_function.require_initialize:
             # initialize distance
             self.distance_function.initialize(t,
