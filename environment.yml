@@ -13,8 +13,6 @@ dependencies:
   - pandoc
   - nbconvert
   - ipykernel
-  - r-base
-  - rpy2
   - pygments
   - dask
   - pip:

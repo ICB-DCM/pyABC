@@ -22,7 +22,6 @@ flake8
 click
 nbsphinx
 ipykernel
-rpy2
 pygments
 ipython
 feather-format
