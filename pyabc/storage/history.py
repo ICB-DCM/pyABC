@@ -708,7 +708,8 @@ class History:
     def get_weighted_sum_stats_for_model(self, m: int = 0, t: int = None) \
             -> (np.ndarray, List):
         """
-        Summary statistics.
+        Summary statistics for model `m`. The weights sum to 1, unless
+        there were multiple acceptances per particle.
 
         Parameters
         ----------
