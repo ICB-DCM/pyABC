@@ -36,52 +36,68 @@ If you use it in your work, you can cite the paper:
 .. toctree::
    :maxdepth: 2
    :caption: User's guide
+
    what
 
 .. toctree::
    :maxdepth: 2
+   
    installation
 
 .. toctree::
    :maxdepth: 2
+   
    examples
 
 .. toctree::
    :maxdepth: 2
+
+   sampler
+
+.. toctree::
+   :maxdepth: 2
+   
    sge
 
 .. toctree::
    :maxdepth: 2
+   
    export_db
 
 .. toctree::
    :maxdepth: 2
+   
    web_visualization
 
 
 .. toctree::
    :maxdepth: 2
    :caption: About
+   
    releasenotes
 
 .. toctree::
    :maxdepth: 2
+   
    about
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer's guide
+   
    documentation
 
 .. toctree::
    :maxdepth: 2
+   
    code
 
 
 .. toctree::
    :maxdepth: 2
    :caption: API reference
+   
    api_reference
 
 

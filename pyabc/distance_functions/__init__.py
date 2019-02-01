@@ -1,3 +1,7 @@
+"""
+Distance functions
+==================
+"""
 
 from .distance_functions import (DistanceFunction,
                                  NoDistance,
