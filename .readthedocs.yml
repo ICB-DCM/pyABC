@@ -2,5 +2,6 @@ version: 1
 
 conda:
     file: environment.yml
+    quiet: false
 python:
     setup_py_install: true
