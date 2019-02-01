@@ -76,7 +76,7 @@ def test_storage(object_):
     rebuilt = from_bytes(serial)
 
     if not isinstance(object_, robjects.DataFrame):
-        assert type(object_) == type(rebuilt)
+        assert isinstance(object_, type(rebuilt))
 
     if isinstance(object_, int):
         assert object_ == rebuilt

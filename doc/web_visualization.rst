@@ -1,3 +1,5 @@
+.. _web_visualization:
+
 Web based visualizations
 ========================
 

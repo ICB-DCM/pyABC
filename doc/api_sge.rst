@@ -1,3 +1,5 @@
+.. _api_sge:
+
 .. automodule:: pyabc.sge
 
 .. autoclass:: pyabc.sge.SGE

@@ -1,3 +1,5 @@
+.. _api_random_variables:
+
 Random Variables
 ================
 
