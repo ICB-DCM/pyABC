@@ -5,6 +5,7 @@ conda:
 python:
     version: 3
     install:
+       - requirements: requirements.txt
        - method: pip
          path: .
        - method: setuptools
