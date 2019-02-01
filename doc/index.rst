@@ -3,10 +3,11 @@ Welcome to pyABC's documentation!
 
 .. image:: https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master
    :target: https://travis-ci.org/ICB-DCM/pyABC
+.. image:: https://readthedocs.org/projects/pyabc/badge/?version=latest
+   :target: https://pyabc.readthedocs.io/en/latest
 
-Version: |version|
-
-Source code: https://github.com/icb-dcm/pyabc
+:Releasen: |version|
+:Source code: https://github.com/icb-dcm/pyabc
 
 .. image:: logo.png
 
@@ -28,6 +29,8 @@ If you're interested in using it, you can cite the paper:
 
     Emmanuel Klinger, Dennis Rickert, Jan Hasenauer; pyABC: distributed, likelihood-free inference;
     Bioinformatics 2018; https://doi.org/10.1093/bioinformatics/bty361
+
+
 
 
 User's Guide
