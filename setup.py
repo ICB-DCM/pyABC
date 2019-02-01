@@ -8,8 +8,16 @@ Created on Thu May  8 13:37:43 2014
 from setuptools import setup, find_packages
 import os
 
+
+# extract version
 with open(os.path.join(os.path.dirname(__file__), "pyabc", "version.py")) as f:
     version = f.read().split("\n")[0].split("=")[-1].strip(' ').strip('"')
+
+
+# read a file
+def read(fname):
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
 
 setup(install_requires=["numpy", "scipy", "pandas", "cloudpickle",
                         "flask_bootstrap", "flask", "bokeh", "redis",
