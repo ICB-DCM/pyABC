@@ -118,7 +118,8 @@ def test_savs_no_sum_stats(history: History):
     population = Population(particle_list)
     
     # do not save sum stats
-    history.saves_sum_stats = False
+    print(history.stores_sum_stats)
+    history.stores_sum_stats = False
 
     # test some basic routines
     history.append_population(t=0, current_epsilon=42.97,
