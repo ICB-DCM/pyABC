@@ -1,3 +1,5 @@
+.. _what:
+
 What is pyABC about?
 ====================
 

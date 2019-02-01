@@ -1,3 +1,5 @@
+.. _api_populationstrategy:
+
 .. automodule:: pyabc.populationstrategy
 
 .. autoclass:: pyabc.populationstrategy.PopulationStrategy

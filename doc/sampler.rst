@@ -1,3 +1,5 @@
+.. _sampler:
+
 Parallel and Distributed Sampling
 =================================
 
@@ -96,7 +98,7 @@ implementations are available for both multi-core (e.g.
 concurrent.futures.ProcessPoolExecutor) and distributed (e.g. Dask)
 environments
 
-Check the :doc:`API documentation <sampler_api>` for more details.
+Check the :doc:`API documentation <api_sampler>` for more details.
 
 
 How to setup a Redis based distributed cluster

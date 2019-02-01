@@ -1,6 +1,7 @@
-.. _external_api:
+.. _api_epsilon:
 
-.. automodule:: pyabc.external
+.. automodule:: pyabc.epsilon
    :members:
    :special-members: __call__
    :show-inheritance:
+
