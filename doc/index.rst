@@ -10,6 +10,7 @@ Welcome to pyABC's documentation!
 :Source code: https://github.com/icb-dcm/pyabc
 
 .. image:: logo.png
+   :alt: pyABC logo
 
 pyABC is a framework for distributed, likelihood-free inference.
 That means, if you have a model and some data and want to know the posterior
