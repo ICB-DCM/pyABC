@@ -1,20 +1,8 @@
 name: py36
 dependencies:
   - python=3.6
-  - numpy
-  - scipy
-  - bokeh
-  - pandas
-  - flask
-  - scikit-learn
-  - distributed
-  - matplotlib
   - sphinx
   - pandoc
   - nbconvert
-  - ipykernel
-  - pygments
-  - dask
   - pip:
     - nbsphinx
-    - feather-format
