@@ -31,6 +31,8 @@ setup(install_requires=["numpy", "scipy", "pandas", "cloudpickle",
       url="http://pyabc.readthedocs.io/en/latest/",
       include_package_data=True,
       description='Distributed, likelihood-free ABC-SMC inference',
+      long_description=read('README.md'),
+      long_description_content_type='text/markdown',
       classifiers=[
         'Programming Language :: Python :: 3.6'
       ],
