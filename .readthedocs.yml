@@ -1,12 +1,6 @@
-version: 2
+version: 1
 
 conda:
-    environment: environment.yml
+    file: environment.yml
 python:
-    version: 3
-    install:
-       - requirements: requirements.txt
-       - method: pip
-         path: .
-       - method: setuptools
-         path: .
+    setup_py_install: true
