@@ -103,6 +103,33 @@ def test_single_particle_save_load(history: History):
     assert df.b.iloc[0] == 12
 
 
+def test_savs_no_sum_stats(history: History):
+    particle_list = []
+    for _ in range(0, 6):
+        particle = Particle(
+            m=0, parameter=Parameter({"th0": np.random.random()}),
+            weight=.2,
+            accepted_distances=[np.random.random()],
+            accepted_sum_stats=[{"ss0": np.random.random(),
+                                 "ss1": np.random.random()}],
+            all_sum_stats=[],
+            accepted=True)
+        particle_list.append(particle)
+    population = Population(particle_list)
+    
+    # do not save sum stats
+    history.saves_sum_stats = False
+
+    # test some basic routines
+    history.append_population(t=0, current_epsilon=42.97,
+                              population=population,
+                              nr_simulations=10,
+                              model_names=[""])
+    history.get_distribution(0, 0)
+    history.get_weighted_sum_stats(t=0)
+    history.get_population_extended()
+
+
 def test_single_particle_save_load_np_int64(history: History):
     # Test if np.int64 can also be used for indexing
     # This is an important test!!!
