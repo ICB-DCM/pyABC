@@ -1,3 +1,5 @@
+.. _sge:
+
 Parallel job execution on an SGE cluster environment
 ====================================================
 
@@ -44,7 +46,7 @@ where distributed file systems are rather slow.
 
 The ``pyabc.sge.sge_available`` can be used to check if an SGE cluster can be used on the machine.
 
-Check the :doc:`API documentation <sge_api>` for more details.
+Check the :doc:`API documentation <api_sge>` for more details.
 
 
 Information about running jobs

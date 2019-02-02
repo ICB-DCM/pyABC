@@ -1,8 +1,6 @@
-Random Variables
-================
+.. _api_external:
 
-.. automodule:: pyabc.random_variables
+.. automodule:: pyabc.external
    :members:
    :special-members: __init__, __call__
    :show-inheritance:
-

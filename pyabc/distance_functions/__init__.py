@@ -1,11 +1,15 @@
 """
 Distance functions
 ==================
+<<<<<<< HEAD
 
 Commonly used distance functions for ABC, implementing a few advanced
 features.
 """
 
+=======
+"""
+>>>>>>> feature_savenostats
 
 from .distance_functions import (DistanceFunction,
                                  NoDistance,

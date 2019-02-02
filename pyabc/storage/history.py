@@ -6,18 +6,20 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
-from .db_model import (ABCSMC, Population, Model, Particle,
-                       Parameter, Sample, SummaryStatistic, Base)
 from functools import wraps
 import logging
 
-history_logger = logging.getLogger("History")
+from .db_model import (ABCSMC, Population, Model, Particle,
+                       Parameter, Sample, SummaryStatistic, Base)
+
+
+logger = logging.getLogger("History")
 
 
 def with_session(f):
     @wraps(f)
     def f_wrapper(self: "History", *args, **kwargs):
-        history_logger.debug('Database access through "{}"'.format(f.__name__))
+        logger.debug('Database access through "{}"'.format(f.__name__))
         no_session = self._session is None and self._engine is None
         if no_session:
             self._make_session()
@@ -64,23 +66,41 @@ class History:
     This class records the evolution of the populations
     and stores the ABCSMC results.
 
-    Parameters
+    Attributes
     ----------
 
-    db: str
-        SQLAlchemy database identifier.
+    db_identifier: str
+        SQLalchemy database identifier. For a relative path use the
+        template "sqlite:///file.db", for an absolute path
+        "sqlite:////path/to/file.db", and for an in-memory database
+        "sqlite://".
 
+    stores_sum_stats: bool, optional (default = True)
+        Whether to store summary statistics to the database. Note: this
+        is True by default, and should be set to False only for testing
+        purposes (i.e. to speed up the writing to the file system),
+        as it can not be guaranteed that all methods of pyabc work
+        correctly if the summary statistics are not stored.
+
+    id: int
+        The id of the ABCSMC analysis that is currently in use.
+        If there are analyses in the database already, this defaults
+        to the latest id. Manually set if another run is wanted.
     """
     DB_TIMEOUT = 120
 
-    def __init__(self, db: str):
+    def __init__(self, db: str, stores_sum_stats: bool = True):
         """
-        Only counts the simulations which appear in particles.
-        If a simulation terminated prematurely, it is not counted.
+        Initialize history object.
         """
         self.db_identifier = db
+        self.stores_sum_stats = stores_sum_stats
+
+        # to be filled using the session wrappers
         self._session = None
         self._engine = None
+
+        # find id in database
         self.id = self._pre_calculate_id()
 
     def db_file(self):
@@ -88,7 +108,7 @@ class History:
         return f
 
     @property
-    def inmemory(self):
+    def in_memory(self):
         return (self._engine is not None
                 and str(self._engine.url) == "sqlite://")
 
@@ -123,8 +143,8 @@ class History:
     @with_session
     def _pre_calculate_id(self):
         abcs = self._session.query(ABCSMC).all()
-        if len(abcs) == 1:
-            return abcs[0].id
+        if len(abcs) > 0:
+            return abcs[-1].id
         return None
 
     @with_session
@@ -135,7 +155,7 @@ class History:
         Parameters
         ----------
 
-        t: int
+        t: int, optional (default = self.max_t)
             Population index.
 
         Returns
@@ -143,7 +163,7 @@ class History:
 
         alive: List
             A list which contains the indices of those
-            models which are still alive
+            models which are still alive.
 
         """
         if t is None:
@@ -180,8 +200,8 @@ class History:
         -------
 
         df, w: pandas.DataFrame, np.ndarray
-            Here, df is a pd.DataFrame of parameters, and
-            w are the weights associated with each parameter.
+            * df: a DataFrame of parameters
+            * w:  are the weights associated with each parameter
         """
         m = int(m)
         if t is None:
@@ -208,7 +228,7 @@ class History:
     @with_session
     def model_names(self, t: int = -1):
         """
-        List of model names at time t.
+        Get the names of alive models for population `t`.
 
         Parameters
         ----------
@@ -346,7 +366,7 @@ class History:
         self._session.add(abcsmc)
         self._session.commit()
         self.id = abcsmc.id
-        history_logger.info("Start {}".format(abcsmc))
+        logger.info("Start {}".format(abcsmc))
 
     @with_session
     def observed_sum_stat(self):
@@ -407,7 +427,7 @@ class History:
 
     def _close_session(self):
         # don't close in memory database
-        if self.inmemory:
+        if self.in_memory:
             return
         # only close connections to permanent databases
         self._session.close()
@@ -417,7 +437,7 @@ class History:
 
     def __getstate__(self):
         dct = self.__dict__.copy()
-        if self.inmemory:
+        if self.in_memory:
             dct["_engine"] = None
             dct["_session"] = None
         return dct
@@ -435,12 +455,15 @@ class History:
                               .one())
         abc_smc_simulation.end_time = datetime.datetime.now()
         self._session.commit()
-        history_logger.info("Done {}".format(abc_smc_simulation))
+        logger.info("Done {}".format(abc_smc_simulation))
 
     @with_session
-    def _save_to_population_db(self, t: int, current_epsilon: float,
+    def _save_to_population_db(self,
+                               t: int,
+                               current_epsilon: float,
                                nr_simulations: int,
-                               store: dict, model_probabilities: dict,
+                               store: dict,
+                               model_probabilities: dict,
                                model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
@@ -455,43 +478,66 @@ class History:
                                 epsilon=current_epsilon)
         abc_smc_simulation.populations.append(population)
 
+        # iterate over models
         for m, model_population in store.items():
+            # create new model
             model = Model(m=int(m), p_model=float(model_probabilities[m]),
                           name=str(model_names[m]))
+            # append model
             population.models.append(model)
 
+            # iterate over model population of particles
             for store_item in model_population:
                 # a store_item is a Particle
                 weight = store_item.weight
                 distance_list = store_item.accepted_distances
                 parameter = store_item.parameter
                 summary_statistics_list = store_item.accepted_sum_stats
+
+                # create new particle
                 particle = Particle(w=weight)
+                # append particle to model
                 model.particles.append(particle)
+
+                # append parameter dimensions to particle
                 for key, value in parameter.items():
                     if isinstance(value, dict):
+                        # parameter entry is itself a dictionary
                         for key_dict, value_dict in value.items():
+                            # append nested dimension to parameter
                             particle.parameters.append(
                                 Parameter(name=key + "_" + key_dict,
                                           value=value_dict))
                     else:
+                        # append dimension to parameter
                         particle.parameters.append(
                             Parameter(name=key, value=value))
-                for distance, summ_stat in zip(distance_list,
-                                               summary_statistics_list):
-                    sample = Sample(distance=distance)
-                    particle.samples.append(sample)
-                    for name, value in summ_stat.items():
-                        if name is None:
-                            raise Exception("Summary statistics need names.")
-                        sample.summary_statistics.append(
-                            SummaryStatistic(name=name, value=value))
 
+                # append samples to particle
+                for distance, sum_stat in zip(distance_list,
+                                              summary_statistics_list):
+                    # create new sample from distance
+                    sample = Sample(distance=distance)
+                    # append to particle
+                    particle.samples.append(sample)
+                    # append sum stat dimensions to sample
+                    if self.stores_sum_stats:
+                        for name, value in sum_stat.items():
+                            if name is None:
+                                raise Exception(
+                                    "Summary statistics need names.")
+                            sample.summary_statistics.append(
+                                SummaryStatistic(name=name, value=value))
+
+        # commit changes
         self._session.commit()
-        history_logger.debug("Appended population")
+
+        # log
+        logger.debug("Appended population")
 
     @internal_docstring_warning
-    def append_population(self, t: int,
+    def append_population(self,
+                          t: int,
                           current_epsilon: float,
                           population: Population,
                           nr_simulations: int,
@@ -526,19 +572,21 @@ class History:
                                     model_names)
 
     @with_session
-    def get_model_probabilities(self, t: int = None) -> pd.DataFrame:
+    def get_model_probabilities(self, t: Union[int, None] = None) \
+            -> pd.DataFrame:
         """
         Model probabilities.
 
         Parameters
         ----------
-        t: int or None
-            Population. Defaults to None, i.e. the last population.
+        t: int or None (default = None)
+            Population index. If None, all populations of indices >= 0 are
+            considered.
 
         Returns
         -------
         probabilities: np.ndarray
-            Model probabilities
+            Model probabilities.
         """
 
         if t is not None:
@@ -588,7 +636,9 @@ class History:
             t = self.max_t
         else:
             t = int(t)
+
         model_probs = self.get_model_probabilities(t)
+
         return int((model_probs.p > 0).sum())
 
     @with_session
@@ -604,7 +654,7 @@ class History:
 
         t: int, optional (default = self.max_t)
             Population index.
-            If t is None the last population is selected.
+            If t is None, the last population is selected.
 
         Returns
         -------
@@ -629,6 +679,7 @@ class History:
         model_probabilities = self.get_model_probabilities(t).reset_index()
         df_weighted = df.merge(model_probabilities)
         df_weighted["w"] *= df_weighted["p"]
+
         return df_weighted
 
     @with_session
@@ -673,9 +724,11 @@ class History:
         return self.max_t + 1
 
     @with_session
-    def get_sum_stats(self, m: int = 0, t: int = None) -> (np.ndarray, List):
+    def get_weighted_sum_stats_for_model(self, m: int = 0, t: int = None) \
+            -> (np.ndarray, List):
         """
-        Summary statistics.
+        Summary statistics for model `m`. The weights sum to 1, unless
+        there were multiple acceptances per particle.
 
         Parameters
         ----------
@@ -693,7 +746,6 @@ class History:
             * w: the weights associated with the summary statistics
             * sum_stats: list of summary statistics
         """
-
         m = int(m)
         if t is None:
             t = self.max_t
@@ -719,8 +771,8 @@ class History:
         return sp.array(weights), results
 
     @with_session
-    def get_weighted_sum_stats(self, t: int = None) -> (
-            List[float], List[dict]):
+    def get_weighted_sum_stats(self, t: int = None) \
+            -> (List[float], List[dict]):
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
@@ -783,7 +835,9 @@ class History:
         return json.loads(abc.population_strategy)
 
     @with_session
-    def get_population_extended(self, *, m=None, t="last", tidy=True) \
+    def get_population_extended(self, *, m: Union[int, None] = None,
+                                t: Union[int, str] = "last",
+                                tidy: bool = True) \
             -> pd.DataFrame:
         """
         Get extended population information, including parameters, distances,
@@ -791,13 +845,16 @@ class History:
 
         Parameters
         ----------
-        m: int, optional
-            The model to query.
-            If omitted, all models are returned
-        t: str, optional
-            Can be "last" or "all"
+
+        m: int or None, optional (default = None)
+            The model to query. If omitted, all models are returned
+
+        t: int or str, optional (default = "last")
+            Can be "last" or "all", or a population index.
             In case of "all", all populations are returned.
-            If "last", only the last population is returned.
+            If "last", only the last population is returned, for an int value
+            only the corresponding population at that time index.
+
         tidy: bool, optional
             If True, try to return a tidy DataFrame, where the individual
             parameters and summary statistics are pivoted.
@@ -833,11 +890,14 @@ class History:
                  .join(Parameter)
                  .filter(ABCSMC.id == self.id)
                  )
+
         if m is not None:
             query = query.filter(Model.m == m)
 
         if t == "last":
             t = self.max_t
+
+        # if t is not "all", filter for time point t
         if t != "all":
             query = query.filter(Population.t == t)
 

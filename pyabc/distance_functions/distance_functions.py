@@ -18,7 +18,7 @@ from ..sampler import Sampler
 from .scales import standard_deviation
 
 
-df_logger = logging.getLogger("DistanceFunction")
+logger = logging.getLogger("DistanceFunction")
 
 
 class DistanceFunction(ABC):
@@ -41,7 +41,6 @@ class DistanceFunction(ABC):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance function (at the beginning of run()),
-        directly after handle_x_0,
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.
@@ -473,7 +472,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.w[t] = w
 
         # logging
-        df_logger.debug("update distance weights = {}".format(self.w[t]))
+        logger.debug("update distance weights = {}".format(self.w[t]))
 
     def get_config(self) -> dict:
         return {"name": self.__class__.__name__,

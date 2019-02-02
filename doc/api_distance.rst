@@ -1,6 +1,7 @@
-.. _external_api:
+.. _api_distance:
 
-.. automodule:: pyabc.external
+.. automodule:: pyabc.distance_functions
    :members:
    :special-members: __init__, __call__
    :show-inheritance:
+

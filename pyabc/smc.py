@@ -31,7 +31,7 @@ import warnings
 import numpy as np
 
 
-abclogger = logging.getLogger("ABC")
+logger = logging.getLogger("ABC")
 
 model_output = TypeVar("model_output")
 
@@ -222,11 +222,6 @@ class ABCSMC:
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
         return state_red_dict
-
-    def do_not_stop_when_only_single_model_alive(self):
-        warnings.warn("This method is deprecated and removed "
-                      "in pyABC 1.0.0", DeprecationWarning, stacklevel=2)
-        self.stop_if_only_single_model_alive = False
 
     def load(self, db: str,
              abc_id: int = 1,
@@ -771,7 +766,7 @@ class ABCSMC:
             # get epsilon for generation t
             current_eps = self.acceptor.get_epsilon_equivalent(t) \
                 if isinstance(self.eps, NoEpsilon) else self.eps(t)
-            abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
+            logger.info('t:' + str(t) + ' eps:' + str(current_eps))
 
             # do some adaptations
             self._fit_transitions(t)
@@ -780,7 +775,7 @@ class ABCSMC:
             # create simulate function
             simulate_one = self._create_simulate_function(t)
 
-            abclogger.debug('now submitting population ' + str(t))
+            logger.debug('now submitting population ' + str(t))
 
             # perform the sampling
             sample = self.sampler.sample_until_n_accepted(
@@ -790,13 +785,13 @@ class ABCSMC:
             population = sample.get_accepted_population()
 
             # save to database before making any changes to the population
-            abclogger.debug('population ' + str(t) + ' done')
+            logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
                 t, current_eps, population, nr_evaluations,
                 model_names)
-            abclogger.debug(
+            logger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 

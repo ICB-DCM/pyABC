@@ -18,7 +18,7 @@ from pyabc.cv.bootstrap import calc_cv
 from .transition import Transition
 from .transition.predict_population_size import predict_population_size
 
-adaptation_logger = logging.getLogger("Adaptation")
+logger = logging.getLogger("Adaptation")
 
 
 class PopulationStrategy:
@@ -190,5 +190,5 @@ class AdaptivePopulationSize(PopulationStrategy):
                                         self.max_population_size),
                                     self.min_population_size)
 
-        adaptation_logger.info("Change nr particles {} -> {}"
-                               .format(reference_nr_part, self.nr_particles))
+        logger.info("Change nr particles {} -> {}"
+                    .format(reference_nr_part, self.nr_particles))
