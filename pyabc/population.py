@@ -85,7 +85,7 @@ class Population:
     """
 
     def __init__(self, particles: List[Particle]):
-        self._list = [particle.copy() for particle in particles]
+        self._list = particles.copy()
         self._model_probabilities = None
         self._normalize_weights()
 

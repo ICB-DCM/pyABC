@@ -31,7 +31,7 @@ class Sample:
             Concatenation of all the all_sum_stats lists of all
             particles added and accepted to this sample via append().
         """
-        return sum((particle.all_sum_stats
+        return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
                     for particle in self._particles), [])
 
     @property
@@ -42,8 +42,7 @@ class Sample:
 
         List of only the accepted particles.
         """
-        return [particle.copy()
-                for particle in self._particles if particle.accepted]
+        return [particle for particle in self._particles if particle.accepted]
 
     def append(self, particle: Particle):
         """
