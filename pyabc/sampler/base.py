@@ -10,14 +10,14 @@ class Sample:
     Parameters
     ----------
 
-    record_all_sum_stats: bool
-        True: Record summary statistics of the rejected particles as well.
-        False: Only record accepted particles.
+    record_rejected: bool
+        Whether to record rejected particles as well, along with accepted
+        ones.
     """
 
-    def __init__(self, record_all_sum_stats: bool = False):
+    def __init__(self, record_rejected: bool = False):
         self._particles = []
-        self.record_all_sum_stats = record_all_sum_stats
+        self.record_rejected = record_rejected
 
     @property
     def all_sum_stats(self):
@@ -58,11 +58,13 @@ class Sample:
         """
 
         # add to population if accepted
-        if particle.accepted or self.record_all_sum_stats:
+        if particle.accepted or self.record_rejected:
             self._particles.append(particle)
 
     def __add__(self, other: "Sample"):
-        sample = self.__class__(self.record_all_sum_stats)
+        sample = Sample(self.record_rejected)
+        # sample's list of particles is the concatenation of both samples'
+        # lists
         sample._particles = self._particles + other._particles
         return sample
 
@@ -99,18 +101,18 @@ class SampleFactory:
     Parameters
     ----------
 
-    record_all_sum_stats: bool
-        Corresponds to Sample.record_all_sum_stats.
+    record_rejected: bool
+        Corresponds to Sample.record_rejected.
     """
 
-    def __init__(self, record_all_sum_stats: bool = False):
-        self.record_all_sum_stats = record_all_sum_stats
+    def __init__(self, record_rejected: bool = False):
+        self.record_rejected = record_rejected
 
     def __call__(self):
         """
         Create a new empty sample.
         """
-        return Sample(self.record_all_sum_stats)
+        return Sample(self.record_rejected)
 
 
 class Sampler(ABC):
@@ -133,8 +135,7 @@ class Sampler(ABC):
 
     def __init__(self):
         self.nr_evaluations_ = 0
-        self.sample_factory = SampleFactory(
-            record_all_sum_stats=False)
+        self.sample_factory = SampleFactory(record_rejected=False)
 
     def _create_empty_sample(self) -> Sample:
         return self.sample_factory()
