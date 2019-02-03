@@ -403,9 +403,9 @@ class AdaptivePNormDistance(PNormDistance):
     def configure_sampler(self,
                           sampler: Sampler):
         """
-        Make the sampler return also rejected summary statistics if required,
+        Make the sampler return also rejected particles,
         because these are needed to get a better estimate of the summary
-        statistic variabilities.
+        statistic variabilities, avoiding a bias to accepted ones only.
 
         Parameters
         ----------
@@ -414,7 +414,7 @@ class AdaptivePNormDistance(PNormDistance):
             The sampler employed.
         """
         if self.adaptive:
-            sampler.sample_factory.record_all_sum_stats = True
+            sampler.sample_factory.record_rejected = True
 
     def initialize(self,
                    t: int,
