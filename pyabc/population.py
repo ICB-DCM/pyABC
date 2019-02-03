@@ -57,7 +57,8 @@ class Particle:
         multiplying the weights with the model probabilities.
     """
 
-    def __init__(self, m: int,
+    def __init__(self,
+                 m: int,
                  parameter: Parameter,
                  weight: float,
                  accepted_sum_stats: List[dict],
