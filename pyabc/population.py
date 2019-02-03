@@ -63,16 +63,20 @@ class Particle:
                  weight: float,
                  accepted_sum_stats: List[dict],
                  accepted_distances: List[float],
-                 rejected_sum_stats: List[dict],
-                 rejected_distances: List[float],
-                 accepted: bool):
+                 rejected_sum_stats: List[dict] = None,
+                 rejected_distances: List[float] = None,
+                 accepted: bool = True):
 
         self.m = m
         self.parameter = parameter
         self.weight = weight
         self.accepted_sum_stats = accepted_sum_stats
         self.accepted_distances = accepted_distances
+        if rejected_sum_stats is None:
+            rejected_sum_Stats = []
         self.rejected_sum_stats = rejected_sum_stats
+        if rejected_distances is None:
+            rejected_distances = []
         self.rejected_distances = rejected_distances
         self.accepted = accepted
 
