@@ -10,8 +10,9 @@ implement a Strategy pattern.)
 import datetime
 import logging
 from typing import List, Callable, TypeVar
-import pandas as pd
+import numpy as np
 import scipy as sp
+import pandas as pd
 import copy
 import warnings
 from typing import Union
