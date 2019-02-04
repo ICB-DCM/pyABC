@@ -4,8 +4,12 @@ Approximate Bayesian computation - Sequential Monte Carlo
 
 ABCSMC algorithms for Bayesian model selection.
 """
+
+
 import os
 import logging
+
+
 from .parameters import Parameter
 from .random_variables import (Distribution,
                                ModelPerturbationKernel,
@@ -71,10 +75,10 @@ __all__ = [
     "RV",
     "RVDecorator",
     "LowerBoundDecorator",
-    "Parameter",
     "Distribution",
     "ModelPerturbationKernel",
     # random_variables end
+    "Parameter",
     "GridSearchCV",
     "ConstantPopulationSize",
     "AdaptivePopulationSize",

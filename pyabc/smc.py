@@ -26,8 +26,10 @@ from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
 from .acceptor import accept_use_current_time, SimpleAcceptor
+
 import copy
 import warnings
+
 
 abclogger = logging.getLogger("ABC")
 
@@ -42,7 +44,7 @@ class ABCSMC:
     """
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
-    This is an implementation of an ABCSMC algorithm similar to [#tonistumpf]_
+    This is an implementation of an ABCSMC algorithm similar to [#tonistumpf]_ .
 
 
     Parameters
@@ -132,7 +134,6 @@ class ABCSMC:
     stop_if_only_single_model_alive: bool
         Defaults to False. Set this to true if you want to stop ABCSMC
         automatically as soon as only a single model has survived.
-
 
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
