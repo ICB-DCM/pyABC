@@ -523,7 +523,7 @@ class AdaptivePNormDistance(PNormDistance):
         if self.max_weight_ratio is None:
             return w
 
-        w_arr = np.array(w.values())
+        w_arr = np.array(list(w.values()))
         min_abs_weight = np.min(np.abs(w_arr[w_arr != 0]))
 
         for key, value in w.items():
