@@ -2,6 +2,6 @@
 
 .. automodule:: pyabc.distance_functions
    :members:
-   :special-members: __call__
+   :special-members: __call__, __init__
    :show-inheritance:
 
