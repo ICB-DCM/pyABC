@@ -44,7 +44,8 @@ class ABCSMC:
     """
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
-    This is an implementation of an ABCSMC algorithm similar to [#tonistumpf]_ .
+    This is an implementation of an ABCSMC algorithm similar to
+    [#tonistumpf]_ .
 
 
     Parameters
