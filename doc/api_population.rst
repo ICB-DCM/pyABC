@@ -1,7 +1,6 @@
-.. _api_abcsmc:
+.. _api_population:
 
-.. automodule:: pyabc.smc
+.. automodule:: pyabc.population
    :members:
    :special-members: __call__, __init__
    :show-inheritance:
-

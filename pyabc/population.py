@@ -1,3 +1,13 @@
+"""
+Particles and Populations
+=========================
+
+A particle contains the sampled parameters and simulated data.
+A population gathers all particles collected in one SMC
+iteration.
+"""
+
+
 from typing import List, Callable
 import pandas as pd
 from pyabc.parameters import Parameter
