@@ -39,8 +39,8 @@ Writing tests
 Test can be written with `pytest <http://docs.pytest.org/en/latest/>`_
 or the `unittest <https://docs.python.org/3/library/unittest.html>`_ module.
 
-Python (PEP8)
-~~~~~~~~~~~~~
+PEP8 Style Guide
+----------------
 
 We try to respect the `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ standard.
 We run `flake8 <http://flake8.pycqa.org/en/latest/>`_ as part of the test
@@ -65,41 +65,3 @@ get your work merged, please:
 
 Document all your changes in the pull request, and make sure to appropriately
 resolve issues, and delete stale branches after a successful merge.
-
-
-Versioning scheme
------------------
-
-For version numbers, we use ``A.B.C``, where
-
-* ``C`` is increased for bug fixes,
-* ``B`` is increased for new features and minor API breaking changes,
-* ``A`` is increased for major API breaking changes.
-
-That is, we follow the versioning scheme suggested
-by the `Python packaging guide <https://packaging.python.org>`_.
-
-
-Uploading to the Python package index PyPI
-------------------------------------------
-
-First, a so called "wheel" is created via
-
-::
-
-    python setup.py bdist_wheel
-
-A wheel is essentially a zip archive which contains the source code
-and the binaries (if any).
-This archive is uploaded using twine
-
-
-::
-
-    twine upload dist/pyabc-x.y.z-py3-non-any.wheel
-
-replacing x.y.z by the appropriate version number.
-
-For a more in-depth discussion see also the
-`section on distributing packages <https://packaging.python.org/tutorials/distributing-packages>`_
-of the Python packaging guide
