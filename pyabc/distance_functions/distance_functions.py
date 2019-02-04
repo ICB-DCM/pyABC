@@ -368,18 +368,23 @@ class AdaptivePNormDistance(PNormDistance):
         Whether to normalize the weights to have mean 1. This just possibly
         smoothes the decrease of epsilon and might aid numeric stability, but
         is not strictly necessary.
+
+    max_weight_ratio: float, optional (default = None)
+        If not None, large weights will be bounded by the ratio times the
+        smallest non-zero absolute weight. In practise usually not necessary,
+        it is theoretically required to prove convergence.
     """
 
     def __init__(self,
                  p: float = 2,
                  adaptive: bool = True,
                  scale_function=None,
-                 normalize_weights: bool = True):
+                 normalize_weights: bool = True,
+                 max_weight_ratio: float = None):
         # call p-norm constructor
         super().__init__(p=p, w=None)
 
         self.require_initialize = True
-
         self.adaptive = adaptive
 
         if scale_function is None:
@@ -387,6 +392,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.scale_function = scale_function
 
         self.normalize_weights = normalize_weights
+        self.max_weight_ratio = max_weight_ratio
 
         self.x_0 = None
 
@@ -478,18 +484,54 @@ class AdaptivePNormDistance(PNormDistance):
                 w[key] = 1 / scale
 
         # normalize weights to have mean 1
-        # This has just the effect that eps will decrease more smoothly, but is
-        # not important otherwise.
-        if self.normalize_weights:
-            mean_weight = np.mean(list(w.values()))
-            for key in w:
-                w[key] /= mean_weight
+        w = self.normalize_weights(w)
+
+        # bound weights
+        w = self.bound_weights(w)
 
         # add to w attribute, at time t
         self.w[t] = w
 
         # logging
         logger.debug("update distance weights = {}".format(self.w[t]))
+
+    def normalize_weights(self, w):
+        """
+        Normalize weights to have mean 1.
+
+        This has just the effect that eps will decrease more smoothly, but is
+        not important otherwise.
+        """
+        if not self.normalize_weights:
+            return w
+
+        mean_weight = np.mean(list(w.values()))
+        for key in w:
+            w[key] /= mean_weight
+
+        return w
+
+    def bound_weights(self, w):
+        """
+        Bound all weights to self.max_weight_ratio times the minimum
+        non-zero absolute weight, if self.max_weight_ratio is not None.
+
+        While this is usually not required in practice, it is theoretically
+        necessary that the ellipses are not arbitrarily eccentric, in order
+        to ensure convergence.
+        """
+        if self.max_weight_ratio is None:
+            return w
+
+        w_arr = np.array(w.values())
+        min_abs_weight = np.min(np.abs(w_arr[w_arr != 0]))
+
+        for key, value in w.items():
+            if abs(value) / min_abs_weight > self.max_weight_ratio:
+                w[key] = np.sign(value) \
+                    * self.max_weight_ratio * min_abs_weight
+
+        return w
 
     def get_config(self) -> dict:
         return {"name": self.__class__.__name__,
