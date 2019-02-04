@@ -31,9 +31,9 @@ Versioning scheme
 
 For version numbers, we use ``A.B.C``, where
 
-* ``C`` is increased for bug fixes
-* ``B`` is increased for new features
-* ``A`` for API breaking, backwards incompatible changes.
+* ``C`` is increased for bug fixes,
+* ``B`` is increased for new features and minor API breaking changes,
+* ``A`` is increased for major API breaking changes.
 
 That is, we follow the versioning scheme suggested
 by the `Python packaging guide <https://packaging.python.org>`_.
