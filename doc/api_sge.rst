@@ -1,6 +1,9 @@
 .. _api_sge:
 
 .. automodule:: pyabc.sge
+   :members:
+   :special-members: __call__, __init__
+   :show-inheritance:
 
 .. autoclass:: pyabc.sge.SGE
    :members:

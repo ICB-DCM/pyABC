@@ -14,6 +14,7 @@ API reference
    api_populationstrategy
    api_sampler
    api_parameters
+   api_population
    api_random_variables
    api_sge
    api_external

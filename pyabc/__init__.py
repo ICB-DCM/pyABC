@@ -4,8 +4,12 @@ Approximate Bayesian computation - Sequential Monte Carlo
 
 ABCSMC algorithms for Bayesian model selection.
 """
+
+
 import os
 import logging
+
+
 from .parameters import Parameter
 from .random_variables import (Distribution,
                                ModelPerturbationKernel,
@@ -49,7 +53,7 @@ from .version import __version__  # noqa: F401
 
 __all__ = [
     "ABCSMC",
-    # Distance
+    # distance
     "DistanceFunction",
     "NoDistance",
     "SimpleFunctionDistance",
@@ -61,7 +65,7 @@ __all__ = [
     "PercentileDistanceFunction",
     "RangeEstimatorDistanceFunction",
     "DistanceFunctionWithMeasureList",
-    # Distance end
+    # epsilon
     "Epsilon",
     "NoEpsilon",
     "ConstantEpsilon",
@@ -73,26 +77,26 @@ __all__ = [
     "RV",
     "RVDecorator",
     "LowerBoundDecorator",
-    "Parameter",
     "Distribution",
     "ModelPerturbationKernel",
-    # random_variables
+    # div
+    "Parameter",
     "GridSearchCV",
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
     "MultivariateNormalTransition",
     "LocalTransition",
-    # Acceptor
+    # acceptor
     "Acceptor",
     "SimpleAcceptor",
     "UniformAcceptor",
     "StochasticAcceptor",
-    # Model
+    # model
     "ModelResult",
     "Model",
     "SimpleModel",
     "IntegratedModel",
-    # History
+    # history
     "History"
 ]
 

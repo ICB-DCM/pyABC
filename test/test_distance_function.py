@@ -108,3 +108,11 @@ def test_adaptivepnormdistance():
             scale_function=scale_function)
         dist_f.initialize(0, abc.sample_from_prior, abc.x_0)
         dist_f(0, abc.sample_from_prior()[0], abc.sample_from_prior()[1])
+
+    for scale_function in scale_functions:
+        dist_f = AdaptivePNormDistance(
+            scale_function=scale_function,
+            max_weight_ratio=1e3)
+        dist_f.handle_x_0(x_0)
+        dist_f.initialize(0, abc.sample_from_prior())
+        dist_f(0, abc.sample_from_prior()[0], abc.sample_from_prior()[1])

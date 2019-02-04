@@ -24,6 +24,10 @@ Release Notes
 * Change rtd design from alabaster to sphinx_rtd_theme since it implements
   better navigation.
 * Allow for the database to save no summary statistics.
+* Tidy up returning of rejected samples in Sample (not only summary
+  statistics).
+* Recreate a population from file in History.get_population().
+* Change the contribution scheme to master/develop.
 
 
 0.9.5 (2019-01-17)

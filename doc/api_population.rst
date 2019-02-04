@@ -1,6 +1,6 @@
-.. _api_populationstrategy:
+.. _api_population:
 
-.. automodule:: pyabc.populationstrategy
+.. automodule:: pyabc.population
    :members:
    :special-members: __call__, __init__
    :show-inheritance:
