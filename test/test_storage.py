@@ -77,12 +77,11 @@ def rand_pop(m: int):
                  parameter=Parameter({"a": np.random.randint(10),
                                       "b": np.random.randn()}),
                  weight=sp.rand() * 42,
-                 accepted_sum_stats=
-                    [{"ss_float": 0.1,
-                      "ss_int": 42,
-                      "ss_str": "foo bar string",
-                      "ss_np": sp.rand(13, 42),
-                      "ss_df": example_df()}],
+                 accepted_sum_stats=[{"ss_float": 0.1,
+                                      "ss_int": 42,
+                                      "ss_str": "foo bar string",
+                                      "ss_np": sp.rand(13, 42),
+                                      "ss_df": example_df()}],
                  accepted_distances=[sp.rand()])
         for _ in range(np.random.randint(10) + 3)]
     return pop
@@ -95,7 +94,7 @@ def test_single_particle_save_load(history: History):
                  weight=.2,
                  accepted_sum_stats=[{"ss": .1}],
                  accepted_distances=[.1])
-        ]
+    ]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     df, w = history.get_distribution(0, 0)
@@ -146,7 +145,7 @@ def test_get_population(history: History):
                               nr_simulations=200,
                               model_names=["m0"])
     population_h = history.get_population(t=0)
-    
+
     # length
     assert len(population) == len(population_h)
 
@@ -196,7 +195,7 @@ def test_sum_stats_save_load(history: History):
                  accepted_sum_stats=[{"ss1": .1, "ss2": arr2,
                                       "ss3": example_df(),
                                       "rdf0": r["faithful"]}],
-                              # TODO: check why iris fails
+                 # TODO: check why iris fails
                  accepted_distances=[.1]),
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),

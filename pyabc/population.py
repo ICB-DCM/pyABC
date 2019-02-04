@@ -73,7 +73,7 @@ class Particle:
         self.accepted_sum_stats = accepted_sum_stats
         self.accepted_distances = accepted_distances
         if rejected_sum_stats is None:
-            rejected_sum_Stats = []
+            rejected_sum_stats = []
         self.rejected_sum_stats = rejected_sum_stats
         if rejected_distances is None:
             rejected_distances = []

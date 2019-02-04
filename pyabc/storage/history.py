@@ -462,7 +462,7 @@ class History:
         # store the population
         population = Population(t=t, nr_samples=nr_simulations,
                                 epsilon=current_epsilon)
-        
+
         abc_smc_simulation.populations.append(population)
 
         # iterate over models
@@ -809,7 +809,7 @@ class History:
                     all_sum_stats.append(sum_stats)
 
         return all_weights, all_sum_stats
-    
+
     @with_session
     def get_population(self, t: int = None):
         if t is None:
