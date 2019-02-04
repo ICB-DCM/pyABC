@@ -160,9 +160,10 @@ class Model:
         sum_stats_result = self.summary_statistics(t,
                                                    pars,
                                                    sum_stats_calculator)
-        distance = distance_calculator(t,
-                                       sum_stats_result.sum_stats,
-                                       x_0)
+        distance = distance_calculator(sum_stats_result.sum_stats,
+                                       x_0,
+                                       t,
+                                       pars)
         sum_stats_result.distance = distance
 
         return sum_stats_result

@@ -386,7 +386,7 @@ class ABCSMC:
 
         def get_initial_weighted_distances():
             def distance_to_ground_truth(x):
-                return self.distance_function(t, x, self.x_0)
+                return self.distance_function(x, self.x_0, t, par)
 
             # create dataframe from weights and new distances
             weights, sum_stats = self._get_initial_samples(t)

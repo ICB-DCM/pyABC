@@ -16,12 +16,13 @@ from typing import List, Callable
 import logging
 from ..sampler import Sampler
 from .scales import standard_deviation
+from .comparator import Comparator
 
 
 logger = logging.getLogger("DistanceFunction")
 
 
-class DistanceFunction(ABC):
+class DistanceFunction(Comparator):
     """
     Abstract base class for distance functions.
 
@@ -32,136 +33,7 @@ class DistanceFunction(ABC):
         """
         Default constructor.
         """
-        pass
-
-    def initialize(self,
-                   t: int,
-                   get_sum_stats: Callable[[], List[dict]],
-                   x_0: dict):
-        """
-        This method is called by the ABCSMC framework before the first
-        use of the distance function (at the beginning of run()),
-        and can be used to calibrate it to the statistics of the samples.
-
-        The default implementation is to do nothing.
-
-        This function is only called if require_initialize == True.
-
-        Parameters
-        ----------
-
-        t: int
-            Time point for which to initialize the distance function.
-
-        get_sum_stats: Callable[[], List[dict]]
-            Returns on command the initial summary statistics.
-
-        x_0: dict
-            The observed summary statistics.
-        """
-
-    def configure_sampler(self, sampler: Sampler):
-        """
-        This is called by the ABCSMC class and gives the distance function
-        the opportunity to configure the sampler.
-        For example, the distance function might request the sampler
-        to also return rejected particles and their summary statistics
-        in order to adapt the distance functions to the statistics
-        of the sample.
-
-        The default is to do nothing.
-
-        Parameters
-        ----------
-
-        sampler: Sampler
-            The Sampler used in ABCSMC.
-        """
-
-    def update(self,
-               t: int,
-               sum_stats: List[dict]) -> bool:
-        """
-        Update the distance function. Default: Do nothing.
-
-        Parameters
-        ----------
-
-        t: int
-            Time point for which to update/create the distance measure.
-
-        sum_stats: List[dict]
-            List of all summary statistics that should be used to update the
-            distance (in particular also rejected ones).
-
-        Returns
-        -------
-
-        is_updated: bool
-            True: If distance function has changed compared to hitherto.
-            False: If distance function has not changed (default).
-        """
-        return False
-
-    @abstractmethod
-    def __call__(self,
-                 t: int,
-                 x: dict,
-                 x_0: dict) -> float:
-        """
-        Evaluate, at time point t, the distance of the tentatively sampled
-        particle to the measured data.
-
-        Abstract method. This method has to be overwritten by
-        all concrete implementations.
-
-        Parameters
-        ----------
-
-        t: int
-            Time point at which to evaluate the distance.
-
-        x: dict
-            Summary statistics of the tentatively sampled parameter.
-
-        x_0: dict
-            Summary statistics of the measured data.
-
-        Returns
-        -------
-
-        distance: float
-            Attributes distance of the tentatively sampled particle
-            from the measured data.
-        """
-
-    def get_config(self) -> dict:
-        """
-        Return configuration of the distance function.
-
-        Returns
-        -------
-
-        config: dict
-            Dictionary describing the distance function.
-        """
-
-        return {"name": self.__class__.__name__}
-
-    def to_json(self) -> str:
-        """
-        Return JSON encoded configuration of the distance function.
-
-        Returns
-        -------
-
-        json_str: str
-            JSON encoded string describing the distance function.
-            The default implementation is to try to convert the dictionary
-            returned my ``get_config``.
-        """
-
-        return json.dumps(self.get_config())
+        super().__init__()
 
 
 class NoDistance(DistanceFunction):
@@ -181,9 +53,10 @@ class NoDistance(DistanceFunction):
         super().__init__()
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         raise Exception("{} is not intended to be called."
                         .format(self.__class__.__name__))
 
@@ -208,9 +81,10 @@ class SimpleFunctionDistance(DistanceFunction):
         self.function = function
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         return self.function(x, x_0)
 
     def get_config(self):
@@ -286,9 +160,10 @@ class PNormDistance(DistanceFunction):
         self.w = w
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         # make sure weights are initialized
         if self.w is None:
             self._set_default_weights(t, x.keys())
@@ -571,9 +446,10 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
     """
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         return sum(abs((x[key] - x_0[key]) / x_0[key]) if x_0[key] != 0 else
                    (0 if x[key] == 0 else np.inf)
                    for key in self.measures_to_use) / len(self.measures_to_use)
@@ -623,9 +499,10 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
         self._calculate_whitening_transformation_matrix(sum_stats)
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         x_vec, x_0_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(x_0)
         distance = la.norm(
             self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
@@ -716,9 +593,10 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
         self._calculate_normalization(sum_stats)
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         distance = sum(abs((x[key] - x_0[key]) / self.normalization[key])
                        for key in self.measures_to_use)
         return distance
@@ -772,9 +650,10 @@ class AcceptAllDistance(DistanceFunction):
     """
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict) -> float:
+                 x_0: dict,
+                 t: int,
+                 par: dict) -> float:
         return -1
 
 
@@ -788,7 +667,8 @@ class IdentityFakeDistance(DistanceFunction):
     """
 
     def __call__(self,
-                 t: int,
                  x: dict,
-                 x_0: dict):
+                 x_0: dict,
+                 t: int,
+                 par: dict):
         return x
