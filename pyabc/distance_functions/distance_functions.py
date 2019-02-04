@@ -484,10 +484,10 @@ class AdaptivePNormDistance(PNormDistance):
                 w[key] = 1 / scale
 
         # normalize weights to have mean 1
-        w = self.normalize_weights(w)
+        w = self._normalize_weights(w)
 
         # bound weights
-        w = self.bound_weights(w)
+        w = self._bound_weights(w)
 
         # add to w attribute, at time t
         self.w[t] = w
@@ -495,7 +495,7 @@ class AdaptivePNormDistance(PNormDistance):
         # logging
         logger.debug("update distance weights = {}".format(self.w[t]))
 
-    def normalize_weights(self, w):
+    def _normalize_weights(self, w):
         """
         Normalize weights to have mean 1.
 
@@ -511,7 +511,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         return w
 
-    def bound_weights(self, w):
+    def _bound_weights(self, w):
         """
         Bound all weights to self.max_weight_ratio times the minimum
         non-zero absolute weight, if self.max_weight_ratio is not None.
