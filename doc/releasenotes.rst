@@ -20,6 +20,7 @@ Release Notes
 * Tidy up returning of rejected samples in Sample (not only summary
   statistics).
 * Recreate a population from file in History.get_population().
+* Change the contribution scheme to master/develop.
 
 
 0.9.5 (2019-01-17)
