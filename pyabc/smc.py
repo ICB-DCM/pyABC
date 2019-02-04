@@ -16,8 +16,6 @@ import pandas as pd
 import copy
 import warnings
 from typing import Union
-import copy
-import warnings
 
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
