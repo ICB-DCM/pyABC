@@ -107,6 +107,31 @@ class Acceptor:
         """
         raise NotImplementedError()
 
+    def evaluate_sample(self,
+                        sample):
+        """
+        Evaluate the population whether it violates any assumptions that
+        were made for the previous acceptance. Delete from the population
+        all particles that cannot be accepted any longer.
+
+        This methods is called by ABCSMC just after a sampling round has
+        finished. If this re-evaluation indicates that not all particles
+        can be accepted any longer,
+
+        Parameters
+        ----------
+
+        sample: Sample
+            Contains the sampled and accepted particles.
+
+        Returns
+        -------
+
+        sample: Sample
+            The updated sample.
+        """
+        return sample
+    
     def get_epsilon_equivalent(self, t: int):
         """
         Return acceptance criterion for time t. An acceptor should implement
