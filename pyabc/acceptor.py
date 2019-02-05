@@ -16,8 +16,11 @@ time.
 
 import numpy as np
 import scipy as sp
+import pandas as pd
 from typing import Callable, List, Union
 import logging
+
+from .distance_functions import StochasticKernel, RET_SCALE_LIN
 
 
 logger = logging.getLogger("Acceptor")
@@ -35,8 +38,9 @@ class Acceptor:
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_weighted_distances: Callable[[], pd.DataFrame],
                    max_nr_populations: int,
+                   comparator,
                    x_0: dict):
         """
         Initialize. This method is called by the ABCSMC framework initially,
@@ -48,7 +52,9 @@ class Acceptor:
 
     def update(self,
                t: int,
-               sum_stats: List[dict]):
+               weighted_distances: pd.DataFrame,
+               comaprator,
+               acceptance_rate: float):
         """
         Update the acceptance criterion.
         """
@@ -158,7 +164,7 @@ def accept_uniform_use_current_time(
     point to evaluate whether to accept or reject.
     """
 
-    d = distance_function(t, x, x_0)
+    d = distance_function(x, x_0, t, pars)
     accept = d <= eps(t)
 
     return d, accept
@@ -179,14 +185,14 @@ def accept_uniform_use_complete_history(
     """
 
     # first test current criterion, which is most likely to fail
-    d = distance_function(t, x, x_0)
+    d = distance_function(x, x_0, t, pars)
     accept = d <= eps(t)
 
     if accept:
         # also check against all previous distances and acceptance criteria
         for t_prev in range(0, t):
             try:
-                d_prev = distance_function(t_prev, x, x_0)
+                d_prev = distance_function(x, x_0, t_prev, pars)
                 accept = d_prev <= eps(t_prev)
                 if not accept:
                     break
@@ -250,8 +256,6 @@ class StochasticAcceptor(Acceptor):
 
     def __init__(
             self,
-            pdf=None,
-            c=None,
             temp_schemes: Union[Callable, List[Callable]] = None,
             **kwargs):
         """
@@ -297,23 +301,20 @@ class StochasticAcceptor(Acceptor):
 
         super().__init__()
 
-        self.pdf = pdf
-        self.c = c
-
         if temp_schemes is None:
-            temp_schemes = [scheme_acceptance_rate, scheme_decay]
+            temp_schemes = [scheme_acceptance_rate, scheme_exponential_decay]
         elif not isinstance(temp_schemes, list):
             temp_schemes = [temp_schemes]
         if not len(temp_schemes):
-            raise ValueError("At least one temperature scheduling method "
-                             "is required.")
+            raise ValueError(
+                "At least one temperature scheduling method is required.")
         self.temp_schemes = temp_schemes
         
         # default kwargs
         default_kwargs = dict(
             target_acceptance_rate = 0.5,
             temp_init = None,
-            temp_decay_exponent = 3,
+            temp_decay_exponent = 4,
             alpha = 0.5,
             config = {}
         )
@@ -331,8 +332,9 @@ class StochasticAcceptor(Acceptor):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_weighted_distances: Callable[[], pd.DataFrame],
                    max_nr_populations: int,
+                   comparator,
                    x_0):
         """
         Initialize temperature.
@@ -340,22 +342,20 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = x_0
         self.max_nr_populations = max_nr_populations
 
-        # init normalization c
-        if self.c is None:
-            self.c = self.pdf(self.x_0, self.x_0)
-        
         # update
-        self._update(t, get_sum_stats, 1.0)
+        self._update(t, get_weighted_distances, comparator, 1.0)
 
     def update(self,
                t: int,
-               sum_stats: List[dict],
+               weighted_distances: pd.DataFrame,
+               comparator,
                acceptance_rate: float):
-        self._update(t, lambda: sum_stats, acceptance_rate)
+        self._update(t, lambda: weighted_distances, comparator, acceptance_rate)
 
     def _update(self,
                 t: int,
-                get_sum_stats: Callable[[], List[dict]],
+                get_weighted_distances: Callable[[], pd.DataFrame],
+                comparator,
                 acceptance_rate: float):
 
         # check if final time point reached
@@ -367,10 +367,10 @@ class StochasticAcceptor(Acceptor):
         temps = []
         for scheme in self.temp_schemes:
             temp = scheme(t=t,
-                          get_sum_stats=get_sum_stats,
+                          get_weighted_distances=get_weighted_distances,
                           x_0=self.x_0,
-                          pdf=self.pdf,
-                          c=self.c,
+                          pdf_max=comparator.pdf_max,
+                          ret_scale=comparator.ret_scale,
                           temperatures=self.temperatures,
                           max_nr_populations=self.max_nr_populations,
                           acceptance_rate=acceptance_rate,
@@ -388,14 +388,22 @@ class StochasticAcceptor(Acceptor):
 
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
+        comparator = distance_function
+        if not isinstance(comparator, StochasticKernel):
+            raise AssertionError(
+                    "The comparator must be a pyabc.StochasticKernel.")
+
         # temperature
         temp = self.temperatures[t]
 
         # compute probability density
-        pd = self.pdf(x_0, x)
+        pd = comparator(x, x_0, t, pars)
 
-        # rescale
-        pd_rescaled = pd / self.c
+        if comparator.ret_scale == RET_SCALE_LIN:
+            # rescale
+            pd_rescaled = pd / comparator.pdf_max
+        else:  # comparator.ret_scale == RET_SCALE_LOG
+            pd_rescaled = np.exp(pd - comparator.pdf_max)
 
         # acceptance probability
         acceptance_probability = pd_rescaled ** (1 / temp)
@@ -412,53 +420,14 @@ class StochasticAcceptor(Acceptor):
     def get_epsilon_equivalent(self, t: int):
         return self.temperatures[t]
 
-
-def get_pdf_normal(mean, cov):
-    """
-    Generate a normal probability density function for given
-    mean and covariance.
-    """
-    def pdf(x_0, x):
-        v_0 = np.array(list(x_0.values()))
-        v = np.array(list(x.values()))
-        
-        return sp.stats.multivariate_normal.pdf(v_0 - v, mean=mean, cov=cov)
-
-    c = sp.stats.multivariate_normal.pdf(np.zeros(len(v)), mean=mean, cov=cov)
-
-    return pdf, c
-
-
-def get_pmf_binomial(p):
-    """
-    Generate a binomial probability mass function
-    for a given success probability p.
-    """
-    def pdf(x_0, x):
-        v_0 = np.array(list(x_0.values()))
-        v = np.array(list(x.values()))
-
-        pmf = 1
-        for j in range(len(v)):
-            pmf *= sp.stats.binom.pmf(k=v_0[j], n=v[j], p=p) \
-                   if v[j] > 0 else 1
-
-        return pmf
-
-    c = 1
-    # if we have a better bound on n, we can improve the guess of c
-
-    return pdf, c
-
-
 def scheme_acceptance_rate(**kwargs):
     # required fields
     t = kwargs['t']
     temperatures = kwargs['temperatures']
     temp_init = kwargs['temp_init']
-    get_sum_stats = kwargs['get_sum_stats']
-    pdf = kwargs['pdf']
-    c = kwargs['c']
+    get_weighted_distances = kwargs['get_weighted_distances']
+    pdf_max = kwargs['pdf_max']
+    ret_scale = kwargs['ret_scale']
     x_0 = kwargs['x_0']
     target_acceptance_rate = kwargs['target_acceptance_rate']
 
@@ -467,16 +436,21 @@ def scheme_acceptance_rate(**kwargs):
         return temp_init
 
     # execute function
-    sum_stats = get_sum_stats()
+    df = get_weighted_distances()
+    weights = np.array(df['w'])
+    pdfs = np.array(df['distance'])
 
     # compute rescaled posterior densities
-    values = [pdf(x_0, x) / c
-              for x in sum_stats]
-    values = np.array(values)
+    if ret_scale == RET_SCALE_LIN:
+        values = pdfs / pdf_max
+    else:  # ret_scale == RET_SCALE_LOG
+        values = np.exp(pdfs - pdf_max)
 
+    weights /= np.sum(weights)
+    
     # objective function which we wish to find a root for
     def obj(beta):
-        val = np.sum(values**beta) / values.size - \
+        val = np.sum(weights * values**beta) - \
             target_acceptance_rate
         return val
 

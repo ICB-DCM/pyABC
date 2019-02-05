@@ -30,6 +30,14 @@ from .scales import (median_absolute_deviation,
                      combined_mean_absolute_deviation,
                      standard_deviation_to_observation)
 
+from .stochastic_kernel import (StochasticKernel,
+                                RET_SCALE_LIN,
+                                RET_SCALE_LOG,
+                                SimpleFunctionKernel,
+                                NormalKernel,
+                                IndependentNormalKernel,
+                                BinomialKernel)
+
 __all__ = [
     # distances
     "DistanceFunction",
@@ -54,5 +62,13 @@ __all__ = [
     "mean_absolute_deviation_to_observation",
     "combined_median_absolute_deviation",
     "combined_mean_absolute_deviation",
-    "standard_deviation_to_observation"
+    "standard_deviation_to_observation",
+    # stochastic kernels
+    "StochasticKernel",
+    "RET_SCALE_LIN",
+    "RET_SCALE_LOG",
+    "SimpleFunctionKernel",
+    "NormalKernel",
+    "IndependentNormalKernel",
+    "BinomialKernel",
 ]

@@ -213,8 +213,7 @@ class ABCSMC:
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
         self.history = None  # type: History
-        self._initial_sum_stats = None
-        self._initial_weights = None
+        self._initial_population = None
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
@@ -381,30 +380,43 @@ class ABCSMC:
         """
 
         def get_initial_sum_stats():
-            sum_stats = self._get_initial_samples(t)[1]
+            population = self._get_initial_population(t)
+            sum_stats = population.get_accepted_sum_stats()
+
             return sum_stats
 
         def get_initial_weighted_distances():
-            def distance_to_ground_truth(x):
+            def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
 
             # create dataframe from weights and new distances
-            weights, sum_stats = self._get_initial_samples(t)
+            population = self._get_initial_population(t)
+            ret = population.get_all(keys=['weight', 'parameter', 'sum_stat'])
+            weights = ret['weight']
+            parameters = ret['parameter']
+            sum_stats = ret['sum_stat']
+
+            # re-compute distances from updated distance function
             rows = []
-            for i in range(len(weights)):
-                weight = weights[i]
-                distance = distance_to_ground_truth(sum_stats[i])
+            for weight, parameter, sum_stat \
+                    in zip(weights, parameters, sum_stats):
+                distance = distance_to_ground_truth(sum_stat, parameter)
                 rows.append({'distance': distance, 'w': weight})
             weighted_distances = pd.DataFrame(rows)
             return weighted_distances
+        
+        def get_initial_population():
+            population = self._get_initial_population(t)
+            return population
 
         # initialize dist, eps, acc
         self.distance_function.initialize(t, get_initial_sum_stats, self.x_0)
         self.eps.initialize(t, get_initial_weighted_distances)
-        self.acceptor.initialize(t, get_initial_sum_stats,
-                                 self.max_nr_populations, self.x_0)
+        self.acceptor.initialize(t, get_initial_weighted_distances,
+                                 self.max_nr_populations,
+                                 self.distance_function, self.x_0)
 
-    def _get_initial_samples(self, t: int) -> (List[float], List[dict]):
+    def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
         Get initial samples, either from the last population stored in history,
         or via sampling sum stats from the prior. This can be used to calibrate
@@ -416,17 +428,15 @@ class ABCSMC:
         .. warning::
             The sample is cached.
         """
-        if self._initial_weights is None or self._initial_sum_stats is None:
+        if self._initial_population is None:
             if self.history.n_populations > 0:
-                weights, sum_stats = self.history.get_weighted_sum_stats()
-                self._initial_weights = weights
-                self._initial_sum_stats = sum_stats
+                # extract latest population from database
+                population = self.history.get_population()
             else:
-                self._initial_sum_stats = self._sample_from_prior(t)
-                self._initial_weights = [1.0 / len(self._initial_sum_stats)
-                                         for _ in self._initial_sum_stats]
-
-        return self._initial_weights, self._initial_sum_stats
+                # sample
+                population = self._sample_from_prior(t)
+            self._initial_population = population
+        return self._initial_population
 
     def _create_simulate_from_prior_function(self, t):
         """
@@ -442,15 +452,23 @@ class ABCSMC:
         # simulation function, simplifying some parts compared to later
 
         def simulate_one():
+            # sample model
             m = int(model_prior.rvs())
+            # sample parameter
             theta = parameter_priors[m].rvs()
+            # simulate summary statistics
             model_result = models[m].summary_statistics(
                 t, theta, summary_statistics)
+            # sampled from prior, so all have uniform weight
             weight = 1.0
+            # remember sum stats as accepted
             accepted_sum_stats = [model_result.sum_stats]
             # distance will be computed after initialization of the
-            # distance function
+            # distances
             accepted_distances = [np.inf]
+            # all are happy and accepted
+            accepted = True
+
             return Particle(
                 m=m,
                 parameter=theta,
@@ -459,7 +477,7 @@ class ABCSMC:
                 accepted_distances=accepted_distances,
                 rejected_sum_stats=[],
                 rejected_distances=[],
-                accepted=True)
+                accepted=accepted)
 
         return simulate_one
 
@@ -476,8 +494,10 @@ class ABCSMC:
         sample = self.sampler.sample_until_n_accepted(
             self.population_strategy.nr_particles, simulate_one)
 
-        # return all generated summary statistics
-        return sample.all_sum_stats
+        # extract accepted population
+        population = sample.get_accepted_population()
+
+        return population
 
     def _create_simulate_function(self, t):
         """
@@ -817,8 +837,8 @@ class ABCSMC:
 
             # compute distances with the new distance measure
             if df_updated:
-                def distance_to_ground_truth(x):
-                    return self.distance_function(t + 1, x, self.x_0)
+                def distance_to_ground_truth(x, par):
+                    return self.distance_function(x, self.x_0, t + 1, par)
 
                 population.update_distances(distance_to_ground_truth)
 
@@ -826,7 +846,8 @@ class ABCSMC:
             self.eps.update(t + 1, population.get_weighted_distances())
 
             # update acceptor
-            self.acceptor.update(t + 1, population.get_accepted_sum_stats(),
+            self.acceptor.update(t + 1, population.get_weighted_distances(),
+                                 self.distance_function,
                                  acceptance_rate)
 
             # check early termination conditions

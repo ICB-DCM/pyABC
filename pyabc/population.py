@@ -155,7 +155,7 @@ class Population:
         for particle in self._list:
             for i in range(len(particle.accepted_distances)):
                 particle.accepted_distances[i] = distance_to_ground_truth(
-                    particle.accepted_sum_stats[i])
+                    particle.accepted_sum_stats[i], particle.parameter)
 
     def get_model_probabilities(self) -> dict:
         """
@@ -196,6 +196,39 @@ class Population:
         weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
+    
+    def get_weighted_sum_stats(self) -> tuple:
+        weights = []
+        sum_stats = []
+        for particle in self._list:
+            model_probability = self._model_probabilities[particle.m]
+            normalized_weight = particle.weight * model_probability
+            for sum_stat in particle.accepted_sum_stats:
+                weights.append(normalized_weight)
+                sum_stats.append(sum_stat)
+        return weights, sum_stats
+
+    def get_all(self, keys):
+        """
+        Possible entries of keys:
+            weight, distance, sum_stat, parameter
+        """
+        ret = {key: [] for key in keys}
+        for particle in self._list:
+            n_accepted = len(particle.accepted_distances)
+            if 'weight' in keys:
+                model_probability = self._model_probabilities[particle.m]
+                weight = particle.weight * model_probability
+                ret['weight'].extend([weight] * n_accepted)
+            if 'parameter' in keys:
+                ret['parameter'].extend([particle.parameter] * n_accepted)
+            if 'distance' in keys:
+                for distance in particle.accepted_distances:
+                    ret['distance'].append(distance)
+            if 'sum_stat' in keys:
+                for sum_stat in particle.accepted_sum_stats:
+                    ret['sum_stat'].append(sum_stat)
+        return ret
 
     def get_accepted_sum_stats(self) -> List[dict]:
         """

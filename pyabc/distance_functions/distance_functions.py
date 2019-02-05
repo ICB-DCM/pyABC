@@ -55,8 +55,8 @@ class NoDistance(DistanceFunction):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
-                 par: dict) -> float:
+                 t: int = None,
+                 par: dict = None) -> float:
         raise Exception("{} is not intended to be called."
                         .format(self.__class__.__name__))
 
@@ -83,8 +83,8 @@ class SimpleFunctionDistance(DistanceFunction):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
-                 par: dict) -> float:
+                 t: int = None,
+                 par: dict = None) -> float:
         return self.function(x, x_0)
 
     def get_config(self):
@@ -94,7 +94,7 @@ class SimpleFunctionDistance(DistanceFunction):
             conf["name"] = self.function.__name__
         except AttributeError:
             try:
-                conf["name"] = self.function.__class_.__name__
+                conf["name"] = self.function.__class__.__name__
             except AttributeError:
                 pass
         return conf
@@ -116,7 +116,7 @@ def to_distance(maybe_distance_function):
     if maybe_distance_function is None:
         return NoDistance()
 
-    if isinstance(maybe_distance_function, DistanceFunction):
+    if isinstance(maybe_distance_function, Comparator):
         return maybe_distance_function
 
     return SimpleFunctionDistance(maybe_distance_function)
@@ -162,8 +162,8 @@ class PNormDistance(DistanceFunction):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
-                 par: dict) -> float:
+                 t: int = None,
+                 par: dict = None) -> float:
         # make sure weights are initialized
         if self.w is None:
             self._set_default_weights(t, x.keys())
@@ -448,8 +448,8 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
-                 par: dict) -> float:
+                 t: int = None,
+                 par: dict = None) -> float:
         return sum(abs((x[key] - x_0[key]) / x_0[key]) if x_0[key] != 0 else
                    (0 if x[key] == 0 else np.inf)
                    for key in self.measures_to_use) / len(self.measures_to_use)
@@ -501,8 +501,8 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
-                 par: dict) -> float:
+                 t: int = None,
+                 par: dict = None) -> float:
         x_vec, x_0_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(x_0)
         distance = la.norm(
             self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
@@ -595,8 +595,8 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
-                 par: dict) -> float:
+                 t: int = None,
+                 par: dict = None) -> float:
         distance = sum(abs((x[key] - x_0[key]) / self.normalization[key])
                        for key in self.measures_to_use)
         return distance

@@ -1,6 +1,8 @@
-from abc import ABC, abtractmethod
+from abc import ABC, abstractmethod
 from typing import List, Callable
 import json
+
+from ..sampler import Sampler
 
 
 class Comparator(ABC):
@@ -42,7 +44,7 @@ class Comparator(ABC):
             The observed summary statistics.
         """
 
-    def configure_sample(
+    def configure_sampler(
             self,
             sampler: Sampler):
         """
@@ -94,8 +96,8 @@ class Comparator(ABC):
             self,
             x: dict,
             x_0: dict,
-            t: int,
-            par: dict) -> float:
+            t: int = None,
+            par: dict = None) -> float:
         """
         Evaluate at time point t the distance of the summary statistics of
         the data simulated for the tentatively sampled particle to those of

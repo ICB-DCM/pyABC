@@ -13,13 +13,13 @@ RET_SCALES = [RET_SCALE_LIN, RET_SCALE_LOG]
 class StochasticKernel(Comparator):
     """
     A stochastic kernel assesses the similarity between observed and
-    simulated summary statistics or data via a probability  measure.
+    simulated summary statistics or data via a probability measure.
 
     The returned value cannot be interpreted as a distance function,
     but rather as an inverse distance, as it increases as the similarity
     between observed and simulated summary statistics increases.
 
-    Paraemeters
+    Parameters
     -----------
 
     ret_scale: str, optional (default = RET_SCALE_LIN)
@@ -92,8 +92,8 @@ class SimpleFunctionKernel(StochasticKernel):
     def __call__(
             x: dict,
             x_0: dict,
-            t: int,
-            par: dict) -> float
+            t: int = None,
+            par: dict = None) -> float:
         return self.function(x=x, x_0=x_0, t=t, par=par)
 
 
@@ -126,14 +126,14 @@ class NormalKernel(StochasticKernel):
             self,
             mean=None,
             cov=None,
-            ret_scale=RET_SCALE_LOG,
+            ret_scale=RET_SCALE_LIN,
             keys=None):
         super().__init__(ret_scale=ret_scale, keys=keys)
         self.mean = mean
         self.cov = cov
 
         # create frozen multivariate normal distribution
-        self.rv = sp.multivariate_normal(mean=self.mean, cov=self.cov)
+        self.rv = sp.stats.multivariate_normal(mean=self.mean, cov=self.cov)
 
         self.ret_scale = ret_scale
         self._pdf_max = None
@@ -151,6 +151,7 @@ class NormalKernel(StochasticKernel):
         self._pdf_max = self(x_0, x_0)
 
     def __call__(
+            self,
             x: dict,
             x_0: dict,
             t: int = None,
@@ -160,7 +161,7 @@ class NormalKernel(StochasticKernel):
         logarithm.
         """
         # difference to array
-        diff = np.array([x[key] - x_0[key] for key in self.keys)
+        diff = np.array([x[key] - x_0[key] for key in self.keys])
         
         # compute pdf
         if self.ret_scale == RET_SCALE_LIN:
@@ -238,7 +239,7 @@ class IndependentNormalKernel(StochasticKernel):
             t: int = None,
             par: dict = None):
         # difference to array
-        diff = np.array([x[key] - x_0[key] for key in self.keys)
+        diff = np.array([x[key] - x_0[key] for key in self.keys])
 
         # compute pdf
         log_2_pi = np.sum(np.log(2 * np.pi * self.var))
@@ -270,8 +271,8 @@ class BinomialKernel(StochasticKernel):
 
     def __init__(
             self,
-            p: float
-            ret_scale=RET_SCALE_LIN
+            p: float,
+            ret_scale=RET_SCALE_LIN,
             keys=None):
         super().__init__(ret_scale=ret_scale, keys=keys)
 
@@ -288,8 +289,8 @@ class BinomialKernel(StochasticKernel):
     def __call__(
             x: dict,
             x_0: dict,
-            t: int,
-            par: dict) -> float:
+            t: int = None,
+            par: dict = None) -> float:
         x = np.array([x[key] for key in self.keys])
         x_0 = np.array([x_0[key] for key in self.keys])
 
