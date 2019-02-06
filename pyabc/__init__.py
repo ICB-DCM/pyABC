@@ -9,62 +9,68 @@ ABCSMC algorithms for Bayesian model selection.
 import os
 import logging
 
-
 from .parameters import Parameter
-from .random_variables import (Distribution,
-                               ModelPerturbationKernel,
-                               RV,
-                               RVBase,
-                               RVDecorator,
-                               LowerBoundDecorator)
-from .distance_functions import (DistanceFunction,
-                                 NoDistance,
-                                 SimpleFunctionDistance,
-                                 PNormDistance,
-                                 AdaptivePNormDistance,
-                                 ZScoreDistanceFunction,
-                                 PCADistanceFunction,
-                                 MinMaxDistanceFunction,
-                                 PercentileDistanceFunction,
-                                 RangeEstimatorDistanceFunction,
-                                 DistanceFunctionWithMeasureList)
-from .epsilon import (Epsilon,
-                      NoEpsilon,
-                      ConstantEpsilon,
-                      QuantileEpsilon,
-                      MedianEpsilon,
-                      ListEpsilon)
+from .random_variables import (
+    Distribution,
+    ModelPerturbationKernel,
+    RV,
+    RVBase,
+    RVDecorator,
+    LowerBoundDecorator)
+from .distance import (
+    Distance,
+    NoDistance,
+    SimpleFunctionDistance,
+    PNormDistance,
+    AdaptivePNormDistance,
+    ZScoreDistance,
+    PCADistance,
+    MinMaxDistance,
+    PercentileDistance,
+    RangeEstimatorDistance,
+    DistanceWithMeasureList)
+from .epsilon import (
+    Epsilon,
+    NoEpsilon,
+    ConstantEpsilon,
+    QuantileEpsilon,
+    MedianEpsilon,
+    ListEpsilon)
 from .smc import ABCSMC
 from .storage import History
-from .acceptor import (Acceptor,
-                       SimpleAcceptor,
-                       UniformAcceptor,
-                       StochasticAcceptor)
-from .model import (Model,
-                    SimpleModel,
-                    ModelResult,
-                    IntegratedModel)
-from .transition import (MultivariateNormalTransition,
-                         LocalTransition)
-from .populationstrategy import (AdaptivePopulationSize,
-                                 ConstantPopulationSize)
+from .acceptor import (
+    Acceptor,
+    SimpleAcceptor,
+    UniformAcceptor,
+    StochasticAcceptor)
+from .model import (
+    Model,
+    SimpleModel,
+    ModelResult,
+    IntegratedModel)
+from .transition import (
+    MultivariateNormalTransition,
+    LocalTransition)
+from .populationstrategy import (
+    AdaptivePopulationSize,
+    ConstantPopulationSize)
 from .transition import GridSearchCV
 from .version import __version__  # noqa: F401
 
 __all__ = [
     "ABCSMC",
     # distance
-    "DistanceFunction",
+    "Distance",
     "NoDistance",
     "SimpleFunctionDistance",
     "PNormDistance",
     "AdaptivePNormDistance",
-    "ZScoreDistanceFunction",
-    "PCADistanceFunction",
-    "MinMaxDistanceFunction",
-    "PercentileDistanceFunction",
-    "RangeEstimatorDistanceFunction",
-    "DistanceFunctionWithMeasureList",
+    "ZScoreDistance",
+    "PCADistance",
+    "MinMaxDistance",
+    "PercentileDistance",
+    "RangeEstimatorDistance",
+    "DistanceWithMeasureList",
     # epsilon
     "Epsilon",
     "NoEpsilon",
