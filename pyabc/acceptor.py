@@ -282,6 +282,7 @@ class StochasticAcceptor(Acceptor):
     def __init__(
             self,
             temp_schemes: Union[Callable, List[Callable]] = None,
+            pdf_max_method: Callable = None,
             **kwargs):
         """
         Parameters
@@ -335,6 +336,10 @@ class StochasticAcceptor(Acceptor):
                 "At least one temperature scheduling method is required.")
         self.temp_schemes = temp_schemes
         
+        if pdf_max_method = None:
+            pdf_max_method = pdf_max_use_default
+        self.pdf_max_method = pdf_max_method
+
         # default kwargs
         default_kwargs = dict(
             target_acceptance_rate = 0.5,
@@ -348,7 +353,10 @@ class StochasticAcceptor(Acceptor):
             kwargs.setdefault(key, value)
         self.kwargs = kwargs
 
-        # temepratures, indexed by time
+        # maximum pdfs, indexed by time
+        self.pdf_maxs = {}
+
+        # temperatures, indexed by time
         self.temperatures = {}
 
         # fields to be filled later
@@ -392,6 +400,8 @@ class StochasticAcceptor(Acceptor):
             self.temperatures[t] = 1.0
             return
 
+        # update temperature
+
         # evaluate schedulers
         temps = []
         for scheme in self.temp_schemes:
@@ -415,6 +425,14 @@ class StochasticAcceptor(Acceptor):
         # fill into temperatures list
         self.temperatures[t] = temp
 
+        # update pdf_max
+
+        self.pdf_maxs[t] = self.pdf_max_method(
+            default=kernel.pdf_max,
+            get_weighted_distances=get_weighted_distances,
+            pdf_maxs=self.pdf_maxs)
+
+        logger.debutg(f"pdf_max: {pdf_maxs[t]}")
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         kernel = distance_function
@@ -597,3 +615,26 @@ def scheme_daly(**kwargs):
     
     return temp
 
+
+# PDF MAX EVALUATION
+
+
+
+def pdf_max_use_default(**kwargs):
+    pdf_max = kwargs['default']
+    return pdf_max
+
+
+def pdf_max_take_max_found(**kwargs):
+    pdf_maxs = kwargs['pdf_maxs']
+    get_weighted_distances = kwargs['get_weighted_distances']
+
+    df = get_weighted_distances()
+    pdfs = np.array(df['distance'])
+
+    max_prev = max(pdf_maxs.values())
+    max_prev_iter = max(pdfs)
+
+    pdf_max = max(max_prev, max_prev_iter)
+
+    return pdf_max
