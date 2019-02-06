@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from typing import Callable, List
 
-from .comparator import Comparator
+from .base import Distance
 
 
 RET_SCALE_LIN = "RET_SCALE_LIN"
@@ -10,14 +10,17 @@ RET_SCALE_LOG = "RET_SCALE_LOG"
 RET_SCALES = [RET_SCALE_LIN, RET_SCALE_LOG]
 
 
-class StochasticKernel(Comparator):
+class StochasticKernel(Distance):
     """
     A stochastic kernel assesses the similarity between observed and
     simulated summary statistics or data via a probability measure.
 
-    The returned value cannot be interpreted as a distance function,
-    but rather as an inverse distance, as it increases as the similarity
-    between observed and simulated summary statistics increases.
+    .. note::
+        The returned value cannot be interpreted as a distance function,
+        but rather as an inverse distance, as it increases as the similarity
+        between observed and simulated summary statistics increases.
+        Thus, a StochasticKernel should only be used together with a
+        StochasticAcceptor.
 
     Parameters
     -----------
@@ -28,8 +31,7 @@ class StochasticKernel(Comparator):
         can be either of p(x,x_0), or log(p(x,x_0)).
 
     keys: List[str]
-        The keys of the summary statistics in the order corresponding
-        to that in mean and cov.
+        The keys of the summary statistics, specifying the order to be used.
     """
 
     def __init__(
@@ -56,12 +58,12 @@ class StochasticKernel(Comparator):
     def check_ret_scale(ret_scale):
         if ret_scale not in RET_SCALES:
             raise ValueError(
-                f"ret_scale must be in {RET_SCALES}")
+                f"ret_scale must be ofe of {RET_SCALES}")
 
     @property
     def pdf_max(self):
         """
-        Return the maximal density function value possible under this
+        Return the maximum density function value possible under this
         noise model.
 
         Default: Return None.
@@ -76,10 +78,13 @@ class SimpleFunctionKernel(StochasticKernel):
     Parameters
     ----------
 
-    function: Callabel[**kwargs, float]
-        A callable accepting a subset of __call__'s parameters.
+    function: Callable[**kwargs, float]
+        A Callable accepting a subset of __call__'s parameters.
+        The function should be a pdf or pmf.
 
     ret_scale: as in StochasticKernel.ret_scale
+    
+    keys: List[str], optional (see StochasticKernel.keys)
     """
     def __init__(
             self,
@@ -99,8 +104,8 @@ class SimpleFunctionKernel(StochasticKernel):
 
 class NormalKernel(StochasticKernel):
     """
-    A kernel with a normal probability density. This is just
-    a wrapper around sp.multivariate_normal.
+    A kernel with a normal, i.e. Gaussian,  probability density.
+    This is just a wrapper around sp.multivariate_normal.
 
     Parameters
     ----------
@@ -114,10 +119,12 @@ class NormalKernel(StochasticKernel):
     ret_scale: str, optional (default = RET_SCALE_LIN)
         The scale on which the distribution is to be returned.
 
+    keys: List[str], optional (see StochasticKernel.keys)
+
     .. note::
 
        The order of the entries in the mean and cov vectors is assumed
-       to be the same as one in keys. If keys is None, it is assumed to
+       to be the same as the one in keys. If keys is None, it is assumed to
        be the same as the one obtained via sorted(x.keys()) for summary
        statistics x.
     """
@@ -180,8 +187,8 @@ class IndependentNormalKernel(StochasticKernel):
     """
     This kernel can be used for efficient computations of large-scale
     independent normal distributions, circumventing the covariance
-    matrix, and computing directly on a log-scale to avoid numeric
-    issues.
+    matrix, and performing computations directly on a log-scale to avoid
+    numeric issues.
 
     Parameters
     ----------
@@ -192,6 +199,8 @@ class IndependentNormalKernel(StochasticKernel):
     var: array_like, optional (default = ones vector)
         Variances of the distribution (assuming zeros in the off-diagonal
         of the covariance matrix).
+
+    keys: List[str], optional (see StochasticKernel.keys)
     """
 
     def __init__(
@@ -267,6 +276,8 @@ class BinomialKernel(StochasticKernel):
 
     ret_scale: str, optional (default = RET_SCALE_LIN)
         The scale on which the distribution is to be returned.
+
+    keys: List[str], optional (see StochasticKernel.keys)
     """
 
     def __init__(
@@ -275,16 +286,11 @@ class BinomialKernel(StochasticKernel):
             ret_scale=RET_SCALE_LIN,
             keys=None):
         super().__init__(ret_scale=ret_scale, keys=keys)
-
-    def initialize(
-            self,
-            t: int,
-            get_sum_stats: Callable[[], List[dict]],
-            x_0: dict):
-        super().initialize(
-            t=t,
-            get_sum_stats=get_sum_stats,
-            x_0=x_0)
+        
+        if p > 1 or p < 0:
+            raise ValueError(
+                f"p must be in the interval [0, 1], but obtained {p}.")
+        self.p = p
 
     def __call__(
             x: dict,
@@ -295,12 +301,12 @@ class BinomialKernel(StochasticKernel):
         x_0 = np.array([x_0[key] for key in self.keys])
 
         if self.ret_scale == RET_SCALE_LIN:
-            ret = 1
+            ret = 1.0
             for j in range(len(x_0)):
                 ret *= sp.stats.binom.pmf(k=x_0[j], n=x[j], p=self.p) \
                        if x[j] > 0 else 1
         else:  # self.ret_scale == RET_SCALE_LOG
-            ret = 0
+            ret = 0.0
             for j in range(len(x_0)):
                 ret += sp.stats.binom.logpmf(k=x_0[j], n=x[j], p=self.p) \
                        if x[j] > 0 else 0

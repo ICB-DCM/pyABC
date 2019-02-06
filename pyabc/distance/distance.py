@@ -1,6 +1,6 @@
 """
-Distance functions
-==================
+Distances
+=========
 
 Distance functions measure closeness of observed and sampled data.
 For custom distance functions, either pass a plain function to ABCSMC or
@@ -14,115 +14,16 @@ from scipy import linalg as la
 from abc import ABC, abstractmethod
 from typing import List, Callable
 import logging
+
 from ..sampler import Sampler
 from .scales import standard_deviation
-from .comparator import Comparator
+from .base import Distance
 
 
-logger = logging.getLogger("DistanceFunction")
+logger = logging.getLogger("Distance")
 
 
-class DistanceFunction(Comparator):
-    """
-    Abstract base class for distance functions.
-
-    Any other distance function should inherit from this class.
-    """
-
-    def __init__(self):
-        """
-        Default constructor.
-        """
-        super().__init__()
-
-
-class NoDistance(DistanceFunction):
-    """
-    Implements a kind of null object as distance function.
-
-    This can be used as a dummy distance function if e.g. integrated modeling
-    is used.
-
-    .. note::
-        This distance function cannot be evaluated, so currently it is in
-        particular not possible to use an epsilon threshold which requires
-        initialization (i.e. eps.require_initialize==True is not possible).
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        raise Exception("{} is not intended to be called."
-                        .format(self.__class__.__name__))
-
-
-class SimpleFunctionDistance(DistanceFunction):
-    """
-    This is a wrapper around a simple function which calculates the distance.
-    If a function is passed to the ABCSMC class, then it is converted to
-    an instance of the SimpleFunctionDistance class.
-
-    Parameters
-    ----------
-
-    function: Callable[[dict, dict], float]
-        A Callable accepting two parameters, namely summary statistics x and
-        x_0, and returning the distance between both.
-    """
-
-    def __init__(self,
-                 function):
-        super().__init__()
-        self.function = function
-
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        return self.function(x, x_0)
-
-    def get_config(self):
-        conf = super().get_config()
-        # try to get the function name
-        try:
-            conf["name"] = self.function.__name__
-        except AttributeError:
-            try:
-                conf["name"] = self.function.__class__.__name__
-            except AttributeError:
-                pass
-        return conf
-
-
-def to_distance(maybe_distance_function):
-    """
-
-    Parameters
-    ----------
-    maybe_distance_function: either a Callable, which takes two arguments, or
-    a DistanceFunction instance.
-
-    Returns
-    -------
-
-    """
-
-    if maybe_distance_function is None:
-        return NoDistance()
-
-    if isinstance(maybe_distance_function, Comparator):
-        return maybe_distance_function
-
-    return SimpleFunctionDistance(maybe_distance_function)
-
-
-class PNormDistance(DistanceFunction):
+class PNormDistance(Distance):
     """
     Use a weighted p-norm
 
@@ -399,7 +300,7 @@ class AdaptivePNormDistance(PNormDistance):
                 "normalize_weights": self.normalize_weights}
 
 
-class DistanceFunctionWithMeasureList(DistanceFunction):
+class DistanceWithMeasureList(Distance):
     """
     Base class for distance functions with measure list.
     This class is not functional on its own.
@@ -432,7 +333,7 @@ class DistanceFunctionWithMeasureList(DistanceFunction):
         return config
 
 
-class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
+class ZScoreDistance(DistanceWithMeasureList):
     """
     Calculate distance as sum of ZScore over the selected measures.
     The measured Data is the reference for the ZScore.
@@ -455,7 +356,7 @@ class ZScoreDistanceFunction(DistanceFunctionWithMeasureList):
                    for key in self.measures_to_use) / len(self.measures_to_use)
 
 
-class PCADistanceFunction(DistanceFunctionWithMeasureList):
+class PCADistance(DistanceWithMeasureList):
     """
     Calculate distance in whitened coordinates.
 
@@ -509,7 +410,7 @@ class PCADistanceFunction(DistanceFunctionWithMeasureList):
         return distance
 
 
-class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
+class RangeEstimatorDistance(DistanceWithMeasureList):
     """
     Abstract base class for distance functions which estimate is based on a
     range.
@@ -602,7 +503,7 @@ class RangeEstimatorDistanceFunction(DistanceFunctionWithMeasureList):
         return distance
 
 
-class MinMaxDistanceFunction(RangeEstimatorDistanceFunction):
+class MinMaxDistance(RangeEstimatorDistance):
     """
     Calculate upper and lower margins as max and min of the parameters.
     This works surprisingly well for normalization in simple cases
@@ -617,7 +518,7 @@ class MinMaxDistanceFunction(RangeEstimatorDistanceFunction):
         return min(parameter_list)
 
 
-class PercentileDistanceFunction(RangeEstimatorDistanceFunction):
+class PercentileDistance(RangeEstimatorDistance):
     """
     Calculate normalization 20% and 80% from percentiles as lower
     and upper margins
@@ -628,12 +529,12 @@ class PercentileDistanceFunction(RangeEstimatorDistanceFunction):
     @staticmethod
     def upper(parameter_list):
         return sp.percentile(parameter_list,
-                             100 - PercentileDistanceFunction.PERCENTILE)
+                             100 - PercentileDistance.PERCENTILE)
 
     @staticmethod
     def lower(parameter_list):
         return sp.percentile(parameter_list,
-                             PercentileDistanceFunction.PERCENTILE)
+                             PercentileDistance.PERCENTILE)
 
     def get_config(self):
         config = super().get_config()
@@ -641,7 +542,7 @@ class PercentileDistanceFunction(RangeEstimatorDistanceFunction):
         return config
 
 
-class AcceptAllDistance(DistanceFunction):
+class AcceptAllDistance(Distance):
     """
     Just a mock distance function which always returns -1.
     So any sample should be accepted for any sane epsilon object.
@@ -657,7 +558,7 @@ class AcceptAllDistance(DistanceFunction):
         return -1
 
 
-class IdentityFakeDistance(DistanceFunction):
+class IdentityFakeDistance(Distance):
     """
     A fake distance function, which just passes the summary statistics on.
     This class assumes that the model already returns the distance. This can be
