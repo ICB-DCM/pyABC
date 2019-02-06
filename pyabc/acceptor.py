@@ -336,7 +336,7 @@ class StochasticAcceptor(Acceptor):
                 "At least one temperature scheduling method is required.")
         self.temp_schemes = temp_schemes
         
-        if pdf_max_method = None:
+        if pdf_max_method == None:
             pdf_max_method = pdf_max_use_default
         self.pdf_max_method = pdf_max_method
 
@@ -432,7 +432,7 @@ class StochasticAcceptor(Acceptor):
             get_weighted_distances=get_weighted_distances,
             pdf_maxs=self.pdf_maxs)
 
-        logger.debutg(f"pdf_max: {pdf_maxs[t]}")
+        logger.debug(f"pdf_max: {self.pdf_maxs[t]}")
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         kernel = distance_function
