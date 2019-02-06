@@ -165,31 +165,30 @@ class Distance(ABC):
 
 
 class NoDistance(Distance):
-	"""
-	Implements a kind of null object as distance function.
-	
-	This can be used as a dummy distance function if e.g. integrated modeling
-	is used.
+    """
+    Implements a kind of null object as distance function.
 
-	.. note::
-        THis distance function cannot be evaluated, so currently it is in
+    This can be used as a dummy distance function if e.g. integrated modeling
+    is used.
+
+    .. note::
+        This distance function cannot be evaluated, so currently it is in
         particular not possible to use an epsilon threshold which requires
         initialization, because during initialization the distance function is
         invoked directly and not via the acceptor as usual. Conceptually, this
         would be possible and can be implemented on request.
     """
-    
+
     def __init__(self):
-		super().__init__()
-	
-	def __call__(
-			self,
-			x: dict,
-			x_0: dict,
-			t: int = None,
-			par: dict = None) -> float:
-		raise Exception(
-			f"{self.__class__.__name__} is not intended to be called.")
+        super().__init__()
+
+    def __call__(self,
+                 x: dict,
+                 x_0: dict,
+                 t: int = None,
+                 par: dict = None) -> float:
+        raise Exception(
+            f"{self.__class__.__name__} is not intended to be called.")
 
 
 class SimpleFunctionDistance(Distance):
@@ -206,26 +205,25 @@ class SimpleFunctionDistance(Distance):
         x_0, and returning the distance between both.
     """
 
-    def __init__(self,
-                 function):
+    def __init__(self, fun):
         super().__init__()
-        self.function = function
+        self.fun = fun
 
     def __call__(self,
                  x: dict,
                  x_0: dict,
                  t: int = None,
                  par: dict = None) -> float:
-        return self.function(x, x_0)
+        return self.fun(x, x_0)
 
     def get_config(self):
         conf = super().get_config()
         # try to get the function name
         try:
-            conf["name"] = self.function.__name__
+            conf["name"] = self.fun.__name__
         except AttributeError:
             try:
-                conf["name"] = self.function.__class__.__name__
+                conf["name"] = self.fun.__class__.__name__
             except AttributeError:
                 pass
         return conf
@@ -248,8 +246,7 @@ def to_distance(maybe_distance):
     if maybe_distance is None:
         return NoDistance()
 
-    if isinstance(maybe_distance_function, Comparator):
-        return maybe_distance_function
+    if isinstance(maybe_distance, Distance):
+        return maybe_distance
 
-    return SimpleFunctionDistance(maybe_distance_function)
-	
+    return SimpleFunctionDistance(maybe_distance)

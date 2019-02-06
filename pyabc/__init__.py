@@ -40,7 +40,7 @@ from .smc import ABCSMC
 from .storage import History
 from .acceptor import (
     Acceptor,
-    SimpleAcceptor,
+    SimpleFunctionAcceptor,
     UniformAcceptor,
     StochasticAcceptor)
 from .model import (
@@ -94,7 +94,7 @@ __all__ = [
     "LocalTransition",
     # acceptor
     "Acceptor",
-    "SimpleAcceptor",
+    "SimpleFunctionAcceptor",
     "UniformAcceptor",
     "StochasticAcceptor",
     # model

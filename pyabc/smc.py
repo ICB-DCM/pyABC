@@ -17,7 +17,7 @@ import copy
 import warnings
 from typing import Union
 
-from .distance import to_distance
+from .distance import PNormDistance, to_distance
 from .epsilon import Epsilon, MedianEpsilon, NoEpsilon
 from .model import Model
 from .population import Particle
@@ -29,7 +29,7 @@ from .pyabc_rand_choice import fast_random_choice
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import UniformAcceptor, SimpleAcceptor
+from .acceptor import UniformAcceptor, SimpleFunctionAcceptor
 
 
 logger = logging.getLogger("ABC")
@@ -73,7 +73,7 @@ class ABCSMC:
         A list of prior distributions for the models' parameters.
         Each list entry is the prior distribution for the corresponding model.
 
-    distance_function: DistanceFunction, optional
+    distance_function: Distance, optional
         Measures the distance of the tentatively sampled particle to the
         measured data.
 
@@ -149,7 +149,7 @@ class ABCSMC:
                  models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
-                 distance_function,
+                 distance_function = None,
                  population_size: Union[PopulationStrategy, int] = 100,
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
@@ -172,6 +172,8 @@ class ABCSMC:
         assert len(self.models) == len(self.parameter_priors), \
             "Number models and number parameter priors have to agree"
 
+        if distance_function is None:
+            distance_function = PNormDistance()
         self.distance_function = to_distance(distance_function)
 
         self.summary_statistics = summary_statistics
@@ -207,7 +209,7 @@ class ABCSMC:
 
         if acceptor is None:
             acceptor = UniformAcceptor()
-        self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
+        self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
         # will be set later
         self.stop_if_only_single_model_alive = False
@@ -381,6 +383,7 @@ class ABCSMC:
 
         def get_initial_sum_stats():
             population = self._get_initial_population(t)
+            # only the accepted sum stats are available initially
             sum_stats = population.get_accepted_sum_stats()
 
             return sum_stats
@@ -410,11 +413,13 @@ class ABCSMC:
             return population
 
         # initialize dist, eps, acc
-        self.distance_function.initialize(t, get_initial_sum_stats, self.x_0)
-        self.eps.initialize(t, get_initial_weighted_distances)
-        self.acceptor.initialize(t, get_initial_weighted_distances,
-                                 self.max_nr_populations,
-                                 self.distance_function, self.x_0)
+        self.distance_function.initialize(
+            t, get_initial_sum_stats, self.x_0)
+        self.eps.initialize(
+            t, get_initial_weighted_distances)
+        self.acceptor.initialize(
+            t, get_initial_weighted_distances, self.max_nr_populations,
+            self.distance_function, self.x_0)
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """

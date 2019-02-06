@@ -385,7 +385,7 @@ class StochasticAcceptor(Acceptor):
                 acceptance_rate: float):
         if not isinstance(kernel, StochasticKernel):
             raise AssertionError(
-                    "The comparator must be a pyabc.StochasticKernel.")
+                    "The distance function must be a pyabc.StochasticKernel.")
 
         # check if final time point reached
         if t >= self.max_nr_populations - 1:
@@ -420,7 +420,7 @@ class StochasticAcceptor(Acceptor):
         kernel = distance_function
         if not isinstance(kernel, StochasticKernel):
             raise AssertionError(
-                    "The comparator must be a pyabc.StochasticKernel.")
+                    "The distance function must be a pyabc.StochasticKernel.")
 
         # temperature
         temp = self.temperatures[t]
@@ -428,11 +428,11 @@ class StochasticAcceptor(Acceptor):
         # compute probability density
         pd = kernel(x, x_0, t, pars)
 
-        if comparator.ret_scale == RET_SCALE_LIN:
+        if kernel.ret_scale == RET_SCALE_LIN:
             # rescale
-            pd_rescaled = pd / comparator.pdf_max
-        else:  # comparator.ret_scale == RET_SCALE_LOG
-            pd_rescaled = np.exp(pd - comparator.pdf_max)
+            pd_rescaled = pd / kernel.pdf_max
+        else:  # kernel.ret_scale == RET_SCALE_LOG
+            pd_rescaled = np.exp(pd - kernel.pdf_max)
 
         # acceptance probability
         acceptance_probability = pd_rescaled ** (1 / temp)
