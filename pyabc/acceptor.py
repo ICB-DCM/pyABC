@@ -20,7 +20,7 @@ import pandas as pd
 from typing import Callable, List, Union
 import logging
 
-from .distance_functions import StochasticKernel, RET_SCALE_LIN
+from .distance import StochasticKernel, RET_SCALE_LIN
 
 
 logger = logging.getLogger("Acceptor")
@@ -36,24 +36,25 @@ class Acceptor:
         Default constructor.
         """
 
-    def initialize(self,
-                   t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame],
-                   max_nr_populations: int,
-                   comparator,
-                   x_0: dict):
+    def initialize(
+            self,
+            t: int,
+            get_weighted_distances: Callable[[], pd.DataFrame],
+            max_nr_populations: int,
+            distance_function,
+            x_0: dict):
         """
         Initialize. This method is called by the ABCSMC framework initially,
         and can be used to calibrate the acceptor to initial statistics.
 
-        The defaul implementation is to do nothing.
+        The default is to do nothing.
         """
         pass
 
     def update(self,
                t: int,
                weighted_distances: pd.DataFrame,
-               comaprator,
+               distance_function,
                acceptance_rate: float):
         """
         Update the acceptance criterion.
@@ -74,7 +75,7 @@ class Acceptor:
         t: int
             Time point for which to check.
 
-        distance_function: pyabc.DistanceFunction
+        distance_function: pyabc.Distance
             The distance function.
             The user is free to use or ignore this function.
 
@@ -107,8 +108,7 @@ class Acceptor:
         """
         raise NotImplementedError()
 
-    def evaluate_sample(self,
-                        sample):
+    def evaluate_sample(self, sample):
         """
         Evaluate the population whether it violates any assumptions that
         were made for the previous acceptance. Delete from the population
@@ -141,7 +141,7 @@ class Acceptor:
         return np.inf
 
 
-class SimpleAcceptor(Acceptor):
+class SimpleFunctionAcceptor(Acceptor):
     """
     Initialize from function.
 
@@ -157,7 +157,7 @@ class SimpleAcceptor(Acceptor):
 
         self.fun = fun
 
-    def __call__(self, t, distance_function, eps, x, x_0, pars):
+    def __call__(self, t, distance_function,eps, x, x_0, pars):
         return self.fun(t, distance_function, eps, x, x_0, pars)
 
     @staticmethod
@@ -179,7 +179,7 @@ class SimpleAcceptor(Acceptor):
         if isinstance(acceptor, Acceptor):
             return acceptor
         else:
-            return SimpleAcceptor(acceptor)
+            return SimpleFunctionAcceptor(acceptor)
 
 
 def accept_uniform_use_current_time(
@@ -327,7 +327,7 @@ class StochasticAcceptor(Acceptor):
         super().__init__()
 
         if temp_schemes is None:
-            temp_schemes = [scheme_acceptance_rate, scheme_exponential_decay]
+            temp_schemes = [scheme_acceptance_rate, scheme_decay]
         elif not isinstance(temp_schemes, list):
             temp_schemes = [temp_schemes]
         if not len(temp_schemes):
@@ -339,7 +339,7 @@ class StochasticAcceptor(Acceptor):
         default_kwargs = dict(
             target_acceptance_rate = 0.5,
             temp_init = None,
-            temp_decay_exponent = 4,
+            temp_decay_exponent = 3,
             alpha = 0.5,
             config = {}
         )
@@ -355,12 +355,13 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = None
         self.max_nr_populations = None
 
-    def initialize(self,
-                   t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame],
-                   max_nr_populations: int,
-                   comparator,
-                   x_0):
+    def initialize(
+            self,
+            t: int,
+            get_weighted_distances: Callable[[], pd.DataFrame],
+            max_nr_populations: int,
+            distance_function,
+            x_0):
         """
         Initialize temperature.
         """
@@ -368,20 +369,23 @@ class StochasticAcceptor(Acceptor):
         self.max_nr_populations = max_nr_populations
 
         # update
-        self._update(t, get_weighted_distances, comparator, 1.0)
+        self._update(t, get_weighted_distances, distance_function, 1.0)
 
     def update(self,
                t: int,
                weighted_distances: pd.DataFrame,
-               comparator,
+               distance_function,
                acceptance_rate: float):
-        self._update(t, lambda: weighted_distances, comparator, acceptance_rate)
+        self._update(t, lambda: weighted_distances, distance_function, acceptance_rate)
 
     def _update(self,
                 t: int,
                 get_weighted_distances: Callable[[], pd.DataFrame],
-                comparator,
+                kernel,
                 acceptance_rate: float):
+        if not isinstance(kernel, StochasticKernel):
+            raise AssertionError(
+                    "The comparator must be a pyabc.StochasticKernel.")
 
         # check if final time point reached
         if t >= self.max_nr_populations - 1:
@@ -394,8 +398,8 @@ class StochasticAcceptor(Acceptor):
             temp = scheme(t=t,
                           get_weighted_distances=get_weighted_distances,
                           x_0=self.x_0,
-                          pdf_max=comparator.pdf_max,
-                          ret_scale=comparator.ret_scale,
+                          pdf_max=kernel.pdf_max,
+                          ret_scale=kernel.ret_scale,
                           temperatures=self.temperatures,
                           max_nr_populations=self.max_nr_populations,
                           acceptance_rate=acceptance_rate,
@@ -413,8 +417,8 @@ class StochasticAcceptor(Acceptor):
 
 
     def __call__(self, t, distance_function, eps, x, x_0, pars):
-        comparator = distance_function
-        if not isinstance(comparator, StochasticKernel):
+        kernel = distance_function
+        if not isinstance(kernel, StochasticKernel):
             raise AssertionError(
                     "The comparator must be a pyabc.StochasticKernel.")
 
@@ -422,7 +426,7 @@ class StochasticAcceptor(Acceptor):
         temp = self.temperatures[t]
 
         # compute probability density
-        pd = comparator(x, x_0, t, pars)
+        pd = kernel(x, x_0, t, pars)
 
         if comparator.ret_scale == RET_SCALE_LIN:
             # rescale
@@ -440,10 +444,14 @@ class StochasticAcceptor(Acceptor):
         else:
             accept = False
 
-        return pd_rescaled, accept
+        return pd, accept
 
     def get_epsilon_equivalent(self, t: int):
         return self.temperatures[t]
+
+
+# TEMPERATURE SCHEMES
+
 
 def scheme_acceptance_rate(**kwargs):
     # required fields
