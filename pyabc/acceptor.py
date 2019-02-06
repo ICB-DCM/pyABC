@@ -632,7 +632,10 @@ def pdf_max_take_max_found(**kwargs):
     df = get_weighted_distances()
     pdfs = np.array(df['distance'])
 
-    max_prev = max(pdf_maxs.values())
+    if len(pdf_maxs) == 0:
+        max_prev = np.inf
+    else:
+        max_prev = max(pdf_maxs.values(), )
     max_prev_iter = max(pdfs)
 
     pdf_max = max(max_prev, max_prev_iter)
