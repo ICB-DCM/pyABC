@@ -30,17 +30,24 @@ class StochasticKernel(Distance):
         Given a proability density p(x,x_0), the returned value
         can be either of p(x,x_0), or log(p(x,x_0)).
 
-    keys: List[str]
+    keys: List[str], optional
         The keys of the summary statistics, specifying the order to be used.
+
+    pdf_max: float, optional
+        The maximum possible probability density function value.
+        Defaults to None. Must be overridden if pdf_max is to be used
+        in th analysis.
     """
 
     def __init__(
             self,
             ret_scale=RET_SCALE_LIN,
-            keys=None):
+            keys=None,
+            pdf_max=None):
         StochasticKernel.check_ret_scale(ret_scale)
         self.ret_scale = ret_scale
         self.keys = keys
+        self.pdf_max = pdf_max
 
     def initialize(
             self,
@@ -60,15 +67,6 @@ class StochasticKernel(Distance):
             raise ValueError(
                 f"ret_scale must be ofe of {RET_SCALES}")
 
-    @property
-    def pdf_max(self):
-        """
-        Return the maximum density function value possible under this
-        noise model.
-
-        Default: Return None.
-        """
-        return None
 
 class SimpleFunctionKernel(StochasticKernel):
     """
@@ -90,8 +88,9 @@ class SimpleFunctionKernel(StochasticKernel):
             self,
             function,
             ret_scale=RET_SCALE_LIN,
-            keys=None):
-        super().__init__(ret_scale=ret_scale, keys=keys)
+            keys=None,
+            pdf_max=None):
+        super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
         self.function = function
 
     def __call__(
@@ -121,6 +120,8 @@ class NormalKernel(StochasticKernel):
 
     keys: List[str], optional (see StochasticKernel.keys)
 
+    pdf_max: float, optional (see StochasticKernel.pdf_max)
+
     .. note::
 
        The order of the entries in the mean and cov vectors is assumed
@@ -134,8 +135,9 @@ class NormalKernel(StochasticKernel):
             mean=None,
             cov=None,
             ret_scale=RET_SCALE_LIN,
-            keys=None):
-        super().__init__(ret_scale=ret_scale, keys=keys)
+            keys=None,
+            pdf_max=None):
+        super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
         self.mean = mean
         self.cov = cov
 
@@ -143,7 +145,6 @@ class NormalKernel(StochasticKernel):
         self.rv = sp.stats.multivariate_normal(mean=self.mean, cov=self.cov)
 
         self.ret_scale = ret_scale
-        self._pdf_max = None
 
     def initialize(
             self,
@@ -154,8 +155,11 @@ class NormalKernel(StochasticKernel):
             t=t,
             get_sum_stats=get_sum_stats,
             x_0=x_0)
+
         # cache pdf_max
-        self._pdf_max = self(x_0, x_0)
+        if self.pdf_max is None:
+            # take  value at observed summary statistics
+            self.pdf_max = self(x_0, x_0)
 
     def __call__(
             self,
@@ -178,10 +182,6 @@ class NormalKernel(StochasticKernel):
         
         return ret
 
-    @property
-    def pdf_max(self):
-        return self._pdf_max
-
 
 class IndependentNormalKernel(StochasticKernel):
     """
@@ -201,16 +201,19 @@ class IndependentNormalKernel(StochasticKernel):
         of the covariance matrix).
 
     keys: List[str], optional (see StochasticKernel.keys)
+
+    pdf_max: float, optional (see StochasticKernel.pdf_max)
     """
 
     def __init__(
             self,
             mean=None,
             var=None,
-            keys=None):
-        super().__init__(ret_scale=RET_SCALE_LOG, keys=keys)
-        self.mean = None
-        self.var = None
+            keys=None,
+            pdf_max=None):
+        super().__init__(ret_scale=RET_SCALE_LOG, keys=keys, pdf_max=pdf_max)
+        self.mean = mean
+        self.var = var
         self.dim = None
 
     def initialize(
@@ -239,7 +242,9 @@ class IndependentNormalKernel(StochasticKernel):
             self.var = np.array(self.var) * np.ones(self.dim)
 
         # cache pdf_max
-        self._pdf_max = self(x_0, x_0)
+        if self.pdf_max is None:
+            # take value at observed summary statistics
+            self.pdf_max = self(x_0, x_0)
 
     def __call__(
             self,
@@ -259,10 +264,6 @@ class IndependentNormalKernel(StochasticKernel):
 
         return log_pdf
 
-    @property
-    def pdf_max(self):
-        return self._pdf_max
-
 
 class BinomialKernel(StochasticKernel):
     """
@@ -278,14 +279,17 @@ class BinomialKernel(StochasticKernel):
         The scale on which the distribution is to be returned.
 
     keys: List[str], optional (see StochasticKernel.keys)
+
+    pdf_max: float, optional (see StochasticKernel.pdf_max)
     """
 
     def __init__(
             self,
             p: float,
             ret_scale=RET_SCALE_LIN,
-            keys=None):
-        super().__init__(ret_scale=ret_scale, keys=keys)
+            keys=None,
+            pdf_max=1):
+        super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
         
         if p > 1 or p < 0:
             raise ValueError(
@@ -312,10 +316,3 @@ class BinomialKernel(StochasticKernel):
                        if x[j] > 0 else 0
 
         return ret
-
-    @property
-    def pdf_max(self):
-        """
-        This value is most certaily much too high in practice.
-        """
-        return 1
