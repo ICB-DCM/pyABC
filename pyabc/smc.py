@@ -17,7 +17,7 @@ import copy
 import warnings
 from typing import Union
 
-from .distance_functions import to_distance
+from .distance import to_distance
 from .epsilon import Epsilon, MedianEpsilon, NoEpsilon
 from .model import Model
 from .population import Particle
