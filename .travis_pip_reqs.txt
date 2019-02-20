@@ -28,3 +28,4 @@ ipython
 feather-format
 bkcharts
 tzlocal
+codecov

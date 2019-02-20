@@ -39,6 +39,9 @@ install:
 script:
   - travis_wait 30 python -m pytest test
 
+after_success:
+  - codecov
+
 # cache
 
 cache: pip
