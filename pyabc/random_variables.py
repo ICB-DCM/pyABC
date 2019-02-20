@@ -298,7 +298,7 @@ class LowerBoundDecorator(RVDecorator):
     def decorator_repr(self):
         return "Lower: X > {lower:2f}".format(lower=self.lower_bound)
 
-    def rvs(self):
+    def rvs(self, *args, **kwargs):
         for _ in range(LowerBoundDecorator.MAX_TRIES):
             sample = self.component.rvs()
             # not sure whether > is the exact opposite. but <= is consistent
@@ -306,19 +306,19 @@ class LowerBoundDecorator(RVDecorator):
                 return sample  # with the other functions
         return None
 
-    def pdf(self, x):
+    def pdf(self, x, *args, **kwargs):
         if x <= self.lower_bound:
             return 0.
         return (self.component.pdf(x)
                 / (1 - self.component.cdf(self.lower_bound)))
 
-    def pmf(self, x):
+    def pmf(self, x, *args, **kwargs):
         if x <= self.lower_bound:
             return 0.
         return (self.component.pmf(x)
                 / (1 - self.component.cdf(self.lower_bound)))
 
-    def cdf(self, x):
+    def cdf(self, x, *args, **kwargs):
         if x <= self.lower_bound:
             return 0.
         lower_mass = self.component.cdf(self.lower_bound)
