@@ -61,7 +61,3 @@ def main(db, out, out_format, generation="last", model=None, id=1, tidy=True):
 
     # convert dataframe to output file format
     to_file(df, out, file_format=out_format)
-
-
-if __name__ == "__main__":
-    main()
