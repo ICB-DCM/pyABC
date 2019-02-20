@@ -18,7 +18,7 @@ from ..sampler import Sampler
 from .scales import standard_deviation
 
 
-df_logger = logging.getLogger("DistanceFunction")
+logger = logging.getLogger("DistanceFunction")
 
 
 class DistanceFunction(ABC):
@@ -489,7 +489,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.w[t] = w
 
         # logging
-        df_logger.debug("update distance weights = {}".format(self.w[t]))
+        logger.debug("update distance weights = {}".format(self.w[t]))
 
     def get_config(self) -> dict:
         return {"name": self.__class__.__name__,

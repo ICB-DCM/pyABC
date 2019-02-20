@@ -5,7 +5,7 @@ from redis import StrictRedis
 from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_PARTICLES, N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME, BATCH_SIZE)
-from .redis_logging import worker_logger
+from .redis_logging import logger
 
 
 class RedisEvalParallelSampler(Sampler):
@@ -52,7 +52,7 @@ class RedisEvalParallelSampler(Sampler):
     """
     def __init__(self, host="localhost", port=6379, batch_size=1):
         super().__init__()
-        worker_logger.debug(
+        logger.debug(
             f"Redis sampler: host={host} port={port}")
         # handles the connection to the redis-server
         self.redis = StrictRedis(host=host, port=port)
