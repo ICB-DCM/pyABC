@@ -1,0 +1,8 @@
+name: py36
+dependencies:
+  - python=3.6
+  - sphinx
+  - pandoc
+  - nbconvert
+  - pip:
+    - nbsphinx

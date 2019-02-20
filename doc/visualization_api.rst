@@ -1,2 +1,0 @@
-.. automodule:: pyabc.visualization
-   :members:

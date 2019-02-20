@@ -1,3 +1,9 @@
+"""
+Random variables
+================
+"""
+
+
 import logging
 from abc import ABC, abstractmethod
 from functools import reduce

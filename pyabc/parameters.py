@@ -2,6 +2,10 @@ from collections import UserDict
 
 
 class ParameterStructure(UserDict):
+    """
+    Basic functionality of a structure containing parameters.
+    """
+
     @staticmethod
     def flatten_dict(dict_: dict):
         new_dict = {}
@@ -52,6 +56,7 @@ class Parameter(ParameterStructure):
         >>> assert p.a == p["a"]
 
     """
+
     def __add__(self, other: "Parameter") -> "Parameter":
         return Parameter(**{key: self[key] + other[key] for key in self})
 

@@ -1,6 +1,6 @@
 """
-pyABC's interface to external simulators
-========================================
+Interface to external simulators
+================================
 
 Currently, the R language is supported.
 
