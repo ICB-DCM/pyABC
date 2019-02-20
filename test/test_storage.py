@@ -103,7 +103,7 @@ def test_single_particle_save_load(history: History):
     assert df.b.iloc[0] == 12
 
 
-def test_savs_no_sum_stats(history: History):
+def test_save_no_sum_stats(history: History):
     particle_list = []
     for _ in range(0, 6):
         particle = Particle(
