@@ -145,10 +145,11 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
 
 class AllInOneModel(Model):
-    def summary_statistics(self, pars, sum_stats_calculator) -> ModelResult:
+    def summary_statistics(self, t, pars, sum_stats_calculator) -> ModelResult:
         return ModelResult(sum_stats={"result": 1})
 
-    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) -> \
+    def accept(self, t, pars, sum_stats_calculator, distance_calculator, eps,
+               acceptor, x_0) -> \
             ModelResult:
         return ModelResult(accepted=True)
 
