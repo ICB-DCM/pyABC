@@ -58,7 +58,6 @@ class DistanceFunction(ABC):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance function (in ``new`` and ``load``),
-        directly after set_
         and can be used to calibrate it to the statistics of the samples.
 
         The default implementation is to do nothing.

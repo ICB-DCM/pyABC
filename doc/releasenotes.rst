@@ -1,9 +1,21 @@
+.. _releasenotes:
+
 Release Notes
 =============
 
 
 0.9 series
 ..........
+
+
+0.9.6 (2019-02-01)
+------------------
+
+* Fix several errors with the readthedocs (rtd) documentation.
+* Speed-up rtd build by removing unnecessary conda and pip requirements.
+* Clean-up requirements for travis and rtd.
+* Change rtd design from alabaster to sphinx_rtd_theme since it implements
+  better navigation.
 
 
 0.9.5 (2019-01-17)
