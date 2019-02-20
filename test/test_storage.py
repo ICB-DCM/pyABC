@@ -103,7 +103,11 @@ def test_single_particle_save_load(history: History):
     assert df.b.iloc[0] == 12
 
 
-def test_saves_no_sum_stats(history: History):
+def test_save_no_sum_stats(history: History):
+    """
+    Test that what has been stored can be retrieved correctly
+    also when no sum stats are saved.
+    """
     particle_list = []
     for _ in range(0, 6):
         particle = Particle(
@@ -118,6 +122,7 @@ def test_saves_no_sum_stats(history: History):
     population = Population(particle_list)
 
     # do not save sum stats
+    # use the attribute first to make sure we have no typo
     print(history.stores_sum_stats)
     history.stores_sum_stats = False
 
@@ -126,15 +131,23 @@ def test_saves_no_sum_stats(history: History):
                               population=population,
                               nr_simulations=10,
                               model_names=[""])
+
+    # just call
     history.get_distribution(0, 0)
 
-    # test whether weights and distances returned corretly
+    # test whether weights and distances returned correctly
     weighted_distances_h = history.get_weighted_distances()
     weighted_distances = population.get_weighted_distances()
     assert (weighted_distances_h[['distance', 'w']]
             == weighted_distances[['distance', 'w']]).all().all()
 
-    history.get_weighted_sum_stats(t=0)
+    weights, sum_stats = history.get_weighted_sum_stats(t=0)
+    # all particles should be contained nontheless
+    assert len(weights) == len(particle_list)
+    for sum_stat in sum_stats:
+        # should be empty
+        assert not sum_stat
+
     history.get_population_extended()
 
 

@@ -2,5 +2,5 @@
 
 .. automodule:: pyabc.transition
    :members:
-   :special-members: __call__, __init__
+   :special-members: __init__,__call__
    :show-inheritance:
