@@ -8,6 +8,12 @@ Release Notes
 ..........
 
 
+0.9.7 (2019-02-20)
+------------------
+
+* Allow for the database to save no summary statistics for testing purposes.
+
+
 0.9.6 (2019-02-01)
 ------------------
 
@@ -16,7 +22,6 @@ Release Notes
 * Clean-up requirements for travis and rtd.
 * Change rtd design from alabaster to sphinx_rtd_theme since it implements
   better navigation.
-* Allow for the database to save no summary statistics.
 
 
 0.9.5 (2019-01-17)

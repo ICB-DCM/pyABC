@@ -104,6 +104,10 @@ def test_single_particle_save_load(history: History):
 
 
 def test_save_no_sum_stats(history: History):
+    """
+    Test that what has been stored can be retrieved correctly
+    also when no sum stats are saved.
+    """
     particle_list = []
     for _ in range(0, 6):
         particle = Particle(
