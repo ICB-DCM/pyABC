@@ -1,3 +1,3 @@
 import logging
 
-worker_logger = logging.getLogger("REDIS-WORKER")
+logger = logging.getLogger("REDIS-WORKER")

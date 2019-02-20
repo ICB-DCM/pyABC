@@ -8,6 +8,15 @@ Release Notes
 ..........
 
 
+0.9.7 (2019-02-20)
+------------------
+
+* Allow for the database to save no summary statistics for testing purposes.
+* Tidy up some pyabc.History methods.
+* pyabc.History.id set by default to the largest index (previously 0),
+  corresponding to the latest inserted analysis.
+
+
 0.9.6 (2019-02-01)
 ------------------
 

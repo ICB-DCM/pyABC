@@ -103,6 +103,47 @@ def test_single_particle_save_load(history: History):
     assert df.b.iloc[0] == 12
 
 
+def test_save_no_sum_stats(history: History):
+    """
+    Test that what has been stored can be retrieved correctly
+    also when no sum stats are saved.
+    """
+    particle_list = []
+    for _ in range(0, 6):
+        particle = Particle(
+            m=0, parameter=Parameter({"th0": np.random.random()}),
+            weight=.2,
+            accepted_distances=[np.random.random()],
+            accepted_sum_stats=[{"ss0": np.random.random(),
+                                 "ss1": np.random.random()}],
+            all_sum_stats=[],
+            accepted=True)
+        particle_list.append(particle)
+    population = Population(particle_list)
+
+    # do not save sum stats
+    # use the attribute first to make sure we have no typo
+    print(history.stores_sum_stats)
+    history.stores_sum_stats = False
+
+    # test some basic routines
+    history.append_population(t=0, current_epsilon=42.97,
+                              population=population,
+                              nr_simulations=10,
+                              model_names=[""])
+
+    history.get_distribution(0, 0)
+
+    weights, sum_stats = history.get_weighted_sum_stats(t=0)
+    # all particles should be contained nontheless
+    assert len(weights) == len(particle_list)
+    for sum_stat in sum_stats:
+        # should be empty
+        assert not sum_stat
+
+    history.get_population_extended()
+
+
 def test_single_particle_save_load_np_int64(history: History):
     # Test if np.int64 can also be used for indexing
     # This is an important test!!!
@@ -147,7 +188,7 @@ def test_sum_stats_save_load(history: History):
                               True)]
     history.append_population(0, 42,
                               Population(particle_list), 2, ["m1", "m2"])
-    weights, sum_stats = history.get_sum_stats(0, 0)
+    weights, sum_stats = history.get_weighted_sum_stats_for_model(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
