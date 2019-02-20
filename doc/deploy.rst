@@ -31,13 +31,13 @@ respective merge commit.
 Merge into master
 ~~~~~~~~~~~~~~~~~
 
-1. create a pull request from develop to master
-2. check that all test on travis pass
-3. check that the documentation is up-to-date
-4. adapt the version number in ``pyabc/version.py`` (see above)
-5. update the release notes in ``doc/releasenotes.rst``
-6. request a code review
-7. merge into the orign master branch
+1. create a pull request from develop to master,
+2. check that all test on travis pass,
+3. check that the documentation is up-to-date,
+4. adapt the version number in ``pyabc/version.py`` (see above),
+5. update the release notes in ``doc/releasenotes.rst``,
+6. request a code review,
+7. merge into the origin master branch.
 
 To be able to actually perform the merge, sufficient rights may be required.
 Also, at least one review is required.
@@ -45,15 +45,15 @@ Also, at least one review is required.
 Create a release on github
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-After mergin into master, create a new release on GitHub.
+After merging into master, create a new release on GitHub.
 In the release form,
 
-* specify a tag with the new version as specified in ``pyabc/version.py``
+* specify a tag with the new version as specified in ``pyabc/version.py``,
 * include the latest additions to ``doc/releasenotes.rst`` in the release
-  description
+  description.
 
-Uploade to the Python package index PyPI
-----------------------------------------
+Upload to the Python package index PyPI
+---------------------------------------
 
 First, a so called "wheel" is created via::
 

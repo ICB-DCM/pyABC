@@ -50,7 +50,7 @@ suite. The tests won't pass if flake8 complains.
 Contribute code
 ===============
 
-If you start working on a new feature or a fix, f not already done, please
+If you start working on a new feature or a fix, if not already done, please
 create an issue on github, shortly describing your plans, and assign it to
 yourself. Your starting point should not be the master branch, but the
 developt branch, which contains the latest updates.
@@ -58,10 +58,10 @@ developt branch, which contains the latest updates.
 Create an own branch or fork, on which you can implement your changes. To
 get your work merged, please:
 
-1. create a pull request to develop
-2. check that all tests on travis pass
-3. check that the documentation is up-to-date
-4. request a code review.
+1. create a pull request to develop,
+2. check that all tests on travis pass,
+3. check that the documentation is up-to-date,
+4. request a code review from the main developers.
 
 Document all your changes in the pull request, and make sure to appropriately
 resolve issues, and delete stale branches after a successful merge.
