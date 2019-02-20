@@ -17,8 +17,6 @@ scikit-learn
 matplotlib
 sqlalchemy
 distributed
-pytest
-flake8
 click
 nbsphinx
 ipykernel
@@ -28,4 +26,7 @@ ipython
 feather-format
 bkcharts
 tzlocal
+flake8
+pytest
 codecov
+pytest-cov
