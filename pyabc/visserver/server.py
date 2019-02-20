@@ -186,7 +186,3 @@ def run_app(db, debug, port):
     history = History("sqlite:///" + db)
     app.config["HISTORY"] = history
     app.run(debug=debug, port=port)
-
-
-if __name__ == '__main__':
-    run_app()
