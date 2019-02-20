@@ -2,5 +2,5 @@
 
 .. automodule:: pyabc.external
    :members:
-   :special-members: __call__, __call__
+   :special-members: __call__, __init__
    :show-inheritance:
