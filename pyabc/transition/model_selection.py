@@ -47,8 +47,8 @@ class GridSearchCV(GridSearchCVSKL):
                 self.estimator.get_params()))
             return res
 
-        if self.cv > len(X):
-            old_cv = self.cv
+        if super.cv > len(X):
+            old_cv = super.cv
             self.cv = len(X)
             res = super().fit(X, y, groups)
             self.cv = old_cv
