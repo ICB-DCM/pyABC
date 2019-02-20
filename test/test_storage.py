@@ -123,7 +123,7 @@ def test_save_no_sum_stats(history: History):
 
     # do not save sum stats
     # use the attribute first to make sure we have no typo
-    stores_sum_stats = history.stores_sum_stats
+    print(history.stores_sum_stats)
     history.stores_sum_stats = False
 
     # test some basic routines
