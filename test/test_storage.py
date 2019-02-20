@@ -122,7 +122,8 @@ def test_save_no_sum_stats(history: History):
     population = Population(particle_list)
 
     # do not save sum stats
-    print(history.stores_sum_stats)
+    # use the attribute first to make sure we have no typo
+    stores_sum_stats = history.stores_sum_stats
     history.stores_sum_stats = False
 
     # test some basic routines
@@ -130,8 +131,16 @@ def test_save_no_sum_stats(history: History):
                               population=population,
                               nr_simulations=10,
                               model_names=[""])
+
     history.get_distribution(0, 0)
-    history.get_weighted_sum_stats(t=0)
+
+    weights, sum_stats = history.get_weighted_sum_stats(t=0)
+    # all particles should be contained nontheless
+    assert len(weights) == len(particle_list)
+    for sum_stat in sum_stats:
+        # should be empty
+        assert not sum_stat
+
     history.get_population_extended()
 
 
