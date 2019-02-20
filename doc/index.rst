@@ -5,6 +5,8 @@ Welcome to pyABC's documentation!
    :target: https://travis-ci.org/ICB-DCM/pyABC
 .. image:: https://readthedocs.org/projects/pyabc/badge/?version=latest
    :target: https://pyabc.readthedocs.io/en/latest
+.. image:: https://badge.fury.io/py/pyabc.svg
+   :target: https://badge.fury.io/py/pyabc
 
 :Release: |version|
 :Source code: https://github.com/icb-dcm/pyabc
