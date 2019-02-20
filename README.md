@@ -4,6 +4,7 @@
 
 [![Build Status](https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master)](https://travis-ci.org/ICB-DCM/pyABC)
 [![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/923a9ab160e6420b9fc468701be60a98)](https://www.codacy.com/app/yannikschaelte/pyABC?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ICB-DCM/pyABC&amp;utm_campaign=Badge_Grade)
 [![PyPI version](https://badge.fury.io/py/pyabc.svg)](https://badge.fury.io/py/pyabc)
 
 Massively parallel, distributed and scalable ABC-SMC
