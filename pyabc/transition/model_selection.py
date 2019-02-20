@@ -47,8 +47,8 @@ class GridSearchCV(GridSearchCVSKL):
                 self.estimator.get_params()))
             return res
 
-        if super.cv > len(X):
-            old_cv = super.cv
+        if self.cv > len(X):  # pylint:disable=used-before-assignment
+            old_cv = self.cv  # pylint:disable=used-before-assignment
             self.cv = len(X)
             res = super().fit(X, y, groups)
             self.cv = old_cv
