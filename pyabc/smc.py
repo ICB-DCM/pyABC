@@ -46,7 +46,7 @@ class ABCSMC:
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
     This is an implementation of an ABCSMC algorithm similar to
-    [#tonistumpf]_ .
+    [#tonistumpf]_.
 
 
     Parameters
@@ -140,9 +140,9 @@ class ABCSMC:
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
-                  Systems in Systems and Population Biology.”
-                  Bioinformatics 26, no. 1 (2010):
-                  104–10. doi:10.1093/bioinformatics/btp619.
+                  Systems in Systems and Population Biology”.
+                  Bioinformatics 26, no. 1, 104–10, 2010.
+                  doi:10.1093/bioinformatics/btp619.
     """
 
     def __init__(self,

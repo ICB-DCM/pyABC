@@ -343,7 +343,7 @@ class PNormDistance(DistanceFunction):
 class AdaptivePNormDistance(PNormDistance):
     """
     In the p-norm distance, adapt the weights for each generation, based on
-    the previous simulations.
+    the previous simulations. This class is motivated by [#prangle]_.
 
     Parameters
     ----------
@@ -373,6 +373,10 @@ class AdaptivePNormDistance(PNormDistance):
         If not None, large weights will be bounded by the ratio times the
         smallest non-zero absolute weight. In practice usually not necessary,
         it is theoretically required to ensure convergence.
+
+
+    .. [#prangle] Prangle, Dennis. "Adapting the ABC Distance Function".
+                Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
     """
 
     def __init__(self,
