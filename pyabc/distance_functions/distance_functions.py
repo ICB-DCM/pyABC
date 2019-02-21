@@ -371,8 +371,8 @@ class AdaptivePNormDistance(PNormDistance):
 
     max_weight_ratio: float, optional (default = None)
         If not None, large weights will be bounded by the ratio times the
-        smallest non-zero absolute weight. In practise usually not necessary,
-        it is theoretically required to prove convergence.
+        smallest non-zero absolute weight. In practice usually not necessary,
+        it is theoretically required to ensure convergence.
     """
 
     def __init__(self,
@@ -523,13 +523,16 @@ class AdaptivePNormDistance(PNormDistance):
         if self.max_weight_ratio is None:
             return w
 
+        # find minimum weight != 0
         w_arr = np.array(list(w.values()))
         min_abs_weight = np.min(np.abs(w_arr[w_arr != 0]))
+        # can be assumed to be != 0
 
         for key, value in w.items():
+            # bound too large weights
             if abs(value) / min_abs_weight > self.max_weight_ratio:
-                w[key] = np.sign(value) \
-                    * self.max_weight_ratio * min_abs_weight
+                w[key] = np.sign(value) * self.max_weight_ratio \
+                    * min_abs_weight
 
         return w
 
@@ -538,7 +541,8 @@ class AdaptivePNormDistance(PNormDistance):
                 "p": self.p,
                 "adaptive": self.adaptive,
                 "scale_function": self.scale_function.__name__,
-                "normalize_weights": self.normalize_weights}
+                "normalize_weights": self.normalize_weights,
+                "max_weight_ratio": self.max_weight_ratio}
 
 
 class DistanceFunctionWithMeasureList(DistanceFunction):
