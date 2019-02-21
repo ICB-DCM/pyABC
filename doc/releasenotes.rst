@@ -14,6 +14,7 @@ Release Notes
 * Tidy up returning of rejected samples in Sample (not only summary
   statistics).
 * Recreate a population from file in History.get_population().
+* Speed up loading from database by eager loading.
 * Document the change of the contribution scheme to master+develop.
 
 
