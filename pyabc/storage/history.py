@@ -144,6 +144,12 @@ class History:
 
     @with_session
     def _pre_calculate_id(self):
+        """
+        If there are analysis objects saved in the database already,
+        the id of the latest appended one is returned.
+        This is because that is usually the run the user will be interested
+        in.
+        """
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
             return abcs[-1].id
@@ -203,7 +209,7 @@ class History:
 
         df, w: pandas.DataFrame, np.ndarray
             * df: a DataFrame of parameters
-            * w:  are the weights associated with each parameter
+            * w: are the weights associated with each parameter
         """
         m = int(m)
         if t is None:
@@ -831,6 +837,17 @@ class History:
 
     @with_session
     def get_population(self, t: int = None):
+        """
+        Create a pyabc.Population object containing all particles,
+        as far as those can be recreated from the database. In particular,
+        rejected particles are currently not stored.
+
+        Parameters
+        ----------
+
+        t: int, optional (default = self.max_t)
+            The population index.
+        """
         if t is None:
             t = self.max_t
         else:
@@ -920,10 +937,10 @@ class History:
         ----------
 
         m: int or None, optional (default = None)
-            The model to query. If omitted, all models are returned
+            The model to query. If omitted, all models are returned.
 
         t: int or str, optional (default = "last")
-            Can be "last" or "all", or a population index.
+            Can be "last" or "all", or a population index (i.e. an int).
             In case of "all", all populations are returned.
             If "last", only the last population is returned, for an int value
             only the corresponding population at that time index.

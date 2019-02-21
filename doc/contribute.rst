@@ -20,7 +20,7 @@ detailed explanation.
 Contribute tests
 ================
 
-We're commited to testing our code. Tests that are required to pass are located in the
+We're committed to testing our code. Tests that are required to pass are located in the
 ``test`` folder. All files starting with ``test_`` contain tests and are automatically run
 on Travis CI. To run them manually, type::
 
@@ -36,7 +36,7 @@ and integration tests. We highly encourage a
 Writing tests
 -------------
 
-Test can be written with `pytest <http://docs.pytest.org/en/latest/>`_
+Tests can be written with `pytest <http://docs.pytest.org/en/latest/>`_
 or the `unittest <https://docs.python.org/3/library/unittest.html>`_ module.
 
 PEP8 Style Guide
@@ -50,18 +50,18 @@ suite. The tests won't pass if flake8 complains.
 Contribute code
 ===============
 
-If you start working on a new feature or a fix, f not already done, please
+If you start working on a new feature or a fix, if not already done, please
 create an issue on github, shortly describing your plans, and assign it to
 yourself. Your starting point should not be the master branch, but the
-developt branch, which contains the latest updates.
+develop branch, which contains the latest updates.
 
 Create an own branch or fork, on which you can implement your changes. To
 get your work merged, please:
 
-1. create a pull request to develop
-2. check that all tests on travis pass
-3. check that the documentation is up-to-date
-4. request a code review.
+1. create a pull request to the develop branch,
+2. check that all tests on travis pass,
+3. check that the documentation is up-to-date,
+4. request a code review from the main developers.
 
 Document all your changes in the pull request, and make sure to appropriately
 resolve issues, and delete stale branches after a successful merge.

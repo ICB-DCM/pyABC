@@ -8,11 +8,31 @@ Release Notes
 ..........
 
 
-0.9.7 (2019-02-20)
+0.10.0 (2019-02-21)
 ------------------
 
 * Stochastic acceptor introduced as alternative to uniform epsilon
   thresholds.
+
+
+0.9.8 (2019-02-21)
+------------------
+
+* Tidy up returning of rejected samples in Sample (not only summary
+  statistics).
+* Recreate a population from file in History.get_population().
+* Speed up loading from database by eager loading.
+* Document the change of the contribution scheme to master+develop.
+
+
+0.9.7 (2019-02-20)
+------------------
+
+* Allow for the database to save no summary statistics for testing purposes.
+* Tidy up some pyabc.History methods.
+* pyabc.History.id set by default to the largest index (previously 0),
+  corresponding to the latest inserted analysis.
+>>>>>>> feature_recreate_population
 
 
 0.9.6 (2019-02-01)
@@ -23,11 +43,6 @@ Release Notes
 * Clean-up requirements for travis and rtd.
 * Change rtd design from alabaster to sphinx_rtd_theme since it implements
   better navigation.
-* Allow for the database to save no summary statistics.
-* Tidy up returning of rejected samples in Sample (not only summary
-  statistics).
-* Recreate a population from file in History.get_population().
-* Change the contribution scheme to master/develop.
 
 
 0.9.5 (2019-01-17)
