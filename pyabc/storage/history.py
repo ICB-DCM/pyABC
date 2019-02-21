@@ -818,6 +818,17 @@ class History:
 
     @with_session
     def get_population(self, t: int = None):
+        """
+        Create a pyabc.Population object containing all particles,
+        as far as those can be recreated from the database. In particular,
+        rejected particles are currently not stored.
+
+        Parameters
+        ----------
+
+        t: int, optional (default = self.max_t)
+            The population index.
+        """
         if t is None:
             t = self.max_t
         else:
