@@ -99,8 +99,7 @@ latest/task.html#quick-and-easy-parallelism)
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)
 
-        counted_results = list(self.map_(map_function,
-                                        [None] * n))
+        counted_results = list(self.map_(map_function, [None] * n))
         counted_results = filter(lambda x: not isinstance(x, Exception),
                                  counted_results)
         results, evals = zip(*counted_results)
