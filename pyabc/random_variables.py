@@ -235,7 +235,7 @@ class RVDecorator(RVBase):
     def copy(self):
         return self.__class__(self.component.copy())
 
-    def decorator_repr(self) -> str:
+    def decorator_repr(self) -> str:  # pylint: disable=R0201
         """
         Represent the decorator itself.
 

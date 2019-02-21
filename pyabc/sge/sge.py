@@ -176,7 +176,7 @@ class SGE:
             print("Warning: Could not find SGE installation.", file=sys.stderr)
 
         # python interpreter which executes the jobs
-        if type(time_h) is not int:
+        if not isinstance(time_h, int):
             raise Exception('Time should be an integer hour')
         if python_executable_path is None:
             python_executable_path = sys.executable

@@ -15,6 +15,7 @@ if __name__ == "__main__":
     res = sge.map(f, [1, 2, 3, 4])
 
     print("Got results", flush=True)
-    assert res == [2, 4, 6, 8], "Wrong result, got {}".format(res)
+    if res != [2, 4, 6, 8]:
+        raise AssertionError("Wrong result, got {}".format(res))
 
     print("Finished", flush=True)

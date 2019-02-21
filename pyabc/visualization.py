@@ -122,7 +122,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     """
     x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx, kde=kde)
     if ax is None:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")

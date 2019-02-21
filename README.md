@@ -12,10 +12,10 @@ Massively parallel, distributed and scalable ABC-SMC
 for parameter estimation of complex stochastic models.
 Implemented in Python with support of the R language.
 
--  **Documentation:** [https://pyabc.readthedocs.io](https://pyabc.readthedocs.io)
--  **Contact:** [https://pyabc.readthedocs.io/en/latest/about.html](https://pyabc.readthedocs.io/en/latest/about.html)
--  **Source:** [https://github.com/icb-dcm/pyabc](https://github.com/icb-dcm/pyabc)
--  **Bug reports:** [https://github.com/icb-dcm/pyabc/issues](https://github.com/icb-dcm/pyabc/issues)
+- **Documentation:** [https://pyabc.readthedocs.io](https://pyabc.readthedocs.io)
+- **Contact:** [https://pyabc.readthedocs.io/en/latest/about.html](https://pyabc.readthedocs.io/en/latest/about.html)
+- **Source:** [https://github.com/icb-dcm/pyabc](https://github.com/icb-dcm/pyabc)
+- **Bug reports:** [https://github.com/icb-dcm/pyabc/issues](https://github.com/icb-dcm/pyabc/issues)
 
 ## Examples
 
