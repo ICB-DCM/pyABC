@@ -8,6 +8,16 @@ Release Notes
 ..........
 
 
+0.9.8 (2019-02-21)
+------------------
+
+* Tidy up returning of rejected samples in Sample (not only summary
+  statistics).
+* Recreate a population from file in History.get_population().
+* Speed up loading from database by eager loading.
+* Document the change of the contribution scheme to master+develop.
+
+
 0.9.7 (2019-02-20)
 ------------------
 

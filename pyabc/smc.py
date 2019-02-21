@@ -10,8 +10,13 @@ implement a Strategy pattern.)
 import datetime
 import logging
 from typing import List, Callable, TypeVar
-import pandas as pd
+import numpy as np
 import scipy as sp
+import pandas as pd
+import copy
+import warnings
+from typing import Union
+
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
@@ -21,14 +26,10 @@ from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
 from .pyabc_rand_choice import fast_random_choice
-from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
 from .acceptor import accept_use_current_time, SimpleAcceptor
-
-import copy
-import warnings
 
 
 logger = logging.getLogger("ABC")
@@ -45,7 +46,7 @@ class ABCSMC:
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
     This is an implementation of an ABCSMC algorithm similar to
-    [#tonistumpf]_ .
+    [#tonistumpf]_.
 
 
     Parameters
@@ -139,9 +140,9 @@ class ABCSMC:
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
-                  Systems in Systems and Population Biology.”
-                  Bioinformatics 26, no. 1 (2010):
-                  104–10. doi:10.1093/bioinformatics/btp619.
+                  Systems in Systems and Population Biology”.
+                  Bioinformatics 26, no. 1, 104–10, 2010.
+                  doi:10.1093/bioinformatics/btp619.
     """
 
     def __init__(self,
@@ -435,7 +436,7 @@ class ABCSMC:
     def _create_simulate_from_prior_function(self, t):
         """
         Similar to _create_simulate_function, apart here we sample from the
-        prior and accept always.
+        prior and accept all.
         """
 
         model_prior = self.model_prior
@@ -448,18 +449,22 @@ class ABCSMC:
         def simulate_one():
             m = int(model_prior.rvs())
             theta = parameter_priors[m].rvs()
-            sum_stats = []
-            all_sum_stats = []
             model_result = models[m].summary_statistics(
                 t, theta, summary_statistics)
-            all_sum_stats.append(model_result.sum_stats)
-            weight = 0
-            accepted_distances = []
-            accepted = True
-            # only the all_summary_statistics field will be read later
+            weight = 1.0
+            accepted_sum_stats = [model_result.sum_stats]
+            # distance will be computed after initialization of the
+            # distance function
+            accepted_distances = [np.inf]
             return Particle(
-                m, theta, weight, accepted_distances,
-                sum_stats, all_sum_stats, accepted)
+                m=m,
+                parameter=theta,
+                weight=weight,
+                accepted_sum_stats=accepted_sum_stats,
+                accepted_distances=accepted_distances,
+                rejected_sum_stats=[],
+                rejected_distances=[],
+                accepted=True)
 
         return simulate_one
 
@@ -623,9 +628,10 @@ class ABCSMC:
 
         # from here, theta_ss is valid according to the prior
 
-        accepted_distances = []
         accepted_sum_stats = []
-        all_sum_stats = []
+        accepted_distances = []
+        rejected_sum_stats = []
+        rejected_distances = []
 
         for _ in range(nr_samples_per_parameter):
             model_result = models[m_ss].accept(
@@ -636,13 +642,12 @@ class ABCSMC:
                 eps,
                 acceptor,
                 x_0)
-            # append to all_sum_stats in either case to allow for the situation
-            # that in population.all_sum_stats() one is only interested in
-            # accepted particles
-            all_sum_stats.append(model_result.sum_stats)
             if model_result.accepted:
-                accepted_distances.append(model_result.distance)
                 accepted_sum_stats.append(model_result.sum_stats)
+                accepted_distances.append(model_result.distance)
+            else:
+                rejected_sum_stats.append(model_result.sum_stats)
+                rejected_distances.append(model_result.distance)
 
         accepted = len(accepted_sum_stats) > 0
 
@@ -658,8 +663,14 @@ class ABCSMC:
             weight = 0
 
         return Particle(
-            m_ss, theta_ss, weight, accepted_distances,
-            accepted_sum_stats, all_sum_stats, accepted)
+            m=m_ss,
+            parameter=theta_ss,
+            weight=weight,
+            accepted_sum_stats=accepted_sum_stats,
+            accepted_distances=accepted_distances,
+            rejected_sum_stats=rejected_sum_stats,
+            rejected_distances=rejected_distances,
+            accepted=accepted)
 
     @staticmethod
     def _calc_proposal_weight(

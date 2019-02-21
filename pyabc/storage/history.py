@@ -6,12 +6,14 @@ import numpy as np
 import pandas as pd
 import scipy as sp
 from sqlalchemy import func
+from sqlalchemy.orm import subqueryload
 from functools import wraps
 import logging
 
 from .db_model import (ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
-
+from ..population import Particle as PyParticle, Population as PyPopulation
+from ..parameters import Parameter as PyParameter
 
 logger = logging.getLogger("History")
 
@@ -142,6 +144,12 @@ class History:
 
     @with_session
     def _pre_calculate_id(self):
+        """
+        If there are analysis objects saved in the database already,
+        the id of the latest appended one is returned.
+        This is because that is usually the run the user will be interested
+        in.
+        """
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
             return abcs[-1].id
@@ -200,7 +208,7 @@ class History:
 
         df, w: pandas.DataFrame, np.ndarray
             * df: a DataFrame of parameters
-            * w:  are the weights associated with each parameter
+            * w: are the weights associated with each parameter
         """
         m = int(m)
         if t is None:
@@ -460,6 +468,7 @@ class History:
         # store the population
         population = Population(t=t, nr_samples=nr_simulations,
                                 epsilon=current_epsilon)
+
         abc_smc_simulation.populations.append(population)
 
         # iterate over models
@@ -785,6 +794,10 @@ class History:
                   .join(Population).join(ABCSMC)
                   .filter(ABCSMC.id == self.id)
                   .filter(Population.t == t)
+                  .options(
+                      subqueryload(Model.particles)
+                      .subqueryload(Particle.samples)
+                      .subqueryload(Sample.summary_statistics))
                   .all())
 
         all_weights = []
@@ -802,6 +815,83 @@ class History:
                     all_sum_stats.append(sum_stats)
 
         return all_weights, all_sum_stats
+
+    @with_session
+    def get_population(self, t: int = None):
+        """
+        Create a pyabc.Population object containing all particles,
+        as far as those can be recreated from the database. In particular,
+        rejected particles are currently not stored.
+
+        Parameters
+        ----------
+
+        t: int, optional (default = self.max_t)
+            The population index.
+        """
+        if t is None:
+            t = self.max_t
+        else:
+            t = int(t)
+
+        models = (self._session.query(Model)
+                  .join(Population).join(ABCSMC)
+                  .options(
+                      subqueryload(Model.particles)
+                      .subqueryload(Particle.samples)
+                      .subqueryload(Sample.summary_statistics),
+                      subqueryload(Model.particles)
+                      .subqueryload(Particle.parameters))
+                  .filter(ABCSMC.id == self.id)
+                  .filter(Population.t == t)
+                  .all())
+
+        py_particles = []
+
+        # iterate over models
+        for model in models:
+            # model id
+            py_m = model.m
+            for particle in model.particles:
+                # weight
+                py_weight = particle.w * model.p_model
+
+                # parameter
+                py_parameter = {}
+                for parameter in particle.parameters:
+                    py_parameter[parameter.name] = parameter.value
+                py_parameter = PyParameter(**py_parameter)
+
+                # samples
+                py_accepted_sum_stats = []
+                py_accepted_distances = []
+                for sample in particle.samples:
+                    # summary statistic
+                    py_sum_stat = {}
+                    for sum_stat in sample.summary_statistics:
+                        py_sum_stat[sum_stat.name] = sum_stat.value
+                    py_accepted_sum_stats.append(py_sum_stat)
+
+                    # distance
+                    py_distance = sample.distance
+                    py_accepted_distances.append(py_distance)
+
+                # create particle
+                py_particle = PyParticle(
+                    m=py_m,
+                    parameter=py_parameter,
+                    weight=py_weight,
+                    accepted_sum_stats=py_accepted_sum_stats,
+                    accepted_distances=py_accepted_distances,
+                    rejected_sum_stats=[],
+                    rejected_distances=[],
+                    accepted=True)
+                py_particles.append(py_particle)
+
+        # create population
+        py_population = PyPopulation(py_particles)
+
+        return py_population
 
     @with_session
     def get_population_strategy(self):
@@ -828,10 +918,10 @@ class History:
         ----------
 
         m: int or None, optional (default = None)
-            The model to query. If omitted, all models are returned
+            The model to query. If omitted, all models are returned.
 
         t: int or str, optional (default = "last")
-            Can be "last" or "all", or a population index.
+            Can be "last" or "all", or a population index (i.e. an int).
             In case of "all", all populations are returned.
             If "last", only the last population is returned, for an int value
             only the corresponding population at that time index.
