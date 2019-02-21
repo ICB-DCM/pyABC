@@ -7,7 +7,7 @@ def weight_checked(function):
     Function decorator to check normalization of weights.
     """
     def function_with_checking(points, weights=None, **kwargs):
-        if weights is not None and np.isclose(weights.sum(), 1):
+        if weights is not None and not np.isclose(weights.sum(), 1):
             raise AssertionError(
                 f"Weights not normalized: {weights.sum()}.")
         return function(points, weights, **kwargs)
