@@ -1,6 +1,6 @@
 cloudpickle
 gitpython
-sqlalchemy
+sqlalchemy==1.2.18
 flask_bootstrap
 flask
 sortedcontainers
