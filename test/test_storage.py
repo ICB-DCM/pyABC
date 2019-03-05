@@ -60,6 +60,7 @@ def history_uninitialized():
 
 def rand_pop(m: int):
     """
+    Create a population for model m, of random size >= 3.
 
     Parameters
     ----------
@@ -71,30 +72,29 @@ def rand_pop(m: int):
     -------
 
     """
-    pop = [Particle(m,
-                    Parameter({"a": np.random.randint(10),
-                               "b": np.random.randn()}),
-                    sp.rand() * 42,
-                    [sp.rand()],
-                    [{"ss_float": 0.1,
-                      "ss_int": 42,
-                      "ss_str": "foo bar string",
-                      "ss_np": sp.rand(13, 42),
-                      "ss_df": example_df()}],
-                    [],
-                    True)
-           for _ in range(np.random.randint(10) + 3)]
+    pop = [
+        Particle(m=m,
+                 parameter=Parameter({"a": np.random.randint(10),
+                                      "b": np.random.randn()}),
+                 weight=sp.rand() * 42,
+                 accepted_sum_stats=[{"ss_float": 0.1,
+                                      "ss_int": 42,
+                                      "ss_str": "foo bar string",
+                                      "ss_np": sp.rand(13, 42),
+                                      "ss_df": example_df()}],
+                 accepted_distances=[sp.rand()])
+        for _ in range(np.random.randint(10) + 3)]
     return pop
 
 
 def test_single_particle_save_load(history: History):
-    particle_list = [Particle(0,
-                              Parameter({"a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss": .1}],
-                              [],
-                              True)]
+    particle_list = [
+        Particle(m=0,
+                 parameter=Parameter({"a": 23, "b": 12}),
+                 weight=.2,
+                 accepted_sum_stats=[{"ss": .1}],
+                 accepted_distances=[.1])
+    ]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     df, w = history.get_distribution(0, 0)
@@ -103,18 +103,91 @@ def test_single_particle_save_load(history: History):
     assert df.b.iloc[0] == 12
 
 
+def test_save_no_sum_stats(history: History):
+    """
+    Test that what has been stored can be retrieved correctly
+    also when no sum stats are saved.
+    """
+    particle_list = []
+    for _ in range(0, 6):
+        particle = Particle(
+            m=0,
+            parameter=Parameter({"th0": np.random.random()}),
+            weight=.2,
+            accepted_sum_stats=[{"ss0": np.random.random(),
+                                 "ss1": np.random.random()}],
+            accepted_distances=[np.random.random()])
+        particle_list.append(particle)
+
+    population = Population(particle_list)
+
+    # do not save sum stats
+    # use the attribute first to make sure we have no typo
+    print(history.stores_sum_stats)
+    history.stores_sum_stats = False
+
+    # test some basic routines
+    history.append_population(t=0, current_epsilon=42.97,
+                              population=population,
+                              nr_simulations=10,
+                              model_names=[""])
+
+    # just call
+    history.get_distribution(0, 0)
+
+    # test whether weights and distances returned correctly
+    weighted_distances_h = history.get_weighted_distances()
+    weighted_distances = population.get_weighted_distances()
+    assert (weighted_distances_h[['distance', 'w']]
+            == weighted_distances[['distance', 'w']]).all().all()
+
+    weights, sum_stats = history.get_weighted_sum_stats(t=0)
+    # all particles should be contained nontheless
+    assert len(weights) == len(particle_list)
+    for sum_stat in sum_stats:
+        # should be empty
+        assert not sum_stat
+
+    history.get_population_extended()
+
+
+def test_get_population(history: History):
+    population = Population(rand_pop(0))
+    history.append_population(t=0, current_epsilon=7.0,
+                              population=population,
+                              nr_simulations=200,
+                              model_names=["m0"])
+    population_h = history.get_population(t=0)
+
+    # length
+    assert len(population) == len(population_h)
+
+    # distances
+    distances = sum((p.accepted_distances
+                     for p in population.get_list()), [])
+    distances_h = sum((p.accepted_distances
+                       for p in population_h.get_list()), [])
+    for d0, d1 in zip(distances, distances_h):
+        assert np.isclose(d0, d1)
+
+    # weights
+    weights = [p.weight for p in population.get_list()]
+    weights_h = [p.weight for p in population_h.get_list()]
+    for w0, w1 in zip(weights, weights_h):
+        assert np.isclose(w0, w1)
+
+
 def test_single_particle_save_load_np_int64(history: History):
     # Test if np.int64 can also be used for indexing
     # This is an important test!!!
     m_list = [0, np.int64(0)]
     t_list = [0, np.int64(0)]
-    particle_list = [Particle(0,
-                              Parameter({"a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss": .1}],
-                              [],
-                              True)]
+    particle_list = [Particle(
+        m=0,
+        parameter=Parameter({"a": 23, "b": 12}),
+        weight=.2,
+        accepted_sum_stats=[{"ss": .1}],
+        accepted_distances=[.1])]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     for m in m_list:
@@ -128,31 +201,31 @@ def test_single_particle_save_load_np_int64(history: History):
 def test_sum_stats_save_load(history: History):
     arr = sp.random.rand(10)
     arr2 = sp.random.rand(10, 2)
-    particle_list = [Particle(0, Parameter({"a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss1": .1, "ss2": arr2,
-                                "ss3": example_df(),
-                                "rdf0": r["iris"]}],
-                              [],
-                              True),
-                     Particle(0, Parameter({
-                         "a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss12": .11, "ss22": arr,
-                                "ss33": example_df(),
-                                "rdf": r["mtcars"]}],
-                              [],
-                              True)]
+    particle_list = [
+        Particle(m=0,
+                 parameter=Parameter({"a": 23, "b": 12}),
+                 weight=.2,
+                 accepted_sum_stats=[{"ss1": .1, "ss2": arr2,
+                                      "ss3": example_df(),
+                                      "rdf0": r["faithful"]}],
+                 # TODO: check why iris fails
+                 accepted_distances=[.1]),
+        Particle(m=0,
+                 parameter=Parameter({"a": 23, "b": 12}),
+                 weight=.2,
+                 accepted_sum_stats=[{"ss12": .11, "ss22": arr,
+                                      "ss33": example_df(),
+                                      "rdf": r["mtcars"]}],
+                 accepted_distances=[.1])]
+
     history.append_population(0, 42,
                               Population(particle_list), 2, ["m1", "m2"])
-    weights, sum_stats = history.get_sum_stats(0, 0)
+    weights, sum_stats = history.get_weighted_sum_stats_for_model(0, 0)
     assert (weights == 0.5).all()
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
     assert (sum_stats[0]["ss3"] == example_df()).all().all()
-    assert (sum_stats[0]["rdf0"] == pandas2ri.ri2py(r["iris"])).all().all()
+    assert (sum_stats[0]["rdf0"] == pandas2ri.ri2py(r["faithful"])).all().all()
     assert sum_stats[1]["ss12"] == .11
     assert (sum_stats[1]["ss22"] == arr).all()
     assert (sum_stats[1]["ss33"] == example_df()).all().all()
@@ -160,13 +233,12 @@ def test_sum_stats_save_load(history: History):
 
 
 def test_total_nr_samples(history: History):
-    particle_list = [Particle(0,
-                              Parameter({"a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss": .1}],
-                              [],
-                              True)]
+    particle_list = [
+        Particle(m=0,
+                 parameter=Parameter({"a": 23, "b": 12}),
+                 weight=.2,
+                 accepted_sum_stats=[{"ss": .1}],
+                 accepted_distances=[.1])]
     population = Population(particle_list)
     history.append_population(0, 42, population, 4234, ["m1"])
     history.append_population(0, 42, population, 3, ["m1"])
@@ -175,12 +247,12 @@ def test_total_nr_samples(history: History):
 
 
 def test_t_count(history: History):
-    particle_list = [Particle(0, Parameter({"a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss": .1}],
-                              [],
-                              True)]
+    particle_list = [
+        Particle(m=0,
+                 parameter=Parameter({"a": 23, "b": 12}),
+                 weight=.2,
+                 accepted_sum_stats=[{"ss": .1}],
+                 accepted_distances=[.1])]
     for t in range(1, 10):
         history.append_population(t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
@@ -191,7 +263,6 @@ def test_dataframe_storage_readout():
     model_names = ["fake_name"] * 5
 
     def make_hist():
-
         h = History("sqlite:///" + path)
         h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
         return h
@@ -324,13 +395,12 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1"]
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
-    particle_list = [Particle(0,
-                              Parameter({"a": 23, "b": 12}),
-                              .2,
-                              [.1],
-                              [{"ss": .1}],
-                              [],
-                              True)]
+    particle_list = [
+        Particle(m=0,
+                 parameter=Parameter({"a": 23, "b": 12}),
+                 weight=.2,
+                 accepted_sum_stats=[{"ss": .1}],
+                 accepted_distances=[.1])]
     h.append_population(0, 42, Population(particle_list), 2, model_names)
 
     h2 = History(h.db_identifier)

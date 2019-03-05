@@ -1,9 +1,52 @@
+.. _releasenotes:
+
 Release Notes
 =============
 
 
 0.9 series
 ..........
+
+
+0.9.8 (2019-02-21)
+------------------
+
+* Tidy up returning of rejected samples in Sample (not only summary
+  statistics).
+* Recreate a population from file in History.get_population().
+* Speed up loading from database by eager loading.
+* Document the change of the contribution scheme to master+develop.
+
+
+0.9.7 (2019-02-20)
+------------------
+
+* Allow for the database to save no summary statistics for testing purposes.
+* Tidy up some pyabc.History methods.
+* pyabc.History.id set by default to the largest index (previously 0),
+  corresponding to the latest inserted analysis.
+
+
+0.9.6 (2019-02-01)
+------------------
+
+* Fix several errors with the readthedocs (rtd) documentation.
+* Speed-up rtd build by removing unnecessary conda and pip requirements.
+* Clean-up requirements for travis and rtd.
+* Change rtd design from alabaster to sphinx_rtd_theme since it implements
+  better navigation.
+
+
+0.9.5 (2019-01-17)
+------------------
+
+* ABCSMC can pass observed summary statistics to distance functions
+  (required for some scale functions, and to make the
+  methods robust to volatile summary statistics).
+* Implementation of more scale functions (distance_functions.scales), in
+  particular some taking into account the bias to the observed data.
+* AdaptivePNormDistance accepts a Callable as scaling scheme, allowing
+  for more flexibility.
 
 
 0.9.4 (2018-12-18)

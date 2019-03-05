@@ -1,5 +1,15 @@
+"""
+Particles and Populations
+=========================
+
+A particle contains the sampled parameters and simulated data.
+A population gathers all particles collected in one SMC
+iteration.
+"""
+
+
 from typing import List, Callable
-import pandas
+import pandas as pd
 from pyabc.parameters import Parameter
 
 
@@ -15,30 +25,31 @@ class Particle:
     ----------
 
     m: int
-        The model nr
+        The model index.
 
     parameter: Parameter
-        The model specific parameter
+        The model specific parameter.
 
-    weight: float, 0 < weight < 1
-        The weight of the particle
+    weight: float, 0 <= weight <= 1
+        The weight of the particle.
 
-    distances: List[float]
+    accepted_sum_stats: List[dict]
+        List of accepted summary statistics.
+        This list is usually of length 1. This list is longer only if more
+        than one sample is taken for a particle.
+        This list has length 0 if the particle is rejected.
+
+    accepted_distances: List[float]
         A particle can contain more than one sample.
         If so, the distances of the individual samples
         are stored in this list. In the most common case of a single
         sample, this list has length 1.
 
-    accepted_sum_stats
-        List of accepted summary statistics which describe the particle
-        This list is usually of length 1. This list is longer only if more
-        than one sample is taken for a particle.
-        This list has length 0 if the particle is rejected.
+    rejected_sum_stats: List[dict]
+        List of rejected summary statistics.
 
-    all_sum_stats: List[dict]
-        List of all summary statistics generated during the creation of this
-        particle (also when they led to rejection).
-        This list is non-empty also for rejected particles.
+    rejected_distances: List[float]
+        List of rejected distances.
 
     accepted: bool
         True if particle was accepted, False if not.
@@ -56,43 +67,28 @@ class Particle:
         multiplying the weights with the model probabilities.
     """
 
-    def __init__(self, m: int,
+    def __init__(self,
+                 m: int,
                  parameter: Parameter,
                  weight: float,
-                 accepted_distances: List[float],
                  accepted_sum_stats: List[dict],
-                 all_sum_stats: List[dict],
-                 accepted: bool):
+                 accepted_distances: List[float],
+                 rejected_sum_stats: List[dict] = None,
+                 rejected_distances: List[float] = None,
+                 accepted: bool = True):
 
         self.m = m
         self.parameter = parameter
         self.weight = weight
-        self.accepted_distances = accepted_distances
         self.accepted_sum_stats = accepted_sum_stats
-        self.all_sum_stats = all_sum_stats
+        self.accepted_distances = accepted_distances
+        if rejected_sum_stats is None:
+            rejected_sum_stats = []
+        self.rejected_sum_stats = rejected_sum_stats
+        if rejected_distances is None:
+            rejected_distances = []
+        self.rejected_distances = rejected_distances
         self.accepted = accepted
-
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-    def __setitem__(self, key, value):
-        setattr(self, key, value)
-
-    def __eq__(self, other):
-        for key in ["m", "parameter", "weight", "accepted_distances",
-                    "accepted_sum_stats", "all_sum_stats"]:
-            if self[key] != other[key]:
-                return False
-        return True
-
-    def copy(self):
-        return self.__class__(self.m,
-                              self.parameter,
-                              self.weight,
-                              self.accepted_distances,
-                              self.accepted_sum_stats,
-                              self.all_sum_stats,
-                              self.accepted)
 
 
 class Population:
@@ -103,7 +99,7 @@ class Population:
     """
 
     def __init__(self, particles: List[Particle]):
-        self._list = [particle.copy() for particle in particles]
+        self._list = particles.copy()
         self._model_probabilities = None
         self._normalize_weights()
 
@@ -175,7 +171,7 @@ class Population:
         # _model_probabilities are assigned during normalization
         return self._model_probabilities
 
-    def get_weighted_distances(self) -> pandas.DataFrame:
+    def get_weighted_distances(self) -> pd.DataFrame:
         """
         Create DataFrame of (distance, weight)'s. The particle weights are
         multiplied by the model probabilities. If one simulation per particle
@@ -186,8 +182,8 @@ class Population:
         Returns
         -------
 
-        weighted_distances: pandas.DataFrame:
-            A pandas.DataFrame containing in column 'distance' the distances
+        weighted_distances: pd.DataFrame:
+            A pd.DataFrame containing in column 'distance' the distances
             and in column 'w' the scaled weights.
         """
         rows = []
@@ -197,7 +193,7 @@ class Population:
                 rows.append({'distance': distance,
                              'w': particle.weight * model_probability})
 
-        weighted_distances = pandas.DataFrame(rows)
+        weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
 
@@ -218,8 +214,8 @@ class Population:
 
         for particle in self._list:
             if particle is not None:
-                # setdefault: similar to get(), sets dict[key] = default if key
-                # is not in dict yet.
+                # append particle for key particle.m, create empty list
+                # if key not yet existent
                 store.setdefault(particle.m, []).append(particle)
             else:
                 print("Warning: Empty particle.")

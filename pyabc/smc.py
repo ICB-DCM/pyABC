@@ -10,8 +10,13 @@ implement a Strategy pattern.)
 import datetime
 import logging
 from typing import List, Callable, TypeVar
-import pandas as pd
+import numpy as np
 import scipy as sp
+import pandas as pd
+import copy
+import warnings
+from typing import Union
+
 from .distance_functions import to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
@@ -21,15 +26,13 @@ from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .storage import History
 from .populationstrategy import PopulationStrategy
 from .pyabc_rand_choice import fast_random_choice
-from typing import Union
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
 from .acceptor import accept_use_current_time, SimpleAcceptor
-import copy
-import warnings
 
-abclogger = logging.getLogger("ABC")
+
+logger = logging.getLogger("ABC")
 
 model_output = TypeVar("model_output")
 
@@ -42,7 +45,8 @@ class ABCSMC:
     """
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
-    This is an implementation of an ABCSMC algorithm similar to [#tonistumpf]_
+    This is an implementation of an ABCSMC algorithm similar to
+    [#tonistumpf]_.
 
 
     Parameters
@@ -134,12 +138,11 @@ class ABCSMC:
         automatically as soon as only a single model has survived.
 
 
-
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
-                  Systems in Systems and Population Biology.”
-                  Bioinformatics 26, no. 1 (2010):
-                  104–10. doi:10.1093/bioinformatics/btp619.
+                  Systems in Systems and Population Biology”.
+                  Bioinformatics 26, no. 1, 104–10, 2010.
+                  doi:10.1093/bioinformatics/btp619.
     """
 
     def __init__(self,
@@ -216,11 +219,6 @@ class ABCSMC:
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
         return state_red_dict
-
-    def do_not_stop_when_only_single_model_alive(self):
-        warnings.warn("This method is deprecated and removed "
-                      "in pyABC 1.0.0", DeprecationWarning, stacklevel=2)
-        self.stop_if_only_single_model_alive = False
 
     def load(self, db: str,
              abc_id: int = 1,
@@ -386,6 +384,8 @@ class ABCSMC:
             to do the first population). Usually 0 or history.max_t + 1.
         """
 
+        self.distance_function.handle_x_0(self.x_0)
+
         if self.distance_function.require_initialize:
             # initialize distance
             self.distance_function.initialize(t,
@@ -436,7 +436,7 @@ class ABCSMC:
     def _create_simulate_from_prior_function(self, t):
         """
         Similar to _create_simulate_function, apart here we sample from the
-        prior and accept always.
+        prior and accept all.
         """
 
         model_prior = self.model_prior
@@ -449,18 +449,22 @@ class ABCSMC:
         def simulate_one():
             m = int(model_prior.rvs())
             theta = parameter_priors[m].rvs()
-            sum_stats = []
-            all_sum_stats = []
             model_result = models[m].summary_statistics(
                 t, theta, summary_statistics)
-            all_sum_stats.append(model_result.sum_stats)
-            weight = 0
-            accepted_distances = []
-            accepted = True
-            # only the all_summary_statistics field will be read later
+            weight = 1.0
+            accepted_sum_stats = [model_result.sum_stats]
+            # distance will be computed after initialization of the
+            # distance function
+            accepted_distances = [np.inf]
             return Particle(
-                m, theta, weight, accepted_distances,
-                sum_stats, all_sum_stats, accepted)
+                m=m,
+                parameter=theta,
+                weight=weight,
+                accepted_sum_stats=accepted_sum_stats,
+                accepted_distances=accepted_distances,
+                rejected_sum_stats=[],
+                rejected_distances=[],
+                accepted=True)
 
         return simulate_one
 
@@ -624,9 +628,10 @@ class ABCSMC:
 
         # from here, theta_ss is valid according to the prior
 
-        accepted_distances = []
         accepted_sum_stats = []
-        all_sum_stats = []
+        accepted_distances = []
+        rejected_sum_stats = []
+        rejected_distances = []
 
         for _ in range(nr_samples_per_parameter):
             model_result = models[m_ss].accept(
@@ -637,13 +642,12 @@ class ABCSMC:
                 eps,
                 acceptor,
                 x_0)
-            # append to all_sum_stats in either case to allow for the situation
-            # that in population.all_sum_stats() one is only interested in
-            # accepted particles
-            all_sum_stats.append(model_result.sum_stats)
             if model_result.accepted:
-                accepted_distances.append(model_result.distance)
                 accepted_sum_stats.append(model_result.sum_stats)
+                accepted_distances.append(model_result.distance)
+            else:
+                rejected_sum_stats.append(model_result.sum_stats)
+                rejected_distances.append(model_result.distance)
 
         accepted = len(accepted_sum_stats) > 0
 
@@ -659,8 +663,14 @@ class ABCSMC:
             weight = 0
 
         return Particle(
-            m_ss, theta_ss, weight, accepted_distances,
-            accepted_sum_stats, all_sum_stats, accepted)
+            m=m_ss,
+            parameter=theta_ss,
+            weight=weight,
+            accepted_sum_stats=accepted_sum_stats,
+            accepted_distances=accepted_distances,
+            rejected_sum_stats=rejected_sum_stats,
+            rejected_distances=rejected_distances,
+            accepted=accepted)
 
     @staticmethod
     def _calc_proposal_weight(
@@ -768,7 +778,7 @@ class ABCSMC:
 
             # get epsilon for generation t
             current_eps = self.eps(t)
-            abclogger.info('t:' + str(t) + ' eps:' + str(current_eps))
+            logger.info('t:' + str(t) + ' eps:' + str(current_eps))
 
             # do some adaptations
             self._fit_transitions(t)
@@ -777,7 +787,7 @@ class ABCSMC:
             # create simulate function
             simulate_one = self._create_simulate_function(t)
 
-            abclogger.debug('now submitting population ' + str(t))
+            logger.debug('now submitting population ' + str(t))
 
             # perform the sampling
             sample = self.sampler.sample_until_n_accepted(
@@ -787,13 +797,13 @@ class ABCSMC:
             population = sample.get_accepted_population()
 
             # save to database before making any changes to the population
-            abclogger.debug('population ' + str(t) + ' done')
+            logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
                 t, current_eps, population, nr_evaluations,
                 model_names)
-            abclogger.debug(
+            logger.debug(
                 '\ntotal nr simulations up to t =' + str(t) + ' is '
                 + str(self.history.total_nr_simulations))
 

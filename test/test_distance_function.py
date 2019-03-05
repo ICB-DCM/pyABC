@@ -1,7 +1,21 @@
 import scipy as sp
 from pyabc import (PercentileDistanceFunction,
                    MinMaxDistanceFunction,
-                   PNormDistance)
+                   PNormDistance,
+                   AdaptivePNormDistance)
+
+
+from pyabc.distance_functions import (
+    median_absolute_deviation,
+    mean_absolute_deviation,
+    standard_deviation,
+    bias,
+    root_mean_square_deviation,
+    median_absolute_deviation_to_observation,
+    mean_absolute_deviation_to_observation,
+    combined_median_absolute_deviation,
+    combined_mean_absolute_deviation,
+    standard_deviation_to_observation)
 
 
 class MockABC:
@@ -52,7 +66,7 @@ def test_pnormdistance():
                    {'s1': -1, 's2': 0, 's3': 1}])
 
     # first test that for PNormDistance, the weights stay constant
-    dist_f = PNormDistance(p=2)
+    dist_f = PNormDistance()
     dist_f.initialize(0, abc.sample_from_prior())
 
     # call distance function, also to initialize w
@@ -63,4 +77,39 @@ def test_pnormdistance():
     assert sum(abs(a-b) for a, b in
                zip(list(dist_f.w[0].values()), [1, 1, 1])) < 0.01
 
-    # TODO: Also create test for AdaptivePNormDistance
+
+def test_adaptivepnormdistance():
+    """
+    Only tests basic running.
+    """
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1}])
+    x_0 = {'s1': 0, 's2': 0, 's3': 1}
+
+    scale_functions = [
+        median_absolute_deviation,
+        mean_absolute_deviation,
+        standard_deviation,
+        bias,
+        root_mean_square_deviation,
+        median_absolute_deviation_to_observation,
+        mean_absolute_deviation_to_observation,
+        combined_median_absolute_deviation,
+        combined_mean_absolute_deviation,
+        standard_deviation_to_observation
+    ]
+
+    for scale_function in scale_functions:
+        dist_f = AdaptivePNormDistance(
+            scale_function=scale_function)
+        dist_f.handle_x_0(x_0)
+        dist_f.initialize(0, abc.sample_from_prior())
+        dist_f(0, abc.sample_from_prior()[0], abc.sample_from_prior()[1])
+
+    for scale_function in scale_functions:
+        dist_f = AdaptivePNormDistance(
+            scale_function=scale_function,
+            max_weight_ratio=1e3)
+        dist_f.handle_x_0(x_0)
+        dist_f.initialize(0, abc.sample_from_prior())
+        dist_f(0, abc.sample_from_prior()[0], abc.sample_from_prior()[1])

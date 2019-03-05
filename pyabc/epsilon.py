@@ -15,7 +15,7 @@ from .weighted_statistics import weighted_quantile
 from typing import List, Union
 import pandas
 
-eps_logger = logging.getLogger("Epsilon")
+logger = logging.getLogger("Epsilon")
 
 
 class Epsilon(ABC):
@@ -238,7 +238,7 @@ class QuantileEpsilon(Epsilon):
                  quantile_multiplier: float = 1,
                  weighted: bool = True):
 
-        eps_logger.debug(
+        logger.debug(
             "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
             .format(initial_epsilon, quantile_multiplier))
         require_initialize = initial_epsilon == 'from_sample'
@@ -269,7 +269,7 @@ class QuantileEpsilon(Epsilon):
         self._update(t, weighted_distances)
 
         # logging
-        eps_logger.info("initial epsilon is {}".format(self._look_up[t]))
+        logger.info("initial epsilon is {}".format(self._look_up[t]))
 
     def __call__(self,
                  t: int) -> float:
@@ -309,7 +309,7 @@ class QuantileEpsilon(Epsilon):
         self._update(t, weighted_distances)
 
         # logger
-        eps_logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
+        logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
 
     def _update(self,
                 t: int,

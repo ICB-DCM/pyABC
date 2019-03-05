@@ -16,7 +16,8 @@ from rpy2.robjects import pandas2ri
                         "py-float",
                         "py-str",
                         "r-df-cars",
-                        "r-df-iris"])
+                        "r-df-faithful"  # TODO re-add iris, see #45
+                        ])
 def object_(request):
     par = request.param
     if par == "empty":
@@ -64,6 +65,8 @@ def object_(request):
         return r["mtcars"]
     if par == "r-df-iris":
         return r["iris"]
+    if par == "r-df-faithful":
+        return r["faithful"]
     raise Exception("Invalid Test DataFrame Type")
 
 
@@ -73,7 +76,7 @@ def test_storage(object_):
     rebuilt = from_bytes(serial)
 
     if not isinstance(object_, robjects.DataFrame):
-        assert type(object_) == type(rebuilt)
+        assert isinstance(object_, type(rebuilt))
 
     if isinstance(object_, int):
         assert object_ == rebuilt

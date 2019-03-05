@@ -1,6 +1,6 @@
-.. _external_api:
+.. _api_external:
 
 .. automodule:: pyabc.external
    :members:
-   :special-members: __call__
+   :special-members: __init__,__call__
    :show-inheritance:

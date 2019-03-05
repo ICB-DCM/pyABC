@@ -1,6 +1,6 @@
 # pyABC
 
-![pyABC](doc/logo.png)
+![pyABC](https://raw.githubusercontent.com/ICB-DCM/pyABC/master/doc/logo.png)
 
 [![Build Status](https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master)](https://travis-ci.org/ICB-DCM/pyABC)
 [![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
