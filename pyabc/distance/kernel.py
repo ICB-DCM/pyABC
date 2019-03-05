@@ -238,7 +238,7 @@ class IndependentNormalKernel(StochasticKernel):
         # initialize var correctly
         if self.var is None:
             self.var = np.ones(self.dim)
-        if not callable(var):
+        if not callable(self.var):
             self.var = np.array(self.var) * np.ones(self.dim)
 
         # cache pdf_max
