@@ -238,7 +238,7 @@ class IndependentNormalKernel(StochasticKernel):
         # initialize var correctly
         if self.var is None:
             self.var = np.ones(self.dim)
-        else:
+        if not callable(var):
             self.var = np.array(self.var) * np.ones(self.dim)
 
         # cache pdf_max
@@ -252,13 +252,19 @@ class IndependentNormalKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None):
+        # compute variance from parameters
+        if callable(self.var):
+            var = self.var(par)
+        else:
+            var = self.var
+
         # difference to array
         diff = np.array([x[key] - x_0[key] for key in self.keys])
 
         # compute pdf
-        log_2_pi = np.sum(np.log(2 * np.pi * self.var))
+        log_2_pi = np.sum(np.log(2 * np.pi * var))
 
-        squares = np.sum((diff**2) / self.var)
+        squares = np.sum((diff**2) / var)
 
         log_pdf = - 0.5 * (log_2_pi + squares)
 
