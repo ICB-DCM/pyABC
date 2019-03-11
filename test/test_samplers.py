@@ -22,14 +22,14 @@ def multi_proc_map(f, x):
 
 
 class GenericFutureWithProcessPool(ConcurrentFutureSampler):
-    def __init__(self, map=None):
+    def __init__(self, map_=None):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
         super().__init__(cfuture_executor, client_max_jobs)
 
 
 class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
-    def __init__(self, map=None):
+    def __init__(self, map_=None):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
         batchsize = 15
@@ -38,19 +38,19 @@ class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
-    def __init__(self, map=None):
+    def __init__(self, map_=None):
         cfuture_executor = ThreadPoolExecutor(max_workers=8)
         client_max_jobs = 8
         super().__init__(cfuture_executor, client_max_jobs)
 
 
 class MultiProcessingMappingSampler(MappingSampler):
-    def __init__(self, map=None):
+    def __init__(self, map_=None):
         super().__init__(multi_proc_map)
 
 
 class DaskDistributedSamplerBatch(DaskDistributedSampler):
-    def __init__(self, map=None):
+    def __init__(self, map_=None):
         batchsize = 20
         super().__init__(batchsize=batchsize)
 

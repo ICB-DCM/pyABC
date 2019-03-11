@@ -228,8 +228,9 @@ class History:
         pars = df.pivot("id", "name", "value").sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
-        assert w_arr.size == 0 or np.isclose(w_arr.sum(), 1), \
-            "weight not close to 1, w.sum()={}".format(w_arr.sum())
+        if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
+            raise AssertionError(
+                "Weight not close to 1, w.sum()={}".format(w_arr.sum()))
         return pars, w_arr
 
     @with_session

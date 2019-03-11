@@ -11,7 +11,6 @@ import tempfile
 
 import pytest
 import scipy as sp
-import scipy.interpolate
 import scipy.stats as st
 from scipy.special import gamma, binom
 
@@ -145,11 +144,11 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
 
 class AllInOneModel(Model):
-    def summary_statistics(self, pars, sum_stats_calculator) -> ModelResult:
+    def summary_statistics(self, t, pars, sum_stats_calculator) -> ModelResult:
         return ModelResult(sum_stats={"result": 1})
 
-    def accept(self, pars, sum_stats_calculator, distance_calculator, eps) -> \
-            ModelResult:
+    def accept(self, t, pars, sum_stats_calculator, distance_calculator,
+               eps_calculator, acceptor, x_0) -> ModelResult:
         return ModelResult(accepted=True)
 
 
@@ -658,6 +657,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistanceFunction(measures_to_use=["y"]),
                  population_size,
+                 model_prior=model_prior,
                  eps=MedianEpsilon(.2),
                  sampler=sampler)
 

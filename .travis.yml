@@ -37,7 +37,10 @@ install:
 # run tests
 
 script:
-  - travis_wait 30 python -m pytest test
+  - travis_wait 30 python -m pytest --cov=pyabc test/
+
+after_success:
+  - codecov
 
 # cache
 

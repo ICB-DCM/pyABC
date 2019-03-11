@@ -28,7 +28,8 @@ from .history import History
               help="If True, the individual parameter and summary statistic "
                    "names are pivoted. Only works for a single model and "
                    "time point.")
-def main(db, out, out_format, generation="last", model=None, id=1, tidy=True):
+def main(db, out, out_format, generation="last",
+         model=None, id=1, tidy=True):  # pylint: disable=W0622
     """
     Export from the SQLite database to different table formats.
     The function pyabc.History.get_population_extended() is used
@@ -61,7 +62,3 @@ def main(db, out, out_format, generation="last", model=None, id=1, tidy=True):
 
     # convert dataframe to output file format
     to_file(df, out, file_format=out_format)
-
-
-if __name__ == "__main__":
-    main()
