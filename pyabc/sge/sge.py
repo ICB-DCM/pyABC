@@ -58,10 +58,10 @@ class SGE:
         It this file does not exist a tmp directory within the user home
         directory is created.
 
-    memory: str
+    memory: str, optional (default = '3G')
         Ram requested by each job, e.g. "10G"
 
-    time_h: int
+    time_h: int (default = 100)
         Job run time in hours.
 
     python_executable_path: str or None
@@ -77,7 +77,7 @@ class SGE:
         File to which stdout messages from workers are stored
         If set to None, a file within the tmp_directory is used.
 
-    parallel_environment: str
+    parallel_environment: str, optional (default = 'map')
         The SGE environment. (This is what is passed to the -pe option
         in the qsub script)
 
@@ -87,13 +87,11 @@ class SGE:
     queue: str
         The SGE queue.
 
-    priority: int
-        SGE job priority. A value between -1000 and 0
-        Default: -500
-
+    priority: int, optional (default = None)
+        SGE job priority. A value between -1000 and 0.
         Note that a priority of 0 automatically enables the reservation flag.
 
-    num_threads: int, default = 1
+    num_threads: int, optional (default = 1)
         Number of threads for each worker.
         This also sets the environment variable MKL_NUM_THREADS,
         OMP_NUM_THREADS to the
@@ -112,7 +110,7 @@ class SGE:
         the cluster
         The ``__exit__`` method directly after the function run finished.
 
-    chunk_size: int, default=1
+    chunk_size: int, optional (default = 1)
         nr of tasks executed within one job
 
             .. warning::
