@@ -59,7 +59,7 @@ class SGE:
         directory is created.
 
     memory: str, optional (default = '3G')
-        Ram requested by each job, e.g. "10G"
+        Ram requested by each job, e.g. '10G'.
 
     time_h: int (default = 100)
         Job run time in hours.
@@ -79,7 +79,7 @@ class SGE:
 
     parallel_environment: str, optional (default = 'map')
         The SGE environment. (This is what is passed to the -pe option
-        in the qsub script)
+        in the qsub script).
 
     name: str
         A name for the job.
@@ -87,7 +87,7 @@ class SGE:
     queue: str
         The SGE queue.
 
-    priority: int, optional (default = None)
+    priority: int, optional.
         SGE job priority. A value between -1000 and 0.
         Note that a priority of 0 automatically enables the reservation flag.
 
@@ -95,7 +95,7 @@ class SGE:
         Number of threads for each worker.
         This also sets the environment variable MKL_NUM_THREADS,
         OMP_NUM_THREADS to the
-        sepcified number to handle jobs which use OpenMP etc. correctly
+        specified number to handle jobs which use OpenMP etc. correctly.
 
     execution_context: \
     :class:`DefaultContext \
@@ -107,11 +107,11 @@ class SGE:
 
         Any context manager can be passed here.
         The ``__enter__`` method is called before evaluating the function on
-        the cluster
+        the cluster.
         The ``__exit__`` method directly after the function run finished.
 
     chunk_size: int, optional (default = 1)
-        nr of tasks executed within one job
+        nr of tasks executed within one job.
 
             .. warning::
 
@@ -124,7 +124,7 @@ class SGE:
     Returns
     -------
     sge: SGE
-        configured sge mapper
+        The configured sge mapper.
     """
 
     def __init__(self, tmp_directory: str = None, memory: str = '3G',
