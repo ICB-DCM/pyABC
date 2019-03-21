@@ -445,12 +445,12 @@ class StochasticAcceptor(Acceptor):
 
         # compute probability density
         pd = kernel(x, x_0, t, pars)
-
+        #print("pd, pdf_max: ", pd, kernel.pdf_max, self.pdf_maxs[t])
         if kernel.ret_scale == RET_SCALE_LIN:
             # rescale
-            pd_rescaled = pd / kernel.pdf_max
+            pd_rescaled = pd / self.pdf_maxs[t]
         else:  # kernel.ret_scale == RET_SCALE_LOG
-            pd_rescaled = np.exp(pd - kernel.pdf_max)
+            pd_rescaled = np.exp(pd - self.pdf_maxs[t])
 
         # acceptance probability
         acceptance_probability = pd_rescaled ** (1 / temp)
