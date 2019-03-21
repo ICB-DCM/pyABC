@@ -400,6 +400,15 @@ class StochasticAcceptor(Acceptor):
             self.temperatures[t] = 1.0
             return
 
+        # update pdf_max
+
+        self.pdf_maxs[t] = self.pdf_max_method(
+            default=kernel.pdf_max,
+            get_weighted_distances=get_weighted_distances,
+            pdf_maxs=self.pdf_maxs)
+
+        logger.debug(f"pdf_max: {self.pdf_maxs[t]}")
+
         # update temperature
 
         # evaluate schedulers
@@ -408,7 +417,7 @@ class StochasticAcceptor(Acceptor):
             temp = scheme(t=t,
                           get_weighted_distances=get_weighted_distances,
                           x_0=self.x_0,
-                          pdf_max=kernel.pdf_max,
+                          pdf_max=self.pdf_maxs[t],
                           ret_scale=kernel.ret_scale,
                           temperatures=self.temperatures,
                           max_nr_populations=self.max_nr_populations,
@@ -425,15 +434,6 @@ class StochasticAcceptor(Acceptor):
         # fill into temperatures list
         self.temperatures[t] = temp
 
-        # update pdf_max
-
-        self.pdf_maxs[t] = self.pdf_max_method(
-            default=kernel.pdf_max,
-            get_weighted_distances=get_weighted_distances,
-            pdf_maxs=self.pdf_maxs)
-
-        logger.debug(f"pdf_max: {self.pdf_maxs[t]}")
-
     def __call__(self, t, distance_function, eps, x, x_0, pars):
         kernel = distance_function
         if not isinstance(kernel, StochasticKernel):
@@ -445,7 +445,13 @@ class StochasticAcceptor(Acceptor):
 
         # compute probability density
         pd = kernel(x, x_0, t, pars)
-        #print("pd, pdf_max: ", pd, kernel.pdf_max, self.pdf_maxs[t])
+        pdf_max = self.pdf_maxs[t]
+
+        # check pdf max ok
+        if pdf_max < pd:
+            logger.info(
+                f"Encountered a density {pd} > current pdf max {pdf_max}.")
+
         if kernel.ret_scale == RET_SCALE_LIN:
             # rescale
             pd_rescaled = pd / self.pdf_maxs[t]
