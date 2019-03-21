@@ -25,10 +25,10 @@ Base = declarative_base()
 class BytesStorage(types.TypeDecorator):
     impl = LargeBinary
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value, dialect):  # pylint: disable=R0201
         return to_bytes(value)
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value, dialect):  # pylint: disable=R0201
         return from_bytes(value)
 
 

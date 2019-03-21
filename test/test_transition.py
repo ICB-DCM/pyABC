@@ -145,10 +145,10 @@ def test_argument_order(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
     test = df.iloc[0]
-    reversed = test[::-1]
+    reversed_ = test[::-1]
     # works b/c of even nr of parameters
-    assert (np.array(test) != np.array(reversed)).all()
-    assert transition.pdf(test) == transition.pdf(reversed)
+    assert (np.array(test) != np.array(reversed_)).all()
+    assert transition.pdf(test) == transition.pdf(reversed_)
 
 
 def test_score(transition: Transition):

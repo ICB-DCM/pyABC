@@ -169,8 +169,9 @@ class ABCSMC:
         self.parameter_priors = parameter_priors
 
         # sanity checks
-        assert len(self.models) == len(self.parameter_priors), \
-            "Number models and number parameter priors have to agree"
+        if len(self.models) != len(self.parameter_priors):
+            raise AssertionError(
+                "Number models and number parameter priors have to agree.")
 
         if distance_function is None:
             distance_function = PNormDistance()
