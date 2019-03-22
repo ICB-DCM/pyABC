@@ -5,10 +5,12 @@ from typing import List, Union
 from ..storage import History
 from .util import to_lists_or_default
 
+
 def plot_sample_numbers(
         histories: Union[List, History],
         labels: Union[List, str] = None,
-        rotation: int = 0):
+        rotation: int = 0,
+        size: tuple = None):
     """
     Plot required numbers of samples over all iterations.
     """
@@ -44,6 +46,9 @@ def plot_sample_numbers(
     ax.set_title("Total required samples")
     ax.set_ylabel("Samples")
     ax.set_xlabel("Run")
+    # set size
+    if size is not None:
+        fig.set_size_inches(size)
 
     fig.tight_layout()
 

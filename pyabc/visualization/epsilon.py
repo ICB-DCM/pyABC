@@ -1,17 +1,19 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from typing import Union, List
 import numpy as np
 
 from ..storage import History
-from .util import get_lists_or_default
+from .util import to_lists_or_default
 
 
 def plot_epsilons(
         histories: Union[List, History],
         labels: Union[List, str] = None,
-        scale: str = None):
+        scale: str = None,
+        size: tuple = None):
     # preprocess input
-    histories, labels = get_lists_or_default(histories, labels)
+    histories, labels = to_lists_or_default(histories, labels)
     if scale is None:
         scale = 'lin'
     
@@ -20,7 +22,8 @@ def plot_epsilons(
     # extract epsilons
     eps = []
     for history in histories:
-        eps.append(np.array(history.get_all_populations()['epsilon']))
+        # note: first entry is from calibration, thus must be discarded
+        eps.append(np.array(history.get_all_populations()['epsilon'][1:]))
 
     # scale
     if scale == 'log':
@@ -42,6 +45,14 @@ def plot_epsilons(
     else:
         ylabel = "Epsilon"
     ax.set_ylabel(ylabel)
-    ax.set_legend("Epsilon values")
+    ax.legend()
+    ax.set_title("Epsilon values")
+    # enforce integer ticks
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    # set size
+    if size is not None:
+        fig.set_size_inches(size)
+
+    fig.tight_layout()
 
     return ax
