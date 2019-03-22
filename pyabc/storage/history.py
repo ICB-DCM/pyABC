@@ -103,7 +103,7 @@ class History:
         self._engine = None
 
         # find id in database
-        self.id = self._pre_calculate_id()
+        self._id = self._find_latest_id()
 
     def db_file(self):
         f = self.db_identifier.split(":")[-1][3:]
@@ -143,17 +143,38 @@ class History:
         return runs
 
     @with_session
-    def _pre_calculate_id(self):
+    def _find_latest_id(self):
         """
         If there are analysis objects saved in the database already,
         the id of the latest appended one is returned.
-        This is because that is usually the run the user will be interested
-        in.
+        This is because that is usually the run the user will be
+        interested in.
         """
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
             return abcs[-1].id
         return None
+
+    @property
+    @with_session
+    def id(self):
+        return self._id
+
+    @id.setter
+    @with_session
+    def id(self, val):
+        """
+        Set id to `val`. If `val` is None, self._find_latest_id()
+        is employed to try to find one.
+        """
+        if val is None:
+            val = self._find_latest_id()
+        else:
+            if val not in \
+                    [obj.id for obj in self._session.query(ABCSMC).all()]:
+                raise ValueError(
+                    f"Specified id {val} does not exist in database.")
+        self._id = val
 
     @with_session
     def alive_models(self, t: int = None) -> List:
