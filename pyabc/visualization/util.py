@@ -1,17 +1,16 @@
-def get_histories_and_ids(histories, ids=None):
+from ..storage import History
+
+
+def to_lists_or_default(histories, labels=None):
     """
-    Make sure both are lists of the same length.
-    If ids is None,  
+    Interpret input using default values, and convert to lists.
     """
     if isinstance(histories, History):
         histories = [histories]
-    n_history = len(histories)
-    if ids is None:
-        ids = [None] * n_history
-    n_id = len(ids)
-    if n_history == 1 and n_id > 1:
-        histories =  [histories[0]] * n_id
-    if n_id == 1 and n_history > 1:
-        ids = [ids[0]] * n_history
 
-    return histories, ids
+    if isinstance(labels, str):
+        labels = [labels]
+    elif labels is None:
+        labels = ["History " + str(j) for j in range(n_history)]
+
+    return histories, labels
