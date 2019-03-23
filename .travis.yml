@@ -37,7 +37,8 @@ install:
 # run tests
 
 script:
-  - travis_wait 30 python -m pytest --cov=pyabc test/
+  - travis_wait 30 python -m pytest --cov=pyabc test/test_*
+  - travis_wait 10 xvfb-run -a python -m pytest --cov=pyabc --cov-append test/visualization/test_*
 
 after_success:
   - codecov
