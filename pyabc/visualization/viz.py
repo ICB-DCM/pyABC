@@ -8,23 +8,6 @@ import pickle
 import pymc3
 
 
-limits = {
-    'p_infectCC': (-10, -2),
-    'coupling': (-6, -1),
-    'p_infectDIFF': (-9, -2),
-    'pII': (-4, -2),
-    'degrE2': (-2, 1)
-}
-
-true_pars = {
-    'p_infectCC': np.log10(2e-7),
-    'coupling': np.log10(0.01),
-    'p_infectDIFF': np.log10(3.16e-5),
-    'pII': np.log10(0.001584893),
-    'degrE2': np.log10(0.3)
-}
-
-
 def resample(arr, w, n_resampled):
     w = w/ np.sum(w)
     n_par = len(w)  # = len(arr)
@@ -151,14 +134,3 @@ def viz_samples(label, history):
     plt.xlabel("Generation t")
     plt.ylabel("Log(#Samples)")
     plt.savefig(label + "_samples")
-
-
-db_file = "sqlite:///results_20190304/hcv_sili_20190304.db"
-#db_file = "sqlite:///results_exp29d/Exp29D.db"
-history = pyabc.History(db_file)
-
-viz_kdes("viz", history)
-viz_errorbars("viz", history, list(true_pars.keys()))
-viz_quantiles("viz", history, list(true_pars.keys()))
-viz_eps("viz", history)
-viz_samples("viz", history)
