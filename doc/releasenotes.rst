@@ -8,6 +8,13 @@ Release Notes
 ..........
 
 
+0.9.9 (2019-03-23)
+------------------
+
+* Extend visualization routines: Add histogram, sample number, epsilon
+  trajectory, and credible interval plots.
+
+
 0.9.8 (2019-02-21)
 ------------------
 
