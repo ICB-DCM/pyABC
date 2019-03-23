@@ -85,6 +85,7 @@ def _apply_scale(eps, scale):
         raise ValueError(f"Scale {scale} must be one of lin, log, log10.")
     return eps
 
+
 def _get_ylabel(scale):
     """
     Get corect y axis label.

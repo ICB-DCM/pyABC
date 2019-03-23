@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from ..storage import History
@@ -182,7 +181,8 @@ def plot_histogram_matrix_lowlevel(
     par_names = list(df.columns.values)
 
     # create new figure
-    fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par, sharex=False, sharey=False)
+    fig, arr_ax = plt.subplots(
+        nrows=n_par, ncols=n_par, sharex=False, sharey=False)
 
     def scatter(x, y, ax):
         ax.scatter(x, y, color="k")

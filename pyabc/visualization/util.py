@@ -12,7 +12,7 @@ def to_lists_or_default(histories, labels=None):
     if isinstance(labels, str):
         labels = [labels]
     elif labels is None:
-        labels = ["History " + str(j) for j in range(n_history)]
+        labels = ["History " + str(j) for j in range(len(histories))]
 
     if len(histories) != len(labels):
         raise ValueError("The lengths of histories and labels do not match.")

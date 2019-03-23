@@ -1,11 +1,10 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from typing import Union, List
+from typing import List
 import numpy as np
 
 from ..storage import History
 from ..weighted_statistics import weighted_quantile
-from .util import to_lists_or_default
 
 
 def plot_confidence_intervals(
@@ -36,7 +35,8 @@ def plot_confidence_intervals(
     # prepare matrices
     cis = np.empty((n_par, n_pop, 2 * n_confidence))
     median = np.empty((n_par, n_pop))
-    if show_mean: mean = np.empty((n_par, n_pop))
+    if show_mean:
+        mean = np.empty((n_par, n_pop))
 
     # fill matrices
     # iterate over populations
@@ -51,7 +51,7 @@ def plot_confidence_intervals(
             median[i_par, t] = compute_quantile(vals, w, 0.5)
             # mean
             if show_mean:
-                mean[i_par, t] = np.sum(weights * vals)
+                mean[i_par, t] = np.sum(w * vals)
             # confidences
             for i_c, confidence in enumerate(confidences):
                 lb, ub = compute_confidence_interval(
@@ -64,17 +64,19 @@ def plot_confidence_intervals(
         for i_c, confidence in reversed(list(enumerate(confidences))):
 
             ax.errorbar(
-                x = range(0, n_pop),
-                y = median[i_par].flatten(),
-                yerr = [median[i_par] - cis[i_par, :, i_c],
-                        cis[i_par, :, -1 - i_c] - median[i_par]],
-                capsize = (5.0 / n_confidence) * (i_c + 1),
-                label = "{:.2f}".format(confidence))
+                x=range(0, n_pop),
+                y=median[i_par].flatten(),
+                yerr=[median[i_par] - cis[i_par, :, i_c],
+                      cis[i_par, :, -1 - i_c] - median[i_par]],
+                capsize=(5.0 / n_confidence) * (i_c + 1),
+                label="{:.2f}".format(confidence))
         ax.set_title(f"Parameter {par}")
         ax.legend()
 
     # format
     arr_ax[-1].set_xlabel("Population t")
+    for ax in arr_ax:
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     fig.tight_layout()
 
 
