@@ -13,6 +13,7 @@ Release Notes
 
 * Extend visualization routines: Add histogram, sample number, epsilon
   trajectory, and credible interval plots.
+* Test visualization routines on travis.
 
 
 0.9.8 (2019-02-21)
