@@ -70,4 +70,5 @@ def test_kdes():
 
 def test_confidence_intervals():
     pyabc.visualization.plot_confidence_intervals(histories[0])
-    pyabc.visualization.plot_confidence_intervals(histories[0], confidences=[0.2, 0.5, 0.9])
+    pyabc.visualization.plot_confidence_intervals(
+        histories[0], confidences=[0.2, 0.5, 0.9])
