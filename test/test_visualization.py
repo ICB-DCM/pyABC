@@ -46,3 +46,23 @@ def test_epsilons():
     pyabc.visualization.plot_sample_numbers(histories, labels)
     with pytest.raises(ValueError):
         pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
+
+
+def test_sample_numbers():
+    pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
+
+
+def test_histograms():
+    pyabc.visualization.plot_histogram_1d(histories[0], 'p0', bins=20)
+    pyabc.visualization.plot_histogram_2d(histories[0], 'p0', 'p1')
+    pyabc.visualization.plot_histogram_matrix(histories[0], bins=1000)
+
+
+def test_kdes():
+    df, w = histories[0].get_distribution(m=0, t=None)
+    pyabc.visualization.plot_kde_1d(
+        df, w, x='p0',
+        xmin=limits['p0'][0], xmax=limits['p0'][1],
+        label="PDF")
+    pyabc.visualization.plot_kde_2d(df, w, x='p0', y='p1')
+    pyabc.visualization.plot_kde_matrix(df, w)
