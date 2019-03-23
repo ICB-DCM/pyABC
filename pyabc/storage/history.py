@@ -169,11 +169,9 @@ class History:
         """
         if val is None:
             val = self._find_latest_id()
-        else:
-            if val not in \
-                    [obj.id for obj in self._session.query(ABCSMC).all()]:
-                raise ValueError(
-                    f"Specified id {val} does not exist in database.")
+        elif val not in [obj.id for obj in self._session.query(ABCSMC).all()]:
+            raise ValueError(
+                f"Specified id {val} does not exist in database.")
         self._id = val
 
     @with_session
