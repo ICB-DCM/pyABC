@@ -31,6 +31,8 @@ def plot_confidence_intervals(
     # prepare axes
     fig, arr_ax = plt.subplots(
         nrows=n_par, ncols=1, sharex=False, sharey=False)
+    if n_par == 1:
+        arr_ax = [arr_ax]
 
     # prepare matrices
     cis = np.empty((n_par, n_pop, 2 * n_confidence))
@@ -62,7 +64,6 @@ def plot_confidence_intervals(
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
         for i_c, confidence in reversed(list(enumerate(confidences))):
-
             ax.errorbar(
                 x=range(0, n_pop),
                 y=median[i_par].flatten(),
