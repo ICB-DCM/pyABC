@@ -13,7 +13,7 @@ automatically find a visually good level of smoothness.
 
 """
 import numpy as np
-from .transition import MultivariateNormalTransition
+from ..transition import MultivariateNormalTransition
 import matplotlib.pyplot as plt
 import pandas as pd
 

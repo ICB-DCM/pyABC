@@ -49,6 +49,7 @@ from .transition import (MultivariateNormalTransition,
 from .populationstrategy import (AdaptivePopulationSize,
                                  ConstantPopulationSize)
 from .transition import GridSearchCV
+from . import visualization
 from .version import __version__  # noqa: F401
 
 __all__ = [
@@ -94,7 +95,8 @@ __all__ = [
     "Model",
     "SimpleModel",
     "IntegratedModel",
-    "History"
+    "History",
+    "visualization",
 ]
 
 

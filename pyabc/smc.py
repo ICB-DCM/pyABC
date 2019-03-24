@@ -371,8 +371,7 @@ class ABCSMC:
         """
         Called once in new() and load(). This function either, if available,
         takes the last population from the history, or generates a
-        sample population from the prior,
-         and calls the initialize() functions
+        sample population from the prior, and calls the initialize() functions
         of the distance function and the epsilon, if respectively the
         require_initialize flags are set (unset the respective flags if no
         initialization is required for the first population).
