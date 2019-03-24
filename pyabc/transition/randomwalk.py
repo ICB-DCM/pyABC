@@ -23,8 +23,10 @@ class DiscreteRandomWalkTransition(Transition):
     """
 
     def __init__(self,
-            n_steps: int = 1,
-            p_l: float = 1./3, p_r: float = 1./3, p_c: float = 1./3):
+                 n_steps: int = 1,
+                 p_l: float = 1. / 3,
+                 p_r: float = 1. / 3,
+                 p_c: float = 1. / 3):
         self.n_steps = n_steps
         self.p_l = p_l
         self.p_r = p_r
@@ -78,7 +80,7 @@ def perform_random_walk(dim, n_steps, p_l, p_r, p_c):
 
 def calculate_single_random_walk_probability(
         start, end, n_steps,
-        p_l: float = 1./3, p_r: float = 1./3, p_c: float = 1./3):
+        p_l: float = 1. / 3, p_r: float = 1. / 3, p_c: float = 1. / 3):
     """
     Calculate the probability of getting from state `start` to state `end`
     in `n_steps` steps, where the probabilities for a left, right, and
@@ -91,7 +93,7 @@ def calculate_single_random_walk_probability(
         for n_r in range(max(int(step_j), 0), n_steps + 1):
             n_l = n_r - step_j
             n_c = n_steps - n_r - n_l
-            p_j +=  stats.multinomial.pmf(
+            p_j += stats.multinomial.pmf(
                 x=[n_l, n_r, n_c], n=n_steps, p=[p_l, p_r, p_c])
         p *= p_j
     return p
