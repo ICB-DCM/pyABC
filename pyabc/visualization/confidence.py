@@ -14,7 +14,23 @@ def plot_confidence_intervals(
         confidences: List = None,
         show_mean: bool = False,
         size: tuple = None,):
+    """
+    Plot confidence intervals over time.
 
+    Parameters
+    ----------
+
+    history: History
+        The history to extract data from.
+    m: int, optional (default = 0)
+        The id of the model to plot for.
+    par_names: List of str, optional
+        The parameter to plot for. If None, then all parameters are used.
+    show_mean: bool, optional (default = False)
+        Whether to show the mean apart from the median as well.
+    size: tuple of float
+        Size of the plot.
+    """
     if confidences is None:
         confidences = [0.95]
     confidences = sorted(confidences)
@@ -82,6 +98,15 @@ def plot_confidence_intervals(
 
 
 def compute_confidence_interval(vals, weights, confidence: float = 0.95):
+    """
+    Compute confidence interval to confidence level `confidence` for points
+    `vals` associated to weights `weights`.
+
+    Returns
+    -------
+    lb, ub: tuple of float
+        Lower and upper bound of the confidence interval.
+    """
     if confidence <= 0.0 or confidence >= 1.0:
         raise ValueError(
             f"Confidence {confidence} must be in the interval (0.0, 1.0).")
@@ -93,4 +118,8 @@ def compute_confidence_interval(vals, weights, confidence: float = 0.95):
 
 
 def compute_quantile(vals, weights, alpha):
+    """
+    Compute `alpha`-quantile for points `vals` associated to weights
+    `weights`.
+    """
     return weighted_quantile(vals, weights, alpha=alpha)
