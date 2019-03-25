@@ -256,7 +256,7 @@ class History:
         return pars, w_arr
 
     @with_session
-    def model_names(self, t: int = History.PRE_TIME):
+    def model_names(self, t: int = PRE_TIME):
         """
         Get the names of alive models for population `t`.
 
@@ -362,7 +362,7 @@ class History:
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
             population_strategy=population_strategy_json_str)
-        
+
         # create and append dummy population
         population = Population(
             t=History.PRE_TIME,
