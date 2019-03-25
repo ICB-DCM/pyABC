@@ -169,8 +169,9 @@ class ABCSMC:
         self.parameter_priors = parameter_priors
 
         # sanity checks
-        assert len(self.models) == len(self.parameter_priors), \
-            "Number models and number parameter priors have to agree"
+        if len(self.models) != len(self.parameter_priors):
+            raise AssertionError(
+                "Number models and number parameter priors have to agree.")
 
         self.distance_function = to_distance(distance_function)
 
@@ -370,8 +371,7 @@ class ABCSMC:
         """
         Called once in new() and load(). This function either, if available,
         takes the last population from the history, or generates a
-        sample population from the prior,
-         and calls the initialize() functions
+        sample population from the prior, and calls the initialize() functions
         of the distance function and the epsilon, if respectively the
         require_initialize flags are set (unset the respective flags if no
         initialization is required for the first population).
@@ -398,9 +398,8 @@ class ABCSMC:
             # create dataframe from weights and new distances
             weights, sum_stats = self._get_initial_samples(t)
             rows = []
-            for i in range(len(weights)):
-                weight = weights[i]
-                distance = distance_to_ground_truth(sum_stats[i])
+            for weight, sum_stat in zip(weights, sum_stats):
+                distance = distance_to_ground_truth(sum_stat)
                 rows.append({'distance': distance,
                              'w': weight})
             weighted_distances = pd.DataFrame(rows)

@@ -92,7 +92,7 @@ class DistanceFunction(ABC):
             The Sampler used in ABCSMC.
         """
 
-    def update(self,
+    def update(self,  # pylint: disable=R0201
                t: int,
                all_sum_stats: List[dict]) -> bool:
         """

@@ -58,10 +58,10 @@ class SGE:
         It this file does not exist a tmp directory within the user home
         directory is created.
 
-    memory: str
-        Ram requested by each job, e.g. "10G"
+    memory: str, optional (default = '3G')
+        Ram requested by each job, e.g. '10G'.
 
-    time_h: int
+    time_h: int (default = 100)
         Job run time in hours.
 
     python_executable_path: str or None
@@ -77,9 +77,9 @@ class SGE:
         File to which stdout messages from workers are stored
         If set to None, a file within the tmp_directory is used.
 
-    parallel_environment: str
+    parallel_environment: str, optional (default = 'map')
         The SGE environment. (This is what is passed to the -pe option
-        in the qsub script)
+        in the qsub script).
 
     name: str
         A name for the job.
@@ -87,17 +87,15 @@ class SGE:
     queue: str
         The SGE queue.
 
-    priority: int
-        SGE job priority. A value between -1000 and 0
-        Default: -500
-
+    priority: int, optional.
+        SGE job priority. A value between -1000 and 0.
         Note that a priority of 0 automatically enables the reservation flag.
 
-    num_threads: int, default = 1
+    num_threads: int, optional (default = 1)
         Number of threads for each worker.
         This also sets the environment variable MKL_NUM_THREADS,
         OMP_NUM_THREADS to the
-        sepcified number to handle jobs which use OpenMP etc. correctly
+        specified number to handle jobs which use OpenMP etc. correctly.
 
     execution_context: \
     :class:`DefaultContext \
@@ -109,11 +107,11 @@ class SGE:
 
         Any context manager can be passed here.
         The ``__enter__`` method is called before evaluating the function on
-        the cluster
+        the cluster.
         The ``__exit__`` method directly after the function run finished.
 
-    chunk_size: int, default=1
-        nr of tasks executed within one job
+    chunk_size: int, optional (default = 1)
+        nr of tasks executed within one job.
 
             .. warning::
 
@@ -126,7 +124,7 @@ class SGE:
     Returns
     -------
     sge: SGE
-        configured sge mapper
+        The configured sge mapper.
     """
 
     def __init__(self, tmp_directory: str = None, memory: str = '3G',
@@ -176,7 +174,7 @@ class SGE:
             print("Warning: Could not find SGE installation.", file=sys.stderr)
 
         # python interpreter which executes the jobs
-        if type(time_h) is not int:
+        if not isinstance(time_h, int):
             raise Exception('Time should be an integer hour')
         if python_executable_path is None:
             python_executable_path = sys.executable

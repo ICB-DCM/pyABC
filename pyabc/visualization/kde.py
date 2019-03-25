@@ -1,19 +1,14 @@
 """
-Visualizations
---------------
-
-Helper functions to visualize results of ABCSMC runs.
-
 To plot densities from the weighted importance samples, the visualization
 routines employ a kernel density estimate. Note that this can "over-smoothen"
 so that local structure is lost. If this could be the case, it makes sense
 to in the argument `kde` reduce the `scaling` in the default
 MultivariateNormalTransition(), or to replace it by a GridSearchCV() to
 automatically find a visually good level of smoothness.
-
 """
+
 import numpy as np
-from .transition import MultivariateNormalTransition
+from ..transition import MultivariateNormalTransition
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -122,7 +117,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     """
     x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx, kde=kde)
     if ax is None:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")

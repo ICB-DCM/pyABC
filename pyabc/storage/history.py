@@ -103,7 +103,7 @@ class History:
         self._engine = None
 
         # find id in database
-        self.id = self._pre_calculate_id()
+        self._id = self._find_latest_id()
 
     def db_file(self):
         f = self.db_identifier.split(":")[-1][3:]
@@ -143,17 +143,36 @@ class History:
         return runs
 
     @with_session
-    def _pre_calculate_id(self):
+    def _find_latest_id(self):
         """
         If there are analysis objects saved in the database already,
         the id of the latest appended one is returned.
-        This is because that is usually the run the user will be interested
-        in.
+        This is because that is usually the run the user will be
+        interested in.
         """
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
             return abcs[-1].id
         return None
+
+    @property
+    @with_session
+    def id(self):
+        return self._id
+
+    @id.setter
+    @with_session
+    def id(self, val):
+        """
+        Set id to `val`. If `val` is None, self._find_latest_id()
+        is employed to try to find one.
+        """
+        if val is None:
+            val = self._find_latest_id()
+        elif val not in [obj.id for obj in self._session.query(ABCSMC).all()]:
+            raise ValueError(
+                f"Specified id {val} does not exist in database.")
+        self._id = val
 
     @with_session
     def alive_models(self, t: int = None) -> List:
@@ -228,8 +247,9 @@ class History:
         pars = df.pivot("id", "name", "value").sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
-        assert w_arr.size == 0 or np.isclose(w_arr.sum(), 1), \
-            "weight not close to 1, w.sum()={}".format(w_arr.sum())
+        if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
+            raise AssertionError(
+                "Weight not close to 1, w.sum()={}".format(w_arr.sum()))
         return pars, w_arr
 
     @with_session
@@ -660,18 +680,35 @@ class History:
         else:
             t = int(t)
 
-        query = (self._session.query(Sample.distance, Particle.w, Model.m)
-                 .join(Particle)
-                 .join(Model).join(Population).join(ABCSMC)
-                 .filter(ABCSMC.id == self.id)
-                 .filter(Population.t == t))
-        df = pd.read_sql_query(query.statement, self._engine)
+        models = (self._session.query(Model)
+                  .join(Population).join(ABCSMC)
+                  .filter(ABCSMC.id == self.id)
+                  .filter(Population.t == t)
+                  .options(
+                      subqueryload(Model.particles)
+                      .subqueryload(Particle.samples))
+                  .all())
 
-        model_probabilities = self.get_model_probabilities(t).reset_index()
-        df_weighted = df.merge(model_probabilities)
-        df_weighted["w"] *= df_weighted["p"]
+        weights = []
+        distances = []
+        for model in models:
+            for particle in model.particles:
+                weight = particle.w * model.p_model
+                for sample in particle.samples:
+                    weights.append(weight)
+                    distances.append(sample.distance)
 
-        return df_weighted
+        # query = (self._session.query(Sample.distance, Particle.w, Model.m)
+        #         .join(Particle)
+        #         .join(Model).join(Population).join(ABCSMC)
+        #         .filter(ABCSMC.id == self.id)
+        #         .filter(Population.t == t))
+        # df = pd.read_sql_query(query.statement, self._engine)
+        # model_probabilities = self.get_model_probabilities(t).reset_index()
+        # df_weighted = df.merge(model_probabilities)
+        # df_weighted["w"] *= df_weighted["p"]
+
+        return pd.DataFrame({'distance': distances, 'w': weights})
 
     @with_session
     def get_nr_particles_per_population(self) -> pd.Series:

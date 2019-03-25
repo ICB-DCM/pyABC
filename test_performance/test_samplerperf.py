@@ -122,7 +122,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
 
     # Evaluate the model probabililties
-    mp = history.get_model_probabilities(history.max_t)
+    history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
         res = st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
@@ -135,4 +135,4 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized
                                               + p2_expected_unnormalized)
     assert history.max_t == nr_populations-1
-    # the next line only tests of we obtain correct numerical types
+    # the next line only tests if we obtain correct numerical types

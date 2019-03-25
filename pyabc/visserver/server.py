@@ -64,7 +64,7 @@ def abc_detail(abc_id):
     abc = ABCInfo(history.get_abc())
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
-    model_probabilities.columns = list(map(lambda x: "{}".format(x),
+    model_probabilities.columns = list(map("{}".format,
                                            model_probabilities.columns))
     model_probabilities = model_probabilities.reset_index()
     if len(model_probabilities) > 0:
@@ -186,7 +186,3 @@ def run_app(db, debug, port):
     history = History("sqlite:///" + db)
     app.config["HISTORY"] = history
     app.run(debug=debug, port=port)
-
-
-if __name__ == '__main__':
-    run_app()
