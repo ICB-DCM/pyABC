@@ -8,12 +8,14 @@ Release Notes
 ..........
 
 
-0.9.9 (2019-03-23)
+0.9.9 (2019-03-25)
 ------------------
 
 * Extend visualization routines: Add histogram, sample number, epsilon
   trajectory, and credible interval plots.
 * Test visualization routines on travis.
+* Fix problem with the History.get_weighted_distances function after update to
+  sqlalchemy>=1.3.0.
 
 
 0.9.8 (2019-02-21)
