@@ -13,7 +13,11 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
     lieing on the grid of integers.
 
     .. note::
-        This transition does not adapt to the problem structure.
+        This transition does not adapt to the problem structure and thus has
+        potentially slow convergence.
+        Further, the transition does not satisfy proposal >> prior, so that
+        it is indeed not valid as an importance sampling distribution. This
+        can be overcome by selecting the number of steps as a random variable.
 
     Parameters
     ----------
