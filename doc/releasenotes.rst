@@ -11,6 +11,7 @@ Release Notes
 0.9.9 (2019-03-25)
 ------------------
 
+* Monitor code quality using codacy and codecov.
 * Extend visualization routines: Add histogram, sample number, epsilon
   trajectory, model probability, and credible interval plots.
 * Test visualization routines on travis.
