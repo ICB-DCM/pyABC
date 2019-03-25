@@ -680,18 +680,35 @@ class History:
         else:
             t = int(t)
 
-        query = (self._session.query(Sample.distance, Particle.w, Model.m)
-                 .join(Particle)
-                 .join(Model).join(Population).join(ABCSMC)
-                 .filter(ABCSMC.id == self.id)
-                 .filter(Population.t == t))
-        df = pd.read_sql_query(query.statement, self._engine)
+        models = (self._session.query(Model)
+                  .join(Population).join(ABCSMC)
+                  .filter(ABCSMC.id == self.id)
+                  .filter(Population.t == t)
+                  .options(
+                      subqueryload(Model.particles)
+                      .subqueryload(Particle.samples))
+                  .all())
 
-        model_probabilities = self.get_model_probabilities(t).reset_index()
-        df_weighted = df.merge(model_probabilities)
-        df_weighted["w"] *= df_weighted["p"]
+        weights = []
+        distances = []
+        for model in models:
+            for particle in model.particles:
+                weight = particle.w * model.p_model
+                for sample in particle.samples:
+                    weights.append(weight)
+                    distances.append(sample.distance)
 
-        return df_weighted
+        # query = (self._session.query(Sample.distance, Particle.w, Model.m)
+        #         .join(Particle)
+        #         .join(Model).join(Population).join(ABCSMC)
+        #         .filter(ABCSMC.id == self.id)
+        #         .filter(Population.t == t))
+        # df = pd.read_sql_query(query.statement, self._engine)
+        # model_probabilities = self.get_model_probabilities(t).reset_index()
+        # df_weighted = df.merge(model_probabilities)
+        # df_weighted["w"] *= df_weighted["p"]
+
+        return pd.DataFrame({'distance': distances, 'w': weights})
 
     @with_session
     def get_nr_particles_per_population(self) -> pd.Series:
