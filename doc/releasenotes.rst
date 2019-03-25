@@ -8,12 +8,13 @@ Release Notes
 ..........
 
 
-0.9.9 (2019-03-23)
+0.9.9 (2019-03-25)
 ------------------
 
 * Extend visualization routines: Add histogram, sample number, epsilon
   trajectory, model probability, and credible interval plots.
 * Test visualization routines on travis.
+* Add random walk based transition for discrete parameters.
 
 
 0.9.8 (2019-02-21)

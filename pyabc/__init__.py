@@ -44,7 +44,8 @@ from .model import (Model,
                     ModelResult,
                     IntegratedModel)
 from .transition import (MultivariateNormalTransition,
-                         LocalTransition)
+                         LocalTransition,
+                         DiscreteRandomWalkTransition)
 from .populationstrategy import (AdaptivePopulationSize,
                                  ConstantPopulationSize)
 from .transition import GridSearchCV
@@ -85,6 +86,7 @@ __all__ = [
     "AdaptivePopulationSize",
     "MultivariateNormalTransition",
     "LocalTransition",
+    "DiscreteRandomWalkTransition",
     "Acceptor",
     "SimpleAcceptor",
     "accept_use_current_time",
