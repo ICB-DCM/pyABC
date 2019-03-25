@@ -764,7 +764,8 @@ class History:
         """
         max_t = (self._session.query(func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
-        print(max_t)
+        if max_t is None:
+            max_t = History.PRE_TIME
         return max_t
 
     @property
