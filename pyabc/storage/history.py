@@ -310,13 +310,54 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def store_initial_data(self, ground_truth_model: int, options: dict,
+    def start_new_analysis(self,
+                           options: dict,
+                           distance_function_json_str: str,
+                           eps_function_json_str: str,
+                           population_strategy_json_str: str):
+        """
+        Register a new analysis and update `self.id` to it.
+
+        Parameters
+        ----------
+
+        options: dict
+            Of ABC metadata
+
+        distance_function_json_str: str
+            The distance function represented as json string
+
+        eps_function_json_str: str
+            The epsilon represented as json string
+
+        population_strategy_json_str: str
+            The population strategy represented as json string
+        """
+        # create new ABCSMC analysis object
+        abcsmc = ABCSMC(
+            json_parameters=str(options),
+            start_time=datetime.datetime.now(),
+            git_hash=git_hash(),
+            distance_function=distance_function_json_str,
+            epsilon_function=eps_function_json_str,
+            population_strategy=population_strategy_json_str)
+
+        # add to session
+        self._session.add(abcsmc)
+        self._session.commit()
+
+        # set own id
+        self.id = abcsmc.id
+
+        logger.info("Start {}".format(abcsmc))
+
+    @with_session
+    @internal_docstring_warning
+    def store_initial_data(self,
+                           ground_truth_model: int,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            model_names: List[str],
-                           distance_function_json_str: str,
-                           eps_function_json_str: str,
-                           population_strategy_json_str: str,
                            nr_samples_pre: int = 0):
         """
         Store the initial configuration data.
@@ -327,9 +368,6 @@ class History:
         ground_truth_model: int
             Nr of the ground truth model.
 
-        options: dict
-            Of ABC metadata
-
         observed_summary_statistics: dict
             the measured summary statistics
 
@@ -339,29 +377,14 @@ class History:
         model_names: List
             A list of model names
 
-        distance_function_json_str: str
-            The distance function represented as json string
-
-        eps_function_json_str: str
-            The epsilon represented as json string
-
-        population_strategy_json_str: str
-            The population strategy represented as json string
-
         nr_samples_pre: int, optional (default = 0)
             Number of samples used in the pre population.
         """
 
         # store ground truth to db
-
-        # create new ABCSMC analysis object
-        abcsmc = ABCSMC(
-            json_parameters=str(options),
-            start_time=datetime.datetime.now(),
-            git_hash=git_hash(),
-            distance_function=distance_function_json_str,
-            epsilon_function=eps_function_json_str,
-            population_strategy=population_strategy_json_str)
+        abcsmc = (self._session.query(ABCSMC)
+                  .filter(ABCSMC.id == self.id)
+                  .one())
 
         # create and append dummy population
         population = Population(
@@ -404,14 +427,8 @@ class History:
             if m != ground_truth_model:
                 population.models.append(Model(m=m, name=name, p_model=0))
 
-        # add to session
-        self._session.add(abcsmc)
+        # commit changes
         self._session.commit()
-
-        # set own id
-        self.id = abcsmc.id
-
-        logger.info("Start {}".format(abcsmc))
 
     @with_session
     def observed_sum_stat(self):

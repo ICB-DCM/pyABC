@@ -307,6 +307,14 @@ class ABCSMC:
         if gt_par is None:
             gt_par = {}
 
+        # start new analysis and save configuration data to database
+        # also sets history id
+        self.history.start_new_analysis(
+            meta_info,
+            self.distance_function.to_json(),
+            self.eps.to_json(),
+            self.population_strategy.to_json())
+
         # sample from prior to calibrate distance function and epsilon
         self._initialize_dist_and_eps(History.PRE_TIME + 1)
 
@@ -315,16 +323,12 @@ class ABCSMC:
         nr_samples_pre = 0 if not self._initial_weights \
             else len(self._initial_weights)
         self.history.store_initial_data(gt_model,
-                                        meta_info,
                                         observed_sum_stat,
                                         gt_par,
                                         model_names,
-                                        self.distance_function.to_json(),
-                                        self.eps.to_json(),
-                                        self.population_strategy.to_json(),
                                         nr_samples_pre=nr_samples_pre)
 
-        # return id generated in store_initial_data
+        # return id generated in start_new_analysis
         return self.history.id
 
     def load(self, db: str,
