@@ -3,10 +3,10 @@ import scipy.stats as stats
 import pandas as pd
 from typing import Union
 
-from .base import Transition
+from .base import DiscreteTransition
 
 
-class DiscreteRandomWalkTransition(Transition):
+class DiscreteRandomWalkTransition(DiscreteTransition):
     """
     This transition is based on a discrete random walk. This may be useful
     for discrete ordinal parameter distributions that can be described as
