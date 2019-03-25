@@ -317,7 +317,7 @@ class History:
                            distance_function_json_str: str,
                            eps_function_json_str: str,
                            population_strategy_json_str: str,
-                           nr_samples_pre: int):
+                           nr_samples_pre: int = 0):
         """
         Store the initial configuration data.
 
@@ -348,7 +348,7 @@ class History:
         population_strategy_json_str: str
             The population strategy represented as json string
 
-        nr_samples_pre: int
+        nr_samples_pre: int, optional (default = 0)
             Number of samples used in the pre population.
         """
 
@@ -764,6 +764,7 @@ class History:
         """
         max_t = (self._session.query(func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
+        print(max_t)
         return max_t
 
     @property
