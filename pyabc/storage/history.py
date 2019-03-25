@@ -89,7 +89,10 @@ class History:
         If there are analyses in the database already, this defaults
         to the latest id. Manually set if another run is wanted.
     """
+    # connection timeout
     DB_TIMEOUT = 120
+    # time of the calibration pre population
+    PRE_TIME = -1
 
     def __init__(self, db: str, stores_sum_stats: bool = True):
         """
@@ -253,7 +256,7 @@ class History:
         return pars, w_arr
 
     @with_session
-    def model_names(self, t: int = -1):
+    def model_names(self, t: int = History.PRE_TIME):
         """
         Get the names of alive models for population `t`.
 
@@ -314,7 +317,7 @@ class History:
                            distance_function_json_str: str,
                            eps_function_json_str: str,
                            population_strategy_json_str: str,
-                           nr_samples_calibration: int = 0):
+                           nr_samples_pre: int):
         """
         Store the initial configuration data.
 
@@ -345,6 +348,8 @@ class History:
         population_strategy_json_str: str
             The population strategy represented as json string
 
+        nr_samples_pre: int
+            Number of samples used in the pre population.
         """
 
         # store ground truth to db
@@ -360,7 +365,9 @@ class History:
         
         # create and append dummy population
         population = Population(
-            t=-1, nr_samples=nr_samples_calibration, epsilon=np.inf)
+            t=History.PRE_TIME,
+            nr_samples=nr_samples_pre,
+            epsilon=np.inf)
         abcsmc.populations.append(population)
 
         # add (ground truth or dummy) model
@@ -416,7 +423,7 @@ class History:
                      .join(Population)
                      .join(ABCSMC)
                      .filter(ABCSMC.id == self.id)
-                     .filter(Population.t == -1)
+                     .filter(Population.t == History.PRE_TIME)
                      .filter(Model.p_model == 1)
                      .all()
                      )
