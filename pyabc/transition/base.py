@@ -173,3 +173,9 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
                                       self.mean_cv)
         self.cv_estimate_ = res
         return res.n_estimated
+
+
+class DiscreteTransition(Transition):
+    """
+    This is a base class for discrete transition kernels.
+    """
