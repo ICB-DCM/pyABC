@@ -54,6 +54,10 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
         """
         Evaluate the probability mass function (PMF) at `x`.
         """
+        if not np.all(np.isclose(x,x.astype(int))):
+            raise ValueError(
+                f"Transition can only handle integer values, not fulfilled "
+                f"by x={x}.")
         x = x[self.X.columns]
         x = np.array(x)
         if len(x.shape) == 1:
