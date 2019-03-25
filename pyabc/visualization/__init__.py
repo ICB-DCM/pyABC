@@ -1,3 +1,11 @@
+"""
+Visualizations
+--------------
+
+Helper functions to visualize results of ABCSMC runs.
+
+"""
+
 from .kde import (
     plot_kde_1d,
     plot_kde_2d,
