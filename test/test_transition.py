@@ -1,17 +1,12 @@
-from pyabc.transition import (
-    NotEnoughParticles, Transition, DiscreteTransition)
-from pyabc import (
-    MultivariateNormalTransition, LocalTransition,
-    DiscreteRandomWalkTransition)
+from pyabc.transition import NotEnoughParticles, LocalTransition, Transition
+from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
 import pytest
 from pyabc import GridSearchCV
 
 
-@pytest.fixture(params=[LocalTransition,
-                        MultivariateNormalTransition,
-                        DiscreteRandomWalkTransition])
+@pytest.fixture(params=[LocalTransition, MultivariateNormalTransition])
 def transition(request):
     return request.param()
 
@@ -28,30 +23,15 @@ def data_single(n):
     return df, w
 
 
-def data_discrete(n):
-    df = pd.DataFrame({"a": np.random.randint(0, 100, n),
-                       "b": np.random.randint(0, 50, n)})
-    w = np.ones(len(df)) / len(df)
-    return df, w
-
-
-def data_single_discrete(n):
-    df = pd.DataFrame({"a": np.random.randint(0, 10, n)})
-    w = np.ones(len(df)) / len(df)
-    return df, w
-
-
 def test_rvs_return_type(transition: Transition):
-    df, w = data(20) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(20)
+    df, w = data(20)
     transition.fit(df, w)
     sample = transition.rvs()
     assert (sample.index == pd.Index(["a", "b"])).all()
 
 
 def test_pdf_return_types(transition: Transition):
-    df, w = data(20) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(20)
+    df, w = data(20)
     transition.fit(df, w)
     single = transition.pdf(df.iloc[0])
     multiple = transition.pdf(df)
@@ -60,9 +40,7 @@ def test_pdf_return_types(transition: Transition):
 
 
 def test_many_particles_single_par(transition: Transition):
-    df, w = data_single(20) \
-        if not isinstance(transition, DiscreteTransition) \
-        else data_single_discrete(20)
+    df, w = data_single(20)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
@@ -70,8 +48,7 @@ def test_many_particles_single_par(transition: Transition):
 def test_variance_estimate(transition: Transition):
     var_list = []
     for n in [20, 250]:
-        df, w = data(n) if not isinstance(transition, DiscreteTransition) \
-            else data_discrete(n)
+        df, w = data(n)
         transition.fit(df, w)
         var = transition.mean_cv()
         var_list.append(var)
@@ -81,8 +58,7 @@ def test_variance_estimate(transition: Transition):
 
 def test_variance_estimate_higher_n_than_sample(transition: Transition):
     n = 100
-    df, w = data(n) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(n)
+    df, w = data(n)
     transition.fit(df, w)
 
     var_list = []
@@ -95,8 +71,7 @@ def test_variance_estimate_higher_n_than_sample(transition: Transition):
 
 
 def test_variance_no_side_effect(transition: Transition):
-    df, w = data(60) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(60)
+    df, w = data(60)
     transition.fit(df, w)
     # very intrusive test. touches internals of m. not very nice.
     X_orig_id = id(transition.X)
@@ -131,37 +106,32 @@ def test_0_particles_fit(transition: Transition):
 
 def test_single_particle_fit(transition: Transition):
     # TODO define proper behavior
-    df, w = data(1) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(1)
+    df, w = data(1)
     transition.fit(df, w)
 
 
 def test_single_particle_required_nr_samples(transition: Transition):
     # TODO define proper behavior
-    df, w = data(1) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(1)
+    df, w = data(1)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
 
 def test_two_particles_fit(transition: Transition):
     # TODO define proper behavior
-    df, w = data(2) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(2)
+    df, w = data(2)
     transition.fit(df, w)
 
 
 def test_two_particles_required_nr_samples(transition: Transition):
     # TODO define proper behavior
-    df, w = data(2) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(2)
+    df, w = data(2)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
 
 def test_many_particles(transition: Transition):
-    df, w = data(20) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(20)
+    df, w = data(20)
     transition.fit(df, w)
     transition.required_nr_samples(.1)
 
@@ -172,8 +142,7 @@ def test_argument_order(transition: Transition):
     Order of parameter names is no guaranteed.
     The Transition kernel has to take care of the correct sorting.
     """
-    df, w = data(20) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(20)
+    df, w = data(20)
     transition.fit(df, w)
     test = df.iloc[0]
     reversed_ = test[::-1]
@@ -183,8 +152,7 @@ def test_argument_order(transition: Transition):
 
 
 def test_score(transition: Transition):
-    df, w = data(20) if not isinstance(transition, DiscreteTransition) \
-        else data_discrete(20)
+    df, w = data(20)
     transition.fit(df, w)
     transition.score(df, w)  # just call it
 
