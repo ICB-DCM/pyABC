@@ -9,7 +9,9 @@ import pytest
 from pyabc import GridSearchCV
 
 
-@pytest.fixture(params=[LocalTransition, MultivariateNormalTransition])
+@pytest.fixture(params=[LocalTransition,
+                        MultivariateNormalTransition,
+                        DiscreteRandomWalkTransition])
 def transition(request):
     return request.param()
 
@@ -34,7 +36,7 @@ def data_discrete(n):
 
 
 def data_single_discrete(n):
-    df = pd.DataFrame({"a": np.random.randint(0, 100, n)})
+    df = pd.DataFrame({"a": np.random.randint(0, 10, n)})
     w = np.ones(len(df)) / len(df)
     return df, w
 
