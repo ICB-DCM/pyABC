@@ -54,6 +54,14 @@ class DiscreteRandomWalkTransition(Transition):
         """
         Evaluate the probability mass function (PMF) at `x`.
         """
+        x = x[self.X.columns]
+        x = np.array(x)
+        if len(x.shape) == 1:
+            return self.pdf_single(x)
+        else:
+            return np.array([self.pdf_single(x_) for x_ in x])
+
+    def pdf_single(self, x):
         p = 0.0
         for start, weight in zip(self.X.values, self.w):
             # probability if started from start
