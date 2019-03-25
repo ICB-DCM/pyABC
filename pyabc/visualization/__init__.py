@@ -23,7 +23,8 @@ from .histogram import (
     plot_histogram_matrix_lowlevel)
 from .confidence import (
     plot_confidence_intervals)
-
+from .model_probabilities import (
+    plot_model_probabilities)
 
 __all__ = [
     "plot_kde_1d",
@@ -38,4 +39,5 @@ __all__ = [
     "plot_histogram_matrix",
     "plot_histogram_matrix_lowlevel",
     "plot_confidence_intervals",
+    "plot_model_probabilities",
 ]
