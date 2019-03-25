@@ -7,10 +7,10 @@ Welcome to pyABC's documentation!
    :target: https://pyabc.readthedocs.io/en/latest
 .. image:: https://api.codacy.com/project/badge/Grade/923a9ab160e6420b9fc468701be60a98
    :target: https://www.codacy.com/app/yannikschaelte/pyABC?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ICB-DCM/pyABC&amp;utm_campaign=Badge_Grade
+.. image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/ICB-DCM/pyABC
 .. image:: https://badge.fury.io/py/pyabc.svg
    :target: https://badge.fury.io/py/pyabc
-.. image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/ICB-DCM/pyABC
 
 :Release: |version|
 :Source code: https://github.com/icb-dcm/pyabc
