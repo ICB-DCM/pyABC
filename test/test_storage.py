@@ -35,8 +35,8 @@ def history(request):
         raise Exception(f"Bad database type for testing: {request.param}")
     model_names = ["fake_name_{}".format(k) for k in range(50)]
     h = History("sqlite://" + this_path)
-    h.store_initial_data(0, {}, {}, {}, model_names,
-                         "", "", '{"name": "pop_strategy_str_test"}')
+    h.start_new_analysis({}, "", "", '{"name": "pop_strategy_str_test"}')
+    h.store_initial_data(0, {}, {}, model_names, 0)
     yield h
     if request.param == "file":
         try:
@@ -264,7 +264,8 @@ def test_dataframe_storage_readout():
 
     def make_hist():
         h = History("sqlite:///" + path)
-        h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+        h.start_new_analysis({}, "", "", "")
+        h.store_initial_data(0, {}, {}, model_names, 0)
         return h
 
     pops = {}
@@ -356,7 +357,8 @@ def test_observed_sum_stats(history_uninitialized: History, gt_model):
                      "s2": 1.1,
                      "s3": np.array(.1),
                      "s4": np.random.rand(10)}
-    h.store_initial_data(gt_model, {}, obs_sum_stats, {}, [""], "", "", "")
+    h.start_new_analysis({}, "", "", "")
+    h.store_initial_data(gt_model, obs_sum_stats, {}, [""], 0)
 
     h2 = History(h.db_identifier)
     loaded_sum_stats = h2.observed_sum_stat()
@@ -374,7 +376,8 @@ def test_observed_sum_stats(history_uninitialized: History, gt_model):
 def test_model_name_load(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1", "m2", "m3"]
-    h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+    h.start_new_analysis({}, "", "", "")
+    h.store_initial_data(0, {}, {}, model_names, 0)
 
     h2 = History(h.db_identifier)
     model_names_loaded = h2.model_names()
@@ -384,7 +387,8 @@ def test_model_name_load(history_uninitialized: History):
 def test_model_name_load_no_gt_model(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1", "m2", "m3"]
-    h.store_initial_data(None, {}, {}, {}, model_names, "", "", "")
+    h.start_new_analysis({}, "", "", "")
+    h.store_initial_data(None, {}, {}, model_names, 0)
 
     h2 = History(h.db_identifier)
     model_names_loaded = h2.model_names()
@@ -394,7 +398,8 @@ def test_model_name_load_no_gt_model(history_uninitialized: History):
 def test_model_name_load_single_with_pop(history_uninitialized: History):
     h = history_uninitialized
     model_names = ["m1"]
-    h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+    h.start_new_analysis({}, "", "", "")
+    h.store_initial_data(0, {}, {}, model_names, 0)
     particle_list = [
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
