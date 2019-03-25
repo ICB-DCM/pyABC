@@ -313,7 +313,8 @@ class History:
                            model_names: List[str],
                            distance_function_json_str: str,
                            eps_function_json_str: str,
-                           population_strategy_json_str: str):
+                           population_strategy_json_str: str,
+                           nr_samples_calibration: int = 0):
         """
         Store the initial configuration data.
 
@@ -348,6 +349,7 @@ class History:
 
         # store ground truth to db
 
+        # create new ABCSMC analysis object
         abcsmc = ABCSMC(
             json_parameters=str(options),
             start_time=datetime.datetime.now(),
@@ -355,9 +357,13 @@ class History:
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
             population_strategy=population_strategy_json_str)
-        population = Population(t=-1, nr_samples=0, epsilon=0)
+        
+        # create and append dummy population
+        population = Population(
+            t=-1, nr_samples=nr_samples_calibration, epsilon=np.inf)
         abcsmc.populations.append(population)
 
+        # add (ground truth or dummy) model
         if ground_truth_model is not None:  # GT model given
             gt_model = Model(m=ground_truth_model,
                              p_model=1,
@@ -366,27 +372,38 @@ class History:
             gt_model = Model(m=None,
                              p_model=1,
                              name=None)
-
         population.models.append(gt_model)
+
+        # add a particle
         gt_part = Particle(w=1)
         gt_model.particles.append(gt_part)
 
+        # add ground truth parameter (or {})
         for key, value in ground_truth_parameter.items():
             gt_part.parameters.append(Parameter(name=key, value=value))
+
+        # add a sample
         sample = Sample(distance=0)
         gt_part.samples = [sample]
+
+        # add observed sum stats to sample
         sample.summary_statistics = [
             SummaryStatistic(name=key, value=value)
             for key, value in observed_summary_statistics.items()
         ]
 
+        # add all models not added so far
         for m, name in enumerate(model_names):
             if m != ground_truth_model:
                 population.models.append(Model(m=m, name=name, p_model=0))
 
+        # add to session
         self._session.add(abcsmc)
         self._session.commit()
+
+        # set own id
         self.id = abcsmc.id
+
         logger.info("Start {}".format(abcsmc))
 
     @with_session
