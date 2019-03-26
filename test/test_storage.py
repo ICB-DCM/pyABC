@@ -419,5 +419,14 @@ def test_population_to_df(history: History):
     assert len(df) == len(df_js)
 
 
+def test_update_nr_samples(history: History):
+    history.store_initial_data(None, {}, {}, {}, ["m0"], "", "", "")
+    pops = history.get_all_populations()
+    assert 0 == pops[pops['t'] == History.PRE_TIME]['samples'].values
+    history.update_nr_samples(History.PRE_TIME, 43)
+    pops = history.get_all_populations()
+    assert 43 == pops[pops['t'] == History.PRE_TIME]['samples'].values
+
+
 def test_pickle(history: History):
     pickle.dumps(history)
