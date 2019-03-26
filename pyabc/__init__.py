@@ -44,10 +44,12 @@ from .model import (Model,
                     ModelResult,
                     IntegratedModel)
 from .transition import (MultivariateNormalTransition,
-                         LocalTransition)
+                         LocalTransition,
+                         DiscreteRandomWalkTransition)
 from .populationstrategy import (AdaptivePopulationSize,
                                  ConstantPopulationSize)
 from .transition import GridSearchCV
+from . import visualization
 from .version import __version__  # noqa: F401
 
 __all__ = [
@@ -84,6 +86,7 @@ __all__ = [
     "AdaptivePopulationSize",
     "MultivariateNormalTransition",
     "LocalTransition",
+    "DiscreteRandomWalkTransition",
     "Acceptor",
     "SimpleAcceptor",
     "accept_use_current_time",
@@ -92,7 +95,8 @@ __all__ = [
     "Model",
     "SimpleModel",
     "IntegratedModel",
-    "History"
+    "History",
+    "visualization",
 ]
 
 

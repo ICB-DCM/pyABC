@@ -56,9 +56,9 @@ latest/task.html#quick-and-easy-parallelism)
         `True` for better performance.
     """
 
-    def __init__(self, map=map, mapper_pickles=False):
+    def __init__(self, map_=map, mapper_pickles=False):
         super().__init__()
-        self.map = map
+        self.map_ = map_
         self.pickle, self.unpickle = ((identity, identity)
                                       if mapper_pickles
                                       else (pickle.dumps, pickle.loads))
@@ -99,8 +99,7 @@ latest/task.html#quick-and-easy-parallelism)
         map_function = functools.partial(self.map_function,
                                          sample_simulate_accept)
 
-        counted_results = list(self.map(map_function,
-                                        [None] * n))
+        counted_results = list(self.map_(map_function, [None] * n))
         counted_results = filter(lambda x: not isinstance(x, Exception),
                                  counted_results)
         results, evals = zip(*counted_results)
