@@ -7,12 +7,14 @@ from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
                    ConstantPopulationSize)
-from pyabc.sampler import (SingleCoreSampler, MappingSampler,
+from pyabc.sampler import (SingleCoreSampler,
+                           MappingSampler,
                            MulticoreParticleParallelSampler,
                            DaskDistributedSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
                            RedisEvalParallelSamplerServerStarter)
+from pyabc.population import Particle
 
 
 def multi_proc_map(f, x):
@@ -53,6 +55,11 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
     def __init__(self, map_=None):
         batchsize = 20
         super().__init__(batchsize=batchsize)
+
+
+class WrongOutputSampler(SingleCoreSampler):
+    def sample_until_n_accepted(self, n, simulate_one):
+        return super().sample_until_n_accepted(n + 1, simulate_one)
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():
@@ -167,3 +174,14 @@ def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
     two_competing_gaussians_multiple_population(db_path,
                                                 redis_starter_sampler, 1)
+
+
+def test_wrong_output_sampler():
+    sampler = WrongOutputSampler()
+
+    def simulate_one():
+        return Particle(m=0, parameter={}, weight=0,
+                        accepted_sum_stats=[], accepted_distances=[],
+                        accepted=True)
+    with pytest.raises(AssertionError):
+        sampler.sample_until_n_accepted(5, simulate_one)
