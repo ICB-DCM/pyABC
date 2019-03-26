@@ -89,10 +89,7 @@ class History:
         If there are analyses in the database already, this defaults
         to the latest id. Manually set if another run is wanted.
     """
-    # connection timeout
     DB_TIMEOUT = 120
-    # time of the calibration pre population
-    PRE_TIME = -1
 
     def __init__(self, db: str, stores_sum_stats: bool = True):
         """
@@ -256,7 +253,7 @@ class History:
         return pars, w_arr
 
     @with_session
-    def model_names(self, t: int = PRE_TIME):
+    def model_names(self, t: int = -1):
         """
         Get the names of alive models for population `t`.
 
@@ -310,55 +307,13 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def start_new_analysis(self,
-                           options: dict,
-                           distance_function_json_str: str,
-                           eps_function_json_str: str,
-                           population_strategy_json_str: str):
-        """
-        Register a new analysis and update `self.id` to it.
-
-        Parameters
-        ----------
-
-        options: dict
-            Of ABC metadata
-
-        distance_function_json_str: str
-            The distance function represented as json string
-
-        eps_function_json_str: str
-            The epsilon represented as json string
-
-        population_strategy_json_str: str
-            The population strategy represented as json string
-        """
-        # create new ABCSMC analysis object
-        abcsmc = ABCSMC(
-            json_parameters=str(options),
-            start_time=datetime.datetime.now(),
-            git_hash=git_hash(),
-            distance_function=distance_function_json_str,
-            epsilon_function=eps_function_json_str,
-            population_strategy=population_strategy_json_str)
-
-        # add to session
-        self._session.add(abcsmc)
-        self._session.commit()
-
-        # set own id
-        self.id = abcsmc.id
-
-        logger.info("Start {}".format(abcsmc))
-
-    @with_session
-    @internal_docstring_warning
-    def store_initial_data(self,
-                           ground_truth_model: int,
+    def store_initial_data(self, ground_truth_model: int, options: dict,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            model_names: List[str],
-                           nr_samples_pre: int = 0):
+                           distance_function_json_str: str,
+                           eps_function_json_str: str,
+                           population_strategy_json_str: str):
         """
         Store the initial configuration data.
 
@@ -367,6 +322,9 @@ class History:
 
         ground_truth_model: int
             Nr of the ground truth model.
+
+        options: dict
+            Of ABC metadata
 
         observed_summary_statistics: dict
             the measured summary statistics
@@ -377,23 +335,29 @@ class History:
         model_names: List
             A list of model names
 
-        nr_samples_pre: int, optional (default = 0)
-            Number of samples used in the pre population.
+        distance_function_json_str: str
+            The distance function represented as json string
+
+        eps_function_json_str: str
+            The epsilon represented as json string
+
+        population_strategy_json_str: str
+            The population strategy represented as json string
+
         """
 
         # store ground truth to db
-        abcsmc = (self._session.query(ABCSMC)
-                  .filter(ABCSMC.id == self.id)
-                  .one())
 
-        # create and append dummy population
-        population = Population(
-            t=History.PRE_TIME,
-            nr_samples=nr_samples_pre,
-            epsilon=np.inf)
+        abcsmc = ABCSMC(
+            json_parameters=str(options),
+            start_time=datetime.datetime.now(),
+            git_hash=git_hash(),
+            distance_function=distance_function_json_str,
+            epsilon_function=eps_function_json_str,
+            population_strategy=population_strategy_json_str)
+        population = Population(t=-1, nr_samples=0, epsilon=0)
         abcsmc.populations.append(population)
 
-        # add (ground truth or dummy) model
         if ground_truth_model is not None:  # GT model given
             gt_model = Model(m=ground_truth_model,
                              p_model=1,
@@ -402,33 +366,28 @@ class History:
             gt_model = Model(m=None,
                              p_model=1,
                              name=None)
-        population.models.append(gt_model)
 
-        # add a particle
+        population.models.append(gt_model)
         gt_part = Particle(w=1)
         gt_model.particles.append(gt_part)
 
-        # add ground truth parameter (or {})
         for key, value in ground_truth_parameter.items():
             gt_part.parameters.append(Parameter(name=key, value=value))
-
-        # add a sample
         sample = Sample(distance=0)
         gt_part.samples = [sample]
-
-        # add observed sum stats to sample
         sample.summary_statistics = [
             SummaryStatistic(name=key, value=value)
             for key, value in observed_summary_statistics.items()
         ]
 
-        # add all models not added so far
         for m, name in enumerate(model_names):
             if m != ground_truth_model:
                 population.models.append(Model(m=m, name=name, p_model=0))
 
-        # commit changes
+        self._session.add(abcsmc)
         self._session.commit()
+        self.id = abcsmc.id
+        logger.info("Start {}".format(abcsmc))
 
     @with_session
     def observed_sum_stat(self):
@@ -440,7 +399,7 @@ class History:
                      .join(Population)
                      .join(ABCSMC)
                      .filter(ABCSMC.id == self.id)
-                     .filter(Population.t == History.PRE_TIME)
+                     .filter(Population.t == -1)
                      .filter(Model.p_model == 1)
                      .all()
                      )
@@ -781,8 +740,6 @@ class History:
         """
         max_t = (self._session.query(func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
-        if max_t is None:
-            max_t = History.PRE_TIME
         return max_t
 
     @property
