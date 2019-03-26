@@ -115,10 +115,14 @@ class SampleFactory:
 
 
 def wrap_sample(f):
+    """
+    Wrapper for Sampler.sample_until_n_accepted.
+    Checks whether the sampling output is valid.
+    """
     def sample_until_n_accepted(self, n, simulate_one):
         sample = f(self, n, simulate_one)
         if sample.n_accepted != n:
-            raise ValueError(
+            raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
         return sample
     return sample_until_n_accepted
