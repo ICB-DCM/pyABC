@@ -7,8 +7,7 @@ from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
                    ConstantPopulationSize)
-from pyabc.sampler import (Sample,
-                           SingleCoreSampler,
+from pyabc.sampler import (SingleCoreSampler,
                            MappingSampler,
                            MulticoreParticleParallelSampler,
                            DaskDistributedSampler,
@@ -179,6 +178,7 @@ def test_in_memory(redis_starter_sampler):
 
 def test_wrong_output_sampler():
     sampler = WrongOutputSampler()
+
     def simulate_one():
         return Particle(m=0, parameter={}, weight=0,
                         accepted_sum_stats=[], accepted_distances=[],
