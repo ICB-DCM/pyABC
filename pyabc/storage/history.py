@@ -411,7 +411,7 @@ class History:
         gt_part = Particle(w=1)
         gt_model.particles.append(gt_part)
 
-        # add ground trurh parameter (or {})
+        # add ground truth parameter (or {})
         for key, value in ground_truth_parameter.items():
             gt_part.parameters.append(Parameter(name=key, value=value))
 
