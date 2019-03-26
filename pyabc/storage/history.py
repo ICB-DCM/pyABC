@@ -21,7 +21,7 @@ logger = logging.getLogger("History")
 def with_session(f):
     @wraps(f)
     def f_wrapper(self: "History", *args, **kwargs):
-        logger.debug('Database access through "{}"'.format(f.__name__))
+        logger.debug(f"Database access through {f.__name__}")
         no_session = self._session is None and self._engine is None
         if no_session:
             self._make_session()
@@ -89,7 +89,10 @@ class History:
         If there are analyses in the database already, this defaults
         to the latest id. Manually set if another run is wanted.
     """
+    # session timeout
     DB_TIMEOUT = 120
+    # time before first population time
+    PRE_TIME = -1
 
     def __init__(self, db: str, stores_sum_stats: bool = True):
         """
@@ -254,7 +257,7 @@ class History:
         return pars, w_arr
 
     @with_session
-    def model_names(self, t: int = -1):
+    def model_names(self, t: int = PRE_TIME):
         """
         Get the names of alive models for population `t`.
 
@@ -328,33 +331,30 @@ class History:
         ----------
 
         ground_truth_model: int
-            Nr of the ground truth model.
+            Index of the ground truth model.
 
         options: dict
-            Of ABC metadata
+            Of ABC metadata.
 
         observed_summary_statistics: dict
-            the measured summary statistics
+            The measured summary statistics.
 
         ground_truth_parameter: dict
-            the ground truth parameters
+            The ground truth parameters.
 
         model_names: List
-            A list of model names
+            A list of model names.
 
         distance_function_json_str: str
-            The distance function represented as json string
+            The distance function represented as json string.
 
         eps_function_json_str: str
-            The epsilon represented as json string
+            The epsilon represented as json string.
 
         population_strategy_json_str: str
-            The population strategy represented as json string
-
+            The population strategy represented as json string.
         """
-
-        # store ground truth to db
-
+        # create a new ABCSMC analysis object
         abcsmc = ABCSMC(
             json_parameters=str(options),
             start_time=datetime.datetime.now(),
@@ -362,9 +362,48 @@ class History:
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
             population_strategy=population_strategy_json_str)
-        population = Population(t=-1, nr_samples=0, epsilon=0)
+
+        # add to session
+        self._session.add(abcsmc)
+        self._session.commit()
+
+        # set own id
+        self.id = abcsmc.id
+
+        # store pre population
+        self.store_pre_population(
+            ground_truth_model, observed_summary_statistics,
+            ground_truth_parameter, model_names)
+
+        # log
+        logger.info("Start {}".format(abcsmc))
+
+    @with_session
+    @internal_docstring_warning
+    def store_pre_population(self,
+                             ground_truth_model: int,
+                             observed_summary_statistics: dict,
+                             ground_truth_parameter: dict,
+                             model_names: List[str]):
+        """
+        Store a dummy pre-population containing some configuration data
+        and in particular some ground truth values.
+
+        For the parameters, see store_initial_data.
+        """
+        # extract analysis object
+        abcsmc = (self._session.query(ABCSMC)
+                  .filter(ABCSMC.id == self.id)
+                  .one())
+
+        # store  ground truth to db
+
+        # create and append dummy population
+        population = Population(
+            t=History.PRE_TIME, nr_samples=0, epsilon=np.inf)
         abcsmc.populations.append(population)
 
+        # add (ground truth or dummy) model
         if ground_truth_model is not None:  # GT model given
             gt_model = Model(m=ground_truth_model,
                              p_model=1,
@@ -373,28 +412,62 @@ class History:
             gt_model = Model(m=None,
                              p_model=1,
                              name=None)
-
         population.models.append(gt_model)
+
+        # add a particle
         gt_part = Particle(w=1)
         gt_model.particles.append(gt_part)
 
+        # add ground truth parameter (or {})
         for key, value in ground_truth_parameter.items():
             gt_part.parameters.append(Parameter(name=key, value=value))
+
+        # add a sample
         sample = Sample(distance=0)
         gt_part.samples = [sample]
+
+        # add observed sum stats to sample
         sample.summary_statistics = [
             SummaryStatistic(name=key, value=value)
             for key, value in observed_summary_statistics.items()
         ]
 
+        # add all models not added so far
         for m, name in enumerate(model_names):
             if m != ground_truth_model:
                 population.models.append(Model(m=m, name=name, p_model=0))
 
-        self._session.add(abcsmc)
+        # commit changes
         self._session.commit()
-        self.id = abcsmc.id
-        logger.info("Start {}".format(abcsmc))
+
+    @with_session
+    @internal_docstring_warning
+    def update_nr_samples(self, t: int = PRE_TIME, nr_samples: int = 0):
+        """
+        Update the number of samples used in iteration `t`. The default
+        time of `PRE_TIME` implies an update of the number of samples
+        used in calibration.
+
+        Parameters
+        ----------
+
+        t: int, optional (default = -1)
+            Time to update for.
+        nr_samples: int, optional (default = 0)
+            Number of samples reported.
+        """
+        # extract population
+        population = (self._session.query(Population)
+                      .join(ABCSMC)
+                      .filter(ABCSMC.id == self.id)
+                      .filter(Population.t == t)
+                      .one())
+
+        # update samples number
+        population.nr_samples = nr_samples
+
+        # commit changes
+        self._session.commit()
 
     @with_session
     def observed_sum_stat(self):
@@ -415,7 +488,7 @@ class History:
                      .join(Population)
                      .join(ABCSMC)
                      .filter(ABCSMC.id == self.id)
-                     .filter(Population.t == -1)
+                     .filter(Population.t == History.PRE_TIME)
                      .filter(Model.p_model == 1)
                      .all()
                      )
@@ -475,7 +548,6 @@ class History:
     def done(self):
         """
         Close database sessions and store end time of population.
-
         """
 
         abc_smc_simulation = (self._session.query(ABCSMC)
@@ -496,16 +568,16 @@ class History:
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
 
-        # prepare
-        abc_smc_simulation = (self._session.query(ABCSMC)
-                              .filter(ABCSMC.id == self.id)
-                              .one())
+        # extract analysis object
+        abcsmc = (self._session.query(ABCSMC)
+                  .filter(ABCSMC.id == self.id)
+                  .one())
 
         # store the population
         population = Population(t=t, nr_samples=nr_simulations,
                                 epsilon=current_epsilon)
 
-        abc_smc_simulation.populations.append(population)
+        abcsmc.populations.append(population)
 
         # iterate over models
         for m, model_population in store.items():

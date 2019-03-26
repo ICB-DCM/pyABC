@@ -15,6 +15,12 @@ Release Notes
   thresholds.
 
 
+0.9.10 (2019-03-27)
+-------------------
+
+* Save number of samples in calibration step in database.
+
+
 0.9.9 (2019-03-25)
 ------------------
 

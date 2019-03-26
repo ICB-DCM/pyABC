@@ -226,47 +226,6 @@ class ABCSMC:
         del state_red_dict['sampler']
         return state_red_dict
 
-    def load(self, db: str,
-             abc_id: int = 1,
-             observed_sum_stat: dict = None) -> int:
-        """
-        Load an ABC-SMC run for continuation.
-
-        Parameters
-        ----------
-
-        db: str
-            A SQLAlchemy database identifier pointing to the database from
-            which to continue a run.
-
-        abc_id: int, optional
-            The id of the ABC-SMC run in the database which is to be continued.
-            The default is 1. If more than one ABC-SMC run is stored, use
-            the ``abc_id`` parameter to indicate which one to continue.
-
-        observed_sum_stat: dict, optional
-            The observed summary statistics. This field should be used only if
-            the summary statistics cannot be reproduced exactly from the
-            database (in particular when they are no numpy or pandas objects,
-            e.g. when they were generated in R). If None, then the summary
-            statistics are read from the history.
-
-
-        .. note::
-
-            The epsilon's and distance function's initialize methods are
-            not called when an ABCSMC run is loaded.
-        """
-
-        self.history = History(db)
-        self.history.id = abc_id
-
-        if observed_sum_stat is None:
-            observed_sum_stat = self.history.observed_sum_stat()
-        self.x_0 = observed_sum_stat
-
-        return self.history.id
-
     def new(self, db: str,
             observed_sum_stat: dict = None,
             *,
@@ -367,6 +326,43 @@ class ABCSMC:
         # return id generated in store_initial_data
         return self.history.id
 
+    def load(self, db: str,
+             abc_id: int = 1,
+             observed_sum_stat: dict = None) -> int:
+        """
+        Load an ABC-SMC run for continuation.
+
+        Parameters
+        ----------
+
+        db: str
+            A SQLAlchemy database identifier pointing to the database from
+            which to continue a run.
+
+        abc_id: int, optional
+            The id of the ABC-SMC run in the database which is to be continued.
+            The default is 1. If more than one ABC-SMC run is stored, use
+            the ``abc_id`` parameter to indicate which one to continue.
+
+        observed_sum_stat: dict, optional
+            The observed summary statistics. This field should be used only if
+            the summary statistics cannot be reproduced exactly from the
+            database (in particular when they are no numpy or pandas objects,
+            e.g. when they were generated in R). If None, then the summary
+            statistics are read from the history.
+        """
+
+        self.history = History(db)
+        self.history.id = abc_id
+
+        # extract observed sum stats from input or history
+        if observed_sum_stat is None:
+            observed_sum_stat = self.history.observed_sum_stat()
+        self.x_0 = observed_sum_stat
+
+        # just return the id again
+        return self.history.id
+
     def _initialize_dist_eps_acc(self, t: int):
         """
         Called once at the start of run(). This function either, if available,
@@ -408,7 +404,7 @@ class ABCSMC:
                 rows.append({'distance': distance, 'w': weight})
             weighted_distances = pd.DataFrame(rows)
             return weighted_distances
-        
+
         def get_initial_population():
             population = self._get_initial_population(t)
             return population
@@ -421,6 +417,12 @@ class ABCSMC:
         self.acceptor.initialize(
             t, get_initial_weighted_distances, self.max_nr_populations,
             self.distance_function, self.x_0)
+
+        # update number of samples in calibration
+        if self.history.n_populations == 0:
+            nr_samples_pre = 0 if self._initial_population is None \
+                else len(self._initial_population)
+            self.history.update_nr_samples(History.PRE_TIME, nr_samples_pre)
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
