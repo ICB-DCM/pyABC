@@ -45,10 +45,15 @@ def np_from_bytes(arr_bytes):
     f.seek(0)
     arr = np.load(f)
     f.close()
-    for type_ in _primitive_types:
-        try:
-            if type_(arr) == arr:
-                return type_(arr)
-        except (TypeError, ValueError):
-            pass
+    if arr.size == 1:
+        # otherwise int, float conversion will error, and str conversion
+        # will work but raise a "FutureWarning: elementwise comparison failed"
+
+        # try to convert to primitive types
+        for type_ in _primitive_types:
+            try:
+                if type_(arr) == arr:
+                    return type_(arr)
+            except (TypeError, ValueError):
+                pass
     return arr
