@@ -11,8 +11,6 @@ Welcome to pyABC's documentation!
    :target: https://codecov.io/gh/ICB-DCM/pyABC
 .. image:: https://badge.fury.io/py/pyabc.svg
    :target: https://badge.fury.io/py/pyabc
-.. image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/ICB-DCM/pyABC
 
 :Release: |version|
 :Source code: https://github.com/icb-dcm/pyabc
