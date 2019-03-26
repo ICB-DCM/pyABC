@@ -50,7 +50,6 @@ Release Notes
 * Tidy up some pyabc.History methods.
 * pyabc.History.id set by default to the largest index (previously 0),
   corresponding to the latest inserted analysis.
->>>>>>> feature_recreate_population
 
 
 0.9.6 (2019-02-01)
