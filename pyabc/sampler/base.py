@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pyabc.population import Particle, Population
-from typing import List
+from typing import List, Callable
 
 
 class Sample:
@@ -140,7 +140,10 @@ class Sampler(ABC):
         return self.sample_factory()
 
     @abstractmethod
-    def sample_until_n_accepted(self, n, simulate_one) -> Sample:
+    def sample_until_n_accepted(
+            self,
+            n: int,
+            simulate_one: Callable) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
         population) of particles.
