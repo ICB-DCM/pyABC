@@ -18,8 +18,5 @@ class SingleCoreSampler(Sampler):
                 if new_sim.accepted:
                     break
         self.nr_evaluations_ = nr_simulations
-        if sample.n_accepted != n:
-            raise AssertionError(
-                "The number of accepted samples is not as expected.")
 
         return sample

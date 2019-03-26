@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from pyabc.population import Particle, Population
 from typing import List, Callable
 
@@ -114,7 +114,27 @@ class SampleFactory:
         return Sample(self.record_rejected)
 
 
-class Sampler(ABC):
+def wrap_sample(f):
+    def sample_until_n_accepted(self, n, simulate_one):
+        sample = f(self, n, simulate_one)
+        if sample.n_accepted != n:
+            raise ValueError(
+                f"Expected {n} but got {sample.n_accepted} acceptances.")
+        return sample
+    return sample_until_n_accepted
+
+
+class SamplerMeta(ABCMeta):
+    """
+    This metaclass handles the checking of sampling output values.
+    """
+
+    def __init__(cls, name, bases, attrs):
+        ABCMeta.__init__(cls, name, bases, attrs)
+        cls.sample_until_n_accepted = wrap_sample(cls.sample_until_n_accepted)
+
+
+class Sampler(ABC, metaclass=SamplerMeta):
     """
     Abstract Sampler base class.
 
