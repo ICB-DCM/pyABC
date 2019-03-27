@@ -81,7 +81,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, n, simulate_one):
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 

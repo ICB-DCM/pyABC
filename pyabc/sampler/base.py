@@ -119,8 +119,8 @@ def wrap_sample(f):
     Wrapper for Sampler.sample_until_n_accepted.
     Checks whether the sampling output is valid.
     """
-    def sample_until_n_accepted(self, n, simulate_one):
-        sample = f(self, n, simulate_one)
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
+        sample = f(self, n, simulate_one, all_accepted)
         if sample.n_accepted != n:
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
@@ -175,7 +175,8 @@ class Sampler(ABC, metaclass=SamplerMeta):
     def sample_until_n_accepted(
             self,
             n: int,
-            simulate_one: Callable) -> Sample:
+            simulate_one: Callable,
+            all_accepted: bool = False) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
         population) of particles.

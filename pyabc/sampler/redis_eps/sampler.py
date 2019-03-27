@@ -69,7 +69,7 @@ class RedisEvalParallelSampler(Sampler):
         """
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
-    def sample_until_n_accepted(self, n, simulate_one):
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
         # open pipeline
         pipeline = self.redis.pipeline()
 
