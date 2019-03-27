@@ -176,7 +176,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     assert pops[pops['t'] == History.PRE_TIME]['samples'].values > 0
     # our samplers should not have overhead in calibration
     assert pops[pops['t'] == History.PRE_TIME]['samples'].values \
-      == pop_size.nr_particles
+        == pop_size.nr_particles
 
 
 def test_in_memory(redis_starter_sampler):
