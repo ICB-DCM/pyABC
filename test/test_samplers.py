@@ -177,8 +177,8 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     pre_evals = pops[pops['t'] == History.PRE_TIME]['samples'].values
     assert pre_evals >= pop_size.nr_particles
     # our samplers should not have overhead in calibration, except batching
-    batch_size = sampler.batch_size if hasattr(sampler, 'batch_size') else 0
-    assert pre_evals <= pop_size.nr_particles + batch_size
+    batch_size = sampler.batch_size if hasattr(sampler, 'batch_size') else 1
+    assert pre_evals <= pop_size.nr_particles + batch_size - 1
 
 
 def test_in_memory(redis_starter_sampler):
