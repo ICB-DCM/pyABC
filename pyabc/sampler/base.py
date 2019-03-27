@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from pyabc.population import Particle, Population
-from typing import List
+from typing import List, Callable
 
 
 class Sample:
@@ -114,7 +114,31 @@ class SampleFactory:
         return Sample(self.record_rejected)
 
 
-class Sampler(ABC):
+def wrap_sample(f):
+    """
+    Wrapper for Sampler.sample_until_n_accepted.
+    Checks whether the sampling output is valid.
+    """
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
+        sample = f(self, n, simulate_one, all_accepted)
+        if sample.n_accepted != n:
+            raise AssertionError(
+                f"Expected {n} but got {sample.n_accepted} acceptances.")
+        return sample
+    return sample_until_n_accepted
+
+
+class SamplerMeta(ABCMeta):
+    """
+    This metaclass handles the checking of sampling output values.
+    """
+
+    def __init__(cls, name, bases, attrs):
+        ABCMeta.__init__(cls, name, bases, attrs)
+        cls.sample_until_n_accepted = wrap_sample(cls.sample_until_n_accepted)
+
+
+class Sampler(ABC, metaclass=SamplerMeta):
     """
     Abstract Sampler base class.
 
@@ -139,8 +163,20 @@ class Sampler(ABC):
     def _create_empty_sample(self) -> Sample:
         return self.sample_factory()
 
+    def initialize(self):
+        """
+        Initialize the sampler.
+        """
+        # TODO It is not nice that nr_evaluations_ is an attribute.
+        # It should be returned directly in sample_until_n_accepted
+        self.nr_evaluations_ = 0
+
     @abstractmethod
-    def sample_until_n_accepted(self, n, simulate_one) -> Sample:
+    def sample_until_n_accepted(
+            self,
+            n: int,
+            simulate_one: Callable,
+            all_accepted: bool = False) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
         population) of particles.
@@ -156,6 +192,13 @@ class Sampler(ABC):
             sampling parameters, simulating data, and comparing to observed
             data to check for acceptance, as indicated via the
             particle.accepted flag.
+
+        all_accepted: bool, optional (default = False)
+            If it known in advance that all sampled particles will have
+            particle.accepted == True, then setting all_accepted = True can
+            reduce the computational overhead for dynamic schedulers. This
+            is usually in particular the case in the initial calibration
+            iteration.
 
         Returns
         -------

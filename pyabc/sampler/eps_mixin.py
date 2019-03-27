@@ -7,13 +7,13 @@ class EPSMixin:
     def full_submit_function_pickle(self, job_id):
         simulate_one = pickle.loads(self.simulate_accept_one)
         result_batch = []
-        for j in range(self.batchsize):
+        for j in range(self.batch_size):
             eval_result = simulate_one()
             eval_accept = eval_result.accepted
             result_batch.append((eval_result, eval_accept, job_id[j]))
         return result_batch
 
-    def sample_until_n_accepted(self, n, simulate_one):
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
         # For default pickling
         if self.default_pickle:
             self.simulate_accept_one = pickle.dumps(simulate_one)
@@ -22,7 +22,7 @@ class EPSMixin:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(job_id):
                 result_batch = []
-                for j in range(self.batchsize):
+                for j in range(self.batch_size):
                     eval_result = simulate_one()
                     eval_accept = eval_result.accepted
                     result_batch.append((eval_result, eval_accept, job_id[j]))
@@ -46,7 +46,7 @@ class EPSMixin:
                 if curJob.done():
                     remote_batch = curJob.result()
                     running_jobs.remove(curJob)
-                    for i in range(self.batchsize):
+                    for i in range(self.batch_size):
                         remote_evaluated = remote_batch[i]
                         remote_result = remote_evaluated[0]
                         remote_accept = remote_evaluated[1]
@@ -93,7 +93,7 @@ class EPSMixin:
                                           self.client_cores()).astype(int)
                                - len(running_jobs)):
                     job_id_batch = []
-                    for i in range(self.batchsize):
+                    for i in range(self.batch_size):
                         job_id_batch.append(next_job_id)
                         next_job_id += 1
 
@@ -108,12 +108,14 @@ class EPSMixin:
         # create 1 to-be-returned sample from all results
         sample = self._create_empty_sample()
         counter_accepted = 0
+        self.nr_evaluations_ = 0
         while counter_accepted < n:
             cur_res = all_results.pop(0)
             particle = cur_res[1]
             sample.append(particle)
             if particle.accepted:
                 counter_accepted += 1
-            self.nr_evaluations_ = cur_res[0]
+            # n_eval is latest job_id + 1
+            self.nr_evaluations_ = max(self.nr_evaluations_, cur_res[0] + 1)
 
         return sample

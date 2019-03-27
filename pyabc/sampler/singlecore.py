@@ -6,7 +6,7 @@ class SingleCoreSampler(Sampler):
     Sample on a single core. No parallelization.
     """
 
-    def sample_until_n_accepted(self, n, simulate_one):
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
         nr_simulations = 0
         sample = self._create_empty_sample()
 
@@ -18,8 +18,5 @@ class SingleCoreSampler(Sampler):
                 if new_sim.accepted:
                     break
         self.nr_evaluations_ = nr_simulations
-        if sample.n_accepted != n:
-            raise AssertionError(
-                "The number of accepted samples is not as expected.")
 
         return sample

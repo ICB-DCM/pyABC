@@ -217,6 +217,7 @@ class ABCSMC:
         self.x_0 = None
         self.history = None  # type: History
         self._initial_population = None
+        self._initial_n_eval = 0
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
@@ -377,12 +378,10 @@ class ABCSMC:
             Time point for which to initialize (i.e. the time point at which
             to do the first population). Usually 0 or history.max_t + 1.
         """
-
         def get_initial_sum_stats():
             population = self._get_initial_population(t)
             # only the accepted sum stats are available initially
             sum_stats = population.get_accepted_sum_stats()
-
             return sum_stats
 
         def get_initial_weighted_distances():
@@ -409,6 +408,8 @@ class ABCSMC:
             population = self._get_initial_population(t)
             return population
 
+        # reset nr_evaluations counter in sampler
+        self.sampler.initialize()
         # initialize dist, eps, acc
         self.distance_function.initialize(
             t, get_initial_sum_stats, self.x_0)
@@ -440,10 +441,13 @@ class ABCSMC:
             if self.history.n_populations > 0:
                 # extract latest population from database
                 population = self.history.get_population()
+                n_eval = 0
             else:
                 # sample
                 population = self._sample_from_prior(t)
+                n_eval = self.sampler.nr_evaluations_
             self._initial_population = population
+            self._initial_n_eval = n_eval
         return self._initial_population
 
     def _create_simulate_from_prior_function(self, t):
@@ -500,7 +504,8 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            self.population_strategy.nr_particles, simulate_one)
+            self.population_strategy.nr_particles, simulate_one,
+            all_accepted=True)
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -789,6 +794,11 @@ class ABCSMC:
 
         # sample from prior to calibrate distance, epsilon, and acceptor
         self._initialize_dist_eps_acc(self.history.max_t + 1)
+
+        # update number of samples in calibration
+        if self._initial_n_eval > 0:
+            self.history.update_nr_samples(
+                History.PRE_TIME, self._initial_n_eval)
 
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()

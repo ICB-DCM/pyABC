@@ -32,17 +32,17 @@ class DaskDistributedSampler(EPSMixin, Sampler):
         of an additional pickling overhead. For dask, this workaround should
         not be necessary and it should be save to use default_pickle=false.
 
-    batchsize: int, optional
+    batch_size: int, optional
         Number of parameter samples that are evaluated in one remote execution
         call. Batchsubmission can be used to reduce the communication overhead
-        for fast (ms-s) model evaluations. Large batchsizes can result in un-
-        necessary model evaluations. By default, batchsize=1, i.e. no batching
-        is done.
+        for fast (ms-s) model evaluations. Large batch sizes can result in un-
+        necessary model evaluations. By default, batch_size=1, i.e. no
+        batching is done.
 
     """
 
     def __init__(self, dask_client=None, client_max_jobs=np.inf,
-                 default_pickle=False, batchsize=1):
+                 default_pickle=False, batch_size=1):
         super().__init__()
 
         # Assign Client
@@ -60,7 +60,7 @@ class DaskDistributedSampler(EPSMixin, Sampler):
         self.default_pickle = default_pickle
 
         # Batchsize
-        self.batchsize = batchsize
+        self.batch_size = batch_size
 
     def __getstate__(self):
         d = dict(self.__dict__)
