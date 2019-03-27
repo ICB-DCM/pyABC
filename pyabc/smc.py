@@ -393,8 +393,8 @@ class ABCSMC:
 
         if self.distance_function.require_initialize:
             # initialize distance
-            self.distance_function.initialize(t,
-                                              self._get_initial_samples(t)[1])
+            self.distance_function.initialize(
+                t, self._get_initial_samples(t)[1])
 
         if self.eps.require_initialize:
             def distance_to_ground_truth(x):
@@ -484,7 +484,8 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            self.population_strategy.nr_particles, simulate_one)
+            self.population_strategy.nr_particles, simulate_one,
+            all_accepted=True)
 
         # return all generated summary statistics
         return sample.all_sum_stats
