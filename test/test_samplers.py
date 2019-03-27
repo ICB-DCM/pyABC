@@ -211,7 +211,7 @@ def test_redis_multiprocess():
 
 
 def test_redis_manage():
-     _manage(command="stop", host="localhost", port=6379)
+    _manage(command="stop", host="localhost", port=6379)
     sampler = RedisEvalParallelSamplerServerStarter()
     _manage(command="stop", host="localhost", port=6379)
     sampler.cleanup()
