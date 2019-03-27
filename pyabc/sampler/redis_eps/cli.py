@@ -8,7 +8,8 @@ import cloudpickle
 from time import time
 import click
 from .redis_logging import logger
-from .cmd import (N_WORKER, SSA, N_PARTICLES, N_EVAL, QUEUE, START, STOP,
+from .cmd import (N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
+                  N_WORKER, SSA, QUEUE, START, STOP,
                   MSG, BATCH_SIZE)
 from multiprocessing import Pool
 import numpy as np
@@ -54,26 +55,25 @@ def work_on_population(redis: StrictRedis,
 
     # read from pipeline
     pipeline = redis.pipeline()
+    # extract bytes
+    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b, n_eval_b \
+        = (pipeline.get(SSA).get(BATCH_SIZE)
+           .get(ALL_ACCEPTED).get(N_REQ).get(N_ACC).get(N_EVAL).execute())
 
-    # extract ssa, batch_size_bytes
-    ssa, batch_size_bytes = pipeline.get(SSA).get(BATCH_SIZE).execute()
-
-    if ssa is None:
+    if ssa_b is None:
         return
 
     kill_handler.exit = False
 
-    # extract n_particles
-    n_particles_bytes = redis.get(N_PARTICLES)
-    if n_particles_bytes is None:
+    if n_acc_b is None:
         return
 
     # convert from bytes
-    n_particles = int(n_particles_bytes.decode())
-    batch_size = int(batch_size_bytes.decode())
-
-    # extract sampling routine
-    simulate_one, sample_factory = pickle.loads(ssa)
+    simulate_one, sample_factory = pickle.loads(ssa_b)
+    batch_size = int(batch_size_b.decode())
+    all_accepted = bool(int(all_accepted_b.decode()))
+    n_req = int(n_req_b.decode())
+    n_acc = int(n_acc_b.decode())
 
     # notify sign up as worker
     n_worker = redis.incr(N_WORKER)
@@ -88,7 +88,8 @@ def work_on_population(redis: StrictRedis,
     sample = sample_factory()
 
     # loop until no more particles required
-    while n_particles > 0:
+    while n_acc < n_req \
+            and (not all_accepted or int(redis.get(N_EVAL).decode()) < n_req):
         if kill_handler.killed:
             logger.info(
                 f"Worker {n_worker} received stop signal. "
@@ -145,14 +146,14 @@ def work_on_population(redis: StrictRedis,
             # new pipeline
             pipeline = redis.pipeline()
             # update particles counter
-            pipeline.decr(N_PARTICLES, len(accepted_samples))
+            pipeline.incr(N_ACC, len(accepted_samples))
             # note: samples are appended 1-by-1
             pipeline.rpush(QUEUE, *accepted_samples)
             # execute all commands
-            n_particles, _ = pipeline.execute()
+            n_acc, _ = pipeline.execute()
         else:
             # update particles counter in case other workers were successful
-            n_particles = int(redis.get(N_PARTICLES).decode())
+            n_acc = int(redis.get(N_ACC).decode())
 
     # end of n_particles > 0 loop
 
@@ -257,10 +258,11 @@ def _manage(command, host="localhost", port=6379):
         pipe = redis.pipeline()
         pipe.get(N_WORKER)
         pipe.get(N_EVAL)
-        pipe.get(N_PARTICLES)
+        pipe.get(N_ACC)
+        pipe.get(N_REQ)
         res = pipe.execute()
         res = [r.decode() if r is not None else r for r in res]
-        print("Workers={} Evaluations={} Particles={}".format(*res))
+        print("Workers={} Evaluations={} Acceptances={}/{}".format(*res))
     elif command == "stop":
         redis.publish(MSG, STOP)
     elif command == "reset-workers":

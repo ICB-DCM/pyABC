@@ -7,7 +7,7 @@ class EPSMixin:
     def full_submit_function_pickle(self, job_id):
         simulate_one = pickle.loads(self.simulate_accept_one)
         result_batch = []
-        for j in range(self.batchsize):
+        for j in range(self.batch_size):
             eval_result = simulate_one()
             eval_accept = eval_result.accepted
             result_batch.append((eval_result, eval_accept, job_id[j]))
@@ -22,7 +22,7 @@ class EPSMixin:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(job_id):
                 result_batch = []
-                for j in range(self.batchsize):
+                for j in range(self.batch_size):
                     eval_result = simulate_one()
                     eval_accept = eval_result.accepted
                     result_batch.append((eval_result, eval_accept, job_id[j]))
@@ -46,7 +46,7 @@ class EPSMixin:
                 if curJob.done():
                     remote_batch = curJob.result()
                     running_jobs.remove(curJob)
-                    for i in range(self.batchsize):
+                    for i in range(self.batch_size):
                         remote_evaluated = remote_batch[i]
                         remote_result = remote_evaluated[0]
                         remote_accept = remote_evaluated[1]
@@ -93,7 +93,7 @@ class EPSMixin:
                                           self.client_cores()).astype(int)
                                - len(running_jobs)):
                     job_id_batch = []
-                    for i in range(self.batchsize):
+                    for i in range(self.batch_size):
                         job_id_batch.append(next_job_id)
                         next_job_id += 1
 

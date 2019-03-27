@@ -10,13 +10,19 @@ DONE = "Done"
 
 
 def work(simulate_one,
-         queue, n_eval: Value, n_particles: Value, sample_factory):
+         queue,
+         n_eval: Value,
+         n_acc: Value,
+         n: int,
+         all_accepted: bool,
+         sample_factory):
     random.seed()
     np.random.seed()
 
     sample = sample_factory()
 
-    while n_particles.value > 0:
+    while n_acc.value < n and \
+            (not all_accepted or n_eval.value < n):
         with n_eval.get_lock():
             particle_id = n_eval.value
             n_eval.value += 1
@@ -26,9 +32,9 @@ def work(simulate_one,
 
         if new_sim.accepted:
 
-            # reduce number of required particles
-            with n_particles.get_lock():
-                n_particles.value -= 1
+            # increase number or accepted particles
+            with n_acc.get_lock():
+                n_acc.value += 1
 
             # put into queue
             queue.put((particle_id, sample))
@@ -85,15 +91,15 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
-        n_particles = Value(c_longlong)
-        n_particles.value = n
+        n_acc = Value(c_longlong)
+        n_acc.value = 0
 
         queue = Queue()
 
         processes = [
             Process(target=work,
                     args=(simulate_one,
-                          queue, n_eval, n_particles,
+                          queue, n_eval, n_acc, n, all_accepted,
                           self._create_empty_sample),
                     daemon=self.daemon)
             for _ in range(self.n_procs)

@@ -3,7 +3,8 @@ from time import sleep
 import cloudpickle
 from redis import StrictRedis
 from ...sampler import Sampler
-from .cmd import (SSA, N_EVAL, N_PARTICLES, N_WORKER, QUEUE, MSG, START,
+from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
+                  N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME, BATCH_SIZE)
 from .redis_logging import logger
 
@@ -77,7 +78,9 @@ class RedisEvalParallelSampler(Sampler):
         self.redis.set(
             SSA, cloudpickle.dumps((simulate_one, self.sample_factory)))
         pipeline.set(N_EVAL, 0)
-        pipeline.set(N_PARTICLES, n)
+        pipeline.set(N_ACC, 0)
+        pipeline.set(N_REQ, n)
+        pipeline.set(ALL_ACCEPTED, int(all_accepted))  # encode as int
         pipeline.set(N_WORKER, 0)
         pipeline.set(BATCH_SIZE, self.batch_size)
         # delete previous results
@@ -114,7 +117,9 @@ class RedisEvalParallelSampler(Sampler):
         pipeline = self.redis.pipeline()
         pipeline.delete(SSA)
         pipeline.delete(N_EVAL)
-        pipeline.delete(N_PARTICLES)
+        pipeline.delete(N_ACC)
+        pipeline.delete(N_REQ)
+        pipeline.delete(ALL_ACCEPTED)
         pipeline.delete(BATCH_SIZE)
         pipeline.execute()
 
