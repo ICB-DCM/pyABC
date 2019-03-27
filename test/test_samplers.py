@@ -1,5 +1,6 @@
 import multiprocessing
 import pytest
+import numpy as np
 import scipy as sp
 import scipy.stats as st
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
@@ -15,6 +16,7 @@ from pyabc.sampler import (SingleCoreSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
                            RedisEvalParallelSamplerServerStarter)
+from pyabc.sampler.redis_eps.cli import _manage
 from pyabc.population import Particle
 
 
@@ -192,3 +194,22 @@ def test_wrong_output_sampler():
                         accepted=True)
     with pytest.raises(AssertionError):
         sampler.sample_until_n_accepted(5, simulate_one)
+
+
+def test_redis_multiprocess():
+    sampler = RedisEvalParallelSamplerServerStarter(
+        batch_size=3, workers=1, processes_per_worker=1)
+
+    def simulate_one():
+        accepted = np.random.randint(2)
+        print(accepted)
+        return Particle(0, {}, 0.1, [], [], accepted)
+
+    sample = sampler.sample_until_n_accepted(10, simulate_one)
+    assert 10 == len(sample.get_accepted_population())
+
+
+def test_redis_manage():
+    _manage(command="stop", host="localhost", port=6379)
+    RedisEvalParallelSamplerServerStarter()
+    _manage(command="stop", host="localhost", port=6379)
