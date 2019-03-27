@@ -108,6 +108,7 @@ class EPSMixin:
         # create 1 to-be-returned sample from all results
         sample = self._create_empty_sample()
         counter_accepted = 0
+        self.nr_evaluations_ = 0
         while counter_accepted < n:
             cur_res = all_results.pop(0)
             particle = cur_res[1]

@@ -35,7 +35,7 @@ class DaskDistributedSampler(EPSMixin, Sampler):
     batch_size: int, optional
         Number of parameter samples that are evaluated in one remote execution
         call. Batchsubmission can be used to reduce the communication overhead
-        for fast (ms-s) model evaluations. Large batch_sizes can result in un-
+        for fast (ms-s) model evaluations. Large batch sizes can result in un-
         necessary model evaluations. By default, batch_size=1, i.e. no
         batching is done.
 
