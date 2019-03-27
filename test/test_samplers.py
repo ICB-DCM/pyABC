@@ -17,6 +17,7 @@ from pyabc.sampler import (SingleCoreSampler,
                            RedisEvalParallelSamplerServerStarter)
 from pyabc.population import Particle
 
+
 def multi_proc_map(f, x):
     with multiprocessing.Pool() as pool:
         res = pool.map(f, x)
