@@ -398,10 +398,8 @@ class StochasticAcceptor(Acceptor):
         # check if final time point reached
         if t >= self.max_nr_populations - 1:
             self.temperatures[t] = 1.0
-            return
 
         # update pdf_max
-
         self.pdf_maxs[t] = self.pdf_max_method(
             default=kernel.pdf_max,
             get_weighted_distances=get_weighted_distances,
@@ -545,7 +543,10 @@ def scheme_exponential_decay(**kwargs):
 
     # how many steps left?
     t_to_go = (max_nr_populations - 1) - (t - 1)
-    
+
+    if t_to_go < 2:
+        return 1.0
+
     temp = temp_base ** ((t_to_go - 1) / t_to_go)
     return temp
 
@@ -562,6 +563,12 @@ def scheme_decay(**kwargs):
     if max_nr_populations == np.inf:
         raise ValueError("Can only perform decay step with a finite "
                          "max_nr_populations.")
+ 
+    # how many steps left?
+    t_to_go = (max_nr_populations - 1) - (t - 1)
+    if t_to_go < 2:
+        # have to take exact step, i.e. a temperature of 1, next
+        return 1.0
 
     # get temperature to start with
     if t - 1 in temperatures:
@@ -571,11 +578,6 @@ def scheme_decay(**kwargs):
     else:
         return scheme_acceptance_rate(**kwargs)
 
-    # how many steps left?
-    t_to_go = (max_nr_populations - 1) - (t - 1)
-    if t_to_go < 2:
-        # have to take exact step, i.e. a temperature of 1, next
-        return 1.0
     temps = np.linspace(1, (temp_base)**(1 / temp_decay_exponent),
                         t_to_go + 1) ** temp_decay_exponent
     logger.debug(f"temperatures: {temps}")
