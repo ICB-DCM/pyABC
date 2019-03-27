@@ -56,9 +56,9 @@ def work_on_population(redis: StrictRedis,
     # read from pipeline
     pipeline = redis.pipeline()
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b, n_eval_b \
+    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b \
         = (pipeline.get(SSA).get(BATCH_SIZE)
-           .get(ALL_ACCEPTED).get(N_REQ).get(N_ACC).get(N_EVAL).execute())
+           .get(ALL_ACCEPTED).get(N_REQ).get(N_ACC).execute())
 
     if ssa_b is None:
         return
@@ -73,7 +73,6 @@ def work_on_population(redis: StrictRedis,
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
     n_req = int(n_req_b.decode())
-    n_acc = int(n_acc_b.decode())
 
     # notify sign up as worker
     n_worker = redis.incr(N_WORKER)
@@ -88,7 +87,7 @@ def work_on_population(redis: StrictRedis,
     sample = sample_factory()
 
     # loop until no more particles required
-    while n_acc < n_req \
+    while int(redis.get(N_ACC).decode()) < n_req \
             and (not all_accepted or int(redis.get(N_EVAL).decode()) < n_req):
         if kill_handler.killed:
             logger.info(
@@ -150,12 +149,9 @@ def work_on_population(redis: StrictRedis,
             # note: samples are appended 1-by-1
             pipeline.rpush(QUEUE, *accepted_samples)
             # execute all commands
-            n_acc, _ = pipeline.execute()
-        else:
-            # update particles counter in case other workers were successful
-            n_acc = int(redis.get(N_ACC).decode())
+            pipeline.execute()
 
-    # end of n_particles > 0 loop
+    # end of sampling loop
 
     # notify quit
     redis.decr(N_WORKER)
