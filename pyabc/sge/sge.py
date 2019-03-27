@@ -7,7 +7,7 @@ import tempfile
 import time
 import sys
 import cloudpickle
-from .config import make_config
+from .config import get_config
 from .execution_contexts import DefaultContext
 from .db import job_db_factory
 from .util import sge_available
@@ -140,7 +140,7 @@ class SGE:
         self.memory = memory
         self.time_h = time_h
 
-        self.config = make_config()
+        self.config = get_config()
 
         if parallel_environment is not None:
             self.config["SGE"]["PARALLEL_ENVIRONMENT"] = parallel_environment
