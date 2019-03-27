@@ -171,9 +171,10 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     assert abs(mp0 - p1_expected) + abs(mp1 - p2_expected) < sp.inf
 
     # check that sampler only did nr_particles samples in first round
-    # pops = history.get_all_populations()
+    pops = history.get_all_populations()
+    assert pops[pops['t'] == History.PRE_TIME]['samples'].values > 0
     # assert pops[pops['t'] == History.PRE_TIME]['samples'].values \
-    #    == pop_size.nr_particles
+    #   == pop_size.nr_particles
 
 
 def test_in_memory(redis_starter_sampler):
