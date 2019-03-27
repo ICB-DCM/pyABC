@@ -215,6 +215,7 @@ class ABCSMC:
         self.history = None  # type: History
         self._initial_sum_stats = None
         self._initial_weights = None
+        self._initial_n_eval = 0
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -322,9 +323,9 @@ class ABCSMC:
         self._initialize_dist_and_eps(self.history.max_t + 1)
 
         # update number of samples in calibration
-        nr_samples_pre = 0 if self._initial_weights is None \
-            else len(self._initial_weights)
-        self.history.update_nr_samples(History.PRE_TIME, nr_samples_pre)
+        if self._initial_n_eval > 0:
+            self.history.update_nr_samples(
+                History.PRE_TIME, self._initial_n_eval)
 
         # return id generated in store_initial_data
         return self.history.id
@@ -385,6 +386,8 @@ class ABCSMC:
             Time point for which to initialize (i.e. the time point at which
             to do the first population). Usually 0 or history.max_t + 1.
         """
+        # initialize the sampler
+        self.sampler.initialize()
 
         self.distance_function.handle_x_0(self.x_0)
 
@@ -427,11 +430,12 @@ class ABCSMC:
                 weights, sum_stats = self.history.get_weighted_sum_stats()
                 self._initial_weights = weights
                 self._initial_sum_stats = sum_stats
+                self._initial_n_eval = 0
             else:
                 self._initial_sum_stats = self._sample_from_prior(t)
                 self._initial_weights = [1.0 / len(self._initial_sum_stats)
                                          for _ in self._initial_sum_stats]
-
+                self._initial_n_eval = self.sampler.nr_evaluations_
         return self._initial_weights, self._initial_sum_stats
 
     def _create_simulate_from_prior_function(self, t):
