@@ -6,7 +6,7 @@ class SingleCoreSampler(Sampler):
     Sample on a single core. No parallelization.
     """
 
-    def sample_until_n_accepted(self, n, simulate_one):
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
         nr_simulations = 0
         sample = self._create_empty_sample()
 
