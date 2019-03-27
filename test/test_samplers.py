@@ -207,9 +207,11 @@ def test_redis_multiprocess():
 
     sample = sampler.sample_until_n_accepted(10, simulate_one)
     assert 10 == len(sample.get_accepted_population())
+    sampler.cleanup()
 
 
 def test_redis_manage():
+     _manage(command="stop", host="localhost", port=6379)
+    sampler = RedisEvalParallelSamplerServerStarter()
     _manage(command="stop", host="localhost", port=6379)
-    RedisEvalParallelSamplerServerStarter()
-    _manage(command="stop", host="localhost", port=6379)
+    sampler.cleanup()
