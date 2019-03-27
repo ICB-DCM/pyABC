@@ -26,10 +26,12 @@ db_path = "sqlite:///" \
 
 distance = pyabc.PNormDistance(p=2)
 n_history = 2
+sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
+
 for _ in range(n_history):
-    abc = pyabc.ABCSMC(model, prior, distance)
+    abc = pyabc.ABCSMC(model, prior, distance, 20, sampler=sampler)
     abc.new(db_path, observation)
-    abc.run(minimum_epsilon=.1, max_nr_populations=4)
+    abc.run(minimum_epsilon=.1, max_nr_populations=3)
 
 
 histories = []
