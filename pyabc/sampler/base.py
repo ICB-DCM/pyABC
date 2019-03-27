@@ -194,7 +194,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
             particle.accepted flag.
 
         all_accepted: bool, optional (default = False)
-            If it known in advance that all sampled particles will have
+            If it is known in advance that all sampled particles will have
             particle.accepted == True, then setting all_accepted = True can
             reduce the computational overhead for dynamic schedulers. This
             is usually in particular the case in the initial calibration
