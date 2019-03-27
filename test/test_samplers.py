@@ -172,9 +172,11 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
 
     # check that sampler only did nr_particles samples in first round
     pops = history.get_all_populations()
+    # since we had calibration (of epsilon), check that was saved
     assert pops[pops['t'] == History.PRE_TIME]['samples'].values > 0
-    # assert pops[pops['t'] == History.PRE_TIME]['samples'].values \
-    #   == pop_size.nr_particles
+    # our samplers should not have overhead in calibration
+    assert pops[pops['t'] == History.PRE_TIME]['samples'].values \
+      == pop_size.nr_particles
 
 
 def test_in_memory(redis_starter_sampler):
