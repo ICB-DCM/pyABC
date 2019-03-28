@@ -12,7 +12,7 @@ Release Notes
 -------------------
 
 * Save number of samples taken in calibration step in database.
-* Fix error with reported number of simulation in EpsMixin based samplers.
+* Fix error with reported number of simulations in EpsMixin based samplers.
 * Fix several warnings.
 
 
