@@ -30,7 +30,7 @@ mySummaryStatistics <- function(modelResult){
   list(x=modelResult[1],
        y=modelResult[2],
        mtcars=mtcars,  # Can also pass data frames
-       iris=iris,
+       cars=cars,
        arbitraryKey="Some random text")
 }
 
@@ -51,7 +51,7 @@ myDistance <- function(sumStatSample, sumStatData){
 # in a variable.
 # This is passed by pyABC as to myDistance
 # as the sumStatData argument
-mySumStatData <- list(x=4, y=8, mtcars=mtcars, iris=iris)
+mySumStatData <- list(x=4, y=8, mtcars=mtcars, cars=cars)
 
 # The functions for the model, the summary
 # statistics and distance
