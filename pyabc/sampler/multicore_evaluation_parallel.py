@@ -32,7 +32,7 @@ def work(simulate_one,
 
         if new_sim.accepted:
 
-            # increase number or accepted particles
+            # increase number of accepted particles
             with n_acc.get_lock():
                 n_acc.value += 1
 
