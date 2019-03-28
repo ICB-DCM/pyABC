@@ -2,7 +2,8 @@ import os
 import sqlite3
 import time
 import redis
-import configparser
+
+from .config import get_config
 
 
 def within_time(job_start_time, max_run_time_h):
@@ -79,8 +80,7 @@ class RedisJobDB:
             return True
 
     def __init__(self, tmp_dir):
-        config = configparser.ConfigParser()
-        config.read(os.path.join(os.getenv("HOME"), ".parallel"))
+        config = get_config()
         self.HOST = config["REDIS"]["HOST"]
         self.job_name = os.path.basename(tmp_dir)
         self.connection = redis.Redis(host=self.HOST, decode_responses=True)
@@ -136,8 +136,7 @@ def job_db_factory(tmp_path):
     -------
     SQLite or redis db depending on availability
     """
-    config = configparser.ConfigParser()
-    config.read(os.path.join(os.getenv("HOME"), ".parallel"))
+    config = get_config()
     if config["BROKER"]["TYPE"] == "REDIS":
         return RedisJobDB(tmp_path)
     if config["BROKER"]["TYPE"] == "SQLITE":

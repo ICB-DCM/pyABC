@@ -30,18 +30,17 @@ class ConcurrentFutureSampler(EPSMixin, Sampler):
         functions, which can not be pickled using default pickle, at the cost
         of an additional pickling overhead.
 
-    batchsize: int, optional
+    batch_size: int, optional
         Number of parameter samples that are evaluated in one remote execution
-        call. Batchsubmission can be used to reduce the communication overhead
-        for fast (ms-s) model evaluations. Large batchsizes can result in un-
-        necessary model evaluations. By default, batchsize=1, i.e. no batching
-        is done
-
+        call. Batch submission can be used to reduce the communication overhead
+        for fast (ms-s) model evaluations. Large batch sizes can result in un-
+        necessary model evaluations. By default, batch_size=1, i.e. no batching
+        is done.
 
     """
 
     def __init__(self, cfuture_executor=None, client_max_jobs=200,
-                 default_pickle=True, batchsize=1):
+                 default_pickle=True, batch_size=1):
         super().__init__()
 
         # Assign Client
@@ -61,7 +60,7 @@ class ConcurrentFutureSampler(EPSMixin, Sampler):
         self.default_pickle = default_pickle
 
         # Batchsize
-        self.batchsize = batchsize
+        self.batch_size = batch_size
 
     def __getstate__(self):
         d = dict(self.__dict__)

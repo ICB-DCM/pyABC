@@ -8,6 +8,14 @@ Release Notes
 ..........
 
 
+0.9.10 (2019-03-27)
+-------------------
+
+* Save number of samples taken in calibration step in database.
+* Fix error with reported number of simulations in EpsMixin based samplers.
+* Fix several warnings.
+
+
 0.9.9 (2019-03-25)
 ------------------
 

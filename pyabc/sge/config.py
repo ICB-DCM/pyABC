@@ -7,7 +7,8 @@ DEFAULT_CONFIG = """#~/.parallel
 TMP=/tmp
 
 [BROKER]
-TYPE=REDIS   # can be SQLITE or REDIS
+# can be SQLITE or REDIS
+TYPE=REDIS
 
 [SGE]
 QUEUE=p.openmp
@@ -19,8 +20,12 @@ HOST=127.0.0.1
 """
 
 
-def make_config():
+def get_config():
     config = configparser.ConfigParser()
     config.read_string(DEFAULT_CONFIG)
-    config.read(os.path.join(os.getenv("HOME"), ".parallel"))
+
+    config_file = os.path.join(os.getenv("HOME"), ".parallel")
+    if os.path.isfile(config_file):
+        config.read(config_file)
+
     return config

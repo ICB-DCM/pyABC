@@ -43,6 +43,7 @@ class TransitionMeta(ABCMeta):
     This metaclass handles the special case of no parameters.
     Transition classes do not have to check for it anymore
     """
+
     def __init__(cls, name, bases, attrs):
         ABCMeta.__init__(cls, name, bases, attrs)
         cls.fit = wrap_fit(cls.fit)

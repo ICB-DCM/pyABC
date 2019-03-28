@@ -215,54 +215,12 @@ class ABCSMC:
         self.history = None  # type: History
         self._initial_sum_stats = None
         self._initial_weights = None
+        self._initial_n_eval = 0
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
         return state_red_dict
-
-    def load(self, db: str,
-             abc_id: int = 1,
-             observed_sum_stat: dict = None) -> int:
-        """
-        Load an ABC-SMC run for continuation.
-
-        Parameters
-        ----------
-
-        db: str
-            A SQLAlchemy database identifier pointing to the database from
-            which to continue a run.
-
-        abc_id: int, optional
-            The id of the ABC-SMC run in the database which is to be continued.
-            The default is 1. If more than one ABC-SMC run is stored, use
-            the ``abc_id`` parameter to indicate which one to continue.
-
-        observed_sum_stat: dict, optional
-            The observed summary statistics. This field should be used only if
-            the summary statistics cannot be reproduced exactly from the
-            database (in particular when they are no numpy or pandas objects,
-            e.g. when they were generated in R). If None, then the summary
-            statistics are read from the history.
-
-
-        .. note::
-
-            The epsilon's and distance function's initialize methods are
-            not called when an ABCSMC run is loaded.
-        """
-
-        self.history = History(db)
-        self.history.id = abc_id
-
-        if observed_sum_stat is None:
-            observed_sum_stat = self.history.observed_sum_stat()
-        self.x_0 = observed_sum_stat
-
-        self._initialize_dist_and_eps(self.history.max_t + 1)
-
-        return self.history.id
 
     def new(self, db: str,
             observed_sum_stat: dict = None,
@@ -364,7 +322,52 @@ class ABCSMC:
         # sample from prior to calibrate distance function and epsilon
         self._initialize_dist_and_eps(self.history.max_t + 1)
 
+        # update number of samples in calibration
+        if self._initial_n_eval > 0:
+            self.history.update_nr_samples(
+                History.PRE_TIME, self._initial_n_eval)
+
         # return id generated in store_initial_data
+        return self.history.id
+
+    def load(self, db: str,
+             abc_id: int = 1,
+             observed_sum_stat: dict = None) -> int:
+        """
+        Load an ABC-SMC run for continuation.
+
+        Parameters
+        ----------
+
+        db: str
+            A SQLAlchemy database identifier pointing to the database from
+            which to continue a run.
+
+        abc_id: int, optional
+            The id of the ABC-SMC run in the database which is to be continued.
+            The default is 1. If more than one ABC-SMC run is stored, use
+            the ``abc_id`` parameter to indicate which one to continue.
+
+        observed_sum_stat: dict, optional
+            The observed summary statistics. This field should be used only if
+            the summary statistics cannot be reproduced exactly from the
+            database (in particular when they are no numpy or pandas objects,
+            e.g. when they were generated in R). If None, then the summary
+            statistics are read from the history.
+        """
+
+        self.history = History(db)
+        self.history.id = abc_id
+
+        # extract observed sum stats from input or history
+        if observed_sum_stat is None:
+            observed_sum_stat = self.history.observed_sum_stat()
+        self.x_0 = observed_sum_stat
+
+        # initialize eps and dist
+        self._initialize_dist_and_eps(self.history.max_t + 1)
+
+        # just return the id again
         return self.history.id
 
     def _initialize_dist_and_eps(self, t: int):
@@ -383,13 +386,15 @@ class ABCSMC:
             Time point for which to initialize (i.e. the time point at which
             to do the first population). Usually 0 or history.max_t + 1.
         """
+        # initialize the sampler
+        self.sampler.initialize()
 
         self.distance_function.handle_x_0(self.x_0)
 
         if self.distance_function.require_initialize:
             # initialize distance
-            self.distance_function.initialize(t,
-                                              self._get_initial_samples(t)[1])
+            self.distance_function.initialize(
+                t, self._get_initial_samples(t)[1])
 
         if self.eps.require_initialize:
             def distance_to_ground_truth(x):
@@ -425,11 +430,12 @@ class ABCSMC:
                 weights, sum_stats = self.history.get_weighted_sum_stats()
                 self._initial_weights = weights
                 self._initial_sum_stats = sum_stats
+                self._initial_n_eval = 0
             else:
                 self._initial_sum_stats = self._sample_from_prior(t)
                 self._initial_weights = [1.0 / len(self._initial_sum_stats)
                                          for _ in self._initial_sum_stats]
-
+                self._initial_n_eval = self.sampler.nr_evaluations_
         return self._initial_weights, self._initial_sum_stats
 
     def _create_simulate_from_prior_function(self, t):
@@ -478,7 +484,8 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            self.population_strategy.nr_particles, simulate_one)
+            self.population_strategy.nr_particles, simulate_one,
+            all_accepted=True)
 
         # return all generated summary statistics
         return sample.all_sum_stats

@@ -11,7 +11,8 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
     Simple routine to start a redis-server with 2 workers for test purposes.
     """
 
-    def __init__(self, host="localhost", port=6379, batch_size=1):
+    def __init__(self, host="localhost", port=6379, batch_size=1,
+                 workers=2, processes_per_worker=1):
         # start server
         conn = psutil.net_connections()
         ports = [c.laddr[1] for c in conn]
@@ -27,9 +28,11 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         # initiate worker processes
         self.__worker = [
             Process(target=work,
-                    args=(["--host", "localhost", "--port", str(port)],),
+                    args=(["--host", "localhost",
+                           "--port", str(port),
+                           "--processes", str(processes_per_worker)],),
                     daemon=False)
-            for _ in range(2)
+            for _ in range(workers)
         ]
 
         # start workers

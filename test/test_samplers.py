@@ -1,18 +1,22 @@
 import multiprocessing
 import pytest
+import numpy as np
 import scipy as sp
 import scipy.stats as st
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
                    PercentileDistanceFunction, SimpleModel,
-                   ConstantPopulationSize)
-from pyabc.sampler import (SingleCoreSampler, MappingSampler,
+                   ConstantPopulationSize,
+                   History)
+from pyabc.sampler import (SingleCoreSampler,
+                           MappingSampler,
                            MulticoreParticleParallelSampler,
                            DaskDistributedSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
                            RedisEvalParallelSamplerServerStarter)
+from pyabc.population import Particle
 
 
 def multi_proc_map(f, x):
@@ -32,9 +36,9 @@ class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
     def __init__(self, map_=None):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
-        batchsize = 15
+        batch_size = 15
         super().__init__(cfuture_executor, client_max_jobs,
-                         batchsize=batchsize)
+                         batch_size=batch_size)
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
@@ -51,8 +55,14 @@ class MultiProcessingMappingSampler(MappingSampler):
 
 class DaskDistributedSamplerBatch(DaskDistributedSampler):
     def __init__(self, map_=None):
-        batchsize = 20
-        super().__init__(batchsize=batchsize)
+        batch_size = 20
+        super().__init__(batch_size=batch_size)
+
+
+class WrongOutputSampler(SingleCoreSampler):
+    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
+        return super().sample_until_n_accepted(
+            n + 1, simulate_one, all_accepted=False)
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():
@@ -118,7 +128,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
 
     # We plug all the ABC setup together
     nr_populations = 2
-    pop_size = ConstantPopulationSize(40, nr_samples_per_parameter=n_sim)
+    pop_size = ConstantPopulationSize(23, nr_samples_per_parameter=n_sim)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  PercentileDistanceFunction(measures_to_use=["y"]),
                  pop_size,
@@ -162,8 +172,42 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
 
     assert abs(mp0 - p1_expected) + abs(mp1 - p2_expected) < sp.inf
 
+    # check that sampler only did nr_particles samples in first round
+    pops = history.get_all_populations()
+    # since we had calibration (of epsilon), check that was saved
+    pre_evals = pops[pops['t'] == History.PRE_TIME]['samples'].values
+    assert pre_evals >= pop_size.nr_particles
+    # our samplers should not have overhead in calibration, except batching
+    batch_size = sampler.batch_size if hasattr(sampler, 'batch_size') else 1
+    assert pre_evals <= pop_size.nr_particles + batch_size - 1
+
 
 def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
     two_competing_gaussians_multiple_population(db_path,
                                                 redis_starter_sampler, 1)
+
+
+def test_wrong_output_sampler():
+    sampler = WrongOutputSampler()
+
+    def simulate_one():
+        return Particle(m=0, parameter={}, weight=0,
+                        accepted_sum_stats=[], accepted_distances=[],
+                        accepted=True)
+    with pytest.raises(AssertionError):
+        sampler.sample_until_n_accepted(5, simulate_one)
+
+
+def test_redis_multiprocess():
+    sampler = RedisEvalParallelSamplerServerStarter(
+        batch_size=3, workers=1, processes_per_worker=1)
+
+    def simulate_one():
+        accepted = np.random.randint(2)
+        print(accepted)
+        return Particle(0, {}, 0.1, [], [], accepted)
+
+    sample = sampler.sample_until_n_accepted(10, simulate_one)
+    assert 10 == len(sample.get_accepted_population())
+    sampler.cleanup()
