@@ -51,11 +51,11 @@ from .model import (
 from .transition import (
     MultivariateNormalTransition,
     LocalTransition,
-    DiscreteRandomWalkTransition)
+    DiscreteRandomWalkTransition,
+    GridSearchCV)
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
-from .transition import GridSearchCV
 from . import visualization
 from .version import __version__  # noqa: F401
 
@@ -81,18 +81,19 @@ __all__ = [
     "ListEpsilon",
     "QuantileEpsilon",
     "MedianEpsilon",
-    # random_variables
+    # random_variable
     "RVBase",
     "RV",
     "RVDecorator",
     "LowerBoundDecorator",
     "Distribution",
     "ModelPerturbationKernel",
-    # div
+    # parameter
     "Parameter",
-    "GridSearchCV",
+    # population size
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
+    # transition
     "MultivariateNormalTransition",
     "LocalTransition",
     "DiscreteRandomWalkTransition",
@@ -108,6 +109,7 @@ __all__ = [
     "IntegratedModel",
     # history
     "History",
+    # visualization
     "visualization",
 ]
 
