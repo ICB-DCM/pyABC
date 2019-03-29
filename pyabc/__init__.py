@@ -97,6 +97,7 @@ __all__ = [
     "MultivariateNormalTransition",
     "LocalTransition",
     "DiscreteRandomWalkTransition",
+    "GridSearchCV",
     # acceptor
     "Acceptor",
     "SimpleFunctionAcceptor",
