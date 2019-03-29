@@ -11,50 +11,58 @@ import logging
 
 
 from .parameters import Parameter
-from .random_variables import (Distribution,
-                               ModelPerturbationKernel,
-                               RV,
-                               RVBase,
-                               RVDecorator,
-                               LowerBoundDecorator)
-from .distance_functions import (DistanceFunction,
-                                 NoDistance,
-                                 SimpleFunctionDistance,
-                                 PNormDistance,
-                                 AdaptivePNormDistance,
-                                 ZScoreDistanceFunction,
-                                 PCADistanceFunction,
-                                 MinMaxDistanceFunction,
-                                 PercentileDistanceFunction,
-                                 RangeEstimatorDistanceFunction,
-                                 DistanceFunctionWithMeasureList)
-from .epsilon import (Epsilon,
-                      ConstantEpsilon,
-                      QuantileEpsilon,
-                      MedianEpsilon,
-                      ListEpsilon)
+from .random_variables import (
+    Distribution,
+    ModelPerturbationKernel,
+    RV,
+    RVBase,
+    RVDecorator,
+    LowerBoundDecorator)
+from .distance_functions import (
+    DistanceFunction,
+    NoDistance,
+    SimpleFunctionDistance,
+    PNormDistance,
+    AdaptivePNormDistance,
+    ZScoreDistanceFunction,
+    PCADistanceFunction,
+    MinMaxDistanceFunction,
+    PercentileDistanceFunction,
+    RangeEstimatorDistanceFunction,
+    DistanceFunctionWithMeasureList)
+from .epsilon import (
+    Epsilon,
+    ConstantEpsilon,
+    QuantileEpsilon,
+    MedianEpsilon,
+    ListEpsilon)
 from .smc import ABCSMC
 from .storage import History
-from .acceptor import (Acceptor,
-                       SimpleAcceptor,
-                       accept_use_current_time,
-                       accept_use_complete_history)
-from .model import (Model,
-                    SimpleModel,
-                    ModelResult,
-                    IntegratedModel)
-from .transition import (MultivariateNormalTransition,
-                         LocalTransition,
-                         DiscreteRandomWalkTransition)
-from .populationstrategy import (AdaptivePopulationSize,
-                                 ConstantPopulationSize)
-from .transition import GridSearchCV
+from .acceptor import (
+    Acceptor,
+    SimpleAcceptor,
+    accept_use_current_time,
+    accept_use_complete_history)
+from .model import (
+    Model,
+    SimpleModel,
+    ModelResult,
+    IntegratedModel)
+from .transition import (
+    MultivariateNormalTransition,
+    LocalTransition,
+    DiscreteRandomWalkTransition,
+    GridSearchCV)
+from .populationstrategy import (
+    AdaptivePopulationSize,
+    ConstantPopulationSize)
 from . import visualization
 from .version import __version__  # noqa: F401
 
+
 __all__ = [
     "ABCSMC",
-    # Distance start
+    # distance
     "DistanceFunction",
     "NoDistance",
     "SimpleFunctionDistance",
@@ -66,36 +74,42 @@ __all__ = [
     "PercentileDistanceFunction",
     "RangeEstimatorDistanceFunction",
     "DistanceFunctionWithMeasureList",
-    # Distance end
+    # epsilon
     "Epsilon",
     "ConstantEpsilon",
     "ListEpsilon",
     "QuantileEpsilon",
     "MedianEpsilon",
-    # random_variables start
+    # random variable
     "RVBase",
     "RV",
     "RVDecorator",
     "LowerBoundDecorator",
     "Distribution",
     "ModelPerturbationKernel",
-    # random_variables end
+    # parameter
     "Parameter",
-    "GridSearchCV",
+    # population size
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
+    # transition
     "MultivariateNormalTransition",
     "LocalTransition",
     "DiscreteRandomWalkTransition",
+    "GridSearchCV",
+    # acceptor
     "Acceptor",
     "SimpleAcceptor",
     "accept_use_current_time",
     "accept_use_complete_history",
+    # model
     "ModelResult",
     "Model",
     "SimpleModel",
     "IntegratedModel",
+    # history
     "History",
+    # visualization
     "visualization",
 ]
 
