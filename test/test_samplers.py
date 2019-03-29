@@ -183,8 +183,8 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     assert pre_evals >= pop_size.nr_particles
     # our samplers should not have overhead in calibration, except batching
     batch_size = sampler.batch_size if hasattr(sampler, 'batch_size') else 1
-    max_expected = pop_size.nr_particles + batch_size -1
-    if pre_evals > pop_size.nr_particles + batch_size - 1:
+    max_expected = pop_size.nr_particles + batch_size - 1
+    if pre_evals > max_expected:
         # Violations have been observed occasionally for the redis server
         # due to runtime conditions with the increase of the evaluations
         # counter. This could be overcome, but as it usually only happens
@@ -192,7 +192,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
         # print a warning here.
         logger.warn(
             f"Had {pre_evals} simulations in the calibration iteration, "
-            f"but a maximum of {max_evals} would have been sufficient for "
+            f"but a maximum of {max_expected} would have been sufficient for "
             f"the population size of {pop_size.nr_particles}.")
 
 
