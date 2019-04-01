@@ -353,6 +353,7 @@ class History:
 
         population_strategy_json_str: str
             The population strategy represented as json string.
+
         """
         # create a new ABCSMC analysis object
         abcsmc = ABCSMC(
@@ -455,6 +456,7 @@ class History:
             Time to update for.
         nr_samples: int, optional (default = 0)
             Number of samples reported.
+
         """
         # extract population
         population = (self._session.query(Population)

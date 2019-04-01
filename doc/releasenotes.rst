@@ -4,8 +4,8 @@ Release Notes
 =============
 
 
-0.9 series
-..........
+0.10 series
+-----------
 
 
 0.10.0 (2019-04-01)
@@ -13,6 +13,17 @@ Release Notes
 
 * Stochastic acceptor introduced as alternative to uniform epsilon
   thresholds.
+
+
+0.9 series
+..........
+
+
+0.9.11 (2019-04-01)
+-------------------
+
+* Run some notebooks as part of the tests.
+* Automatize pypi upload via travis.
 
 
 0.9.10 (2019-03-27)
