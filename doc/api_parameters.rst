@@ -5,5 +5,5 @@ Parameters
 
 .. automodule:: pyabc.parameters
    :members:
-   :special-members: __init__,__call_
+   :special-members: __init__, __call_
    :show-inheritance:

@@ -1,47 +1,54 @@
 language: python
 python:
-  - "3.6"
-
+- '3.6'
 sudo: true
-
-# environment
-
 os:
-  - linux
+- linux
 dist:
-  - trusty  # take the latest supported LTS version
+# take the latest supported LTS version
+- trusty
 
 # install dependencies
 
 before_install:
-  # install latest r
-  - sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
-  - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
-  - gpg -a --export E084DAB9 | sudo apt-key add -
-  - sudo apt-get update
-  - sudo apt-get install r-base r-base-dev r-base-core r-recommended
-
+# install latest r
+- sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
+- gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
+- gpg -a --export E084DAB9 | sudo apt-key add -
+- sudo apt-get update
+- sudo apt-get install r-base r-base-dev r-base-core r-recommended
 # from apt
 addons:
   apt:
     update: true
     packages:
     - redis-server
-
 # from pip
 install:
-  - pip install --upgrade .
-  - pip install --upgrade -r .travis_pip_reqs.txt
-  - pip install --upgrade pytest
+- pip install --upgrade .
+- pip install --upgrade -r .travis_pip_reqs.txt
+- pip install --upgrade pytest
 
 # run tests
 
 script:
-  - travis_wait 15 python -m pytest --cov=pyabc test/test_*
-  - travis_wait 10 xvfb-run -a python -m pytest --cov=pyabc --cov-append test/visualization/test_*
+- travis_wait 15 python -m pytest --cov=pyabc test/test_*
+- travis_wait 5 xvfb-run -a python -m pytest --cov=pyabc --cov-append test/visualization/test_*
+- travis_wait 15 test/run_notebooks.sh
 
 after_success:
-  - codecov
+- codecov
+
+# deploy
+
+deploy:
+  provider: pypi
+  username: yannik.schaelte
+  password:
+    secure: OrrncJ6ne3gL/KtkvW47Vy2aymDtSVR05fgqhEZWCOR/MCilocjW24UGLsLfrVnhzOkoZCdir+7/ACCYr+NwznA6aqqYlSJ4qGEmFCol5htejQLZVtI5CX+otjsuF/utHyqSIVLNf2cDtXX9TSqUW7TsJh0YHrPtH8gUDr5kzZLNBdn4oCh9xVM4P1/FgWx5hEj9H1X62hOURZxKFs1mK+JxryNjFla/agaEzypHKTYMn+q1biRaQlMl+93JQs85kRQWoxOab6sn1B2CUfRezGs5wjj/zIBHvwPpIsJGniMtBan+xKqkJls4t5gGPss1CyVqWc6Eb8l4pg9kXTFUN30fKEYAmF2WRj1HwyCWumKXUzZ/vOCRtN91RyrtEkc/SOlmg5MvBNiKaaDO45R644LeMav1PaAt1GJxfqb8J9fBcMRbYYwheu7u/dOMUTl4HxuVoq3qtIdgnpdL22+UAaWRmcSKfJCcST8U4wOfTmsP2YcPog4IM7HoW7QfwGLlHR1VHUUGcPf1CDNC74jpSUu2qSDpdGJHVxBRQw48vak9eYA+pPbAellU5BQo6N6BjKM1oDWnc54du/C5bKmC6oNEv2d+LMvrFfmttFuOKxJEuooIHs3fDuvJHRjvEylImjn+L6wu5n0t4HnKP8t9ur85XLupLKTaTp6eVuC8fuA=
+  on:
+    branch: master
+    tags: true
 
 # cache
 

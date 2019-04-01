@@ -2,7 +2,7 @@
 
 .. automodule:: pyabc.sge
    :members:
-   :special-members: __init__,__call__
+   :special-members: __init__, __call__
    :show-inheritance:
 
 .. autoclass:: pyabc.sge.SGE
