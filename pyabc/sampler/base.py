@@ -163,14 +163,6 @@ class Sampler(ABC, metaclass=SamplerMeta):
     def _create_empty_sample(self) -> Sample:
         return self.sample_factory()
 
-    def initialize(self):
-        """
-        Initialize the sampler.
-        """
-        # TODO It is not nice that nr_evaluations_ is an attribute.
-        # It should be returned directly in sample_until_n_accepted
-        self.nr_evaluations_ = 0
-
     @abstractmethod
     def sample_until_n_accepted(
             self,

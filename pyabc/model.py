@@ -8,7 +8,7 @@ Models for ABCSMC.
 from .parameters import Parameter
 from typing import Callable, Any
 from .epsilon import Epsilon
-from .distance_functions import DistanceFunction
+from .distance import Distance
 from .acceptor import Acceptor
 
 
@@ -121,7 +121,7 @@ class Model:
                  t,
                  pars,
                  sum_stats_calculator,
-                 distance_calculator: DistanceFunction,
+                 distance_calculator: Distance,
                  x_0) -> ModelResult:
         """
         Sample, calculate summary statistics, and then calculate the distance.
@@ -160,9 +160,10 @@ class Model:
         sum_stats_result = self.summary_statistics(t,
                                                    pars,
                                                    sum_stats_calculator)
-        distance = distance_calculator(t,
-                                       sum_stats_result.sum_stats,
-                                       x_0)
+        distance = distance_calculator(sum_stats_result.sum_stats,
+                                       x_0,
+                                       t,
+                                       pars)
         sum_stats_result.distance = distance
 
         return sum_stats_result
@@ -171,7 +172,7 @@ class Model:
                t,
                pars,
                sum_stats_calculator,
-               distance_calculator: DistanceFunction,
+               distance_calculator: Distance,
                eps_calculator: Epsilon,
                acceptor: Acceptor,
                x_0):
@@ -195,7 +196,7 @@ class Model:
             A function which calculates summary statistics.
             The user is free to use or ignore this function.
 
-        distance_calculator: pyabc.DistanceFunction
+        distance_calculator: pyabc.Distance
             The distance function.
             The user is free to use or ignore this function.
 
@@ -338,7 +339,7 @@ class IntegratedModel(Model):
                t: int,
                pars,
                sum_stats_calculator,
-               distance_calculator: DistanceFunction,
+               distance_calculator: Distance,
                eps_calculator: Epsilon,
                acceptor: Acceptor,
                x_0: dict):

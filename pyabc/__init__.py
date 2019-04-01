@@ -18,18 +18,20 @@ from .random_variables import (
     RVBase,
     RVDecorator,
     LowerBoundDecorator)
-from .distance_functions import (
-    DistanceFunction,
+from .distance import (
+    Distance,
     NoDistance,
+    IdentityFakeDistance,
+    AcceptAllDistance,
     SimpleFunctionDistance,
     PNormDistance,
     AdaptivePNormDistance,
-    ZScoreDistanceFunction,
-    PCADistanceFunction,
-    MinMaxDistanceFunction,
-    PercentileDistanceFunction,
-    RangeEstimatorDistanceFunction,
-    DistanceFunctionWithMeasureList)
+    ZScoreDistance,
+    PCADistance,
+    MinMaxDistance,
+    PercentileDistance,
+    RangeEstimatorDistance,
+    DistanceWithMeasureList)
 from .epsilon import (
     Epsilon,
     ConstantEpsilon,
@@ -63,17 +65,19 @@ from .version import __version__  # noqa: F401
 __all__ = [
     "ABCSMC",
     # distance
-    "DistanceFunction",
+    "Distance",
     "NoDistance",
+    "IdentityFakeDistance",
+    "AcceptAllDistance",
     "SimpleFunctionDistance",
     "PNormDistance",
     "AdaptivePNormDistance",
-    "ZScoreDistanceFunction",
-    "PCADistanceFunction",
-    "MinMaxDistanceFunction",
-    "PercentileDistanceFunction",
-    "RangeEstimatorDistanceFunction",
-    "DistanceFunctionWithMeasureList",
+    "ZScoreDistance",
+    "PCADistance",
+    "MinMaxDistance",
+    "PercentileDistance",
+    "RangeEstimatorDistance",
+    "DistanceWithMeasureList",
     # epsilon
     "Epsilon",
     "ConstantEpsilon",

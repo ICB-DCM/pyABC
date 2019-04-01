@@ -155,7 +155,7 @@ class Population:
         for particle in self._list:
             for i in range(len(particle.accepted_distances)):
                 particle.accepted_distances[i] = distance_to_ground_truth(
-                    particle.accepted_sum_stats[i])
+                    particle.accepted_sum_stats[i], particle.parameter)
 
     def get_model_probabilities(self) -> dict:
         """
@@ -192,10 +192,47 @@ class Population:
             for distance in particle.accepted_distances:
                 rows.append({'distance': distance,
                              'w': particle.weight * model_probability})
-
         weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
+
+    def get_all(self, keys):
+        """
+        Get dataframe of population values. Possible entries of keys:
+        weight, distance, sum_stat, parameter.
+
+        Returns
+        -------
+
+        Dictionary where the keys are associated to same-ordered lists
+        of the corresponding values.
+        """
+        ret = {key: [] for key in keys}
+        for particle in self._list:
+            n_accepted = len(particle.accepted_distances)
+            if 'weight' in keys:
+                model_probability = self._model_probabilities[particle.m]
+                weight = particle.weight * model_probability
+                ret['weight'].extend([weight] * n_accepted)
+            if 'parameter' in keys:
+                ret['parameter'].extend([particle.parameter] * n_accepted)
+            if 'distance' in keys:
+                for distance in particle.accepted_distances:
+                    ret['distance'].append(distance)
+            if 'sum_stat' in keys:
+                for sum_stat in particle.accepted_sum_stats:
+                    ret['sum_stat'].append(sum_stat)
+        return pd.DataFrame(ret)
+
+    def get_accepted_sum_stats(self) -> List[dict]:
+        """
+        Return a list of all accepted summary statistics.
+        """
+        sum_stats = []
+        for particle in self._list:
+            sum_stats.extend(particle.accepted_sum_stats)
+
+        return sum_stats
 
     def to_dict(self) -> dict:
         """
