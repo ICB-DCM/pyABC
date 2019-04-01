@@ -322,9 +322,6 @@ class ABCSMC:
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
 
-        # sample from prior to calibrate distance function and epsilon
-        self._initialize_dist_eps_acc(self.history.max_t + 1)
-
         # return id generated in store_initial_data
         return self.history.id
 
@@ -361,9 +358,6 @@ class ABCSMC:
         if observed_sum_stat is None:
             observed_sum_stat = self.history.observed_sum_stat()
         self.x_0 = observed_sum_stat
-
-        # initialize eps and dist
-        self._initialize_dist_eps_acc(self.history.max_t + 1)
 
         # just return the id again
         return self.history.id
