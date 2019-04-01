@@ -8,6 +8,13 @@ Release Notes
 ..........
 
 
+0.9.11 (2019-04-01)
+-------------------
+
+* Run some notebooks as part of the tests.
+* Automatize pypi upload via travis.
+
+
 0.9.10 (2019-03-27)
 -------------------
 
