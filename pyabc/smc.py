@@ -427,7 +427,6 @@ class ABCSMC:
 
         if self._initial_population is None:
             if self.history.n_populations > 0:
-                weights, sum_stats = self.history.get_weighted_sum_stats()
                 # extract latest population from database
                 population = self.history.get_population()
             else:
@@ -436,7 +435,6 @@ class ABCSMC:
                 # update number of samples in calibration
                 self.history.update_nr_samples(
                     History.PRE_TIME, self.sampler.nr_evaluations_)
-
             self._initial_population = population
 
         return self._initial_population

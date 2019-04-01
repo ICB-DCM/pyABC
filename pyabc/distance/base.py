@@ -62,10 +62,11 @@ class Distance(ABC):
             The sampler used in ABCSMC.
         """
 
+    # pylint: disable=R0201
     def update(
             self,
             t: int,
-            sum_stats: List[dict]) -> bool:  # pylint: disable=R0201
+            sum_stats: List[dict]) -> bool:
         """
         Update the distance for the upcoming generation t.
         The default is to do nothing.
