@@ -58,6 +58,12 @@ In the release form,
 Upload to the Python package index PyPI
 ---------------------------------------
 
+The upload to pypi has been automatized via travis since pyabc version 0.9.11,
+and is triggered whenever a new release tag is created on the github master
+branch.
+
+To manually upload a new version to pypi, proceed as follows:
+
 First, a so called "wheel" is created via::
 
     python setup.py bdist_wheel
