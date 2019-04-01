@@ -65,7 +65,7 @@ class Distance(ABC):
     def update(
             self,
             t: int,
-            sum_stats: List[dict]) -> bool:
+            sum_stats: List[dict]) -> bool:  # pylint: disable=R0201
         """
         Update the distance for the upcoming generation t.
         The default is to do nothing.
