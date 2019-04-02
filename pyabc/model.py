@@ -220,11 +220,11 @@ class Model:
         result = self.summary_statistics(t,
                                          pars,
                                          sum_stats_calculator)
-        distance, accepted = acceptor(t=t,
-                                      distance_function=distance_calculator,
+        distance, accepted = acceptor(distance_function=distance_calculator,
                                       eps=eps_calculator,
                                       x=result.sum_stats,
                                       x_0=x_0,
+                                      t=t,
                                       par=pars)
         result.distance = distance
         result.accepted = accepted

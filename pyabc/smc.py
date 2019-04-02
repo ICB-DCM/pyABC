@@ -823,6 +823,7 @@ class ABCSMC:
 
             # acceptance rate
             acceptance_rate = len(population.get_list()) / nr_evaluations
+            logger.debug(f"Acceptance rate: {acceptance_rate}.")
 
             # update distance function
             df_updated = self.distance_function.update(
@@ -839,9 +840,9 @@ class ABCSMC:
             self.eps.update(t + 1, population.get_weighted_distances())
 
             # update acceptor
-            self.acceptor.update(t + 1, population.get_weighted_distances(),
-                                 self.distance_function,
-                                 acceptance_rate)
+            self.acceptor.update(
+                t + 1, population.get_weighted_distances(),
+                self.distance_function, acceptance_rate)
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon
