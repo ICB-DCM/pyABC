@@ -442,7 +442,7 @@ class StochasticAcceptor(Acceptor):
         # fill into temperatures list
         self.temperatures[t] = temp
 
-    def __call__(self, t, distance_function, eps, x, x_0, pars):
+    def __call__(self, t, distance_function, eps, x, x_0, par):
         kernel = distance_function
         if not isinstance(kernel, StochasticKernel):
             raise AssertionError(
@@ -452,7 +452,7 @@ class StochasticAcceptor(Acceptor):
         temp = self.temperatures[t]
 
         # compute probability density
-        pd = kernel(x, x_0, t, pars)
+        pd = kernel(x, x_0, t, par)
         pdf_max = self.pdf_maxs[t]
 
         # check pdf max ok
