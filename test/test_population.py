@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from pyabc import Particle, Population
+from pyabc import Population
 from .test_storage import rand_pop_list
 
 
