@@ -130,7 +130,7 @@ def accept_use_current_time(t, distance_function, eps, x, x_0, par):
     point to evaluate whether to accept or reject.
     """
 
-    d = distance_function(x, x_0, t)
+    d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
     return d, accept
@@ -150,14 +150,14 @@ def accept_use_complete_history(t, distance_function, eps, x, x_0, par):
     """
 
     # first test current criterion, which is most likely to fail
-    d = distance_function(x, x_0, t)
+    d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
     if accept:
         # also check against all previous distances and acceptance criteria
         for t_prev in range(0, t):
             try:
-                d_prev = distance_function(x, x_0, t_prev)
+                d_prev = distance_function(x, x_0, t_prev, par)
                 accept = d_prev <= eps(t_prev)
                 if not accept:
                     break
