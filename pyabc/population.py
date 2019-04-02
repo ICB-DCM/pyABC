@@ -196,7 +196,7 @@ class Population:
         weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
-    
+
     def get_weighted_sum_stats(self) -> tuple:
         weights = []
         sum_stats = []
@@ -274,16 +274,6 @@ class Population:
                     ret['sum_stat'].append(sum_stat)
 
         return ret
-
-    def get_accepted_sum_stats(self) -> List[dict]:
-        """
-        Return a list of all accepted summary statistics.
-        """
-        sum_stats = []
-        for particle in self._list:
-            sum_stats.extend(particle.accepted_sum_stats)
-
-        return sum_stats
 
     def to_dict(self) -> dict:
         """

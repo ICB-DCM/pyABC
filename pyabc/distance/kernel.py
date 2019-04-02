@@ -81,9 +81,10 @@ class SimpleFunctionKernel(StochasticKernel):
         The function should be a pdf or pmf.
 
     ret_scale: as in StochasticKernel.ret_scale
-    
+
     keys: List[str], optional (see StochasticKernel.keys)
     """
+
     def __init__(
             self,
             function,
@@ -94,6 +95,7 @@ class SimpleFunctionKernel(StochasticKernel):
         self.function = function
 
     def __call__(
+            self,
             x: dict,
             x_0: dict,
             t: int = None,
@@ -173,13 +175,13 @@ class NormalKernel(StochasticKernel):
         """
         # difference to array
         diff = np.array([x[key] - x_0[key] for key in self.keys])
-        
+
         # compute pdf
         if self.ret_scale == RET_SCALE_LIN:
             ret = self.rv.pdf(diff)
         else:  # self.ret_scale == RET_SCALE_LOG
             ret = self.rv.logpdf(diff)
-        
+
         return ret
 
 
@@ -225,7 +227,7 @@ class IndependentNormalKernel(StochasticKernel):
             t=t,
             get_sum_stats=get_sum_stats,
             x_0=x_0)
-        
+
         # set dimension
         self.dim = len(x_0)
 
@@ -296,13 +298,14 @@ class BinomialKernel(StochasticKernel):
             keys=None,
             pdf_max=1):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
-        
+
         if p > 1 or p < 0:
             raise ValueError(
                 f"p must be in the interval [0, 1], but obtained {p}.")
         self.p = p
 
     def __call__(
+            self,
             x: dict,
             x_0: dict,
             t: int = None,
@@ -314,11 +317,11 @@ class BinomialKernel(StochasticKernel):
             ret = 1.0
             for j in range(len(x_0)):
                 ret *= sp.stats.binom.pmf(k=x_0[j], n=x[j], p=self.p) \
-                       if x[j] > 0 else 1
+                    if x[j] > 0 else 1
         else:  # self.ret_scale == RET_SCALE_LOG
             ret = 0.0
             for j in range(len(x_0)):
                 ret += sp.stats.binom.logpmf(k=x_0[j], n=x[j], p=self.p) \
-                       if x[j] > 0 else 0
+                    if x[j] > 0 else 0
 
         return ret

@@ -136,7 +136,7 @@ class Acceptor:
             The updated sample.
         """
         return sample
-    
+
     def get_epsilon_equivalent(self, t: int):
         """
         Return acceptance criterion for time t. An acceptor should implement
@@ -186,7 +186,7 @@ class SimpleFunctionAcceptor(Acceptor):
         if isinstance(maybe_acceptor, Acceptor):
             return maybe_acceptor
         else:
-            return SimpleFunctionAcceptor(acceptor)
+            return SimpleFunctionAcceptor(maybe_acceptor)
 
 
 def accept_uniform_use_current_time(
@@ -313,7 +313,7 @@ class StochasticAcceptor(Acceptor):
             If None is passed, it is computed, assumed to be for x=x_0.
 
         temp_schemes: Union[Callable, List[Callable]], optional
-            Temperature schemes of the form 
+            Temperature schemes of the form
             Callable[[dict, **kwargs], float]
             returning proposed temperatures for the next time point. If
             multiple are passed, the minimum computed temperature is used.
@@ -341,18 +341,18 @@ class StochasticAcceptor(Acceptor):
             raise ValueError(
                 "At least one temperature scheduling method is required.")
         self.temp_schemes = temp_schemes
-        
-        if pdf_max_method == None:
+
+        if pdf_max_method is None:
             pdf_max_method = pdf_max_use_default
         self.pdf_max_method = pdf_max_method
 
         # default kwargs
         default_kwargs = dict(
-            target_acceptance_rate = 0.5,
-            temp_init = None,
-            temp_decay_exponent = 3,
-            alpha = 0.5,
-            config = {}
+            target_acceptance_rate=0.5,
+            temp_init=None,
+            temp_decay_exponent=3,
+            alpha=0.5,
+            config={}
         )
         # set kwargs to default if not specified
         for key, value in default_kwargs.items():
@@ -390,7 +390,11 @@ class StochasticAcceptor(Acceptor):
                weighted_distances: pd.DataFrame,
                distance_function,
                acceptance_rate: float):
-        self._update(t, lambda: weighted_distances, distance_function, acceptance_rate)
+        self._update(
+            t,
+            lambda: weighted_distances,
+            distance_function,
+            acceptance_rate)
 
     def _update(self,
                 t: int,
@@ -399,7 +403,7 @@ class StochasticAcceptor(Acceptor):
                 acceptance_rate: float):
         if not isinstance(kernel, StochasticKernel):
             raise AssertionError(
-                    "The distance function must be a pyabc.StochasticKernel.")
+                "The distance function must be a pyabc.StochasticKernel.")
 
         # check if final time point reached
         if t >= self.max_nr_populations - 1:
@@ -442,7 +446,7 @@ class StochasticAcceptor(Acceptor):
         kernel = distance_function
         if not isinstance(kernel, StochasticKernel):
             raise AssertionError(
-                    "The distance function must be a pyabc.StochasticKernel.")
+                "The distance function must be a pyabc.StochasticKernel.")
 
         # temperature
         temp = self.temperatures[t]
@@ -489,7 +493,6 @@ def scheme_acceptance_rate(**kwargs):
     get_weighted_distances = kwargs['get_weighted_distances']
     pdf_max = kwargs['pdf_max']
     ret_scale = kwargs['ret_scale']
-    x_0 = kwargs['x_0']
     target_acceptance_rate = kwargs['target_acceptance_rate']
 
     # is there a pre-defined step to start with?
@@ -508,7 +511,7 @@ def scheme_acceptance_rate(**kwargs):
         values = np.exp(pdfs - pdf_max)
 
     weights /= np.sum(weights)
-    
+
     # objective function which we wish to find a root for
     def obj(beta):
         val = np.sum(weights * values**beta) - \
@@ -545,7 +548,7 @@ def scheme_exponential_decay(**kwargs):
     if max_nr_populations == np.inf:
         # just decrease by a factor of alpha each round
         temp = alpha * temp_base
-        return tmp
+        return temp
 
     # how many steps left?
     t_to_go = (max_nr_populations - 1) - (t - 1)
@@ -569,7 +572,7 @@ def scheme_decay(**kwargs):
     if max_nr_populations == np.inf:
         raise ValueError("Can only perform decay step with a finite "
                          "max_nr_populations.")
- 
+
     # how many steps left?
     t_to_go = (max_nr_populations - 1) - (t - 1)
     if t_to_go < 2:
@@ -595,7 +598,7 @@ def scheme_decay(**kwargs):
 
 def scheme_daly(**kwargs):
     """
-    Use modified scheme in daly 2017. 
+    Use modified scheme in daly 2017.
     """
     # required fields
     t = kwargs['t']
@@ -620,18 +623,17 @@ def scheme_daly(**kwargs):
         # k controls reduction in error threshold
         k[t] = temp
         return temp
-    
+
     if acceptance_rate < min_acceptance_rate:
         k_base = alpha * k_base
 
     k[t] = min(k_base, alpha * temp_base)
     temp = temp_base - k[t]
-    
+
     return temp
 
 
 # PDF MAX EVALUATION
-
 
 
 def pdf_max_use_default(**kwargs):

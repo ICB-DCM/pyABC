@@ -16,7 +16,7 @@ import pandas as pd
 import copy
 from typing import Union
 
-from .distance import PNormDistance, to_distance
+from .distance import Distance, PNormDistance, to_distance
 from .epsilon import Epsilon, MedianEpsilon, NoEpsilon
 from .model import Model
 from .population import Particle
@@ -28,7 +28,8 @@ from .pyabc_rand_choice import fast_random_choice
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import UniformAcceptor, SimpleFunctionAcceptor
+from .acceptor import Acceptor, UniformAcceptor, SimpleFunctionAcceptor
+from .sampler import Sampler
 
 
 logger = logging.getLogger("ABC")
@@ -148,15 +149,15 @@ class ABCSMC:
                  models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
-                 distance_function = None,
+                 distance_function: Union[Distance, Callable] = None,
                  population_size: Union[PopulationStrategy, int] = 100,
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
-                 sampler=None,
-                 acceptor=None):
+                 sampler: Sampler = None,
+                 acceptor: Acceptor = None):
 
         if not isinstance(models, list):
             models = [models]
