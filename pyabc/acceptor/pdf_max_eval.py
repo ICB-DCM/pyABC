@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def pdf_max_use_default(**kwargs):
     """
     Just use the pdf_max value passed via default, usually originating

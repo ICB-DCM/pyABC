@@ -423,7 +423,7 @@ class StochasticAcceptor(Acceptor):
         logger.debug(f"For t={t}, pdf_max={self.pdf_maxs[t]}.")
 
         # update temperature
-        
+
         if t >= self.max_nr_populations - 1:
             # t is last time
             self.temperatures[t] = 1.0
