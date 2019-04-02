@@ -126,7 +126,7 @@ class ABCSMC:
     acceptor: Acceptor, optional
         Takes a distance function, summary statistics and an epsilon threshold
         to decide about acceptance of a particle. Argument accepts any subclass
-        of :class:`pyabc.acceptor.Acceptor` or a function convertible to an
+        of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
         acceptor.
 
 
@@ -215,9 +215,8 @@ class ABCSMC:
         # will be set later
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
-        self.history = None  # type: History
+        self.history = None
         self._initial_population = None
-        self._initial_n_eval = 0
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
@@ -397,10 +396,6 @@ class ABCSMC:
             weighted_distances = population.get_weighted_distances()
             return weighted_distances
 
-        def get_initial_population():
-            population = self._get_initial_population(t)
-            return population
-
         # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
             t, get_initial_sum_stats, self.x_0)
@@ -437,12 +432,11 @@ class ABCSMC:
 
         return self._initial_population
 
-    def _create_simulate_from_prior_function(self, t):
+    def _create_simulate_from_prior_function(self, t: int):
         """
         Similar to _create_simulate_function, apart here we sample from the
         prior and accept all.
         """
-
         model_prior = self.model_prior
         parameter_priors = self.parameter_priors
         models = self.models
@@ -463,7 +457,7 @@ class ABCSMC:
             # remember sum stat as accepted
             accepted_sum_stats = [model_result.sum_stats]
             # distance will be computed after initialization of the
-            # distances
+            # distance function
             accepted_distances = [np.inf]
             # all are happy and accepted
             accepted = True
@@ -485,7 +479,6 @@ class ABCSMC:
         Only sample from prior and return results without changing
         the history of the distance function or the epsilon.
         """
-
         # create simulate function
         simulate_one = self._create_simulate_from_prior_function(t)
 
@@ -499,7 +492,7 @@ class ABCSMC:
 
         return population
 
-    def _create_simulate_function(self, t):
+    def _create_simulate_function(self, t: int):
         """
         Create a simulation function which performs the sampling of parameters,
         simulation of data and acceptance checking, and which is then passed
@@ -795,8 +788,8 @@ class ABCSMC:
         for t in range(t0, t_max):
 
             # get epsilon for generation t
-            current_eps = self.acceptor.get_epsilon_equivalent(t) \
-                if isinstance(self.eps, NoEpsilon) else self.eps(t)
+            current_eps = self.eps(t) if not isinstance(self.eps, NoEpsilon) \
+                else self.acceptor.get_epsilon_equivalent(t)
             logger.info('t:' + str(t) + ' eps:' + str(current_eps))
 
             # do some adaptations
@@ -814,6 +807,7 @@ class ABCSMC:
 
             # retrieve accepted population
             population = sample.get_accepted_population()
+
             # save to database before making any changes to the population
             logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
@@ -822,8 +816,8 @@ class ABCSMC:
                 t, current_eps, population, nr_evaluations,
                 model_names)
             logger.debug(
-                '\ntotal nr simulations up to t =' + str(t) + ' is '
-                + str(self.history.total_nr_simulations))
+                f"Total nr simulations up to t = {t} is "
+                f"{self.history.total_nr_simulations}.")
 
             # prepare next iteration
 
