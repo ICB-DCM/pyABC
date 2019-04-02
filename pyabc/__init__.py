@@ -42,7 +42,7 @@ from .smc import ABCSMC
 from .storage import History
 from .acceptor import (
     Acceptor,
-    SimpleAcceptor,
+    SimpleFunctionAcceptor,
     accept_use_current_time,
     accept_use_complete_history)
 from .model import (
@@ -103,7 +103,7 @@ __all__ = [
     "GridSearchCV",
     # acceptor
     "Acceptor",
-    "SimpleAcceptor",
+    "SimpleFunctionAcceptor",
     "accept_use_current_time",
     "accept_use_complete_history",
     # model

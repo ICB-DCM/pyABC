@@ -224,7 +224,8 @@ class Model:
                                       distance_calculator,
                                       eps_calculator,
                                       result.sum_stats,
-                                      x_0)
+                                      x_0,
+                                      pars)
         result.distance = distance
         result.accepted = accepted
 

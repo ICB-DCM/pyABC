@@ -208,6 +208,12 @@ class Population:
         Dictionary where the keys are associated to same-ordered lists
         of the corresponding values.
         """
+        # check input
+        allowed_keys = ['weight', 'distance', 'parameter', 'sum_stat']
+        for key in keys:
+            if key not in allowed_keys:
+                raise ValueError(f"Key {key} not in {allowed_keys}.")
+
         ret = {key: [] for key in keys}
         for particle in self._list:
             n_accepted = len(particle.accepted_distances)
@@ -223,6 +229,7 @@ class Population:
             if 'sum_stat' in keys:
                 for sum_stat in particle.accepted_sum_stats:
                     ret['sum_stat'].append(sum_stat)
+
         return ret
 
     def get_accepted_sum_stats(self) -> List[dict]:

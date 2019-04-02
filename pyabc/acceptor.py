@@ -26,7 +26,7 @@ class Acceptor:
         """
         pass
 
-    def __call__(self, t, distance_function, eps, x, x_0):
+    def __call__(self, t, distance_function, eps, x, x_0, par):
         """
         Compute distance between summary statistics and evaluate whether to
         accept or reject.
@@ -54,6 +54,9 @@ class Acceptor:
         x_0: dict
             The observed summary statistics.
 
+        par: pyabc.Parameter
+            The model parameters used to simulate x.
+
         Returns
         -------
 
@@ -73,13 +76,10 @@ class Acceptor:
             for the further process, and because in some parts of ABC a scalar
             distance value is required.
         """
-        # TODO: The epsilon does not accept a par argument yet, which the
-        # distance can handle. Thus, in the future the argument list will be
-        # extended.
         raise NotImplementedError()
 
 
-class SimpleAcceptor(Acceptor):
+class SimpleFunctionAcceptor(Acceptor):
     """
     Initialize from function.
 
@@ -97,16 +97,18 @@ class SimpleAcceptor(Acceptor):
             fun = accept_use_current_time
         self.fun = fun
 
-    def __call__(self, t, distance_function, eps, x, x_0):
-        return self.fun(t, distance_function, eps, x, x_0)
+    def __call__(self, t, distance_function, eps, x, x_0, par):
+        return self.fun(t, distance_function, eps, x, x_0, par)
 
     @staticmethod
-    def assert_acceptor(acceptor):
+    def assert_acceptor(maybe_acceptor):
         """
+        Create an acceptor object from input.
+
         Parameters
         ----------
 
-        acceptor: Acceptor or Callable
+        maybe_acceptor: Acceptor or Callable
             Either pass a full acceptor, or a callable which is then filled
             into a SimpleAcceptor.
 
@@ -116,13 +118,13 @@ class SimpleAcceptor(Acceptor):
         acceptor: Acceptor
             An Acceptor object in either case.
         """
-        if isinstance(acceptor, Acceptor):
-            return acceptor
+        if isinstance(maybe_acceptor, Acceptor):
+            return maybe_acceptor
         else:
-            return SimpleAcceptor(acceptor)
+            return SimpleFunctionAcceptor(maybe_acceptor)
 
 
-def accept_use_current_time(t, distance_function, eps, x, x_0):
+def accept_use_current_time(t, distance_function, eps, x, x_0, par):
     """
     Use only the distance function and epsilon criterion at the current time
     point to evaluate whether to accept or reject.
@@ -134,7 +136,7 @@ def accept_use_current_time(t, distance_function, eps, x, x_0):
     return d, accept
 
 
-def accept_use_complete_history(t, distance_function, eps, x, x_0):
+def accept_use_complete_history(t, distance_function, eps, x, x_0, par):
     """
     Use the acceptance criteria from the complete history to evaluate whether
     to accept or reject.

@@ -28,7 +28,7 @@ from .pyabc_rand_choice import fast_random_choice
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import accept_use_current_time, SimpleAcceptor
+from .acceptor import accept_use_current_time, SimpleFunctionAcceptor
 
 
 logger = logging.getLogger("ABC")
@@ -209,7 +209,7 @@ class ABCSMC:
 
         if acceptor is None:
             acceptor = accept_use_current_time
-        self.acceptor = SimpleAcceptor.assert_acceptor(acceptor)
+        self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
         self.stop_if_only_single_model_alive = False
         self.x_0 = None
@@ -369,7 +369,7 @@ class ABCSMC:
         sample population from the prior. Then, it calls the initialize()
         functions of the distance, epsilon, and acceptor.
 
-        Note that a calibration samples is only taken if required by any of
+        Note that a calibration sample is only taken if required by any of
         the tools.
 
         Parameters
@@ -386,26 +386,16 @@ class ABCSMC:
             return sum_stats
 
         def get_initial_weighted_distances():
+            population = self._get_initial_population(t)
+
             def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
 
-            # create dataframe from weights and new distances
-            population = self._get_initial_population(t)
-            ret = population.get_all(keys=['weight', 'parameter', 'sum_stat'])
-            weights = ret['weight']
-            parameters = ret['parameter']
-            sum_stats = ret['sum_stat']
-
-            # re-compute distances from updated distance function
-            rows = []
-            for weight, parameter, sum_stat \
-                    in zip(weights, parameters, sum_stats):
-                distance = distance_to_ground_truth(sum_stat, parameter)
-                rows.append({'distance': distance, 'w': weight})
-            weighted_distances = pd.DataFrame(rows)
+            population.update_distances(distance_to_ground_truth)
+            weighted_distances = population.get_weighted_distances()
             return weighted_distances
 
-        # initialize dist, eps, acc
+        # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
             t, get_initial_sum_stats, self.x_0)
         self.eps.initialize(
