@@ -16,7 +16,6 @@ class Distance(ABC):
         """
         Default constructor.
         """
-        pass
 
     def initialize(
             self,
@@ -27,6 +26,7 @@ class Distance(ABC):
         This method is called by the ABCSMC framework before the first
         use of the distance (at the beginning of ABCSMC.run()),
         and can be used to calibrate it to the statistics of the samples.
+
         The default is to do nothing.
 
         Parameters
@@ -102,6 +102,7 @@ class Distance(ABC):
         Evaluate at time point t the distance of the summary statistics of
         the data simulated for the tentatively sampled particle to those of
         the observed data.
+
         Abstract method. This method has to be overwritten by
         all concrete implementations.
 
@@ -115,9 +116,11 @@ class Distance(ABC):
             Summary statistics of the observed data.
         t: int
             Time point at which to evaluate the distance.
+            Usually, the distance will not depend on the time.
         par: dict
             The parameters used to create the summary statistics x. These
             can be required by some distance functions.
+            Usually, the distance will not depend on the parameters.
 
         Returns
         -------
@@ -194,7 +197,7 @@ class IdentityFakeDistance(Distance):
                  x: dict,
                  x_0: dict,
                  t: int = None,
-                 par: dict = None):
+                 par: dict = None) -> float:
         return x
 
 
@@ -217,14 +220,15 @@ class AcceptAllDistance(Distance):
 class SimpleFunctionDistance(Distance):
     """
     This is a wrapper around a simple function which calculates the distance.
-    If a function is passed to the ABCSMC class, then it is converted to
-    an instance of the SimpleFunctionDistance class.
+    If a function/callable is passed to the ABCSMC class, which is not
+    subclassed from pyabc.Distance, then it is converted to an instance of the
+    SimpleFunctionDistance class.
 
     Parameters
     ----------
 
     function: Callable[[dict, dict], float]
-        A Callable accepting as parameters (a subset of ) the arguments of the
+        A Callable accepting as parameters (a subset of) the arguments of the
         pyabc.Distance.__call__ function. Usually at least the summary
         statistics x and x_0. Returns the distance between both.
     """
