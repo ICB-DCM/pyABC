@@ -223,7 +223,7 @@ class Population:
             if 'sum_stat' in keys:
                 for sum_stat in particle.accepted_sum_stats:
                     ret['sum_stat'].append(sum_stat)
-        return pd.DataFrame(ret)
+        return ret
 
     def get_accepted_sum_stats(self) -> List[dict]:
         """
