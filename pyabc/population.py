@@ -21,7 +21,7 @@ class Particle:
     were generated during the creation of this particle, and a flag
     indicating whether this particle was accepted or not.
 
-    Properties
+    Parameters
     ----------
 
     m: int
@@ -53,6 +53,7 @@ class Particle:
 
     accepted: bool
         True if particle was accepted, False if not.
+
 
     .. note::
         There are two different ways of weighting particles: First, the weights
