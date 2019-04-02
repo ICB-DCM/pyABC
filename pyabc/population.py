@@ -197,7 +197,7 @@ class Population:
 
         return weighted_distances
 
-    def get_all(self, keys):
+    def get_for_keys(self, keys):
         """
         Get dataframe of population values. Possible entries of keys:
         weight, distance, sum_stat, parameter.
