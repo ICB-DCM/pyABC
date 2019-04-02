@@ -14,7 +14,6 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 import copy
-import warnings
 from typing import Union
 
 from .distance import PNormDistance, to_distance
@@ -368,8 +367,11 @@ class ABCSMC:
         """
         Called once at the start of run(). This function either, if available,
         takes the last population from the history, or generates a
-        sample population from the prior. Then it calls the initialize()
+        sample population from the prior. Then, it calls the initialize()
         functions of the distance, epsilon, and acceptor.
+
+        Note that a calibration sample is only taken if required by any of
+        the tools.
 
         Parameters
         ----------
@@ -385,32 +387,20 @@ class ABCSMC:
             return sum_stats
 
         def get_initial_weighted_distances():
+            population = self._get_initial_population(t)
+
             def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
 
-            # create dataframe from weights and new distances
-            population = self._get_initial_population(t)
-            ret = population.get_all(keys=['weight', 'parameter', 'sum_stat'])
-            weights = ret['weight']
-            parameters = ret['parameter']
-            sum_stats = ret['sum_stat']
-
-            # re-compute distances from updated distance function
-            rows = []
-            for weight, parameter, sum_stat \
-                    in zip(weights, parameters, sum_stats):
-                distance = distance_to_ground_truth(sum_stat, parameter)
-                rows.append({'distance': distance, 'w': weight})
-            weighted_distances = pd.DataFrame(rows)
+            population.update_distances(distance_to_ground_truth)
+            weighted_distances = population.get_weighted_distances()
             return weighted_distances
 
         def get_initial_population():
             population = self._get_initial_population(t)
             return population
 
-        # reset nr_evaluations counter in sampler
-        self.sampler.initialize()
-        # initialize dist, eps, acc
+        # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
             t, get_initial_sum_stats, self.x_0)
         self.eps.initialize(
@@ -419,12 +409,6 @@ class ABCSMC:
             t, get_initial_weighted_distances, self.max_nr_populations,
             self.distance_function, self.x_0)
 
-        # update number of samples in calibration
-        if self.history.n_populations == 0:
-            nr_samples_pre = 0 if self._initial_population is None \
-                else len(self._initial_population)
-            self.history.update_nr_samples(History.PRE_TIME, nr_samples_pre)
-
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
         Get initial samples, either from the last population stored in history,
@@ -432,22 +416,24 @@ class ABCSMC:
         the distance function or the epsilon.
 
         The history must have been initialized already. This function fills the
-        private properties _initial_weights and _initial_sum_stats.
+        private property _initial_population.
 
         .. warning::
-            The sample is cached.
+            The sample is cached. Thus, the function can be called repeatedly
+            without further computational overhead.
         """
         if self._initial_population is None:
             if self.history.n_populations > 0:
                 # extract latest population from database
                 population = self.history.get_population()
-                n_eval = 0
             else:
                 # sample
                 population = self._sample_from_prior(t)
-                n_eval = self.sampler.nr_evaluations_
+                # update number of samples in calibration
+                self.history.update_nr_samples(
+                    History.PRE_TIME, self.sampler.nr_evaluations_)
             self._initial_population = population
-            self._initial_n_eval = n_eval
+
         return self._initial_population
 
     def _create_simulate_from_prior_function(self, t):
@@ -473,7 +459,7 @@ class ABCSMC:
                 t, theta, summary_statistics)
             # sampled from prior, so all have uniform weight
             weight = 1.0
-            # remember sum stats as accepted
+            # remember sum stat as accepted
             accepted_sum_stats = [model_result.sum_stats]
             # distance will be computed after initialization of the
             # distances
@@ -739,7 +725,7 @@ class ABCSMC:
         return weight
 
     def run(self,
-            minimum_epsilon: float = 0,
+            minimum_epsilon: float = 0.,
             max_nr_populations: int = np.inf,
             min_acceptance_rate: float = 0.,
             **kwargs) -> History:
@@ -750,13 +736,13 @@ class ABCSMC:
         Parameters
         ----------
 
-        minimum_epsilon: float
+        minimum_epsilon: float, optional (default = 0.0)
             Stop if epsilon is smaller than minimum epsilon specified here.
 
-        max_nr_populations: int
+        max_nr_populations: int, optional (default = np.inf)
             The maximum number of populations. Stop if this number is reached.
 
-        min_acceptance_rate: float, optional
+        min_acceptance_rate: float, optional (default = 0.0)
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
 
@@ -795,11 +781,6 @@ class ABCSMC:
         # sample from prior to calibrate distance, epsilon, and acceptor
         self._initialize_dist_eps_acc(self.history.max_t + 1)
 
-        # update number of samples in calibration
-        if self._initial_n_eval > 0:
-            self.history.update_nr_samples(
-                History.PRE_TIME, self._initial_n_eval)
-
         t0 = self.history.max_t + 1
         self.history.start_time = datetime.datetime.now()
         # not saved as attribute b/c Mapper of type
@@ -832,7 +813,6 @@ class ABCSMC:
 
             # retrieve accepted population
             population = sample.get_accepted_population()
-
             # save to database before making any changes to the population
             logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_

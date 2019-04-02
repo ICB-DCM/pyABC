@@ -6,7 +6,7 @@ import scipy.stats as st
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
-                   PercentileDistanceFunction, SimpleModel,
+                   PercentileDistance, SimpleModel,
                    ConstantPopulationSize,
                    History)
 from pyabc.sampler import (SingleCoreSampler,
@@ -134,7 +134,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     nr_populations = 2
     pop_size = ConstantPopulationSize(23, nr_samples_per_parameter=n_sim)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
-                 PercentileDistanceFunction(measures_to_use=["y"]),
+                 PercentileDistance(measures_to_use=["y"]),
                  pop_size,
                  eps=MedianEpsilon(),
                  sampler=sampler)

@@ -52,7 +52,7 @@ class Model:
     Parameters
     ----------
 
-    name: str, optional
+    name: str, optional (default = "model")
         A descriptive name of the model. This name can simplify further
         analysis for the user as it is stored in the database.
     """
@@ -63,9 +63,9 @@ class Model:
     def __repr__(self):
         return "<{} {}>".format(self.__class__.__name__, self.name)
 
-    def sample(self, pars):
+    def sample(self, pars: Parameter):
         """
-        Return a sample from the model evaluated ar parameters ``pars``. This
+        Return a sample from the model evaluated at parameters ``pars``. This
         can be raw data, or already summarized statistics thereof.
 
         This method has to be implemented by any subclass.
@@ -85,9 +85,9 @@ class Model:
         raise NotImplementedError()
 
     def summary_statistics(self,
-                           t,
-                           pars,
-                           sum_stats_calculator) -> ModelResult:
+                           t: int,
+                           pars: Parameter,
+                           sum_stats_calculator: Callable) -> ModelResult:
         """
         Sample, and then calculate the summary statistics.
 
@@ -118,11 +118,11 @@ class Model:
         return ModelResult(sum_stats=sum_stats)
 
     def distance(self,
-                 t,
-                 pars,
-                 sum_stats_calculator,
+                 t: int,
+                 pars: Parameter,
+                 sum_stats_calculator: Callable,
                  distance_calculator: Distance,
-                 x_0) -> ModelResult:
+                 x_0: dict) -> ModelResult:
         """
         Sample, calculate summary statistics, and then calculate the distance.
 
@@ -169,13 +169,13 @@ class Model:
         return sum_stats_result
 
     def accept(self,
-               t,
-               pars,
-               sum_stats_calculator,
+               t: int,
+               pars: Parameter,
+               sum_stats_calculator: Callable,
                distance_calculator: Distance,
                eps_calculator: Epsilon,
                acceptor: Acceptor,
-               x_0):
+               x_0: dict):
         """
         Sample, calculate summary statistics, calculate distance, and then
         accept or not accept a parameter.
@@ -192,7 +192,7 @@ class Model:
         pars: Parameter
             The model parameters.
 
-        sum_stats_calculator:
+        sum_stats_calculator: Callable
             A function which calculates summary statistics.
             The user is free to use or ignore this function.
 
@@ -203,13 +203,12 @@ class Model:
         eps_calculator: pyabc.Epsilon
             The acceptance thresholds.
 
-        acceptor: Acceptor
+        acceptor: pyabc.Acceptor
             The acceptor judging whether to accept, based on distance and
             epsilon.
 
         x_0: dict
             The observed summary statistics.
-
 
         Returns
         -------
@@ -226,7 +225,7 @@ class Model:
                                       eps=eps_calculator,
                                       x=result.sum_stats,
                                       x_0=x_0,
-                                      pars=pars)
+                                      par=pars)
         result.distance = distance
         result.accepted = accepted
 
@@ -254,13 +253,13 @@ class SimpleModel(Model):
 
     def __init__(self,
                  sample_function: Callable[[Parameter], Any],
-                 name=None):
+                 name: str = None):
         if name is None:
             name = sample_function.__name__
         super().__init__(name)
         self.sample_function = sample_function
 
-    def sample(self, pars):
+    def sample(self, pars: Parameter):
         return self.sample_function(pars)
 
     @staticmethod
@@ -303,7 +302,9 @@ class IntegratedModel(Model):
     your own integrated model..
     """
 
-    def integrated_simulate(self, pars, eps: float) -> ModelResult:
+    def integrated_simulate(self,
+                            pars: Parameter,
+                            eps: float) -> ModelResult:
         """
         Method which integrates simulation and acceptance/rejection
         in a single method.
@@ -339,8 +340,8 @@ class IntegratedModel(Model):
 
     def accept(self,
                t: int,
-               pars,
-               sum_stats_calculator,
+               pars: Parameter,
+               sum_stats_calculator: Callable,
                distance_calculator: Distance,
                eps_calculator: Epsilon,
                acceptor: Acceptor,

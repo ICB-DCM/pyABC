@@ -1,4 +1,4 @@
-from pyabc import (SimpleAcceptor)
+from pyabc import (SimpleFunctionAcceptor)
 
 
 def test_simple_acceptor():
@@ -6,17 +6,9 @@ def test_simple_acceptor():
         dist = sum(abs(x[key] - x_0[key]) for key in x)
         return dist, dist < 1
 
-    acceptor = SimpleAcceptor(dummy_accept)
+    acceptor = SimpleFunctionAcceptor(dummy_accept)
 
     x = {'s0': 1, 's1': 0}
     y = {'s0': 2, 's1': 2}
 
     dist, accept = acceptor(0, None, None, x, y, None)
-
-
-def test_uniform_acceptor():
-    pass
-
-
-def test_stochastic_acceptr():
-    pass

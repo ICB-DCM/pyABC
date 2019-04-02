@@ -9,12 +9,13 @@ a user-defined implementation.
 
 import numpy as np
 import scipy as sp
+import pandas as pd
 import logging
 import json
 from abc import ABC, abstractmethod
 from .weighted_statistics import weighted_quantile
 from typing import Callable, List, Union
-import pandas as pd
+
 
 logger = logging.getLogger("Epsilon")
 
@@ -50,9 +51,7 @@ class Epsilon(ABC):
             The time point to initialize the epsilon for.
 
         get_weighted_distances: Callable[[], pd.DataFrame]
-            Returns on demand the distances for initializing the epsilon, as
-            returned by
-            Population.get_weighted_summary_statistics_and_distances().
+            Returns on demand the distances for initializing the epsilon.
         """
         pass
 
@@ -250,7 +249,6 @@ class QuantileEpsilon(Epsilon):
             .format(initial_epsilon, quantile_multiplier))
 
         super().__init__()
-
         self._initial_epsilon = initial_epsilon
         self.alpha = alpha
         self.quantile_multiplier = quantile_multiplier

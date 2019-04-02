@@ -2,16 +2,21 @@
 Distance functions
 ==================
 
-Commonly used distance functions for ABC, implementing a few advanced
-features.
+Distance functions measure closeness of observed and sampled data. This
+module implements various commonly used distance functions for ABC, featuring
+a few advanced concepts.
+
+For custom distance functions, either pass a plain function to ABCSMC or
+subclass the pyabc.Distance class.
 """
 
-from .base import(
+from .base import (
     Distance,
     NoDistance,
+    IdentityFakeDistance,
+    AcceptAllDistance,
     SimpleFunctionDistance,
     to_distance)
-
 from .distance import (
     PNormDistance,
     AdaptivePNormDistance,
@@ -21,7 +26,6 @@ from .distance import (
     PercentileDistance,
     RangeEstimatorDistance,
     DistanceWithMeasureList)
-
 from .scales import (
     median_absolute_deviation,
     mean_absolute_deviation,
@@ -33,7 +37,6 @@ from .scales import (
     combined_median_absolute_deviation,
     combined_mean_absolute_deviation,
     standard_deviation_to_observation)
-
 from .kernel import (
     StochasticKernel,
     RET_SCALE_LIN,
@@ -43,13 +46,16 @@ from .kernel import (
     IndependentNormalKernel,
     BinomialKernel)
 
+
 __all__ = [
     # base
     "Distance",
     "NoDistance",
+    "IdentityFakeDistance",
+    "AcceptAllDistance",
     "SimpleFunctionDistance",
     "to_distance",
-    # distances
+    # distance
     "PNormDistance",
     "AdaptivePNormDistance",
     "ZScoreDistance",
@@ -58,7 +64,6 @@ __all__ = [
     "PercentileDistance",
     "RangeEstimatorDistance",
     "DistanceWithMeasureList",
-    "to_distance",
     # scales
     "median_absolute_deviation",
     "mean_absolute_deviation",

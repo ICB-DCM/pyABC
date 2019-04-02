@@ -20,6 +20,8 @@ from .random_variables import (
 from .distance import (
     Distance,
     NoDistance,
+    IdentityFakeDistance,
+    AcceptAllDistance,
     SimpleFunctionDistance,
     PNormDistance,
     AdaptivePNormDistance,
@@ -53,6 +55,9 @@ from .transition import (
     LocalTransition,
     DiscreteRandomWalkTransition,
     GridSearchCV)
+from .population import (
+    Particle,
+    Population)
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
@@ -65,6 +70,8 @@ __all__ = [
     # distance
     "Distance",
     "NoDistance",
+    "IdentityFakeDistance",
+    "AcceptAllDistance",
     "SimpleFunctionDistance",
     "PNormDistance",
     "AdaptivePNormDistance",
@@ -90,6 +97,9 @@ __all__ = [
     "ModelPerturbationKernel",
     # parameter
     "Parameter",
+    # population
+    "Particle",
+    "Population",
     # population size
     "ConstantPopulationSize",
     "AdaptivePopulationSize",

@@ -61,7 +61,7 @@ class Acceptor:
         """
         pass
 
-    def __call__(self, t, distance_function, eps, x, x_0, pars):
+    def __call__(self, t, distance_function, eps, x, x_0, par):
         """
         Compute distance between summary statistics and evaluate whether to
         accept or reject.
@@ -81,6 +81,7 @@ class Acceptor:
 
         eps: pyabc.Epsilon
             The acceptance thresholds.
+            The user is free to use or ignore this object.
 
         x: dict
             Current summary statistics to evaluate.
@@ -88,23 +89,27 @@ class Acceptor:
         x_0: dict
             The observed summary statistics.
 
-        pars: dict
-            The model parameters.
+        par: pyabc.Parameter
+            The model parameters used to simulate x.
 
         Returns
         -------
 
         (distance, accept): (float, bool)
-            True: The distance function is below the epsilon threshold.
-            False: The distance function is above the epsilon threshold.
+            Distance value obtained and a flag indicating the recommendation
+            to accept or reject. More specifically:
+            True: The distance is below the epsilon threshold.
+            False: The distance is above the epsilon threshold.
 
         .. note::
             Currently, only one value encoding the distance is returned
             (and stored in the database),
             namely that at time t, even if also other distances affect the
-            acceptance decision, e.g. distances from previous iterations. This
-            is because the last distance is likely to be most informative for
-            the further process.
+            acceptance decision, e.g. distances from previous iterations,
+            or in general if the distance is not scalar.
+            This is because the last distance is likely to be most informative
+            for the further process, and because in some parts of ABC a scalar
+            distance value is required.
         """
         raise NotImplementedError()
 
@@ -157,16 +162,18 @@ class SimpleFunctionAcceptor(Acceptor):
 
         self.fun = fun
 
-    def __call__(self, t, distance_function,eps, x, x_0, pars):
-        return self.fun(t, distance_function, eps, x, x_0, pars)
+    def __call__(self, t, distance_function, eps, x, x_0, par):
+        return self.fun(t, distance_function, eps, x, x_0, par)
 
     @staticmethod
-    def assert_acceptor(acceptor):
+    def assert_acceptor(maybe_acceptor):
         """
+        Create an acceptor object from input.
+
         Parameters
         ----------
 
-        acceptor: Acceptor or Callable
+        maybe_acceptor: Acceptor or Callable
             Either pass a full acceptor, or a callable which is then filled
             into a SimpleAcceptor.
 
@@ -176,27 +183,26 @@ class SimpleFunctionAcceptor(Acceptor):
         acceptor: Acceptor
             An Acceptor object in either case.
         """
-        if isinstance(acceptor, Acceptor):
-            return acceptor
+        if isinstance(maybe_acceptor, Acceptor):
+            return maybe_acceptor
         else:
             return SimpleFunctionAcceptor(acceptor)
 
 
 def accept_uniform_use_current_time(
-        t, distance_function, eps, x, x_0, pars):
+        t, distance_function, eps, x, x_0, par):
     """
     Use only the distance function and epsilon criterion at the current time
     point to evaluate whether to accept or reject.
     """
-
-    d = distance_function(x, x_0, t, pars)
+    d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
     return d, accept
 
 
 def accept_uniform_use_complete_history(
-        t, distance_function, eps, x, x_0, pars):
+        t, distance_function, eps, x, x_0, par):
     """
     Use the acceptance criteria from the complete history to evaluate whether
     to accept or reject.
@@ -210,14 +216,14 @@ def accept_uniform_use_complete_history(
     """
 
     # first test current criterion, which is most likely to fail
-    d = distance_function(x, x_0, t, pars)
+    d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
     if accept:
         # also check against all previous distances and acceptance criteria
         for t_prev in range(0, t):
             try:
-                d_prev = distance_function(x, x_0, t_prev, pars)
+                d_prev = distance_function(x, x_0, t_prev, par)
                 accept = d_prev <= eps(t_prev)
                 if not accept:
                     break
@@ -248,13 +254,13 @@ class UniformAcceptor(Acceptor):
         super().__init__()
         self.use_complete_history = use_complete_history
 
-    def __call__(self, t, distance_function, eps, x, x_0, pars):
+    def __call__(self, t, distance_function, eps, x, x_0, par):
         if self.use_complete_history:
             return accept_uniform_use_complete_history(
-                t, distance_function, eps, x, x_0, pars)
+                t, distance_function, eps, x, x_0, par)
         else:  # use only current time
             return accept_uniform_use_current_time(
-                t, distance_function, eps, x, x_0, pars)
+                t, distance_function, eps, x, x_0, par)
 
 
 class StochasticAcceptor(Acceptor):

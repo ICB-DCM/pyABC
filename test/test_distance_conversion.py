@@ -1,5 +1,5 @@
 import pytest
-from pyabc.distance_functions import to_distance
+from pyabc.distance import to_distance
 
 
 def f(x, y):

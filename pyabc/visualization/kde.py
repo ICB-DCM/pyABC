@@ -169,7 +169,7 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         variable to be plotted as y.
     numx: int, optional
         The number of bins in x direction.
-        Defaults tp 50.
+        Defaults to 50.
     numy int, optional
         The number of bins in y direction.
         Defaults to 50.

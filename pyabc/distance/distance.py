@@ -1,17 +1,6 @@
-"""
-Distances
-=========
-
-Distance functions measure closeness of observed and sampled data.
-For custom distance functions, either pass a plain function to ABCSMC or
-subclass the DistanceFunction class if finer grained configuration is required.
-"""
-
-import json
 import scipy as sp
 import numpy as np
 from scipy import linalg as la
-from abc import ABC, abstractmethod
 from typing import List, Callable
 import logging
 
@@ -29,8 +18,8 @@ class PNormDistance(Distance):
 
     .. math::
 
-        d(x, y) =\
-        \\left [\\sum_{i} \\left |w_i ( x_i-y_i ) \\right |^{p} \\right ]^{1/p}
+        d(x, y) = \
+        \\left [\\sum_{i} \\left| w_i ( x_i-y_i ) \\right|^{p} \\right ]^{1/p}
 
     to compute distances between sets of summary statistics. E.g. set p=2 to
     get a Euclidean distance.
@@ -44,7 +33,7 @@ class PNormDistance(Distance):
     w: dict
         Weights. Dictionary indexed by time points. Each entry contains a
         dictionary of numeric weights, indexed by summary statistics labels.
-        If none is passed, a weight of 1 is considered for every summary
+        If None is passed, a weight of 1 is considered for every summary
         statistic. If no entry is available in w for a given time point,
         the maximum available time point is selected.
     """
@@ -151,6 +140,7 @@ class AdaptivePNormDistance(PNormDistance):
                  max_weight_ratio: float = None):
         # call p-norm constructor
         super().__init__(p=p, w=None)
+
         self.adaptive = adaptive
 
         if scale_function is None:
@@ -181,7 +171,7 @@ class AdaptivePNormDistance(PNormDistance):
     def initialize(self,
                    t: int,
                    get_sum_stats: Callable[[], List[dict]],
-                   x_0: dict):
+                   x_0: dict = None):
         """
         Initialize weights.
         """
@@ -209,7 +199,7 @@ class AdaptivePNormDistance(PNormDistance):
 
     def _update(self,
                 t: int,
-                all_sum_stats: List[dict]):
+                sum_stats: List[dict]):
         """
         Here the real update of weights happens.
         """
@@ -218,7 +208,7 @@ class AdaptivePNormDistance(PNormDistance):
         keys = self.x_0.keys()
 
         # number of samples
-        n_samples = len(all_sum_stats)
+        n_samples = len(sum_stats)
 
         # make sure w_list is initialized
         if self.w is None:
@@ -231,8 +221,8 @@ class AdaptivePNormDistance(PNormDistance):
             # prepare list for key
             current_list = []
             for j in range(n_samples):
-                if key in all_sum_stats[j]:
-                    current_list.append(all_sum_stats[j][key])
+                if key in sum_stats[j]:
+                    current_list.append(sum_stats[j][key])
 
             # compute scaling
             scale = self.scale_function(data=current_list, x_0=self.x_0[key])
@@ -325,13 +315,13 @@ class DistanceWithMeasureList(Distance):
     def __init__(self,
                  measures_to_use='all'):
         super().__init__()
-        # the measures (summary statistics) to use for distance calculation.
+        # the measures (summary statistics) to use for distance calculation
         self.measures_to_use = measures_to_use
 
     def initialize(self,
                    t: int,
                    get_sum_stats: Callable[[], List[dict]],
-                   x_0: dict):
+                   x_0: dict = None):
         if self.measures_to_use == 'all':
             self.measures_to_use = x_0.keys()
 
@@ -349,9 +339,8 @@ class ZScoreDistance(DistanceWithMeasureList):
     Hence
 
     .. math::
-
-        d(x, y) =
-         \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
+        d(x, y) = \
+        \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """
 
     def __call__(self,
@@ -381,11 +370,11 @@ class PCADistance(DistanceWithMeasureList):
         super().__init__(measures_to_use)
         self._whitening_transformation_matrix = None
 
-    def _dict_to_to_vect(self, x):
+    def _dict_to_vect(self, x):
         return sp.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
-        samples_vec = sp.asarray([self._dict_to_to_vect(x)
+        samples_vec = sp.asarray([self._dict_to_vect(x)
                                   for x in sum_stats])
         # samples_vec is an array of shape nr_samples x nr_features
         means = samples_vec.mean(axis=0)
@@ -398,13 +387,12 @@ class PCADistance(DistanceWithMeasureList):
     def initialize(self,
                    t: int,
                    get_sum_stats: Callable[[], List[dict]],
-                   x_0: dict):
+                   x_0: dict = None):
         super().initialize(t, get_sum_stats, x_0)
 
         # execute function
         sum_stats = get_sum_stats()
 
-        # calculate whitening
         self._calculate_whitening_transformation_matrix(sum_stats)
 
     def __call__(self,
@@ -412,7 +400,7 @@ class PCADistance(DistanceWithMeasureList):
                  x_0: dict,
                  t: int = None,
                  par: dict = None) -> float:
-        x_vec, x_0_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(x_0)
+        x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
             self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
         return distance
@@ -493,7 +481,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
     def initialize(self,
                    t: int,
                    get_sum_stats: Callable[[], List[dict]],
-                   x_0: dict):
+                   x_0: dict = None):
         super().initialize(t, get_sum_stats, x_0)
 
         # execute function
@@ -548,36 +536,3 @@ class PercentileDistance(RangeEstimatorDistance):
         config = super().get_config()
         config["PERCENTILE"] = self.PERCENTILE
         return config
-
-
-class AcceptAllDistance(Distance):
-    """
-    Just a mock distance function which always returns -1.
-    So any sample should be accepted for any sane epsilon object.
-
-    Can be used for testing.
-    """
-
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int,
-                 par: dict) -> float:
-        return -1
-
-
-class IdentityFakeDistance(Distance):
-    """
-    A fake distance function, which just passes the summary statistics on.
-    This class assumes that the model already returns the distance. This can be
-    useful in cases where simulating can be stopped early, when during the
-    simulation some condition is reached which makes it impossible to accept
-    the particle.
-    """
-
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int,
-                 par: dict):
-        return x
