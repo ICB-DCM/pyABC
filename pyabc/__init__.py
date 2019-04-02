@@ -55,6 +55,9 @@ from .transition import (
     LocalTransition,
     DiscreteRandomWalkTransition,
     GridSearchCV)
+from .population import (
+    Particle,
+    Population)
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
@@ -93,6 +96,9 @@ __all__ = [
     "ModelPerturbationKernel",
     # parameter
     "Parameter",
+    # population
+    "Particle",
+    "Population",
     # population size
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
