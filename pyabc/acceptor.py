@@ -40,12 +40,13 @@ class Acceptor:
         t: int
             Time point for which to check.
 
-        distance_function: pyabc.DistanceFunction
+        distance_function: pyabc.Distance
             The distance function.
             The user is free to use or ignore this function.
 
         eps: pyabc.Epsilon
             The acceptance thresholds.
+            The user is free to use or ignore this object.
 
         x: dict
             Current summary statistics to evaluate.
@@ -57,16 +58,20 @@ class Acceptor:
         -------
 
         (distance, accept): (float, bool)
-            True: The distance function is below the epsilon threshold.
-            False: The distance function is above the epsilon threshold.
+            Distance value obtained and a flag indicating the recommendation
+            to accept or reject. More specifically:
+            True: The distance is below the epsilon threshold.
+            False: The distance is above the epsilon threshold.
 
         .. note::
             Currently, only one value encoding the distance is returned
             (and stored in the database),
             namely that at time t, even if also other distances affect the
-            acceptance decision, e.g. distances from previous iterations. This
-            is because the last distance is likely to be most informative for
-            the further process.
+            acceptance decision, e.g. distances from previous iterations,
+            or in general if the distance is not scalar.
+            This is because the last distance is likely to be most informative
+            for the further process, and because in some parts of ABC a scalar
+            distance value is required.
         """
         raise NotImplementedError()
 
