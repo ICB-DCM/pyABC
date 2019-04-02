@@ -73,6 +73,9 @@ class Acceptor:
             for the further process, and because in some parts of ABC a scalar
             distance value is required.
         """
+        # TODO: The epsilon does not accept a par argument yet, which the
+        # distance can handle. Thus, in the future the argument list will be
+        # extended.
         raise NotImplementedError()
 
 
