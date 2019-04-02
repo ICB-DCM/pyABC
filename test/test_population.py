@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from pyabc import Particle, Population
 from .test_storage import rand_pop_list
@@ -21,6 +22,9 @@ def test_basic():
         keys=['weight', 'distance', 'parameter', 'sum_stat'])
     assert all(weighted_distances['w'] == vals['weight'])
     assert all(weighted_distances['distance'] == vals['distance'])
+
+    with pytest.raises(ValueError):
+        pop.get_for_keys(['distance', 'w'])
 
     # 1 sum stat per particle in this case
     assert len(pop.get_accepted_sum_stats()) == len(pop)
