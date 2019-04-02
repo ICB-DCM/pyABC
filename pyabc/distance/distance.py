@@ -33,7 +33,7 @@ class PNormDistance(Distance):
     w: dict
         Weights. Dictionary indexed by time points. Each entry contains a
         dictionary of numeric weights, indexed by summary statistics labels.
-        If none is passed, a weight of 1 is considered for every summary
+        If None is passed, a weight of 1 is considered for every summary
         statistic. If no entry is available in w for a given time point,
         the maximum available time point is selected.
     """
@@ -52,7 +52,7 @@ class PNormDistance(Distance):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int = None,
+                 t: int,
                  par: dict = None) -> float:
         # make sure weights are initialized
         if self.w is None:
@@ -371,11 +371,11 @@ class PCADistance(DistanceWithMeasureList):
         super().__init__(measures_to_use)
         self._whitening_transformation_matrix = None
 
-    def _dict_to_to_vect(self, x):
+    def _dict_to_vect(self, x):
         return sp.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
-        samples_vec = sp.asarray([self._dict_to_to_vect(x)
+        samples_vec = sp.asarray([self._dict_to_vect(x)
                                   for x in sum_stats])
         # samples_vec is an array of shape nr_samples x nr_features
         means = samples_vec.mean(axis=0)
@@ -401,7 +401,7 @@ class PCADistance(DistanceWithMeasureList):
                  x_0: dict,
                  t: int = None,
                  par: dict = None) -> float:
-        x_vec, x_0_vec = self._dict_to_to_vect(x), self._dict_to_to_vect(x_0)
+        x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
             self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
         return distance
