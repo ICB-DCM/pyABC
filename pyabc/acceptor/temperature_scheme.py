@@ -241,7 +241,7 @@ def scheme_ess(**kwargs):
     pdf_max = kwargs['pdf_max']
     temp_init = kwargs['temp_init']
     temp_decay_exponent = kwargs['temp_decay_exponent']
-    target_ress = kwargs.get('target_ress', 0.5)
+    target_ress = kwargs.get('target_ress', 0.8)
     # check if we can compute a decay step
     if max_nr_populations == np.inf:
         raise ValueError(
@@ -281,11 +281,11 @@ def scheme_ess(**kwargs):
         bounds=sp.optimize.Bounds(lb=np.array([beta_base]), ub=np.array([1])))
     beta = res.x
     temp = 1. / beta
-    print("HUHU", beta, temp)
+
     return temp
 
 
 def ess(pdfs, weights, beta):
-    num = np.sum(pdfs**beta)**2
-    den = np.sum(pdfs**(beta * 2))
+    num = np.sum(weights * pdfs**beta)**2
+    den = np.sum((weights * pdfs**beta) ** 2)
     return num / den
