@@ -482,6 +482,8 @@ class ABCSMC:
         # create simulate function
         simulate_one = self._create_simulate_from_prior_function(t)
 
+        logger.info(f"Calibration sample before t={t}.")
+
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             self.population_strategy.nr_particles, simulate_one,
