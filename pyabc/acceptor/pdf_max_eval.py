@@ -1,16 +1,16 @@
 import numpy as np
 
 
-def pdf_max_use_default(**kwargs):
+def pdf_max_take_from_kernel(**kwargs):
     """
     Just use the pdf_max value passed via default, usually originating
     from the distance function.
     """
-    pdf_max = kwargs['default']
+    pdf_max = kwargs['kernel_val']
     return pdf_max
 
 
-def pdf_max_use_max_found(**kwargs):
+def pdf_max_take_max_found(**kwargs):
     """
     Take as pdf_max the value found so far in history, and in
     `get_weighted_distances`.
@@ -25,7 +25,7 @@ def pdf_max_use_max_found(**kwargs):
     pdf_maxs = kwargs['pdf_maxs']
     get_weighted_distances = kwargs['get_weighted_distances']
 
-    # execute function
+    # execute function (expensive if in calibration)
     df = get_weighted_distances()
 
     pdfs = np.array(df['distance'])

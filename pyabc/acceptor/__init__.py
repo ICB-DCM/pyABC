@@ -11,8 +11,8 @@ from .temperature_scheme import (
     scheme_exponential_decay,
     scheme_daly,)
 from .pdf_max_eval import (
-    pdf_max_use_default,
-    pdf_max_use_max_found,)
+    pdf_max_take_from_kernel,
+    pdf_max_take_max_found,)
 
 
 __all__ = [
@@ -29,6 +29,6 @@ __all__ = [
     'scheme_exponential_decay',
     'scheme_daly',
     # pdf max eval
-    'pdf_max_use_default',
-    'pdf_max_use_max_found'
+    'pdf_max_take_from_kernel',
+    'pdf_max_take_max_found',
 ]

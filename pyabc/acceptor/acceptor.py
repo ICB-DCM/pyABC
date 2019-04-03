@@ -23,7 +23,7 @@ from ..distance import Distance, StochasticKernel, RET_SCALE_LIN
 from ..epsilon import Epsilon
 from pyabc import Parameter
 from .temperature_scheme import scheme_acceptance_rate, scheme_decay
-from .pdf_max_eval import pdf_max_use_default
+from .pdf_max_eval import pdf_max_take_from_kernel
 
 
 logger = logging.getLogger("Acceptor")
@@ -330,10 +330,12 @@ class StochasticAcceptor(Acceptor):
         kwargs: dict, optional
             Passed to the schedulers. Supported arguments that have a default
             value:
-            * target_acceptance_rate
-            * temp_init
-            * temp_decay_exponent
-            * config: dict
+            * target_acceptance_rate: float = 0.5: target acceptance rate
+            * temp_init: float = None (i.e. estimated from prior): initial
+              temperature
+            * temp_decay_exponent: float = 3: Exponent with which the
+              temperature decays in fixed-decay schemes.
+            * config: dict: Can be used as a memory object.
             In addition, the schedulers receive time-specific info, see the
             _update() method for details.
         """
@@ -344,13 +346,10 @@ class StochasticAcceptor(Acceptor):
             temp_schemes = [scheme_acceptance_rate, scheme_decay]
         elif not isinstance(temp_schemes, list):
             temp_schemes = [temp_schemes]
-        if not len(temp_schemes):
-            raise ValueError(
-                "At least one temperature scheduling method is required.")
         self.temp_schemes = temp_schemes
 
         if pdf_max_method is None:
-            pdf_max_method = pdf_max_use_default
+            pdf_max_method = pdf_max_take_from_kernel
         self.pdf_max_method = pdf_max_method
 
         # default kwargs
@@ -358,7 +357,6 @@ class StochasticAcceptor(Acceptor):
             target_acceptance_rate=0.5,
             temp_init=None,
             temp_decay_exponent=3,
-            alpha=0.5,
             config={}
         )
         # set kwargs to default if not specified
@@ -384,7 +382,7 @@ class StochasticAcceptor(Acceptor):
             distance_function: Distance,
             x_0: dict):
         """
-        Initialize temperature.
+        Initialize temperature and maximum pdf.
         """
         self.x_0 = x_0
         self.max_nr_populations = max_nr_populations
@@ -409,18 +407,18 @@ class StochasticAcceptor(Acceptor):
                 get_weighted_distances: Callable[[], pd.DataFrame],
                 kernel: Distance,
                 acceptance_rate: float):
-
-        # check if final time point reached
-        if t >= self.max_nr_populations - 1:
-            self.temperatures[t] = 1.0
-
+        """
+        Update schemes for the upcoming time point t.
+        """
         # update pdf_max
-        self.pdf_maxs[t] = self.pdf_max_method(
-            default=kernel.pdf_max,
+
+        pdf_max = self.pdf_max_method(
+            kernel_val=kernel.pdf_max,
             get_weighted_distances=get_weighted_distances,
             pdf_maxs=self.pdf_maxs)
+        self.pdf_maxs[t] = pdf_max
 
-        logger.debug(f"For t={t}, pdf_max={self.pdf_maxs[t]}.")
+        logger.debug(f"pdf_max={self.pdf_maxs[t]} for t={t}.")
 
         # update temperature
 
