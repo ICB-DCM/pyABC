@@ -95,7 +95,7 @@ def scheme_exponential_decay(**kwargs):
     temperatures = kwargs['temperatures']
     max_nr_populations = kwargs['max_nr_populations']
     temp_init = kwargs['temp_init']
-    alpha = kwargs['alpha']
+    alpha = kwargs.get('alpha', 0.5)
 
     # safety check
     if t >= max_nr_populations - 1:
@@ -156,7 +156,7 @@ def scheme_decay(**kwargs):
     elif temp_init is not None:
         return temp_init
     else:
-        # should give agood first temperature
+        # should give a good first temperature
         return scheme_acceptance_rate(**kwargs)
 
     # how many steps left?
@@ -187,7 +187,7 @@ def scheme_daly(**kwargs):
     temperatures = kwargs['temperatures']
     temp_init = kwargs['temp_init']
     acceptance_rate = kwargs['acceptance_rate']
-    min_acceptance_rate = kwargs.get('min_acceptance_rate', 1e-3)
+    min_acceptance_rate = kwargs.get('min_acceptance_rate', 2e-4)
     max_nr_populations = kwargs['max_nr_populations']
 
     config = kwargs.get('config', {})
@@ -201,21 +201,91 @@ def scheme_daly(**kwargs):
         return 1.0
 
     if t - 1 in temperatures:
-        temp_base = temperatures[t - 1]
+        # addressing the std, not the var
+        eps_base = np.sqrt(temperatures[t - 1])
         k_base = k[t - 1]
     else:
         if temp_init is not None:
             temp = temp_init
         else:
+            # should give a good first temperature
             temp = scheme_acceptance_rate(**kwargs)
         # k controls reduction in error threshold
-        k[t] = temp
+        k[t] = np.sqrt(temp)
         return temp
 
     if acceptance_rate < min_acceptance_rate:
+        logger.debug("Daly scheduler: Reacting to low acceptance rate.")
+        # reduce reduction ke
         k_base = alpha * k_base
 
-    k[t] = min(k_base, alpha * temp_base)
-    temp = temp_base - k[t]
+    k[t] = min(k_base, alpha * eps_base)
+    eps = eps_base - k[t]
+    temp = eps**2
 
     return temp
+
+
+def scheme_ess(**kwargs):
+    """
+    Try to keep the effective sample size constant.
+
+    We accept particles with a certain probability (the distance). 
+    """
+    # required fields
+    t = kwargs['t']
+    temperatures = kwargs['temperatures']
+    max_nr_populations = kwargs['max_nr_populations']
+    get_weighted_distances = kwargs['get_weighted_distances']
+    ret_scale = kwargs['ret_scale']
+    pdf_max = kwargs['pdf_max']
+    temp_init = kwargs['temp_init']
+    temp_decay_exponent = kwargs['temp_decay_exponent']
+    target_ress = kwargs.get('target_ress', 0.5)
+    # check if we can compute a decay step
+    if max_nr_populations == np.inf:
+        raise ValueError(
+            "Can only perform decay step with a finite max_nr_populations.")
+
+    # safety check
+    if t >= max_nr_populations - 1:
+        # t is last time
+        return 1.0
+    
+    # execute function (expensive if in calibration)
+    df = get_weighted_distances()
+
+    weights = np.array(df['w'])
+    pdfs = np.array(df['distance'])
+
+    # compute rescaled posterior densities
+    if ret_scale == RET_SCALE_LIN:
+        values = pdfs / pdf_max
+    else:  # ret_scale == RET_SCALE_LOG
+        values = np.exp(pdfs - pdf_max)
+
+    # to pmf
+    weights /= np.sum(weights)
+
+    target_ess = len(weights) * target_ress
+    if t - 1 in temperatures:
+        beta_base = 1 / temperatures[t - 1]
+    else:
+        beta_base = 0.0
+
+    # objective to minimize
+    def obj(beta):
+        return (ess(values, weights, beta) - target_ess)**2
+    res = sp.optimize.minimize(
+        obj, x0=np.array([0.5*(1 + beta_base)]),
+        bounds=sp.optimize.Bounds(lb=np.array([beta_base]), ub=np.array([1])))
+    beta = res.x
+    temp = 1. / beta
+    print("HUHU", beta, temp)
+    return temp
+
+
+def ess(pdfs, weights, beta):
+    num = np.sum(pdfs**beta)**2
+    den = np.sum(pdfs**(beta * 2))
+    return num / den

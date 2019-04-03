@@ -9,7 +9,8 @@ from .temperature_scheme import (
     scheme_acceptance_rate,
     scheme_decay,
     scheme_exponential_decay,
-    scheme_daly,)
+    scheme_daly,
+    scheme_ess,)
 from .pdf_max_eval import (
     pdf_max_take_from_kernel,
     pdf_max_take_max_found,)
@@ -28,6 +29,7 @@ __all__ = [
     'scheme_decay',
     'scheme_exponential_decay',
     'scheme_daly',
+    'scheme_ess',
     # pdf max eval
     'pdf_max_take_from_kernel',
     'pdf_max_take_max_found',
