@@ -35,8 +35,11 @@ class StochasticKernel(Distance):
 
     pdf_max: float, optional
         The maximum possible probability density function value.
-        Defaults to None. Must be overridden if pdf_max is to be used
-        in th analysis.
+        Defaults to None and is then computed as the density at (x_0, x_0),
+        where x_0 denotes the observed summary statistics.
+        Must be overridden if pdf_max is to be used in the analysis by the
+        acceptor.
+        This value should be in the scale specified by ret_scale already.
     """
 
     def __init__(
@@ -55,7 +58,8 @@ class StochasticKernel(Distance):
             get_sum_stats: Callable[[], List[dict]],
             x_0: dict):
         """
-        Remember the summary statistic keys in sorted order.
+        Remember the summary statistic keys in sorted order,
+        if not set in __init__ already.
         """
         # initialize keys
         if self.keys is None:
@@ -65,7 +69,7 @@ class StochasticKernel(Distance):
     def check_ret_scale(ret_scale):
         if ret_scale not in RET_SCALES:
             raise ValueError(
-                f"ret_scale must be ofe of {RET_SCALES}")
+                f"The ret_scale {ret_scale} must be ofe of {RET_SCALES}.")
 
 
 class SimpleFunctionKernel(StochasticKernel):
@@ -76,23 +80,22 @@ class SimpleFunctionKernel(StochasticKernel):
     Parameters
     ----------
 
-    function: Callable[**kwargs, float]
+    fun: Callable[**kwargs, float]
         A Callable accepting a subset of __call__'s parameters.
         The function should be a pdf or pmf.
 
-    ret_scale: as in StochasticKernel.ret_scale
+    ret_scale, keys, pdf_max: as in StochasticKernel
 
-    keys: List[str], optional (see StochasticKernel.keys)
     """
 
     def __init__(
             self,
-            function,
+            fun,
             ret_scale=RET_SCALE_LIN,
             keys=None,
             pdf_max=None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
-        self.function = function
+        self.fun = fun
 
     def __call__(
             self,
@@ -100,7 +103,7 @@ class SimpleFunctionKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        return self.function(x=x, x_0=x_0, t=t, par=par)
+        return self.fun(x=x, x_0=x_0, t=t, par=par)
 
 
 class NormalKernel(StochasticKernel):
@@ -117,12 +120,8 @@ class NormalKernel(StochasticKernel):
     cov: array_like, optional (default = identiy matrix)
         Covariance matrix of the distribution.
 
-    ret_scale: str, optional (default = RET_SCALE_LIN)
-        The scale on which the distribution is to be returned.
+    ret_scale, keys, pdf_max: As in StochasticKernel.
 
-    keys: List[str], optional (see StochasticKernel.keys)
-
-    pdf_max: float, optional (see StochasticKernel.pdf_max)
 
     .. note::
 
@@ -153,6 +152,7 @@ class NormalKernel(StochasticKernel):
             t: int,
             get_sum_stats: Callable[[], List[dict]],
             x_0: dict):
+        # in particular set keys
         super().initialize(
             t=t,
             get_sum_stats=get_sum_stats,
@@ -198,13 +198,16 @@ class IndependentNormalKernel(StochasticKernel):
     mean: array_like, optional (default = zeros vector)
         Mean of the distribution.
 
-    var: array_like, optional (default = ones vector)
+    var: Union[array_like, Callable], optional (default = ones vector)
         Variances of the distribution (assuming zeros in the off-diagonal
-        of the covariance matrix).
+        of the covariance matrix). Can also be a Callable taking as
+        arguments the parameters. In that case, pdf_max should also be given
+        if it is supposed to be used. Usually, it will then be given as the
+        density at the observed statistics assuming the minimum allowed
+        variance.
 
-    keys: List[str], optional (see StochasticKernel.keys)
+    keys, pdf_max: As in StochasticKernel.
 
-    pdf_max: float, optional (see StochasticKernel.pdf_max)
     """
 
     def __init__(
@@ -223,6 +226,7 @@ class IndependentNormalKernel(StochasticKernel):
             t: int,
             get_sum_stats: Callable[[], List[dict]],
             x_0: dict):
+        # in particular set keys
         super().initialize(
             t=t,
             get_sum_stats=get_sum_stats,
@@ -243,7 +247,7 @@ class IndependentNormalKernel(StochasticKernel):
         if not callable(self.var):
             self.var = np.array(self.var) * np.ones(self.dim)
 
-        # cache pdf_max
+        # cache pdf_max (from now on __call__ can be used)
         if self.pdf_max is None:
             # take value at observed summary statistics
             self.pdf_max = self(x_0, x_0)
@@ -254,10 +258,12 @@ class IndependentNormalKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None):
-        # compute variance from parameters
+        # compute variance
         if callable(self.var):
+            # parameterized variance (i.e. probably estimated)
             var = self.var(par)
         else:
+            # constant numeric values
             var = self.var
 
         # difference to array
@@ -301,7 +307,8 @@ class BinomialKernel(StochasticKernel):
 
         if p > 1 or p < 0:
             raise ValueError(
-                f"p must be in the interval [0, 1], but obtained {p}.")
+                f"The success probability p={p} must be in the interval"
+                f"[0, 1].")
         self.p = p
 
     def __call__(
