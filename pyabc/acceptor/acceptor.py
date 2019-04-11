@@ -418,6 +418,7 @@ class StochasticAcceptor(Acceptor):
             pdf_maxs=self.pdf_maxs)
         self.pdf_maxs[t] = pdf_max
 
+        logger.debug(f"acceptance rate={acceptance_rate}")
         logger.debug(f"pdf_max={self.pdf_maxs[t]} for t={t}.")
 
         # update temperature
@@ -444,7 +445,9 @@ class StochasticAcceptor(Acceptor):
             logger.debug(f"Proposed temperatures: {temps}.")
 
             # take reasonable minimum temperature
-            temp = max(min(temps), 1.0)
+            fallback = self.temperatures[t - 1] \
+                if t - 1 in self.temperatures else np.inf
+            temp = max(min(*temps, fallback), 1.0)
 
             # fill into temperatures list
             self.temperatures[t] = temp
