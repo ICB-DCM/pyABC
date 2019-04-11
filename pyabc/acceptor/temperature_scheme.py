@@ -230,7 +230,7 @@ def scheme_ess(**kwargs):
     """
     Try to keep the effective sample size constant.
 
-    We accept particles with a certain probability (the distance). 
+    We accept particles with a certain probability (the distance).
     """
     # required fields
     t = kwargs['t']
@@ -239,8 +239,6 @@ def scheme_ess(**kwargs):
     get_weighted_distances = kwargs['get_weighted_distances']
     ret_scale = kwargs['ret_scale']
     pdf_max = kwargs['pdf_max']
-    temp_init = kwargs['temp_init']
-    temp_decay_exponent = kwargs['temp_decay_exponent']
     target_ress = kwargs.get('target_ress', 0.8)
     # check if we can compute a decay step
     if max_nr_populations == np.inf:
@@ -251,7 +249,7 @@ def scheme_ess(**kwargs):
     if t >= max_nr_populations - 1:
         # t is last time
         return 1.0
-    
+
     # execute function (expensive if in calibration)
     df = get_weighted_distances()
 
@@ -277,7 +275,7 @@ def scheme_ess(**kwargs):
     def obj(beta):
         return (ess(values, weights, beta) - target_ess)**2
     res = sp.optimize.minimize(
-        obj, x0=np.array([0.5*(1 + beta_base)]),
+        obj, x0=np.array([0.5 * (1 + beta_base)]),
         bounds=sp.optimize.Bounds(lb=np.array([beta_base]), ub=np.array([1])))
     beta = res.x
     temp = 1. / beta
