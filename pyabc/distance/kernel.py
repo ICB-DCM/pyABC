@@ -63,13 +63,16 @@ class StochasticKernel(Distance):
         """
         # initialize keys
         if self.keys is None:
-            self.keys = sorted(x_0)
+            self.initialize_keys(x_0)
 
     @staticmethod
     def check_ret_scale(ret_scale):
         if ret_scale not in RET_SCALES:
             raise ValueError(
                 f"The ret_scale {ret_scale} must be ofe of {RET_SCALES}.")
+
+    def initialize_keys(self, x):
+        self.keys = sorted(x)
 
 
 class SimpleFunctionKernel(StochasticKernel):
@@ -173,6 +176,9 @@ class NormalKernel(StochasticKernel):
         Return the value of the normal distribution at x - x_0, or its
         logarithm.
         """
+        if self.keys is None:
+            self.initialize_keys(x_0)
+
         # difference to array
         diff = np.array([x[key] - x_0[key] for key in self.keys])
 
@@ -258,6 +264,9 @@ class IndependentNormalKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None):
+        if self.keys is None:
+            self.initialize_keys(x_0)
+
         # compute variance
         if callable(self.var):
             # parameterized variance (i.e. probably estimated)
