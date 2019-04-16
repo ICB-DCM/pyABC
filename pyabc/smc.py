@@ -825,7 +825,7 @@ class ABCSMC:
 
             # acceptance rate
             acceptance_rate = len(population.get_list()) / nr_evaluations
-            logger.debug(f"Acceptance rate: {acceptance_rate}.")
+            logger.info(f"Acceptance rate: {acceptance_rate}.")
 
             # update distance function
             df_updated = self.distance_function.update(
