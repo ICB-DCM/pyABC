@@ -311,7 +311,7 @@ class BinomialKernel(StochasticKernel):
             p: float,
             ret_scale=RET_SCALE_LIN,
             keys=None,
-            pdf_max=1):
+            pdf_max=1.0):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
         if p > 1 or p < 0:
@@ -326,18 +326,13 @@ class BinomialKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        x = np.array([x[key] for key in self.keys])
-        x_0 = np.array([x_0[key] for key in self.keys])
+        x = np.array([x[key] for key in self.keys], dtype=int)
+        x_0 = np.array([x_0[key] for key in self.keys], dtype=int)
+        p = self.p
 
         if self.ret_scale == RET_SCALE_LIN:
-            ret = 1.0
-            for j in range(len(x_0)):
-                ret *= sp.stats.binom.pmf(k=x_0[j], n=x[j], p=self.p) \
-                    if x[j] > 0 else 1
+            ret = np.prod(sp.stats.binom.pmf(k=x_0, n=x, p=p))
         else:  # self.ret_scale == RET_SCALE_LOG
-            ret = 0.0
-            for j in range(len(x_0)):
-                ret += sp.stats.binom.logpmf(k=x_0[j], n=x[j], p=self.p) \
-                    if x[j] > 0 else 0
+            ret = np.sum(sp.stats.binom.logpmf(k=x_0, n=x, p=p))
 
         return ret
