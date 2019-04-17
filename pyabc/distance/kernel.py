@@ -334,7 +334,8 @@ class BinomialKernel(StochasticKernel):
         # cache pdf_max (from now on __call__ can be used)
         if self.pdf_max is None:
             # take value at observed summary statistics
-            self.pdf_max = binomial_pdf_max(x_0, self.keys, self.p)
+            self.pdf_max = binomial_pdf_max(
+                x_0, self.keys, self.p, self.ret_scale)
 
     def __call__(
             self,
