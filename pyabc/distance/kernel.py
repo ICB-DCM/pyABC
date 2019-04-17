@@ -355,9 +355,12 @@ class BinomialKernel(StochasticKernel):
         return ret
 
 
-def binomial_pdf_max(x_0, keys, p):
+def binomial_pdf_max(x_0, keys, p, ret_scale):
     ks = np.array([x_0[key] for key in keys], dtype=int).flatten()
-    ns = np.floor((ks - p) / p)
+    ns = np.maximum(np.floor((ks - p) / p), 0)
     pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
     log_pdf_max = np.sum(pms)
+
+    if ret_scale == RET_SCALE_LIN:
+        return np.eps(log_pdf_max)
     return log_pdf_max
