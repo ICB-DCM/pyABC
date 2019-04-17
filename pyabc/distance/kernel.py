@@ -311,7 +311,7 @@ class BinomialKernel(StochasticKernel):
             p: float,
             ret_scale=RET_SCALE_LIN,
             keys=None,
-            pdf_max=1.0):
+            pdf_max=None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
         if p > 1 or p < 0:
@@ -320,19 +320,44 @@ class BinomialKernel(StochasticKernel):
                 f"[0, 1].")
         self.p = p
 
+    def initialize(
+            self,
+            t: int,
+            get_sum_stats: Callable[[], List[dict]],
+            x_0: dict):
+        # in particular set keys
+        super().initialize(
+            t=t,
+            get_sum_stats=get_sum_stats,
+            x_0=x_0)
+
+        # cache pdf_max (from now on __call__ can be used)
+        if self.pdf_max is None:
+            # take value at observed summary statistics
+            self.pdf_max = binomial_pdf_max(x_0, self.keys, self.p)
+
     def __call__(
             self,
             x: dict,
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        x = np.array([x[key] for key in self.keys], dtype=int)
-        x_0 = np.array([x_0[key] for key in self.keys], dtype=int)
+        x = np.array([x[key] for key in self.keys], dtype=int).flatten()
+        x_0 = np.array([x_0[key] for key in self.keys], dtype=int).flatten()
         p = self.p
 
         if self.ret_scale == RET_SCALE_LIN:
+            print(sp.stats.binom.pmf(k=x_0, n=x, p=p))
             ret = np.prod(sp.stats.binom.pmf(k=x_0, n=x, p=p))
         else:  # self.ret_scale == RET_SCALE_LOG
             ret = np.sum(sp.stats.binom.logpmf(k=x_0, n=x, p=p))
 
         return ret
+
+
+def binomial_pdf_max(x_0, keys, p):
+    ks = np.array([x_0[key] for key in keys], dtype=int).flatten()
+    ns = np.floor((ks - p) / p)
+    pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
+    log_pdf_max = np.sum(pms)
+    return log_pdf_max
