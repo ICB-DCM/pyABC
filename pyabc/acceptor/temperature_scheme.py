@@ -172,6 +172,42 @@ def scheme_decay(**kwargs):
     return temp
 
 
+def scheme_friel_pettitt(**kwargs):
+    """
+    See [Vyshemirsky2008].
+    """
+    # required fields
+    t = kwargs['t']
+    temperatures = kwargs['temperatures']
+    max_nr_populations = kwargs['max_nr_populations']
+    temp_init = kwargs['temp_init']
+    temp_decay_exponent = kwargs['temp_decay_exponent']
+    
+    # check if we can compute a decay step
+    if max_nr_populations == np.inf:
+        raise ValueError(
+            "Can only perform decaqy step with a finite max_nr_populations.")
+
+    # safety check
+    if t >= max_nr_populations - 1:
+        # t is last time
+        return 1.0
+
+    # get temperature to start with
+    if t - 1 in temperatures:
+        temp_base = temperatures[t - 1]
+        beta_base = 1. / temp_base
+    elif temp_init is not None:
+        return temp_init
+    else:
+        # should give a good first temperature
+        return scheme_acceptance_rate(**kwargs)
+    # how many steps left?
+    t_to_go = max_nr_populations - t
+    beta = beta_base + (1. - beta_base) / max_nr_populations
+
+    return 1. / beta
+
 def scheme_daly(**kwargs):
     """
     Use modified scheme based on [#daly2017]_.
