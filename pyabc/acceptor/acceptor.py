@@ -22,7 +22,8 @@ import logging
 from ..distance import Distance, StochasticKernel, RET_SCALE_LIN
 from ..epsilon import Epsilon
 from pyabc import Parameter
-from .temperature_scheme import scheme_acceptance_rate, scheme_decay
+from .temperature_scheme import (scheme_acceptance_rate,
+                                 scheme_exponential_decay)
 from .pdf_max_eval import pdf_max_take_from_kernel
 
 
@@ -278,7 +279,7 @@ class StochasticAcceptor(Acceptor):
 
     .. math::
 
-       \\frac{pdf(x_0|x)}{c}\\geq u
+       \\frac{\\text{pdf}(x_0|x)}{c}\\geq u
 
     where u ~ U[0,1], and c is a normalizing constant.
 
@@ -336,6 +337,7 @@ class StochasticAcceptor(Acceptor):
             * temp_decay_exponent: float = 3: Exponent with which the
               temperature decays in fixed-decay schemes.
             * config: dict: Can be used as a memory object.
+
             In addition, the schedulers receive time-specific info, see the
             _update() method for details.
         """
@@ -343,7 +345,7 @@ class StochasticAcceptor(Acceptor):
         super().__init__()
 
         if temp_schemes is None:
-            temp_schemes = [scheme_acceptance_rate, scheme_decay]
+            temp_schemes = [scheme_acceptance_rate, scheme_exponential_decay]
         elif not isinstance(temp_schemes, list):
             temp_schemes = [temp_schemes]
         self.temp_schemes = temp_schemes
@@ -354,9 +356,7 @@ class StochasticAcceptor(Acceptor):
 
         # default kwargs
         default_kwargs = dict(
-            target_acceptance_rate=0.5,
             temp_init=None,
-            temp_decay_exponent=3,
             config={}
         )
         # set kwargs to default if not specified
