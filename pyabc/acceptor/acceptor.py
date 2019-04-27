@@ -495,11 +495,6 @@ class StochasticAcceptor(Acceptor):
         pd = kernel(x, x_0, t, par)
         pdf_max = self.pdf_maxs[t]
 
-        # check pdf max ok
-        if pdf_max < pd:
-            logger.info(
-                f"Encountered a density {pd} > current pdf_max {pdf_max}.")
-
         # rescale
         if kernel.ret_scale == RET_SCALE_LIN:
             pd_rescaled = pd / self.pdf_maxs[t]
@@ -509,6 +504,11 @@ class StochasticAcceptor(Acceptor):
         # acceptance probability
         acceptance_probability = pd_rescaled ** (1 / temp)
 
+        # check pdf max ok
+        if pdf_max < pd:
+            logger.info(
+                f"Encountered a density {pd} > current pdf_max {pdf_max}.")
+
         # accept
         threshold = np.random.uniform(low=0, high=1)
         if acceptance_probability >= threshold:
@@ -516,8 +516,11 @@ class StochasticAcceptor(Acceptor):
         else:
             accept = False
 
+        # weight
+        weight = acceptance_probability / min(1, acceptance_probability)
+
         # return unscaled density value and the acceptance flag
-        return AcceptanceResult(pd, accept)
+        return AcceptanceResult(pd, accept, weight)
 
     def get_epsilon_equivalent(self, t: int):
         return self.temperatures[t]

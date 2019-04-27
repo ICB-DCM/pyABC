@@ -642,6 +642,7 @@ class ABCSMC:
         accepted_distances = []
         rejected_sum_stats = []
         rejected_distances = []
+        accepted_acceptance_weights = []
 
         for _ in range(nr_samples_per_parameter):
             model_result = models[m_ss].accept(
@@ -655,6 +656,7 @@ class ABCSMC:
             if model_result.accepted:
                 accepted_sum_stats.append(model_result.sum_stats)
                 accepted_distances.append(model_result.distance)
+                accepted_acceptance_weights.append(model_result.weight)
             else:
                 rejected_sum_stats.append(model_result.sum_stats)
                 rejected_distances.append(model_result.distance)
@@ -663,7 +665,9 @@ class ABCSMC:
 
         if accepted:
             weight = ABCSMC._calc_proposal_weight(
-                accepted_distances, m_ss, theta_ss, t, model_probabilities,
+                accepted_distances, m_ss, theta_ss,
+                accepted_acceptance_weights, t,
+                model_probabilities,
                 model_prior,
                 parameter_priors,
                 nr_samples_per_parameter,
@@ -687,6 +691,7 @@ class ABCSMC:
             distance_list,
             m_ss,
             theta_ss,
+            acceptance_weights,
             t,
             model_probabilities,
             model_prior,
@@ -718,6 +723,10 @@ class ABCSMC:
                       * parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
                       / normalization)
+
+            # account for acceptance weights
+            weight *= np.prod(acceptance_weights)
+
         return weight
 
     def run(self,
