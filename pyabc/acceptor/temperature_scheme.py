@@ -202,9 +202,8 @@ def scheme_friel_pettitt(**kwargs):
     else:
         # should give a good first temperature
         return scheme_acceptance_rate(**kwargs)
-    # how many steps left?
-    t_to_go = max_nr_populations - t
-    beta = beta_base + (1. - beta_base) / max_nr_populations
+
+    beta = beta_base + ((1. - beta_base) * 1 / (max_nr_populations - t))**2
 
     return 1. / beta
 
