@@ -30,6 +30,42 @@ from .pdf_max_eval import pdf_max_take_from_kernel
 logger = logging.getLogger("Acceptor")
 
 
+class AcceptanceResult(dict):
+    """
+    Result of an acceptance step.
+
+    Parameters
+    ----------
+
+    distance: float
+        Distance value obtained.
+    accept: bool
+        A flag indicating the recommendation
+        to accept or reject. More specifically:
+        True: The distance is below the epsilon threshold.
+        False: The distance is above the epsilon threshold.
+    weight: float, optional (default = 1.0)
+        Weight associated with the evaluation, which may need
+        to be taken into account via importane sampling in
+        calculating the parameter weight.
+    """
+
+    def __init__(self, distance: float, accept: bool, weight: float = 1.0):
+        super().__init__()
+        self.distance = distance
+        self.accept = accept
+        self.weight = weight
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 class Acceptor:
     """
     The acceptor class encodes the acceptance step.
@@ -126,11 +162,7 @@ class Acceptor:
         Returns
         -------
 
-        (distance, accept): (float, bool)
-            Distance value obtained and a flag indicating the recommendation
-            to accept or reject. More specifically:
-            True: The distance is below the epsilon threshold.
-            False: The distance is above the epsilon threshold.
+        An AcceptanceResult.
 
 
         .. note::
@@ -205,7 +237,7 @@ def accept_uniform_use_current_time(
     d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
-    return d, accept
+    return AcceptanceResult(d, accept)
 
 
 def accept_uniform_use_complete_history(
@@ -238,7 +270,7 @@ def accept_uniform_use_complete_history(
                 # ignore as of now
                 accept = True
 
-    return d, accept
+    return AcceptanceResult(d, accept)
 
 
 class UniformAcceptor(Acceptor):
@@ -485,7 +517,7 @@ class StochasticAcceptor(Acceptor):
             accept = False
 
         # return unscaled density value and the acceptance flag
-        return pd, accept
+        return AcceptanceResult(pd, accept)
 
     def get_epsilon_equivalent(self, t: int):
         return self.temperatures[t]
