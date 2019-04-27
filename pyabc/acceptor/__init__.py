@@ -1,3 +1,13 @@
+"""
+Acceptor
+========
+
+Acceptors handle the acceptance step. Stochastic acceptors make use of
+temperature schemes and pdf_max_eval methods.
+
+"""
+
+
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
@@ -7,7 +17,7 @@ from .acceptor import (
     StochasticAcceptor,)
 from .temperature_scheme import (
     scheme_acceptance_rate,
-    scheme_decay,
+    scheme_polynomial_decay,
     scheme_exponential_decay,
     scheme_daly,
     scheme_ess,
@@ -27,7 +37,7 @@ __all__ = [
     'StochasticAcceptor',
     # temperature scheme
     'scheme_acceptance_rate',
-    'scheme_decay',
+    'scheme_polynomial_decay',
     'scheme_exponential_decay',
     'scheme_daly',
     'scheme_ess',

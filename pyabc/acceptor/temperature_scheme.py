@@ -1,3 +1,14 @@
+"""
+Schemes for choosing the next temperature.
+
+Some schems require a given finite number of populations to work. This is
+such as to ensure decrease to a temperature of 1.0 after finitely many
+iterations. In such case, choosing an adequate maximum number of populations
+can be essential for efficiency. Schemes that directly try to optimize the
+number of populations have not been implemented.
+"""
+
+
 import numpy as np
 import scipy as sp
 import logging
@@ -23,7 +34,7 @@ def scheme_acceptance_rate(**kwargs):
     pdf_max = kwargs['pdf_max']
     ret_scale = kwargs['ret_scale']
     max_nr_populations = kwargs['max_nr_populations']
-    target_acceptance_rate = kwargs['target_acceptance_rate']
+    target_acceptance_rate = kwargs.get('target_acceptance_rate', 0.5)
 
     # safety check
     if t >= max_nr_populations - 1:
@@ -82,20 +93,30 @@ def scheme_exponential_decay(**kwargs):
     .. math::
         T_j = T_{j-1}^{(n-j)/(n-(j-1))}.
 
+    This ensures that a temperature of 1.0 is reached after exactly the
+    remaining number of steps.
+
+    If `max_nr_populations` is infinite, the next temperature is
+
+    .. math::
+        T_j = \\alpha \\cdot T_{j-1},
+
+    where by default alpha=0.25.
+
+    So, in both cases the sequence of temperatures follows an exponential
+    decay, also known as a geometric progression, or a linear progression
+    in log-space.
+
     Note that the formula is applied anew in each iteration. That has the
     advantage that, if also other schemes are used s.t. T_{j-1} is smaller
     than by the above, advantage can be made of this.
-
-    If `max_nr_populations` is np.inf:
-    Decrease temperature by a constant factor of `alpha`
-    each round.
     """
     # required fields
     t = kwargs['t']
     temperatures = kwargs['temperatures']
     max_nr_populations = kwargs['max_nr_populations']
     temp_init = kwargs['temp_init']
-    alpha = kwargs.get('alpha', 0.5)
+    alpha = kwargs.get('alpha', 0.25)
 
     # safety check
     if t >= max_nr_populations - 1:
@@ -125,20 +146,26 @@ def scheme_exponential_decay(**kwargs):
     return temp
 
 
-def scheme_decay(**kwargs):
+def scheme_polynomial_decay(**kwargs):
     """
     Compute next temperature as pre-last entry in
     >>> np.linspace(1, (temp_base)**(1 / temp_decay_exponent),
     >>>             t_to_go + 1) ** temp_decay_exponent)
 
     Requires finite `max_nr_populations`.
+
+    Note that this is similar to the `scheme_exponential_decay`, which is
+    indeed the limit for `temp_decay_exponent -> infinity`. For smaller
+    exponent, the sequence makes larger steps for low temperatures. This
+    can be useful in cases, where lower temperatures (which are usually
+    more expensive) can be traversed in few larger steps.
     """
     # required fields
     t = kwargs['t']
     temperatures = kwargs['temperatures']
     max_nr_populations = kwargs['max_nr_populations']
     temp_init = kwargs['temp_init']
-    temp_decay_exponent = kwargs['temp_decay_exponent']
+    temp_decay_exponent = kwargs.get('temp_decay_exponent', 3)
 
     # check if we can compute a decay step
     if max_nr_populations == np.inf:
@@ -162,6 +189,7 @@ def scheme_decay(**kwargs):
     # how many steps left?
     t_to_go = max_nr_populations - t
 
+    # compute sequence
     temps = np.linspace(1, (temp_base)**(1 / temp_decay_exponent),
                         t_to_go + 1) ** temp_decay_exponent
 
@@ -174,15 +202,18 @@ def scheme_decay(**kwargs):
 
 def scheme_friel_pettitt(**kwargs):
     """
-    See [Vyshemirsky2008].
+    Basically takes linear steps in lin-space. See [#vyshemirsky2008]_.
+
+    .. [#vyshemirsky2008] Vyshemirsky, Vladislav, and Mark A. Girolami.
+        "Bayesian ranking of biochemical system models."
+        Bioinformatics 24.6 (2007): 833-839.
     """
     # required fields
     t = kwargs['t']
     temperatures = kwargs['temperatures']
     max_nr_populations = kwargs['max_nr_populations']
     temp_init = kwargs['temp_init']
-    temp_decay_exponent = kwargs['temp_decay_exponent']
-    
+
     # check if we can compute a decay step
     if max_nr_populations == np.inf:
         raise ValueError(
@@ -203,9 +234,10 @@ def scheme_friel_pettitt(**kwargs):
         # should give a good first temperature
         return scheme_acceptance_rate(**kwargs)
 
-    beta = beta_base + ((1. - beta_base) * 1 / (max_nr_populations - t))**2
+    beta = beta_base + ((1. - beta_base) * 1 / (max_nr_populations - t)) ** 2
 
     return 1. / beta
+
 
 def scheme_daly(**kwargs):
     """
@@ -222,7 +254,7 @@ def scheme_daly(**kwargs):
     temperatures = kwargs['temperatures']
     temp_init = kwargs['temp_init']
     acceptance_rate = kwargs['acceptance_rate']
-    min_acceptance_rate = kwargs.get('min_acceptance_rate', 2e-4)
+    min_acceptance_rate = kwargs.get('min_acceptance_rate', 1e-4)
     max_nr_populations = kwargs['max_nr_populations']
 
     config = kwargs.get('config', {})
