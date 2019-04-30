@@ -144,7 +144,6 @@ class ABCSMC:
                   Bioinformatics 26, no. 1, 104–10, 2010.
                   doi:10.1093/bioinformatics/btp619.
     """
-
     def __init__(self,
                  models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
@@ -300,7 +299,6 @@ class ABCSMC:
             The history.id, which is the id under which the generated ABCSMC
             run entry in the database can be identified.
         """
-
         # record observed summary statistics
         if observed_sum_stat is None:
             observed_sum_stat = {}
@@ -351,7 +349,6 @@ class ABCSMC:
             e.g. when they were generated in R). If None, then the summary
             statistics are read from the history.
         """
-
         self.history = History(db)
         self.history.id = abc_id
 
@@ -517,7 +514,6 @@ class ABCSMC:
             happens. Therefore, the returned function should be light, and
             in particular not contain references to the ABCSMC class.
         """
-
         # cache model_probabilities to not query the database so often
         model_probabilities = self.history.get_model_probabilities(
             self.history.max_t)
@@ -587,7 +583,6 @@ class ABCSMC:
         Model, parameter.
 
         """
-
         # first generation
         if t == 0:  # sample from prior
             m_ss = int(model_prior.rvs())
@@ -702,7 +697,6 @@ class ABCSMC:
         """
         Calculate the weight for the generated parameter.
         """
-
         if t == 0:
             weight = (len(distance_list)
                       / nr_samples_per_parameter)
@@ -725,6 +719,7 @@ class ABCSMC:
                       / normalization)
 
             # account for acceptance weights
+            # TODO This is only valid for single samples (see #54)
             weight *= np.prod(acceptance_weights)
 
         return weight
@@ -775,7 +770,6 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
-
         # argument handling
         if len(kwargs) > 1:
             raise TypeError("Keyword arguments are not allowed.")
@@ -880,7 +874,6 @@ class ABCSMC:
         t: int
             Time for which to adapt the population size.
         """
-
         if t == 0:  # we need a particle population to do the fitting
             return
 
@@ -904,7 +897,6 @@ class ABCSMC:
         t: int
             Time for which to update the kernel density estimator.
         """
-
         if t == 0:  # we need a particle population to do the fitting
             return
 
