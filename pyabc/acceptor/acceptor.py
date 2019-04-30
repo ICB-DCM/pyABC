@@ -504,11 +504,6 @@ class StochasticAcceptor(Acceptor):
         # acceptance probability
         acceptance_probability = pd_rescaled ** (1 / temp)
 
-        # check pdf max ok
-        if pdf_max < pd:
-            logger.info(
-                f"Encountered a density {pd} > current pdf_max {pdf_max}.")
-
         # accept
         threshold = np.random.uniform(low=0, high=1)
         if acceptance_probability >= threshold:
@@ -518,6 +513,12 @@ class StochasticAcceptor(Acceptor):
 
         # weight
         weight = acceptance_probability / min(1, acceptance_probability)
+
+        # check pdf max ok
+        if pdf_max < pd:
+            logger.info(
+                f"Encountered a pd={pd} > current c={pdf_max}. "
+                f"Using a weight={weight}")
 
         # return unscaled density value and the acceptance flag
         return AcceptanceResult(pd, accept, weight)
