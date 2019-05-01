@@ -54,6 +54,11 @@ def test_sample_numbers():
     pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
 
 
+def test_effective_sample_sizes():
+    pyabc.visualization.plot_effective_sample_sizes(
+        histories, labels, rotation=45)
+
+
 def test_histograms():
     pyabc.visualization.plot_histogram_1d(histories[0], 'p0', bins=20)
     pyabc.visualization.plot_histogram_2d(histories[0], 'p0', 'p1')
