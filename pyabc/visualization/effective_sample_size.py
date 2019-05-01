@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from typing import List, Union
 from matplotlib.ticker import MaxNLocator
 
@@ -16,7 +15,7 @@ def plot_effective_sample_sizes(
         size: tuple = None):
     """
     Plot effective sample sizes over all iterations.
-    
+
     Parameters
     ----------
 
@@ -43,8 +42,6 @@ def plot_effective_sample_sizes(
 
     # create figure
     fig, ax = plt.subplots()
-
-    n_run = len(histories)
 
     # extract effective sample sizes
     essss = []  # :)
