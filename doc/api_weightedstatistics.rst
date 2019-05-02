@@ -1,4 +1,4 @@
-.. _api_visualization:
+.. _api_weightedstatistics:
 
 .. automodule:: pyabc.weighted_statistics
    :members:
