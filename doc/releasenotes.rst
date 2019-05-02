@@ -18,6 +18,7 @@ Release Notes
 * Rewrite lazy evaluation for calibration sample in ABCSMC class.
 * Give default values for ABCSMC.run arguments, which set no stopping
   criterion.
+* Add function and plot for effective sample size.
 
 
 0.9.11 (2019-04-01)
