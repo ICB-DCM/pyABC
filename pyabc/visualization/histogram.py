@@ -62,7 +62,7 @@ def plot_histogram_1d_lowlevel(
         range_ = None
 
     # plot
-    ax.hist(x=df[x], range=range_, weights=w, **kwargs)
+    ax.hist(x=df[x], range=range_, weights=w, density=True, **kwargs)
     ax.set_xlabel(x)
 
     return ax
@@ -130,7 +130,8 @@ def plot_histogram_2d_lowlevel(
         range_ = None
 
     # plot
-    ax.hist2d(x=df[x], y=df[y], range=range_, weights=w, **kwargs)
+    ax.hist2d(x=df[x], y=df[y], range=range_, weights=w, density=True,
+              **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
 
