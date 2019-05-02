@@ -8,7 +8,7 @@ Release Notes
 ..........
 
 
-0.9.12 (2019-04-07)
+0.9.12 (2019-05-02)
 -------------------
 
 * Reorganize distance module (minor API change:
