@@ -521,7 +521,7 @@ class StochasticAcceptor(Acceptor):
         if pdf_max < pd:
             logger.info(
                 f"Encountered pd={pd:.5f} > current c={pdf_max:.5f}. "
-                f"Using weight={weight:.8f}.")
+                f"Using weight={weight:.20f}.")
 
         # return unscaled density value and the acceptance flag
         return AcceptanceResult(pd, accept, weight)
