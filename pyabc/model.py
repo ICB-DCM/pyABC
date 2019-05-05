@@ -20,7 +20,7 @@ class ModelResult:
     """
 
     def __init__(self,
-                 sum_stats=None, distance=None, accepted=None, weight=None):
+                 sum_stats=None, distance=None, accepted=None, weight=1.0):
         self.sum_stats = sum_stats if sum_stats is not None else {}
         self.distance = distance
         self.accepted = accepted
