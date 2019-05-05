@@ -8,6 +8,19 @@ Release Notes
 ..........
 
 
+0.9.12 (2019-05-02)
+-------------------
+
+* Reorganize distance module (minor API change:
+  distance_functions -> distance, and some classes shortened accordingly)
+* Allow to pass parameters to Acceptor and Distance.
+* Make time and parameter arguments to distance functions optional.
+* Rewrite lazy evaluation for calibration sample in ABCSMC class.
+* Give default values for ABCSMC.run arguments, which set no stopping
+  criterion.
+* Add function and plot for effective sample size.
+
+
 0.9.11 (2019-04-01)
 -------------------
 

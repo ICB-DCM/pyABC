@@ -18,18 +18,20 @@ from .random_variables import (
     RVBase,
     RVDecorator,
     LowerBoundDecorator)
-from .distance_functions import (
-    DistanceFunction,
+from .distance import (
+    Distance,
     NoDistance,
+    IdentityFakeDistance,
+    AcceptAllDistance,
     SimpleFunctionDistance,
     PNormDistance,
     AdaptivePNormDistance,
-    ZScoreDistanceFunction,
-    PCADistanceFunction,
-    MinMaxDistanceFunction,
-    PercentileDistanceFunction,
-    RangeEstimatorDistanceFunction,
-    DistanceFunctionWithMeasureList)
+    ZScoreDistance,
+    PCADistance,
+    MinMaxDistance,
+    PercentileDistance,
+    RangeEstimatorDistance,
+    DistanceWithMeasureList)
 from .epsilon import (
     Epsilon,
     ConstantEpsilon,
@@ -40,7 +42,7 @@ from .smc import ABCSMC
 from .storage import History
 from .acceptor import (
     Acceptor,
-    SimpleAcceptor,
+    SimpleFunctionAcceptor,
     accept_use_current_time,
     accept_use_complete_history)
 from .model import (
@@ -53,6 +55,9 @@ from .transition import (
     LocalTransition,
     DiscreteRandomWalkTransition,
     GridSearchCV)
+from .population import (
+    Particle,
+    Population)
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
@@ -63,17 +68,19 @@ from .version import __version__  # noqa: F401
 __all__ = [
     "ABCSMC",
     # distance
-    "DistanceFunction",
+    "Distance",
     "NoDistance",
+    "IdentityFakeDistance",
+    "AcceptAllDistance",
     "SimpleFunctionDistance",
     "PNormDistance",
     "AdaptivePNormDistance",
-    "ZScoreDistanceFunction",
-    "PCADistanceFunction",
-    "MinMaxDistanceFunction",
-    "PercentileDistanceFunction",
-    "RangeEstimatorDistanceFunction",
-    "DistanceFunctionWithMeasureList",
+    "ZScoreDistance",
+    "PCADistance",
+    "MinMaxDistance",
+    "PercentileDistance",
+    "RangeEstimatorDistance",
+    "DistanceWithMeasureList",
     # epsilon
     "Epsilon",
     "ConstantEpsilon",
@@ -89,6 +96,9 @@ __all__ = [
     "ModelPerturbationKernel",
     # parameter
     "Parameter",
+    # population
+    "Particle",
+    "Population",
     # population size
     "ConstantPopulationSize",
     "AdaptivePopulationSize",
@@ -99,7 +109,7 @@ __all__ = [
     "GridSearchCV",
     # acceptor
     "Acceptor",
-    "SimpleAcceptor",
+    "SimpleFunctionAcceptor",
     "accept_use_current_time",
     "accept_use_complete_history",
     # model

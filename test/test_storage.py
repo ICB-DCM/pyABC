@@ -58,7 +58,7 @@ def history_uninitialized():
         pass
 
 
-def rand_pop(m: int):
+def rand_pop_list(m: int):
     """
     Create a population for model m, of random size >= 3.
 
@@ -152,7 +152,7 @@ def test_save_no_sum_stats(history: History):
 
 
 def test_get_population(history: History):
-    population = Population(rand_pop(0))
+    population = Population(rand_pop_list(0))
     history.append_population(t=0, current_epsilon=7.0,
                               population=population,
                               nr_simulations=200,
@@ -273,7 +273,7 @@ def test_dataframe_storage_readout():
         for t in range(4):
             particle_list = []
             for m in range(5):
-                pops[(h, m, t)] = rand_pop(m)
+                pops[(h, m, t)] = rand_pop_list(m)
                 for particle in pops[(h, m, t)]:
                     particle_list.append(particle)
             h.append_population(t, .1, Population(particle_list), 2,
@@ -301,12 +301,14 @@ def test_dataframe_storage_readout():
 
 
 def test_population_retrieval(history: History):
-    history.append_population(1, .23, Population(rand_pop(0)), 234, ["m1"])
-    history.append_population(2, .123, Population(rand_pop(0)), 345, ["m1"])
-    history.append_population(2, .1235,
-                              Population(rand_pop(5)), 20345, ["m1"] * 6)
-    history.append_population(3, .12330, Population(rand_pop(30)), 30345,
-                              ["m1"] * 31)
+    history.append_population(
+        1, .23, Population(rand_pop_list(0)), 234, ["m1"])
+    history.append_population(
+        2, .123, Population(rand_pop_list(0)), 345, ["m1"])
+    history.append_population(
+        2, .1235, Population(rand_pop_list(5)), 20345, ["m1"] * 6)
+    history.append_population(
+        3, .12330, Population(rand_pop_list(30)), 30345, ["m1"] * 31)
     df = history.get_all_populations()
 
     assert df[df.t == 1].epsilon.iloc[0] == .23
@@ -331,7 +333,7 @@ def test_population_strategy_storage(history):
 
 
 def test_model_probabilities(history):
-    history.append_population(1, .23, Population(rand_pop(3)), 234,
+    history.append_population(1, .23, Population(rand_pop_list(3)), 234,
                               ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities(1)
     assert probs.p[3] == 1
@@ -339,7 +341,7 @@ def test_model_probabilities(history):
 
 
 def test_model_probabilities_all(history):
-    history.append_population(1, .23, Population(rand_pop(3)), 234,
+    history.append_population(1, .23, Population(rand_pop_list(3)), 234,
                               ["m0", "m1", "m2", "m3"])
     probs = history.get_model_probabilities()
     assert (probs[3].values == np.array([1])).all()
@@ -412,7 +414,8 @@ def test_population_to_df(history: History):
     # TODO this test is not very good yet
     for t in range(3):
         for m in range(4):
-            history.append_population(t, .23, Population(rand_pop(m)), 234,
+            history.append_population(t, .23, Population(rand_pop_list(m)),
+                                      234,
                                       ["m0", "m1", "m2", "m3"])
     df = history.get_population_extended(m=0)
     df_js = sumstat_to_json(df)

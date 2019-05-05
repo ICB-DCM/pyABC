@@ -1,7 +1,6 @@
-.. _api_distance:
+.. _api_weightedstatistics:
 
-.. automodule:: pyabc.distance
+.. automodule:: pyabc.weighted_statistics
    :members:
    :special-members: __init__, __call__
    :show-inheritance:
-

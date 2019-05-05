@@ -25,6 +25,9 @@ from .confidence import (
     plot_confidence_intervals)
 from .model_probabilities import (
     plot_model_probabilities)
+from .effective_sample_size import (
+    plot_effective_sample_sizes)
+
 
 __all__ = [
     "plot_kde_1d",
@@ -40,4 +43,5 @@ __all__ = [
     "plot_histogram_matrix_lowlevel",
     "plot_confidence_intervals",
     "plot_model_probabilities",
+    "plot_effective_sample_sizes",
 ]

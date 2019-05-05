@@ -19,3 +19,4 @@ API reference
    api_sge
    api_external
    api_visualization
+   api_weightedstatistics
