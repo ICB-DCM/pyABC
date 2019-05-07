@@ -6,7 +6,7 @@ from ..storage import History
 
 def plot_histogram_1d(
         history: History, x: str, m: int = 0, t: int = None,
-        xmin=None, xmax=None, ax=None, **kwargs):
+        xmin=None, xmax=None, ax=None, size=None, **kwargs):
     """
     Plot 1d histogram of parameter samples.
 
@@ -25,6 +25,8 @@ def plot_histogram_1d(
         Bounds for x. Both must be specified for bounds to be applied.
     ax: matplotlib.axis.Axis
         Axis object for the plot. If None is passed, a new figure is created.
+    size: 2-Tuple of float, optional
+        Size of the plot in inches.
 
     Returns
     -------
@@ -34,12 +36,12 @@ def plot_histogram_1d(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_1d_lowlevel(
-        df, w, x, xmin, xmax, ax=ax, **kwargs)
+        df, w, x, xmin, xmax, ax=ax, size=size, **kwargs)
 
 
 def plot_histogram_1d_lowlevel(
         df: pd.DataFrame, w: pd.DataFrame,
-        x: str, xmin=None, xmax=None, ax=None, **kwargs):
+        x: str, xmin=None, xmax=None, ax=None, size=None, **kwargs):
     """
     Lowlevel interface for plot_histogram_1d (see there for the remaining
     parameters).
@@ -65,12 +67,17 @@ def plot_histogram_1d_lowlevel(
     ax.hist(x=df[x], range=range_, weights=w, density=True, **kwargs)
     ax.set_xlabel(x)
 
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     return ax
 
 
 def plot_histogram_2d(
         history: History, x: str, y: str, m: int = 0, t: int = None,
-        xmin=None, xmax=None, ymin=None, ymax=None, ax=None, **kwargs):
+        xmin=None, xmax=None, ymin=None, ymax=None, ax=None, size=None,
+        **kwargs):
     """
     Plot 2d histogram of parameter pair samples.
 
@@ -89,6 +96,8 @@ def plot_histogram_2d(
         Bounds for x and y. All must be specified for bounds to be applied.
     ax: matplotlib.axis.Axis
         Axis object for the plot. If None is passed, a new figure is created.
+    size: 2-Tuple of float, optional
+        Size of the plot in inches.
 
     Returns
     -------
@@ -98,12 +107,13 @@ def plot_histogram_2d(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_2d_lowlevel(
-        df, w, x, y, xmin, xmax, ymin, ymax, ax=ax, **kwargs)
+        df, w, x, y, xmin, xmax, ymin, ymax, ax=ax, size=size, **kwargs)
 
 
 def plot_histogram_2d_lowlevel(
         df: pd.DataFrame, w: pd.DataFrame,
-        x, y, xmin=None, xmax=None, ymin=None, ymax=None, ax=None, **kwargs):
+        x, y, xmin=None, xmax=None, ymin=None, ymax=None, ax=None, size=None,
+        **kwargs):
     """
     Lowlevel interface for plot_histogram_2d (see there for the remaining
     parameters).
@@ -135,11 +145,15 @@ def plot_histogram_2d_lowlevel(
     ax.set_xlabel(x)
     ax.set_ylabel(y)
 
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     return ax
 
 
 def plot_histogram_matrix(
-        history: History, m: int = 0, t: int = None, **kwargs):
+        history: History, m: int = 0, t: int = None, size=None, **kwargs):
     """
     Plot matrix of 1d and 2d histograms over all parameters.
 
@@ -152,6 +166,8 @@ def plot_histogram_matrix(
         Id of the model to plot for.
     t: int, optional (default = None, i.e. the last time)
         Time point to plot for.
+    size: 2-Tuple of float, optional
+        Size of the plot in inches.
 
     Returns
     -------
@@ -165,7 +181,7 @@ def plot_histogram_matrix(
 
 
 def plot_histogram_matrix_lowlevel(
-        df: pd.DataFrame, w: pd.DataFrame, **kwargs):
+        df: pd.DataFrame, w: pd.DataFrame, size=None, **kwargs):
     """
     Lowlevel interface for plot_histogram_matrix (see there for the remaining
     parameters).
@@ -211,6 +227,11 @@ def plot_histogram_matrix_lowlevel(
 
     # format
     _format_histogram_matrix(arr_ax, par_names)
+
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     fig.tight_layout()
 
     return arr_ax

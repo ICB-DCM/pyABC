@@ -10,9 +10,11 @@ from .util import to_lists_or_default
 def plot_epsilons(
         histories: Union[List, History],
         labels: Union[List, str] = None,
+        colors: List = None,
         scale: str = None,
         title: str = "Epsilon values",
-        size: tuple = None):
+        size: tuple = None,
+        ax=None):
     """
     Plot epsilon trajectory.
 
@@ -24,6 +26,9 @@ def plot_epsilons(
     labels: Union[List ,str], optional
         Labels corresponding to the histories. If None are provided,
         indices are used as labels.
+    colors: List, optional
+        Colors to use for the lines. If None, then the matplotlib
+        default values are used.
     scale: str, optional (default='lin')
         Scaling to apply to the y axis.
         Must be one of 'lin', 'log', 'log10'.
@@ -39,10 +44,15 @@ def plot_epsilons(
     """
     # preprocess input
     histories, labels = to_lists_or_default(histories, labels)
+    if colors is None:
+        colors = [None for _ in range(len(histories))]
     if scale is None:
         scale = 'lin'
 
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     # extract epsilons
     eps = []
@@ -55,8 +65,8 @@ def plot_epsilons(
     eps = _apply_scale(eps, scale)
 
     # plot
-    for ep, label in zip(eps, labels):
-        ax.plot(ep, 'x-', label=label)
+    for ep, label, color in zip(eps, labels, colors):
+        ax.plot(ep, 'x-', label=label, color=color)
 
     # format
     ax.set_xlabel("Population index")
