@@ -30,6 +30,11 @@ def plot_confidence_intervals(
         Whether to show the mean apart from the median as well.
     size: tuple of float
         Size of the plot.
+
+    Returns
+    -------
+
+    arr_ax: Array of generated axes.
     """
     if confidences is None:
         confidences = [0.95]
@@ -94,7 +99,12 @@ def plot_confidence_intervals(
     arr_ax[-1].set_xlabel("Population t")
     for ax in arr_ax:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    # set size
+    if size is not None:
+        fig.set_size_inches(size)
     fig.tight_layout()
+
+    return arr_ax
 
 
 def compute_confidence_interval(vals, weights, confidence: float = 0.95):
