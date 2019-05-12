@@ -52,7 +52,7 @@ work as expected on Windows.
 Distributed samplers
 ~~~~~~~~~~~~~~~~~~~~
 
-The distributed samplers can, be used in a distributed setting, and of course
+The distributed samplers can be used in a distributed setting, and of course
 also locally by setting up a local cluster. However, for local execution,
 the multi-core samplers are recommended as they are easier to set up.
 
