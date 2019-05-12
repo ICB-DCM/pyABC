@@ -72,7 +72,7 @@ it is unsuitable for simulation functions with a runtime below 100ms,
 as network communication becomes prohibitive at this point.
 
 
-The Redis based sampler cab require slightly more effort in
+The Redis based sampler can require slightly more effort in
 setting up than the Dask based sampler, but has fewer constraints regarding
 simulation function runtime. The Dask sampler is in turn better suited to
 handle worker failures and unexpected execution host terminations.
