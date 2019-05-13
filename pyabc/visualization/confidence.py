@@ -51,7 +51,7 @@ def plot_confidence_intervals(
 
     # prepare axes
     fig, arr_ax = plt.subplots(
-        nrows=n_par, ncols=1, sharex=False, sharey=False)
+        nrows=n_par, ncols=1, sharex=False, sharey=False, figsize=size)
     if n_par == 1:
         arr_ax = [arr_ax]
 
@@ -99,9 +99,6 @@ def plot_confidence_intervals(
     arr_ax[-1].set_xlabel("Population t")
     for ax in arr_ax:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    # set size
-    if size is not None:
-        fig.set_size_inches(size)
     fig.tight_layout()
 
     return arr_ax
