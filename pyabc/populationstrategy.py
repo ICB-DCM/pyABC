@@ -17,6 +17,8 @@ from typing import List
 from pyabc.cv.bootstrap import calc_cv
 from .transition import Transition
 from .transition.predict_population_size import predict_population_size
+from pyabc.weighted_statistics import effective_sample_size
+
 
 logger = logging.getLogger("Adaptation")
 
@@ -46,7 +48,8 @@ class PopulationStrategy:
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray):
+                              model_weights: np.ndarray,
+                              particle_weights: np.ndarray):
         """
         Select the population size for the next population.
 
@@ -103,11 +106,11 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of samples to draw for a proposed parameter
     """
 
-    def adapt_population_size(self, transitions, model_weights):
+    def adapt_population_size(self, transitions, model_weights, particle_weights):
         pass
 
 
-class AdaptivePopulationSize(PopulationStrategy):
+class KdeVariationPopulationSize(PopulationStrategy):
     """
     Adapt the population size according to the mean coefficient of variation
     error criterion, as detailed in [#klingerhasenaueradaptive]_ .
@@ -172,7 +175,8 @@ class AdaptivePopulationSize(PopulationStrategy):
                 "mean_cv": self.mean_cv}
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray):
+                              model_weights: np.ndarray,
+                              particle_weights: np.ndarray):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
@@ -189,5 +193,28 @@ class AdaptivePopulationSize(PopulationStrategy):
                                         self.max_population_size),
                                     self.min_population_size)
 
+        logger.info("Change nr particles {} -> {}"
+                    .format(reference_nr_part, self.nr_particles))
+
+
+class EssPopulationSize(PopulationStrategy):
+
+    def __init__(self, initial_nr_particles: int,
+                 nr_samples_per_parameter: int = 1,
+                 target_nr_particles: int = None):
+        super().__init__(nr_particles=initial_nr_particles,
+                         nr_samples_per_parameter=nr_samples_per_parameter)
+        if target_nr_particles is None:
+            target_nr_particles = initial_nr_particles
+        self.target_nr_particles = target_nr_particles
+
+    def adapt_population_size(self, transitions: List[Transition],
+                              model_weights: np.ndarray,
+                              particle_weights: np.ndarray):
+        ess = effective_sample_size(particle_weights)
+        logger.info(ess)
+        reference_nr_part = self.nr_particles
+        self.nr_particles = int(self.nr_particles * \
+            (self.target_nr_particles / ess))
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))

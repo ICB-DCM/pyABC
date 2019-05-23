@@ -59,8 +59,9 @@ from .population import (
     Particle,
     Population)
 from .populationstrategy import (
-    AdaptivePopulationSize,
-    ConstantPopulationSize)
+    ConstantPopulationSize,
+    KdeVariationPopulationSize,
+    EssPopulationSize)
 from . import visualization
 from .version import __version__  # noqa: F401
 
@@ -101,7 +102,8 @@ __all__ = [
     "Population",
     # population size
     "ConstantPopulationSize",
-    "AdaptivePopulationSize",
+    "KdeVariationPopulationSize",
+    "EssPopulationSize",
     # transition
     "MultivariateNormalTransition",
     "LocalTransition",

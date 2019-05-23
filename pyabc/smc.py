@@ -865,15 +865,17 @@ class ABCSMC:
         if t == 0:  # we need a particle population to do the fitting
             return
 
-        w = self.history.get_model_probabilities(
+        model_probabilities = self.history.get_model_probabilities(
             self.history.max_t)["p"].values
+        particle_weights = self.history.get_weighted_distances(self.history.max_t)['w'].values
 
         # make a copy in case the population strategy messes with
         # the transitions
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
         copied_transitions = copy.deepcopy(self.transitions)
-        self.population_strategy.adapt_population_size(copied_transitions, w)
+        self.population_strategy.adapt_population_size(
+            copied_transitions, model_probabilities, particle_weights)
 
     def _fit_transitions(self, t):
         """
