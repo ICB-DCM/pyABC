@@ -5,6 +5,7 @@ import numpy as np
 
 from ..storage import History
 from ..weighted_statistics import weighted_quantile
+from ..transition import MultivariateNormalTransition
 
 
 def plot_confidence_intervals(
@@ -13,7 +14,10 @@ def plot_confidence_intervals(
         par_names: List = None,
         confidences: List = None,
         show_mean: bool = False,
-        size: tuple = None,):
+        show_kde_max: bool = False,
+        show_kde_max_comp: bool = False,
+        size: tuple = None,
+        refval: float = None):
     """
     Plot confidence intervals over time.
 
@@ -55,6 +59,10 @@ def plot_confidence_intervals(
     median = np.empty((n_par, n_pop))
     if show_mean:
         mean = np.empty((n_par, n_pop))
+    if show_kde_max:
+        kde_max = np.empty((n_par, n_pop))
+    if show_kde_max_comp:
+        kde_max_comp = np.empty((n_par, n_pop))
 
     # fill matrices
     # iterate over populations
@@ -62,6 +70,13 @@ def plot_confidence_intervals(
         df, w = history.get_distribution(m=m, t=t)
         # normalize weights to be sure
         w /= w.sum()
+        # fit kde
+        if show_kde_max:
+            kde = MultivariateNormalTransition()
+            kde.fit(df, w)
+            kde_vals = [kde.pdf(p) for _, p in df.iterrows()]
+            ix = kde_vals.index(max(kde_vals))
+            kde_max_pnt = df.iloc[ix]
         # iterate over parameters
         for i_par, par in enumerate(par_names):
             vals = np.array(df[par])
@@ -70,12 +85,22 @@ def plot_confidence_intervals(
             # mean
             if show_mean:
                 mean[i_par, t] = np.sum(w * vals)
+            # kde max
+            if show_kde_max:
+                kde_max[i_par, t] = kde_max_pnt[par]
+            if show_kde_max_comp:
+                kde = MultivariateNormalTransition()
+                kde.fit(df[[par]], w)
+                kde_vals = [kde.pdf(p) for _, p in df[[par]].iterrows()]
+                ix = kde_vals.index(max(kde_vals))
+                kde_max_comp[i_par, t] = vals[ix]
             # confidences
             for i_c, confidence in enumerate(confidences):
                 lb, ub = compute_confidence_interval(
                     vals, w, confidence)
                 cis[i_par, t, i_c] = lb
                 cis[i_par, t, -1 - i_c] = ub
+        
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
@@ -88,13 +113,28 @@ def plot_confidence_intervals(
                 capsize=(5.0 / n_confidence) * (i_c + 1),
                 label="{:.2f}".format(confidence))
         ax.set_title(f"Parameter {par}")
+        # mean
+        if show_mean:
+            ax.plot(range(0, n_pop), mean[i_par], 'x-', label="Mean")
+        # kde max
+        if show_kde_max:
+            ax.plot(range(0, n_pop), kde_max[i_par], 'x-', label="Max KDE")
+        if show_kde_max_comp:
+            ax.plot(range(0, n_pop), kde_max_comp[i_par], 'x-', label="Max comp.-wise KDE")
+        # reference value
+        if refval is not None:
+            ax.hlines(refval[par], xmin=0, xmax=n_pop - 1, label="Reference value")
         ax.legend()
 
     # format
     arr_ax[-1].set_xlabel("Population t")
     for ax in arr_ax:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    if size is not None:
+        fig.set_size_inches(size)
     fig.tight_layout()
+
+    return arr_ax
 
 
 def compute_confidence_interval(vals, weights, confidence: float = 0.95):
