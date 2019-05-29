@@ -19,7 +19,8 @@ def test_r():
     sum_stat = r.summary_statistics("mySummaryStatistics")
     prior = pyabc.Distribution(meanX=pyabc.RV("uniform", 0, 10),
                                meanY=pyabc.RV("uniform", 0, 10))
-    sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
+    # sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
+    sampler = pyabc.sampler.SingleCoreSampler()
     abc = pyabc.ABCSMC(model, prior, distance,
                        summary_statistics=sum_stat,
                        sampler=sampler)

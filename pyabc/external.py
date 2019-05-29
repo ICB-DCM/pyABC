@@ -18,6 +18,7 @@ except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
 from .random_variables import Parameter
 import numpy as np
 import pandas as pd
+import numbers
 import warnings
 
 
@@ -28,7 +29,14 @@ def dict_to_named_list(dct):
     if (isinstance(dct, dict)
             or isinstance(dct, Parameter)
             or isinstance(dct, pd.core.series.Series)):
-        return r.list(**{key: val for key, val in dct.items()})
+        dct = {key: val for key, val in dct.items()}
+        for key, val in dct.items():
+            if isinstance(val, numbers.Integral):
+                dct[key] = int(val)
+            elif isinstance(val, numbers.Number):
+                dct[key] = float(val)
+        r_list = r.list(**dct)
+        return r_list
     return dct
 
 

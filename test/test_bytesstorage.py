@@ -6,6 +6,7 @@ import scipy as sp
 from rpy2.robjects import r
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 
 
 @pytest.fixture(params=["empty", "int", "float", "non_numeric_str",
@@ -89,6 +90,8 @@ def test_storage(object_):
     elif isinstance(object_, pd.DataFrame):
         assert (object_ == rebuilt).all().all()
     elif isinstance(object_, robjects.DataFrame):
-        assert (pandas2ri.ri2py(object_) == rebuilt).all().all()
+        with localconverter(pandas2ri.converter):
+            assert (robjects.conversion.rpy2py(object_) == rebuilt) \
+                   .all().all()
     else:
         raise Exception("Could not compare")
