@@ -76,8 +76,8 @@ class ExternalSumStat:
         file_ = tempfile.mkstemp(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)
         args.append(f"file={file_.name}")
-        subprocess.run([self.script_name, self.sumstat_file, *args])
-    return file_.name
+        ret = subprocess.run([self.script_name, self.sumstat_file, *args])
+        return {'file': file_.name, 'returncode': ret.returncode}
 
 
 class ExternalDistance:
@@ -96,8 +96,10 @@ class ExternalDistance:
         self.prefix = prefix
         self.dir = dir
 
-    def __call__(self, sumstat_1_file, sumstat_2_file):
-        args = [sumstat_1_file, sumstat_2_file]
+    def __call__(self, sumstat_0, sumstat_1):
+        if sumstat_0['returncode'] or sumstat_1['returncode']:
+            return np.inf
+        args = [sumstat_0['file'], sumstat_1['file']]
         file_ = tempfile.mkstemp(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)
         args.append(f"file={file_.name}")
