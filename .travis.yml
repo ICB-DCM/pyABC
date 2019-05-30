@@ -5,7 +5,7 @@ sudo: true
 os:
 - linux
 dist:
-# take the latest supported version
+# take the latest supported LTS version
 - xenial
 
 # install dependencies
