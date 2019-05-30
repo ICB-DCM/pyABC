@@ -12,6 +12,7 @@ Currently, the R language is supported.
 """
 
 try:
+    import rpy2.robjects
     from rpy2.robjects import r
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     raise Exception("Install rpy2 to enable support for the R language")
@@ -30,12 +31,13 @@ def dict_to_named_list(dct):
             or isinstance(dct, Parameter)
             or isinstance(dct, pd.core.series.Series)):
         dct = {key: val for key, val in dct.items()}
+        # convert numbers to default types before converstion (see rpy2 #548)
         for key, val in dct.items():
             if isinstance(val, numbers.Integral):
                 dct[key] = int(val)
             elif isinstance(val, numbers.Number):
                 dct[key] = float(val)
-        r_list = r.list(**dct)
+        r_list = rpy2.robjects.ListVector(dct)
         return r_list
     return dct
 
