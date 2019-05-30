@@ -6,7 +6,7 @@ os:
 - linux
 dist:
 # take the latest supported LTS version
-- trusty
+- xenial
 
 # install dependencies
 
