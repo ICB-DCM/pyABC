@@ -9,6 +9,10 @@ Currently, the R language is supported.
     The rpy2 package needs to be installed to interface with the R language.
     Installation of rpy2 is optional if R support is not required.
     See also :ref:`installation of optional dependencies <install-optional>`.
+
+.. note::
+    Multicore sampling with R 3.4.4 and rpy2 3.0.4 did not work by 2019-05-30.
+    It used to work with rpy2 2.9.5, which is used in pyabc 0.9.12.
 """
 
 try:

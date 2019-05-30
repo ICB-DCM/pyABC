@@ -9,9 +9,6 @@ r_file = "doc/examples/myRModel.R"
 
 
 def test_r():
-    """
-    This is basically just the using_R notebook.
-    """
     r = R(r_file)
     r.display_source_ipython()
     model = r.model("myModel")
