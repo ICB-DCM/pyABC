@@ -7,7 +7,6 @@ import numpy as np
 import tempfile
 import scipy as sp
 import pandas as pd
-import rpy2
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
