@@ -22,7 +22,7 @@ try:
     from rpy2.robjects import r
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     raise Exception("Install rpy2 to enable support for the R language")
-from .random_variables import Parameter
+from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
 import warnings
