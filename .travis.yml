@@ -5,16 +5,13 @@ sudo: true
 os:
 - linux
 dist:
-# take the latest supported LTS version
-- trusty
+# take the latest supported version
+- xenial
 
 # install dependencies
 
 before_install:
-# install latest r
-- sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
-- gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
-- gpg -a --export E084DAB9 | sudo apt-key add -
+# install r
 - sudo apt-get update
 - sudo apt-get install r-base r-base-dev r-base-core r-recommended
 # from apt
