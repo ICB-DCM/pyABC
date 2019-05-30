@@ -9,6 +9,13 @@ Currently, the R language is supported.
     The rpy2 package needs to be installed to interface with the R language.
     Installation of rpy2 is optional if R support is not required.
     See also :ref:`installation of optional dependencies <install-optional>`.
+
+.. note::
+
+    Support of R via rpy2 is considered experimental. Currently, an rpy2
+    version <= 2.9.5 is required. Versions >= 3.0.0 do not work yet properly
+    for various reasons (see #116). R versions 3.4 and 3.5 have shown to work.
+    Should this not work on your system, consider accessing R script-based.
 """
 
 try:
