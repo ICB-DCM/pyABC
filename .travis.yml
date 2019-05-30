@@ -25,7 +25,6 @@ addons:
     - redis-server
 # from pip
 install:
-- conda install r-essentials r-base
 - pip install --upgrade .
 - pip install --upgrade -r .travis_pip_reqs.txt
 - pip install --upgrade pytest
