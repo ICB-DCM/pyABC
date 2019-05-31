@@ -1,8 +1,14 @@
 from .r_rpy2 import R
-from .script import FileModel, FileSumStats
-
+from .script import (
+    ExternalModel,
+    ExternalSumStat,
+    ExternalDistance,
+    FileIdSumStat)
 
 __all__ = [
-    "R",
-    "FileSumStats",
+    'R',
+    'ExternalModel',
+    'ExternalSumStat',
+    'ExternalDistance',
+    'FileIdSumStat',
 ]

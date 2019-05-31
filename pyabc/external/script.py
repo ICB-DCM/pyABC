@@ -4,8 +4,10 @@ import tempfile
 import subprocess
 import os
 
+from ..model import Model
 
-class ExternalModel:
+
+class ExternalModel(Model):
     """
     A model that is called via a command line script.
 
@@ -24,7 +26,8 @@ class ExternalModel:
     """
 
     def __init__(self, script_name, model_file,
-                 suffix=None, prefix=None, dir=None):
+                 suffix=None, prefix="modelsim_", dir=None,
+                 name=None):
         """
         Initialize the model.
 
@@ -39,6 +42,7 @@ class ExternalModel:
             Specify suffix, prefix, or base directory for the created
             temporary files.
         """
+        super().__init__(name=name)
         self.script_name = script_name
         self.model_file = model_file
         self.suffix = suffix
@@ -50,10 +54,13 @@ class ExternalModel:
         for key, val in pars.items():
             args.append(f"{key}={val} ")
         file_ = tempfile.mkstemp(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)
-        args.append(f"file={file_.name}")
+            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+        args.append(f"file={file_}")
         subprocess.run([self.script_name, self.model_file, *args])
-        return file_.name
+        return file_
+
+    def sample(self, pars):
+        return self(pars)
 
 
 class ExternalSumStat:
@@ -63,7 +70,7 @@ class ExternalSumStat:
     """
 
     def __init__(self, script_name, sumstat_file,
-                 suffix=None, prefix=None, dir=None):
+                 suffix=None, prefix="sumstat_", dir=None):
         self.script_name = script_name
         self.sumstat_file = sumstat_file
         self.suffix = suffix
@@ -74,22 +81,22 @@ class ExternalSumStat:
         args = []
         args.append(f"model_output_file={model_output_file}")
         file_ = tempfile.mkstemp(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)
-        args.append(f"file={file_.name}")
+            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+        args.append(f"file={file_}")
         ret = subprocess.run([self.script_name, self.sumstat_file, *args])
-        return {'file': file_.name, 'returncode': ret.returncode}
+        return {'file': file_, 'returncode': ret.returncode}
 
 
 class ExternalDistance:
     """
     Use script and sumstat output files to compute the distance.
-    
+
     The distance is written to a file, which is then read in (it must only
     contain a single float number).
     """
 
     def __init__(self, script_name, distance_file,
-                 suffix=None, prefix=None, dir=None):
+                 suffix=None, prefix="dist_", dir=None):
         self.script_name = script_name
         self.distance_file = distance_file
         self.suffix = suffix
@@ -97,15 +104,17 @@ class ExternalDistance:
         self.dir = dir
 
     def __call__(self, sumstat_0, sumstat_1):
+        # check if external script failed
         if sumstat_0['returncode'] or sumstat_1['returncode']:
-            return np.inf
-        args = [sumstat_0['file'], sumstat_1['file']]
+            return np.nan
+        args = [f"sumstat_0_file={sumstat_0['file']}",
+                f"sumstat_1_file={sumstat_1['file']}"]
         file_ = tempfile.mkstemp(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)
-        args.append(f"file={file_.name}")
-        subprocess.run([self.script_name, self.sumstat_file, *args])
+            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+        args.append(f"file={file_}")
+        subprocess.run([self.script_name, self.distance_file, *args])
         # read in distance
-        with open(file_.name, 'rb') as f:
+        with open(file_, 'rb') as f:
             distance = float(f.read())
         os.remove(file_)
         return distance
