@@ -18,7 +18,7 @@ setup(
                       "flask_bootstrap>=3.3.7.1.dev1", "flask>=1.0.2",
                       "bokeh>=0.13.0", "redis>=2.10.6",
                       "dill>=0.2.8.2", "gitpython>=2.1.11",
-                      "scikit-learn>=0.20.0", "matplotlib>=3.0.0",
+                      "scikit-learn>=0.21.2", "matplotlib>=3.0.0",
                       "sqlalchemy>=1.3.0", "click>=7.0",
                       "feather-format>=0.4.0", "bkcharts>=0.2",
                       "distributed>=1.23.3", "pygments>=2.2.0",
