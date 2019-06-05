@@ -1,23 +1,26 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from typing import List
+from typing import List, Union
 import numpy as np
 
 from ..storage import History
 from ..weighted_statistics import weighted_quantile
-from ..transition import MultivariateNormalTransition
+from ..transition import Transition, MultivariateNormalTransition
 
 
 def plot_confidence_intervals(
         history: History,
         m: int = 0,
+        ts: Union[List[int], int] = None,
         par_names: List = None,
         confidences: List = None,
         show_mean: bool = False,
         show_kde_max: bool = False,
-        show_kde_max_comp: bool = False,
+        show_kde_max_1d: bool = False,
         size: tuple = None,
-        refval: float = None):
+        refval: dict = None,
+        kde: Transition = None,
+        kde_1d: Transition = None):
     """
     Plot confidence intervals over time.
 
@@ -28,12 +31,29 @@ def plot_confidence_intervals(
         The history to extract data from.
     m: int, optional (default = 0)
         The id of the model to plot for.
+    ts: Union[List[int], int], optional (default = all)
+        The time points to plot for.
     par_names: List of str, optional
         The parameter to plot for. If None, then all parameters are used.
     show_mean: bool, optional (default = False)
         Whether to show the mean apart from the median as well.
+    show_kde_max: bool, optional (default = False)
+        Whether to show the one of the sampled points that gives the highest
+        KDE value for the specified KDE.
+        Note: It is not attemtped to find the overall hightest KDE value, but
+        rather the sampled point with the highest value is taken as an
+        approximation (of the MAP-value).
+    show_kde_max_1d: bool, optional (default = False)
+        Same as `show_kde_max`, but here the KDE is applied componentwise.
     size: tuple of float
         Size of the plot.
+    refval: dict, optional (default = None)
+        A dictionary of reference parameter values to plot for each of
+        `par_names`.
+    kde: Transition, optional (default = MultivariateNormalTransition)
+        The KDE to use for `show_kde_max`.
+    kde_1d: Transition, optional (default = MultivariateNormalTransition)
+        The KDE to use for `show_kde_max_1d`.
     """
     if confidences is None:
         confidences = [0.95]
@@ -42,11 +62,11 @@ def plot_confidence_intervals(
         # extract all parameter names
         df, _ = history.get_distribution(m=m)
         par_names = list(df.columns.values)
-
-    # dimensions
     n_par = len(par_names)
-    n_pop = history.max_t + 1
     n_confidence = len(confidences)
+    if ts is None:
+        ts = list(range(0, history.max_t + 1))
+    n_pop = len(ts)
 
     # prepare axes
     fig, arr_ax = plt.subplots(
@@ -61,52 +81,49 @@ def plot_confidence_intervals(
         mean = np.empty((n_par, n_pop))
     if show_kde_max:
         kde_max = np.empty((n_par, n_pop))
-    if show_kde_max_comp:
-        kde_max_comp = np.empty((n_par, n_pop))
+    if show_kde_max_1d:
+        kde_max_1d = np.empty((n_par, n_pop))
+    if kde is None and show_kde_max:
+        kde = MultivariateNormalTransition()
+    if kde_1d is None and show_kde_max_1d:
+        kde_1d = MultivariateNormalTransition()
 
     # fill matrices
     # iterate over populations
-    for t in range(0, n_pop):
+    for i_t, t in enumerate(ts):
         df, w = history.get_distribution(m=m, t=t)
         # normalize weights to be sure
         w /= w.sum()
         # fit kde
         if show_kde_max:
-            kde = MultivariateNormalTransition()
-            kde.fit(df, w)
-            kde_vals = [kde.pdf(p) for _, p in df.iterrows()]
-            ix = kde_vals.index(max(kde_vals))
-            kde_max_pnt = df.iloc[ix]
+            _kde_max_pnt = compute_kde_max(kde, df, w)
         # iterate over parameters
         for i_par, par in enumerate(par_names):
+            # as numpy array
             vals = np.array(df[par])
             # median
-            median[i_par, t] = compute_quantile(vals, w, 0.5)
+            median[i_par, i_t] = compute_quantile(vals, w, 0.5)
             # mean
             if show_mean:
-                mean[i_par, t] = np.sum(w * vals)
+                mean[i_par, i_t] = np.sum(w * vals)
             # kde max
             if show_kde_max:
-                kde_max[i_par, t] = kde_max_pnt[par]
-            if show_kde_max_comp:
-                kde = MultivariateNormalTransition()
-                kde.fit(df[[par]], w)
-                kde_vals = [kde.pdf(p) for _, p in df[[par]].iterrows()]
-                ix = kde_vals.index(max(kde_vals))
-                kde_max_comp[i_par, t] = vals[ix]
+                kde_max[i_par, i_t] = _kde_max_pnt[par]
+            if show_kde_max_1d:
+                _kde_max_1d_pnt = compute_kde_max(kde_1d, df[[par]], w)
+                kde_max_1d[i_par, i_t] = _kde_max_1d_pnt[par]
             # confidences
             for i_c, confidence in enumerate(confidences):
                 lb, ub = compute_confidence_interval(
                     vals, w, confidence)
-                cis[i_par, t, i_c] = lb
-                cis[i_par, t, -1 - i_c] = ub
-        
+                cis[i_par, i_t, i_c] = lb
+                cis[i_par, i_t, -1 - i_c] = ub
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
         for i_c, confidence in reversed(list(enumerate(confidences))):
             ax.errorbar(
-                x=range(0, n_pop),
+                x=ts,
                 y=median[i_par].flatten(),
                 yerr=[median[i_par] - cis[i_par, :, i_c],
                       cis[i_par, :, -1 - i_c] - median[i_par]],
@@ -115,15 +132,18 @@ def plot_confidence_intervals(
         ax.set_title(f"Parameter {par}")
         # mean
         if show_mean:
-            ax.plot(range(0, n_pop), mean[i_par], 'x-', label="Mean")
+            ax.plot(range(n_pop), mean[i_par], 'x-', label="Mean")
         # kde max
         if show_kde_max:
-            ax.plot(range(0, n_pop), kde_max[i_par], 'x-', label="Max KDE")
-        if show_kde_max_comp:
-            ax.plot(range(0, n_pop), kde_max_comp[i_par], 'x-', label="Max comp.-wise KDE")
+            ax.plot(range(n_pop), kde_max[i_par], 'x-', label="Max KDE")
+        if show_kde_max_1d:
+            ax.plot(range(n_pop), kde_max_1d[i_par], 'x-',
+                    label="Max KDE 1d")
         # reference value
         if refval is not None:
-            ax.hlines(refval[par], xmin=0, xmax=n_pop - 1, label="Reference value")
+            ax.hlines(refval[par], xmin=min(ts), xmax=max(ts),
+                      label="Reference value")
+        ax.set_xticks(ts)
         ax.legend()
 
     # format
@@ -155,6 +175,14 @@ def compute_confidence_interval(vals, weights, confidence: float = 0.95):
     lb = compute_quantile(vals, weights, alpha_lb)
     ub = compute_quantile(vals, weights, alpha_ub)
     return lb, ub
+
+
+def compute_kde_max(kde, df, w):
+    kde.fit(df, w)
+    kde_vals = [kde.pdf(p) for _, p in df.iterrows()]
+    ix = kde_vals.index(max(kde_vals))
+    kde_max_pnt = df.iloc[ix]
+    return kde_max_pnt
 
 
 def compute_quantile(vals, weights, alpha):
