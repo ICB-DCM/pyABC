@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 from typing import List, Union
 import numpy as np
 
@@ -123,7 +122,7 @@ def plot_confidence_intervals(
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
         for i_c, confidence in reversed(list(enumerate(confidences))):
             ax.errorbar(
-                x=ts,
+                x=range(n_pop),
                 y=median[i_par].flatten(),
                 yerr=[median[i_par] - cis[i_par, :, i_c],
                       cis[i_par, :, -1 - i_c] - median[i_par]],
@@ -141,15 +140,14 @@ def plot_confidence_intervals(
                     label="Max KDE 1d")
         # reference value
         if refval is not None:
-            ax.hlines(refval[par], xmin=min(ts), xmax=max(ts),
+            ax.hlines(refval[par], xmin=0, xmax=n_pop - 1,
                       label="Reference value")
-        ax.set_xticks(ts)
+        ax.set_xticks(range(n_pop))
+        ax.set_xticklabels(ts)
         ax.legend()
 
     # format
     arr_ax[-1].set_xlabel("Population t")
-    for ax in arr_ax:
-        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     if size is not None:
         fig.set_size_inches(size)
     fig.tight_layout()
