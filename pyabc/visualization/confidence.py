@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from typing import List, Union
 import numpy as np
 
@@ -167,7 +168,8 @@ def plot_confidence_intervals_for_time(
         show_kde_max: bool = False,
         show_kde_max_1d: bool = False,
         size: tuple = None,
-        refval: dict = None,
+        rotation: int = 0,
+        refvals: Union[List[dict], dict] = None,
         kde: Transition = None,
         kde_1d: Transition = None):
     """
@@ -206,19 +208,23 @@ def plot_confidence_intervals_for_time(
     """
     histories, labels = to_lists_or_default(histories, labels)
     n_run = len(histories)
-    if not isinstance(ms, list) or len(ms) == 1:
+    if ms is None:
+        ms = [0] * n_run
+    elif not isinstance(ms, list) or len(ms) == 1:
         ms = [ms] * n_run
     if confidences is None:
         confidences = [0.95]
     confidences = sorted(confidences)
     if par_names is None:
         # extract all parameter names
-        df, _ = history.get_distribution(m=m)
+        df, _ = histories[0].get_distribution(m=ms[0])
         par_names = list(df.columns.values)
     n_par = len(par_names)
     n_confidence = len(confidences)
     if ts is None:
         ts = [history.max_t for history in histories]
+    if refvals is not None and not isinstance(refvals, list):
+        refvals = [refvals] * n_run
 
     # prepare axes
     fig, arr_ax = plt.subplots(
@@ -273,31 +279,54 @@ def plot_confidence_intervals_for_time(
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
-        for i_c, confidence in reversed(list(enumerate(confidences))):
-            ax.errorbar(
-                x=range(n_pop),
-                y=median[i_par].flatten(),
-                yerr=[median[i_par] - cis[i_par, :, i_c],
-                      cis[i_par, :, -1 - i_c] - median[i_par]],
-                capsize=(5.0 / n_confidence) * (i_c + 1),
-                label="{:.2f}".format(confidence))
+        for i_run, (h, label) in enumerate(zip(histories, labels)):
+            for i_c, confidence in reversed(list(enumerate(confidences))):
+                y_err = np.array(
+                    [median[i_par, i_run] - cis[i_par, i_run, i_c],
+                     cis[i_par, i_run, -1 - i_c] - median[i_par, i_run]])
+                y_err = y_err.reshape((2, 1))
+                ax.errorbar(
+                    x=[i_run],
+                    y=median[i_par, i_run],
+                    yerr=y_err,
+                    capsize=(10.0 / n_confidence) * (i_c + 1),
+                    color=f'C{i_c}',
+                )
+            # reference value
+            if refvals[i_run] is not None:
+                ax.plot([i_run], [refvals[i_run][par]], 'x',
+                      color=f'black')
         ax.set_title(f"Parameter {par}")
         # mean
         if show_mean:
-            ax.plot(range(n_pop), mean[i_par], 'x-', label="Mean")
+            ax.plot(range(n_run), mean[i_par], 'x',
+                    color=f'C{n_confidence}')
         # kde max
         if show_kde_max:
-            ax.plot(range(n_pop), kde_max[i_par], 'x-', label="Max KDE")
+            ax.plot(range(n_run), kde_max[i_par], 'x',
+                    color=f'C{n_confidence + 1}')
         if show_kde_max_1d:
-            ax.plot(range(n_pop), kde_max_1d[i_par], 'x-',
-                    label="Max KDE 1d")
-        # reference value
-        if refval is not None:
-            ax.hlines(refval[par], xmin=0, xmax=n_pop - 1,
-                      label="Reference value")
-        ax.set_xticks(range(n_pop))
-        ax.set_xticklabels(ts)
-        ax.legend()
+            ax.plot(range(n_run), kde_max_1d[i_par], 'x',
+                    color=f'C{n_confidence + 2}')
+        ax.set_xticks(range(n_run))
+        ax.set_xticklabels(labels, rotation=rotation)
+        leg_colors = [f'C{i_c}' for i_c in reversed(range(n_confidence))]
+        leg_labels = ['{:.2f}'.format(c) for c in reversed(confidences)]
+        if show_mean:
+            leg_colors.append(f'C{n_confidence}')
+            leg_labels.append("Mean")
+        if show_kde_max:
+            leg_colors.append(f'C{n_confidence + 1}')
+            leg_labels.append("Max KDE")
+        if show_kde_max_1d:
+            leg_colors.append(f'C{n_confidence + 2}')
+            leg_labels.append("Max KDE 1d")
+        if refvals is not None:
+            leg_colors.append('black')
+            leg_labels.append("Reference value")
+        handles = [Line2D([0], [0], color=c, label=l)
+                   for c, l in zip(leg_colors, leg_labels)]
+        ax.legend(handles=handles, bbox_to_anchor=(1.04, 1), loc="upper left")
 
     # format
     arr_ax[-1].set_xlabel("Population t")
