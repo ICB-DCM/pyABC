@@ -276,7 +276,7 @@ def plot_confidence_intervals_for_time(
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
-        for i_run, (h, label) in enumerate(zip(histories, labels)):
+        for i_run, h in enumerate(histories):
             for i_c, confidence in reversed(list(enumerate(confidences))):
                 y_err = np.array(
                     [median[i_par, i_run] - cis[i_par, i_run, i_c],
