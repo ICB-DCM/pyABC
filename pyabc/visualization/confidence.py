@@ -178,29 +178,26 @@ def plot_confidence_intervals_for_time(
     Parameters
     ----------
 
-    history: History
-        The history to extract data from.
-    m: int, optional (default = 0)
-        The id of the model to plot for.
+    histories: Union[List[History], History]
+        The histories to extract data from.
+    labels: Union[List[str], str], optional
+        Labels for the histories. If None, they are just numbered.
+    ms: Union[List[int], int], optional (default = 0)
+        List of the ids of the models to plot for. Default is
+        model id 0 for all histories.
     ts: Union[List[int], int], optional (default = all)
-        The time points to plot for.
+        The time points to plot for, same length as histories.
+        If None, the last times are taken.
     par_names: List of str, optional
         The parameter to plot for. If None, then all parameters are used.
-    show_mean: bool, optional (default = False)
-        Whether to show the mean apart from the median as well.
-    show_kde_max: bool, optional (default = False)
-        Whether to show the one of the sampled points that gives the highest
-        KDE value for the specified KDE.
-        Note: It is not attemtped to find the overall hightest KDE value, but
-        rather the sampled point with the highest value is taken as an
-        approximation (of the MAP-value).
-    show_kde_max_1d: bool, optional (default = False)
-        Same as `show_kde_max`, but here the KDE is applied componentwise.
+        Assumes all histories have these parameters.
+    show_mean, show_kde_max, show_kde_max_1d: bool, optional (default = False)
+        As in `plot_confidence_intervals`.
     size: tuple of float
         Size of the plot.
-    refval: dict, optional (default = None)
+    refvals: Union[List[dict], dict], optional (default = None)
         A dictionary of reference parameter values to plot for each of
-        `par_names`.
+        `par_names`, for each history. Same length as histories.
     kde: Transition, optional (default = MultivariateNormalTransition)
         The KDE to use for `show_kde_max`.
     kde_1d: Transition, optional (default = MultivariateNormalTransition)
