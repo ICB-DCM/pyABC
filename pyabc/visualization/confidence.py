@@ -9,7 +9,7 @@ from ..transition import Transition, MultivariateNormalTransition
 from .util import to_lists_or_default
 
 
-def plot_confidence_intervals(
+def plot_credible_intervals(
         history: History,
         m: int = 0,
         ts: Union[List[int], int] = None,
@@ -23,7 +23,7 @@ def plot_confidence_intervals(
         kde: Transition = None,
         kde_1d: Transition = None):
     """
-    Plot confidence intervals over time.
+    Plot credible intervals over time.
 
     Parameters
     ----------
@@ -115,7 +115,7 @@ def plot_confidence_intervals(
                 kde_max_1d[i_par, i_t] = _kde_max_1d_pnt[par]
             # confidences
             for i_c, confidence in enumerate(confidences):
-                lb, ub = compute_confidence_interval(
+                lb, ub = compute_credible_interval(
                     vals, w, confidence)
                 cis[i_par, i_t, i_c] = lb
                 cis[i_par, i_t, -1 - i_c] = ub
@@ -157,7 +157,7 @@ def plot_confidence_intervals(
     return arr_ax
 
 
-def plot_confidence_intervals_for_time(
+def plot_credible_intervals_for_time(
         histories: Union[List[History], History],
         labels: Union[List[str], str] = None,
         ms: Union[List[int], int] = None,
@@ -173,7 +173,7 @@ def plot_confidence_intervals_for_time(
         kde: Transition = None,
         kde_1d: Transition = None):
     """
-    Plot confidence intervals over time.
+    Plot credible intervals over time.
 
     Parameters
     ----------
@@ -192,7 +192,7 @@ def plot_confidence_intervals_for_time(
         The parameter to plot for. If None, then all parameters are used.
         Assumes all histories have these parameters.
     show_mean, show_kde_max, show_kde_max_1d: bool, optional (default = False)
-        As in `plot_confidence_intervals`.
+        As in `plot_credible_intervals`.
     size: tuple of float
         Size of the plot.
     refvals: Union[List[dict], dict], optional (default = None)
@@ -269,7 +269,7 @@ def plot_confidence_intervals_for_time(
                 kde_max_1d[i_par, i_run] = _kde_max_1d_pnt[par]
             # confidences
             for i_c, confidence in enumerate(confidences):
-                lb, ub = compute_confidence_interval(
+                lb, ub = compute_credible_interval(
                     vals, w, confidence)
                 cis[i_par, i_run, i_c] = lb
                 cis[i_par, i_run, -1 - i_c] = ub
@@ -334,15 +334,15 @@ def plot_confidence_intervals_for_time(
     return arr_ax
 
 
-def compute_confidence_interval(vals, weights, confidence: float = 0.95):
+def compute_credible_interval(vals, weights, confidence: float = 0.95):
     """
-    Compute confidence interval to confidence level `confidence` for points
+    Compute credible interval to confidence level `confidence` for points
     `vals` associated to weights `weights`.
 
     Returns
     -------
     lb, ub: tuple of float
-        Lower and upper bound of the confidence interval.
+        Lower and upper bound of the credible interval.
     """
     if confidence <= 0.0 or confidence >= 1.0:
         raise ValueError(
