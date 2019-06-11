@@ -34,8 +34,10 @@ def plot_confidence_intervals(
         The id of the model to plot for.
     ts: Union[List[int], int], optional (default = all)
         The time points to plot for.
-    par_names: List of str, optional
+    par_names: List[str], optional
         The parameter to plot for. If None, then all parameters are used.
+    confidences: List[float], optional (default = [0.95])
+        Confidence intervals to compute.
     show_mean: bool, optional (default = False)
         Whether to show the mean apart from the median as well.
     show_kde_max: bool, optional (default = False)
@@ -163,8 +165,8 @@ def plot_confidence_intervals_for_time(
         labels: Union[List[str], str] = None,
         ms: Union[List[int], int] = None,
         ts: Union[List[int], int] = None,
-        par_names: List = None,
-        confidences: List = None,
+        par_names: List[str] = None,
+        confidences: List[float] = None,
         show_mean: bool = False,
         show_kde_max: bool = False,
         show_kde_max_1d: bool = False,
@@ -189,9 +191,11 @@ def plot_confidence_intervals_for_time(
     ts: Union[List[int], int], optional (default = all)
         The time points to plot for, same length as histories.
         If None, the last times are taken.
-    par_names: List of str, optional
+    par_names: List[str], optional
         The parameter to plot for. If None, then all parameters are used.
         Assumes all histories have these parameters.
+    confidences: List[float], optional (default = [0.95])
+        Confidence intervals to compute.
     show_mean, show_kde_max, show_kde_max_1d: bool, optional (default = False)
         As in `plot_confidence_intervals`.
     size: tuple of float
@@ -356,6 +360,9 @@ def compute_confidence_interval(vals, weights, confidence: float = 0.95):
 
 
 def compute_kde_max(kde, df, w):
+    """
+    Fit the kde and find the maximal kde value among the points in df.
+    """
     kde.fit(df, w)
     kde_vals = [kde.pdf(p) for _, p in df.iterrows()]
     ix = kde_vals.index(max(kde_vals))
