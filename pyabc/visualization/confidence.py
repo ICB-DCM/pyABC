@@ -14,7 +14,7 @@ def plot_credible_intervals(
         m: int = 0,
         ts: Union[List[int], int] = None,
         par_names: List = None,
-        levels: List = None,
+        confidences: List = None,
         show_mean: bool = False,
         show_kde_max: bool = False,
         show_kde_max_1d: bool = False,
@@ -34,8 +34,10 @@ def plot_credible_intervals(
         The id of the model to plot for.
     ts: Union[List[int], int], optional (default = all)
         The time points to plot for.
-    par_names: List of str, optional
+    par_names: List[str], optional
         The parameter to plot for. If None, then all parameters are used.
+    confidences: List[float], optional (default = [0.95])
+        Confidence intervals to compute.
     show_mean: bool, optional (default = False)
         Whether to show the mean apart from the median as well.
     show_kde_max: bool, optional (default = False)
@@ -56,15 +58,16 @@ def plot_credible_intervals(
     kde_1d: Transition, optional (default = MultivariateNormalTransition)
         The KDE to use for `show_kde_max_1d`.
     """
-    if levels is None:
-        levels = [0.95]
-    levels = sorted(levels)
+    if confidences is None:
+        confidences = [0.95]
+    confidences = sorted(confidences)
     if par_names is None:
         # extract all parameter names
         df, _ = history.get_distribution(m=m)
         par_names = list(df.columns.values)
+    # dimensions
     n_par = len(par_names)
-    n_confidence = len(levels)
+    n_confidence = len(confidences)
     if ts is None:
         ts = list(range(0, history.max_t + 1))
     n_pop = len(ts)
@@ -113,8 +116,8 @@ def plot_credible_intervals(
             if show_kde_max_1d:
                 _kde_max_1d_pnt = compute_kde_max(kde_1d, df[[par]], w)
                 kde_max_1d[i_par, i_t] = _kde_max_1d_pnt[par]
-            # levels
-            for i_c, confidence in enumerate(levels):
+            # confidences
+            for i_c, confidence in enumerate(confidences):
                 lb, ub = compute_credible_interval(
                     vals, w, confidence)
                 cis[i_par, i_t, i_c] = lb
@@ -122,7 +125,7 @@ def plot_credible_intervals(
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
-        for i_c, confidence in reversed(list(enumerate(levels))):
+        for i_c, confidence in reversed(list(enumerate(confidences))):
             ax.errorbar(
                 x=range(n_pop),
                 y=median[i_par].flatten(),
@@ -162,8 +165,8 @@ def plot_credible_intervals_for_time(
         labels: Union[List[str], str] = None,
         ms: Union[List[int], int] = None,
         ts: Union[List[int], int] = None,
-        par_names: List = None,
-        levels: List = None,
+        par_names: List[str] = None,
+        confidences: List[float] = None,
         show_mean: bool = False,
         show_kde_max: bool = False,
         show_kde_max_1d: bool = False,
@@ -188,9 +191,11 @@ def plot_credible_intervals_for_time(
     ts: Union[List[int], int], optional (default = all)
         The time points to plot for, same length as histories.
         If None, the last times are taken.
-    par_names: List of str, optional
+    par_names: List[str], optional
         The parameter to plot for. If None, then all parameters are used.
         Assumes all histories have these parameters.
+    confidences: List[float], optional (default = [0.95])
+        Confidence intervals to compute.
     show_mean, show_kde_max, show_kde_max_1d: bool, optional (default = False)
         As in `plot_credible_intervals`.
     size: tuple of float
@@ -209,15 +214,15 @@ def plot_credible_intervals_for_time(
         ms = [0] * n_run
     elif not isinstance(ms, list) or len(ms) == 1:
         ms = [ms] * n_run
-    if levels is None:
-        levels = [0.95]
-    levels = sorted(levels)
+    if confidences is None:
+        confidences = [0.95]
+    confidences = sorted(confidences)
     if par_names is None:
         # extract all parameter names
         df, _ = histories[0].get_distribution(m=ms[0])
         par_names = list(df.columns.values)
     n_par = len(par_names)
-    n_confidence = len(levels)
+    n_confidence = len(confidences)
     if ts is None:
         ts = [history.max_t for history in histories]
     if refvals is not None and not isinstance(refvals, list):
@@ -267,8 +272,8 @@ def plot_credible_intervals_for_time(
             if show_kde_max_1d:
                 _kde_max_1d_pnt = compute_kde_max(kde_1d, df[[par]], w)
                 kde_max_1d[i_par, i_run] = _kde_max_1d_pnt[par]
-            # levels
-            for i_c, confidence in enumerate(levels):
+            # confidences
+            for i_c, confidence in enumerate(confidences):
                 lb, ub = compute_credible_interval(
                     vals, w, confidence)
                 cis[i_par, i_run, i_c] = lb
@@ -277,7 +282,7 @@ def plot_credible_intervals_for_time(
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
         for i_run, h in enumerate(histories):
-            for i_c, confidence in reversed(list(enumerate(levels))):
+            for i_c, confidence in reversed(list(enumerate(confidences))):
                 y_err = np.array(
                     [median[i_par, i_run] - cis[i_par, i_run, i_c],
                      cis[i_par, i_run, -1 - i_c] - median[i_par, i_run]])
@@ -308,7 +313,7 @@ def plot_credible_intervals_for_time(
         ax.set_xticks(range(n_run))
         ax.set_xticklabels(labels, rotation=rotation)
         leg_colors = [f'C{i_c}' for i_c in reversed(range(n_confidence))]
-        leg_labels = ['{:.2f}'.format(c) for c in reversed(levels)]
+        leg_labels = ['{:.2f}'.format(c) for c in reversed(confidences)]
         if show_mean:
             leg_colors.append(f'C{n_confidence}')
             leg_labels.append("Mean")
@@ -355,6 +360,9 @@ def compute_credible_interval(vals, weights, confidence: float = 0.95):
 
 
 def compute_kde_max(kde, df, w):
+    """
+    Fit the kde and find the maximal kde value among the points in df.
+    """
     kde.fit(df, w)
     kde_vals = [kde.pdf(p) for _, p in df.iterrows()]
     ix = kde_vals.index(max(kde_vals))
