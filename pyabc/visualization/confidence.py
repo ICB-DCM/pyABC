@@ -63,6 +63,7 @@ def plot_confidence_intervals(
         # extract all parameter names
         df, _ = history.get_distribution(m=m)
         par_names = list(df.columns.values)
+    # dimensions
     n_par = len(par_names)
     n_confidence = len(confidences)
     if ts is None:
