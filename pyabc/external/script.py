@@ -3,6 +3,7 @@ import numpy as np
 import tempfile
 import subprocess
 import os
+import xml.etree.ElementTree as ET
 
 from ..model import Model
 
@@ -119,6 +120,22 @@ class ExternalDistance:
         os.remove(file_)
         return distance
 
+class ExternalMorpheus:
+    """
+    Call morpheus model from PyABC
+    """
+    def __init__(self,path: str= None,
+                 id: int=None ,
+                 morpheus_ouput: str=None):
+        self.id=id
+        self.path=path
+        self.morpheus_ouput=morpheus_ouput
+    def __call__(self, xmlPath) ->str:
+        self.id=1
+        self.path=xmlPath
+        self.morpheus_ouput =subprocess.run('morpheus -file '+xmlPath, shell=True)
+        return self.morpheus_ouput
+
 
 class FileIdSumStat:
     def __init__(self, sep):
@@ -132,3 +149,4 @@ class FileIdSumStat:
         # TODO: Recognize empty columns (reduce vector size)
         # and reduce 1-dim vectors to scalars
         return dct
+
