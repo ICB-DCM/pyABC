@@ -3,7 +3,8 @@ import numpy as np
 import tempfile
 import subprocess
 import os
-import xml.etree.ElementTree as ET
+from lxml import etree as xmlm
+from lxml import etree as ET
 
 from ..model import Model
 
@@ -121,6 +122,7 @@ class ExternalDistance:
         return distance
 
 
+
 class MorpheusModel(Model):
     """
     Call morpheus model from PyABC.
@@ -137,11 +139,22 @@ class MorpheusModel(Model):
     def __init__(self, morpheus_file, paramater_mapping=None):
         self.morpheus_file = morpheus_file
 
+    def read_parameter_of_interest(self, xmlPath:str ,parofinterest:str) ->int:
+        #read xml file.
+        tree = ET.parse(xmlPath)
+        root = tree.getroot()
+        #read the parameter of interest form the xml file.
+        for temp in root.findall("./CellTypes/CellType/System/Constant[@symbol='" + parofinterest + "']"):
+            par_of_interest_dict = temp.attrib
+        value = int(par_of_interest_dict['value'])
+        return value
     def sample(self, par):
+
         # create a new folder with a unique id
-        
+        model_folder=''
         # copy the xml into this folder
-        new_file = ...
+        new_file = xmlm.parse('items.xml')
+
         
         # in the new xml, change the parameters to `par` (I think it's the Constant Values)
         # use some python xml editing tool
@@ -158,6 +171,7 @@ class MorpheusModel(Model):
 class MorpheusSumStat:
 
     def __call__(self, model_folder):
+        modle_folder=''
         # read in the csv file as a pandas dataframe
         # extract the summary statistics (in the simplest case, do nothing)
         # what exactly you return here will depend on what data you have
