@@ -120,21 +120,50 @@ class ExternalDistance:
         os.remove(file_)
         return distance
 
-class ExternalMorpheus:
+
+class MorpheusModel(Model):
     """
-    Call morpheus model from PyABC
+    Call morpheus model from PyABC.
+
+    Parameters
+    ----------
+
+    morpheus_file:
+        The XML file containing the morpheus model.
+    parameter_mapping:
+        Mapping from parameter names like `rate0` to the location in the
+        xml file like `CellTypes.System.Constant with symbol rate0`
     """
-    def __init__(self,path: str= None,
-                 id: int=None ,
-                 morpheus_ouput: str=None):
-        self.id=id
-        self.path=path
-        self.morpheus_ouput=morpheus_ouput
-    def __call__(self, xmlPath) ->str:
-        self.id=1
-        self.path=xmlPath
-        self.morpheus_ouput =subprocess.run('morpheus -file '+xmlPath, shell=True)
-        return self.morpheus_ouput
+    def __init__(self, morpheus_file, paramater_mapping=None):
+        self.morpheus_file = morpheus_file
+
+    def sample(self, par):
+        # create a new folder with a unique id
+        
+        # copy the xml into this folder
+        new_file = ...
+        
+        # in the new xml, change the parameters to `par` (I think it's the Constant Values)
+        # use some python xml editing tool
+        # you have to know exactly where the parameter, say b1, will be
+    
+        # call the model
+        subprocess.run('morpheus -file '+ new_file, shell=True)
+
+        # the output csv file will be written into the same folder I think (logging.csv?)
+        # return the folder name or the csv file name
+        return model_folder
+
+
+class MorpheusSumStat:
+
+    def __call__(self, model_folder):
+        # read in the csv file as a pandas dataframe
+        # extract the summary statistics (in the simplest case, do nothing)
+        # what exactly you return here will depend on what data you have
+
+        # return the summary statistics
+
 
 
 class FileIdSumStat:
