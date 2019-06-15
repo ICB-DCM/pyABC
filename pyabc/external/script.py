@@ -139,25 +139,91 @@ class MorpheusModel(Model):
     def __init__(self, morpheus_file, paramater_mapping=None):
         self.morpheus_file = morpheus_file
 
-    def read_parameter_of_interest(self, xmlPath:str ,parofinterest:str) ->int:
+    def get_parameter_of_interest_dict(xml_path:str ,parofinterest:str) ->dict:
+        """"
+        read the xml file and parse the value of the parameter of interest
+
+        parameters
+        ----------
+        xml_path:
+            the path of the xml file
+        parofinterest:
+            the symbol of parameter of interest that we want to estimate
+
+        return
+        ------
+        par_of_interest_dict:
+            a dictionary that hold the symbol and value of the parameter of interest
+        """
         #read xml file.
-        tree = ET.parse(xmlPath)
+        tree = ET.parse(xml_path)
         root = tree.getroot()
         #read the parameter of interest form the xml file.
         for temp in root.findall("./CellTypes/CellType/System/Constant[@symbol='" + parofinterest + "']"):
             par_of_interest_dict = temp.attrib
-        value = int(par_of_interest_dict['value'])
-        return value
-    def sample(self, par):
+        return par_of_interest_dict
+
+
+    def get_parameter_of_interest_value( xml_path:str ,parofinterest:str) ->float:
+        """"
+        read the xml file and parse the value of the parameter of interest
+
+        parameters
+        ----------
+        xml_path:
+            the path of the xml file
+        parofinterest:
+            the symbol of parameter of interest that we want to estimate
+        par_of_interest_value:
+            the value of the parameter of interest
+
+        """
+        #read xml file.
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        #read the parameter of interest form the xml file.
+        for temp in root.findall("./CellTypes/CellType/System/Constant[@symbol='" + parofinterest + "']"):
+            par_of_interest_dict = temp.attrib
+        par_of_interest_value = float(par_of_interest_dict['value'])
+        return par_of_interest_value
+
+    def set_parameter_of_interest( xml_path:str,par_of_interest_dict:list):
+        # This function have a problem of encoding Unicode characters
+        """"
+        read the xml file and parse the value of the parameter of interest
+
+        parameters
+        ----------
+        xml_path:
+            the path of the xml file
+        par_of_interest_dict:
+            parameter of interest dictionary that hold the symbol
+            and value of the new vlue of the parameter of interest
+        par_of_interest_value:
+            the value of the parameter of interest
+
+        """
+        #read xml file.
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        #read the parameter of interest form the xml file.
+        par_index=root.find("./CellTypes/CellType/System/Constant[@symbol='" + par_of_interest_dict[0] + "']")
+        par_index.set('value',str(par_of_interest_dict[1]))
+        tree.write(xml_path)
+
+    def sample(self,xml_path, par:dict):
 
         # create a new folder with a unique id
         model_folder=''
         # copy the xml into this folder
-        new_file = xmlm.parse('items.xml')
+        new_file = xmlm.parse(xml_path)
 
         
         # in the new xml, change the parameters to `par` (I think it's the Constant Values)
+        old_par_dict=self.read_parameter_of_interest_dict(xml_path, par['symbol'])
+
         # use some python xml editing tool
+
         # you have to know exactly where the parameter, say b1, will be
     
         # call the model
