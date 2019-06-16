@@ -187,7 +187,7 @@ class MorpheusModel(Model):
         par_of_interest_value = float(par_of_interest_dict['value'])
         return par_of_interest_value
 
-    def set_parameter_of_interest( xml_path:str,par_of_interest_dict:list):
+    def set_parameter_of_interest(self,xml_path:str,model_folder,par_of_interest_list:list):
         # This function have a problem of encoding Unicode characters
         """"
         read the xml file and parse the value of the parameter of interest
@@ -196,38 +196,61 @@ class MorpheusModel(Model):
         ----------
         xml_path:
             the path of the xml file
-        par_of_interest_dict:
-            parameter of interest dictionary that hold the symbol
+        par_of_interest_list:
+            parameter of interest list that hold the symbol
             and value of the new vlue of the parameter of interest
-        par_of_interest_value:
-            the value of the parameter of interest
 
         """
         #read xml file.
         tree = ET.parse(xml_path)
         root = tree.getroot()
         #read the parameter of interest form the xml file.
-        par_index=root.find("./CellTypes/CellType/System/Constant[@symbol='" + par_of_interest_dict[0] + "']")
-        par_index.set('value',str(par_of_interest_dict[1]))
-        tree.write(xml_path)
+        par_index=root.find("./CellTypes/CellType/System/Constant[@symbol='" + par_of_interest_list[0] + "']")
+        par_index.set('value',str(par_of_interest_list[1]))
+        tree.write(model_folder+'/model.xml')
 
-    def sample(self,xml_path, par:dict):
+    def set_unique_folder_name(self,dir_path):
+        """
+        give a folder a unique ID
+        parameters
+        ----------
+        dir_path:
+            the path of the parent directory for the created directory
+        return
+        ------
+        f_id:
+            the unique ID of the newly created directory
+        """
+        #make sure that models dir exist
+        if os.path.exists("models")==False:
+            os.mkdir(dir_path)
+        #look for a unique folder id
+        f_id = 0
+        while os.path.exists(dir_path+"/model_%s" % f_id):
+            f_id += 1
+        return f_id
+
+    def sample(self,xml_path:str, par:str):
 
         # create a new folder with a unique id
-        model_folder=''
-        # copy the xml into this folder
+        f_id=self.set_unique_folder_name(self,os.getcwd()+"/models")
+        model_folder=os.getcwd()+'/models/model_'+str(f_id)
+        try:
+            os.mkdir(model_folder)
+        except FileExistsError:
+            print("Directory ", model_folder, " already exists")        # copy the xml into this folder
         new_file = xmlm.parse(xml_path)
-
-        
-        # in the new xml, change the parameters to `par` (I think it's the Constant Values)
-        old_par_dict=self.read_parameter_of_interest_dict(xml_path, par['symbol'])
 
         # use some python xml editing tool
 
         # you have to know exactly where the parameter, say b1, will be
-    
+        sy=par["symbol"]
+        val=par['value']
+        list=[sy,val]
+        self.set_parameter_of_interest(self,xml_path,model_folder,list)
+
         # call the model
-        subprocess.run('morpheus -file '+ new_file, shell=True)
+        subprocess.run('morpheus -file '+ xml_path, shell=True)
 
         # the output csv file will be written into the same folder I think (logging.csv?)
         # return the folder name or the csv file name
