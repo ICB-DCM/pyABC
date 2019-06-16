@@ -3,7 +3,11 @@ from .script import (
     ExternalModel,
     ExternalSumStat,
     ExternalDistance,
-    FileIdSumStat)
+    FileIdSumStat,)
+from .morpheus import (
+    MorpheusModel,
+    MorpheusData,
+)
 
 __all__ = [
     'R',
@@ -11,4 +15,6 @@ __all__ = [
     'ExternalSumStat',
     'ExternalDistance',
     'FileIdSumStat',
+    'MorpheusModel',
+    'MorpheusData',
 ]
