@@ -3,6 +3,7 @@ import numpy as np
 import tempfile
 import subprocess
 import os
+import shutil
 
 from ..model import Model
 from ..parameters import Parameter
@@ -26,7 +27,7 @@ class ExternalModel(Model):
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, script_name, model_file,
+    def __init__(self, exec_name, model_file,
                  suffix=None, prefix="modelsim_", dir=None,
                  name=None):
         """
@@ -34,7 +35,7 @@ class ExternalModel(Model):
 
         Parameters
         ----------
-        script_name: str
+        exec_name: str
             Name of the script, e.g. bash or Rscript.
         model_file: str
             Path to the model to be called, e.g. a
@@ -44,20 +45,26 @@ class ExternalModel(Model):
             temporary files.
         """
         super().__init__(name=name)
-        self.script_name = script_name
+        self.exec_name = exec_name
         self.model_file = model_file
         self.suffix = suffix
         self.prefix = prefix
         self.dir = dir
 
+        # check for validity
+        if not shutil.which(self.exec_name):
+            raise ValueError(f"Executable does not exist: {self.exec_name}.")
+        if not os.path.exists(self.model_file):
+            raise ValueError(f"Model file does not exist: {self.model_file}.")
+
     def sample(self, pars: Parameter):
         args = []
         for key, val in pars.items():
-            args.append(f"{key}={val} ")
+            args.append(f"{key}={val}")
         file_ = tempfile.mkstemp(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
         args.append(f"file={file_}")
-        subprocess.run([self.script_name, self.model_file, *args])
+        subprocess.run([self.exec_name, self.model_file, *args])
         return file_
 
     def __call__(self, pars):

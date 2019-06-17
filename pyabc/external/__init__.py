@@ -1,12 +1,11 @@
 from .r_rpy2 import R
-from .script import (
+from .base import (
     ExternalModel,
     ExternalSumStat,
     ExternalDistance,
     FileIdSumStat,)
 from .morpheus import (
     MorpheusModel,
-    MorpheusData,
 )
 
 __all__ = [
@@ -16,5 +15,4 @@ __all__ = [
     'ExternalDistance',
     'FileIdSumStat',
     'MorpheusModel',
-    'MorpheusData',
 ]
