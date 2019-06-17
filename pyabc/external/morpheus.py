@@ -69,7 +69,7 @@ class MorpheusData:
     Read in data from morpheus folder.
     """
 
-    def __init__(self, model_output):
+    def __call__(self, model_output):
         data_file = os.path.join(model_output['dir'], "logger.csv")
         df = pd.read_csv(data_file, sep="\t")
         return df
