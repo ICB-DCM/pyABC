@@ -101,13 +101,20 @@ class MorpheusModel(ExternalModel):
         Write a modified version of the morpheus xml file to the target
         directory.
         """
+        # TODO: cache, check for validity, and allow for specific mapping
         # read xml file
         tree = ET.parse(self.model_file)
         root = tree.getroot()
         # fill in parameters
         for key, val in pars.items():
+            # first try global parameters
             node = root.find(
-                f"./CellTypes/CellType/System/Constant[@symbol='{key}']")
+                f"./Global/Constant[@symbol='{key}']")
+            if node is None:
+                # try cell type parameters
+                node = root.find(
+                    f"./CellTypes/CellType/System/Constant[@symbol='{key}']")
+            # update value
             node.set("value", str(val))
         # write to new file
         tree.write(file_)
