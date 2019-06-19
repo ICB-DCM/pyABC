@@ -83,12 +83,9 @@ class MorpheusModel(ExternalModel):
         self.write_modified_model_file(file_, pars)
 
         # create command
-        cmd = f"{self.exec_name} -file={file_}"
+        cmd = f"{self.exec_name} -file={file_} -outdir={dir_}"
 
         # call the model
-        # change working directoy (TODO use morpheus target dir)
-        cwd = os.getcwd()
-        os.chdir(dir_)
         try:
             devnull = open(os.devnull, 'w')
             subprocess.check_call(
@@ -96,7 +93,6 @@ class MorpheusModel(ExternalModel):
         except subprocess.CalledProcessError as e:
             raise RuntimeError(
                 f"Simulation error: {e.returncode} (err: {e.output})")
-        os.chdir(cwd)  # undo change
 
         return self.output(dir=dir_)
 
