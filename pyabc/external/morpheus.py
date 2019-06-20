@@ -3,11 +3,9 @@ import numpy as np
 import tempfile
 import subprocess
 import os
-import shutil
 import xml.etree.ElementTree as ET
 from typing import Callable, Any
 
-from ..model import Model
 from ..parameters import Parameter
 from .base import ExternalModel
 
