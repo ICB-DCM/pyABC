@@ -19,6 +19,9 @@ class MorpheusModel(ExternalModel):
 
     morpheus_file: str
         The XML file containing the morpheus model.
+    par_map: dict
+        A dictionary from str to str, the keys being the parameter ids
+        to be used in pyabc, and the values xpaths in the `morpheus_file`.
     exec_name: str, optional
         The path to the morpheus executable. If None given,
         'morpheus' is used.
@@ -37,6 +40,7 @@ class MorpheusModel(ExternalModel):
     """
     def __init__(self,
                  model_file: str,
+                 par_map: dict,
                  exec_name: str = "morpheus",
                  suffix: str = None,
                  prefix: str = "morpheus_model_",
@@ -50,6 +54,7 @@ class MorpheusModel(ExternalModel):
             model_file=model_file,
             suffix=suffix, prefix=prefix, dir=dir,
             name=name)
+        self.par_map = par_map
         if output is None:
             output = output_dict
         self.output = output
@@ -99,22 +104,12 @@ class MorpheusModel(ExternalModel):
         Write a modified version of the morpheus xml file to the target
         directory.
         """
-        # TODO: cache, check for validity, and allow for specific mapping
-        # read xml file
         tree = ET.parse(self.model_file)
         root = tree.getroot()
-        # fill in parameters
         for key, val in pars.items():
-            # first try global parameters
-            node = root.find(
-                f"./Global/Constant[@symbol='{key}']")
-            if node is None:
-                # try cell type parameters
-                node = root.find(
-                    f"./CellTypes/CellType/System/Constant[@symbol='{key}']")
-            # update value
-            node.set("value", str(val))
-        # write to new file
+            xpath = self.par_map[key]
+            node = root.find(xpath)
+            node.set('value', str(val))
         tree.write(file_)
 
 
