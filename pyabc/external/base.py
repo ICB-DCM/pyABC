@@ -9,7 +9,7 @@ from ..model import Model
 
 class ExternalModel(Model):
     """
-    A model that is called via a command line script.
+    Interface to a model that is called via an external simulator.
 
     Parameters are passed to the model as named command line arguments
     in the form
@@ -25,26 +25,34 @@ class ExternalModel(Model):
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, script_name, model_file,
-                 suffix=None, prefix="modelsim_", dir=None,
-                 name=None):
+    def __init__(self, script_name: str, model_file: str,
+                 create_dir: bool = True,
+                 suffix: str = None, prefix: str = "modelsim_",
+                 dir: str = None,
+                 name: str = "ExternalModel"):
         """
         Initialize the model.
 
         Parameters
         ----------
         script_name: str
-            Name of the script, e.g. bash or Rscript.
+            Name of the script, e.g. bash, java or Rscript.
         model_file: str
             Path to the model to be called, e.g. a
-            .sh or .r file.
+            .sh, .java or .r file.
+        create_dir: bool, optional (default = True)
+            Whether the function should create a temporary directory.
+            If False, only one temporary file is created.
         suffix, prefix, dir: str, optional (default = None)
             Specify suffix, prefix, or base directory for the created
             temporary files.
+        name: str, optional (default = "ExternalModel")
+            As in pyabc.Model.name.
         """
         super().__init__(name=name)
         self.script_name = script_name
         self.model_file = model_file
+        self.create_dir = create_dir
         self.suffix = suffix
         self.prefix = prefix
         self.dir = dir
@@ -53,11 +61,15 @@ class ExternalModel(Model):
         args = []
         for key, val in pars.items():
             args.append(f"{key}={val} ")
-        file_ = tempfile.mkstemp(
+        if self.create_dir:
+            file_fun = tempfile.mkdtemp
+        else:
+            file_fun = tempfile.mkstemp
+        loc_ = file_fun(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"file={file_}")
+        args.append(f"file={loc_}")
         subprocess.run([self.script_name, self.model_file, *args])
-        return file_
+        return loc_
 
     def sample(self, pars):
         return self(pars)
