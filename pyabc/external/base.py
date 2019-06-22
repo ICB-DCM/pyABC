@@ -79,20 +79,35 @@ class ExternalSumStat:
     """
     {script_name} {sumstat_file} {model_output_file=model_output_file}
     {file=file}
+
+    Parameters
+    ----------
+
+    sumstat_file: 
     """
 
     def __init__(self, script_name, sumstat_file,
+                 create_dir: bool = False,
                  suffix=None, prefix="sumstat_", dir=None):
         self.script_name = script_name
         self.sumstat_file = sumstat_file
+        self.create_dir = create_dir
         self.suffix = suffix
         self.prefix = prefix
         self.dir = dir
 
-    def __call__(self, model_output_file):
+    def __call__(self, model_output):
+        """
+        Create summary statistics from the `model_output` generated
+        by the model.
+        """
         args = []
-        args.append(f"model_output_file={model_output_file}")
-        file_ = tempfile.mkstemp(
+        args.append(f"model_output={model_output}")
+        if self.create_dir:
+            file_fun = tempfile.mkdtemp
+        else:
+            file_fun = tempfile.mkstemp
+        file_ = file_fun(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
         args.append(f"file={file_}")
         ret = subprocess.run([self.script_name, self.sumstat_file, *args])
