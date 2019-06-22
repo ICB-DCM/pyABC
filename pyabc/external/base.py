@@ -77,7 +77,7 @@ class ExternalModel(Model):
 
 class ExternalSumStat:
     """
-    {script_name} {sumstat_file} {model_output_file=model_output_fild}
+    {script_name} {sumstat_file} {model_output_file=model_output_file}
     {file=file}
     """
 
