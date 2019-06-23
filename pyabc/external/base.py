@@ -68,7 +68,10 @@ class ExternalModel(Model):
         loc_ = file_fun(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
         args.append(f"target={loc_}")
-        subprocess.run([self.script_name, self.model_file, *args])
+        devnull = open(os.devnull, 'w')
+        subprocess.run(
+            [self.script_name, self.model_file, *args],
+            stdout=devnull, stderr=devnull)
         return loc_
 
     def sample(self, pars):
@@ -110,7 +113,10 @@ class ExternalSumStat:
         loc_ = file_fun(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
         args.append(f"target={loc_}")
-        ret = subprocess.run([self.script_name, self.sumstat_file, *args])
+        devnull = open(os.devnull, 'w')
+        ret = subprocess.run(
+            [self.script_name, self.sumstat_file, *args],
+            stdout=devnull, stderr=devnull)
         return {'loc': loc_, 'returncode': ret.returncode}
 
 
@@ -139,7 +145,10 @@ class ExternalDistance:
         file_ = tempfile.mkstemp(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
         args.append(f"target={file_}")
-        subprocess.run([self.script_name, self.distance_file, *args])
+        devnull = open(os.devnull, 'w')
+        subprocess.run(
+            [self.script_name, self.distance_file, *args],
+            stdour=devnull, stderr=devnull)
         # read in distance
         with open(file_, 'rb') as f:
             distance = float(f.read())
