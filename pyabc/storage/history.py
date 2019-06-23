@@ -1129,3 +1129,23 @@ class History:
                 df = df_tidy
 
         return df
+
+
+    @with_session
+    def get_Parameter_reference_value(self,refval:str) -> dict:
+        """
+        Create a pyabc.Parameter object containing the parameter that is equal to the reference value
+
+        Parameters
+        ----------
+
+        refval: str,
+            The reference value.
+        """
+
+        particles = (self._session.query(Parameter)
+                     .join(Particle).join(Model).join(Population).join(ABCSMC)
+                     .filter(ABCSMC.id == self.id)
+                     .filter(Parameter.name == refval)
+                     .all())
+        return particles
