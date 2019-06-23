@@ -67,7 +67,7 @@ class ExternalModel(Model):
             file_fun = tempfile.mkstemp
         loc_ = file_fun(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"file={loc_}")
+        args.append(f"target={loc_}")
         subprocess.run([self.script_name, self.model_file, *args])
         return loc_
 
@@ -107,11 +107,11 @@ class ExternalSumStat:
             file_fun = tempfile.mkdtemp
         else:
             file_fun = tempfile.mkstemp
-        file_ = file_fun(
+        loc_ = file_fun(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"file={file_}")
+        args.append(f"target={loc_}")
         ret = subprocess.run([self.script_name, self.sumstat_file, *args])
-        return {'file': file_, 'returncode': ret.returncode}
+        return {'loc': loc_, 'returncode': ret.returncode}
 
 
 class ExternalDistance:
@@ -134,11 +134,11 @@ class ExternalDistance:
         # check if external script failed
         if sumstat_0['returncode'] or sumstat_1['returncode']:
             return np.nan
-        args = [f"sumstat_0_file={sumstat_0['file']}",
-                f"sumstat_1_file={sumstat_1['file']}"]
+        args = [f"sumstat_0_loc={sumstat_0['loc']}",
+                f"sumstat_1_loc={sumstat_1['loc']}"]
         file_ = tempfile.mkstemp(
             suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"file={file_}")
+        args.append(f"target={file_}")
         subprocess.run([self.script_name, self.distance_file, *args])
         # read in distance
         with open(file_, 'rb') as f:
