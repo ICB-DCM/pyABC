@@ -3,6 +3,7 @@ from .base import (
     ExternalModel,
     ExternalSumStat,
     ExternalDistance,
+    create_dummy_sum_stat,
     FileIdSumStat)
 
 __all__ = [
@@ -10,5 +11,6 @@ __all__ = [
     'ExternalModel',
     'ExternalSumStat',
     'ExternalDistance',
+    'create_dummy_sum_stat',
     'FileIdSumStat',
 ]

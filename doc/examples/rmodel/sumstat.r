@@ -11,14 +11,14 @@ names(pars) = names_
 
 
 sumstat <- function(pars){
-    model_result = readRDS(pars$model_output_file)
+    model_result = readRDS(pars$model_output)
     sumstat = list(
         x=model_result[1], y=model_result[2],
 	mtcars=mtcars,  # Can also pass data frames
         cars=cars,
         arbitraryKey="Some random text")
     # print(sumstat)
-    saveRDS(sumstat, pars$file)
+    saveRDS(sumstat, pars$target)
 }
 
 

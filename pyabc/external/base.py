@@ -7,26 +7,91 @@ import os
 from ..model import Model
 
 
+class ExternalHandler:
+    """
+    Handler for calls to external scripts.
+
+    This is a convenience class for bundling repeated functionality.
+    """
+
+    def __init__(self,
+                 executable: str, script: str,
+                 create_folder: bool = False,
+                 delete_after_use: bool = False,
+                 suffix: str = None, prefix: str = None, dir: str = None):
+        """
+        Parameters
+        ----------
+        executable: str
+            Name of the executable to call, e.g. bash, java or Rscript.
+        script: str
+            Path to the script to be executed, e.g. a
+            .sh, .java or .r file.
+        create_folder: bool, optional (default = True)
+            Whether the function should create a temporary directory.
+            If False, only one temporary file is created.
+        suffix, prefix, dir: str, optional (default = None)
+            Specify suffix, prefix, or base directory for the created
+            temporary files.
+        """
+        self.executable = executable
+        self.script = script
+        self.create_folder = create_folder
+        self.suffix = suffix
+        self.prefix = prefix
+        self.dir = dir
+
+    def create_loc(self):
+        """
+        Create temporary file or folder.
+
+        Returns
+        -------
+        loc: str
+            Path of the created file or folder.
+        """
+        if self.create_folder:
+            file_fun = tempfile.mkdtemp
+        else:
+            file_fun = tempfile.mkstemp
+        loc = file_fun(
+            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+        return loc
+
+    def run(self, args):
+        """
+        Run the script for the given arguments.
+        """
+        # create target on file system
+        loc = self.create_loc()
+        # redirect output
+        devnull = open(os.devnull, 'w')
+        # call
+        status = subprocess.run(
+            [self.executable, self.script, *args, f'target={loc}'],
+            stdout=devnull, stderr=devnull)
+        # return location and call's return status
+        return {'loc': loc, 'returncode': status.returncode}
+
+
 class ExternalModel(Model):
     """
     Interface to a model that is called via an external simulator.
 
     Parameters are passed to the model as named command line arguments
-    in the form
-    {script_name} {model_file} {arg1=value1} {arg2=value2} ... {file=filename}
-    where {filename} is the name of a temporary file that was created to
-    store the script output.
-
-    In the __call__ method, the filename is returned and can be used by the
-    FileSumStats or similar classes to read in the data.
+    in the form:
+        {executable} {script} {arg1=value1} {arg2=value2} ... target={loc}
+    Here, {script} is the script that performs the model simulation, and {loc}
+    is the name of a temporary file or folder that was created to
+    store the simulated data.
 
     .. note::
         The generated temporary files are not automatically deleted, unless
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, script_name: str, model_file: str,
-                 create_dir: bool = True,
+    def __init__(self, executable: str, script: str,
+                 create_folder: bool = True,
                  suffix: str = None, prefix: str = "modelsim_",
                  dir: str = None,
                  name: str = "ExternalModel"):
@@ -35,44 +100,22 @@ class ExternalModel(Model):
 
         Parameters
         ----------
-        script_name: str
-            Name of the script, e.g. bash, java or Rscript.
-        model_file: str
-            Path to the model to be called, e.g. a
-            .sh, .java or .r file.
-        create_dir: bool, optional (default = True)
-            Whether the function should create a temporary directory.
-            If False, only one temporary file is created.
-        suffix, prefix, dir: str, optional (default = None)
-            Specify suffix, prefix, or base directory for the created
-            temporary files.
         name: str, optional (default = "ExternalModel")
             As in pyabc.Model.name.
+
+        All other parameters as in ExternalHandler.
         """
         super().__init__(name=name)
-        self.script_name = script_name
-        self.model_file = model_file
-        self.create_dir = create_dir
-        self.suffix = suffix
-        self.prefix = prefix
-        self.dir = dir
+        self.eh = ExternalHandler(
+            executable=executable, script=script,
+            create_folder=create_folder,
+            suffix=suffix, prefix=prefix, dir=dir)
 
     def __call__(self, pars):
         args = []
         for key, val in pars.items():
             args.append(f"{key}={val} ")
-        if self.create_dir:
-            file_fun = tempfile.mkdtemp
-        else:
-            file_fun = tempfile.mkstemp
-        loc_ = file_fun(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"target={loc_}")
-        devnull = open(os.devnull, 'w')
-        subprocess.run(
-            [self.script_name, self.model_file, *args],
-            stdout=devnull, stderr=devnull)
-        return loc_
+        return self.eh.run(args)
 
     def sample(self, pars):
         return self(pars)
@@ -80,44 +123,32 @@ class ExternalModel(Model):
 
 class ExternalSumStat:
     """
-    {script_name} {sumstat_file} {model_output_file=model_output_file}
-    {file=file}
+    Interface to an external calculator that takes the simulated model output
+    and writes to file the summary statistics.
 
-    Parameters
-    ----------
-
-    sumstat_file: 
+    Format:
+        {executable} {script} {model_output=model_output} {target=loc}
+    Here, {script} is the path to the summary statistics computation script,
+    {model_output} is the path to the previously generated model output, and
+    {loc} is the destination to write te summary statistics to.
     """
 
-    def __init__(self, script_name, sumstat_file,
-                 create_dir: bool = False,
-                 suffix=None, prefix="sumstat_", dir=None):
-        self.script_name = script_name
-        self.sumstat_file = sumstat_file
-        self.create_dir = create_dir
-        self.suffix = suffix
-        self.prefix = prefix
-        self.dir = dir
+    def __init__(self, executable: str, script: str,
+                 create_folder: bool = False,
+                 suffix: str = None, prefix: str = "sumstat_",
+                 dir: str = None):
+        self.eh = ExternalHandler(
+            executable=executable, script=script,
+            create_folder=create_folder,
+            suffix=suffix, prefix=prefix, dir=dir)
 
     def __call__(self, model_output):
         """
         Create summary statistics from the `model_output` generated
         by the model.
         """
-        args = []
-        args.append(f"model_output={model_output}")
-        if self.create_dir:
-            file_fun = tempfile.mkdtemp
-        else:
-            file_fun = tempfile.mkstemp
-        loc_ = file_fun(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"target={loc_}")
-        devnull = open(os.devnull, 'w')
-        ret = subprocess.run(
-            [self.script_name, self.sumstat_file, *args],
-            stdout=devnull, stderr=devnull)
-        return {'loc': loc_, 'returncode': ret.returncode}
+        args = [f"model_output={model_output['loc']}"]
+        return self.eh.run(args=args)
 
 
 class ExternalDistance:
@@ -128,32 +159,30 @@ class ExternalDistance:
     contain a single float number).
     """
 
-    def __init__(self, script_name, distance_file,
-                 suffix=None, prefix="dist_", dir=None):
-        self.script_name = script_name
-        self.distance_file = distance_file
-        self.suffix = suffix
-        self.prefix = prefix
-        self.dir = dir
+    def __init__(self, executable: str, script: str,
+                 suffix: str = None, prefix: str = "dist_",
+                 dir: str = None):
+        self.eh = ExternalHandler(
+            executable=executable, script=script,
+            create_folder=False,
+            suffix=suffix, prefix=prefix, dir=dir)
 
     def __call__(self, sumstat_0, sumstat_1):
         # check if external script failed
         if sumstat_0['returncode'] or sumstat_1['returncode']:
             return np.nan
-        args = [f"sumstat_0_loc={sumstat_0['loc']}",
-                f"sumstat_1_loc={sumstat_1['loc']}"]
-        file_ = tempfile.mkstemp(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        args.append(f"target={file_}")
-        devnull = open(os.devnull, 'w')
-        subprocess.run(
-            [self.script_name, self.distance_file, *args],
-            stdour=devnull, stderr=devnull)
+        args = [f"sumstat_0={sumstat_0['loc']}",
+                f"sumstat_1={sumstat_1['loc']}"]
+        ret = self.eh.run(args)
         # read in distance
-        with open(file_, 'rb') as f:
+        with open(ret['loc'], 'rb') as f:
             distance = float(f.read())
-        os.remove(file_)
+        os.remove(ret['loc'])
         return distance
+
+
+def create_dummy_sum_stat(loc: str = '', returncode: str = 0):
+    return {'loc': loc, 'returncode': returncode}
 
 
 class FileIdSumStat:

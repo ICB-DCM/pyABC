@@ -15,7 +15,7 @@ model <- function(pars){
   out <- c(x, y)  # It is not important that it is a vector.
 
   # now this must be written to file
-  saveRDS(out, file=pars$file)
+  saveRDS(out, file=pars$target)
 }
 
 
