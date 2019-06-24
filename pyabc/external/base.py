@@ -67,8 +67,8 @@ class ExternalHandler:
         devnull = open(os.devnull, 'w')
         # call
         status = subprocess.run(
-            [self.executable, self.file, *args, f'target={loc}'],)
-            #stdout=devnull, stderr=devnull)
+            [self.executable, self.file, *args, f'target={loc}'],
+            stdout=devnull, stderr=devnull)
         # return location and call's return status
         return {'loc': loc, 'returncode': status.returncode}
 
