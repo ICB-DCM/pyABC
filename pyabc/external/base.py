@@ -15,7 +15,7 @@ class ExternalHandler:
     """
 
     def __init__(self,
-                 executable: str, script: str,
+                 executable: str, file: str,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = None, dir: str = None):
         """
@@ -23,9 +23,10 @@ class ExternalHandler:
         ----------
         executable: str
             Name of the executable to call, e.g. bash, java or Rscript.
-        script: str
-            Path to the script to be executed, e.g. a
-            .sh, .java or .r file.
+        file: str
+            Path to the file to be executed, e.g. a
+            .sh, .java or .r file, or also a .xml file depending on the
+            executable.
         create_folder: bool, optional (default = True)
             Whether the function should create a temporary directory.
             If False, only one temporary file is created.
@@ -34,7 +35,7 @@ class ExternalHandler:
             temporary files.
         """
         self.executable = executable
-        self.script = script
+        self.file = file
         self.create_folder = create_folder
         self.suffix = suffix
         self.prefix = prefix
@@ -66,8 +67,8 @@ class ExternalHandler:
         devnull = open(os.devnull, 'w')
         # call
         status = subprocess.run(
-            [self.executable, self.script, *args, f'target={loc}'],
-            stdout=devnull, stderr=devnull)
+            [self.executable, self.file, *args, f'target={loc}'],)
+            #stdout=devnull, stderr=devnull)
         # return location and call's return status
         return {'loc': loc, 'returncode': status.returncode}
 
@@ -88,8 +89,8 @@ class ExternalModel(Model):
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, executable: str, script: str,
-                 create_folder: bool = True,
+    def __init__(self, executable: str, file: str,
+                 create_folder: bool = False,
                  suffix: str = None, prefix: str = "modelsim_",
                  dir: str = None,
                  name: str = "ExternalModel"):
@@ -105,7 +106,7 @@ class ExternalModel(Model):
         """
         super().__init__(name=name)
         self.eh = ExternalHandler(
-            executable=executable, script=script,
+            executable=executable, file=file,
             create_folder=create_folder,
             suffix=suffix, prefix=prefix, dir=dir)
 
@@ -131,12 +132,12 @@ class ExternalSumStat:
     {loc} is the destination to write te summary statistics to.
     """
 
-    def __init__(self, executable: str, script: str,
+    def __init__(self, executable: str, file: str,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "sumstat_",
                  dir: str = None):
         self.eh = ExternalHandler(
-            executable=executable, script=script,
+            executable=executable, file=file,
             create_folder=create_folder,
             suffix=suffix, prefix=prefix, dir=dir)
 
@@ -157,11 +158,11 @@ class ExternalDistance:
     contain a single float number).
     """
 
-    def __init__(self, executable: str, script: str,
+    def __init__(self, executable: str, file: str,
                  suffix: str = None, prefix: str = "dist_",
                  dir: str = None):
         self.eh = ExternalHandler(
-            executable=executable, script=script,
+            executable=executable, file=file,
             create_folder=False,
             suffix=suffix, prefix=prefix, dir=dir)
 

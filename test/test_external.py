@@ -56,12 +56,10 @@ def test_external():
 
 def test_external_handler():
     eh = pyabc.external.ExternalHandler(
-        executable="bash", script="", create_folder=False,
+        executable="bash", file="", create_folder=False,
         suffix="sufftest", prefix="preftest")
     loc = eh.create_loc()
-    print("JJJJ", loc)
     assert os.path.exists(loc) and os.path.isfile(loc)
     eh.create_folder = True
     loc = eh.create_loc()
-    print("HHHH", loc)
     assert os.path.exists(loc) and os.path.isdir(loc)
