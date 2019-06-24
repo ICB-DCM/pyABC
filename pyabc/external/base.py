@@ -17,7 +17,6 @@ class ExternalHandler:
     def __init__(self,
                  executable: str, script: str,
                  create_folder: bool = False,
-                 delete_after_use: bool = False,
                  suffix: str = None, prefix: str = None, dir: str = None):
         """
         Parameters
@@ -51,12 +50,11 @@ class ExternalHandler:
             Path of the created file or folder.
         """
         if self.create_folder:
-            file_fun = tempfile.mkdtemp
+            return tempfile.mkdtemp(
+                suffix=self.suffix, prefix=self.prefix, dir=self.dir)
         else:
-            file_fun = tempfile.mkstemp
-        loc = file_fun(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-        return loc
+            return tempfile.mkstemp(
+                self.suffix, prefix=self.prefix, dir=self.dir)[1]
 
     def run(self, args):
         """
