@@ -1,4 +1,3 @@
-import pandas as pd
 import numpy as np
 import tempfile
 import subprocess
@@ -79,8 +78,8 @@ class ExternalModel(Model):
 
     Parameters are passed to the model as named command line arguments
     in the form:
-        {executable} {script} {arg1=value1} {arg2=value2} ... target={loc}
-    Here, {script} is the script that performs the model simulation, and {loc}
+        {executable} {file} {par1}={val1} {par2}={val2} ... target={loc}
+    Here, {file} is the script that performs the model simulation, and {loc}
     is the name of a temporary file or folder that was created to
     store the simulated data.
 
@@ -126,8 +125,8 @@ class ExternalSumStat:
     and writes to file the summary statistics.
 
     Format:
-        {executable} {script} {model_output=model_output} {target=loc}
-    Here, {script} is the path to the summary statistics computation script,
+        {executable} {file} model_output={model_output} target={loc}
+    Here, {file} is the path to the summary statistics computation script,
     {model_output} is the path to the previously generated model output, and
     {loc} is the destination to write te summary statistics to.
     """
@@ -153,6 +152,10 @@ class ExternalSumStat:
 class ExternalDistance:
     """
     Use script and sumstat output files to compute the distance.
+
+    Format:
+        {executable} {file} sumstat_0={sumstat_0} sumstat_1={sumstat_1}
+        target={loc}
 
     The distance is written to a file, which is then read in (it must only
     contain a single float number).
@@ -182,17 +185,3 @@ class ExternalDistance:
 
 def create_dummy_sum_stat(loc: str = '', returncode: str = 0):
     return {'loc': loc, 'returncode': returncode}
-
-
-class FileIdSumStat:
-    def __init__(self, sep):
-        self.sep = sep
-
-    def __call__(self, model_output_file):
-        df = pd.read_csv(model_output_file, sep=self.sep)
-        dct = dict()
-        for col in df.columns:
-            dct[col] = np.array(df[col])
-        # TODO: Recognize empty columns (reduce vector size)
-        # and reduce 1-dim vectors to scalars
-        return dct
