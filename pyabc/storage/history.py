@@ -1130,7 +1130,6 @@ class History:
 
         return df
 
-
     @with_session
     def get_parameter_reference_value(self, refval: str) -> dict:
         """
@@ -1156,4 +1155,4 @@ class History:
                      .filter(ABCSMC.id == self.id)
                      .filter(Parameter.name == refval)
                      .all())
-        return {parameter[0].name:parameter[0].value}
+        return {parameter[0].name: parameter[0].value}
