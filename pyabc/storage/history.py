@@ -1131,28 +1131,26 @@ class History:
         return df
 
     @with_session
-    def get_parameter_reference_value(self, refval: str) -> dict:
+    def get_ground_truth_parameter(self) -> PyParameter:
         """
-        Create a pyabc.Parameter object containing the parameter that
-        is equal to the reference value
-
-        Parameters
-        ----------
-
-        refval: str,
-            The reference value.
+        Create a pyabc.Parameter object from the ground truth parameters
+        saved in the database, if existent.
 
         Returns
         -------
-            A dictionary that contain the name and the value of the
-            reference value
+            A PyParameter dictionary.
         """
-        parameter = (self._session.query(Parameter)
-                     .join(Particle)
-                     .join(Model)
-                     .join(Population)
-                     .join(ABCSMC)
-                     .filter(ABCSMC.id == self.id)
-                     .filter(Parameter.name == refval)
-                     .all())
-        return {parameter[0].name: parameter[0].value}
+        # extract gt par from PRE_TIME iteration
+        pars = (self._session.query(Parameter)
+                .join(Particle)
+                .join(Model)
+                .join(Population)
+                .join(ABCSMC)
+                .filter(ABCSMC.id == self.id)
+                .filter(Population.t == self.PRE_TIME)
+                .filter(Model.p_model == 1)
+                .all())
+        # create dict
+        dct = {par.name: par.value for par in pars}
+        # return as pyabc.Parameter
+        return PyParameter(dct)
