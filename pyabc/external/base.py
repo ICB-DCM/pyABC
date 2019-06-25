@@ -2,6 +2,7 @@ import numpy as np
 import tempfile
 import subprocess
 import os
+from typing import List
 
 from ..model import Model
 
@@ -15,6 +16,7 @@ class ExternalHandler:
 
     def __init__(self,
                  executable: str, file: str,
+                 fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = None, dir: str = None):
         """
@@ -26,6 +28,8 @@ class ExternalHandler:
             Path to the file to be executed, e.g. a
             .sh, .java or .r file, or also a .xml file depending on the
             executable.
+        fixed_args: str, optional (default = None)
+            Argument string to use every time.
         create_folder: bool, optional (default = True)
             Whether the function should create a temporary directory.
             If False, only one temporary file is created.
@@ -35,6 +39,9 @@ class ExternalHandler:
         """
         self.executable = executable
         self.file = file
+        if fixed_args is None:
+            fixed_args = []
+        self.fixed_args = fixed_args
         self.create_folder = create_folder
         self.suffix = suffix
         self.prefix = prefix
@@ -66,7 +73,8 @@ class ExternalHandler:
         devnull = open(os.devnull, 'w')
         # call
         status = subprocess.run(
-            [self.executable, self.file, *args, f'target={loc}'],
+            [self.executable, self.file, *self.fixed_args, *args,
+             f'target={loc}'],
             stdout=devnull, stderr=devnull)
         # return location and call's return status
         return {'loc': loc, 'returncode': status.returncode}
@@ -89,6 +97,7 @@ class ExternalModel(Model):
     """
 
     def __init__(self, executable: str, file: str,
+                 fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "modelsim_",
                  dir: str = None,
@@ -106,6 +115,7 @@ class ExternalModel(Model):
         super().__init__(name=name)
         self.eh = ExternalHandler(
             executable=executable, file=file,
+            fixed_args=fixed_args,
             create_folder=create_folder,
             suffix=suffix, prefix=prefix, dir=dir)
 
@@ -132,11 +142,13 @@ class ExternalSumStat:
     """
 
     def __init__(self, executable: str, file: str,
+                 fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "sumstat_",
                  dir: str = None):
         self.eh = ExternalHandler(
             executable=executable, file=file,
+            fixed_args=fixed_args,
             create_folder=create_folder,
             suffix=suffix, prefix=prefix, dir=dir)
 
@@ -162,10 +174,12 @@ class ExternalDistance:
     """
 
     def __init__(self, executable: str, file: str,
+                 fixed_args: List = None,
                  suffix: str = None, prefix: str = "dist_",
                  dir: str = None):
         self.eh = ExternalHandler(
             executable=executable, file=file,
+            fixed_args=fixed_args,
             create_folder=False,
             suffix=suffix, prefix=prefix, dir=dir)
 
@@ -183,5 +197,25 @@ class ExternalDistance:
         return distance
 
 
-def create_dummy_sum_stat(loc: str = '', returncode: str = 0):
+def create_sum_stat(loc: str = '', returncode: int = 0):
+    """
+    Create a summary statistics dictionary, as returned by the
+    `ExternalModel`.
+
+    Can be used to encode the measured summary statistics, or
+    also create a dummy summary statistic.
+
+    Parameters
+    ----------
+    loc: str, optional (default = '')
+        Location of the summary statistics file or folder.
+    returncode: int, optional (default = 0)
+        Defaults to 0, indicating correct execution. Should usually
+        not be changed.
+
+    Returns
+    -------
+    A dictionary with keys 'loc' and 'returncode' of the given
+    parameters.
+    """
     return {'loc': loc, 'returncode': returncode}

@@ -4,7 +4,7 @@ from .base import (
     ExternalModel,
     ExternalSumStat,
     ExternalDistance,
-    create_dummy_sum_stat)
+    create_sum_stat)
 
 __all__ = [
     'R',
@@ -12,5 +12,5 @@ __all__ = [
     'ExternalModel',
     'ExternalSumStat',
     'ExternalDistance',
-    'create_dummy_sum_stat',
+    'create_sum_stat',
 ]
