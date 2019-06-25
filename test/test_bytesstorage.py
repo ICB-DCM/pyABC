@@ -106,11 +106,11 @@ def test_reference_parameter(object_):
 
     abc = pyabc.ABCSMC(model, prior, distance, population_size=2)
     db_path = ("sqlite:///" +
-               os.path.join(tempfile.gettempdir(), "test22.db"))
+               os.path.join(tempfile.gettempdir(), "test.db"))
     observation = 2.5
     gt_parpp = {"theta": 1}
     abc.new(db_path, {"data": observation}, gt_par=gt_parpp)
     history = abc.run(minimum_epsilon=.01, max_nr_populations=1)
-    a = pyabc.storage.history.History.get_parameter_reference_value(history, 'theta')
+    a = pyabc.storage.history.History.get_ground_truth_parameter(history, 'theta')
     if a[next(iter(a))] == gt_parpp['theta']:
         print('result are correct')
