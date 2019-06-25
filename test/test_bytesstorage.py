@@ -96,11 +96,13 @@ def test_storage(object_):
     else:
         raise Exception("Could not compare")
 
+
 def test_reference_parameter(object_):
     def model(parameter):
         return {"data": parameter["mean"] + 0.5 * sp.randn()}
 
     prior = pyabc.Distribution(mean=pyabc.RV("uniform", 0, 5))
+    
     def distance(x, y):
         return abs(x["data"] - y["data"])
 
