@@ -42,7 +42,7 @@ def test_external():
     model.__repr__()
 
     # create a dummy observed sum stat
-    dummy_sum_stat = pyabc.external.create_dummy_sum_stat()
+    dummy_sum_stat = pyabc.external.create_sum_stat()
 
     pars = {'meanX': 3, 'meanY': 3.5}
 
