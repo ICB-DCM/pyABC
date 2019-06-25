@@ -102,7 +102,7 @@ def test_reference_parameter(object_):
         return {"data": parameter["mean"] + 0.5 * sp.randn()}
 
     prior = pyabc.Distribution(mean=pyabc.RV("uniform", 0, 5))
-    
+
     def distance(x, y):
         return abs(x["data"] - y["data"])
 

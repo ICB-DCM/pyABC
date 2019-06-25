@@ -110,8 +110,8 @@ def plot_histogram_2d(
 
 def plot_histogram_2d_lowlevel(
         df: pd.DataFrame, w: pd.DataFrame,
-        x, y, xmin=None, xmax=None, ymin=None
-        , ymax=None, ax=None, refval=None, **kwargs):
+        x, y, xmin=None, xmax=None, ymin=None,
+        ymax=None, ax=None, refval=None, **kwargs):
     """
     Lowlevel interface for plot_histogram_2d (see there for the remaining
     parameters).
