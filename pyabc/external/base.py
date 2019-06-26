@@ -61,7 +61,7 @@ class ExternalHandler:
                 suffix=self.suffix, prefix=self.prefix, dir=self.dir)
         else:
             return tempfile.mkstemp(
-                self.suffix, prefix=self.prefix, dir=self.dir)[1]
+                suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
 
     def run(self, args):
         """
