@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import tempfile
-import subprocess
 import os
 import xml.etree.ElementTree as ET
 from typing import Callable, Any
@@ -17,12 +15,12 @@ class MorpheusModel(ExternalModel):
     Parameters
     ----------
 
-    morpheus_file: str
+    model_file: str
         The XML file containing the morpheus model.
     par_map: dict
         A dictionary from str to str, the keys being the parameter ids
         to be used in pyabc, and the values xpaths in the `morpheus_file`.
-    exec_name: str, optional
+    executable: str, optional
         The path to the morpheus executable. If None given,
         'morpheus' is used.
     suffix, prefix: str, optional (default: None, 'morpheus_model_')
@@ -31,6 +29,11 @@ class MorpheusModel(ExternalModel):
         Directory to put the temporary folders into. The default is
         the system's temporary files location. Note that these files
         are usually deleted upon system shutdown.
+    show_stdout, show_stderr: bool, optional (default = False, True)
+        Whether to show or hide the stdout and stderr streams.
+    raise_on_error: bool, optional (default = False)
+        Whether to raise on an error in the model execution, or
+        just continue.
     name: str, optional (default: None)
         A name that can be used to identify the model, as it is
         saved to db. If None is passed, the model_file name is used.
@@ -38,21 +41,30 @@ class MorpheusModel(ExternalModel):
         What kind of output the model sample function shall give.
         Pre-defined are output_dir, output_dataframe, output_dict.
     """
+
     def __init__(self,
                  model_file: str,
                  par_map: dict,
-                 exec_name: str = "morpheus",
+                 executable: str = "morpheus",
                  suffix: str = None,
                  prefix: str = "morpheus_model_",
                  dir: str = None,
+                 show_stdout: bool = False,
+                 show_stderr: bool = True,
+                 raise_on_error: bool = False,
                  name: str = None,
                  output: Callable[[str], Any] = None):
         if name is None:
             name = model_file
         super().__init__(
-            exec_name=exec_name,
-            model_file=model_file,
+            executable=executable,
+            file=model_file,
+            fixed_args=None,
+            create_folder=True,
             suffix=suffix, prefix=prefix, dir=dir,
+            show_stdout=show_stdout,
+            show_stderr=show_stderr,
+            raise_on_error=raise_on_error,
             name=name)
         self.par_map = par_map
         if output is None:
@@ -61,41 +73,33 @@ class MorpheusModel(ExternalModel):
 
     def __str__(self):
         s = f"MorpheusModel {{\n" \
-            f"\texec_name:\t{self.exec_name}\n" \
-            f"\tmodel_file:\t{self.model_file}\n" \
-            f"\tname:\t{self.name}\n" \
-            f"\toutput:\t{self.output.__name__}\n" \
+            f"\texecutable: {self.eh.executable}\n" \
+            f"\tfile      : {self.eh.file}\n" \
+            f"\tname      : {self.name}\n" \
+            f"\toutput    : {self.output.__name__}\n" \
             f"}}"
         return s
 
     def __repr__(self):
         return self.__str__()
 
-    def sample(self, pars: Parameter):
+    def __call__(self, pars: Parameter):
         """
-        The sample function. This function is used in ABCSMC to
-        simulate data for given parameters `pars`.
+        This function is used in ABCSMC (or rather the sample() function,
+        which redirects here) to simulate data for given parameters `pars`.
         """
-        # create a new folder
-        dir_ = tempfile.mkdtemp(
-            suffix=self.suffix, prefix=self.prefix, dir=self.dir)
+        # create target on file system
+        dir_ = self.eh.create_loc()
         file_ = os.path.join(dir_, "model.xml")
 
         # write new file with parameter modifications
-        # TODO use morpheus -[KEY]=[VAL]
         self.write_modified_model_file(file_, pars)
 
         # create command
-        cmd = f"{self.exec_name} -file={file_} -outdir={dir_}"
+        cmd = f"{self.eh.executable} -file={file_} -outdir={dir_}"
 
         # call the model
-        try:
-            devnull = open(os.devnull, 'w')
-            subprocess.check_call(
-                cmd, shell=True, stdout=devnull, stderr=devnull)
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(
-                f"Simulation error: {e.returncode} (err: {e.output})")
+        self.eh.run(cmd=cmd, loc="")
 
         return self.output(dir=dir_)
 
@@ -104,7 +108,7 @@ class MorpheusModel(ExternalModel):
         Write a modified version of the morpheus xml file to the target
         directory.
         """
-        tree = ET.parse(self.model_file)
+        tree = ET.parse(self.eh.file)
         root = tree.getroot()
         for key, val in pars.items():
             xpath = self.par_map[key]

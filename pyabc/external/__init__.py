@@ -1,18 +1,20 @@
 from .r_rpy2 import R
 from .base import (
+    ExternalHandler,
     ExternalModel,
     ExternalSumStat,
     ExternalDistance,
-    FileIdSumStat,)
+    create_sum_stat)
 from .morpheus import (
-    MorpheusModel,
-)
+    MorpheusModel)
+
 
 __all__ = [
     'R',
+    'ExternalHandler',
     'ExternalModel',
     'ExternalSumStat',
     'ExternalDistance',
-    'FileIdSumStat',
-    'MorpheusModel',
+    'create_sum_stat',
+    'MorpheusModel'
 ]
