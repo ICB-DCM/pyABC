@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from matplotlib.ticker import MaxNLocator
 from typing import Union, List
 import numpy as np
@@ -14,7 +15,7 @@ def plot_epsilons(
         scale: str = None,
         title: str = "Epsilon values",
         size: tuple = None,
-        ax=None):
+        ax: mpl.axes.Axes = None):
     """
     Plot epsilon trajectory.
 
@@ -36,7 +37,7 @@ def plot_epsilons(
         Title for the plot.
     size: tuple of float, optional
         The size of the plot in inches.
-    ax: matplotlib.pyplot.Axis, optional
+    ax: matplotlib.axes.Axes, optional
         The axis object to use. A new one is created if None.
 
     Returns
