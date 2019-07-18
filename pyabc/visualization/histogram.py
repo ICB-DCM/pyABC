@@ -6,7 +6,7 @@ from ..storage import History
 
 def plot_histogram_1d(
         history: History, x: str, m: int = 0, t: int = None,
-        xmin=None, xmax=None, ax=None, size=None, **kwargs):
+        xmin=None, xmax=None, ax=None, size=None, refval=None, **kwargs):
     """
     Plot 1d histogram of parameter samples.
 
@@ -27,6 +27,8 @@ def plot_histogram_1d(
         Axis object for the plot. If None is passed, a new figure is created.
     size: 2-Tuple of float, optional
         Size of the plot in inches.
+    refval: dict, optional (default = None)
+        A reference value for x, to be highlighted in the plot.
 
     Returns
     -------
@@ -36,12 +38,14 @@ def plot_histogram_1d(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_1d_lowlevel(
-        df, w, x, xmin, xmax, ax=ax, size=size, **kwargs)
+        df, w, x, xmin, xmax, ax=ax, size=size, refval=refval, **kwargs)
+
 
 
 def plot_histogram_1d_lowlevel(
         df: pd.DataFrame, w: pd.DataFrame,
-        x: str, xmin=None, xmax=None, ax=None, size=None, **kwargs):
+        x: str, xmin=None, xmax=None, ax=None, size=None, refval=None,
+        **kwargs):
     """
     Lowlevel interface for plot_histogram_1d (see there for the remaining
     parameters).
@@ -62,6 +66,8 @@ def plot_histogram_1d_lowlevel(
         range_ = (xmin, xmax)
     else:
         range_ = None
+    if refval is not None:
+        ax.axvline(refval[x], color='C1', linestyle='dashed')
 
     # plot
     ax.hist(x=df[x], range=range_, weights=w, density=True, **kwargs)
@@ -77,7 +83,7 @@ def plot_histogram_1d_lowlevel(
 def plot_histogram_2d(
         history: History, x: str, y: str, m: int = 0, t: int = None,
         xmin=None, xmax=None, ymin=None, ymax=None, ax=None, size=None,
-        **kwargs):
+        refval=None, **kwargs):
     """
     Plot 2d histogram of parameter pair samples.
 
@@ -98,6 +104,8 @@ def plot_histogram_2d(
         Axis object for the plot. If None is passed, a new figure is created.
     size: 2-Tuple of float, optional
         Size of the plot in inches.
+    refval: dict, optional (default = None)
+        Reference values for x and y, to be highlighted in the plot.
 
     Returns
     -------
@@ -107,13 +115,14 @@ def plot_histogram_2d(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_2d_lowlevel(
-        df, w, x, y, xmin, xmax, ymin, ymax, ax=ax, size=size, **kwargs)
+        df, w, x, y, xmin, xmax, ymin, ymax, ax=ax, size=size, refval=refval,
+        **kwargs)
 
 
 def plot_histogram_2d_lowlevel(
         df: pd.DataFrame, w: pd.DataFrame,
-        x, y, xmin=None, xmax=None, ymin=None, ymax=None, ax=None, size=None,
-        **kwargs):
+        x, y, xmin=None, xmax=None, ymin=None, ymax=None, ax=None,
+        size=None, refval=None, **kwargs):
     """
     Lowlevel interface for plot_histogram_2d (see there for the remaining
     parameters).
@@ -142,6 +151,8 @@ def plot_histogram_2d_lowlevel(
     # plot
     ax.hist2d(x=df[x], y=df[y], range=range_, weights=w, normed=True,
               **kwargs)
+    if refval is not None:
+        ax.scatter([refval[x]], [refval[y]], color='C1')
     ax.set_xlabel(x)
     ax.set_ylabel(y)
 
@@ -153,7 +164,8 @@ def plot_histogram_2d_lowlevel(
 
 
 def plot_histogram_matrix(
-        history: History, m: int = 0, t: int = None, size=None, **kwargs):
+        history: History, m: int = 0, t: int = None, size=None, refval=None,
+        **kwargs):
     """
     Plot matrix of 1d and 2d histograms over all parameters.
 
@@ -168,6 +180,8 @@ def plot_histogram_matrix(
         Time point to plot for.
     size: 2-Tuple of float, optional
         Size of the plot in inches.
+    refval: dict, optional (default = None)
+        Reference parameter values, to be highlighted in the plot.
 
     Returns
     -------
@@ -177,11 +191,11 @@ def plot_histogram_matrix(
     """
     df, w = history.get_distribution(m=m, t=t)
 
-    return plot_histogram_matrix_lowlevel(df, w, **kwargs)
+    return plot_histogram_matrix_lowlevel(df, w, refval, **kwargs)
 
 
 def plot_histogram_matrix_lowlevel(
-        df: pd.DataFrame, w: pd.DataFrame, size=None, **kwargs):
+        df: pd.DataFrame, w: pd.DataFrame, size=None, refval=None, **kwargs):
     """
     Lowlevel interface for plot_histogram_matrix (see there for the remaining
     parameters).
@@ -201,8 +215,10 @@ def plot_histogram_matrix_lowlevel(
     fig, arr_ax = plt.subplots(
         nrows=n_par, ncols=n_par, sharex=False, sharey=False)
 
-    def scatter(x, y, ax):
+    def scatter(x, y, ax, refval=None):
         ax.scatter(x, y, color="k")
+        if refval is not None:
+            ax.scatter([refval[x.name]], [refval[y.name]], color='C1')
 
     # fill all subplots
     for i in range(0, n_par):
@@ -211,7 +227,8 @@ def plot_histogram_matrix_lowlevel(
 
         # diagonal
         ax = arr_ax[i, i]
-        plot_histogram_1d_lowlevel(df, w, y_name, ax=ax, **kwargs)
+        plot_histogram_1d_lowlevel(df, w, y_name, ax=ax, refval=refval,
+                                   **kwargs)
 
         for j in range(0, i):
             x_name = par_names[j]
@@ -219,11 +236,12 @@ def plot_histogram_matrix_lowlevel(
 
             # lower
             ax = arr_ax[i, j]
-            plot_histogram_2d_lowlevel(df, w, x_name, y_name, ax=ax, **kwargs)
+            plot_histogram_2d_lowlevel(df, w, x_name, y_name, ax=ax,
+                                       refval=refval, **kwargs)
 
             # upper
             ax = arr_ax[j, i]
-            scatter(y, x, ax)
+            scatter(y, x, ax, refval=refval)
 
     # format
     _format_histogram_matrix(arr_ax, par_names)

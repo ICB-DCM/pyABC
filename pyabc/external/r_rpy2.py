@@ -9,13 +9,20 @@ Currently, the R language is supported.
     The rpy2 package needs to be installed to interface with the R language.
     Installation of rpy2 is optional if R support is not required.
     See also :ref:`installation of optional dependencies <install-optional>`.
+
+.. note::
+
+    Support of R via rpy2 is considered experimental. Currently, an rpy2
+    version <= 2.9.5 is required. Versions >= 3.0.0 do not work yet properly
+    for various reasons (see #116). R versions 3.4 and 3.5 have shown to work.
+    Should this not work on your system, consider accessing R script-based.
 """
 
 try:
     from rpy2.robjects import r
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     raise Exception("Install rpy2 to enable support for the R language")
-from .random_variables import Parameter
+from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
 import warnings

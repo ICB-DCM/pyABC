@@ -6,13 +6,13 @@ os:
 - linux
 dist:
 # take the latest supported LTS version
-- trusty
+- xenial
 
 # install dependencies
 
 before_install:
 # install latest r
-- sudo sh -c 'echo "deb http://cran.rstudio.com/bin/linux/ubuntu trusty/" >> /etc/apt/sources.list'
+- sudo sh -c 'echo "deb https://cloud.r-project.org/bin/linux/ubuntu xenial/" >> /etc/apt/sources.list'
 - gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 - gpg -a --export E084DAB9 | sudo apt-key add -
 - sudo apt-get update

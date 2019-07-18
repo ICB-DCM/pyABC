@@ -57,7 +57,7 @@ class Model:
         analysis for the user as it is stored in the database.
     """
 
-    def __init__(self, name: str = "model"):
+    def __init__(self, name: str = "Model"):
         self.name = name
 
     def __repr__(self):
