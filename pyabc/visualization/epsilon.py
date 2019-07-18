@@ -36,6 +36,8 @@ def plot_epsilons(
         Title for the plot.
     size: tuple of float, optional
         The size of the plot in inches.
+    ax: matplotlib.pyplot.Axis, optional
+        The axis object to use. A new one is created if None.
 
     Returns
     -------
