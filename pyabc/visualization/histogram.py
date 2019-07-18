@@ -41,7 +41,6 @@ def plot_histogram_1d(
         df, w, x, xmin, xmax, ax=ax, size=size, refval=refval, **kwargs)
 
 
-
 def plot_histogram_1d_lowlevel(
         df: pd.DataFrame, w: pd.DataFrame,
         x: str, xmin=None, xmax=None, ax=None, size=None, refval=None,
