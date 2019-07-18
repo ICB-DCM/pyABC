@@ -11,6 +11,7 @@ def plot_sample_numbers(
         labels: Union[List, str] = None,
         rotation: int = 0,
         title: str = "Total required samples",
+        colors: List = None,
         size: tuple = None):
     """
     Plot required numbers of samples over all iterations.
@@ -28,6 +29,9 @@ def plot_sample_numbers(
         a tilting of 45 or even 90 can be preferable.
     title: str, optional (default = "Total required samples")
         Title for the plot.
+    colors: List, optional
+        Colors to use for the lines. If None, then the matplotlib
+        default values are used.
     size: tuple of float, optional
         The size of the plot in inches.
 
@@ -62,7 +66,8 @@ def plot_sample_numbers(
     for i_pop in range(n_pop):
         ax.bar(x=np.arange(n_run),
                height=matrix[i_pop, :],
-               bottom=np.sum(matrix[:i_pop, :], axis=0))
+               bottom=np.sum(matrix[:i_pop, :], axis=0),
+               color=colors)
 
     # add labels
     ax.set_xticks(np.arange(n_run))
