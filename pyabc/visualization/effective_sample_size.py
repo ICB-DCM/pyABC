@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from typing import List, Union
 from matplotlib.ticker import MaxNLocator
 
@@ -13,7 +14,8 @@ def plot_effective_sample_sizes(
         rotation: int = 0,
         title: str = "Effective sample size",
         colors: List = None,
-        size: tuple = None):
+        size: tuple = None,
+        ax: mpl.axes.Axes = None):
     """
     Plot effective sample sizes over all iterations.
 
@@ -35,6 +37,8 @@ def plot_effective_sample_sizes(
         default values are used.
     size: tuple of float, optional
         The size of the plot in inches.
+    ax: matplotlib.axes.Axes, optional
+        The axis object to use. A new one is created if None.
 
     Returns
     -------
@@ -47,7 +51,10 @@ def plot_effective_sample_sizes(
         colors = [None for _ in range(len(histories))]
 
     # create figure
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     # extract effective sample sizes
     essss = []  # :)

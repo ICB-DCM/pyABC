@@ -23,7 +23,7 @@ def plot_histogram_1d(
         Time point to plot for.
     xmin, xmax: float
         Bounds for x. Both must be specified for bounds to be applied.
-    ax: matplotlib.axis.Axis
+    ax: matplotlib.axes.Axes
         Axis object for the plot. If None is passed, a new figure is created.
     size: 2-Tuple of float, optional
         Size of the plot in inches.
@@ -99,7 +99,7 @@ def plot_histogram_2d(
         Time point to plot for.
     xmin, xmax, ymin, ymax: float
         Bounds for x and y. All must be specified for bounds to be applied.
-    ax: matplotlib.axis.Axis
+    ax: matplotlib.axes.Axes
         Axis object for the plot. If None is passed, a new figure is created.
     size: 2-Tuple of float, optional
         Size of the plot in inches.

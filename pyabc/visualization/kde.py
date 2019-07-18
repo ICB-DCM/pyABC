@@ -97,6 +97,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     numx: int, optional
         The number of bins in x direction.
         Defaults to 50.
+    ax: matplotlib.axes.Axes, optional
+        The axis object to use.
     title: str, optional
         Title for the plot. Defaults to None.
     refval: dict, optional
@@ -244,6 +246,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     numy int, optional
         The number of bins in y direction.
         Defaults tp 50.
+    ax: matplotlib.axes.Axes, optional
+        The axis object to use.
     colorbar: bool, optional
         Whether to plot a colorbar. Defaults to True.
     title: str, optional

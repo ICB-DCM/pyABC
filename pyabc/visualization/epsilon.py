@@ -51,6 +51,7 @@ def plot_epsilons(
     if scale is None:
         scale = 'lin'
 
+    # create figure
     if ax is None:
         fig, ax = plt.subplots()
     else:
