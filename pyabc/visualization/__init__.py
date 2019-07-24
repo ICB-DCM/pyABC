@@ -21,7 +21,7 @@ from .histogram import (
     plot_histogram_2d_lowlevel,
     plot_histogram_matrix,
     plot_histogram_matrix_lowlevel)
-from .confidence import (
+from .credible import (
     plot_credible_intervals,
     plot_credible_intervals_for_time)
 from .model_probabilities import (
