@@ -8,6 +8,18 @@ Release Notes
 ..........
 
 
+0.9.13 (2019-06-25)
+-------------------
+
+* Fix dependency updates (rpy2, sklearn) and travis build.
+* Add option to limit number of particles for adaptive distance updates.
+* Rename confidence -> credible intervals and plots (Bayesian context).
+* Extract from database and plot reference parameter values.
+* Allow to plot MAP value approximations in credible interval plots.
+* Add a general interface to external scripts that allow using pyabc in a
+  simple way in particular with other programing languages.
+ 
+
 0.9.12 (2019-05-02)
 -------------------
 

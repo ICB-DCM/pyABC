@@ -11,16 +11,18 @@ Currently, the R language is supported.
     See also :ref:`installation of optional dependencies <install-optional>`.
 
 .. note::
-    Multicore sampling with R 3.4.4 and rpy2 3.0.4 did not work by 2019-05-30.
-    It used to work with rpy2 2.9.5, which is used in pyabc 0.9.12.
+    Support of R via rpy2 is considered experimental for various reasons
+    (see #116).
+    Should this not work on your system, consider accessing R script-based.
 """
 
 try:
     import rpy2.robjects
     from rpy2.robjects import r
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
-    raise Exception("Install rpy2 to enable support for the R language")
-from .random_variables import Parameter
+    raise Exception(
+        "Install rpy2 to enable simple support for the R language.")
+from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
 import numbers
