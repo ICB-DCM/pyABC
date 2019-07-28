@@ -120,7 +120,11 @@ def work_on_population(redis: StrictRedis,
         # make batch_size attempts
         for n_batched in range(batch_size):
             # simulate
-            new_sim = simulate_one()
+            try:
+                new_sim = simulate_one()
+            except Exception as e:
+                logger.warning(f"Redis worker number:{n_worker} fail."
+                               f" Error message is: {e}")
             # append to current sample
             sample.append(new_sim)
             # increase evaluation counter

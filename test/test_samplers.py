@@ -15,10 +15,12 @@ from pyabc.sampler import (SingleCoreSampler,
                            DaskDistributedSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
-                           RedisEvalParallelSamplerServerStarter)
+                           RedisEvalParallelSamplerServerStarter,
+                           RedisEvalParallelSampler)
 from pyabc.population import Particle
 import logging
-
+import os
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -225,3 +227,23 @@ def test_redis_multiprocess():
     sample = sampler.sample_until_n_accepted(10, simulate_one)
     assert 10 == len(sample.get_accepted_population())
     sampler.cleanup()
+
+
+def test_redis_catch_error():
+
+    def model(pars):
+        print(f"Model for {pars}")
+        if np.random.uniform() < 0.1:
+            raise ValueError("error")
+        return {'s0': pars['p0'] + 0.2 * np.random.uniform()}
+
+    def distance(s0, s1):
+        return abs(s0['s0'] - s1['s0'])
+    prior = Distribution(p0=RV("uniform", 0, 10))
+    sampler = RedisEvalParallelSampler(port=8775)
+    abc = ABCSMC(model, prior, distance, sampler=sampler)
+    db_file = "sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db")
+    data = {'s0': 2.8}
+    abc.new(db_file, data)
+    with pytest.raises(Exception):
+        abc.run(minimum_epsilon=.1, max_nr_populations=10)
