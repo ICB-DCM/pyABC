@@ -42,6 +42,7 @@ setup(
       'License :: OSI Approved :: BSD License',
       'Operating System :: OS Independent',
     ],
+    license='BSD-3-Clause',
     keywords='likelihood-free inference, abc, '
              'approximate bayesian computation, sge, distributed',
     zip_safe=False,  # not zip safe b/c of Flask templates
