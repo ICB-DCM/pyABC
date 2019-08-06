@@ -15,8 +15,8 @@ before_install:
 #- sudo sh -c 'echo "deb https://cloud.r-project.org/bin/linux/ubuntu xenial/" >> /etc/apt/sources.list'
 #- gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
 #- gpg -a --export E084DAB9 | sudo apt-key add -
-#- sudo apt-get update
-#- sudo apt-get install r-base r-base-dev r-base-core r-recommended
+- sudo apt-get update
+- sudo apt-get install r-base r-base-dev r-base-core r-recommended
 # from apt
 addons:
   apt:
