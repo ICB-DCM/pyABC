@@ -1,14 +1,32 @@
 import os
 from tempfile import gettempdir
+import pytest
 
 import pyabc
+from pyabc.sampler import (SingleCoreSampler,
+                           MulticoreEvalParallelSampler,
+                           RedisEvalParallelSamplerServerStarter)
 import pyabc.external
 
 
-def test_r():
-    """
-    This is basically just the using_R notebook.
-    """
+def RedisEvalParallelSamplerServerStarterWrapper():
+    return RedisEvalParallelSamplerServerStarter(batch_size=5)
+
+
+@pytest.fixture(params=[SingleCoreSampler,
+                        MulticoreEvalParallelSampler,
+                        RedisEvalParallelSamplerServerStarterWrapper,
+                        ])
+def sampler(request):
+    s = request.param()
+    yield s
+    try:
+        s.cleanup()
+    except AttributeError:
+        pass
+
+
+def test_r(sampler):
     r_file = "doc/examples/myRModel.R"
     r = pyabc.external.R(r_file)
     r.display_source_ipython()
@@ -17,7 +35,6 @@ def test_r():
     sum_stat = r.summary_statistics("mySummaryStatistics")
     prior = pyabc.Distribution(meanX=pyabc.RV("uniform", 0, 10),
                                meanY=pyabc.RV("uniform", 0, 10))
-    sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
     abc = pyabc.ABCSMC(model, prior, distance,
                        summary_statistics=sum_stat,
                        sampler=sampler)
