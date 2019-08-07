@@ -12,11 +12,16 @@ dist:
 
 before_install:
 # install latest r
-- sudo sh -c 'echo "deb https://cloud.r-project.org/bin/linux/ubuntu xenial/" >> /etc/apt/sources.list'
-- gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9
-- gpg -a --export E084DAB9 | sudo apt-key add -
+- sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+- sudo add-apt-repository 'deb https://cran.rstudio.com/bin/linux/ubuntu xenial/'
 - sudo apt-get update
 - sudo apt-get install r-base r-base-dev r-base-core r-recommended
+# install latest rpy2
+# note: this is since version >= 3.1.0 is required
+- mkdir tmp
+- sudo apt install mercurial
+- hg clone https://bitbucket.org/rpy2/rpy2 tmp/rpy2
+- cd tmp/rpy2; python setup.py install; cd ../..
 # from apt
 addons:
   apt:
