@@ -17,8 +17,7 @@ Currently, the R language is supported.
 """
 
 try:
-    import rpy2.robjects
-    from rpy2.robjects import r
+    from rpy2.robjects import ListVector, r
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     raise Exception(
         "Install rpy2 to enable simple support for the R language.")
@@ -43,7 +42,7 @@ def dict_to_named_list(dct):
                 dct[key] = int(val)
             elif isinstance(val, numbers.Number):
                 dct[key] = float(val)
-        r_list = rpy2.robjects.ListVector(dct)
+        r_list = ListVector(dct)
         return r_list
     return dct
 
