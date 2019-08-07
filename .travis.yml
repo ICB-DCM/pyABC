@@ -17,9 +17,11 @@ before_install:
 - sudo apt-get update
 - sudo apt-get install r-base r-base-dev r-base-core r-recommended
 # install latest rpy2
+# note: this is since version >= 3.1.0 is required
+- mkdir tmp
 - sudo apt install mercurial
-- hg clone https://bitbucket.org/rpy2/rpy2
-- cd rpy2; python setup.py install; cd ..
+- hg clone https://bitbucket.org/rpy2/rpy2 tmp/rpy2
+- cd tmp/rpy2; python setup.py install; cd ../..
 # from apt
 addons:
   apt:
