@@ -23,7 +23,7 @@ setup(
                       "feather-format>=0.4.0", "bkcharts>=0.2",
                       "distributed>=1.23.3", "pygments>=2.2.0",
                       "IPython>=7.0.1"],
-    extra_requires={"R": ["rpy2==2.9.5"]},  # until #66 is fixed
+    extra_requires={"R": ["rpy2>=3.1.0"]},
     python_requires='>=3.6',
     packages=find_packages(exclude=["examples*", "devideas*",
                                     "test*", "test"]),
@@ -42,6 +42,7 @@ setup(
       'License :: OSI Approved :: BSD License',
       'Operating System :: OS Independent',
     ],
+    license='BSD-3-Clause',
     keywords='likelihood-free inference, abc, '
              'approximate bayesian computation, sge, distributed',
     zip_safe=False,  # not zip safe b/c of Flask templates
