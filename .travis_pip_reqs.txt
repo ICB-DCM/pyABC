@@ -19,7 +19,6 @@ distributed
 click
 nbsphinx
 ipykernel
-rpy2>=3.0.4
 pygments
 ipython
 feather-format
