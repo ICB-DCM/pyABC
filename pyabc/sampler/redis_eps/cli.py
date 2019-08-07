@@ -119,27 +119,28 @@ def work_on_population(redis: StrictRedis,
 
         # make batch_size attempts
         for n_batched in range(batch_size):
-            # simulate
+            # increase evaluation counter
+            internal_counter += 1
             try:
+                # simulate
                 new_sim = simulate_one()
+                # append to current sample
+                sample.append(new_sim)
+                # check for acceptance
+                if new_sim.accepted:
+                    # the order of the IDs is reversed, but this does not
+                    # matter. Important is only that the IDs are specified
+                    # before the simulation starts
+
+                    # append to accepted list
+                    accepted_samples.append(
+                        cloudpickle.dumps(
+                            (particle_max_id - n_batched, sample)))
+                    # initialize new sample
+                    sample = sample_factory()
             except Exception as e:
                 logger.warning(f"Redis worker number {n_worker} failed."
                                f" Error message is: {e}")
-            # append to current sample
-            sample.append(new_sim)
-            # increase evaluation counter
-            internal_counter += 1
-            # check for acceptance
-            if new_sim.accepted:
-                # the order of the IDs is reversed, but this does not
-                # matter. Important is only that the IDs are specified
-                # before the simulation starts
-
-                # append to accepted list
-                accepted_samples.append(
-                    cloudpickle.dumps((particle_max_id - n_batched, sample)))
-                # initialize new sample
-                sample = sample_factory()
 
         # update total simulation-specific time
         cumulative_simulation_time += time() - this_sim_start
