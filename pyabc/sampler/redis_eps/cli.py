@@ -123,7 +123,7 @@ def work_on_population(redis: StrictRedis,
             try:
                 new_sim = simulate_one()
             except Exception as e:
-                logger.warning(f"Redis worker number:{n_worker} fail."
+                logger.warning(f"Redis worker number {n_worker} failed."
                                f" Error message is: {e}")
             # append to current sample
             sample.append(new_sim)
