@@ -4,6 +4,7 @@ import pytest
 
 import pyabc
 from pyabc.sampler import (SingleCoreSampler,
+                           MulticoreEvalParallelSampler,
                            RedisEvalParallelSamplerServerStarter)
 import pyabc.external
 
@@ -13,6 +14,7 @@ def RedisEvalParallelSamplerServerStarterWrapper():
 
 
 @pytest.fixture(params=[SingleCoreSampler,
+                        MulticoreEvalParallelSampler,
                         RedisEvalParallelSamplerServerStarterWrapper,
                         ])
 def sampler(request):
