@@ -142,7 +142,7 @@ def work_on_population(redis: StrictRedis,
                 logger.warning(f"Redis worker number {n_worker} failed."
                                f" Error message is: {e}")
                 new_sim = None
-                sample = sample_factor()
+                sample = sample_factory()
 
         # update total simulation-specific time
         cumulative_simulation_time += time() - this_sim_start
