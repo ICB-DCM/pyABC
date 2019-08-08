@@ -20,7 +20,8 @@ import os
                         "py-float",
                         "py-str",
                         "r-df-cars",
-                        "r-df-faithful"  # TODO re-add iris, see #45
+                        "r-df-faithful",
+                        "r-df-iris",
                         ])
 def object_(request):
     par = request.param
