@@ -22,7 +22,7 @@ setup(
                       "sqlalchemy>=1.3.0", "click>=7.0",
                       "feather-format>=0.4.0", "bkcharts>=0.2",
                       "distributed>=1.23.3", "pygments>=2.2.0",
-                      "IPython>=7.0.1"],
+                      "IPython>=7.0.1", "pyarrow>=0.14.1"],
     extra_requires={"R": ["rpy2>=3.1.0"]},
     python_requires='>=3.6',
     packages=find_packages(exclude=["examples*", "devideas*",
