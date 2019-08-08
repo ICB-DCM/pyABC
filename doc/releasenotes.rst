@@ -11,10 +11,10 @@ Release Notes
 0.9.14 (2019-08-08)
 -------------------
 
-* Update to rpy2 3.1.0 (major change).
+* Update to rpy2 3.1.0 (major change) (#140).
 * pandas data frames saved in database via pyarrow parquet, no longer
-  msgpack (deprecated), with backward compatibility for old databases.
-* Redis workers no longer stop working when encountering model errors.
+  msgpack (deprecated), with backward compatibility for old databases (#141).
+* Redis workers no longer stop working when encountering model errors (#133).
 * Minor edits, esp. color, size, axes options to plotting routines.
 
 
