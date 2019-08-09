@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 from typing import List, Union
 
@@ -11,7 +12,8 @@ def plot_sample_numbers(
         labels: Union[List, str] = None,
         rotation: int = 0,
         title: str = "Total required samples",
-        size: tuple = None):
+        size: tuple = None,
+        ax: mpl.axes.Axes = None):
     """
     Plot required numbers of samples over all iterations.
 
@@ -30,6 +32,8 @@ def plot_sample_numbers(
         Title for the plot.
     size: tuple of float, optional
         The size of the plot in inches.
+    ax: matplotlib.axes.Axes, optional
+        The axis object to use.
 
     Returns
     -------
@@ -40,7 +44,10 @@ def plot_sample_numbers(
     histories, labels = to_lists_or_default(histories, labels)
 
     # create figure
-    fig, ax = plt.subplots()
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     n_run = len(histories)
 
