@@ -208,8 +208,7 @@ def test_sum_stats_save_load(history: History):
                  weight=.2,
                  accepted_sum_stats=[{"ss1": .1, "ss2": arr2,
                                       "ss3": example_df(),
-                                      "rdf0": r["faithful"]}],
-                 # TODO: check why iris fails
+                                      "rdf0": r["iris"]}],
                  accepted_distances=[.1]),
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
@@ -227,7 +226,7 @@ def test_sum_stats_save_load(history: History):
     assert (sum_stats[0]["ss2"] == arr2).all()
     assert (sum_stats[0]["ss3"] == example_df()).all().all()
     with localconverter(pandas2ri.converter):
-        assert (sum_stats[0]["rdf0"] == r["faithful"]).all().all()
+        assert (sum_stats[0]["rdf0"] == r["iris"]).all().all()
     assert sum_stats[1]["ss12"] == .11
     assert (sum_stats[1]["ss22"] == arr).all()
     assert (sum_stats[1]["ss33"] == example_df()).all().all()
