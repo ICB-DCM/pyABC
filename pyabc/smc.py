@@ -133,6 +133,11 @@ class ABCSMC:
     Attributes
     ----------
 
+    max_number_particles_for_distance_update: int
+        Defaults to 1000. Set this to the maximum number of particles that an
+        adaptive distance measure (e.g. AdaptivePNormDistance) uses to update
+        itself each iteration.
+
     stop_if_only_single_model_alive: bool
         Defaults to False. Set this to true if you want to stop ABCSMC
         automatically as soon as only a single model has survived.
@@ -214,6 +219,7 @@ class ABCSMC:
 
         # will be set later
         self.stop_if_only_single_model_alive = False
+        self.max_number_particles_for_distance_update = 1000
         self.x_0 = None
         self.history = None
         self._initial_population = None
@@ -828,8 +834,10 @@ class ABCSMC:
             logger.info(f"Acceptance rate: {acceptance_rate}.")
 
             # update distance function
+            partial_sum_stats = sample.first_n_sum_stats(
+                self.max_number_particles_for_distance_update)
             df_updated = self.distance_function.update(
-                t + 1, sample.all_sum_stats)
+                t + 1, partial_sum_stats)
 
             # compute distances with the new distance measure
             if df_updated:

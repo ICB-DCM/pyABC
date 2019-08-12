@@ -52,7 +52,7 @@ work as expected on Windows.
 Distributed samplers
 ~~~~~~~~~~~~~~~~~~~~
 
-The distributed samplers can, be used in a distributed setting, and of course
+The distributed samplers can be used in a distributed setting, and of course
 also locally by setting up a local cluster. However, for local execution,
 the multi-core samplers are recommended as they are easier to set up.
 
@@ -72,7 +72,7 @@ it is unsuitable for simulation functions with a runtime below 100ms,
 as network communication becomes prohibitive at this point.
 
 
-The Redis based sampler cab require slightly more effort in
+The Redis based sampler can require slightly more effort in
 setting up than the Dask based sampler, but has fewer constraints regarding
 simulation function runtime. The Dask sampler is in turn better suited to
 handle worker failures and unexpected execution host terminations.

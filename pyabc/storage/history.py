@@ -1148,3 +1148,28 @@ class History:
                 df = df_tidy
 
         return df
+
+    @with_session
+    def get_ground_truth_parameter(self) -> PyParameter:
+        """
+        Create a pyabc.Parameter object from the ground truth parameters
+        saved in the database, if existent.
+
+        Returns
+        -------
+            A PyParameter dictionary.
+        """
+        # extract gt par from PRE_TIME iteration
+        pars = (self._session.query(Parameter)
+                .join(Particle)
+                .join(Model)
+                .join(Population)
+                .join(ABCSMC)
+                .filter(ABCSMC.id == self.id)
+                .filter(Population.t == self.PRE_TIME)
+                .filter(Model.p_model == 1)
+                .all())
+        # create dict
+        dct = {par.name: par.value for par in pars}
+        # return as pyabc.Parameter
+        return PyParameter(dct)

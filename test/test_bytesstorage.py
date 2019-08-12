@@ -6,6 +6,10 @@ import scipy as sp
 from rpy2.robjects import r
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
+import pyabc
+import tempfile
+import os
 
 
 @pytest.fixture(params=["empty", "int", "float", "non_numeric_str",
@@ -16,7 +20,8 @@ from rpy2.robjects import pandas2ri
                         "py-float",
                         "py-str",
                         "r-df-cars",
-                        "r-df-faithful"  # TODO re-add iris, see #45
+                        "r-df-faithful",
+                        "r-df-iris",
                         ])
 def object_(request):
     par = request.param
@@ -89,6 +94,29 @@ def test_storage(object_):
     elif isinstance(object_, pd.DataFrame):
         assert (object_ == rebuilt).all().all()
     elif isinstance(object_, robjects.DataFrame):
-        assert (pandas2ri.ri2py(object_) == rebuilt).all().all()
+        with localconverter(pandas2ri.converter):
+            assert (robjects.conversion.rpy2py(object_) == rebuilt) \
+                   .all().all()
     else:
         raise Exception("Could not compare")
+
+
+def test_reference_parameter():
+    def model(parameter):
+        return {"data": parameter["mean"] + 0.5 * sp.randn()}
+
+    prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 5),
+                               p1=pyabc.RV("uniform", 0, 1))
+
+    def distance(x, y):
+        return abs(x["data"] - y["data"])
+
+    abc = pyabc.ABCSMC(model, prior, distance, population_size=2)
+    db_path = ("sqlite:///" +
+               os.path.join(tempfile.gettempdir(), "test.db"))
+    observation = 2.5
+    gt_par = {'p0': 1, 'p1': 0.25}
+    abc.new(db_path, {"data": observation}, gt_par=gt_par)
+    history = abc.history
+    par_from_history = history.get_ground_truth_parameter()
+    assert par_from_history == gt_par
