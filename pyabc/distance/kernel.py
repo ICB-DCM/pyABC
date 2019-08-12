@@ -56,7 +56,7 @@ class StochasticKernel(Distance):
             self,
             t: int,
             get_sum_stats: Callable[[], List[dict]],
-            x_0: dict):
+            x_0: dict = None):
         """
         Remember the summary statistic keys in sorted order,
         if not set in __init__ already.
@@ -154,7 +154,7 @@ class NormalKernel(StochasticKernel):
             self,
             t: int,
             get_sum_stats: Callable[[], List[dict]],
-            x_0: dict):
+            x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
@@ -231,7 +231,7 @@ class IndependentNormalKernel(StochasticKernel):
             self,
             t: int,
             get_sum_stats: Callable[[], List[dict]],
-            x_0: dict):
+            x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
@@ -324,7 +324,7 @@ class BinomialKernel(StochasticKernel):
             self,
             t: int,
             get_sum_stats: Callable[[], List[dict]],
-            x_0: dict):
+            x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
