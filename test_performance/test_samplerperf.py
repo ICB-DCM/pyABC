@@ -8,7 +8,7 @@ import scipy.stats as st
 
 from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
-                   PercentileDistanceFunction, SimpleModel,
+                   PercentileDistance, SimpleModel,
                    ConstantPopulationSize)
 from pyabc.sampler import SingleCoreSampler, MappingSampler, MulticoreEvalParallelSampler, DaskDistributedSampler, \
                            ConcurrentFutureSampler
@@ -106,7 +106,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     nr_populations = 1
     population_size = ConstantPopulationSize(20)
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
-                 PercentileDistanceFunction(measures_to_use=["y"]),
+                 PercentileDistance(measures_to_use=["y"]),
                  population_size,
                  eps=MedianEpsilon(.2),
                  sampler=sampler)

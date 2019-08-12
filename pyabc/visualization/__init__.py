@@ -21,8 +21,9 @@ from .histogram import (
     plot_histogram_2d_lowlevel,
     plot_histogram_matrix,
     plot_histogram_matrix_lowlevel)
-from .confidence import (
-    plot_confidence_intervals)
+from .credible import (
+    plot_credible_intervals,
+    plot_credible_intervals_for_time)
 from .model_probabilities import (
     plot_model_probabilities)
 from .effective_sample_size import (
@@ -41,7 +42,8 @@ __all__ = [
     "plot_histogram_2d_lowlevel",
     "plot_histogram_matrix",
     "plot_histogram_matrix_lowlevel",
-    "plot_confidence_intervals",
+    "plot_credible_intervals",
+    "plot_credible_intervals_for_time",
     "plot_model_probabilities",
     "plot_effective_sample_sizes",
 ]

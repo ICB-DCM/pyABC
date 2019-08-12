@@ -9,15 +9,22 @@ Currently, the R language is supported.
     The rpy2 package needs to be installed to interface with the R language.
     Installation of rpy2 is optional if R support is not required.
     See also :ref:`installation of optional dependencies <install-optional>`.
+
+.. note::
+    Support of R via rpy2 is considered experimental for various reasons
+    (see #116).
+    Should this not work on your system, consider accessing R script-based.
 """
 
 try:
-    from rpy2.robjects import r
+    from rpy2.robjects import ListVector, r
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
-    raise Exception("Install rpy2 to enable support for the R language")
-from .random_variables import Parameter
+    raise Exception(
+        "Install rpy2 to enable simple support for the R language.")
+from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
+import numbers
 import warnings
 
 
@@ -28,7 +35,15 @@ def dict_to_named_list(dct):
     if (isinstance(dct, dict)
             or isinstance(dct, Parameter)
             or isinstance(dct, pd.core.series.Series)):
-        return r.list(**{key: val for key, val in dct.items()})
+        dct = {key: val for key, val in dct.items()}
+        # convert numbers to builtin types before conversion (see rpy2 #548)
+        for key, val in dct.items():
+            if isinstance(val, numbers.Integral):
+                dct[key] = int(val)
+            elif isinstance(val, numbers.Number):
+                dct[key] = float(val)
+        r_list = ListVector(dct)
+        return r_list
     return dct
 
 
