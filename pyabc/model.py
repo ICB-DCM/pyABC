@@ -222,7 +222,7 @@ class Model:
         result = self.summary_statistics(t,
                                          pars,
                                          sum_stats_calculator)
-        acc_res = distance, accepted, weight = acceptor(
+        acc_res = acceptor(
             distance_function=distance_calculator,
             eps=eps_calculator,
             x=result.sum_stats,
