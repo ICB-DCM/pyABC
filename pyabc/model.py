@@ -19,10 +19,12 @@ class ModelResult:
     distances and accepted/rejected.
     """
 
-    def __init__(self, sum_stats=None, distance=None, accepted=None):
+    def __init__(self,
+                 sum_stats=None, distance=None, accepted=None, weight=1.0):
         self.sum_stats = sum_stats if sum_stats is not None else {}
         self.distance = distance
         self.accepted = accepted
+        self.weight = weight
 
 
 class Model:
@@ -220,14 +222,16 @@ class Model:
         result = self.summary_statistics(t,
                                          pars,
                                          sum_stats_calculator)
-        distance, accepted = acceptor(distance_function=distance_calculator,
-                                      eps=eps_calculator,
-                                      x=result.sum_stats,
-                                      x_0=x_0,
-                                      t=t,
-                                      par=pars)
-        result.distance = distance
-        result.accepted = accepted
+        acc_res = acceptor(
+            distance_function=distance_calculator,
+            eps=eps_calculator,
+            x=result.sum_stats,
+            x_0=x_0,
+            t=t,
+            par=pars)
+        result.distance = acc_res.distance
+        result.accepted = acc_res.accept
+        result.weight = acc_res.weight
 
         return result
 

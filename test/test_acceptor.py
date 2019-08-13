@@ -11,4 +11,4 @@ def test_simple_acceptor():
     x = {'s0': 1, 's1': 0}
     y = {'s0': 2, 's1': 2}
 
-    dist, accept = acceptor(0, None, None, x, y, None)
+    acceptor(0, None, None, x, y, None)
