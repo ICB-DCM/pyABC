@@ -1,2 +1,3 @@
 nbsphinx
 sphinx-rtd-theme
+rpy2
