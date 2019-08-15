@@ -88,7 +88,6 @@ class SimpleFunctionKernel(StochasticKernel):
         The function should be a pdf or pmf.
 
     ret_scale, keys, pdf_max: as in StochasticKernel
-
     """
 
     def __init__(
@@ -284,6 +283,108 @@ class IndependentNormalKernel(StochasticKernel):
         squares = np.sum((diff**2) / var)
 
         log_pdf = - 0.5 * (log_2_pi + squares)
+
+        return log_pdf
+
+
+class IndependentLaplaceKernel(StochasticKernel):
+    """
+    This kernel can be used for efficient computations of large-scale
+    independent Laplace distributions, performing computations directly
+    on a log-scale to avoid numeric issues. In each coordinate, a 1-dim
+    Laplace distribution
+
+    .. math::
+
+        p(x) = \\frac{1}{2b}\\exp (\\frac{1}{b}|x-a|)
+
+    is assumed.
+
+    Parameters
+    ----------
+
+    mean: array_like, optional (default = zeros vector)
+        Mean of the distribution.
+
+    scale: Union[array_like, Callable], optional (default = ones vector)
+        Scale terms b of the distribution. Can also be a Callable taking as
+        arguments the parameters. In that case, pdf_max should also be given
+        if it is supposed to be used. Usually, it will then be given as the
+        density at the observed statistics assuming the minimum allowed
+        variance.
+
+    keys, pdf_max: As in StochasticKernel.
+
+    """
+
+    def __init__(
+            self,
+            mean=None,
+            scale=None,
+            keys=None,
+            pdf_max=None):
+        super().__init__(ret_scale=RET_SCALE_LOG, keys=keys, pdf_max=pdf_max)
+        self.mean = mean
+        self.scale = scale
+        self.dim = None
+
+    def initialize(
+            self,
+            t: int,
+            get_sum_stats: Callable[[], List[dict]],
+            x_0: dict = None):
+        # in particular set keys
+        super().initialize(
+            t=t,
+            get_sum_stats=get_sum_stats,
+            x_0=x_0)
+
+        # set dimension
+        self.dim = len(x_0)
+
+        # initialize mean correctly
+        if self.mean is None:
+            self.mean = np.zeros(self.dim)
+        else:
+            self.mean = np.array(self.mean) * np.ones(self.dim)
+
+        # initialize var correctly
+        if self.scale is None:
+            self.scale = np.ones(self.dim)
+        if not callable(self.scale):
+            self.scale = np.array(self.scale) * np.ones(self.dim)
+
+        # cache pdf_max (from now on __call__ can be used)
+        if self.pdf_max is None:
+            # take value at observed summary statistics
+            self.pdf_max = self(x_0, x_0)
+
+    def __call__(
+            self,
+            x: dict,
+            x_0: dict,
+            t: int = None,
+            par: dict = None):
+        if self.keys is None:
+            self.initialize_keys(x_0)
+
+        # compute variance
+        if callable(self.scale):
+            # parameterized variance (i.e. probably estimated)
+            scale = self.scale(par)
+        else:
+            # constant numeric values
+            scale = self.scale
+
+        # difference to array
+        diff = np.array([x[key] - x_0[key] for key in self.keys])
+
+        # compute pdf
+        log_2_b = np.sum(np.log(2 * scale))
+
+        abs_diff = np.sum(np.abs(diff) / scale)
+
+        log_pdf = - (log_2_b + abs_diff)
 
         return log_pdf
 

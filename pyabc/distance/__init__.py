@@ -44,6 +44,7 @@ from .kernel import (
     SimpleFunctionKernel,
     NormalKernel,
     IndependentNormalKernel,
+    IndependentLaplaceKernel,
     BinomialKernel)
 
 
@@ -82,5 +83,6 @@ __all__ = [
     "SimpleFunctionKernel",
     "NormalKernel",
     "IndependentNormalKernel",
+    "IndependentLaplaceKernel",
     "BinomialKernel",
 ]
