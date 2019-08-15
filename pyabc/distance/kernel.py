@@ -295,7 +295,6 @@ class IndependentLaplaceKernel(StochasticKernel):
     Laplace distribution
 
     .. math::
-
         p(x) = \\frac{1}{2b}\\exp (\\frac{1}{b}|x-a|)
 
     is assumed.

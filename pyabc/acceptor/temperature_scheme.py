@@ -67,12 +67,12 @@ def scheme_acceptance_rate(**kwargs):
         return val
 
     if obj(1) > 0:
-        # function is monotone dec, smallest possible value already > 0
+        # function is mon. dec., smallest possible value already > 0
         beta_opt = 1.0
-        # obj(0) >= 0 always
+        # it is obj(0) >= 0 always
     else:
         # perform binary search
-        # TODO: take a more efficient optimization approach?
+        # one could also go for a more efficient optimization approach
         beta_opt = sp.optimize.bisect(obj, 0, 1)
 
     # temperature is inverse beta
