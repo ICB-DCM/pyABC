@@ -4,3 +4,5 @@ dependencies:
   - sphinx
   - pandoc
   - nbconvert
+  - pip:
+    - nbsphinx

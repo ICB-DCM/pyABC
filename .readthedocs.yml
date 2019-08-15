@@ -1,14 +1,7 @@
-# .readthedocs.yml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
-version: 2
-
-requirements_file: .rtd_pip_reqs.txt
+version: 1
 
 conda:
     file: .environment.yml
 
 python:
-    version 3.6
+    setup_py_install: true
