@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_data(time, obs_data, sim_data, plt_title=""):
+def plot_data(time, obs_data, sim_data):
 
     # check if the data types are pandas dataframe
     if isinstance(obs_data, pd.DataFrame)\
