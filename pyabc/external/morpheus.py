@@ -3,9 +3,10 @@ import numpy as np
 import os
 import xml.etree.ElementTree as ET
 from typing import Callable, Any
-
 from ..parameters import Parameter
 from .base import ExternalModel
+import fitMultiCellSumStat.hexagonal_cluster_sumstat as chx
+import fitMultiCellSumStat.cell_types_cout as css
 
 
 class MorpheusModel(ExternalModel):
@@ -53,6 +54,9 @@ class MorpheusModel(ExternalModel):
                  show_stderr: bool = True,
                  raise_on_error: bool = False,
                  name: str = None,
+                 sumstatfunc_list: list = None,
+                 argument_list: list = None,
+
                  output: Callable[[str], Any] = None):
         if name is None:
             name = model_file
@@ -70,6 +74,8 @@ class MorpheusModel(ExternalModel):
         if output is None:
             output = output_dict
         self.output = output
+        self.sumstatfunc_list = sumstatfunc_list,
+        self.argument_list = argument_list
 
     def __str__(self):
         s = f"MorpheusModel {{\n" \
@@ -100,7 +106,8 @@ class MorpheusModel(ExternalModel):
 
         # call the model
         self.eh.run(cmd=cmd, loc="")
-
+        # call SummeryStatistic function
+        self.sumstatlib_tp(self, dir)
         return self.output(dir=dir_)
 
     def write_modified_model_file(self, file_, pars):
@@ -115,6 +122,73 @@ class MorpheusModel(ExternalModel):
             node = root.find(xpath)
             node.set('value', str(val))
         tree.write(file_)
+
+    def sumstatlib_tp(self, dir):
+        result_dict = {'file': dir}
+        logger_df = read_morpheus_log_file(dir)
+        cluster_ss_obj = chx.ClusterSumstat
+        cell_ss_obj = css.CellSumstat
+        for i in self.sumstatfunc_list:
+            try:
+                func = getattr(cluster_ss_obj, i)
+                result_datatype = func(cluster_ss_obj, *self.argument_list)
+                # check if result is a dict format
+                if isinstance(result_datatype, int):
+                    result_dict[i] = result_datatype
+                elif isinstance(result_datatype.values(), dict):
+                    for key, value in result_datatype.items():
+                        for key2, value2 in value:
+                            result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                elif isinstance(result_datatype, dict):
+                    for key, value in result_datatype.items():
+                        result_dict[i + "_" + str(key)] = value
+            except:
+                func = getattr(cell_ss_obj, i)
+                result_datatype = func(cell_ss_obj, *self.argument_list)
+                if isinstance(result_datatype, int):
+                    result_dict[i] = result_datatype
+                elif isinstance(result_datatype.values(), dict):
+                    for key, value in result_datatype.items():
+                        for key2, value2 in value:
+                            result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                elif isinstance(result_datatype, dict):
+                    for key, value in result_datatype.items():
+                        result_dict[i + "_" + str(key)] = value
+        return result_dict
+
+    def sumstatlib_alltp(self, dir):
+        result_dict = {'file': dir}
+        logger_df = read_morpheus_log_file(dir)
+        cluster_ss_obj = chx.ClusterSumstat
+        cell_ss_obj = css.CellSumstat
+        for i in self.sumstatfunc_list:
+            try:
+                func = getattr(cluster_ss_obj, i)
+                result_datatype = func(cluster_ss_obj, *self.argument_list)
+                if isinstance(result_datatype, int):
+                    result_dict[i] = result_datatype
+                elif set(map(type, result_datatype.values())) == {list}:
+                    for key, value_list in result_datatype.items():
+                        for list_member in value_list:
+                            for key2, value2 in list_member.items():
+                                result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                elif isinstance(result_datatype, dict):
+                    for key, value in result_datatype.items():
+                        result_dict[i + "_" + str(key)] = value
+            except:
+                func = getattr(cell_ss_obj, i)
+                result_datatype = func(cell_ss_obj, *self.argument_list)
+                if isinstance(result_datatype, int):
+                    result_dict[i] = result_datatype
+                elif set(map(type, result_datatype.values())) == {list}:
+                    for key, value_list in result_datatype.items():
+                        for list_member in value_list:
+                            for key2, value2 in list_member.items():
+                                result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                elif isinstance(result_datatype, dict):
+                    for key, value in result_datatype.items():
+                        result_dict[i + "_" + str(key)] = value
+        return result_dict
 
 
 def output_dir(dir):
