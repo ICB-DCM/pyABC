@@ -148,7 +148,7 @@ def plot_histogram_2d_lowlevel(
         range_ = None
 
     # plot
-    ax.hist2d(x=df[x], y=df[y], range=range_, weights=w, normed=True,
+    ax.hist2d(x=df[x], y=df[y], range=range_, weights=w, density=True,
               **kwargs)
     if refval is not None:
         ax.scatter([refval[x]], [refval[y]], color='C1')
