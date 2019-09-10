@@ -271,9 +271,10 @@ Job scheduling
 
 HPC environments usually employ a job scheduler for distributing work to the execution nodes. Here, we shortly outline how pyABC can be integrated in such a setup. Exemplarily, we use a redis sampler, usage of in particular the dask sampler being similar.
 
-Let us consider the job scheduler `slurm <https://slurm.schedmd.com>`_. First, you will need a script `script_redis_worker.sh` that starts the redis worker:
+Let us consider the widely used job scheduler `slurm <https://slurm.schedmd.com>`_. First, you will need a script `script_redis_worker.sh` that starts the redis worker:
 
 .. code:: bash
+
    #!/bin/bash
    
    # slurm settings
@@ -286,13 +287,15 @@ Let us consider the job scheduler `slurm <https://slurm.schedmd.com>`_. First, y
    # prepare environment, e.g. set path
 
    # run
-   abs-redis-worker --host={host_ip} --port={port} --runtime={runtime} --processes={n_processes}
+   abs-redis-worker --host={host_ip} --port={port} --runtime={runtime} \
+       --processes={n_processes}
 
 Here, `n_processes` defines the number of processes started for that batch job via multiprocessing. Some HPC setups prefer larger batch jobs, e.g. on a node level, so here each job can already be given some parallelity. The `SBATCH` macros define the slurm setting to be used.
 
 The above script would be submitted to the slurm job manager via `sbatch`. It makes sense to define a script for this as well:
 
 .. code:: bash
+
    #!/bin/bash
 
    for i in {1..{n_jobs}}
@@ -303,10 +306,12 @@ The above script would be submitted to the slurm job manager via `sbatch`. It ma
 Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is based on qsub, e.g. SGE/UGE, instead use a script like
 
 .. code:: bash
+
    #!/bin/bash
 
    for i in {1..{n_jobs}}
    do
-     qsub -o {output_file_name} -e {error_file_name} script_redis_worker.sh
+     qsub -o {output_file_name} -e {error_file_name} \
+         script_redis_worker.sh
 
 and adapt the worker script. For both, there exist many more configuration options. For further details see the respective documentation.
