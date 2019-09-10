@@ -315,4 +315,4 @@ Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is 
 
 and adapt the worker script. For both, there exist many more configuration options. For further details see the respective documentation.
 
-Note that when planning for the number of jobs, cpus, and jobs per batch, also the parallelization on the level of the simulations has to be taken into account.
+Note that when planning for the number of overall redis workers, batches, and cpus per batch, also the parallelization on the level of the simulations has to be taken into account. Also, memory requirements should be checked in advance.
