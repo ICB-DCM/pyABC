@@ -262,7 +262,7 @@ pyABC has been successfully employed on various high-performance computing (HPC)
 Long-running master process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-While most of the work happens on parallel workers, pyabc requires one long-running master process in the background for all of the analysis (or rather two processes, namely the master process running the execution script, and in addition possibly a task scheduler like the redis server). If the HPC infrastructure does not allow for such long-running processes with low requirements, one has to find a way around. Eventually, it is planned for pyABC to support memory-loss-free checkpointing, but presently this is not yet implemented. If possible, the master process can be run on external servers, login nodes, or on execution nodes while taking maximum runtimes into consideration.
+While most of the work happens on parallel workers, pyABC requires one long-running master process in the background for all of the analysis (or rather two processes, namely the master process running the execution script, and in addition possibly a task scheduler like the redis server). If the HPC infrastructure does not allow for such long-running processes with low CPU and memory requirements, one has to find a way around. Eventually, it is planned for pyABC to support loss-free automatic checkpointing and restarting, but presently this is not yet implemented. If possible, the master process can be run on external servers, login nodes, or on execution nodes while taking maximum runtimes and reliability of server and connections into consideration.
 
 
 Job scheduling
@@ -270,7 +270,7 @@ Job scheduling
 
 HPC environments usually employ a job scheduler for distributing work to the execution nodes. Here, we shortly outline how pyABC can be integrated in such a setup. Exemplarily, we use a redis sampler, usage of in particular the dask sampler being similar.
 
-Let us consider the widely used job scheduler `slurm <https://slurm.schedmd.com>`_. First, you will need a script `script_redis_worker.sh` that starts the redis worker:
+Let us consider the widely used job scheduler `slurm <https://slurm.schedmd.com>`_. First, we need a script `script_redis_worker.sh` that starts the redis worker:
 
 .. code:: bash
 
@@ -314,3 +314,5 @@ Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is 
          script_redis_worker.sh
 
 and adapt the worker script. For both, there exist many more configuration options. For further details see the respective documentation.
+
+Note that when planning for the number of jobs, cpus, and jobs per batch, also the parallelization on the level of the simulations has to be taken into account.
