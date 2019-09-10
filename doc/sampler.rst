@@ -256,7 +256,6 @@ In such cases, the following can be done
 High-performance infrastructure
 -------------------------------
 
-
 pyABC has been successfully employed on various high-performance computing (HPC) infrastructures. There are a few things to keep in mind.
 
 
