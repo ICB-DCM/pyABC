@@ -1,7 +1,9 @@
 .. _sampler:
 
+
 Parallel and Distributed Sampling
 =================================
+
 
 Strategies
 ----------
@@ -30,7 +32,6 @@ code can be hard sometimes.
 
 Multi-core only samplers
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 For multi-core execution, pyABC implements two possible parallelization
 strategies.
@@ -76,7 +77,6 @@ The Redis based sampler can require slightly more effort in
 setting up than the Dask based sampler, but has fewer constraints regarding
 simulation function runtime. The Dask sampler is in turn better suited to
 handle worker failures and unexpected execution host terminations.
-
 
 
 General extensible samplers
@@ -133,7 +133,6 @@ of if you're using anaconda via
 At this point, Windows is not officially supported by the Redis developers.
 We assume for now, that the IP address of the machine running the Redis server
 is 111.111.111.111.
-
 
 
 Step 2 or 3: Start pyABC
@@ -241,8 +240,7 @@ pyABC has finished.
 Optional: Something with the workers went wrong in the middle of a run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-It can happen, that workers get unexpectedly killed.
+It can happen that workers get unexpectedly killed.
 If they are not able to communicate to the redis-server that they've finished
 working on the current population before they're killed,
 the pyABC master process will wait forever.
