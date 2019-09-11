@@ -140,7 +140,8 @@ class MorpheusModel(ExternalModel):
                 elif isinstance(result_datatype.values(), dict):
                     for key, value in result_datatype.items():
                         for key2, value2 in value:
-                            result_dict[i + "_" + str(key) + "_" + str(key2)] = np.array(value2)
+                            result_dict[i + "_" + str(key) + "_" +
+                                        str(key2)] = np.array(value2)
                 # check if result is dict
                 elif isinstance(result_datatype, dict):
                     for key, value in result_datatype.items():
@@ -155,7 +156,8 @@ class MorpheusModel(ExternalModel):
                 elif isinstance(result_datatype.values(), dict):
                     for key, value in result_datatype.items():
                         for key2, value2 in value:
-                            result_dict[i + "_" + str(key) + "_" + str(key2)] = np.array(value2)
+                            result_dict[i + "_" + str(key) + "_"
+                                        + str(key2)] = np.array(value2)
                 # check if result is dict
                 elif isinstance(result_datatype, dict):
                     for key, value in result_datatype.items():
@@ -179,7 +181,8 @@ class MorpheusModel(ExternalModel):
                     for key, value_list in result_datatype.items():
                         for list_member in value_list:
                             for key2, value2 in list_member.items():
-                                result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                                result_dict[i + "_" + str(key) + "_" +
+                                            str(key2)] = value2
                 elif isinstance(result_datatype, dict):
                     for key, value in result_datatype.items():
                         result_dict[i + "_" + str(key)] = value
@@ -192,7 +195,8 @@ class MorpheusModel(ExternalModel):
                     for key, value_list in result_datatype.items():
                         for list_member in value_list:
                             for key2, value2 in list_member.items():
-                                result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                                result_dict[i + "_" + str(key) + "_" +
+                                            str(key2)] = value2
                 elif isinstance(result_datatype, dict):
                     for key, value in result_datatype.items():
                         result_dict[i + "_" + str(key)] = value
