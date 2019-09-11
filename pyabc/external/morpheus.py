@@ -73,7 +73,7 @@ class MorpheusModel(ExternalModel):
         if output is None:
             output = output_dict
         self.output = output
-        self.sumstatfunc_list = sumstatfunc_list,
+        self.sumstatfunc_list = sumstatfunc_list
         self.argument_list = argument_list
 
     def __str__(self):
@@ -130,7 +130,7 @@ class MorpheusModel(ExternalModel):
         cell_ss_obj = css.CellSumstat
         logger_df = read_morpheus_log_file(self.argument_list[0])
         self.argument_list[0] = logger_df
-        for i in self.sumstatfunc_list[0]:
+        for i in self.sumstatfunc_list:
             try:
                 func = getattr(cluster_ss_obj, i)
                 result_datatype = func(cluster_ss_obj, *self.argument_list)
@@ -172,7 +172,7 @@ class MorpheusModel(ExternalModel):
         cell_ss_obj = css.CellSumstat
         logger_df = read_morpheus_log_file(self.argument_list[0])
         self.argument_list[0] = logger_df
-        for i in self.sumstatfunc_list[0]:
+        for i in self.sumstatfunc_list:
             try:
                 func = getattr(cluster_ss_obj, i)
                 result_datatype = func(cluster_ss_obj, *self.argument_list)
