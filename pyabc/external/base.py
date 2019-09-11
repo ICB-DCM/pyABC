@@ -130,11 +130,14 @@ class ExternalModel(Model):
     Interface to a model that is called via an external simulator.
 
     Parameters are passed to the model as named command line arguments
-    in the form:
+    in the form
+
         {executable} {file} {par1}={val1} {par2}={val2} ... target={loc}
+
     Here, {file} is the script that performs the model simulation, and {loc}
     is the name of a temporary file or folder that was created to
     store the simulated data.
+
 
     .. note::
         The generated temporary files are not automatically deleted, unless
@@ -187,6 +190,7 @@ class ExternalSumStat:
 
     Format:
         {executable} {file} model_output={model_output} target={loc}
+
     Here, {file} is the path to the summary statistics computation script,
     {model_output} is the path to the previously generated model output, and
     {loc} is the destination to write te summary statistics to.

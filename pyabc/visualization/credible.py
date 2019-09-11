@@ -57,6 +57,11 @@ def plot_credible_intervals(
         The KDE to use for `show_kde_max`.
     kde_1d: Transition, optional (default = MultivariateNormalTransition)
         The KDE to use for `show_kde_max_1d`.
+
+    Returns
+    -------
+
+    arr_ax: Array of generated axes.
     """
     if levels is None:
         levels = [0.95]
@@ -74,7 +79,7 @@ def plot_credible_intervals(
 
     # prepare axes
     fig, arr_ax = plt.subplots(
-        nrows=n_par, ncols=1, sharex=False, sharey=False)
+        nrows=n_par, ncols=1, sharex=False, sharey=False, figsize=size)
     if n_par == 1:
         arr_ax = [arr_ax]
 
