@@ -45,6 +45,8 @@ class MorpheusModel(ExternalModel):
 
     def __init__(self,
                  model_file: str,
+                 sumstatfunc_list: list,
+                 argument_list: list,
                  par_map: dict,
                  executable: str = "morpheus",
                  suffix: str = None,
@@ -54,9 +56,6 @@ class MorpheusModel(ExternalModel):
                  show_stderr: bool = True,
                  raise_on_error: bool = False,
                  name: str = None,
-                 sumstatfunc_list: list = None,
-                 argument_list: list = None,
-
                  output: Callable[[str], Any] = None):
         if name is None:
             name = model_file
@@ -106,9 +105,10 @@ class MorpheusModel(ExternalModel):
 
         # call the model
         self.eh.run(cmd=cmd, loc="")
+        self.argument_list[0] = dir_
         # call SummeryStatistic function
-        self.sumstatlib_tp(self, dir)
-        return self.output(dir=dir_)
+        result_dict = self.sumstatlib_alltp(dir_)
+        return result_dict
 
     def write_modified_model_file(self, file_, pars):
         """
@@ -125,32 +125,38 @@ class MorpheusModel(ExternalModel):
 
     def sumstatlib_tp(self, dir):
         result_dict = {'file': dir}
-        logger_df = read_morpheus_log_file(dir)
         cluster_ss_obj = chx.ClusterSumstat
         cell_ss_obj = css.CellSumstat
-        for i in self.sumstatfunc_list:
+        logger_df = read_morpheus_log_file(self.argument_list[0])
+        self.argument_list[0] = logger_df
+        for i in self.sumstatfunc_list[0]:
             try:
                 func = getattr(cluster_ss_obj, i)
                 result_datatype = func(cluster_ss_obj, *self.argument_list)
-                # check if result is a dict format
+                # check if result is int
                 if isinstance(result_datatype, int):
                     result_dict[i] = result_datatype
+                # check if result is dict of dict
                 elif isinstance(result_datatype.values(), dict):
                     for key, value in result_datatype.items():
                         for key2, value2 in value:
-                            result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                            result_dict[i + "_" + str(key) + "_" + str(key2)] = np.array(value2)
+                # check if result is dict
                 elif isinstance(result_datatype, dict):
                     for key, value in result_datatype.items():
                         result_dict[i + "_" + str(key)] = value
             except:
                 func = getattr(cell_ss_obj, i)
                 result_datatype = func(cell_ss_obj, *self.argument_list)
+                # check if result is int
                 if isinstance(result_datatype, int):
                     result_dict[i] = result_datatype
+                # check if result is dict of dict
                 elif isinstance(result_datatype.values(), dict):
                     for key, value in result_datatype.items():
                         for key2, value2 in value:
-                            result_dict[i + "_" + str(key) + "_" + str(key2)] = value2
+                            result_dict[i + "_" + str(key) + "_" + str(key2)] = np.array(value2)
+                # check if result is dict
                 elif isinstance(result_datatype, dict):
                     for key, value in result_datatype.items():
                         result_dict[i + "_" + str(key)] = value
@@ -161,7 +167,9 @@ class MorpheusModel(ExternalModel):
         logger_df = read_morpheus_log_file(dir)
         cluster_ss_obj = chx.ClusterSumstat
         cell_ss_obj = css.CellSumstat
-        for i in self.sumstatfunc_list:
+        logger_df = read_morpheus_log_file(self.argument_list[0])
+        self.argument_list[0] = logger_df
+        for i in self.sumstatfunc_list[0]:
             try:
                 func = getattr(cluster_ss_obj, i)
                 result_datatype = func(cluster_ss_obj, *self.argument_list)
