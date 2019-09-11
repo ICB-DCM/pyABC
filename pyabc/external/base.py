@@ -79,6 +79,13 @@ class ExternalHandler:
             return tempfile.mkstemp(
                 suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
 
+    def create_executable(self, loc):
+        """
+        Parse and return executable.
+        """
+        executable = self.executable.replace("{loc}", loc)
+        return executable
+
     def run(self, args: List[str] = None, cmd: str = None, loc: str = None):
         """
         Run the script for the given arguments.
@@ -110,8 +117,9 @@ class ExternalHandler:
         if cmd is not None:
             status = subprocess.run(cmd, shell=True, **stdout, **stderr)
         else:
+            executable = self.create_executable()
             status = subprocess.run(
-                [self.executable, self.file, *self.fixed_args, *args,
+                [executable, self.file, *self.fixed_args, *args,
                  f'target={loc}'], **stdout, **stderr)
         if status.returncode:
             msg = (f"Simulation error for arguments {args}: "

@@ -5,8 +5,8 @@ import xml.etree.ElementTree as ET
 from typing import Callable, Any
 from ..parameters import Parameter
 from .base import ExternalModel
-import fitMultiCellSumStat.hexagonal_cluster_sumstat as chx
-import fitMultiCellSumStat.cell_types_cout as css
+import fitmulticell.sumstat.hexagonal_cluster_sumstat as chx
+import fitmulticell.sumstat.cell_types_cout as css
 
 
 class MorpheusModel(ExternalModel):
@@ -94,20 +94,21 @@ class MorpheusModel(ExternalModel):
         which redirects here) to simulate data for given parameters `pars`.
         """
         # create target on file system
-        dir_ = self.eh.create_loc()
-        file_ = os.path.join(dir_, "model.xml")
+        loc = self.eh.create_loc()
+        file_ = os.path.join(loc, "model.xml")
 
         # write new file with parameter modifications
         self.write_modified_model_file(file_, pars)
 
         # create command
-        cmd = f"{self.eh.executable} -file={file_} -outdir={dir_}"
+        cmd = self.eh.create_executable(loc)
+        cmd = cmd + f" -file={file_} -outdir={loc}"
 
         # call the model
         self.eh.run(cmd=cmd, loc="")
-        self.argument_list[0] = dir_
+        self.argument_list[0] = loc
         # call SummeryStatistic function
-        result_dict = self.sumstatlib_alltp(dir_)
+        result_dict = self.sumstatlib_alltp(loc)
         return result_dict
 
     def write_modified_model_file(self, file_, pars):
