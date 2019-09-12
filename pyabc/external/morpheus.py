@@ -1,12 +1,27 @@
 import pandas as pd
 import numpy as np
+import numbers
 import os
 import xml.etree.ElementTree as ET
-from typing import Callable, Any
+from typing import Callable, List, Any
+import abc
+
 from ..parameters import Parameter
 from .base import ExternalModel
-import fitmulticell.sumstat.hexagonal_cluster_sumstat as chx
-import fitmulticell.sumstat.cell_types_cout as css
+
+
+class SumstatFun:
+
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def __call__(self, loc):
+        raise NotImplementedError()
+
+    @property
+    def name(self):
+        raise NotImplementedError()
 
 
 class MorpheusModel(ExternalModel):
@@ -45,9 +60,8 @@ class MorpheusModel(ExternalModel):
 
     def __init__(self,
                  model_file: str,
-                 sumstatfunc_list: list,
-                 argument_list: list,
                  par_map: dict,
+                 sumstat_funs: List[SumstatFun],
                  executable: str = "morpheus",
                  suffix: str = None,
                  prefix: str = "morpheus_model_",
@@ -73,8 +87,7 @@ class MorpheusModel(ExternalModel):
         if output is None:
             output = output_dict
         self.output = output
-        self.sumstatfunc_list = sumstatfunc_list
-        self.argument_list = argument_list
+        self.sumstat_funs = sumstat_funs
 
     def __str__(self):
         s = f"MorpheusModel {{\n" \
@@ -105,11 +118,15 @@ class MorpheusModel(ExternalModel):
         cmd = cmd + f" -file={file_} -outdir={loc}"
 
         # call the model
+        print("---- call model")
         self.eh.run(cmd=cmd, loc="")
-        self.argument_list[0] = loc
-        # call SummeryStatistic function
-        result_dict = self.sumstatlib_alltp(loc)
-        return result_dict
+        
+        # compute summary statistics
+        print("---- compute sumstat")
+        sumstats = self.compute_sumstats(loc)
+
+        print("---- return")
+        return sumstats
 
     def write_modified_model_file(self, file_, pars):
         """
@@ -165,6 +182,17 @@ class MorpheusModel(ExternalModel):
                         result_dict[i + "_" + str(key)] = value
         return result_dict
 
+    def compute_sumstats(self, loc):
+        """
+        Compute summary statistics from the simulated data according to the
+        provided list of summary statistics functions.
+        """
+        sumstat_dict = {}
+        for sumstat_fun in self.sumstat_funs:
+            sumstat = sumstat_fun(loc)
+            safe_append_sumstat(sumstat_dict, sumstat, sumstat_fun.name)
+        return sumstat_dict 
+
     def sumstatlib_alltp(self, dir):
         result_dict = {'file': dir}
         logger_df = read_morpheus_log_file(dir)
@@ -202,6 +230,25 @@ class MorpheusModel(ExternalModel):
                     for key, value in result_datatype.items():
                         result_dict[i + "_" + str(key)] = value
         return result_dict
+
+
+def safe_append_sumstat(sumstat_dict, sumstat, key):
+    types_ = (numbers.Number, np.ndarray, pd.DataFrame)
+    if isinstance(sumstat, types_):
+        if key in sumstat_dict:
+            raise KeyError(
+                f"Key {key} for sumstat {sumstat} already in the "
+                f"sumstat dict {sumstat_dict}.")
+        sumstat_dict[key] = sumstat
+        return
+    if isinstance(sumstat, dict):
+        for _key, _value in sumstat.items():
+            _key = key + '__' + str(_key)
+            safe_append_sumstat(sumstat_dict, _value, _key)
+        return
+    raise ValueError(
+        f"Type {type(sumstat)} of sumstat {sumstat} "
+        f"is not permitted.")
 
 
 def output_dir(dir):
