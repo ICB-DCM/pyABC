@@ -22,6 +22,9 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
     elif len(obs_data) <= 16:
         plot_row_size = 4
         plot_col_size = 4
+    else:
+        print("Data length should be equal or less than 16 ")
+        return -1
     # check if the data types are pandas dataframe
     for (obs_key, obs), (sim_key, sim) \
             in zip(obs_data.items(), sim_data.items()):
@@ -45,7 +48,7 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
                         sim_value[1], color="C0", label='Simulation')
             plt.scatter(obs_value[0],
                         obs_value[1], color="C1", label='Data')
-        # check if the data types are numpy array
+        # check if the data types are 1d numpy array
         elif isinstance(obs, np.ndarray) \
                 and isinstance(sim, np.ndarray):
             obs_value = obs
@@ -57,7 +60,7 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
         else:
             raise SyntaxError('The selected data type is '
                               'not yet supported. Try to use '
-                              'Pandas.Dataframe, numpy.array, or 2d arrays')
+                              'Pandas.Dataframe, 1d numpy.array, or 2d numpy.array')
         plt.xlabel('Time $t$')
         plt.ylabel('Measurement $Y$')
         plt.title(obs_key)

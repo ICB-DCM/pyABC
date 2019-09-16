@@ -3,7 +3,7 @@ import tempfile
 import pytest
 import os
 import numpy as np
-
+from pyabc.visualization import data_plot
 
 # create and run some model
 
@@ -87,3 +87,13 @@ def test_credible_intervals():
 
 def test_model_probabilities():
     pyabc.visualization.plot_model_probabilities(histories[0])
+
+
+def test_data_plot():
+    obs_dict = {1: "second"}
+    sim_dict = {1: "first"}
+    data_plot.plot_data(obs_dict, sim_dict)
+    for i in range(18):
+        obs_dict[i] = i + 1
+        sim_dict[i] = i + 2
+    data_plot.plot_data(obs_dict, sim_dict)
