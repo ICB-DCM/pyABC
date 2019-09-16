@@ -8,6 +8,15 @@ Release Notes
 ..........
 
 
+0.9.15 (2019-09-15)
+-------------------
+
+* Document high-performance infrastructure usage (#159).
+* Some self-administratory stuff (#158, #157).
+* Fix external deprecations (#153).
+* Re-add R related tests (#148).
+
+
 0.9.14 (2019-08-08)
 -------------------
 
