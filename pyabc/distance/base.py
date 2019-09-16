@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Callable
 import json
+import numpy as np
 
 from ..sampler import Sampler
 
@@ -302,7 +303,7 @@ class AggregatedDistance(Distance):
         if weights is None:
             weights = np.ones(len(distances))
         else:
-            weigts = np.array(weights)
+            weights = np.array(weights)
         self.weights = weights
 
     def initialize(
@@ -323,13 +324,13 @@ class AggregatedDistance(Distance):
         """
         for distance in self.distances:
             distance.configure_sampler(sampler)
- 
+
     # pylint: disable=R0201
     def update(
             self,
             t: int,
             sum_stats: List[dict]) -> bool:
-        return any([distance.update(t, sum_stats) \
+        return any([distance.update(t, sum_stats)
                     for distance in self.distances])
 
     @abstractmethod
@@ -340,7 +341,7 @@ class AggregatedDistance(Distance):
             t: int = None,
             par: dict = None) -> float:
         values = np.array([
-            distance(x, x_0, t, par) for distance in self.distances)
+            distance(x, x_0, t, par) for distance in self.distances
         ])
         return np.dot(self.weights, values)
 
