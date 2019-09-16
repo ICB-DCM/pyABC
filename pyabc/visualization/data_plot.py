@@ -26,7 +26,7 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
         print("Data length should be equal or less than 16 ")
         return -1
     # check if the data types are pandas dataframe
-    for (obs_key, obs), (sim_key, sim) \
+    for (obs_key, obs), (_, sim) \
             in zip(obs_data.items(), sim_data.items()):
         plt.subplot(plot_row_size, plot_col_size, plot_index)
         plot_index = plot_index + 1
