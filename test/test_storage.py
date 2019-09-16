@@ -9,6 +9,7 @@ import scipy as sp
 import pandas as pd
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
+from rpy2.robjects.conversion import localconverter
 from pyabc.storage.df_to_file import sumstat_to_json
 import pickle
 
@@ -207,8 +208,7 @@ def test_sum_stats_save_load(history: History):
                  weight=.2,
                  accepted_sum_stats=[{"ss1": .1, "ss2": arr2,
                                       "ss3": example_df(),
-                                      "rdf0": r["faithful"]}],
-                 # TODO: check why iris fails
+                                      "rdf0": r["iris"]}],
                  accepted_distances=[.1]),
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
@@ -225,11 +225,13 @@ def test_sum_stats_save_load(history: History):
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
     assert (sum_stats[0]["ss3"] == example_df()).all().all()
-    assert (sum_stats[0]["rdf0"] == pandas2ri.ri2py(r["faithful"])).all().all()
+    with localconverter(pandas2ri.converter):
+        assert (sum_stats[0]["rdf0"] == r["iris"]).all().all()
     assert sum_stats[1]["ss12"] == .11
     assert (sum_stats[1]["ss22"] == arr).all()
     assert (sum_stats[1]["ss33"] == example_df()).all().all()
-    assert (sum_stats[1]["rdf"] == pandas2ri.ri2py(r["mtcars"])).all().all()
+    with localconverter(pandas2ri.converter):
+        assert (sum_stats[1]["rdf"] == r["mtcars"]).all().all()
 
 
 def test_total_nr_samples(history: History):

@@ -191,7 +191,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
         # counter. This could be overcome, but as it usually only happens
         # for low-runtime models, this should not be a problem. Thus, only
         # print a warning here.
-        logger.warn(
+        logger.warning(
             f"Had {pre_evals} simulations in the calibration iteration, "
             f"but a maximum of {max_expected} would have been sufficient for "
             f"the population size of {pop_size.nr_particles}.")
@@ -237,12 +237,17 @@ def test_redis_catch_error():
 
     def distance(s0, s1):
         return abs(s0['s0'] - s1['s0'])
+
     prior = Distribution(p0=RV("uniform", 0, 10))
     sampler = RedisEvalParallelSamplerServerStarter(
         batch_size=3, workers=1, processes_per_worker=1, port=8775)
-    abc = ABCSMC(model, prior, distance, sampler=sampler)
+
+    abc = ABCSMC(model, prior, distance, sampler=sampler, population_size=10)
+
     db_file = "sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db")
     data = {'s0': 2.8}
     abc.new(db_file, data)
-    abc.run(minimum_epsilon=.1, max_nr_populations=10)
+
+    abc.run(minimum_epsilon=.1, max_nr_populations=3)
+
     sampler.cleanup()
