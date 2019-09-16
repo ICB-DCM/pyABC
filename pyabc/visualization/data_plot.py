@@ -58,9 +58,11 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
             plt.plot(obs_value,
                      color="C1", label='Data')
         else:
-            raise SyntaxError('The selected data type is '
+            print('The selected data type is '
                               'not yet supported. Try to use '
-                              'Pandas.Dataframe, 1d numpy.array, or 2d numpy.array')
+                              'Pandas.Dataframe, 1d numpy.array, '
+                              'or 2d numpy.array')
+            return -1
         plt.xlabel('Time $t$')
         plt.ylabel('Measurement $Y$')
         plt.title(obs_key)
