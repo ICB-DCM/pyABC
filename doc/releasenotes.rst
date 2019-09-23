@@ -11,6 +11,8 @@ Release Notes
 0.9.15 (2019-09-15)
 -------------------
 
+* Some extensions of external simulators interface (#168).
+* Add basic plots of summary statistics (#165).
 * Document high-performance infrastructure usage (#159).
 * Some self-administratory stuff (#158, #157).
 * Fix external deprecations (#153).
