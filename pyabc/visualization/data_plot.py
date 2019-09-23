@@ -89,8 +89,8 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
                         "not yet supported. Try to use "
                         "Pandas.Dataframe, 1d numpy.array, "
                         "or 2d numpy.array. Found = {}.".format(type(obs)))
-        #ax.set_xlabel('Time $t$')
-        #ax.set_ylabel('Measurement $Y$')
+
+        # finalize axes
         ax.set_title(obs_key)
         ax.legend()
 
