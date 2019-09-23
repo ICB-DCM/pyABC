@@ -15,8 +15,6 @@ from .base import (
     ExternalSumStat,
     ExternalDistance,
     create_sum_stat)
-from .morpheus import (
-    MorpheusModel)
 
 
 __all__ = [
@@ -26,5 +24,4 @@ __all__ = [
     'ExternalSumStat',
     'ExternalDistance',
     'create_sum_stat',
-    'MorpheusModel'
 ]

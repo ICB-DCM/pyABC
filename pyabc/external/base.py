@@ -117,7 +117,7 @@ class ExternalHandler:
         if cmd is not None:
             status = subprocess.run(cmd, shell=True, **stdout, **stderr)
         else:
-            executable = self.create_executable()
+            executable = self.create_executable(loc)
             status = subprocess.run(
                 [executable, self.file, *self.fixed_args, *args,
                  f'target={loc}'], **stdout, **stderr)
