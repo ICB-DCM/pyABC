@@ -19,6 +19,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/sde_ion_channels.ipynb
    examples/adaptive_distances.ipynb
    examples/external_simulators.ipynb
+   examples/data_plots.ipynb
 
 
 Download the examples as notebooks
@@ -36,6 +37,7 @@ Download the examples as notebooks
 * :download:`Stochastic Differential Equation: Ion channel noise in Hodgkin-Huxley neurons <examples/sde_ion_channels.ipynb>`
 * :download:`Adaptive Distances <examples/adaptive_distances.ipynb>`
 * :download:`External Simulators <examples/external_simulators.ipynb>`
+* :download:`Data plots <examples/data_plots.ipynb>`
 
 
 .. warning::
