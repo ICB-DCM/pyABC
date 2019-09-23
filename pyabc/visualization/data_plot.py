@@ -33,68 +33,68 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
 
     ax: Axis of the generated plot.
     """
-    fig = plt.figure()
-    plot_index = 1
-    # check if user specify a specific key to be printed
+    # check if user specified a specific key to be printed
     if key is not None:
         obs_data = {key: obs_data[key]}
         sim_data = {key: sim_data[key]}
+
+    # get number of rows and columns
     if len(obs_data) <= 3:
-        plot_row_size = 1
-        plot_col_size = len(obs_data)
+        nrows = 1
+        ncols = len(obs_data)
     elif len(obs_data) <= 6:
-        plot_row_size = 2
-        plot_col_size = 2
+        nrows = 2
+        ncols = 2
     elif len(obs_data) <= 9:
-        plot_row_size = 3
-        plot_col_size = 3
+        nrows = 3
+        ncols = 3
     elif len(obs_data) <= 16:
-        plot_row_size = 4
-        plot_col_size = 4
+        nrows = 4
+        ncols = 4
     else:
-        logger.debug("Data length should be equal or less than 16."
-                     " Found = {}".format(len(obs_data)))
+        logger.error("Data length should be equal or less than 16. "
+                     "Found = {}.".format(len(obs_data)))
         return
-    # check if the data types are pandas dataframe
-    for (obs_key, obs), (_, sim) \
-            in zip(obs_data.items(), sim_data.items()):
-        plt.subplot(plot_row_size, plot_col_size, plot_index)
-        plot_index = plot_index + 1
-        if isinstance(obs, pd.DataFrame)\
-                and isinstance(sim, pd.DataFrame):
+
+    # initialize figure
+    fig, arr_ax = plt.subplots(nrows, ncols)
+
+    # iterate over keys
+    for plot_index, ((obs_key, obs), (_, sim)) \
+            in enumerate(zip(obs_data.items(), sim_data.items())):
+        ax = arr_ax.flatten()[plot_index]
+
+        # data frame
+        if isinstance(obs, pd.DataFrame):
             obs_value = obs.values.item()
             sim_value = sim.values.item()
-            plt.plot(sim_value,
-                     color="C0", label='Simulation')
-            plt.plot(obs_value,
-                     color="C1", label='Data')
-        # check if the data types are 2d array
-        elif isinstance(obs, np.ndarray) \
-                and isinstance(sim, np.ndarray) \
-                and (obs.ndim == 2) and (sim.ndim == 2):
+            ax.plot(sim_value,  '-x', color="C0", label='Simulation')
+            ax.plot(obs_value,  '-x', color="C1", label='Data')
+        # 2d array
+        elif isinstance(obs, np.ndarray) and (obs.ndim == 2):
             obs_value = obs
             sim_value = sim
-            plt.scatter(sim_value[0],
-                        sim_value[1], color="C0", label='Simulation')
-            plt.scatter(obs_value[0],
-                        obs_value[1], color="C1", label='Data')
-        # check if the data types are 1d numpy array
-        elif isinstance(obs, np.ndarray) \
-                and isinstance(sim, np.ndarray):
+            ax.scatter(sim_value[0], sim_value[1],
+                       color="C0", label='Simulation')
+            ax.scatter(obs_value[0], obs_value[1],
+                       color="C1", label='Data')
+        # 1d array
+        elif isinstance(obs, np.ndarray):
             obs_value = obs
             sim_value = sim
-            plt.plot(sim_value,
-                     color="C0", label='Simulation')
-            plt.plot(obs_value,
-                     color="C1", label='Data')
+            ax.plot(sim_value, '-x', color="C0", label='Simulation')
+            ax.plot(obs_value, '-x', color="C1", label='Data')
         else:
-            logger.debug('The selected data type is '
-                         'not yet supported. Try to use '
-                         'Pandas.Dataframe, 1d numpy.array, '
-                         'or 2d numpy.array. Found = {}'.format(type(obs)))
-            return
-        plt.xlabel('Time $t$')
-        plt.ylabel('Measurement $Y$')
-        plt.title(obs_key)
-        plt.legend()
-        fig.suptitle("Observed vs. simulated data", fontsize=16)
+            logger.info("The selected data type is "
+                        "not yet supported. Try to use "
+                        "Pandas.Dataframe, 1d numpy.array, "
+                        "or 2d numpy.array. Found = {}.".format(type(obs)))
+        #ax.set_xlabel('Time $t$')
+        #ax.set_ylabel('Measurement $Y$')
+        ax.set_title(obs_key)
+        ax.legend()
+
+    # finalize plot
+    fig.tight_layout()
+
+    return arr_ax
