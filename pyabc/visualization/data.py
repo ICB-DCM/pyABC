@@ -62,7 +62,10 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
     # iterate over keys
     for plot_index, ((obs_key, obs), (_, sim)) \
             in enumerate(zip(obs_data.items(), sim_data.items())):
-        ax = arr_ax.flatten()[plot_index]
+        if nrows == ncols == 1:
+            ax = arr_ax
+        else:
+            ax = arr_ax.flatten()[plot_index]
 
         # data frame
         if isinstance(obs, pd.DataFrame):

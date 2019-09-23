@@ -90,8 +90,8 @@ def test_model_probabilities():
 
 
 def test_data_plot():
-    obs_dict = {1: "second"}
-    sim_dict = {1: "first"}
+    obs_dict = {1: 0.7}
+    sim_dict = {1: 6.5}
     data_plot.plot_data(obs_dict, sim_dict)
     for i in range(18):
         obs_dict[i] = i + 1
