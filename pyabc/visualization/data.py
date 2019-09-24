@@ -2,12 +2,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
+from typing import List, Union
 
 
 logger = logging.getLogger("Data_plot")
 
 
-def plot_data(obs_data: dict, sim_data: dict, key=None):
+def plot_data(obs_data: dict,
+              sim_data: dict,
+              keys: Union[List[str], str] = None):
     """
     Plot summary statistic data.
 
@@ -24,19 +27,22 @@ def plot_data(obs_data: dict, sim_data: dict, key=None):
         where keys represent the summary statistic name and values represent
         the data itself. The values can be represented as pandas dataframe,
         1d numpy array, or 2d numpy array.
-    key: Union[str, int], optional
-        A specified specific summary statistic data, if None,
-        then all summary statistics values are used.
+    key: Union[List[str], str], optional
+        Specific summary statistic keys to be used. If None,
+        then all entries are used.
 
     Returns
     -------
 
-    ax: Axis of the generated plot.
+    arr_ax: Axes of the generated plot.
     """
     # check if user specified a specific key to be printed
-    if key is not None:
-        obs_data = {key: obs_data[key]}
-        sim_data = {key: sim_data[key]}
+    if keys is None:
+        keys = list(obs_data.keys())
+    if not isinstance(keys, list):
+        keys = [keys]
+    obs_data = {key: obs_data[key] for key in keys}
+    sim_data = {key: sim_data[key] for key in keys}
 
     # get number of rows and columns
     if len(obs_data) <= 3:
