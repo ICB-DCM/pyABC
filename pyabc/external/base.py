@@ -3,8 +3,13 @@ import tempfile
 import subprocess
 import os
 from typing import List
+import logging
 
 from ..model import Model
+from ..parameters import Parameter
+
+
+logger = logging.getLogger("External")
 
 
 class ExternalHandler:
@@ -15,15 +20,21 @@ class ExternalHandler:
     """
 
     def __init__(self,
-                 executable: str, file: str,
+                 executable: str, file: str = None,
                  fixed_args: List = None,
                  create_folder: bool = False,
-                 suffix: str = None, prefix: str = None, dir: str = None):
+                 suffix: str = None, prefix: str = None, dir: str = None,
+                 show_stdout: bool = False,
+                 show_stderr: bool = True,
+                 raise_on_error: bool = False):
         """
         Parameters
         ----------
         executable: str
             Name of the executable to call, e.g. bash, java or Rscript.
+            The executable may be parameterized, e.g. appearances of {loc}
+            in the string are replaced at runtime by the location of the
+            output.
         file: str
             Path to the file to be executed, e.g. a
             .sh, .java or .r file, or also a .xml file depending on the
@@ -36,6 +47,11 @@ class ExternalHandler:
         suffix, prefix, dir: str, optional (default = None)
             Specify suffix, prefix, or base directory for the created
             temporary files.
+        show_stdout, show_stderr: bool, optional (default: False, True)
+            Whether to show or hide the stdout and stderr streams.
+        raise_on_error: bool, optional (default = False)
+            Whether to raise when an error in the execution of the external
+            script occurs, or just continue.
         """
         self.executable = executable
         self.file = file
@@ -46,6 +62,9 @@ class ExternalHandler:
         self.suffix = suffix
         self.prefix = prefix
         self.dir = dir
+        self.show_stdout = show_stdout
+        self.show_stderr = show_stderr
+        self.raise_on_error = raise_on_error
 
     def create_loc(self):
         """
@@ -63,19 +82,58 @@ class ExternalHandler:
             return tempfile.mkstemp(
                 suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
 
-    def run(self, args):
+    def create_executable(self, loc):
+        """
+        Parse and return executable.
+
+        Replaces instances of {loc} by the location `loc`.
+        """
+        executable = self.executable.replace("{loc}", loc)
+        return executable
+
+    def run(self, args: List[str] = None, cmd: str = None, loc: str = None):
         """
         Run the script for the given arguments.
+
+        Parameters
+        ----------
+        args: List[str], optional
+            Arguments to pass to the external program, e.g. parameters.
+        cmd: str, optional
+            If this is not None, then it is assumed to contain the full
+            command to be executed via the shell (then `args` is ignored).
+            Be aware of possible security implications of shell injection.
+        loc: str, optional
+            Location for the output. If None is passed, one is created.
         """
         # create target on file system
-        loc = self.create_loc()
+        if loc is None:
+            loc = self.create_loc()
+
         # redirect output
         devnull = open(os.devnull, 'w')
+        stdout = stderr = {}
+        if not self.show_stdout:
+            stdout = {'stdout': devnull}
+        if not self.show_stderr:
+            stderr = {'stderr': devnull}
+
         # call
-        status = subprocess.run(
-            [self.executable, self.file, *self.fixed_args, *args,
-             f'target={loc}'],
-            stdout=devnull, stderr=devnull)
+        if cmd is not None:
+            status = subprocess.run(cmd, shell=True, **stdout, **stderr)
+        else:
+            executable = self.create_executable(loc)
+            status = subprocess.run(
+                [executable, self.file, *self.fixed_args, *args,
+                 f'target={loc}'], **stdout, **stderr)
+        if status.returncode:
+            msg = (f"Simulation error for arguments {args}: "
+                   f"returncode {status.returncode}.")
+            if self.raise_on_error:
+                raise ValueError(msg)
+            else:
+                logger.warn(msg)
+
         # return location and call's return status
         return {'loc': loc, 'returncode': status.returncode}
 
@@ -104,6 +162,9 @@ class ExternalModel(Model):
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "modelsim_",
                  dir: str = None,
+                 show_stdout: bool = False,
+                 show_stderr: bool = True,
+                 raise_on_error: bool = False,
                  name: str = "ExternalModel"):
         """
         Initialize the model.
@@ -120,9 +181,12 @@ class ExternalModel(Model):
             executable=executable, file=file,
             fixed_args=fixed_args,
             create_folder=create_folder,
-            suffix=suffix, prefix=prefix, dir=dir)
+            suffix=suffix, prefix=prefix, dir=dir,
+            show_stdout=show_stdout,
+            show_stderr=show_stderr,
+            raise_on_error=raise_on_error)
 
-    def __call__(self, pars):
+    def __call__(self, pars: Parameter):
         args = []
         for key, val in pars.items():
             args.append(f"{key}={val} ")
@@ -149,12 +213,18 @@ class ExternalSumStat:
                  fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "sumstat_",
-                 dir: str = None):
+                 dir: str = None,
+                 show_stdout: bool = False,
+                 show_stderr: bool = True,
+                 raise_on_error: bool = False):
         self.eh = ExternalHandler(
             executable=executable, file=file,
             fixed_args=fixed_args,
             create_folder=create_folder,
-            suffix=suffix, prefix=prefix, dir=dir)
+            suffix=suffix, prefix=prefix, dir=dir,
+            show_stdout=show_stdout,
+            show_stderr=show_stderr,
+            raise_on_error=raise_on_error)
 
     def __call__(self, model_output):
         """
@@ -180,12 +250,18 @@ class ExternalDistance:
     def __init__(self, executable: str, file: str,
                  fixed_args: List = None,
                  suffix: str = None, prefix: str = "dist_",
-                 dir: str = None):
+                 dir: str = None,
+                 show_stdout: bool = False,
+                 show_stderr: bool = True,
+                 raise_on_error: bool = False):
         self.eh = ExternalHandler(
             executable=executable, file=file,
             fixed_args=fixed_args,
             create_folder=False,
-            suffix=suffix, prefix=prefix, dir=dir)
+            suffix=suffix, prefix=prefix, dir=dir,
+            show_stdout=show_stdout,
+            show_stderr=show_stderr,
+            raise_on_error=raise_on_error)
 
     def __call__(self, sumstat_0, sumstat_1):
         # check if external script failed
