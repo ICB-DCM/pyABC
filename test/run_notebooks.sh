@@ -5,7 +5,7 @@
 
 
 declare -a notebooks
-notebooks=("adaptive_distances" "conversion_reaction" "early_stopping" "external_simulators" "parameter_inference" "quickstart" "resuming" "using_R")
+notebooks=("adaptive_distances" "conversion_reaction" "early_stopping" "external_simulators" "parameter_inference" "quickstart" "resuming" "using_R" "data_plots")
 
 
 dir="doc/examples"

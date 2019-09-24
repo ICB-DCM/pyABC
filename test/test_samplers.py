@@ -231,7 +231,6 @@ def test_redis_multiprocess():
 def test_redis_catch_error():
 
     def model(pars):
-        print(pars)
         if np.random.uniform() < 0.1:
             raise ValueError("error")
         return {'s0': pars['p0'] + 0.2 * np.random.uniform()}
