@@ -86,7 +86,7 @@ def plot_data(obs_data: dict,
             ax.set_ylabel(str(obs_key))
         elif isinstance(obs, np.ndarray):
             # nd: scatter
-            for j in range(len(sim)):
+            for j, (obs_val, sim_val) in enumerate(zip(obs, sim)):
                 ax.scatter(obs[j], sim[j], label=f"Coordinate {j}")
             ax.set_xlabel("Data")
             ax.set_ylabel("Simulation")
