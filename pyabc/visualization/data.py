@@ -45,22 +45,11 @@ def plot_data(obs_data: dict,
     sim_data = {key: sim_data[key] for key in keys}
 
     # get number of rows and columns
-    if len(obs_data) <= 3:
-        nrows = 1
-        ncols = len(obs_data)
-    elif len(obs_data) <= 6:
-        nrows = 2
-        ncols = 2
-    elif len(obs_data) <= 9:
-        nrows = 3
-        ncols = 3
-    elif len(obs_data) <= 16:
-        nrows = 4
-        ncols = 4
-    else:
-        logger.error("Data length should be equal or less than 16. "
-                     "Found = {}.".format(len(obs_data)))
-        return
+    ndata = len(obs_data)
+    ncols = int(np.ceil(np.sqrt(ndata)))
+    nrows = ncols
+    while ncols * (nrows - 1) >= ndata:
+        nrows -= 1
 
     # initialize figure
     fig, arr_ax = plt.subplots(nrows, ncols)
@@ -75,33 +64,46 @@ def plot_data(obs_data: dict,
 
         # data frame
         if isinstance(obs, pd.DataFrame):
-            obs_value = obs.values.item()
-            sim_value = sim.values.item()
-            ax.plot(sim_value,  '-x', color="C0", label='Simulation')
-            ax.plot(obs_value,  '-x', color="C1", label='Data')
-        # 2d array
-        elif isinstance(obs, np.ndarray) and (obs.ndim == 2):
-            obs_value = obs
-            sim_value = sim
-            ax.scatter(sim_value[0], sim_value[1],
-                       color="C0", label='Simulation')
-            ax.scatter(obs_value[0], obs_value[1],
-                       color="C1", label='Data')
-        # 1d array
-        elif isinstance(obs, np.ndarray):
+            if len(obs.columns) == 1:
+                # 1d: plot
+                ax.plot(sim.values.flatten(), '-x', label="Simulation")
+                ax.plot(obs.values.flatten(), '-x', label="Data")
+                ax.set_xlabel("Index")
+                ax.set_ylabel(obs.columns[0])
+            else:
+                # nd: scatter
+                for j, key in enumerate(obs.columns):
+                    ax.scatter(obs[key].values, sim[key].values, label=key)
+                ax.set_xlabel("Data")
+                ax.set_ylabel("Simulation")
+        elif isinstance(obs, np.ndarray) and obs.ndim == 1:
+            # 1d: plot
             obs_value = obs
             sim_value = sim
             ax.plot(sim_value, '-x', color="C0", label='Simulation')
             ax.plot(obs_value, '-x', color="C1", label='Data')
+            ax.set_xlabel("Index")
+            ax.set_ylabel(str(obs_key))
+        elif isinstance(obs, np.ndarray):
+            # nd: scatter
+            for j in range(len(sim)):
+                ax.scatter(obs[j], sim[j], label=f"Coordinate {j}")
+            ax.set_xlabel("Data")
+            ax.set_ylabel("Simulation")
         else:
-            logger.info("The selected data type is "
-                        "not yet supported. Try to use "
-                        "Pandas.Dataframe, 1d numpy.array, "
-                        "or 2d numpy.array. Found = {}.".format(type(obs)))
+            logger.info(f"Data type {type(obs)} for key {obs_key} is "
+                        f"not supported.")
+            # remove not needed axis
+            ax.axis('off')
 
         # finalize axes
-        ax.set_title(obs_key)
+        ax.set_title(str(obs_key))
         ax.legend()
+
+    # remove not needed axes
+    for plot_index in range(ndata, ncols * nrows):
+        ax = arr_ax.flatten()[plot_index]
+        ax.axis('off')
 
     # finalize plot
     fig.tight_layout()
