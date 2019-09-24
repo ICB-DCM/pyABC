@@ -93,7 +93,7 @@ def test_data_plot():
     obs_dict = {1: 0.7}
     sim_dict = {1: 6.5}
     pyabc.visualization.plot_data(obs_dict, sim_dict)
-    for i in range(18):
+    for i in range(5):
         obs_dict[i] = i + 1
         sim_dict[i] = i + 2
     pyabc.visualization.plot_data(obs_dict, sim_dict)
