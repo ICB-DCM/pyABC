@@ -7,6 +7,7 @@
 [![codacy](https://api.codacy.com/project/badge/Grade/923a9ab160e6420b9fc468701be60a98)](https://www.codacy.com/app/yannikschaelte/pyABC?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ICB-DCM/pyABC&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg)](https://codecov.io/gh/ICB-DCM/pyABC)
 [![pyPI version](https://badge.fury.io/py/pyabc.svg)](https://badge.fury.io/py/pyabc)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3364560.svg)](https://doi.org/10.5281/zenodo.3364560)
 
 Massively parallel, distributed and scalable ABC-SMC
 (Approximate Bayesian Computation - Sequential Monte Carlo)

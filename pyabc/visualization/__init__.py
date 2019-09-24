@@ -28,6 +28,8 @@ from .model_probabilities import (
     plot_model_probabilities)
 from .effective_sample_size import (
     plot_effective_sample_sizes)
+from .data import (
+    plot_data)
 
 
 __all__ = [
@@ -46,4 +48,5 @@ __all__ = [
     "plot_credible_intervals_for_time",
     "plot_model_probabilities",
     "plot_effective_sample_sizes",
+    "plot_data",
 ]
