@@ -32,6 +32,9 @@ class ExternalHandler:
         ----------
         executable: str
             Name of the executable to call, e.g. bash, java or Rscript.
+            The executable may be parameterized, e.g. appearances of {loc}
+            in the string are replaced at runtime by the location of the
+            output.
         file: str
             Path to the file to be executed, e.g. a
             .sh, .java or .r file, or also a .xml file depending on the
@@ -82,6 +85,8 @@ class ExternalHandler:
     def create_executable(self, loc):
         """
         Parse and return executable.
+
+        Replaces instances of {loc} by the location `loc`.
         """
         executable = self.executable.replace("{loc}", loc)
         return executable
