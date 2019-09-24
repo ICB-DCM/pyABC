@@ -14,7 +14,7 @@ Release Notes
 * Some extensions of external simulators interface (#168).
 * Add basic plots of summary statistics (#165).
 * Document high-performance infrastructure usage (#159).
-* Some self-administratory stuff (#158, #157).
+* Self-administrative: Add social preview (#158), and link to zenodo (#157).
 * Fix external deprecations (#153).
 * Re-add R related tests (#148).
 
