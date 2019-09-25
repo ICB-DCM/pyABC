@@ -289,7 +289,7 @@ class AggregatedDistance(Distance):
     All class functions are propagated to the children.
     """
 
-    def __init__(self, distances: List[Distance], weights: List[float]):
+    def __init__(self, distances: List[Distance], weights: List[float] = None):
         """
         Parameters
         ----------
@@ -299,7 +299,10 @@ class AggregatedDistance(Distance):
         weights: List[float], optional (default = [1,...])
             The weights to apply to the distances when taking the sum.
         """
-        self.distances = distances
+        if not isinstance(distances, list):
+            distances = [distances]
+        self.distances = [to_distance(distance) for distance in distances]
+
         if weights is None:
             weights = np.ones(len(distances))
         else:
@@ -332,7 +335,6 @@ class AggregatedDistance(Distance):
         return any([distance.update(t, sum_stats)
                     for distance in self.distances])
 
-    @abstractmethod
     def __call__(
             self,
             x: dict,

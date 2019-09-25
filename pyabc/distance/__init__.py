@@ -16,6 +16,7 @@ from .base import (
     IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
+    AggregatedDistance,
     to_distance)
 from .distance import (
     PNormDistance,
@@ -46,6 +47,7 @@ __all__ = [
     "IdentityFakeDistance",
     "AcceptAllDistance",
     "SimpleFunctionDistance",
+    "AggregatedDistance",
     "to_distance",
     # distance
     "PNormDistance",
