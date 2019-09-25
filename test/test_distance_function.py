@@ -64,10 +64,11 @@ def test_single_parameter_percentile():
 def test_pnormdistance():
     abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
                    {'s1': -1, 's2': 0, 's3': 1}])
+    x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
     # first test that for PNormDistance, the weights stay constant
     dist_f = PNormDistance()
-    dist_f.initialize(0, abc.sample_from_prior)
+    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
 
     # call distance function, also to initialize w
     d = dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
@@ -75,7 +76,7 @@ def test_pnormdistance():
     assert expected == d
 
     assert sum(abs(a - b) for a, b in
-               zip(list(dist_f.w[0].values()), [1, 1, 1])) < 0.01
+               zip(list(dist_f.weights[0].values()), [1, 1, 1])) < 0.01
 
 
 def test_adaptivepnormdistance():
