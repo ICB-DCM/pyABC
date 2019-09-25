@@ -61,6 +61,7 @@ def test_total_sample_numbers():
     pyabc.visualization.plot_total_sample_numbers(
         histories, rotation=75, yscale='log10')
 
+
 def test_effective_sample_sizes():
     pyabc.visualization.plot_effective_sample_sizes(
         histories, labels, rotation=45)
