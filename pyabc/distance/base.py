@@ -325,7 +325,6 @@ class AggregatedDistance(Distance):
         for distance in self.distances:
             distance.configure_sampler(sampler)
 
-    # pylint: disable=R0201
     def update(
             self,
             t: int,
@@ -355,7 +354,7 @@ class AggregatedDistance(Distance):
         config: dict
             Dictionary describing the distance.
         """
-        configs = []
+        config = {}
         for j, distance in enumerate(self.distances):
-            configs.append(f"Distance {j}: {distance.get_config}")
-        return ", ".join(configs)
+            config['Distance_{j}'] = distance.get_config()
+        return config
