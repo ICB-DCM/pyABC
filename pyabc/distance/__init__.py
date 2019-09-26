@@ -16,11 +16,12 @@ from .base import (
     IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
-    AggregatedDistance,
     to_distance)
 from .distance import (
     PNormDistance,
     AdaptivePNormDistance,
+    AggregatedDistance,
+    AdaptiveAggregatedDistance,
     ZScoreDistance,
     PCADistance,
     MinMaxDistance,
@@ -48,10 +49,12 @@ __all__ = [
     "AcceptAllDistance",
     "SimpleFunctionDistance",
     "AggregatedDistance",
+    "AdaptiveAggregatedDistance",
     "to_distance",
     # distance
     "PNormDistance",
     "AdaptivePNormDistance",
+    "AggregatedDistance",
     "ZScoreDistance",
     "PCADistance",
     "MinMaxDistance",
