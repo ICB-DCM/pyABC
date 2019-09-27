@@ -2,7 +2,7 @@ import scipy as sp
 
 import numpy as np
 from scipy import linalg as la
-from typing import List, Callable
+from typing import List, Callable, Union
 import logging
 
 from ..sampler import Sampler
@@ -364,15 +364,18 @@ class AggregatedDistance(Distance):
     def __init__(
             self,
             distances: List[Distance],
-            weights: List[float] = None):
+            weights: Union[List, dict] = None):
         """
         Parameters
         ----------
 
         distances: List
             The distance functions to apply.
-        weights: List[float], optional (default = [1,...])
-            The weights to apply to the distances when taking the sum.
+        weights: Union[List, dict], optional (default = [1,...])
+            The weights to apply to the distances when taking the sum. Can be
+            a list with entries in the same order as the distances, or a
+            dictionary of lists, with the keys being the single time points
+            (if the weights should be iteration-specific).
         """
         if not isinstance(distances, list):
             distances = [distances]
@@ -420,7 +423,7 @@ class AggregatedDistance(Distance):
             t: int = None,
             par: dict = None) -> float:
         """
-        Applied all distance functions and computes the weighted sum of all
+        Applies all distance functions and computes the weighted sum of all
         obtained values.
         """
         values = np.array([
@@ -476,15 +479,38 @@ class AggregatedDistance(Distance):
 
 
 class AdaptiveAggregatedDistance(AggregatedDistance):
+    """
+    Adapt the weights of `AggregatedDistances` automatically over time.
+
+    Parameters
+    ----------
+
+    distances: List[Distance]
+        As in AggregatedDistance.
+
+    adaptive: bool, optional (default = True)
+        True: Adapt weights after each iteration.
+        False: Adapt weights only once at the beginning in initialize().
+        This corresponds to a pre-calibration.
+
+    scale_function: Callable, optional (default = scale_span)
+        Function that takes a list of floats, namely the values obtained
+        by applying one of the distances passed to a set of samples,
+        and returns a single float, namely the weight to apply to this
+        distance function.
+    """
 
     def __init__(
             self,
             distances: List[Distance],
-            weights: List[float] = None,
-            adaptive: bool = True):
-        super().__init__(distances=distances, weights=weights)
+            adaptive: bool = True,
+            scale_function: Callable = None):
+        super().__init__(distances=distances)
         self.adaptive = adaptive
         self.x_0 = None
+        if scale_function is None:
+            scale_function = scale_span
+        self.scale_function = scale_function
 
     def initialize(self,
                    t: int,
@@ -531,13 +557,13 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         w = []
 
         for distance in self.distances:
-            # prepare list for key
-            current_list = []
-            for sum_stat in sum_stats:
-                current_list.append(distance(sum_stat, self.x_0))
-            current_list = np.array(current_list)
+            # apply distance to all samples
+            current_list = [
+                distance(sum_stat, self.x_0)
+                for sum_stat in sum_stats
+            ]
             # compute scaling
-            scale = np.max(current_list) - np.min(current_list)
+            scale = self.scale_function(current_list)
 
             # compute weight (inverted scale)
             if np.isclose(scale, 0):
@@ -553,6 +579,10 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         # logging
         logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+
+
+def scale_span(distance_values):
+    return max(distance_values) - min(distance_values)
 
 
 class DistanceWithMeasureList(Distance):
