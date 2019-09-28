@@ -6,7 +6,7 @@ from typing import List, Callable, Union
 import logging
 
 from ..sampler import Sampler
-from .scales import standard_deviation
+from .scales import standard_deviation, span
 from .base import Distance, to_distance
 
 
@@ -509,7 +509,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         self.adaptive = adaptive
         self.x_0 = None
         if scale_function is None:
-            scale_function = scale_span
+            scale_function = span
         self.scale_function = scale_function
 
     def initialize(self,
@@ -579,10 +579,6 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         # logging
         logger.debug(f"updated weights[{t}] = {self.weights[t]}")
-
-
-def scale_span(distance_values):
-    return max(distance_values) - min(distance_values)
 
 
 class DistanceWithMeasureList(Distance):
