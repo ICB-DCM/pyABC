@@ -443,7 +443,7 @@ class AggregatedDistance(Distance):
         """
         config = {}
         for j, distance in enumerate(self.distances):
-            config['Distance_{j}'] = distance.get_config()
+            config[f'Distance_{j}'] = distance.get_config()
         return config
 
     def format_weights_and_factors(self, t):

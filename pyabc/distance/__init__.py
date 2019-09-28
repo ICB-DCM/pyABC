@@ -38,7 +38,10 @@ from .scales import (
     mean_absolute_deviation_to_observation,
     combined_median_absolute_deviation,
     combined_mean_absolute_deviation,
-    standard_deviation_to_observation)
+    standard_deviation_to_observation,
+    span,
+    mean,
+    median)
 
 
 __all__ = [
@@ -71,5 +74,8 @@ __all__ = [
     "mean_absolute_deviation_to_observation",
     "combined_median_absolute_deviation",
     "combined_mean_absolute_deviation",
-    "standard_deviation_to_observation"
+    "standard_deviation_to_observation",
+    "span",
+    "mean",
+    "median",
 ]

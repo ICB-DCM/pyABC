@@ -1,8 +1,8 @@
 """
-Various schemes to compute scales for the
-(Adaptive)PNormDistance.
+Various schemes to compute scales for the AdaptivePNormDistance and the
+AdaptiveAggregatedDistance.
 
-For usage, the following are recommended:
+For usage with AdaptivePNormDistance, the following are recommended:
 * standard_deviation
 * root_mean_square_deviation (also takes observation into account)
 * median_absolute_deviation
@@ -19,6 +19,12 @@ in addition the following:
 
 Here, "only distance to observation" means that the in-sample variation
 is not taken into account.
+
+For AdaptiveAggregatedDistance, for which the data are not summary statistic
+values, but distance values, instead use either of
+* span
+* mean
+* median
 """
 
 
