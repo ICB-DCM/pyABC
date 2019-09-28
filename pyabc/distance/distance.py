@@ -30,7 +30,6 @@ class PNormDistance(Distance):
 
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
-
     weights: dict, optional (default = 1)
         Weights. Dictionary indexed by time points. Each entry contains a
         dictionary of numeric weights, indexed by summary statistics labels.
@@ -39,7 +38,6 @@ class PNormDistance(Distance):
         point, the maximum available time point is selected.
         It is also possible to pass a single dictionary index by summary
         statistics labels, if weights do not change in time.
-
     factors: dict, optional (default = 1)
         Scaling factors that the weights are multiplied with. The same
         structure applies as to weights.
@@ -147,15 +145,12 @@ class AdaptivePNormDistance(PNormDistance):
 
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
-
     factors: dict, optional
         As in PNormDistance.
-
     adaptive: bool, optional (default = True)
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
         This corresponds to a pre-calibration.
-
     scale_function: Callable, optional (default = standard_deviation)
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
@@ -163,12 +158,10 @@ class AdaptivePNormDistance(PNormDistance):
         summary statistic. Implemented are absolute_median_deviation,
         standard_deviation (default), centered_absolute_median_deviation,
         centered_standard_deviation.
-
     normalize_weights: bool, optional (default = True)
         Whether to normalize the weights to have mean 1. This just possibly
         smoothes the decrease of epsilon and might aid numeric stability, but
         is not strictly necessary.
-
     max_weight_ratio: float, optional (default = None)
         If not None, large weights will be bounded by the ratio times the
         smallest non-zero absolute weight. In practice usually not necessary,
@@ -224,6 +217,7 @@ class AdaptivePNormDistance(PNormDistance):
         """
         Initialize weights.
         """
+        super().initialize(t, get_sum_stats, x_0)
         self.x_0 = x_0
 
         # execute function
@@ -238,7 +232,6 @@ class AdaptivePNormDistance(PNormDistance):
         """
         Update weights based on all simulations.
         """
-
         if not self.adaptive:
             return False
 
@@ -252,19 +245,11 @@ class AdaptivePNormDistance(PNormDistance):
         """
         Here the real update of weights happens.
         """
-
         # retrieve keys
         keys = self.x_0.keys()
 
         # number of samples
         n_samples = len(sum_stats)
-
-        # make sure weights is initialized
-        if self.weights is None:
-            self.weights = {}
-
-        if self.factors is None:
-            self.factors = {t: {key: 1.0 for key in keys}}
 
         # to-be-filled-and-appended weights dictionary
         w = {}
@@ -364,7 +349,8 @@ class AggregatedDistance(Distance):
     def __init__(
             self,
             distances: List[Distance],
-            weights: Union[List, dict] = None):
+            weights: Union[List, dict] = None,
+            factors: Union[List, dict] = None):
         """
         Parameters
         ----------
@@ -376,21 +362,32 @@ class AggregatedDistance(Distance):
             a list with entries in the same order as the distances, or a
             dictionary of lists, with the keys being the single time points
             (if the weights should be iteration-specific).
+        factors: Union[List, dict], optional (dfault = [1,...])
+            Scaling factors that the weights are multiplied with. The same
+            structure applies as to weights.
+            If None is passed, a factor of 1 is considered for every summary
+            statistic.
+            Note that in this class, factors are superfluous as everything can
+            be achieved with weights alone, however in subclsses the factors
+            can remain static while weights adapt over time, allowing for
+            greater flexibility.
         """
         if not isinstance(distances, list):
             distances = [distances]
         self.distances = [to_distance(distance) for distance in distances]
 
         self.weights = weights
+        self.factors = factors
 
     def initialize(
             self,
             t: int,
             get_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
+        super().initialize(t, get_sum_stats, x_0)
         for distance in self.distances:
             distance.initialize(t, get_sum_stats, x_0)
-        self.format_weights(t)
+        self.format_weights_and_factors(t)
 
     def configure_sampler(
             self,
@@ -429,9 +426,10 @@ class AggregatedDistance(Distance):
         values = np.array([
             distance(x, x_0, t, par) for distance in self.distances
         ])
-        self.format_weights(t)
+        self.format_weights_and_factors(t)
         weights = AggregatedDistance.get_for_t_or_latest(self.weights, t)
-        return np.dot(weights, values)
+        factors = AggregatedDistance.get_for_t_or_latest(self.factors, t)
+        return np.dot(weights * factors, values)
 
     def get_config(self) -> dict:
         """
@@ -448,9 +446,11 @@ class AggregatedDistance(Distance):
             config['Distance_{j}'] = distance.get_config()
         return config
 
-    def format_weights(self, t):
+    def format_weights_and_factors(self, t):
         self.weights = AggregatedDistance.format_dict(
             self.weights, t, len(self.distances))
+        self.factors = AggregatedDistance.format_dict(
+            self.factors, t, len(self.distances))
 
     @staticmethod
     def format_dict(w, t, n_distances, default_val=1.):
@@ -487,12 +487,12 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     distances: List[Distance]
         As in AggregatedDistance.
-
+    factors: Union[List, dict]
+        As in AggregatedDistance.
     adaptive: bool, optional (default = True)
         True: Adapt weights after each iteration.
         False: Adapt weights only once at the beginning in initialize().
         This corresponds to a pre-calibration.
-
     scale_function: Callable, optional (default = scale_span)
         Function that takes a list of floats, namely the values obtained
         by applying one of the distances passed to a set of samples,
@@ -503,9 +503,11 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
     def __init__(
             self,
             distances: List[Distance],
+            factors: Union[List, dict] = None,
             adaptive: bool = True,
             scale_function: Callable = None):
         super().__init__(distances=distances)
+        self.factors = factors
         self.adaptive = adaptive
         self.x_0 = None
         if scale_function is None:
@@ -549,10 +551,6 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         """
         Here the real update of weights happens.
         """
-        # make sure weights is initialized
-        if self.weights is None:
-            self.weights = {}
-
         # to-be-filled-and-appended weights dictionary
         w = []
 
@@ -716,6 +714,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
         Parameters
         ----------
+
         parameter_list: List[float]
             List of values of a parameter.
 
@@ -733,6 +732,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
         Parameters
         ----------
+
         parameter_list: List[float]
             List of values of a parameter.
 
