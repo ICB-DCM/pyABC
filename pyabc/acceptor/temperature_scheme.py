@@ -202,7 +202,7 @@ def scheme_polynomial_decay(**kwargs):
 
 def scheme_friel_pettitt(**kwargs):
     """
-    Basically takes linear steps in lin-space. See [#vyshemirsky2008]_.
+    Basically takes linear steps in log-space. See [#vyshemirsky2008]_.
 
     .. [#vyshemirsky2008] Vyshemirsky, Vladislav, and Mark A. Girolami.
         "Bayesian ranking of biochemical system models."
@@ -351,6 +351,6 @@ def scheme_ess(**kwargs):
 
 
 def ess(pdfs, weights, beta):
-    num = np.sum(weights * pdfs**beta)**2
+    num = np.sum(weights * pdfs**beta) ** 2
     den = np.sum((weights * pdfs**beta) ** 2)
     return num / den
