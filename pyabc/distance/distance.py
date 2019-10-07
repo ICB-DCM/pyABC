@@ -6,7 +6,7 @@ from typing import List, Callable, Union
 import logging
 
 from ..sampler import Sampler
-from .scales import standard_deviation, span
+from .scale import standard_deviation, span
 from .base import Distance, to_distance
 
 

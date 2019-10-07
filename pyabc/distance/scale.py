@@ -2,6 +2,10 @@
 Various schemes to compute scales for the AdaptivePNormDistance and the
 AdaptiveAggregatedDistance.
 
+All of the functions take as argument a `data` list of values, and some in
+addition other arguments, in particular a float `x_0` for the observed
+value.
+
 For usage with AdaptivePNormDistance, the following are recommended:
 * standard_deviation
 * root_mean_square_deviation (also takes observation into account)

@@ -28,7 +28,7 @@ from .distance import (
     PercentileDistance,
     RangeEstimatorDistance,
     DistanceWithMeasureList)
-from .scales import (
+from .scale import (
     median_absolute_deviation,
     mean_absolute_deviation,
     standard_deviation,
@@ -51,13 +51,12 @@ __all__ = [
     "IdentityFakeDistance",
     "AcceptAllDistance",
     "SimpleFunctionDistance",
-    "AggregatedDistance",
-    "AdaptiveAggregatedDistance",
     "to_distance",
     # distance
     "PNormDistance",
     "AdaptivePNormDistance",
     "AggregatedDistance",
+    "AdaptiveAggregatedDistance",
     "ZScoreDistance",
     "PCADistance",
     "MinMaxDistance",
