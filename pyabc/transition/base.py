@@ -142,7 +142,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         A call to this method, as a side effect, also sets the attributes
         ``test_points_``, ``test_weights_`` and ``variation_at_test_points_``.
-        These are the individual points, weights and varations
+        These are the individual points, weights and variations
         used to calculate the mean.
         """
         # TODO: not sure if this is the right behaviour
@@ -158,11 +158,15 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         self.test_points_ = test_points
         self.test_weights_ = test_weights
 
+        # calculate bootstrapped coefficients of variation
         cv, variation_at_test = calc_cv(n_samples, np.array([1]),
                                         self.NR_BOOTSTRAP, test_weights,
                                         [self], [test_points])
 
         self.variation_at_test_points_ = variation_at_test[0]
+
+        # return the cv as estimator of the uncertainty of sampling
+        # `n_samples` times from the KDE
         return cv
 
     def required_nr_samples(self, coefficient_of_variation: float) -> int:
