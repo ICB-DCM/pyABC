@@ -8,6 +8,15 @@ Release Notes
 ..........
 
 
+0.9.16 (2019-10-08)
+-------------------
+
+* Add AggregatedDistance function, and a basic self-tuned version
+  AdaptiveAggregatedDistance (#173).
+* In the adaptive_distances and the aggregated_distances notebooks, add
+  examples where some methods can fail (#173).
+
+
 0.9.15 (2019-09-15)
 -------------------
 
