@@ -65,9 +65,11 @@ def test_variance_estimate_higher_n_than_sample(transition: Transition):
     for n_test in [n, n*4, n*10]:
         var = transition.mean_cv(n_test)
         var_list.append(var)
+        print(var)
 
     for lower, upper in zip(var_list[:-1], var_list[1:]):
-        assert lower >= upper
+        # add a little buffer to overcome slight random fluctuations
+        assert lower + 1e-2 >= upper
 
 
 def test_variance_no_side_effect(transition: Transition):
