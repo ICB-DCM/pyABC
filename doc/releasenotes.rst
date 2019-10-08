@@ -12,9 +12,12 @@ Release Notes
 -------------------
 
 * Add AggregatedDistance function, and a basic self-tuned version
-  AdaptiveAggregatedDistance (#173).
+  AdaptiveAggregatedDistance.
+* Add additional factors to PNormDistance and AggregatedDistance for
+  flexibility. Minor API break: argument w renamed to weights.
 * In the adaptive_distances and the aggregated_distances notebooks, add
-  examples where some methods can fail (#173).
+  examples where some methods can fail.
+* Add plot_total_sample_numbers plot (#173).
 
 
 0.9.15 (2019-09-15)
