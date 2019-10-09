@@ -1,7 +1,8 @@
-version: 1
-
-conda:
-    file: .environment.yml
-
-python:
-    setup_py_install: true
+name: py36
+dependencies:
+  - python=3.6
+  - sphinx
+  - pandoc
+  - nbconvert
+  - pip:
+    - nbsphinx
