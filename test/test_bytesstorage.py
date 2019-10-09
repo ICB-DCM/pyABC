@@ -18,6 +18,8 @@ import os
                         "df-numeric_str", "df-int-float-numeric_str",
                         "df-int-float-non_numeric_str-str_ind",
                         "df-int-float-numeric_str-str_ind",
+                        "series",
+                        "series-no_ind",
                         "py-int",
                         "py-float",
                         "py-str",
@@ -63,6 +65,10 @@ def object_(request):
                              "b": [1.1, 2.2],
                              "c": ["1", "2"]},
                             index=["first", "second"])
+    if par == "series":
+        return pd.Series({'a': 42, 'b': 3.8, 'c': 4.2})
+    if par == "series-no_ind":
+        return pd.Series(sp.randn(10))
     if par == "py-int":
         return 42
     if par == "py-float":
@@ -108,6 +114,8 @@ def test_storage(object_):
         assert (object_ == rebuilt).all()
     elif isinstance(object_, pd.DataFrame):
         assert (object_ == rebuilt).all().all()
+    elif isinstance(object_, pd.Series):
+        assert (object_.to_frame() == rebuilt).all().all()
     elif isinstance(object_, robjects.DataFrame):
         with localconverter(pandas2ri.converter):
             assert (robjects.conversion.rpy2py(object_) == rebuilt) \
@@ -117,8 +125,11 @@ def test_storage(object_):
 
 
 def _check_type(object_, rebuilt):
-    # r objects are transformed to pd.DataFrame
+    # r objects are converted to pd.DataFrame
     if isinstance(object_, robjects.DataFrame):
+        assert isinstance(rebuilt, pd.DataFrame)
+    # pd.Series are converted to pd.DataFrame
+    elif isinstance(object_, pd.Series):
         assert isinstance(rebuilt, pd.DataFrame)
     # <= 1 dim numpy arrays are converted to primitive type
     elif isinstance(object_, np.ndarray) and object_.size <= 1:
