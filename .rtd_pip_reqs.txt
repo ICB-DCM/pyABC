@@ -1,2 +1,4 @@
 sphinx
+nbsphinx
+nbconvert
 sphinx-rtd-theme
