@@ -4,3 +4,8 @@ dependencies:
   - sphinx
   - pandoc
   - pip
+  - pip:
+      - nbsphinx
+      - nbconvert
+      - sphinx
+      - sphinx-rtd-theme
