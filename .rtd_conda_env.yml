@@ -5,7 +5,7 @@ dependencies:
   - pandoc
   - pip
   - pip:
+      - sphinx
       - nbsphinx
       - nbconvert
-      - sphinx
       - sphinx-rtd-theme
