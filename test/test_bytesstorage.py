@@ -26,6 +26,7 @@ import os
                         "np-int",
                         "np-float",
                         "np-str",
+                        "np-single-int",
                         "np-single-float",
                         "np-single-str",
                         "r-df-cars",
@@ -81,8 +82,10 @@ def object_(request):
         return sp.random.randn(100)
     if par == "np-str":
         return np.array(["foo", "bar"])
+    if par == "np-single-int":
+        return np.array(3)
     if par == "np-single-float":
-        return np.array(4.2)
+        return np.array(4.1)
     if par == "np-single-str":
         return np.array("foo bar")
     if par == "r-df-cars":
