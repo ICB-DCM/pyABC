@@ -7,7 +7,7 @@ version: 2
 
 # conda setup
 conda:
-    file: .rtd_conda_env.yml
+    environment: .rtd_conda_env.yml
 
 # python requirements
 python:
