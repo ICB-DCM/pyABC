@@ -76,7 +76,6 @@ def abc_detail(abc_id):
 
         melted = pd.melt(model_probabilities, id_vars="t", var_name="m",
                          value_name="p")
-        melted = melted.convert_objects()
         melted["m"] = pd.to_numeric(melted["m"])
 
         # although it might seem cumbersome, not using the bkcharts

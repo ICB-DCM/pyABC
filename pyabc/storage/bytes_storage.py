@@ -19,8 +19,18 @@ except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
         return object_
 
 
-def to_bytes(object_):
+def maybe_to_df(object_):
+    """
+    Convert pd.Series and robjects.DataFrame to pd.DataFrame.
+    """
+    if isinstance(object_, pd.Series):
+        object_ = object_.to_frame()
     object_ = r_to_py(object_)
+    return object_
+
+
+def to_bytes(object_):
+    object_ = maybe_to_df(object_)
     if isinstance(object_, pd.DataFrame):
         return df_to_bytes(object_)
     return np_to_bytes(object_)
