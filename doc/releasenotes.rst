@@ -8,6 +8,19 @@ Release Notes
 ..........
 
 
+0.9.17 (2019-10-10)
+-------------------
+
+* Use latest pypi rpy2 version on travis and rtd since now the relevant
+  issues were addressed there (easier build, esp. for users).
+* Update rtd build to version 2 (all #179).
+* Render logo text for platform independence.
+* Prevent stochastic transition test from failing that often.
+* Remove deprecated pd.convert_objects call in web server.
+* Allow pandas.Series as summary statistics, by conversion to
+  pandas.DataFrame (all #180).
+
+
 0.9.16 (2019-10-08)
 -------------------
 
@@ -17,7 +30,7 @@ Release Notes
   flexibility. Minor API break: argument w renamed to weights.
 * In the adaptive_distances and the aggregated_distances notebooks, add
   examples where some methods can fail.
-* Add plot_total_sample_numbers plot (#173).
+* Add plot_total_sample_numbers plot (all #173).
 
 
 0.9.15 (2019-09-15)
