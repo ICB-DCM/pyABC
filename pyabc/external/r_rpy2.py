@@ -16,16 +16,20 @@ Currently, the R language is supported.
     Should this not work on your system, consider accessing R script-based.
 """
 
-try:
-    from rpy2.robjects import ListVector, r
-except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
-    raise Exception(
-        "Install rpy2 to enable simple support for the R language.")
 from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
 import numbers
 import warnings
+import logging
+
+logger = logging.getLogger("External")
+
+try:
+    from rpy2.robjects import ListVector, r
+except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
+    logger.error(
+        "Install rpy2 to enable simple support for the R language.")
 
 
 __all__ = ["R"]
