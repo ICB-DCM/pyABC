@@ -17,7 +17,7 @@ Welcome to pyABC's documentation!
 :Release: |version|
 :Source code: https://github.com/icb-dcm/pyabc
 
-.. image:: logo.png
+.. image:: logo/logo.png
    :alt: pyABC logo
    :align: center
 

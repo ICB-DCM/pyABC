@@ -18,7 +18,9 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/multiscale_agent_based.ipynb
    examples/sde_ion_channels.ipynb
    examples/adaptive_distances.ipynb
+   examples/aggregated_distances.ipynb
    examples/external_simulators.ipynb
+   examples/data_plots.ipynb
 
 
 Download the examples as notebooks
@@ -35,7 +37,9 @@ Download the examples as notebooks
 * :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
 * :download:`Stochastic Differential Equation: Ion channel noise in Hodgkin-Huxley neurons <examples/sde_ion_channels.ipynb>`
 * :download:`Adaptive Distances <examples/adaptive_distances.ipynb>`
+* :download:`Aggregated Distances <examples/aggregated_distances.ipynb>`
 * :download:`External Simulators <examples/external_simulators.ipynb>`
+* :download:`Data plots <examples/data_plots.ipynb>`
 
 
 .. warning::

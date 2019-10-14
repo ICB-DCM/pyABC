@@ -16,6 +16,7 @@ from .base import (
     ExternalDistance,
     create_sum_stat)
 
+
 __all__ = [
     'R',
     'ExternalHandler',

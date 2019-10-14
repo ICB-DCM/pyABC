@@ -1,7 +1,9 @@
 .. _sampler:
 
+
 Parallel and Distributed Sampling
 =================================
+
 
 Strategies
 ----------
@@ -30,7 +32,6 @@ code can be hard sometimes.
 
 Multi-core only samplers
 ~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 For multi-core execution, pyABC implements two possible parallelization
 strategies.
@@ -76,7 +77,6 @@ The Redis based sampler can require slightly more effort in
 setting up than the Dask based sampler, but has fewer constraints regarding
 simulation function runtime. The Dask sampler is in turn better suited to
 handle worker failures and unexpected execution host terminations.
-
 
 
 General extensible samplers
@@ -133,7 +133,6 @@ of if you're using anaconda via
 At this point, Windows is not officially supported by the Redis developers.
 We assume for now, that the IP address of the machine running the Redis server
 is 111.111.111.111.
-
 
 
 Step 2 or 3: Start pyABC
@@ -241,8 +240,7 @@ pyABC has finished.
 Optional: Something with the workers went wrong in the middle of a run
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-It can happen, that workers get unexpectedly killed.
+It can happen that workers get unexpectedly killed.
 If they are not able to communicate to the redis-server that they've finished
 working on the current population before they're killed,
 the pyABC master process will wait forever.
@@ -253,3 +251,68 @@ In such cases, the following can be done
 2. Execute ``abc-redis-manager reset-workers`` to manually reset the number
    of registered workers to zero.
 3. Start worker processes again.
+
+
+High-performance infrastructure
+-------------------------------
+
+pyABC has been successfully employed on various high-performance computing (HPC) infrastructures. There are a few things to keep in mind.
+
+
+Long-running master process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+While most of the work happens on parallel workers, pyABC requires one long-running master process in the background for all of the analysis (or rather two processes, namely the master process running the execution script, and in addition possibly a task scheduler like the redis server). If the HPC infrastructure does not allow for such long-running processes with low CPU and memory requirements, one has to find a way around. Eventually, it is planned for pyABC to support loss-free automatic checkpointing and restarting, but presently this is not yet implemented. If possible, the master process can be run on external servers, login nodes, or on execution nodes while taking maximum runtimes and reliability of server and connections into consideration.
+
+
+Job scheduling
+~~~~~~~~~~~~~~
+
+HPC environments usually employ a job scheduler for distributing work to the execution nodes. Here, we shortly outline how pyABC can be integrated in such a setup. Exemplarily, we use a redis sampler, usage of in particular the dask sampler being similar.
+
+Let us consider the widely used job scheduler `slurm <https://slurm.schedmd.com>`_. First, we need a script `script_redis_worker.sh` that starts the redis worker:
+
+.. code:: bash
+
+   #!/bin/bash
+   
+   # slurm settings
+   #SBATCH -p {partition_id}
+   #SBATCH -c {number_of_cpus}
+   #SBATCH -t {time_in_minutes}
+   #SBATCH -o {output_file_name}
+   #SBATCH -e {error_file_name}
+
+   # prepare environment, e.g. set path
+
+   # run
+   abs-redis-worker --host={host_ip} --port={port} --runtime={runtime} \
+       --processes={n_processes}
+
+Here, `n_processes` defines the number of processes started for that batch job via multiprocessing. Some HPC setups prefer larger batch jobs, e.g. on a node level, so here each job can already be given some parallelity. The `SBATCH` macros define the slurm setting to be used.
+
+The above script would be submitted to the slurm job manager via `sbatch`. It makes sense to define a script for this as well:
+
+.. code:: bash
+
+   #!/bin/bash
+
+   for i in {1..{n_jobs}}
+   do
+     sbatch script_redis_worker.sh
+   done
+
+Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is based on qsub, e.g. SGE/UGE, instead use a script like
+
+.. code:: bash
+
+   #!/bin/bash
+
+   for i in {1..{n_jobs}}
+   do
+     qsub -o {output_file_name} -e {error_file_name} \
+         script_redis_worker.sh
+
+and adapt the worker script. For both, there exist many more configuration options. For further details see the respective documentation.
+
+Note that when planning for the number of overall redis workers, batches, and cpus per batch, also the parallelization on the level of the simulations has to be taken into account. Also, memory requirements should be checked in advance.

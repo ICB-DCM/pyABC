@@ -54,6 +54,14 @@ def test_sample_numbers():
     pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
 
 
+def test_total_sample_numbers():
+    pyabc.visualization.plot_total_sample_numbers(histories)
+    pyabc.visualization.plot_total_sample_numbers(
+        histories, labels, yscale='log')
+    pyabc.visualization.plot_total_sample_numbers(
+        histories, rotation=75, yscale='log10')
+
+
 def test_effective_sample_sizes():
     pyabc.visualization.plot_effective_sample_sizes(
         histories, labels, rotation=45)
@@ -87,3 +95,13 @@ def test_credible_intervals():
 
 def test_model_probabilities():
     pyabc.visualization.plot_model_probabilities(histories[0])
+
+
+def test_data_plot():
+    obs_dict = {1: 0.7}
+    sim_dict = {1: 6.5}
+    pyabc.visualization.plot_data(obs_dict, sim_dict)
+    for i in range(5):
+        obs_dict[i] = i + 1
+        sim_dict[i] = i + 2
+    pyabc.visualization.plot_data(obs_dict, sim_dict)

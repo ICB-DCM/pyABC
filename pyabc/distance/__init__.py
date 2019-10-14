@@ -20,13 +20,15 @@ from .base import (
 from .distance import (
     PNormDistance,
     AdaptivePNormDistance,
+    AggregatedDistance,
+    AdaptiveAggregatedDistance,
     ZScoreDistance,
     PCADistance,
     MinMaxDistance,
     PercentileDistance,
     RangeEstimatorDistance,
     DistanceWithMeasureList)
-from .scales import (
+from .scale import (
     median_absolute_deviation,
     mean_absolute_deviation,
     standard_deviation,
@@ -36,7 +38,10 @@ from .scales import (
     mean_absolute_deviation_to_observation,
     combined_median_absolute_deviation,
     combined_mean_absolute_deviation,
-    standard_deviation_to_observation)
+    standard_deviation_to_observation,
+    span,
+    mean,
+    median)
 from .kernel import (
     StochasticKernel,
     RET_SCALE_LIN,
@@ -59,13 +64,15 @@ __all__ = [
     # distance
     "PNormDistance",
     "AdaptivePNormDistance",
+    "AggregatedDistance",
+    "AdaptiveAggregatedDistance",
     "ZScoreDistance",
     "PCADistance",
     "MinMaxDistance",
     "PercentileDistance",
     "RangeEstimatorDistance",
     "DistanceWithMeasureList",
-    # scales
+    # scale
     "median_absolute_deviation",
     "mean_absolute_deviation",
     "standard_deviation",
@@ -76,6 +83,9 @@ __all__ = [
     "combined_median_absolute_deviation",
     "combined_mean_absolute_deviation",
     "standard_deviation_to_observation",
+    "span",
+    "mean",
+    "median",
     # kernels
     "StochasticKernel",
     "RET_SCALE_LIN",

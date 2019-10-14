@@ -1,0 +1,11 @@
+name: py37
+dependencies:
+  - python=3.7
+  - sphinx
+  - pandoc
+  - pip
+  - pip:
+      - sphinx
+      - nbsphinx
+      - nbconvert
+      - sphinx-rtd-theme

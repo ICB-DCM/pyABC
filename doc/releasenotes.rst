@@ -8,7 +8,7 @@ Release Notes
 -----------
 
 
-0.10.0 (2019-04-01)
+0.10.0 (2019-10-14)
 -------------------
 
 * Stochastic acceptor introduced as alternative to uniform epsilon
@@ -17,6 +17,42 @@ Release Notes
 
 0.9 series
 ..........
+
+
+0.9.17 (2019-10-10)
+-------------------
+
+* Use latest pypi rpy2 version on travis and rtd since now the relevant
+  issues were addressed there (easier build, esp. for users).
+* Update rtd build to version 2 (all #179).
+* Render logo text for platform independence.
+* Prevent stochastic transition test from failing that often.
+* Remove deprecated pd.convert_objects call in web server.
+* Allow pandas.Series as summary statistics, by conversion to
+  pandas.DataFrame (all #180).
+
+
+0.9.16 (2019-10-08)
+-------------------
+
+* Add AggregatedDistance function, and a basic self-tuned version
+  AdaptiveAggregatedDistance.
+* Add additional factors to PNormDistance and AggregatedDistance for
+  flexibility. Minor API break: argument w renamed to weights.
+* In the adaptive_distances and the aggregated_distances notebooks, add
+  examples where some methods can fail.
+* Add plot_total_sample_numbers plot (all #173).
+
+
+0.9.15 (2019-09-15)
+-------------------
+
+* Some extensions of external simulators interface (#168).
+* Add basic plots of summary statistics (#165).
+* Document high-performance infrastructure usage (#159).
+* Self-administrative: Add social preview (#158), and link to zenodo (#157).
+* Fix external deprecations (#153).
+* Re-add R related tests (#148).
 
 
 0.9.14 (2019-08-08)
