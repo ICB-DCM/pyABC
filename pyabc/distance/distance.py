@@ -78,7 +78,7 @@ class PNormDistance(Distance):
     def __call__(self,
                  x: dict,
                  x_0: dict,
-                 t: int,
+                 t: int = None,
                  par: dict = None) -> float:
         # make sure everything is formatted correctly
         self.format_weights_and_factors(t, x_0.keys())
@@ -230,7 +230,7 @@ class AdaptivePNormDistance(PNormDistance):
                t: int,
                sum_stats: List[dict]):
         """
-        Update weights based on all simulations.
+        Update weights.
         """
         if not self.adaptive:
             return False
