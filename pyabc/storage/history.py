@@ -213,7 +213,8 @@ class History:
     def get_distribution(self, m: int = 0, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
-        Returns the weighted population sample as pandas DataFrame.
+        Returns the weighted population sample for model m and timepoint t
+        as a pandas DataFrame.
 
         Parameters
         ----------
@@ -265,6 +266,12 @@ class History:
 
         t: int, optional (default = -1)
             Population index.
+
+        Returns
+        -------
+
+        model_names: List[str]
+            List of model names.
         """
         res = (self._session.query(Model.name)
                .join(Population)
@@ -466,6 +473,15 @@ class History:
 
     @with_session
     def observed_sum_stat(self):
+        """
+        Get the observed summary statistics.
+
+        Returns
+        -------
+
+        sum_stats_dct: dict
+            The observed summary statistics.
+        """
         sum_stats = (self._session
                      .query(SummaryStatistic)
                      .join(Sample)
@@ -708,11 +724,13 @@ class History:
 
         Parameters
         ----------
+
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
+
         nr_alive: int >= 0 or None
             Number of models still alive.
             None is for the last population
@@ -787,13 +805,14 @@ class History:
     @with_session
     def get_nr_particles_per_population(self) -> pd.Series:
         """
+        Get the number of particles per population.
 
         Returns
         -------
 
         nr_particles_per_population: pd.DataFrame
             A pandas DataFrame containing the number
-            of particles for each population
+            of particles for each population.
 
         """
         query = (self._session.query(Population.t)
