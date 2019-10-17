@@ -45,8 +45,7 @@ from .storage import History
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
-    accept_use_current_time,
-    accept_use_complete_history)
+    UniformAcceptor)
 from .model import (
     Model,
     SimpleModel,
@@ -114,8 +113,7 @@ __all__ = [
     # acceptor
     "Acceptor",
     "SimpleFunctionAcceptor",
-    "accept_use_current_time",
-    "accept_use_complete_history",
+    "UniformAcceptor",
     # model
     "ModelResult",
     "Model",
