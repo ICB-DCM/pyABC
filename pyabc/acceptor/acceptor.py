@@ -14,9 +14,8 @@ when the distance measure and epsilon criteria develop over
 time.
 """
 
-import numpy as np
 import pandas as pd
-from typing import Callable, List, Union
+from typing import Callable, List
 import logging
 
 from ..distance import Distance
@@ -46,7 +45,7 @@ class AcceptanceResult(dict):
         to be taken into account via importance sampling in
         calculating the parameter weight.
     """
-    
+ 
     def __init__(self, distance: float, accept: bool, weight: float = 1.0):
         super().__init__()
         self.distance = distance
