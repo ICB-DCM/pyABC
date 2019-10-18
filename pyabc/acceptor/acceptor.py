@@ -15,7 +15,7 @@ time.
 """
 
 import pandas as pd
-from typing import Callable, List
+from typing import Callable
 import logging
 
 from ..distance import Distance
@@ -45,7 +45,7 @@ class AcceptanceResult(dict):
         to be taken into account via importance sampling in
         calculating the parameter weight.
     """
- 
+
     def __init__(self, distance: float, accept: bool, weight: float = 1.0):
         super().__init__()
         self.distance = distance
@@ -267,7 +267,7 @@ def accept_use_complete_history(
     return AcceptanceResult(distance=d, accept=accept)
 
 
-class Uniformacceptor(Acceptor):
+class UniformAcceptor(Acceptor):
     """
     Base acceptance on the distance function and a uniform error distribution
     between -eps and eps.
@@ -289,8 +289,8 @@ class Uniformacceptor(Acceptor):
 
     def __call__(self, distance_function, eps, x, x_0, t, par):
         if self.use_complete_history:
-            return accept_uniform_use_complete_history(
+            return accept_use_complete_history(
                 distance_function, eps, x, x_0, t, par)
         else:  # use only current time
-            return accept_uniform_use_current_time(
+            return accept_use_current_time(
                 distance_function, eps, x, x_0, t, par)
