@@ -26,7 +26,7 @@ from ..parameters import Parameter
 logger = logging.getLogger("Acceptor")
 
 
-class AcceptanceResult(dict):
+class AcceptorResult(dict):
     """
     Result of an acceptance step.
 
@@ -157,7 +157,7 @@ class Acceptor:
         Returns
         -------
 
-        An AcceptanceResult.
+        An AcceptorResult.
 
         .. note::
             Currently, only one value encoding the distance is returned
@@ -232,7 +232,7 @@ def accept_use_current_time(
     d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
-    return AcceptanceResult(distance=d, accept=accept)
+    return AcceptorResult(distance=d, accept=accept)
 
 
 def accept_use_complete_history(
@@ -264,7 +264,7 @@ def accept_use_complete_history(
                 # ignore as of now
                 accept = True
 
-    return AcceptanceResult(distance=d, accept=accept)
+    return AcceptorResult(distance=d, accept=accept)
 
 
 class UniformAcceptor(Acceptor):

@@ -8,6 +8,7 @@ Acceptors handle the acceptance step.
 
 
 from .acceptor import (
+    AcceptorResult,
     Acceptor,
     SimpleFunctionAcceptor,
     UniformAcceptor,
@@ -16,6 +17,7 @@ from .acceptor import (
 
 __all__ = [
     # acceptor
+    'AcceptorResult',
     'Acceptor',
     'SimpleFunctionAcceptor',
     'UniformAcceptor',

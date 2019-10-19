@@ -819,23 +819,25 @@ class ABCSMC:
 
             # retrieve accepted population
             population = sample.get_accepted_population()
+            logger.debug(f"Population {t} done.")
 
             # save to database before making any changes to the population
-            logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
                 t, current_eps, population, nr_evaluations,
                 model_names)
             logger.debug(
-                f"Total nr simulations up to t = {t}: "
+                f"Total samples up to t = {t}: "
                 f"{self.history.total_nr_simulations}.")
 
             # prepare next iteration
 
             # acceptance rate
-            acceptance_rate = len(population.get_list()) / nr_evaluations
-            logger.info(f"Acceptance rate: {acceptance_rate}.")
+            pop_size = len(population.get_list())
+            acceptance_rate = pop_size / nr_evaluations
+            logger.info(f"Acceptance rate: {pop_size} / {nr_evaluations} = "
+                        f"{acceptance_rate:.4e}.")
 
             # update distance function
             partial_sum_stats = sample.first_n_sum_stats(
