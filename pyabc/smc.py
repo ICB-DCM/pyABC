@@ -800,8 +800,7 @@ class ABCSMC:
         for t in range(t0, t_max):
 
             # get epsilon for generation t
-            current_eps = self.eps(t) if not isinstance(self.eps, NoEpsilon) \
-                else self.acceptor.get_epsilon_equivalent(t)
+            current_eps = self.eps(t)
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # do some adaptations

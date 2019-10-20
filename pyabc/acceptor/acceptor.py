@@ -171,14 +171,6 @@ class Acceptor:
         """
         raise NotImplementedError()
 
-    def get_epsilon_equivalent(self, t: int):
-        """
-        Return acceptance criterion for time t. An acceptor should implement
-        this if it manages the acceptance criterion itself, i.e. when it is
-        used together with a NoEpsilon.
-        """
-        raise NotImplementedError()
-
 
 class SimpleFunctionAcceptor(Acceptor):
     """
