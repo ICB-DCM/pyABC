@@ -62,19 +62,19 @@ def git_hash():
     return git_hash
 
 
-def create_db_identifier(dir_: str = None, file_: str = "pyabc_test.db"):
+def create_db_identifier(file_: str = "pyabc_test.db", dir_: str = None):
     """
     Create an sqlite database identifier.
 
     Parameters
     ----------
+    file_:
+        The database file name. Optional, defaults to "pyabc_test.db".
     dir_:
         The base folder name. Optional, defaults to the system's
         temporary directory, i.e. "/tmp/" on Linux. While this makes
         sense for testing purposes, for productive use a non-temporary
         location should be used.
-    file_:
-        The database file name. Optional, defaults to "pyabc_test.db".
     """
     if dir_ is None:
         dir_ = tempfile.gettempdir()
