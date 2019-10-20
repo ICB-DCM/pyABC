@@ -17,7 +17,7 @@ import copy
 from typing import Union
 
 from .distance import Distance, PNormDistance, to_distance
-from .epsilon import Epsilon, MedianEpsilon, NoEpsilon
+from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import Particle
 from .transition import Transition, MultivariateNormalTransition
