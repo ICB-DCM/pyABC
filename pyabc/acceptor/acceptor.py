@@ -33,17 +33,17 @@ class AcceptorResult(dict):
     Parameters
     ----------
 
-    distance:
+    distance: float
         Distance value obtained.
-    accept:
+    accept: bool
         A flag indicating the recommendation to accept or reject.
         More specifically:
         True: The distance is below the acceptance threshold.
         False: The distance is above the acceptance threshold.
-    weight:
+    weight: float, optional (default = 1.0)
         Weight associated with the evaluation, which may need
-        to be taken into account via importance sampling in
-        calculating the parameter weight.
+        to be taken into account via importance sampling when
+        calculating the parameter weight. Defaults to 1.0.
     """
 
     def __init__(self, distance: float, accept: bool, weight: float = 1.0):
