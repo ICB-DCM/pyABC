@@ -4,7 +4,7 @@ import pyabc
 from pyabc.acceptor import AcceptorResult
 
 
-def test_simple_acceptor():
+def test_simple_function_acceptor():
 
     def distance(x, x_0):
         return sum(abs(x[key] - x_0[key]) for key in x_0)
@@ -37,3 +37,29 @@ def test_simple_acceptor():
 
     df = h.get_weighted_distances()
     assert np.isfinite(df['distance']).all()
+
+
+def test_uniform_acceptor():
+    def dist(x, x_0):
+        return sum(abs(x[key] - x_0[key]) for key in x_0)
+
+    distance = pyabc.SimpleFunctionDistance(dist)
+    acceptor = pyabc.UniformAcceptor()
+    eps = pyabc.ListEpsilon([1, 4, 2])
+
+    x = {'s0': 1.5}
+    x_0 = {'s0': 0}
+
+    ret = acceptor(distance_function=distance,
+                   eps=eps, x=x, x_0=x_0, t=2, par=None)
+
+    assert ret.accept
+
+    # now let's test again, including previous time points
+
+    acceptor = pyabc.UniformAcceptor(use_complete_history=True)
+
+    ret = acceptor(distance_function=distance,
+                   eps=eps, x=x, x_0=x_0, t=2, par=None)
+
+    assert not ret.accept
