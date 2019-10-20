@@ -36,6 +36,7 @@ from .distance import (
     DistanceWithMeasureList)
 from .epsilon import (
     Epsilon,
+    NoEpsilon,
     ConstantEpsilon,
     QuantileEpsilon,
     MedianEpsilon,
@@ -88,6 +89,7 @@ __all__ = [
     "DistanceWithMeasureList",
     # epsilon
     "Epsilon",
+    "NoEpsilon",
     "ConstantEpsilon",
     "ListEpsilon",
     "QuantileEpsilon",
