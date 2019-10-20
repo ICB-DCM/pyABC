@@ -21,7 +21,7 @@ import logging
 
 from ..distance import Distance, StochasticKernel, RET_SCALE_LIN
 from ..epsilon import Epsilon
-from pyabc import Parameter
+from ..parameters import Parameter
 from .temperature_scheme import (scheme_acceptance_rate,
                                  scheme_exponential_decay)
 from .pdf_max_eval import pdf_max_take_from_kernel
@@ -30,7 +30,7 @@ from .pdf_max_eval import pdf_max_take_from_kernel
 logger = logging.getLogger("Acceptor")
 
 
-class AcceptanceResult(dict):
+class AcceptorResult(dict):
     """
     Result of an acceptance step.
 
@@ -40,14 +40,14 @@ class AcceptanceResult(dict):
     distance: float
         Distance value obtained.
     accept: bool
-        A flag indicating the recommendation
-        to accept or reject. More specifically:
-        True: The distance is below the epsilon threshold.
-        False: The distance is above the epsilon threshold.
+        A flag indicating the recommendation to accept or reject.
+        More specifically:
+        True: The distance is below the acceptance threshold.
+        False: The distance is above the acceptance threshold.
     weight: float, optional (default = 1.0)
         Weight associated with the evaluation, which may need
-        to be taken into account via importane sampling in
-        calculating the parameter weight.
+        to be taken into account via importance sampling when
+        calculating the parameter weight. Defaults to 1.0.
     """
 
     def __init__(self, distance: float, accept: bool, weight: float = 1.0):
@@ -76,6 +76,7 @@ class Acceptor:
         """
         Default constructor.
         """
+        pass
 
     def initialize(
             self,
@@ -87,7 +88,6 @@ class Acceptor:
         """
         Initialize. This method is called by the ABCSMC framework initially,
         and can be used to calibrate the acceptor to initial statistics.
-
         The default is to do nothing.
 
         Parameters
@@ -138,7 +138,6 @@ class Acceptor:
         """
         Compute distance between summary statistics and evaluate whether to
         accept or reject.
-
         All concrete implementations must implement this method.
 
         Parameters
@@ -162,8 +161,7 @@ class Acceptor:
         Returns
         -------
 
-        An AcceptanceResult.
-
+        An AcceptorResult.
 
         .. note::
             Currently, only one value encoding the distance is returned
@@ -197,7 +195,7 @@ class SimpleFunctionAcceptor(Acceptor):
         Callable with the same signature as the __call__ method.
     """
 
-    def __init__(self, fun):
+    def __init__(self, fun: Callable):
         super().__init__()
         self.fun = fun
 
@@ -228,7 +226,7 @@ class SimpleFunctionAcceptor(Acceptor):
             return SimpleFunctionAcceptor(maybe_acceptor)
 
 
-def accept_uniform_use_current_time(
+def accept_use_current_time(
         distance_function, eps, x, x_0, t, par):
     """
     Use only the distance function and epsilon criterion at the current time
@@ -237,10 +235,10 @@ def accept_uniform_use_current_time(
     d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
-    return AcceptanceResult(d, accept)
+    return AcceptorResult(distance=d, accept=accept)
 
 
-def accept_uniform_use_complete_history(
+def accept_use_complete_history(
         distance_function, eps, x, x_0, t, par):
     """
     Use the acceptance criteria from the complete history to evaluate whether
@@ -253,7 +251,6 @@ def accept_uniform_use_complete_history(
     can frequently occur when continuing a stopped run. A different behavior
     is easy to implement.
     """
-
     # first test current criterion, which is most likely to fail
     d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
@@ -270,13 +267,13 @@ def accept_uniform_use_complete_history(
                 # ignore as of now
                 accept = True
 
-    return AcceptanceResult(d, accept)
+    return AcceptorResult(distance=d, accept=accept)
 
 
 class UniformAcceptor(Acceptor):
     """
     Base acceptance on the distance function and a uniform error distribution
-    between -eps and eps.
+    between -eps and eps. This is the most common acceptance criterion in ABC.
     """
 
     def __init__(self, use_complete_history: bool = False):
@@ -294,11 +291,11 @@ class UniformAcceptor(Acceptor):
         self.use_complete_history = use_complete_history
 
     def __call__(self, distance_function, eps, x, x_0, t, par):
-        if self.use_complete_history:
-            return accept_uniform_use_complete_history(
+        if self.user_complete_history: 
+            return accept_use_complete_history(
                 distance_function, eps, x, x_0, t, par)
         else:  # use only current time
-            return accept_uniform_use_current_time(
+            return accept_use_current_time(
                 distance_function, eps, x, x_0, t, par)
 
 

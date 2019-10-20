@@ -129,8 +129,7 @@ class Epsilon(ABC):
 class NoEpsilon(Epsilon):
     """
     Implements a kind of null object as epsilon.
-
-    This can be used as a dummy epsilon if e.g. stochastic acceptance is used.
+    This can be used as a dummy epsilon.
     """
 
     def __init__(self):

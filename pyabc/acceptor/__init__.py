@@ -2,17 +2,20 @@
 Acceptor
 ========
 
+<<<<<<< HEAD
 Acceptors handle the acceptance step. Stochastic acceptors make use of
 temperature schemes and pdf_max_eval methods.
+=======
+Acceptors handle the acceptance step.
+>>>>>>> develop
 
 """
 
 
 from .acceptor import (
+    AcceptorResult,
     Acceptor,
     SimpleFunctionAcceptor,
-    accept_uniform_use_current_time,
-    accept_uniform_use_complete_history,
     UniformAcceptor,
     StochasticAcceptor,)
 from .temperature_scheme import (
@@ -29,10 +32,9 @@ from .pdf_max_eval import (
 
 __all__ = [
     # acceptor
+    'AcceptorResult',
     'Acceptor',
     'SimpleFunctionAcceptor',
-    'accept_uniform_use_current_time',
-    'accept_uniform_use_complete_history',
     'UniformAcceptor',
     'StochasticAcceptor',
     # temperature scheme

@@ -19,6 +19,16 @@ Release Notes
 ..........
 
 
+0.9.18 (2019-10-20)
+-------------------
+
+* Add create_sqlite_db_id convenience function to create database names.
+* Temporarily require cffi=1.12.2 for rpy2 on travis (all #185).
+* Introduce UniformAcceptor and SimpleFunctionAcceptor classes to streamline
+  the traditional acceptance step.
+* Add AcceptorResult and allow weights in the acceptance step (all #184).
+
+
 0.9.17 (2019-10-10)
 -------------------
 

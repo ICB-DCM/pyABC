@@ -18,6 +18,7 @@ from typing import Union
 
 from .distance import Distance, PNormDistance, to_distance
 from .epsilon import Epsilon, MedianEpsilon, NoEpsilon
+from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import Particle
 from .transition import Transition, MultivariateNormalTransition
@@ -127,7 +128,7 @@ class ABCSMC:
         Takes a distance function, summary statistics and an epsilon threshold
         to decide about acceptance of a particle. Argument accepts any subclass
         of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
-        acceptor.
+        acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
 
 
     Attributes
@@ -643,7 +644,7 @@ class ABCSMC:
         accepted_distances = []
         rejected_sum_stats = []
         rejected_distances = []
-        accepted_acceptance_weights = []
+        accepted_weights = []
 
         for _ in range(nr_samples_per_parameter):
             model_result = models[m_ss].accept(
@@ -657,7 +658,7 @@ class ABCSMC:
             if model_result.accepted:
                 accepted_sum_stats.append(model_result.sum_stats)
                 accepted_distances.append(model_result.distance)
-                accepted_acceptance_weights.append(model_result.weight)
+                accepted_weights.append(model_result.weight)
             else:
                 rejected_sum_stats.append(model_result.sum_stats)
                 rejected_distances.append(model_result.distance)
@@ -667,7 +668,7 @@ class ABCSMC:
         if accepted:
             weight = ABCSMC._calc_proposal_weight(
                 accepted_distances, m_ss, theta_ss,
-                accepted_acceptance_weights, t,
+                accepted_weights, t,
                 model_probabilities,
                 model_prior,
                 parameter_priors,
@@ -801,7 +802,8 @@ class ABCSMC:
             # get epsilon for generation t
             current_eps = self.eps(t) if not isinstance(self.eps, NoEpsilon) \
                 else self.acceptor.get_epsilon_equivalent(t)
-            logger.info('t:' + str(t) + ' eps:' + str(current_eps))
+            current_eps = self.eps(t)
+            logger.info(f"t: {t}, eps: {current_eps}.")
 
             # do some adaptations
             self._fit_transitions(t)
@@ -810,7 +812,7 @@ class ABCSMC:
             # create simulate function
             simulate_one = self._create_simulate_function(t)
 
-            logger.debug('now submitting population ' + str(t))
+            logger.debug(f"Now submitting population {t}.")
 
             # perform the sampling
             sample = self.sampler.sample_until_n_accepted(
@@ -818,23 +820,25 @@ class ABCSMC:
 
             # retrieve accepted population
             population = sample.get_accepted_population()
+            logger.debug(f"Population {t} done.")
 
             # save to database before making any changes to the population
-            logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
                 t, current_eps, population, nr_evaluations,
                 model_names)
             logger.debug(
-                f"Total nr simulations up to t = {t} is "
+                f"Total samples up to t = {t}: "
                 f"{self.history.total_nr_simulations}.")
 
             # prepare next iteration
 
             # acceptance rate
-            acceptance_rate = len(population.get_list()) / nr_evaluations
-            logger.info(f"Acceptance rate: {acceptance_rate}.")
+            pop_size = len(population.get_list())
+            acceptance_rate = pop_size / nr_evaluations
+            logger.info(f"Acceptance rate: {pop_size} / {nr_evaluations} = "
+                        f"{acceptance_rate:.4e}.")
 
             # update distance function
             partial_sum_stats = sample.first_n_sum_stats(
@@ -901,7 +905,6 @@ class ABCSMC:
 
         Parameters
         ----------
-
         t: int
             Time for which to update the kernel density estimator.
         """

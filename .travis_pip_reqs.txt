@@ -25,6 +25,7 @@ feather-format
 bkcharts
 tzlocal
 rpy2>=3.2.0
+cffi==1.12.2
 flake8
 pytest
 codecov
