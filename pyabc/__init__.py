@@ -41,7 +41,9 @@ from .epsilon import (
     MedianEpsilon,
     ListEpsilon)
 from .smc import ABCSMC
-from .storage import History
+from .storage import (
+    History,
+    create_db_identifier)
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
@@ -123,6 +125,7 @@ __all__ = [
     "IntegratedModel",
     # history
     "History",
+    "create_db_identifier",
     # visualization
     "visualization",
 ]

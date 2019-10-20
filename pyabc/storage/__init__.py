@@ -84,6 +84,10 @@ In addition, it is also possible to store pandas DataFrames.
 
 """
 
-from .history import History
+from .history import History, create_db_identifier
 
-__all__ = ["History"]
+
+__all__ = [
+    "History",
+    "create_db_identifier",
+]
