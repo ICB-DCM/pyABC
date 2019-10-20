@@ -43,7 +43,7 @@ from .epsilon import (
 from .smc import ABCSMC
 from .storage import (
     History,
-    create_db_identifier)
+    create_sqlite_db_id)
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
@@ -125,7 +125,7 @@ __all__ = [
     "IntegratedModel",
     # history
     "History",
-    "create_db_identifier",
+    "create_sqlite_db_id",
     # visualization
     "visualization",
 ]

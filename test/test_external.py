@@ -37,7 +37,7 @@ def test_r(sampler):
     abc = pyabc.ABCSMC(model, prior, distance,
                        summary_statistics=sum_stat,
                        sampler=sampler)
-    db = pyabc.create_db_identifier("test_external.db")
+    db = pyabc.create_sqlite_db_id(file_="test_external.db")
     abc.new(db, r.observation("mySumStatData"))
     history = abc.run(minimum_epsilon=0.9, max_nr_populations=2)
     history.get_weighted_sum_stats_for_model(m=0, t=1)[1][0]["cars"].head()

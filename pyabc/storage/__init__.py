@@ -84,10 +84,10 @@ In addition, it is also possible to store pandas DataFrames.
 
 """
 
-from .history import History, create_db_identifier
+from .history import History, create_sqlite_db_id
 
 
 __all__ = [
     "History",
-    "create_db_identifier",
+    "create_sqlite_db_id",
 ]
