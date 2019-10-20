@@ -2,12 +2,7 @@
 Acceptor
 ========
 
-<<<<<<< HEAD
-Acceptors handle the acceptance step. Stochastic acceptors make use of
-temperature schemes and pdf_max_eval methods.
-=======
 Acceptors handle the acceptance step.
->>>>>>> develop
 
 """
 

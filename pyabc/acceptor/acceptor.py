@@ -291,7 +291,7 @@ class UniformAcceptor(Acceptor):
         self.use_complete_history = use_complete_history
 
     def __call__(self, distance_function, eps, x, x_0, t, par):
-        if self.user_complete_history:
+        if self.use_complete_history:
             return accept_use_complete_history(
                 distance_function, eps, x, x_0, t, par)
         else:  # use only current time

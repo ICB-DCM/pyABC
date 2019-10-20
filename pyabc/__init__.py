@@ -94,7 +94,7 @@ __all__ = [
     "ListEpsilon",
     "QuantileEpsilon",
     "MedianEpsilon",
-    # random_variable
+    # random variable
     "RVBase",
     "RV",
     "RVDecorator",
