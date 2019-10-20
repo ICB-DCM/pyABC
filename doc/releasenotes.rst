@@ -11,7 +11,7 @@ Release Notes
 0.10.0 (2019-10-14)
 -------------------
 
-* Stochastic acceptor introduced as alternative to uniform epsilon
+* Introduce StochasticAcceptor as an alternative to uniform epsilon
   thresholds.
 
 
