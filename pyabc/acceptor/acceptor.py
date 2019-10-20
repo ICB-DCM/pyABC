@@ -262,7 +262,7 @@ def accept_use_complete_history(
 class UniformAcceptor(Acceptor):
     """
     Base acceptance on the distance function and a uniform error distribution
-    between -eps and eps.
+    between -eps and eps. This is the most common acceptance criterion in ABC.
     """
 
     def __init__(self, use_complete_history: bool = False):
