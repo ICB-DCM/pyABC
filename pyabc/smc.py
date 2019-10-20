@@ -127,7 +127,7 @@ class ABCSMC:
         Takes a distance function, summary statistics and an epsilon threshold
         to decide about acceptance of a particle. Argument accepts any subclass
         of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
-        acceptor.
+        acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
 
 
     Attributes
