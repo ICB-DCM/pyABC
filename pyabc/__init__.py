@@ -36,6 +36,7 @@ from .distance import (
     DistanceWithMeasureList)
 from .epsilon import (
     Epsilon,
+    NoEpsilon,
     ConstantEpsilon,
     QuantileEpsilon,
     MedianEpsilon,
@@ -47,8 +48,7 @@ from .storage import (
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
-    accept_use_current_time,
-    accept_use_complete_history)
+    UniformAcceptor)
 from .model import (
     Model,
     SimpleModel,
@@ -89,6 +89,7 @@ __all__ = [
     "DistanceWithMeasureList",
     # epsilon
     "Epsilon",
+    "NoEpsilon",
     "ConstantEpsilon",
     "ListEpsilon",
     "QuantileEpsilon",
@@ -116,8 +117,7 @@ __all__ = [
     # acceptor
     "Acceptor",
     "SimpleFunctionAcceptor",
-    "accept_use_current_time",
-    "accept_use_complete_history",
+    "UniformAcceptor",
     # model
     "ModelResult",
     "Model",
