@@ -63,7 +63,7 @@ __all__ = [
     "PercentileDistance",
     "RangeEstimatorDistance",
     "DistanceWithMeasureList",
-    # scales
+    # scale
     "median_absolute_deviation",
     "mean_absolute_deviation",
     "standard_deviation",

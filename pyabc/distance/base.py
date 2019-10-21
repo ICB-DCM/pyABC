@@ -8,6 +8,7 @@ from ..sampler import Sampler
 class Distance(ABC):
     """
     Abstract base class for distance objects.
+
     Any object that computes the similarity between observed and simulated data
     should inherit from this class.
     """
@@ -69,6 +70,7 @@ class Distance(ABC):
             sum_stats: List[dict]) -> bool:
         """
         Update the distance for the upcoming generation t.
+
         The default is to do nothing.
 
         Parameters

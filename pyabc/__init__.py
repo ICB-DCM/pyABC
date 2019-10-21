@@ -36,17 +36,19 @@ from .distance import (
     DistanceWithMeasureList)
 from .epsilon import (
     Epsilon,
+    NoEpsilon,
     ConstantEpsilon,
     QuantileEpsilon,
     MedianEpsilon,
     ListEpsilon)
 from .smc import ABCSMC
-from .storage import History
+from .storage import (
+    History,
+    create_sqlite_db_id)
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
-    accept_use_current_time,
-    accept_use_complete_history)
+    UniformAcceptor)
 from .model import (
     Model,
     SimpleModel,
@@ -87,6 +89,7 @@ __all__ = [
     "DistanceWithMeasureList",
     # epsilon
     "Epsilon",
+    "NoEpsilon",
     "ConstantEpsilon",
     "ListEpsilon",
     "QuantileEpsilon",
@@ -114,8 +117,7 @@ __all__ = [
     # acceptor
     "Acceptor",
     "SimpleFunctionAcceptor",
-    "accept_use_current_time",
-    "accept_use_complete_history",
+    "UniformAcceptor",
     # model
     "ModelResult",
     "Model",
@@ -123,6 +125,7 @@ __all__ = [
     "IntegratedModel",
     # history
     "History",
+    "create_sqlite_db_id",
     # visualization
     "visualization",
 ]

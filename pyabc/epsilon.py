@@ -7,6 +7,7 @@ the observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
+import numpy as np
 import scipy as sp
 import pandas as pd
 import logging
@@ -40,6 +41,8 @@ class Epsilon(ABC):
         This method is called by the ABCSMC framework before the first usage
         of the epsilon and can be used to calibrate it to the statistics of the
         samples.
+
+        Default: Do nothing.
 
         Parameters
         ----------
@@ -121,6 +124,22 @@ class Epsilon(ABC):
             returned my ``get_config``.
         """
         return json.dumps(self.get_config())
+
+
+class NoEpsilon(Epsilon):
+    """
+    Implements a kind of null object as epsilon.
+
+    This can be used as a dummy epsilon when the Acceptor integrates the
+    acceptance threshold.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self,
+                 t: int) -> float:
+        return np.nan
 
 
 class ConstantEpsilon(Epsilon):
@@ -229,6 +248,7 @@ class QuantileEpsilon(Epsilon):
         logger.debug(
             "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
             .format(initial_epsilon, quantile_multiplier))
+
         super().__init__()
         self._initial_epsilon = initial_epsilon
         self.alpha = alpha
@@ -252,6 +272,7 @@ class QuantileEpsilon(Epsilon):
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame]):
         if self._initial_epsilon != 'from_sample':
+            # safety check in __call__
             return
 
         # execute function
@@ -278,7 +299,6 @@ class QuantileEpsilon(Epsilon):
         # initialize if necessary
         if not self._look_up:
             self._set_initial_value(t)
-
         try:
             eps = self._look_up[t]
         except KeyError as e:

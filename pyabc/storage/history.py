@@ -8,6 +8,7 @@ import scipy as sp
 from sqlalchemy import func
 from sqlalchemy.orm import subqueryload
 from functools import wraps
+import tempfile
 import logging
 
 from .db_model import (ABCSMC, Population, Model, Particle,
@@ -59,6 +60,28 @@ def git_hash():
             git.exc.InvalidGitRepositoryError) as e:
         git_hash = str(e)
     return git_hash
+
+
+def create_sqlite_db_id(
+        dir_: str = None,
+        file_: str = "pyabc_test.db"):
+    """
+    Convenience function to create an sqlite database identifier which
+    can be understood by sqlalchemy.
+
+    Parameters
+    ----------
+    dir_:
+        The base folder name. Optional, defaults to the system's
+        temporary directory, i.e. "/tmp/" on Linux. While this makes
+        sense for testing purposes, for productive use a non-temporary
+        location should be used.
+    file_:
+        The database file name. Optional, defaults to "pyabc_test.db".
+    """
+    if dir_ is None:
+        dir_ = tempfile.gettempdir()
+    return "sqlite:///" + os.path.join(dir_, file_)
 
 
 class History:
@@ -213,7 +236,8 @@ class History:
     def get_distribution(self, m: int = 0, t: int = None) \
             -> (pd.DataFrame, np.ndarray):
         """
-        Returns the weighted population sample as pandas DataFrame.
+        Returns the weighted population sample for model m and timepoint t
+        as a pandas DataFrame.
 
         Parameters
         ----------
@@ -265,6 +289,12 @@ class History:
 
         t: int, optional (default = -1)
             Population index.
+
+        Returns
+        -------
+
+        model_names: List[str]
+            List of model names.
         """
         res = (self._session.query(Model.name)
                .join(Population)
@@ -466,6 +496,15 @@ class History:
 
     @with_session
     def observed_sum_stat(self):
+        """
+        Get the observed summary statistics.
+
+        Returns
+        -------
+
+        sum_stats_dct: dict
+            The observed summary statistics.
+        """
         sum_stats = (self._session
                      .query(SummaryStatistic)
                      .join(Sample)
@@ -708,11 +747,13 @@ class History:
 
         Parameters
         ----------
+
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
+
         nr_alive: int >= 0 or None
             Number of models still alive.
             None is for the last population
@@ -787,13 +828,14 @@ class History:
     @with_session
     def get_nr_particles_per_population(self) -> pd.Series:
         """
+        Get the number of particles per population.
 
         Returns
         -------
 
         nr_particles_per_population: pd.DataFrame
             A pandas DataFrame containing the number
-            of particles for each population
+            of particles for each population.
 
         """
         query = (self._session.query(Population.t)

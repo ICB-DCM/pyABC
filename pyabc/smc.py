@@ -16,7 +16,7 @@ import pandas as pd
 import copy
 from typing import Union
 
-from .distance import PNormDistance, to_distance
+from .distance import Distance, PNormDistance, to_distance
 from .epsilon import Epsilon, MedianEpsilon
 from .model import Model
 from .population import Particle
@@ -28,7 +28,8 @@ from .pyabc_rand_choice import fast_random_choice
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import accept_use_current_time, SimpleFunctionAcceptor
+from .acceptor import Acceptor, UniformAcceptor, SimpleFunctionAcceptor
+from .sampler import Sampler
 
 
 logger = logging.getLogger("ABC")
@@ -125,8 +126,8 @@ class ABCSMC:
     acceptor: Acceptor, optional
         Takes a distance function, summary statistics and an epsilon threshold
         to decide about acceptance of a particle. Argument accepts any subclass
-        of :class:`pyabc.acceptor.Acceptor` or a function convertible to an
-        acceptor.
+        of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
+        acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
 
 
     Attributes
@@ -153,15 +154,15 @@ class ABCSMC:
                  models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
-                 distance_function,
+                 distance_function: Union[Distance, Callable] = None,
                  population_size: Union[PopulationStrategy, int] = 100,
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
-                 sampler=None,
-                 acceptor=None):
+                 sampler: Sampler = None,
+                 acceptor: Acceptor = None):
 
         if not isinstance(models, list):
             models = [models]
@@ -213,15 +214,14 @@ class ABCSMC:
         self.sampler = sampler
 
         if acceptor is None:
-            acceptor = accept_use_current_time
+            acceptor = UniformAcceptor()
         self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
         self.stop_if_only_single_model_alive = False
         self.max_number_particles_for_distance_update = 1000
         self.x_0 = None
-        self.history = None  # type: History
+        self.history = None
         self._initial_population = None
-        self._initial_n_eval = 0
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
@@ -305,7 +305,6 @@ class ABCSMC:
             The history.id, which is the id under which the generated ABCSMC
             run entry in the database can be identified.
         """
-
         # record observed summary statistics
         if observed_sum_stat is None:
             observed_sum_stat = {}
@@ -356,7 +355,6 @@ class ABCSMC:
             e.g. when they were generated in R). If None, then the summary
             statistics are read from the history.
         """
-
         self.history = History(db)
         self.history.id = abc_id
 
@@ -370,7 +368,7 @@ class ABCSMC:
 
     def _initialize_dist_eps_acc(self, t: int):
         """
-        Called once in new() and load(). This function either, if available,
+        Called once at the start of run(). This function either, if available,
         takes the last population from the history, or generates a
         sample population from the prior. Then, it calls the initialize()
         functions of the distance, epsilon, and acceptor.
@@ -406,6 +404,9 @@ class ABCSMC:
             t, get_initial_sum_stats, self.x_0)
         self.eps.initialize(
             t, get_initial_weighted_distances)
+        self.acceptor.initialize(
+            t, get_initial_weighted_distances, self.max_nr_populations,
+            self.distance_function, self.x_0)
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
@@ -420,7 +421,6 @@ class ABCSMC:
             The sample is cached. Thus, the function can be called repeatedly
             without further computational overhead.
         """
-
         if self._initial_population is None:
             if self.history.n_populations > 0:
                 # extract latest population from database
@@ -435,12 +435,11 @@ class ABCSMC:
 
         return self._initial_population
 
-    def _create_simulate_from_prior_function(self, t):
+    def _create_simulate_from_prior_function(self, t: int):
         """
         Similar to _create_simulate_function, apart here we sample from the
         prior and accept all.
         """
-
         model_prior = self.model_prior
         parameter_priors = self.parameter_priors
         models = self.models
@@ -483,9 +482,10 @@ class ABCSMC:
         Only sample from prior and return results without changing
         the history of the distance function or the epsilon.
         """
-
         # create simulate function
         simulate_one = self._create_simulate_from_prior_function(t)
+
+        logger.info(f"Calibration sample before t={t}.")
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
@@ -497,7 +497,7 @@ class ABCSMC:
 
         return population
 
-    def _create_simulate_function(self, t):
+    def _create_simulate_function(self, t: int):
         """
         Create a simulation function which performs the sampling of parameters,
         simulation of data and acceptance checking, and which is then passed
@@ -520,7 +520,6 @@ class ABCSMC:
             happens. Therefore, the returned function should be light, and
             in particular not contain references to the ABCSMC class.
         """
-
         # cache model_probabilities to not query the database so often
         model_probabilities = self.history.get_model_probabilities(
             self.history.max_t)
@@ -590,7 +589,6 @@ class ABCSMC:
         Model, parameter.
 
         """
-
         # first generation
         if t == 0:  # sample from prior
             m_ss = int(model_prior.rvs())
@@ -645,6 +643,7 @@ class ABCSMC:
         accepted_distances = []
         rejected_sum_stats = []
         rejected_distances = []
+        accepted_weights = []
 
         for _ in range(nr_samples_per_parameter):
             model_result = models[m_ss].accept(
@@ -658,6 +657,7 @@ class ABCSMC:
             if model_result.accepted:
                 accepted_sum_stats.append(model_result.sum_stats)
                 accepted_distances.append(model_result.distance)
+                accepted_weights.append(model_result.weight)
             else:
                 rejected_sum_stats.append(model_result.sum_stats)
                 rejected_distances.append(model_result.distance)
@@ -666,7 +666,9 @@ class ABCSMC:
 
         if accepted:
             weight = ABCSMC._calc_proposal_weight(
-                accepted_distances, m_ss, theta_ss, t, model_probabilities,
+                accepted_distances, m_ss, theta_ss,
+                accepted_weights, t,
+                model_probabilities,
                 model_prior,
                 parameter_priors,
                 nr_samples_per_parameter,
@@ -690,6 +692,7 @@ class ABCSMC:
             distance_list,
             m_ss,
             theta_ss,
+            acceptance_weights,
             t,
             model_probabilities,
             model_prior,
@@ -700,7 +703,6 @@ class ABCSMC:
         """
         Calculate the weight for the generated parameter.
         """
-
         if t == 0:
             weight = (len(distance_list)
                       / nr_samples_per_parameter)
@@ -721,6 +723,11 @@ class ABCSMC:
                       * parameter_priors[m_ss].pdf(theta_ss)
                       * fraction_accepted_runs_for_single_parameter
                       / normalization)
+
+            # account for acceptance weights
+            # TODO This is only valid for single samples (see #54)
+            weight *= np.prod(acceptance_weights)
+
         return weight
 
     def run(self,
@@ -769,7 +776,6 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
-
         # argument handling
         if len(kwargs) > 1:
             raise TypeError("Keyword arguments are not allowed.")
@@ -795,7 +801,7 @@ class ABCSMC:
 
             # get epsilon for generation t
             current_eps = self.eps(t)
-            logger.info('t:' + str(t) + ' eps:' + str(current_eps))
+            logger.info(f"t: {t}, eps: {current_eps}.")
 
             # do some adaptations
             self._fit_transitions(t)
@@ -804,7 +810,7 @@ class ABCSMC:
             # create simulate function
             simulate_one = self._create_simulate_function(t)
 
-            logger.debug('now submitting population ' + str(t))
+            logger.debug(f"Now submitting population {t}.")
 
             # perform the sampling
             sample = self.sampler.sample_until_n_accepted(
@@ -812,19 +818,25 @@ class ABCSMC:
 
             # retrieve accepted population
             population = sample.get_accepted_population()
+            logger.debug(f"Population {t} done.")
 
             # save to database before making any changes to the population
-            logger.debug('population ' + str(t) + ' done')
             nr_evaluations = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
                 t, current_eps, population, nr_evaluations,
                 model_names)
             logger.debug(
-                '\ntotal nr simulations up to t =' + str(t) + ' is '
-                + str(self.history.total_nr_simulations))
+                f"Total samples up to t = {t}: "
+                f"{self.history.total_nr_simulations}.")
 
             # prepare next iteration
+
+            # acceptance rate
+            pop_size = len(population.get_list())
+            acceptance_rate = pop_size / nr_evaluations
+            logger.info(f"Acceptance rate: {pop_size} / {nr_evaluations} = "
+                        f"{acceptance_rate:.4e}.")
 
             # update distance function
             partial_sum_stats = sample.first_n_sum_stats(
@@ -842,9 +854,12 @@ class ABCSMC:
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances())
 
+            # update acceptor
+            self.acceptor.update(
+                t + 1, population.get_weighted_distances(),
+                self.distance_function, acceptance_rate)
+
             # check early termination conditions
-            acceptance_rate = \
-                len(population.get_list()) / nr_evaluations
             if (current_eps <= minimum_epsilon
                     or (self.stop_if_only_single_model_alive
                         and self.history.nr_of_models_alive() <= 1)
@@ -869,7 +884,6 @@ class ABCSMC:
         t: int
             Time for which to adapt the population size.
         """
-
         if t == 0:  # we need a particle population to do the fitting
             return
 
@@ -889,7 +903,6 @@ class ABCSMC:
 
         Parameters
         ----------
-
         t: int
             Time for which to update the kernel density estimator.
         """
