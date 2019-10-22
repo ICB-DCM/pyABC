@@ -5,9 +5,9 @@ from typing import Callable, List
 from .base import Distance
 
 
-RET_SCALE_LIN = "RET_SCALE_LIN"
-RET_SCALE_LOG = "RET_SCALE_LOG"
-RET_SCALES = [RET_SCALE_LIN, RET_SCALE_LOG]
+SCALE_LIN = "SCALE_LIN"
+SCALE_LOG = "SCALE_LOG"
+SCALES = [SCALE_LIN, SCALE_LOG]
 
 
 class StochasticKernel(Distance):
@@ -25,7 +25,7 @@ class StochasticKernel(Distance):
     Parameters
     -----------
 
-    ret_scale: str, optional (default = RET_SCALE_LIN)
+    ret_scale: str, optional (default = SCALE_LIN)
         The scale of the value returned in __call__:
         Given a proability density p(x,x_0), the returned value
         can be either of p(x,x_0), or log(p(x,x_0)).
@@ -44,7 +44,7 @@ class StochasticKernel(Distance):
 
     def __init__(
             self,
-            ret_scale=RET_SCALE_LIN,
+            ret_scale=SCALE_LIN,
             keys=None,
             pdf_max=None):
         StochasticKernel.check_ret_scale(ret_scale)
@@ -67,9 +67,9 @@ class StochasticKernel(Distance):
 
     @staticmethod
     def check_ret_scale(ret_scale):
-        if ret_scale not in RET_SCALES:
+        if ret_scale not in SCALES:
             raise ValueError(
-                f"The ret_scale {ret_scale} must be one of {RET_SCALES}.")
+                f"The ret_scale {ret_scale} must be one of {SCALES}.")
 
     def initialize_keys(self, x):
         self.keys = sorted(x)
@@ -93,7 +93,7 @@ class SimpleFunctionKernel(StochasticKernel):
     def __init__(
             self,
             fun,
-            ret_scale=RET_SCALE_LIN,
+            ret_scale=SCALE_LIN,
             keys=None,
             pdf_max=None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
@@ -137,7 +137,7 @@ class NormalKernel(StochasticKernel):
             self,
             mean=None,
             cov=None,
-            ret_scale=RET_SCALE_LIN,
+            ret_scale=SCALE_LIN,
             keys=None,
             pdf_max=None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
@@ -182,9 +182,9 @@ class NormalKernel(StochasticKernel):
         diff = np.array([x[key] - x_0[key] for key in self.keys])
 
         # compute pdf
-        if self.ret_scale == RET_SCALE_LIN:
+        if self.ret_scale == SCALE_LIN:
             ret = self.rv.pdf(diff)
-        else:  # self.ret_scale == RET_SCALE_LOG
+        else:  # self.ret_scale == SCALE_LOG
             ret = self.rv.logpdf(diff)
 
         return ret
@@ -221,7 +221,7 @@ class IndependentNormalKernel(StochasticKernel):
             var=None,
             keys=None,
             pdf_max=None):
-        super().__init__(ret_scale=RET_SCALE_LOG, keys=keys, pdf_max=pdf_max)
+        super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
         self.mean = mean
         self.var = var
         self.dim = None
@@ -322,7 +322,7 @@ class IndependentLaplaceKernel(StochasticKernel):
             scale=None,
             keys=None,
             pdf_max=None):
-        super().__init__(ret_scale=RET_SCALE_LOG, keys=keys, pdf_max=pdf_max)
+        super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
         self.mean = mean
         self.scale = scale
         self.dim = None
@@ -398,7 +398,7 @@ class BinomialKernel(StochasticKernel):
     p: float
         The success probability.
 
-    ret_scale: str, optional (default = RET_SCALE_LIN)
+    ret_scale: str, optional (default = SCALE_LIN)
         The scale on which the distribution is to be returned.
 
     keys: List[str], optional (see StochasticKernel.keys)
@@ -409,7 +409,7 @@ class BinomialKernel(StochasticKernel):
     def __init__(
             self,
             p: float,
-            ret_scale=RET_SCALE_LIN,
+            ret_scale=SCALE_LIN,
             keys=None,
             pdf_max=None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
@@ -447,10 +447,10 @@ class BinomialKernel(StochasticKernel):
         x_0 = np.array([x_0[key] for key in self.keys], dtype=int).flatten()
         p = self.p
 
-        if self.ret_scale == RET_SCALE_LIN:
+        if self.ret_scale == SCALE_LIN:
             print(sp.stats.binom.pmf(k=x_0, n=x, p=p))
             ret = np.prod(sp.stats.binom.pmf(k=x_0, n=x, p=p))
-        else:  # self.ret_scale == RET_SCALE_LOG
+        else:  # self.ret_scale == SCALE_LOG
             ret = np.sum(sp.stats.binom.logpmf(k=x_0, n=x, p=p))
 
         return ret
@@ -462,6 +462,6 @@ def binomial_pdf_max(x_0, keys, p, ret_scale):
     pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
     log_pdf_max = np.sum(pms)
 
-    if ret_scale == RET_SCALE_LIN:
+    if ret_scale == SCALE_LIN:
         return np.eps(log_pdf_max)
     return log_pdf_max

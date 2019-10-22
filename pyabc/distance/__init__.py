@@ -44,8 +44,8 @@ from .scale import (
     median)
 from .kernel import (
     StochasticKernel,
-    RET_SCALE_LIN,
-    RET_SCALE_LOG,
+    SCALE_LIN,
+    SCALE_LOG,
     SimpleFunctionKernel,
     NormalKernel,
     IndependentNormalKernel,
@@ -88,8 +88,8 @@ __all__ = [
     "median",
     # kernels
     "StochasticKernel",
-    "RET_SCALE_LIN",
-    "RET_SCALE_LOG",
+    "SCALE_LIN",
+    "SCALE_LOG",
     "SimpleFunctionKernel",
     "NormalKernel",
     "IndependentNormalKernel",

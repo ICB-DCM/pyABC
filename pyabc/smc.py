@@ -403,11 +403,12 @@ class ABCSMC:
         # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
             t, get_initial_sum_stats, self.x_0)
-        self.eps.initialize(
-            t, get_initial_weighted_distances)
         self.acceptor.initialize(
+            t, get_initial_weighted_distances, self.distance_function,
+            self.x_0)
+        self.eps.initialize(
             t, get_initial_weighted_distances, self.max_nr_populations,
-            self.distance_function, self.x_0)
+            self.acceptor.get_config())
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
@@ -800,8 +801,7 @@ class ABCSMC:
         for t in range(t0, t_max):
 
             # get epsilon for generation t
-            current_eps = self.eps(t) if not isinstance(self.eps, NoEpsilon) \
-                else self.acceptor.get_epsilon_equivalent(t)
+            current_eps = self.eps(t)
 
             logger.info(f"t: {t}, eps: {current_eps}.")
 
@@ -853,13 +853,15 @@ class ABCSMC:
 
                 population.update_distances(distance_to_ground_truth)
 
-            # update epsilon
-            self.eps.update(t + 1, population.get_weighted_distances())
-
             # update acceptor
             self.acceptor.update(
                 t + 1, population.get_weighted_distances(),
-                self.distance_function, acceptance_rate)
+                self.distance_function)
+
+            # update epsilon
+            self.eps.update(t + 1, population.get_weighted_distances(),
+                            acceptance_rate,
+                            self.acceptor.get_config())
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon

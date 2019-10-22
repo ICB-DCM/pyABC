@@ -19,12 +19,10 @@ import pandas as pd
 from typing import Callable, List, Union
 import logging
 
-from ..distance import Distance, StochasticKernel, RET_SCALE_LIN
+from ..distance import Distance, StochasticKernel, SCALE_LIN
 from ..epsilon import Epsilon
 from ..parameters import Parameter
-from .temperature_scheme import (scheme_acceptance_rate,
-                                 scheme_exponential_decay)
-from .pdf_max_eval import pdf_max_take_from_kernel
+from .pdf_norm import pdf_norm_max_found
 
 
 logger = logging.getLogger("Acceptor")
@@ -82,7 +80,6 @@ class Acceptor:
             self,
             t: int,
             get_weighted_distances: Callable[[], pd.DataFrame],
-            max_nr_populations: int,
             distance_function: Distance,
             x_0: dict):
         """
@@ -97,8 +94,6 @@ class Acceptor:
             The timepoint to initialize the acceptor for.
         get_weighted_distances: Callable[[], pd.DataFrame]
             Returns on demand the distances for initializing the acceptor.
-        max_nr_populations: int
-            Maximum number of populations in current run.
         distance_function: Distance
             Distance object. The acceptor should not modify it, but might
             extract some meta information.
@@ -110,8 +105,7 @@ class Acceptor:
     def update(self,
                t: int,
                weighted_distances: pd.DataFrame,
-               distance_function: Distance,
-               acceptance_rate: float):
+               distance_function: Distance):
         """
         Update the acceptance criterion.
 
@@ -124,8 +118,6 @@ class Acceptor:
             The current generation's weighted distances.
         distance_function: Distance
             Distance object.
-        acceptance_rate: float
-            The current generation's acceptance rate.
         """
         pass
 
@@ -175,14 +167,8 @@ class Acceptor:
         """
         raise NotImplementedError()
 
-    def get_epsilon_equivalent(self, t: int):
-        """
-        Return acceptance criterion for time t. An acceptor should implement
-        this if it manages the acceptance criterion itself, i.e. when it is
-        used together with a NoEpsilon.
-        """
-        raise NotImplementedError()
-
+    def get_config(self):
+        return None
 
 class SimpleFunctionAcceptor(Acceptor):
     """
@@ -324,102 +310,38 @@ class StochasticAcceptor(Acceptor):
 
     def __init__(
             self,
-            temp_schemes: Union[Callable, List[Callable]] = None,
-            pdf_max_method: Callable = None,
+            pdf_norm_method: Callable = None,
             **kwargs):
         """
         Parameters
         ----------
 
-        pdf: callable, optional
-            A probability density function
-
-            .. math::
-
-               pdf(x_0|x)
-
-            of the observed summary statistics given the simulated
-            summary statistics. If None is passed, a standard multivariate
-            normal distribution is assumed.
-
-        temp_schemes: Union[Callable, List[Callable]], optional
-            Temperature schemes of the form
-            Callable[[dict, **kwargs], float]
-            returning proposed temperatures for the next time point. If
-            multiple are passed, the minimum computed temperature is used.
-            If the next time point is the last time point according to
-            max_nr_populations, 1.0 is used for exact inference.
-
-        pdf_max_method: Callable, optional
-            Method how to compute the normalization constant c.
-            The normalization value the density is divided by. To have
-            acceptance from the desired distribution, c should be
-            at least (and as precisely as possible for higher acceptance
-            rates) the highest mode of the distribution.
-            If None is passed, it is computed, assumed to be for x=x_0.
-
-        kwargs: dict, optional
-            Passed to the schedulers. Supported arguments that have a default
-            value:
-            * target_acceptance_rate: float = 0.5: target acceptance rate
-            * temp_init: float = None (i.e. estimated from prior): initial
-              temperature
-            * temp_decay_exponent: float = 3: Exponent with which the
-              temperature decays in fixed-decay schemes.
-            * config: dict: Can be used as a memory object.
-
-            In addition, the schedulers receive time-specific info, see the
-            _update() method for details.
         """
 
         super().__init__()
 
-        if temp_schemes is None:
-            temp_schemes = [scheme_acceptance_rate, scheme_exponential_decay]
-        elif not isinstance(temp_schemes, list):
-            temp_schemes = [temp_schemes]
-        self.temp_schemes = temp_schemes
-
-        if pdf_max_method is None:
-            pdf_max_method = pdf_max_take_from_kernel
-        self.pdf_max_method = pdf_max_method
-
-        # default kwargs
-        default_kwargs = dict(
-            temp_init=None,
-            config={}
-        )
-        # set kwargs to default if not specified
-        for key, value in default_kwargs.items():
-            kwargs.setdefault(key, value)
-        self.kwargs = kwargs
+        if pdf_norm_method is None:
+            pdf_norm_method = pdf_norm_from_kernel
+        self.pdf_norm_method = pdf_norm_method
 
         # maximum pdfs, indexed by time
-        self.pdf_maxs = {}
-
-        # temperatures, indexed by time
-        self.temperatures = {}
+        self.pdf_norms = {}
 
         # fields to be filled later
         self.x_0 = None
-        self.max_nr_populations = None
+        self.kernel_scale = None
 
     def initialize(
             self,
             t: int,
             get_weighted_distances: Callable[[], pd.DataFrame],
-            max_nr_populations: int,
             distance_function: Distance,
             x_0: dict):
         """
         Initialize temperature and maximum pdf.
         """
         self.x_0 = x_0
-        self.max_nr_populations = max_nr_populations
-
-        if not isinstance(distance_function, StochasticKernel):
-            raise AssertionError(
-                "The distance function must be a pyabc.StochasticKernel.")
+        self.kernel_scale = distance_function.ret_scale
 
         # update
         self._update(t, get_weighted_distances, distance_function, 1.0)
@@ -427,77 +349,49 @@ class StochasticAcceptor(Acceptor):
     def update(self,
                t: int,
                weighted_distances: pd.DataFrame,
-               distance_function: Distance,
-               acceptance_rate: float):
+               distance_function: Distance):
         self._update(
-            t, lambda: weighted_distances, distance_function, acceptance_rate)
+            t, lambda: weighted_distances, distance_function)
 
     def _update(self,
                 t: int,
                 get_weighted_distances: Callable[[], pd.DataFrame],
-                kernel: Distance,
-                acceptance_rate: float):
+                kernel: Distance):
         """
         Update schemes for the upcoming time point t.
         """
-        # update pdf_max
+        # update pdf normalization
 
-        pdf_max = self.pdf_max_method(
+        pdf_norm = self.pdf_norm_method(
             kernel_val=kernel.pdf_max,
             get_weighted_distances=get_weighted_distances,
-            pdf_maxs=self.pdf_maxs)
-        self.pdf_maxs[t] = pdf_max
+            prev_pdf_norm=max(self.pdf_norms.values()))
+        self.pdf_norms[t] = pdf_norm
 
-        logger.debug(f"acceptance rate={acceptance_rate}")
-        logger.debug(f"pdf_max={self.pdf_maxs[t]} for t={t}.")
+        logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
 
-        # update temperature
-
-        if t >= self.max_nr_populations - 1:
-            # t is last time
-            self.temperatures[t] = 1.0
-        else:
-            # evaluate schedulers
-            temps = []
-            for scheme in self.temp_schemes:
-                temp = scheme(
-                    t=t,
-                    get_weighted_distances=get_weighted_distances,
-                    x_0=self.x_0,
-                    pdf_max=self.pdf_maxs[t],
-                    ret_scale=kernel.ret_scale,
-                    temperatures=self.temperatures,
-                    max_nr_populations=self.max_nr_populations,
-                    acceptance_rate=acceptance_rate,
-                    **self.kwargs)
-                temps.append(temp)
-
-            logger.debug(f"Proposed temperatures: {temps}.")
-
-            # take reasonable minimum temperature
-            fallback = self.temperatures[t - 1] \
-                if t - 1 in self.temperatures else np.inf
-            temp = max(min(*temps, fallback), 1.0)
-
-            # fill into temperatures list
-            self.temperatures[t] = temp
+    def get_config(self, t: int):
+        return dict(
+            pdf_norm=self.pdf_norms[t],
+            kernel_scale=self.kernel_scale,  # TODO Refactor
+        )
 
     def __call__(self, distance_function, eps, x, x_0, t, par):
         # rename
         kernel = distance_function
 
         # temperature
-        temp = self.temperatures[t]
+        temp = eps(t)
 
         # compute probability density
         pd = kernel(x, x_0, t, par)
-        pdf_max = self.pdf_maxs[t]
+        pdf_norm = self.pdf_norms[t]
 
         # rescale
-        if kernel.ret_scale == RET_SCALE_LIN:
-            pd_rescaled = pd / self.pdf_maxs[t]
-        else:  # kernel.ret_scale == RET_SCALE_LOG
-            pd_rescaled = np.exp(pd - self.pdf_maxs[t])
+        if kernel.ret_scale == SCALE_LIN:
+            pd_rescaled = pd / pdf_norm
+        else:  # kernel.ret_scale == SCALE_LOG
+            pd_rescaled = np.exp(pd - pdf_norm)
 
         # acceptance probability
         acceptance_probability = pd_rescaled ** (1 / temp)
@@ -517,12 +411,9 @@ class StochasticAcceptor(Acceptor):
 
         # check pdf max ok
         if pdf_max < pd:
-            logger.info(
-                f"Encountered pd={pd:.5f} > current c={pdf_max:.5f}. "
-                f"Using weight={weight:.20f}.")
+            logger.debug(
+                f"Encountered pd={pd:.4e} > current c={pdf_max:.4e}. "
+                f"Using weight={weight:.4e}.")
 
         # return unscaled density value and the acceptance flag
         return AcceptorResult(pd, accept, weight)
-
-    def get_epsilon_equivalent(self, t: int):
-        return self.temperatures[t]

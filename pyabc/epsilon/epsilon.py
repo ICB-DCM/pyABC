@@ -137,7 +137,9 @@ class QuantileEpsilon(Epsilon):
 
     def initialize(self,
                    t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame]):
+                   get_weighted_distances: Callable[[], pd.DataFrame],
+                   max_nr_populations: int,
+                   acceptor_config: dict):
         if self._initial_epsilon != 'from_sample':
             # safety check in __call__
             return
@@ -179,7 +181,9 @@ class QuantileEpsilon(Epsilon):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame):
+               weighted_distances: pd.DataFrame,
+               acceptance_rate: float,
+               acceptor_config: dict):
         """
         Compute quantile of the (weighted) distances given in population,
         and use this to update epsilon.
