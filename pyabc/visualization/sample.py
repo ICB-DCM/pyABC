@@ -239,7 +239,7 @@ def plot_sample_numbers_trajectory(
         ylabel = "log10(" + ylabel + ")"
 
     # plot
-    for i_run, (t, sample, label) in enumerate(zip(times, samples, labels)):
+    for t, sample, label in zip(times, samples, labels):
         ax.plot(t, sample, 'x-', label=label)
 
     # add labels
@@ -329,7 +329,7 @@ def plot_acceptance_rates_trajectory(
         ylabel = "log10(" + ylabel + ")"
 
     # plot
-    for i_run, (t, rate, label) in enumerate(zip(times, rates, labels)):
+    for t, rate, label in zip(times, rates, labels):
         ax.plot(t, rate, 'x-', label=label)
 
     # add labels
