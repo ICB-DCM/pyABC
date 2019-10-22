@@ -522,7 +522,7 @@ class StochasticAcceptor(Acceptor):
                 f"Using weight={weight:.20f}.")
 
         # return unscaled density value and the acceptance flag
-        return AcceptanceResult(pd, accept, weight)
+        return AcceptorResult(pd, accept, weight)
 
     def get_epsilon_equivalent(self, t: int):
         return self.temperatures[t]

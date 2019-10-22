@@ -57,7 +57,13 @@ def scheme_acceptance_rate(**kwargs):
     else:  # ret_scale == RET_SCALE_LOG
         values = np.exp(pdfs - pdf_max)
 
+    # to acceptance probabilities
+    values = np.minimum(values, 1.0)
+
     # to pmf
+    # TODO: We currently use the weights from the previous iteration
+    # It might be better to use weights based on transition / prior
+    # for the next proposal transition kernel
     weights /= np.sum(weights)
 
     # objective function which we wish to find a root for
