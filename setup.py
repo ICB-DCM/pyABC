@@ -23,7 +23,7 @@ setup(
                       "feather-format>=0.4.0", "bkcharts>=0.2",
                       "distributed>=1.23.3", "pygments>=2.2.0",
                       "IPython>=7.0.1", "pyarrow>=0.14.1"],
-    extra_requires={"R": ["rpy2>=3.2.0"]},
+    extra_requires={"R": ["rpy2>=3.2.0", "cffi>=1.13.1"]},
     python_requires='>=3.6',
     packages=find_packages(exclude=["examples*", "devideas*",
                                     "test*", "test"]),
