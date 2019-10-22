@@ -230,7 +230,7 @@ def plot_sample_numbers_trajectory(
         samples.append(np.array(h_info['samples']))
 
     # apply scale
-    ylabel = "Sam"
+    ylabel = "Samples"
     if yscale == 'log':
         samples = [np.log(sample) for sample in samples]
         ylabel = "log(" + ylabel + ")"
