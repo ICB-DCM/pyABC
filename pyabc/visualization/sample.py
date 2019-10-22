@@ -194,7 +194,7 @@ def plot_sample_numbers_trajectory(
     rotation: int, optional (default = 0)
         Rotation to apply to the plot's x tick labels. For longer labels,
         a tilting of 45 or even 90 can be preferable.
-    title: str, optional (default = "Total required samples")
+    title: str, optional (default = "Required samples")
         Title for the plot.
     yscale: str, optional (default = 'lin')
         The scale on which to plot the counts. Can be one of 'lin', 'log'
@@ -259,7 +259,7 @@ def plot_acceptance_rates_trajectory(
         histories: Union[List, History],
         labels: Union[List, str] = None,
         rotation: int = 0,
-        title: str = "Required samples",
+        title: str = "Acceptance rates",
         yscale: str = 'lin',
         size: tuple = None,
         ax: mpl.axes.Axes = None):
@@ -278,7 +278,7 @@ def plot_acceptance_rates_trajectory(
     rotation: int, optional (default = 0)
         Rotation to apply to the plot's x tick labels. For longer labels,
         a tilting of 45 or even 90 can be preferable.
-    title: str, optional (default = "Total required samples")
+    title: str, optional (default = "Acceptance rates")
         Title for the plot.
     yscale: str, optional (default = 'lin')
         The scale on which to plot the counts. Can be one of 'lin', 'log'
