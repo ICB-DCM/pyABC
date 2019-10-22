@@ -178,8 +178,42 @@ def plot_sample_numbers_trajectory(
         title: str = "Required samples",
         yscale: str = 'lin',
         size: tuple = None,
-        ax: mpl.axes.Axes = None):
-    pass
+        ax: mpl.axes.Axes = None): 
+    # preprocess input
+    histories, labels = to_lists_or_default(histories, labels)
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    n_run = len(histories)
+
+    # extract sample numbers
+    samples = []
+    for history in histories:
+        # note: the first entry corresponds to the calibration and should
+        # be included here to be fair against methods not requiring
+        # calibration
+        samples.append(np.array(history.get_all_populations()['samples']))
+
+    # plot
+    for i_run, (sample, label) in enumerate(zip(samples, labels)):
+        ax.plt(np.arange(len(sample)), sample, label=label)
+
+    # add labels
+    ax.set_xticks(np.arange(n_pop))
+    ax.show_legend()
+    ax.set_title(title)
+    ax.set_ylabel("Samples")
+    ax.set_xlabel("Population index")
+    # set size
+    if size is not None:
+        fig.set_size_inches(size)
+    fig.tight_layout()
+
+    return ax
 
 
 def plot_acceptance_rates_trajectory(
