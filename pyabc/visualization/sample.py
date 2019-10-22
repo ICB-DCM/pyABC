@@ -178,7 +178,37 @@ def plot_sample_numbers_trajectory(
         title: str = "Required samples",
         yscale: str = 'lin',
         size: tuple = None,
-        ax: mpl.axes.Axes = None): 
+        ax: mpl.axes.Axes = None):
+    """
+    Plot of required sample number over all iterations, i.e. one trajectory
+    per history.
+
+    Parameters
+    ----------
+
+    histories: Union[List, History]
+        The histories to plot from. History ids must be set correctly.
+    labels: Union[List ,str], optional
+        Labels corresponding to the histories. If None are provided,
+        indices are used as labels.
+    rotation: int, optional (default = 0)
+        Rotation to apply to the plot's x tick labels. For longer labels,
+        a tilting of 45 or even 90 can be preferable.
+    title: str, optional (default = "Total required samples")
+        Title for the plot.
+    yscale: str, optional (default = 'lin')
+        The scale on which to plot the counts. Can be one of 'lin', 'log'
+        (basis e) or 'log10'
+    size: tuple of float, optional
+        The size of the plot in inches.
+    ax: matplotlib.axes.Axes, optional
+        The axis object to use.
+
+    Returns
+    -------
+
+    ax: Axis of the generated plot.
+    """
     # preprocess input
     histories, labels = to_lists_or_default(histories, labels)
 
@@ -198,16 +228,24 @@ def plot_sample_numbers_trajectory(
         # calibration
         samples.append(np.array(history.get_all_populations()['samples']))
 
+    # apply scale
+    ylabel = "Samples"
+    if yscale == 'log':
+        samples = [np.log(sample) for sample in samples]
+        ylabel = "log(" + ylabel + ")"
+    elif yscale == 'log10':
+        samples = [np.log10(sample) for sample in samples]
+        ylabel = "log10(" + ylabel + ")"
+
     # plot
     for i_run, (sample, label) in enumerate(zip(samples, labels)):
-        ax.plt(np.arange(len(sample)), sample, label=label)
+        ax.plot(np.arange(len(sample)), sample, 'x-', label=label)
 
     # add labels
-    ax.set_xticks(np.arange(n_pop))
-    ax.show_legend()
+    ax.legend()
     ax.set_title(title)
-    ax.set_ylabel("Samples")
-    ax.set_xlabel("Population index")
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel("Population index $t$")
     # set size
     if size is not None:
         fig.set_size_inches(size)
