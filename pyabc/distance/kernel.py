@@ -69,7 +69,7 @@ class StochasticKernel(Distance):
     def check_ret_scale(ret_scale):
         if ret_scale not in RET_SCALES:
             raise ValueError(
-                f"The ret_scale {ret_scale} must be ofe of {RET_SCALES}.")
+                f"The ret_scale {ret_scale} must be one of {RET_SCALES}.")
 
     def initialize_keys(self, x):
         self.keys = sorted(x)
