@@ -218,8 +218,6 @@ def plot_sample_numbers_trajectory(
     else:
         fig = ax.get_figure()
 
-    n_run = len(histories)
-
     # extract sample numbers
     samples = []
     for history in histories:
