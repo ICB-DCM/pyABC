@@ -60,7 +60,7 @@ def test_sample_numbers_trajectory():
 
 
 def test_acceptance_rates_trajectory():
-    pyabc.visualization.plot_acceptance_rateas_trajectory(
+    pyabc.visualization.plot_acceptance_rates_trajectory(
         histories, labels, yscale='log10', rotation=76)
 
 

@@ -219,15 +219,18 @@ def plot_sample_numbers_trajectory(
         fig = ax.get_figure()
 
     # extract sample numbers
+    times = []
     samples = []
     for history in histories:
         # note: the first entry corresponds to the calibration and should
         # be included here to be fair against methods not requiring
         # calibration
-        samples.append(np.array(history.get_all_populations()['samples']))
+        h_info = history.get_all_populations()
+        times.append(np.array(h_info['t']))
+        samples.append(np.array(h_info['samples']))
 
     # apply scale
-    ylabel = "Samples"
+    ylabel = "Sam"
     if yscale == 'log':
         samples = [np.log(sample) for sample in samples]
         ylabel = "log(" + ylabel + ")"
@@ -236,8 +239,8 @@ def plot_sample_numbers_trajectory(
         ylabel = "log10(" + ylabel + ")"
 
     # plot
-    for i_run, (sample, label) in enumerate(zip(samples, labels)):
-        ax.plot(np.arange(len(sample)), sample, 'x-', label=label)
+    for i_run, (t, sample, label) in enumerate(zip(times, samples, labels)):
+        ax.plot(t, sample, 'x-', label=label)
 
     # add labels
     ax.legend()
@@ -260,4 +263,83 @@ def plot_acceptance_rates_trajectory(
         yscale: str = 'lin',
         size: tuple = None,
         ax: mpl.axes.Axes = None):
-    pass
+    """
+    Plot of acceptance rates over all iterations, i.e. one trajectory
+    per history.
+
+    Parameters
+    ----------
+
+    histories: Union[List, History]
+        The histories to plot from. History ids must be set correctly.
+    labels: Union[List ,str], optional
+        Labels corresponding to the histories. If None are provided,
+        indices are used as labels.
+    rotation: int, optional (default = 0)
+        Rotation to apply to the plot's x tick labels. For longer labels,
+        a tilting of 45 or even 90 can be preferable.
+    title: str, optional (default = "Total required samples")
+        Title for the plot.
+    yscale: str, optional (default = 'lin')
+        The scale on which to plot the counts. Can be one of 'lin', 'log'
+        (basis e) or 'log10'
+    size: tuple of float, optional
+        The size of the plot in inches.
+    ax: matplotlib.axes.Axes, optional
+        The axis object to use.
+
+    Returns
+    -------
+
+    ax: Axis of the generated plot.
+    """
+    # preprocess input
+    histories, labels = to_lists_or_default(histories, labels)
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
+    # extract sample numbers
+    times = []
+    samples = []
+    pop_sizes = []
+    for history in histories:
+        # note: the first entry of time -1 is trivial and is thus ignored here
+        h_info = history.get_all_populations()
+        times.append(np.array(h_info['t'])[1:])
+        samples.append(np.array(h_info['samples'])[1:])
+        pop_sizes.append(np.array(
+            history.get_nr_particles_per_population().values[1:]))
+
+    # compute acceptance rates
+    rates = []
+    for sample, pop_size in zip(samples, pop_sizes):
+        rates.append(pop_size / sample)
+
+    # apply scale
+    ylabel = "Acceptance rate"
+    if yscale == 'log':
+        rates = [np.log(rate) for rate in rates]
+        ylabel = "log(" + ylabel + ")"
+    elif yscale == 'log10':
+        rates = [np.log10(rate) for rate in rates]
+        ylabel = "log10(" + ylabel + ")"
+
+    # plot
+    for i_run, (t, rate, label) in enumerate(zip(times, rates, labels)):
+        ax.plot(t, rate, 'x-', label=label)
+
+    # add labels
+    ax.legend()
+    ax.set_title(title)
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel("Population index $t$")
+    # set size
+    if size is not None:
+        fig.set_size_inches(size)
+    fig.tight_layout()
+
+    return ax
