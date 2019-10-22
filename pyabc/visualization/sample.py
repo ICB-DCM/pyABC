@@ -169,3 +169,25 @@ def plot_total_sample_numbers(
     fig.tight_layout()
 
     return ax
+
+
+def plot_sample_numbers_trajectory(
+        histories: Union[List, History],
+        labels: Union[List, str] = None,
+        rotation: int = 0,
+        title: str = "Required samples",
+        yscale: str = 'lin',
+        size: tuple = None,
+        ax: mpl.axes.Axes = None):
+    pass
+
+
+def plot_acceptance_rates_trajectory(
+        histories: Union[List, History],
+        labels: Union[List, str] = None,
+        rotation: int = 0,
+        title: str = "Required samples",
+        yscale: str = 'lin',
+        size: tuple = None,
+        ax: mpl.axes.Axes = None):
+    pass
