@@ -4,19 +4,33 @@ Release Notes
 =============
 
 
-0.10 series
------------
-
-
-0.10.0 (2019-10-14)
--------------------
-
 * Introduce StochasticAcceptor as an alternative to uniform epsilon
   thresholds.
 
 
 0.9 series
 ..........
+
+
+0.9.19 (2019-10-24)
+-------------------
+
+* Introduce acceptor.StochasticAcceptor to encode the stochastic acceptance
+  step generalizing the standard uniform criterion.
+* Introduce distance.StochasticKernel to encode noise distributions, with
+  several concrete implementations already.
+* Introduce epsilon.Temperature to capture the temperature replacing the
+  traditional epsilons. In addition, multiple concrete
+  pyabc.epsilon.TemperatureSchemes have been implemented that handle the
+  calculation of the next temperature value.
+
+
+0.9.19 (2019-10-23)
+-------------------
+
+* Move to cffi>=1.13.1 after that bug was surprisingly quickly fixed (#195).
+* Create sub-module for epsilon (#189).
+* Add plots for sample and acceptance rate trajectories (#193).
 
 
 0.9.18 (2019-10-20)
