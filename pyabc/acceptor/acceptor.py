@@ -172,7 +172,7 @@ class Acceptor:
         """
         Create a configuration object that contains all values of interest for
         the update of the Epsilon object.
-        
+
         Parameters
         ----------
 

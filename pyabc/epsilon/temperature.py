@@ -18,9 +18,9 @@ class Temperature(Epsilon):
     Parameters
     ----------
     schemes: Union[Callable, List[Callable]]
-        Temperature schemes of the form
-        ``Callable[[dict, **kwargs], float]`` returning proposed
-        temperatures for the next time point.
+        Temperature schemes returning proposed
+        temperatures for the next time point, e.g.
+        instances of :class:`pyabc.epsilon.TemperatureScheme`.
     aggregate_fun: Callable[List[int], int]
         The function to aggregate the schemes by, of the form
         ``Callable[List[float], float]``.
@@ -41,10 +41,12 @@ class Temperature(Epsilon):
             aggregate_fun: Callable[[List[int]], int] = None,
             initial_temperature: float = None):
         if schemes is None:
+            # this combination proved rather stable
             schemes = [AcceptanceRateScheme(), ExponentialDecayScheme()]
         self.schemes = schemes
 
         if aggregate_fun is None:
+            # use minimum over all proposed temperature values
             aggregate_fun = min
         self.aggregate_fun = aggregate_fun
 
@@ -59,6 +61,8 @@ class Temperature(Epsilon):
                    max_nr_populations: int,
                    acceptor_config: dict):
         self.max_nr_populations = max_nr_populations
+
+        # set initial temperature
         self._update(t, get_weighted_distances, 1.0, acceptor_config)
 
     def update(self,
@@ -77,8 +81,6 @@ class Temperature(Epsilon):
         """
         Compute the temperature for time `t`.
         """
-        # update the temperature
-
         # scheme arguments
         kwargs = dict(
             t=t,
@@ -86,7 +88,7 @@ class Temperature(Epsilon):
             max_nr_populations=self.max_nr_populations,
             pdf_norm=acceptor_config['pdf_norm'],
             kernel_scale=acceptor_config['kernel_scale'],
-            prev_temperature=self.temperatures.get(t - 1, None),
+            prev_temperature=self.temperatures.get(t-1, None),
             acceptance_rate=acceptance_rate,
         )
 
@@ -98,7 +100,7 @@ class Temperature(Epsilon):
                 # execute scheme
                 temperature = self.initial_temperature(**kwargs)
             else:
-                # is float value
+                # should be float value
                 temperature = self.initial_temperature
         else:
             # evalute schemes
@@ -111,7 +113,7 @@ class Temperature(Epsilon):
             # compute next temperature based on proposals and fallback
             # should not be higher than before
             fallback = self.temperatures[t - 1] \
-                if t - 1 in self.temperatures else np.inf
+                if t-1 in self.temperatures else np.inf
             proposed_value = self.aggregate_fun(temps)
             # also a value lower than 1.0 does not make sense
             temperature = max(min(proposed_value, fallback), 1.0)
@@ -125,6 +127,11 @@ class Temperature(Epsilon):
 
 
 class TemperatureScheme:
+    """
+    A TemperatureScheme suggests the next temperature value. It is used as
+    one of potentially multiple schemes employed in the Temperature class.
+    This class is abstract.
+    """
 
     def __init__(self):
         pass
@@ -143,10 +150,10 @@ class TemperatureScheme:
 class AcceptanceRateScheme(TemperatureScheme):
     """
     Try to keep the acceptance rate constant at a value of
-    `target_acceptance_rate`. Note that this scheme will fail to
+    `target_rate`. Note that this scheme will fail to
     reduce the temperature sufficiently in later iterations, if the
     problem's inherent acceptance rate is lower, but it has been
-    observed to give big temperature leaps in early iterations.
+    observed to give big feasible temperature leaps in early iterations.
 
     Parameters
     ----------
@@ -165,7 +172,7 @@ class AcceptanceRateScheme(TemperatureScheme):
                  kernel_scale: str,
                  prev_temperature: float,
                  acceptance_rate: float):
-        # execute function ( expensive if in calibration)
+        # execute function (expensive if in calibration)
         df = get_weighted_distances()
 
         weights = np.array(df['w'])
