@@ -8,6 +8,14 @@ Release Notes
 ..........
 
 
+0.9.19 (2019-10-23)
+-------------------
+
+* Move to cffi>=1.13.1 after that bug was surprisingly quickly fixed (#195).
+* Create sub-module for epsilon (#189).
+* Add plots for sample and acceptance rate trajectories (#193).
+
+
 0.9.18 (2019-10-20)
 -------------------
 
