@@ -38,7 +38,7 @@ class Temperature(Epsilon):
     def __init__(
             self,
             schemes: Union[Callable, List[Callable]] = None,
-            aggregate_fun: Callable[List[int], int] = None,
+            aggregate_fun: Callable[[List[int]], int] = None,
             initial_temperature: float = None):
         if schemes is None:
             schemes = [AcceptanceRateScheme(), ExponentialDecayScheme()]

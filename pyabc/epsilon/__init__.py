@@ -18,13 +18,28 @@ from .epsilon import (
     QuantileEpsilon,
     MedianEpsilon,
 )
+from .temperature import (
+    Temperature,
+    TemperatureScheme,
+    AcceptanceRateScheme,
+    ExponentialDecayScheme,
+    DalyScheme,
+)
 
 
 __all__ = [
+    # base
     'Epsilon',
     'NoEpsilon',
+    # epsilon
     'ConstantEpsilon',
     'ListEpsilon',
     'QuantileEpsilon',
     'MedianEpsilon',
+    # temperature
+    'Temperature',
+    'TemperatureScheme',
+    'AcceptanceRateScheme',
+    'ExponentialDecayScheme',
+    'DalyScheme',
 ]
