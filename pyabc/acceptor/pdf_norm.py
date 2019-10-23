@@ -30,4 +30,4 @@ def pdf_norm_max_found(
 
     pdf_norm = max(prev_pdf_norm, *pdfs)
 
-    return pdf_max
+    return pdf_norm

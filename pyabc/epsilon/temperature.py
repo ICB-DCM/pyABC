@@ -1,9 +1,13 @@
 import numpy as np
+import scipy as sp
 import pandas as pd
-from typing import Callable, Dict, List, Union
+from typing import Callable, List, Union
+import logging
 
 from .base import Epsilon
-from ..distance import SCALE_LIN, StochasticKernel
+from ..distance import SCALE_LIN
+
+logger = logging.getLogger("Temperature")
 
 
 class Temperature(Epsilon):
@@ -41,7 +45,7 @@ class Temperature(Epsilon):
         self.schemes = schemes
 
         if aggregate_fun is None:
-            aggregate_fun = lambda xs: np.min(xs)
+            aggregate_fun = min
         self.aggregate_fun = aggregate_fun
 
         self.initial_temperature = initial_temperature
@@ -82,7 +86,7 @@ class Temperature(Epsilon):
             max_nr_populations=self.max_nr_populations,
             pdf_norm=acceptor_config['pdf_norm'],
             kernel_scale=acceptor_config['kernel_scale'],
-            prev_temperature = self.temperatures.get(t - 1, None),
+            prev_temperature=self.temperatures.get(t - 1, None),
             acceptance_rate=acceptance_rate,
         )
 
@@ -162,15 +166,15 @@ class AcceptanceRateScheme(TemperatureScheme):
                  prev_temperature: float,
                  acceptance_rate: float):
         # execute function ( expensive if in calibration)
-        df = get_weigted_distances()
+        df = get_weighted_distances()
 
         weights = np.array(df['w'])
         pdfs = np.array(df['distance'])
 
         # compute rescaled posterior densities
-        if kernel_scale == KERNEL_SCALE_LIN:
+        if kernel_scale == SCALE_LIN:
             values = pdfs / pdf_norm
-        else:  # kernel_scale == KERNEL_SCALE_LOG
+        else:  # kernel_scale == SCALE_LOG
             values = np.exp(pdfs - pdf_norm)
 
         # to acceptance probabilities
@@ -184,7 +188,7 @@ class AcceptanceRateScheme(TemperatureScheme):
 
         # objective function which we wish to find a root for
         def obj(beta):
-            val = np.sum(weights * values**beta) - target_rate
+            val = np.sum(weights * values**beta) - self.arget_rate
             return val
 
         if obj(1) > 0:
@@ -261,9 +265,9 @@ class ExponentialDecayScheme(TemperatureScheme):
 
         if max_nr_populations == np.inf:
             # just decrease by a factor of alpha each round
-            temperature = alpha * temp_base
+            temperature = self.alpha * temp_base
             return temperature
-        
+
         # how many steps left?
         t_to_go = max_nr_populations - t
 
@@ -286,7 +290,8 @@ class DalyScheme(TemperatureScheme):
             for exact and approximate Bayesian inference on biological
             models". Journal of The Royal Society Interface, 2017
     """
-    def __init__(self, alpha=0.5, min_rate: 1e-4):
+
+    def __init__(self, alpha: float = 0.5, min_rate: float = 1e-4):
         self.alpha = alpha
         self.min_rate = min_rate
         self.k = {}

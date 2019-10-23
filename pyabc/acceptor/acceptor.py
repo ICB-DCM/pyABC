@@ -16,10 +16,10 @@ time.
 
 import numpy as np
 import pandas as pd
-from typing import Callable, List, Union
+from typing import Callable
 import logging
 
-from ..distance import Distance, StochasticKernel, SCALE_LIN
+from ..distance import Distance, SCALE_LIN
 from ..epsilon import Epsilon
 from ..parameters import Parameter
 from .pdf_norm import pdf_norm_max_found
@@ -169,6 +169,7 @@ class Acceptor:
 
     def get_config(self):
         return None
+
 
 class SimpleFunctionAcceptor(Acceptor):
     """
@@ -321,7 +322,7 @@ class StochasticAcceptor(Acceptor):
         super().__init__()
 
         if pdf_norm_method is None:
-            pdf_norm_method = pdf_norm_from_kernel
+            pdf_norm_method = pdf_norm_max_found
         self.pdf_norm_method = pdf_norm_method
 
         # maximum pdfs, indexed by time
@@ -410,9 +411,9 @@ class StochasticAcceptor(Acceptor):
             weight = acceptance_probability / min(1, acceptance_probability)
 
         # check pdf max ok
-        if pdf_max < pd:
+        if pdf_norm < pd:
             logger.debug(
-                f"Encountered pd={pd:.4e} > current c={pdf_max:.4e}. "
+                f"Encountered pd={pd:.4e} > current c={pdf_norm:.4e}. "
                 f"Using weight={weight:.4e}.")
 
         # return unscaled density value and the acceptance flag
