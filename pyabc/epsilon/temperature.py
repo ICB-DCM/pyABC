@@ -284,6 +284,61 @@ class ExponentialDecayScheme(TemperatureScheme):
         return temperature
 
 
+class PolynomialDecayScheme(TemperatureScheme):
+    """
+    Compute next temperature as pre-last entry in
+
+    >>> np.linspace(1, (temp_base)**(1 / temp_decay_exponent),
+    >>>             t_to_go + 1) ** temp_decay_exponent)
+
+    Requires finite `max_nr_populations`.
+
+    Note that this is similar to the `scheme_exponential_decay`, which is
+    indeed the limit for `temp_decay_exponent -> infinity`. For smaller
+    exponent, the sequence makes larger steps for low temperatures. This
+    can be useful in cases, where lower temperatures (which are usually
+    more expensive) can be traversed in few larger steps.
+    """
+
+    def __init__(self, exponent: float = 3):
+        self.exponent = exponent
+
+    def __call__(self,
+                 t: int,
+                 get_weighted_distances: Callable,
+                 max_nr_populations: int,
+                 pdf_norm: float,
+                 kernel_scale: str,
+                 prev_temperature: float,
+                 acceptance_rate: float):
+        # needs a starting temperature
+        # if not available, return infinite temperature
+        if prev_temperature is None:
+            return np.inf
+
+        # base temperature
+        temp_base = prev_temperature
+
+        # check if we can compute a decay step
+        if max_nr_populations == np.inf:
+            raise ValueError("Can only perform PolynomialDecayScheme step "
+                             "with a finite max_nr_populations.")
+
+        # how many steps left?
+        t_to_go = max_nr_populations - t
+
+        # compute sequence
+        temps = np.linspace(1, (temp_base)**(1 / self.exponent),
+                            t_to_go+1) ** self.exponent
+
+        logger.debug(f"Temperatures proposed by polynomial decay method: "
+                     f"{temps}.")
+
+        # pre-last step is the next step
+        temperature = temps[-2]
+        return temperature
+
+
 class DalyScheme(TemperatureScheme):
     """
     This scheme is loosely based on [#daly2017]_, however note that it does
@@ -338,3 +393,110 @@ class DalyScheme(TemperatureScheme):
         temperature = eps**2
 
         return temperature
+
+
+class FrielPettittScheme(TemperatureScheme):
+    """
+    Basically takes linear steps in log-space. See [#vyshemirsky2008]_.
+
+    .. [#vyshemirsky2008] Vyshemirsky, Vladislav, and Mark A. Girolami.
+        "Bayesian ranking of biochemical system models."
+        Bioinformatics 24.6 (2007): 833-839.
+    """
+
+    def __call__(self,
+                 t: int,
+                 get_weighted_distances: Callable,
+                 max_nr_populations: int,
+                 pdf_norm: float,
+                 kernel_scale: str,
+                 prev_temperature: float,
+                 acceptance_rate: float):
+        # needs a starting temperature
+        # if not available, return infinite temperature
+        if prev_temperature is None:
+            return np.inf
+
+        # check if we can compute a decay step
+        if max_nr_populations == np.inf:
+            raise ValueError("Can only perform FrielPettittScheme step with a "
+                             "finite max_nr_populations.")
+
+        # base temperature
+        temp_base = prev_temperature
+        beta_base = 1. / temp_base
+
+        # time to go
+        t_to_go = max_nr_populations - t
+
+        beta = beta_base + ((1. - beta_base) * 1 / t_to_go) ** 2
+
+        temperature = 1. / beta
+        return temperature
+
+
+class EssScheme(TemperatureScheme):
+    """
+    Try to keep the effective sample size constant.
+
+    Parameters
+    ----------
+    target_relative_ess: float
+        Targe relative effective sample size.
+    """
+
+    def __init__(self, target_relative_ess: float = 0.8):
+        self.target_relative_ess = target_relative_ess
+
+    def __call__(self,
+                 t: int,
+                 get_weighted_distances: Callable,
+                 max_nr_populations: int,
+                 pdf_norm: float,
+                 kernel_scale: str,
+                 prev_temperature: float,
+                 acceptance_rate: float):
+        # execute functino (expensive if in calibration)
+        df = get_weighted_distances()
+
+        weights = np.array(df['w'])
+        pdfs = np.array(df['distance'])
+
+        # compute rescaled posterior densities
+        if kernel_scale == SCALE_LIN:
+            values = pdfs / pdf_norm
+        else:  # kernel_scale == SCALE_LOG
+            values = np.exp(pdfs - pdf_norm)
+
+        # to pmf
+        weights /= np.sum(weights)
+
+        target_ess = len(weights) * self.target_relative_ess
+
+        if prev_temperature is None:
+            beta_base = 0.0
+        else:
+            beta_base = 1. / prev_temperature
+
+        # objective to minimize
+        def obj(beta):
+            return (_ess(values, weights, beta) - target_ess)**2
+
+        bounds = sp.optimize.Bounds(lb=np.array([beta_base]),
+                                    ub=np.array([1.]))
+        ret = sp.optimize.minimize(
+            obj, x0=np.array([0.5 * (1 + beta_base)]),
+            bounds=bounds)
+        beta = ret.x
+
+        temperature = 1. / beta
+        return temperature
+
+
+def _ess(pdfs, weights, beta):
+    """
+    Effective sample size of importance samples.
+    """
+    num = np.sum(weights * pdfs**beta)**2
+    den = np.sum((weights * pdfs**beta)**2)
+    return num / den

@@ -23,7 +23,10 @@ from .temperature import (
     TemperatureScheme,
     AcceptanceRateScheme,
     ExponentialDecayScheme,
+    PolynomialDecayScheme,
     DalyScheme,
+    FrielPettittScheme,
+    EssScheme,
 )
 
 
@@ -41,5 +44,8 @@ __all__ = [
     'TemperatureScheme',
     'AcceptanceRateScheme',
     'ExponentialDecayScheme',
+    'PolynomialDecayScheme',
     'DalyScheme',
+    'FrielPettittScheme',
+    'EssScheme',
 ]

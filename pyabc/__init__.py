@@ -44,7 +44,10 @@ from .epsilon import (
     TemperatureScheme,
     AcceptanceRateScheme,
     ExponentialDecayScheme,
-    DalyScheme)
+    PolynomialDecayScheme,
+    DalyScheme,
+    FrielPettittScheme,
+    EssScheme)
 from .smc import ABCSMC
 from .storage import (
     History,
@@ -105,7 +108,10 @@ __all__ = [
     "TemperatureScheme",
     "AcceptanceRateScheme",
     "ExponentialDecayScheme",
+    "PolynomialDecayScheme",
     "DalyScheme",
+    "FrielPettittScheme",
+    "EssScheme",
     # random variable
     "RVBase",
     "RV",
