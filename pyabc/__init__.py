@@ -53,7 +53,9 @@ from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
     UniformAcceptor,
-    StochasticAcceptor)
+    StochasticAcceptor,
+    pdf_norm_from_kernel,
+    pdf_norm_max_found)
 from .model import (
     Model,
     SimpleModel,
@@ -129,6 +131,8 @@ __all__ = [
     "SimpleFunctionAcceptor",
     "UniformAcceptor",
     "StochasticAcceptor",
+    "pdf_norm_from_kernel",
+    "pdf_norm_max_found",
     # model
     "ModelResult",
     "Model",

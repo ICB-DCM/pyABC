@@ -188,7 +188,7 @@ class AcceptanceRateScheme(TemperatureScheme):
 
         # objective function which we wish to find a root for
         def obj(beta):
-            val = np.sum(weights * values**beta) - self.arget_rate
+            val = np.sum(weights * values**beta) - self.target_rate
             return val
 
         if obj(1) > 0:

@@ -16,8 +16,8 @@ import pandas as pd
 import copy
 from typing import Union
 
-from .distance import Distance, PNormDistance, to_distance
-from .epsilon import Epsilon, MedianEpsilon
+from .distance import Distance, PNormDistance, to_distance, StochasticKernel
+from .epsilon import Epsilon, MedianEpsilon, Temperature
 from .model import Model
 from .population import Particle
 from .transition import Transition, MultivariateNormalTransition
@@ -28,7 +28,8 @@ from .pyabc_rand_choice import fast_random_choice
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import Acceptor, UniformAcceptor, SimpleFunctionAcceptor
+from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
+                       StochasticAcceptor)
 from .sampler import Sampler
 
 
@@ -226,6 +227,18 @@ class ABCSMC:
         self.max_nr_populations = None
         self.min_acceptance_rate = None
 
+        self._sanity_check()
+
+    def _sanity_check(self):
+        # check stochastic setting
+        if isinstance(self.acceptor, StochasticAcceptor):
+            if not isinstance(self.eps, Temperature):
+                raise ValueError("Epsilon must be derived from "
+                                 "pyabc.epsilon.Temperature.")
+            if not isinstance(self.distance_function, StochasticKernel):
+                raise ValueError("Distance must be derived from "
+                                 "pyabc.distance.StochasticKernel")
+
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
@@ -407,7 +420,7 @@ class ABCSMC:
             self.x_0)
         self.eps.initialize(
             t, get_initial_weighted_distances, self.max_nr_populations,
-            self.acceptor.get_config())
+            self.acceptor.get_config(t))
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
@@ -848,19 +861,19 @@ class ABCSMC:
             # compute distances with the new distance measure
             if df_updated:
                 def distance_to_ground_truth(x, par):
-                    return self.distance_function(x, self.x_0, t + 1, par)
+                    return self.distance_function(x, self.x_0, t+1, par)
 
                 population.update_distances(distance_to_ground_truth)
 
             # update acceptor
             self.acceptor.update(
-                t + 1, population.get_weighted_distances(),
+                t+1, population.get_weighted_distances(),
                 self.distance_function)
 
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances(),
                             acceptance_rate,
-                            self.acceptor.get_config())
+                            self.acceptor.get_config(t+1))
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon

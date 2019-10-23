@@ -345,7 +345,7 @@ class StochasticAcceptor(Acceptor):
         self.kernel_scale = distance_function.ret_scale
 
         # update
-        self._update(t, get_weighted_distances, distance_function, 1.0)
+        self._update(t, get_weighted_distances, distance_function)
 
     def update(self,
                t: int,
@@ -366,7 +366,8 @@ class StochasticAcceptor(Acceptor):
         pdf_norm = self.pdf_norm_method(
             kernel_val=kernel.pdf_max,
             get_weighted_distances=get_weighted_distances,
-            prev_pdf_norm=max(self.pdf_norms.values()))
+            prev_pdf_norm=None if not self.pdf_norms
+            else max(self.pdf_norms.values()))
         self.pdf_norms[t] = pdf_norm
 
         logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
