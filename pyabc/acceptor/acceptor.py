@@ -167,7 +167,7 @@ class Acceptor:
         """
         raise NotImplementedError()
 
-    def get_config(self):
+    def get_config(self, t: int):  # noqa: R0201 
         return None
 
 

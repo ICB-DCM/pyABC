@@ -83,16 +83,15 @@ class SimpleFunctionKernel(StochasticKernel):
     Parameters
     ----------
 
-    fun: Callable[**kwargs, float]
-        A Callable accepting a subset of __call__'s parameters.
+    fun: Callable
+        A Callable accepting `__call__`'s parameters.
         The function should be a pdf or pmf.
-
     ret_scale, keys, pdf_max: as in StochasticKernel
     """
 
     def __init__(
             self,
-            fun,
+            fun: Callable,
             ret_scale=SCALE_LIN,
             keys=None,
             pdf_max=None):
