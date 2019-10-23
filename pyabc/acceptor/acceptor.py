@@ -167,7 +167,8 @@ class Acceptor:
         """
         raise NotImplementedError()
 
-    def get_config(self, t: int):  # pylint disable=no-self-use
+    # pylint: disable=R0201
+    def get_config(self, t: int):
         return None
 
 
