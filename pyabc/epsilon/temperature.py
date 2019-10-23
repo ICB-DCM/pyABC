@@ -7,7 +7,7 @@ import logging
 from .base import Epsilon
 from ..distance import SCALE_LIN
 
-logger = logging.getLogger("Temperature")
+logger = logging.getLogger("Epsilon")
 
 
 class Temperature(Epsilon):

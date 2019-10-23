@@ -32,7 +32,8 @@ from .distance import (
     MinMaxDistance,
     PercentileDistance,
     RangeEstimatorDistance,
-    DistanceWithMeasureList)
+    DistanceWithMeasureList,
+    IndependentNormalKernel,)
 from .epsilon import (
     Epsilon,
     NoEpsilon,
@@ -97,6 +98,7 @@ __all__ = [
     "PercentileDistance",
     "RangeEstimatorDistance",
     "DistanceWithMeasureList",
+    "IndependentNormalKernel",
     # epsilon
     "Epsilon",
     "NoEpsilon",

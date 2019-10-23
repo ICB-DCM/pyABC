@@ -335,7 +335,6 @@ class StochasticAcceptor(Acceptor):
             bias against if the normalization is not sufficient is
             included).
         """
-
         super().__init__()
 
         if pdf_norm_method is None:
