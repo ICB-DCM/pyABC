@@ -720,6 +720,7 @@ class ABCSMC:
         if t == 0:
             weight = (len(distance_list)
                       / nr_samples_per_parameter)
+            weight *= np.prod(acceptance_weights)
         else:
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
