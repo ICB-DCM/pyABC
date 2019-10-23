@@ -168,7 +168,17 @@ class Acceptor:
         raise NotImplementedError()
 
     # pylint: disable=R0201
-    def get_config(self, t: int):
+    def get_epsilon_config(self, t: int) -> dict:
+        """
+        Create a configuration object that contains all values of interest for
+        the update of the Epsilon object.
+        
+        Parameters
+        ----------
+
+        t: int
+            The timepoint for which to get the config.
+        """
         return None
 
 
@@ -292,12 +302,12 @@ class StochasticAcceptor(Acceptor):
     """
     This acceptor implements a stochastic acceptance step based on a
     probability density, generalizing from the uniform acceptance kernel.
-    A particle is accepted if for the simulated summary statistics x
-    and the observed summary statistics x_0 holds
+    A particle is accepted if for the simulated summary statistics x,
+    observed summary statistics x_0 and parameters theta holds
 
     .. math::
 
-       \\frac{\\text{pdf}(x_0|x)}{c}\\geq u
+       \\frac{\\text{pdf}(x_0|x,\\theta)}{c}\\geq u
 
     where u ~ U[0,1], and c is a normalizing constant.
 
@@ -312,12 +322,18 @@ class StochasticAcceptor(Acceptor):
 
     def __init__(
             self,
-            pdf_norm_method: Callable = None,
-            **kwargs):
+            pdf_norm_method: Callable = None):
         """
         Parameters
         ----------
-
+        pdf_norm_method: Callable
+            Function to calculate a pdf normalization (denoted `c` above).
+            Shipped are `pyabc.acceptor.pdf_norm_from_kernel` to use the
+            value provided by the StochasticKernel, and
+            `pyabc.acceptor.pdf_norm_max_found` to always use the maximum
+            value among accepted particles so far (an importance sampling
+            bias against if the normalization is not sufficient is
+            included).
         """
 
         super().__init__()
@@ -373,7 +389,10 @@ class StochasticAcceptor(Acceptor):
 
         logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
 
-    def get_config(self, t: int):
+    def get_epsilon_config(self, t: int) -> dict:
+        """
+        Pack the pdf normalization and the kernel scale.
+        """
         return dict(
             pdf_norm=self.pdf_norms[t],
             kernel_scale=self.kernel_scale,  # TODO Refactor
@@ -415,8 +434,8 @@ class StochasticAcceptor(Acceptor):
         # check pdf max ok
         if pdf_norm < pd:
             logger.debug(
-                f"Encountered pd={pd:.4e} > current c={pdf_norm:.4e}. "
-                f"Using weight={weight:.4e}.")
+                f"Encountered pd={pd:.4e} > c={pdf_norm:.4e}, "
+                f"thus weight={weight:.4e}.")
 
         # return unscaled density value and the acceptance flag
         return AcceptorResult(pd, accept, weight)

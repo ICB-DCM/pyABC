@@ -420,7 +420,7 @@ class ABCSMC:
             self.x_0)
         self.eps.initialize(
             t, get_initial_weighted_distances, self.max_nr_populations,
-            self.acceptor.get_config(t))
+            self.acceptor.get_epsilon_config(t))
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
@@ -873,7 +873,7 @@ class ABCSMC:
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances(),
                             acceptance_rate,
-                            self.acceptor.get_config(t+1))
+                            self.acceptor.get_epsilon_config(t+1))
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon
