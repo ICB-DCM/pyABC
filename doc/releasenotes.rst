@@ -4,10 +4,6 @@ Release Notes
 =============
 
 
-* Introduce StochasticAcceptor as an alternative to uniform epsilon
-  thresholds.
-
-
 0.9 series
 ..........
 
