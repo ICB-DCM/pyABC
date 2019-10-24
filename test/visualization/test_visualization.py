@@ -54,6 +54,16 @@ def test_sample_numbers():
     pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
 
 
+def test_sample_numbers_trajectory():
+    pyabc.visualization.plot_sample_numbers_trajectory(
+        histories, labels, yscale='log', rotation=90)
+
+
+def test_acceptance_rates_trajectory():
+    pyabc.visualization.plot_acceptance_rates_trajectory(
+        histories, labels, yscale='log10', rotation=76)
+
+
 def test_total_sample_numbers():
     pyabc.visualization.plot_total_sample_numbers(histories)
     pyabc.visualization.plot_total_sample_numbers(
