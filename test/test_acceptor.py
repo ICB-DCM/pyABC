@@ -63,3 +63,14 @@ def test_uniform_acceptor():
                    eps=eps, x=x, x_0=x_0, t=2, par=None)
 
     assert not ret.accept
+
+
+def test_stochastic_acceptor():
+    acceptor = pyabc.StochasticAcceptor(pdf_norm_method=pyabc.pdf_norm_max_found)
+    eps = pyabc.Temperature()
+    distance = pyabc.IndependentNormalKernel(mean=np.array([0, 0]), np.array(var=[1, 1]))
+
+    def model(p):
+        return {'s0': p['p0'] + np.random.randn((1, 2))}
+    data = {'s0': np.array([0.4, -0.6])}
+

@@ -5,7 +5,8 @@ from pyabc import (PercentileDistance,
                    PNormDistance,
                    AdaptivePNormDistance,
                    AggregatedDistance,
-                   AdaptiveAggregatedDistance)
+                   AdaptiveAggregatedDistance,
+                   IndependentNormalKernel,)
 
 
 from pyabc.distance import (
@@ -160,3 +161,17 @@ def test_adaptiveaggregateddistance():
         val = distance(
             abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
         assert isinstance(val, float)
+
+
+def test_independentnormalkernel():
+    kernel = IndependentNormalKernel()#mean=np.zeros(2), var=np.ones(2))
+    x = {'y': np.array([0,0])}#, 'y2': np.array([0,0])}
+    x0 = {'y': np.array([1,1])}#, 'y2': np.array([2,2])}
+    kernel.initialize(0, None, x0)
+    ret = kernel(x,x0)
+
+    expected_value = -0.5 * (2 * np.log(2 * np.pi * 1) + 2 * ((1 - 0)**2 / 1))
+    print(expected_value)
+    print(ret)
+
+
