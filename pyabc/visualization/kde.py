@@ -8,9 +8,11 @@ automatically find a visually good level of smoothness.
 """
 
 import numpy as np
-from ..transition import MultivariateNormalTransition
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from ..transition import MultivariateNormalTransition
+from ..storage import History
 
 
 def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
@@ -51,7 +53,6 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
     Returns
     -------
-
     x, pdf: (np.ndarray, np.ndarray)
         The x and the densities at these points.
         These can be passed for plotting, for example as
@@ -72,20 +73,23 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
     return x_vals, pdf
 
 
-def plot_kde_1d(df, w, x, xmin=None, xmax=None,
-                numx=50, ax=None, title: str = None,
-                refval=None, kde=None, **kwargs):
+def plot_kde_1d_highlevel(
+        history: History, x: str, m: int = 0, t: int = None,
+        xmin=None, xmax=None, numx=50, ax=None,
+        size=None, title: str = None, refval=None, kde=None, **kwargs):
     """
-    Plots a 1d histogram.
+    Plot 1d kernel density estimate of parameter samples.
 
     Parameters
     ----------
-    df: Pandas Dataframe
-        The rows are the observations, the columns the variables
-    w: The corresponding weights
+    history: History
+        History to extract data from.
     x: str
-        The variable for the x-axis
-
+        The variable for the x-axis.
+    m: int, optional
+        Id of the model to plot for.
+    t: int, optional
+        Time point to plot for. Defaults to last time point.
     xmin: float, optional
         The lower limit in x for the histogram.
         If left empty, it is set to the minimum of the ovbservations of the
@@ -99,6 +103,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         Defaults to 50.
     ax: matplotlib.axes.Axes, optional
         The axis object to use.
+    size: 2-Tuple of float, optional
+        Size of the plot in inches.
     title: str, optional
         Title for the plot. Defaults to None.
     refval: dict, optional
@@ -112,10 +118,33 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
 
     Returns
     -------
-
     ax: matplotlib axis
         axis of the plot
+    """
+    df, w = history.get_distribution(m=m, t=t)
 
+    return plot_kde_1d(df, w, x, xmin, xmax, numx, ax, size, title, refval,
+            kde, **kwargs)
+
+
+def plot_kde_1d(df, w, x, xmin=None, xmax=None,
+                numx=50, ax=None, size=None, title: str = None,
+                refval=None, kde=None, **kwargs):
+    """
+    Lowlevel interface for plot_kde_1d_highlevel (see there for the remaining
+    parameters).
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        The rows are the observations, the columns the variables.
+    w: pandas.DataFrame
+        The corresponding weights.
+
+    Returns
+    -------
+    ax: matplotlib axis
+        Axis of the plot.
     """
     x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx, kde=kde)
     if ax is None:
@@ -128,6 +157,11 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         ax.set_title(title)
     if refval is not None:
         ax.axvline(refval[x], color='C1', linestyle='dashed')
+
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     return ax
 
 
@@ -207,6 +241,19 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     pdf = kde.pdf(test)
     PDF = pdf.reshape(X.shape)
     return X, Y, PDF
+
+
+def plot_kde_2d_highlevel(
+        history: History, m: int = 0, t: int=None, x: str, y: str,
+        xmin: float = None, xmax: float = None, ymin: float = None,
+        ymax: float = None, numx: int = 50, numy: int = 50, ax=None,
+        colorbar=True, title: str = None, refval=None, kde=None,
+        **kwargs):
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_2d(
+        df, w, x, y, xmin, xmax, ymin, ymax, numx, numy, ax, colorbar,
+        title, refval, kde, **kwargs)
 
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,

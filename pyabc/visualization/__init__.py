@@ -7,6 +7,7 @@ Helper functions to visualize results of ABCSMC runs.
 """
 
 from .kde import (
+    plot_kde_1d_highlevel,
     plot_kde_1d,
     plot_kde_2d,
     plot_kde_matrix)
@@ -36,6 +37,7 @@ from .data import (
 
 
 __all__ = [
+    "plot_kde_1d_highlevel",
     "plot_kde_1d",
     "plot_kde_2d",
     "plot_kde_matrix",
