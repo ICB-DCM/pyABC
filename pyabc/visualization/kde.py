@@ -247,26 +247,14 @@ def plot_kde_2d_highlevel(
         history: History, m: int = 0, t: int=None, x: str, y: str,
         xmin: float = None, xmax: float = None, ymin: float = None,
         ymax: float = None, numx: int = 50, numy: int = 50, ax=None,
-        colorbar=True, title: str = None, refval=None, kde=None,
+        size=None, colorbar=True, title: str = None, refval=None, kde=None,
         **kwargs):
-    df, w = history.get_distribution(m=m, t=t)
+    """ 
+    Plot 2d kernel density estimate of parameter samples.
 
-    return plot_kde_2d(
-        df, w, x, y, xmin, xmax, ymin, ymax, numx, numy, ax, colorbar,
-        title, refval, kde, **kwargs)
-
-
-def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-                numx=50, numy=50, ax=None, colorbar=True,
-                title: str = None, refval=None, kde=None, **kwargs):
-    """
-    Plots a 2d histogram.
 
     Parameters
     ----------
-    df: Pandas Dataframe
-        The rows are the observations, the columns the variables
-    w: The corresponding weights.
     x: str
         The variable for the x-axis.
     y: str
@@ -295,6 +283,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Defaults tp 50.
     ax: matplotlib.axes.Axes, optional
         The axis object to use.
+    size: 2-Tuple of float
+        Size of the plot in inches.
     colorbar: bool, optional
         Whether to plot a colorbar. Defaults to True.
     title: str, optional
@@ -304,7 +294,34 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     kde: pyabc.Transition, optional
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
-        cross-validated scaling is used.
+        cross-validated scaling is used..
+
+    Returns
+    -------
+
+    ax: matplotlib axis
+        Axis of the plot.
+    """
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_2d(
+        df, w, x, y, xmin, xmax, ymin, ymax, numx, numy, ax, size, colorbar,
+        title, refval, kde, **kwargs)
+
+
+def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
+                numx=50, numy=50, ax=None, size=None, colorbar=True,
+                title: str = None, refval=None, kde=None, **kwargs):
+    """
+    Plot a 2d kernel density estimate of parameter samples.
+
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables
+    w: The corresponding weights.
+
+    For the other parameters, see `plot_kde_2d_highlevel`.
 
     Returns
     -------
@@ -329,27 +346,24 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         # cbar.set_label("PDF")
     if refval is not None:
         ax.scatter([refval[x]], [refval[y]], color='C1')
+
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     return ax
 
 
-def plot_kde_matrix(df, w,
-                    limits=None,
-                    colorbar=True,
-                    height=2.5,
-                    numx=50,
-                    numy=50,
-                    refval=None,
-                    kde=None):
+def plot_kde_matrix_highlevel(
+        history, m: int = 0, t: int = None, limits=None,
+        colorbar: bool = True, height: float = 2.5,
+        numx: int = 50, numy: int = 50, refval=None, kde=None):
     """
-    Plot a KDE matrix.
+    Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
     Parameters
     ----------
 
-    df: Pandas Dataframe
-        The rows are the observations, the columns the variables.
-    w: np.narray
-        The corresponding weights.
     colorbar: bool
         Whether to plot the colorbars or not.
     limits: dictionary, optional
@@ -370,6 +384,38 @@ def plot_kde_matrix(df, w,
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
         cross-validated scaling is used.
+
+    Returns
+    -------
+
+    arr_ax: Array of the generated plots' axes.
+    """
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_matrix(
+        df, w, limits, colorbar, height, numx, numy, refval, kde)
+
+
+def plot_kde_matrix(df, w,
+                    limits=None,
+                    colorbar=True,
+                    height=2.5,
+                    numx=50,
+                    numy=50,
+                    refval=None,
+                    kde=None):
+    """
+    Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
+
+    Parameters
+    ----------
+
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables.
+    w: np.narray
+        The corresponding weights.
+    
+    Other parameters: See plot_kde_matrix_highlevel.
     """
 
     n_par = df.shape[1]
