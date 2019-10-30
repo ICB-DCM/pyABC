@@ -84,13 +84,19 @@ def test_histograms():
 
 
 def test_kdes():
-    df, w = histories[0].get_distribution(m=0, t=None)
+    history = histories[0]
+    df, w = history.get_distribution(m=0, t=None)
     pyabc.visualization.plot_kde_1d(
         df, w, x='p0',
         xmin=limits['p0'][0], xmax=limits['p0'][1],
         label="PDF")
     pyabc.visualization.plot_kde_2d(df, w, x='p0', y='p1')
     pyabc.visualization.plot_kde_matrix(df, w)
+
+    # also use the highlevel interfaces
+    pyabc.visualization.plot_kde_1d_highlevel(history, x='p0')
+    pyabc.visualization.plot_kde_2d_highlevel(history, x='p0', y='p1')
+    pyabc.visualization.plot_kde_matrix_highlevel(history)
 
 
 def test_credible_intervals():

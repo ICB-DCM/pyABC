@@ -124,7 +124,7 @@ def plot_kde_1d_highlevel(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_kde_1d(df, w, x, xmin, xmax, numx, ax, size, title, refval,
-            kde, **kwargs)
+                       kde, **kwargs)
 
 
 def plot_kde_1d(df, w, x, xmin=None, xmax=None,
@@ -216,7 +216,6 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
     Returns
     -------
-
     X, Y, PDF: (np.ndarray, np.ndarray, np.ndarray)
         The X, the Y and the densities at these points.
         These can be passed for plotting, for example as
@@ -244,21 +243,26 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 
 def plot_kde_2d_highlevel(
-        history: History, m: int = 0, t: int=None, x: str, y: str,
+        history: History, x: str, y: str, m: int = 0, t: int = None,
         xmin: float = None, xmax: float = None, ymin: float = None,
         ymax: float = None, numx: int = 50, numy: int = 50, ax=None,
         size=None, colorbar=True, title: str = None, refval=None, kde=None,
         **kwargs):
-    """ 
+    """
     Plot 2d kernel density estimate of parameter samples.
-
 
     Parameters
     ----------
+    history: History
+        History to extract data from.
     x: str
         The variable for the x-axis.
     y: str
         The variable for the y-axis.
+    m: int, optional
+        Id of the model to plot for.
+    t: int, optional
+        Time point to plot for. Defaults to last time point.
     xmin: float, optional
         The lower limit in x for the histogram.
         If left empty, it is set to the minimum of the ovbservations of the
@@ -298,7 +302,6 @@ def plot_kde_2d_highlevel(
 
     Returns
     -------
-
     ax: matplotlib axis
         Axis of the plot.
     """
@@ -325,9 +328,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
     Returns
     -------
-
     ax: matplotlib axis
-        axis of the plot
+        Axis of the plot.
 
     """
     X, Y, PDF = kde_2d(df, w, x, y,
@@ -363,11 +365,16 @@ def plot_kde_matrix_highlevel(
 
     Parameters
     ----------
-
-    colorbar: bool
-        Whether to plot the colorbars or not.
+    history: History
+        History to extract data from.
+    m: int, optional
+        Id of the model to plot for.
+    t: int, optional
+        Time point to plot for. Defaults to last time point.
     limits: dictionary, optional
         Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
+    colorbar: bool
+        Whether to plot the colorbars or not.
     height: float, optional
         Height of each subplot in inches. Default: 2.5.
     numx: int, optional
@@ -387,7 +394,6 @@ def plot_kde_matrix_highlevel(
 
     Returns
     -------
-
     arr_ax: Array of the generated plots' axes.
     """
     df, w = history.get_distribution(m=m, t=t)
@@ -409,13 +415,16 @@ def plot_kde_matrix(df, w,
 
     Parameters
     ----------
-
     df: Pandas Dataframe
         The rows are the observations, the columns the variables.
     w: np.narray
         The corresponding weights.
-    
+
     Other parameters: See plot_kde_matrix_highlevel.
+
+    Returns
+    -------
+    arr_ax: Array of the generated plots' axes.
     """
 
     n_par = df.shape[1]
