@@ -868,13 +868,13 @@ class ABCSMC:
 
             # update acceptor
             self.acceptor.update(
-                t+1, population.get_weighted_distances(),
+                t + 1, population.get_weighted_distances(),
                 self.distance_function)
 
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances(),
                             acceptance_rate,
-                            self.acceptor.get_epsilon_config(t+1))
+                            self.acceptor.get_epsilon_config(t + 1))
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon
