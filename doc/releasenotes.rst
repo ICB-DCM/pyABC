@@ -11,7 +11,7 @@ Release Notes
 0.9.20 (2019-10-30)
 -------------------
 
-* Add high level versions of the kde plotting routines.
+* Add high level versions of the kde plotting routines (#204).
 
 
 0.9.19 (2019-10-23)
