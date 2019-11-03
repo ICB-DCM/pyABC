@@ -3,6 +3,7 @@ import tempfile
 import pytest
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # create and run some model
@@ -48,20 +49,24 @@ def test_epsilons():
     pyabc.visualization.plot_sample_numbers(histories, labels)
     with pytest.raises(ValueError):
         pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
+    plt.close()
 
 
 def test_sample_numbers():
     pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
+    plt.close()
 
 
 def test_sample_numbers_trajectory():
     pyabc.visualization.plot_sample_numbers_trajectory(
         histories, labels, yscale='log', rotation=90)
+    plt.close()
 
 
 def test_acceptance_rates_trajectory():
     pyabc.visualization.plot_acceptance_rates_trajectory(
         histories, labels, yscale='log10', rotation=76)
+    plt.close()
 
 
 def test_total_sample_numbers():
@@ -70,27 +75,38 @@ def test_total_sample_numbers():
         histories, labels, yscale='log')
     pyabc.visualization.plot_total_sample_numbers(
         histories, rotation=75, yscale='log10')
+    plt.close()
 
 
 def test_effective_sample_sizes():
     pyabc.visualization.plot_effective_sample_sizes(
         histories, labels, rotation=45)
+    plt.close()
 
 
 def test_histograms():
     pyabc.visualization.plot_histogram_1d(histories[0], 'p0', bins=20)
     pyabc.visualization.plot_histogram_2d(histories[0], 'p0', 'p1')
     pyabc.visualization.plot_histogram_matrix(histories[0], bins=1000)
+    plt.close()
 
 
 def test_kdes():
-    df, w = histories[0].get_distribution(m=0, t=None)
+    history = histories[0]
+    df, w = history.get_distribution(m=0, t=None)
     pyabc.visualization.plot_kde_1d(
         df, w, x='p0',
         xmin=limits['p0'][0], xmax=limits['p0'][1],
         label="PDF")
     pyabc.visualization.plot_kde_2d(df, w, x='p0', y='p1')
     pyabc.visualization.plot_kde_matrix(df, w)
+
+    # also use the highlevel interfaces
+    pyabc.visualization.plot_kde_1d_highlevel(history, x='p0')
+    pyabc.visualization.plot_kde_2d_highlevel(history, x='p0', y='p1',
+                                              size=(7, 5))
+    pyabc.visualization.plot_kde_matrix_highlevel(history, height=27.43)
+    plt.close()
 
 
 def test_credible_intervals():
@@ -101,10 +117,12 @@ def test_credible_intervals():
         histories, levels=[0.5, 0.99],
         show_kde_max_1d=True, show_kde_max=True, show_mean=True,
         refvals=p_true)
+    plt.close()
 
 
 def test_model_probabilities():
     pyabc.visualization.plot_model_probabilities(histories[0])
+    plt.close()
 
 
 def test_data_plot():
@@ -115,3 +133,4 @@ def test_data_plot():
         obs_dict[i] = i + 1
         sim_dict[i] = i + 2
     pyabc.visualization.plot_data(obs_dict, sim_dict)
+    plt.close()
