@@ -136,7 +136,7 @@ class NormalKernel(StochasticKernel):
             self,
             mean=None,
             cov=None,
-            ret_scale=SCALE_LIN,
+            ret_scale=SCALE_LOG,
             keys=None,
             pdf_max=None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
