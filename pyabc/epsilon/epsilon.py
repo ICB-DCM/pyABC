@@ -206,7 +206,7 @@ class QuantileEpsilon(Epsilon):
 
         # extract weights
         if self.weighted:
-            weights = weighted_distances.w.values
+            weights = weighted_distances.w.values.astype(float)
             # The sum of the weighted distances is larger than 1 if more than
             # a single simulation per parameter is performed.
             # Re-normalize in this case.
