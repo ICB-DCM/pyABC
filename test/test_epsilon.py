@@ -1,14 +1,19 @@
 import pyabc
 import numpy as np
-import scipy as sp
 import pandas as pd
 import pytest
+
+
+def test_constantepsilon():
+    eps = pyabc.ConstantEpsilon(42)
+    assert np.isclose(eps(100), 42)
 
 
 def test_listepsilon():
     eps = pyabc.ListEpsilon([3.5, 2.3, 1, 0.3])
     with pytest.raises(Exception):
         eps(4)
+
 
 def test_quantileepsilon():
     mpl = 1.1
