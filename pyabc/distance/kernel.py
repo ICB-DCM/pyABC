@@ -267,7 +267,7 @@ class IndependentNormalKernel(StochasticKernel):
         diff = _diff_arr(x, x_0, self.keys)
 
         # compute pdf
-        log_2_pi = np.sum(np.log(2 * np.pi) + np.log(var))
+        log_2_pi = np.sum(np.log(2) + np.log(np.pi) + np.log(var))
 
         squares = np.sum((diff**2) / var)
 
