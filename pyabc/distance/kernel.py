@@ -1,6 +1,6 @@
 import numpy as np
 import scipy as sp
-from typing import Callable, List
+from typing import Callable, List, Union
 
 from .base import Distance
 
@@ -44,9 +44,9 @@ class StochasticKernel(Distance):
 
     def __init__(
             self,
-            ret_scale=SCALE_LIN,
-            keys=None,
-            pdf_max=None):
+            ret_scale: str = SCALE_LIN,
+            keys: List[str] = None,
+            pdf_max: float = None):
         StochasticKernel.check_ret_scale(ret_scale)
         self.ret_scale = ret_scale
         self.keys = keys
@@ -92,9 +92,9 @@ class SimpleFunctionKernel(StochasticKernel):
     def __init__(
             self,
             fun: Callable,
-            ret_scale=SCALE_LIN,
-            keys=None,
-            pdf_max=None):
+            ret_scale: str = SCALE_LIN,
+            keys: List[str] = None,
+            pdf_max: float = None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
         self.fun = fun
 
@@ -115,9 +115,6 @@ class NormalKernel(StochasticKernel):
     Parameters
     ----------
 
-    mean: array_like, optional (default = zeros vector)
-        Mean of the distribution.
-
     cov: array_like, optional (default = identiy matrix)
         Covariance matrix of the distribution.
 
@@ -134,18 +131,12 @@ class NormalKernel(StochasticKernel):
 
     def __init__(
             self,
-            mean=None,
-            cov=None,
-            ret_scale=SCALE_LOG,
-            keys=None,
-            pdf_max=None):
+            cov: np.ndarray = None,
+            ret_scale: str = SCALE_LOG,
+            keys: List[str] = None,
+            pdf_max: float = None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
-        self.mean = mean
         self.cov = cov
-
-        # create frozen multivariate normal distribution
-        self.rv = sp.stats.multivariate_normal(mean=self.mean, cov=self.cov)
-
         self.ret_scale = ret_scale
 
     def initialize(
@@ -159,10 +150,26 @@ class NormalKernel(StochasticKernel):
             get_sum_stats=get_sum_stats,
             x_0=x_0)
 
+        # initialize distribution
+        self._init_distr(x_0)
+
         # cache pdf_max
         if self.pdf_max is None:
             # take  value at observed summary statistics
             self.pdf_max = self(x_0, x_0)
+
+    def _init_distr(self, x_0):
+        """
+        Initialize cov (covariance) and rv (distribution).
+        """
+        if self.cov is None:
+            dim = sum(np.size(x_0[key]) for key in self.keys)
+            self.cov = np.eye(dim)
+        self.cov = np.array(self.cov)
+        # create frozen multivariate normal distribution
+        dim = self.cov.shape[0]
+        mean = np.zeros(dim)
+        self.rv = sp.stats.multivariate_normal(mean=mean, cov=self.cov)
 
     def __call__(
             self,
@@ -178,7 +185,7 @@ class NormalKernel(StochasticKernel):
             self.initialize_keys(x_0)
 
         # difference to array
-        diff = np.array([x[key] - x_0[key] for key in self.keys])
+        diff = _diff_arr(x, x_0, self.keys)
 
         # compute pdf
         if self.ret_scale == SCALE_LIN:
@@ -199,10 +206,7 @@ class IndependentNormalKernel(StochasticKernel):
     Parameters
     ----------
 
-    mean: array_like, optional (default = zeros vector)
-        Mean of the distribution.
-
-    var: Union[array_like, Callable], optional (default = ones vector)
+    var: Union[array_like, float, Callable], optional (default = ones vector)
         Variances of the distribution (assuming zeros in the off-diagonal
         of the covariance matrix). Can also be a Callable taking as
         arguments the parameters. In that case, pdf_max should also be given
@@ -216,14 +220,11 @@ class IndependentNormalKernel(StochasticKernel):
 
     def __init__(
             self,
-            mean=None,
-            var=None,
-            keys=None,
-            pdf_max=None):
+            var: Union[Callable, List[float], float] = None,
+            keys: List[str] = None,
+            pdf_max: float = None):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
-        self.mean = mean
         self.var = var
-        self.dim = None
 
     def initialize(
             self,
@@ -236,23 +237,17 @@ class IndependentNormalKernel(StochasticKernel):
             get_sum_stats=get_sum_stats,
             x_0=x_0)
 
-        # set dimension
-        self.dim = len(x_0)
+        # dimension
+        dim = sum(np.size(x_0[key]) for key in self.keys)
 
-        # initialize mean correctly
-        if self.mean is None:
-            self.mean = np.zeros(self.dim)
-        else:
-            self.mean = np.array(self.mean) * np.ones(self.dim)
-
-        # initialize var correctly
+        # initialize var
         if self.var is None:
-            self.var = np.ones(self.dim)
+            self.var = np.ones(dim)
         if not callable(self.var):
-            self.var = np.array(self.var) * np.ones(self.dim)
+            self.var = np.array(self.var) * np.ones(dim)
 
         # cache pdf_max (from now on __call__ can be used)
-        if self.pdf_max is None:
+        if self.pdf_max is None and not callable(self.var):
             # take value at observed summary statistics
             self.pdf_max = self(x_0, x_0)
 
@@ -266,15 +261,10 @@ class IndependentNormalKernel(StochasticKernel):
             self.initialize_keys(x_0)
 
         # compute variance
-        if callable(self.var):
-            # parameterized variance (i.e. probably estimated)
-            var = self.var(par)
-        else:
-            # constant numeric values
-            var = self.var
+        var = self.var(par) if callable(self.var) else self.var
 
         # difference to array
-        diff = np.array([x[key] - x_0[key] for key in self.keys])
+        diff = _diff_arr(x, x_0, self.keys)
 
         # compute pdf
         log_2_pi = np.sum(np.log(2 * np.pi * var))
@@ -301,10 +291,7 @@ class IndependentLaplaceKernel(StochasticKernel):
     Parameters
     ----------
 
-    mean: array_like, optional (default = zeros vector)
-        Mean of the distribution.
-
-    scale: Union[array_like, Callable], optional (default = ones vector)
+    scale: Union[array_like, float, Callable], optional (default = ones vector)
         Scale terms b of the distribution. Can also be a Callable taking as
         arguments the parameters. In that case, pdf_max should also be given
         if it is supposed to be used. Usually, it will then be given as the
@@ -317,12 +304,10 @@ class IndependentLaplaceKernel(StochasticKernel):
 
     def __init__(
             self,
-            mean=None,
-            scale=None,
-            keys=None,
-            pdf_max=None):
+            scale: Union[Callable, List[float], float] = None,
+            keys: List[str] = None,
+            pdf_max: float = None):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
-        self.mean = mean
         self.scale = scale
         self.dim = None
 
@@ -337,23 +322,17 @@ class IndependentLaplaceKernel(StochasticKernel):
             get_sum_stats=get_sum_stats,
             x_0=x_0)
 
-        # set dimension
-        self.dim = len(x_0)
+        # dimension
+        dim = sum(np.size(x_0[key]) for key in self.keys)
 
-        # initialize mean correctly
-        if self.mean is None:
-            self.mean = np.zeros(self.dim)
-        else:
-            self.mean = np.array(self.mean) * np.ones(self.dim)
-
-        # initialize var correctly
+        # initialize scale correctly
         if self.scale is None:
-            self.scale = np.ones(self.dim)
+            self.scale = np.ones(dim)
         if not callable(self.scale):
-            self.scale = np.array(self.scale) * np.ones(self.dim)
+            self.scale = np.array(self.scale) * np.ones(dim)
 
         # cache pdf_max (from now on __call__ can be used)
-        if self.pdf_max is None:
+        if self.pdf_max is None and not callable(self.scale):
             # take value at observed summary statistics
             self.pdf_max = self(x_0, x_0)
 
@@ -367,15 +346,10 @@ class IndependentLaplaceKernel(StochasticKernel):
             self.initialize_keys(x_0)
 
         # compute variance
-        if callable(self.scale):
-            # parameterized variance (i.e. probably estimated)
-            scale = self.scale(par)
-        else:
-            # constant numeric values
-            scale = self.scale
+        scale = self.scale(par) if callable(self.scale) else self.scale
 
         # difference to array
-        diff = np.array([x[key] - x_0[key] for key in self.keys])
+        diff = _diff_arr(x, x_0, self.keys)
 
         # compute pdf
         log_2_b = np.sum(np.log(2 * scale))
@@ -394,26 +368,23 @@ class BinomialKernel(StochasticKernel):
     Parameters
     ----------
 
-    p: float
+    p: Union[float, Callable]
         The success probability.
-
     ret_scale: str, optional (default = SCALE_LIN)
         The scale on which the distribution is to be returned.
-
     keys: List[str], optional (see StochasticKernel.keys)
-
     pdf_max: float, optional (see StochasticKernel.pdf_max)
     """
 
     def __init__(
             self,
-            p: float,
-            ret_scale=SCALE_LIN,
-            keys=None,
-            pdf_max=None):
+            p: Union[float, Callable],
+            ret_scale: str = SCALE_LOG,
+            keys: List[str] = None,
+            pdf_max: float = None):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
-        if p > 1 or p < 0:
+        if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
                 f"The success probability p={p} must be in the interval"
                 f"[0, 1].")
@@ -431,7 +402,7 @@ class BinomialKernel(StochasticKernel):
             x_0=x_0)
 
         # cache pdf_max (from now on __call__ can be used)
-        if self.pdf_max is None:
+        if self.pdf_max is None and not callable(self.p):
             # take value at observed summary statistics
             self.pdf_max = binomial_pdf_max(
                 x_0, self.keys, self.p, self.ret_scale)
@@ -442,12 +413,13 @@ class BinomialKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        x = np.array([x[key] for key in self.keys], dtype=int).flatten()
-        x_0 = np.array([x_0[key] for key in self.keys], dtype=int).flatten()
-        p = self.p
+        x = np.array(_arr(x, self.keys), dtype=int)
+        x_0 = np.array(_arr(x_0, self.keys), dtype=int)
+
+        # compute p
+        p = self.p if not callable(self.p) else self.p(par)
 
         if self.ret_scale == SCALE_LIN:
-            print(sp.stats.binom.pmf(k=x_0, n=x, p=p))
             ret = np.prod(sp.stats.binom.pmf(k=x_0, n=x, p=p))
         else:  # self.ret_scale == SCALE_LOG
             ret = np.sum(sp.stats.binom.logpmf(k=x_0, n=x, p=p))
@@ -456,11 +428,46 @@ class BinomialKernel(StochasticKernel):
 
 
 def binomial_pdf_max(x_0, keys, p, ret_scale):
-    ks = np.array([x_0[key] for key in keys], dtype=int).flatten()
+    """
+    Compute the model value of the binomial distribution.
+    Note that since we interpret x_0 as the noisy k value, we search
+    the model value over arbitrary n.
+    """
+    ks = np.array(_arr(x_0, keys), dtype=int)
     ns = np.maximum(np.floor((ks - p) / p), 0)
     pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
     log_pdf_max = np.sum(pms)
 
     if ret_scale == SCALE_LIN:
-        return np.eps(log_pdf_max)
+        return np.exp(log_pdf_max)
     return log_pdf_max
+
+
+def _diff_arr(x, x_0, keys):
+    """
+    Get difference array.
+    """
+    diff = []
+    for key in keys:
+        d = x[key] - x_0[key]
+        try:
+            diff.extend(d)
+        except Exception:
+            diff.append(d)
+    diff = np.array(diff)
+    return diff
+
+
+def _arr(x, keys):
+    """
+    Get as flat array.
+    """
+    arr = []
+    for key in keys:
+        val = x[key]
+        try:
+            arr.extend(val)
+        except Exception:
+            arr.append(val)
+    arr = np.array(arr)
+    return arr
