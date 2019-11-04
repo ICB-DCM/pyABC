@@ -66,11 +66,18 @@ def test_uniform_acceptor():
 
 
 def test_stochastic_acceptor():
-    acceptor = pyabc.StochasticAcceptor(pdf_norm_method=pyabc.pdf_norm_max_found)
-    eps = pyabc.Temperature()
-    distance = pyabc.IndependentNormalKernel(mean=np.array([0, 0]), np.array(var=[1, 1]))
+    acceptor = pyabc.StochasticAcceptor(
+        pdf_norm_method=pyabc.pdf_norm_max_found)
+    eps = pyabc.Temperature(initial_temperature=1)
+    distance = pyabc.IndependentNormalKernel(var=np.array([1, 1]))
 
-    def model(p):
-        return {'s0': p['p0'] + np.random.randn((1, 2))}
-    data = {'s0': np.array([0.4, -0.6])}
+    def model(par):
+        return {'s0': par['p0'] + np.array([0.3, 0.7])}
+    x_0 = {'s0': np.array([0.4, -0.6])}
 
+    # just run
+    prior = pyabc.Distribution(p0=pyabc.RV('uniform', -1, 2))
+    abc = pyabc.ABCSMC(model, prior, distance, eps=eps,
+                       acceptor=acceptor, population_size=10)
+    abc.new(pyabc.create_sqlite_db_id(), x_0)
+    abc.run(max_nr_populations=1, minimum_epsilon=1.)
