@@ -430,6 +430,7 @@ class BinomialKernel(StochasticKernel):
 def binomial_pdf_max(x_0, keys, p, ret_scale):
     """
     Compute the model value of the binomial distribution.
+
     Note that since we interpret x_0 as the noisy k value, we search
     the model value over arbitrary n.
     """

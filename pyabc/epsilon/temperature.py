@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import pandas as pd
+import numbers
 from typing import Callable, List, Union
 import logging
 
@@ -12,7 +13,7 @@ logger = logging.getLogger("Epsilon")
 
 class Temperature(Epsilon):
     """
-    A temperatur scheme handles the decrease of the temperatures employed
+    A temperature scheme handles the decrease of the temperatures employed
     by a :class:`pyabc.acceptor.StochasticAcceptor` over time.
 
     Parameters
@@ -99,11 +100,13 @@ class Temperature(Epsilon):
             if callable(self.initial_temperature):
                 # execute scheme
                 temperature = self.initial_temperature(**kwargs)
-            else:
-                # should be float value
+            elif isinstance(self.initial_temperature, numbers.Number):
                 temperature = self.initial_temperature
+            else:
+                raise ValueError(
+                    "Initial temperature must be a float or a callable")
         else:
-            # evalute schemes
+            # evaluate schemes
             temps = []
             for scheme in self.schemes:
                 temp = scheme(**kwargs)
@@ -154,6 +157,7 @@ class AcceptanceRateScheme(TemperatureScheme):
     reduce the temperature sufficiently in later iterations, if the
     problem's inherent acceptance rate is lower, but it has been
     observed to give big feasible temperature leaps in early iterations.
+    In particular, this scheme can be used to propose an initial temperature.
 
     Parameters
     ----------
@@ -199,7 +203,8 @@ class AcceptanceRateScheme(TemperatureScheme):
             return val
 
         if obj(1) > 0:
-            # function is mon. dec., smallest possible value already > 0
+            # function is monotonically decreasing
+            # smallest possible value already > 0
             beta_opt = 1.0
             # it is obj(0) >= 0 always
         else:
@@ -239,9 +244,9 @@ class ExponentialDecayScheme(TemperatureScheme):
     decay, also known as a geometric progression, or a linear progression
     in log-space.
 
-    Note that the formula is applied anew in each iteration. That has the
-    advantage that, if also other schemes are used s.t. T_{j-1} is smaller
-    than by the above, advantage can be made of this.
+    Note that the formula is applied anew in each iteration.
+    This is advantageous if also other schemes are used s.t. T_{j-1}
+    is smaller than by the above.
 
     Parameters
     ----------
@@ -297,7 +302,14 @@ class PolynomialDecayScheme(TemperatureScheme):
     indeed the limit for `temp_decay_exponent -> infinity`. For smaller
     exponent, the sequence makes larger steps for low temperatures. This
     can be useful in cases, where lower temperatures (which are usually
-    more expensive) can be traversed in few larger steps.
+    more expensive) can be traversed in few larger steps, however also
+    the opposite may be true, i.e. that more steps at low temperatures
+    are advantageous.
+
+    Parameters
+    ----------
+    exponent: float, optional
+        The exponent to use in the scheme.
     """
 
     def __init__(self, exponent: float = 3):
@@ -437,7 +449,7 @@ class FrielPettittScheme(TemperatureScheme):
 
 class EssScheme(TemperatureScheme):
     """
-    Try to keep the effective sample size constant.
+    Try to keep the effective sample size (ESS) constant.
 
     Parameters
     ----------
@@ -456,7 +468,7 @@ class EssScheme(TemperatureScheme):
                  kernel_scale: str,
                  prev_temperature: float,
                  acceptance_rate: float):
-        # execute functino (expensive if in calibration)
+        # execute function (expensive if in calibration)
         df = get_weighted_distances()
 
         weights = np.array(df['w'], dtype=float)
@@ -495,7 +507,7 @@ class EssScheme(TemperatureScheme):
 
 def _ess(pdfs, weights, beta):
     """
-    Effective sample size of importance samples.
+    Effective sample size (ESS) of importance samples.
     """
     num = np.sum(weights * pdfs**beta)**2
     den = np.sum((weights * pdfs**beta)**2)

@@ -104,8 +104,7 @@ class Acceptor:
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
-               distance_function: Distance):
+               weighted_distances: pd.DataFrame):
         """
         Update the acceptance criterion.
 
@@ -116,8 +115,6 @@ class Acceptor:
             The timepoint to initialize the acceptor for.
         weighted_distances: Callable[[], pd.DataFrame]
             The current generation's weighted distances.
-        distance_function: Distance
-            Distance object.
         """
         pass
 
@@ -175,9 +172,13 @@ class Acceptor:
 
         Parameters
         ----------
-
         t: int
             The timepoint for which to get the config.
+
+        Returns
+        -------
+        config: dict
+            The relevant information.
         """
         return None
 
@@ -311,7 +312,9 @@ class StochasticAcceptor(Acceptor):
 
     where u ~ U[0,1], and c is a normalizing constant.
 
-    The concept is based on [#wilkinson]_.
+    The concept is based on [#wilkinson]_. In addition, we introduce
+    acceptance kernel temperation and rejection control importance sampling
+    to permit a more flexible choice and adaptation of c.
 
     .. [#wilkinson] Wilkinson, Richard David; "Approximate Bayesian
         computation (ABC) gives exact results under the assumption of model
@@ -330,10 +333,12 @@ class StochasticAcceptor(Acceptor):
             Function to calculate a pdf normalization (denoted `c` above).
             Shipped are `pyabc.acceptor.pdf_norm_from_kernel` to use the
             value provided by the StochasticKernel, and
-            `pyabc.acceptor.pdf_norm_max_found` to always use the maximum
-            value among accepted particles so far (an importance sampling
-            bias against if the normalization is not sufficient is
-            included).
+            `pyabc.acceptor.pdf_norm_max_found` (default) to always use
+            the maximum value among accepted particles so far.
+            Note that re-weighting based on ideas from rejection control
+            importance sampling to handle the normalization constant being
+            insufficient, and thus avoiding an importance sampling bias,
+            is included either way.
         """
         super().__init__()
 
@@ -347,6 +352,7 @@ class StochasticAcceptor(Acceptor):
         # fields to be filled later
         self.x_0 = None
         self.kernel_scale = None
+        self.kernel_pdf_max = None
 
     def initialize(
             self,
@@ -359,28 +365,25 @@ class StochasticAcceptor(Acceptor):
         """
         self.x_0 = x_0
         self.kernel_scale = distance_function.ret_scale
+        self.kernel_pdf_max = distance_function.pdf_max
 
         # update
-        self._update(t, get_weighted_distances, distance_function)
+        self._update(t, get_weighted_distances)
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
-               distance_function: Distance):
-        self._update(
-            t, lambda: weighted_distances, distance_function)
+               weighted_distances: pd.DataFrame):
+        self._update(t, lambda: weighted_distances)
 
     def _update(self,
                 t: int,
-                get_weighted_distances: Callable[[], pd.DataFrame],
-                kernel: Distance):
+                get_weighted_distances: Callable[[], pd.DataFrame]):
         """
         Update schemes for the upcoming time point t.
         """
         # update pdf normalization
-
         pdf_norm = self.pdf_norm_method(
-            kernel_val=kernel.pdf_max,
+            kernel_val=self.kernel_pdf_max,
             get_weighted_distances=get_weighted_distances,
             prev_pdf_norm=None if not self.pdf_norms
             else max(self.pdf_norms.values()))

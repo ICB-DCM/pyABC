@@ -868,8 +868,7 @@ class ABCSMC:
 
             # update acceptor
             self.acceptor.update(
-                t + 1, population.get_weighted_distances(),
-                self.distance_function)
+                t + 1, population.get_weighted_distances())
 
             # update epsilon
             self.eps.update(t + 1, population.get_weighted_distances(),
