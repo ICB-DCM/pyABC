@@ -198,6 +198,13 @@ class Population:
         return weighted_distances
 
     def get_weighted_sum_stats(self) -> tuple:
+        """
+        Get weights and summary statistics.
+
+        Returns
+        -------
+        weights, sum_stats: 2-Tuple of lists
+        """
         weights = []
         sum_stats = []
         for particle in self._list:
@@ -207,28 +214,6 @@ class Population:
                 weights.append(normalized_weight)
                 sum_stats.append(sum_stat)
         return weights, sum_stats
-
-    def get_all(self, keys):
-        """
-        Possible entries of keys:
-            weight, distance, sum_stat, parameter
-        """
-        ret = {key: [] for key in keys}
-        for particle in self._list:
-            n_accepted = len(particle.accepted_distances)
-            if 'weight' in keys:
-                model_probability = self._model_probabilities[particle.m]
-                weight = particle.weight * model_probability
-                ret['weight'].extend([weight] * n_accepted)
-            if 'parameter' in keys:
-                ret['parameter'].extend([particle.parameter] * n_accepted)
-            if 'distance' in keys:
-                for distance in particle.accepted_distances:
-                    ret['distance'].append(distance)
-            if 'sum_stat' in keys:
-                for sum_stat in particle.accepted_sum_stats:
-                    ret['sum_stat'].append(sum_stat)
-        return ret
 
     def get_accepted_sum_stats(self) -> List[dict]:
         """
