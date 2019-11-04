@@ -35,6 +35,7 @@ from .distance import (
     DistanceWithMeasureList,
     NormalKernel,
     IndependentNormalKernel,
+    IndependentLaplaceKernel,
     BinomialKernel,)
 from .epsilon import (
     Epsilon,
@@ -102,6 +103,7 @@ __all__ = [
     "DistanceWithMeasureList",
     "NormalKernel",
     "IndependentNormalKernel",
+    "IndependentLaplaceKernel",
     "BinomialKernel",
     # epsilon
     "Epsilon",

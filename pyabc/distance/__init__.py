@@ -86,7 +86,7 @@ __all__ = [
     "span",
     "mean",
     "median",
-    # kernels
+    # kernel
     "StochasticKernel",
     "SCALE_LIN",
     "SCALE_LOG",
