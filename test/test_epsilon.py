@@ -4,6 +4,11 @@ import pandas as pd
 import pytest
 
 
+def test_noepsilon():
+    eps = pyabc.NoEpsilon()
+    assert not np.isfinite(eps(42))
+
+
 def test_constantepsilon():
     eps = pyabc.ConstantEpsilon(42)
     assert np.isclose(eps(100), 42)
