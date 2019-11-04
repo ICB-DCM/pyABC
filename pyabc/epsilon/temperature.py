@@ -480,7 +480,7 @@ class EssScheme(TemperatureScheme):
         else:  # kernel_scale == SCALE_LOG
             values = np.exp(pdfs - pdf_norm)
 
-        # to pmf
+        # to probability mass function (i.e. normalize)
         weights /= np.sum(weights)
 
         target_ess = len(weights) * self.target_relative_ess
