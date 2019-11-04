@@ -8,7 +8,7 @@ Release Notes
 ..........
 
 
-0.9.19 (2019-10-24)
+0.9.21 (2019-11-05)
 -------------------
 
 * Introduce acceptor.StochasticAcceptor to encode the stochastic acceptance
@@ -18,7 +18,13 @@ Release Notes
 * Introduce epsilon.Temperature to capture the temperature replacing the
   traditional epsilons. In addition, multiple concrete
   pyabc.epsilon.TemperatureSchemes have been implemented that handle the
-  calculation of the next temperature value.
+  calculation of the next temperature value (all #197).
+
+
+0.9.20 (2019-10-30)
+-------------------
+
+* Add high-level versions of the kde plotting routines (#204).
 
 
 0.9.19 (2019-10-23)
