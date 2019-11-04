@@ -175,8 +175,8 @@ class AcceptanceRateScheme(TemperatureScheme):
         # execute function (expensive if in calibration)
         df = get_weighted_distances()
 
-        weights = np.array(df['w'])
-        pdfs = np.array(df['distance'])
+        weights = np.array(df['w'], dtype=float)
+        pdfs = np.array(df['distance'], dtype=float)
 
         # compute rescaled posterior densities
         if kernel_scale == SCALE_LIN:
