@@ -8,9 +8,11 @@ automatically find a visually good level of smoothness.
 """
 
 import numpy as np
-from ..transition import MultivariateNormalTransition
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from ..transition import MultivariateNormalTransition
+from ..storage import History
 
 
 def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
@@ -51,7 +53,6 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
     Returns
     -------
-
     x, pdf: (np.ndarray, np.ndarray)
         The x and the densities at these points.
         These can be passed for plotting, for example as
@@ -72,20 +73,23 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
     return x_vals, pdf
 
 
-def plot_kde_1d(df, w, x, xmin=None, xmax=None,
-                numx=50, ax=None, title: str = None,
-                refval=None, kde=None, **kwargs):
+def plot_kde_1d_highlevel(
+        history: History, x: str, m: int = 0, t: int = None,
+        xmin=None, xmax=None, numx=50, ax=None,
+        size=None, title: str = None, refval=None, kde=None, **kwargs):
     """
-    Plots a 1d histogram.
+    Plot 1d kernel density estimate of parameter samples.
 
     Parameters
     ----------
-    df: Pandas Dataframe
-        The rows are the observations, the columns the variables
-    w: The corresponding weights
+    history: History
+        History to extract data from.
     x: str
-        The variable for the x-axis
-
+        The variable for the x-axis.
+    m: int, optional
+        Id of the model to plot for.
+    t: int, optional
+        Time point to plot for. Defaults to last time point.
     xmin: float, optional
         The lower limit in x for the histogram.
         If left empty, it is set to the minimum of the ovbservations of the
@@ -99,6 +103,8 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         Defaults to 50.
     ax: matplotlib.axes.Axes, optional
         The axis object to use.
+    size: 2-Tuple of float, optional
+        Size of the plot in inches.
     title: str, optional
         Title for the plot. Defaults to None.
     refval: dict, optional
@@ -112,10 +118,33 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
 
     Returns
     -------
-
     ax: matplotlib axis
         axis of the plot
+    """
+    df, w = history.get_distribution(m=m, t=t)
 
+    return plot_kde_1d(df, w, x, xmin, xmax, numx, ax, size, title, refval,
+                       kde, **kwargs)
+
+
+def plot_kde_1d(df, w, x, xmin=None, xmax=None,
+                numx=50, ax=None, size=None, title: str = None,
+                refval=None, kde=None, **kwargs):
+    """
+    Lowlevel interface for plot_kde_1d_highlevel (see there for the remaining
+    parameters).
+
+    Parameters
+    ----------
+    df: pandas.DataFrame
+        The rows are the observations, the columns the variables.
+    w: pandas.DataFrame
+        The corresponding weights.
+
+    Returns
+    -------
+    ax: matplotlib axis
+        Axis of the plot.
     """
     x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx, kde=kde)
     if ax is None:
@@ -128,6 +157,11 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
         ax.set_title(title)
     if refval is not None:
         ax.axvline(refval[x], color='C1', linestyle='dashed')
+
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     return ax
 
 
@@ -182,7 +216,6 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
     Returns
     -------
-
     X, Y, PDF: (np.ndarray, np.ndarray, np.ndarray)
         The X, the Y and the densities at these points.
         These can be passed for plotting, for example as
@@ -209,21 +242,27 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     return X, Y, PDF
 
 
-def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-                numx=50, numy=50, ax=None, colorbar=True,
-                title: str = None, refval=None, kde=None, **kwargs):
+def plot_kde_2d_highlevel(
+        history: History, x: str, y: str, m: int = 0, t: int = None,
+        xmin: float = None, xmax: float = None, ymin: float = None,
+        ymax: float = None, numx: int = 50, numy: int = 50, ax=None,
+        size=None, colorbar=True, title: str = None, refval=None, kde=None,
+        **kwargs):
     """
-    Plots a 2d histogram.
+    Plot 2d kernel density estimate of parameter samples.
 
     Parameters
     ----------
-    df: Pandas Dataframe
-        The rows are the observations, the columns the variables
-    w: The corresponding weights.
+    history: History
+        History to extract data from.
     x: str
         The variable for the x-axis.
     y: str
         The variable for the y-axis.
+    m: int, optional
+        Id of the model to plot for.
+    t: int, optional
+        Time point to plot for. Defaults to last time point.
     xmin: float, optional
         The lower limit in x for the histogram.
         If left empty, it is set to the minimum of the ovbservations of the
@@ -248,6 +287,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Defaults tp 50.
     ax: matplotlib.axes.Axes, optional
         The axis object to use.
+    size: 2-Tuple of float
+        Size of the plot in inches.
     colorbar: bool, optional
         Whether to plot a colorbar. Defaults to True.
     title: str, optional
@@ -257,13 +298,38 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
     kde: pyabc.Transition, optional
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
-        cross-validated scaling is used.
+        cross-validated scaling is used..
 
     Returns
     -------
-
     ax: matplotlib axis
-        axis of the plot
+        Axis of the plot.
+    """
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_2d(
+        df, w, x, y, xmin, xmax, ymin, ymax, numx, numy, ax, size, colorbar,
+        title, refval, kde, **kwargs)
+
+
+def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
+                numx=50, numy=50, ax=None, size=None, colorbar=True,
+                title: str = None, refval=None, kde=None, **kwargs):
+    """
+    Plot a 2d kernel density estimate of parameter samples.
+
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables
+    w: The corresponding weights.
+
+    For the other parameters, see `plot_kde_2d_highlevel`.
+
+    Returns
+    -------
+    ax: matplotlib axis
+        Axis of the plot.
 
     """
     X, Y, PDF = kde_2d(df, w, x, y,
@@ -282,31 +348,33 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         # cbar.set_label("PDF")
     if refval is not None:
         ax.scatter([refval[x]], [refval[y]], color='C1')
+
+    # set size
+    if size is not None:
+        ax.get_figure().set_size_inches(size)
+
     return ax
 
 
-def plot_kde_matrix(df, w,
-                    limits=None,
-                    colorbar=True,
-                    height=2.5,
-                    numx=50,
-                    numy=50,
-                    refval=None,
-                    kde=None):
+def plot_kde_matrix_highlevel(
+        history, m: int = 0, t: int = None, limits=None,
+        colorbar: bool = True, height: float = 2.5,
+        numx: int = 50, numy: int = 50, refval=None, kde=None):
     """
-    Plot a KDE matrix.
+    Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
     Parameters
     ----------
-
-    df: Pandas Dataframe
-        The rows are the observations, the columns the variables.
-    w: np.narray
-        The corresponding weights.
-    colorbar: bool
-        Whether to plot the colorbars or not.
+    history: History
+        History to extract data from.
+    m: int, optional
+        Id of the model to plot for.
+    t: int, optional
+        Time point to plot for. Defaults to last time point.
     limits: dictionary, optional
         Dictionary of the form ``{"name": (lower_limit, upper_limit)}``.
+    colorbar: bool
+        Whether to plot the colorbars or not.
     height: float, optional
         Height of each subplot in inches. Default: 2.5.
     numx: int, optional
@@ -323,6 +391,40 @@ def plot_kde_matrix(df, w,
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
         cross-validated scaling is used.
+
+    Returns
+    -------
+    arr_ax: Array of the generated plots' axes.
+    """
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_matrix(
+        df, w, limits, colorbar, height, numx, numy, refval, kde)
+
+
+def plot_kde_matrix(df, w,
+                    limits=None,
+                    colorbar=True,
+                    height=2.5,
+                    numx=50,
+                    numy=50,
+                    refval=None,
+                    kde=None):
+    """
+    Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
+
+    Parameters
+    ----------
+    df: Pandas Dataframe
+        The rows are the observations, the columns the variables.
+    w: np.narray
+        The corresponding weights.
+
+    Other parameters: See plot_kde_matrix_highlevel.
+
+    Returns
+    -------
+    arr_ax: Array of the generated plots' axes.
     """
 
     n_par = df.shape[1]

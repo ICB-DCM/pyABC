@@ -8,8 +8,11 @@ Helper functions to visualize results of ABCSMC runs.
 
 from .kde import (
     plot_kde_1d,
+    plot_kde_1d_highlevel,
     plot_kde_2d,
-    plot_kde_matrix)
+    plot_kde_2d_highlevel,
+    plot_kde_matrix,
+    plot_kde_matrix_highlevel)
 from .sample import (
     plot_sample_numbers,
     plot_total_sample_numbers,
@@ -37,8 +40,11 @@ from .data import (
 
 __all__ = [
     "plot_kde_1d",
+    "plot_kde_1d_highlevel",
     "plot_kde_2d",
+    "plot_kde_2d_highlevel",
     "plot_kde_matrix",
+    "plot_kde_matrix_highlevel",
     "plot_sample_numbers",
     "plot_total_sample_numbers",
     "plot_sample_numbers_trajectory",
