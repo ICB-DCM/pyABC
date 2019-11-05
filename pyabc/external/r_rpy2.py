@@ -165,7 +165,9 @@ class R:
         distance_py._R = self
         return distance_py
 
-    def summary_statistics(self, function_name: str):
+    def summary_statistics(self,
+                           function_name: str,
+                           is_py_model: bool = False):
         """
         The R-summary statistics.
 
@@ -174,10 +176,11 @@ class R:
         function_name: str
           Name of the function in the R script which defines the summary
           statistics function.
+        is_py_model: bool
+            Whether or not the model result is a python object.
 
         Returns
         -------
-
         summary_statistics: callable
             The summary statistics function.
         """
@@ -186,6 +189,13 @@ class R:
         # set reference to this class to ensure the source file is
         # read again when unpickling
         summary_statistics._R = self
+
+        if is_py_model:
+            def summary_statistics_py(model_output):
+                return summary_statistics(
+                    dict_to_named_list(model_output))
+            return summary_statistics_py
+
         return summary_statistics
 
     def observation(self, name: str):
@@ -194,14 +204,12 @@ class R:
 
         Parameters
         ----------
-
         name: str
             Name of the named list defined in the R script which holds
             the observed data.
 
         Returns
         -------
-
         observation: r named list
             A dictionary like object which holds the summary statistics
             of the observed data.
