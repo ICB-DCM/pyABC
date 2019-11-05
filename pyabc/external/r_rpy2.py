@@ -73,9 +73,7 @@ class R:
         well as the observed data.
     """
     def __init__(self, source_file: str):
-        warnings.warn("The support of the R language for ABC-SMC is "
-                      "considered experimental. The API might change in the "
-                      "future.")
+        warnings.warn("The support of R via rpy2 is considered experimental.")
         self.source_file = source_file
         self._read_source()
 
