@@ -4,6 +4,6 @@ sumstat <- function(model_output){
     sumstat = list(
         loc=model_output$loc,
         x=model_result$s0,
-	y=model_result$s1,
+	y=model_result$s1
     )
 }
