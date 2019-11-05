@@ -518,6 +518,7 @@ class EssScheme(TemperatureScheme):
 
         bounds = sp.optimize.Bounds(lb=np.array([beta_base]),
                                     ub=np.array([1.]))
+        # TODO make more efficient by providing gradients
         ret = sp.optimize.minimize(
             obj, x0=np.array([0.5 * (1 + beta_base)]),
             bounds=bounds)

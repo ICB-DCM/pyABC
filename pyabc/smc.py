@@ -231,13 +231,14 @@ class ABCSMC:
 
     def _sanity_check(self):
         # check stochastic setting
-        if isinstance(self.acceptor, StochasticAcceptor):
-            if not isinstance(self.eps, Temperature):
-                raise ValueError("Epsilon must be derived from "
-                                 "pyabc.epsilon.Temperature.")
-            if not isinstance(self.distance_function, StochasticKernel):
-                raise ValueError("Distance must be derived from "
-                                 "pyabc.distance.StochasticKernel")
+        stochastics = [isinstance(self.acceptor, StochasticAcceptor),
+                       isinstance(self.eps, Temperature),
+                       isinstance(self.distance_function, StochasticKernel)]
+        # check if usage is consistent
+        if not all(stochastics) and any(stochastics):
+            raise ValueError(
+                "Please only use acceptor.StochasticAcceptor, "
+                "epsilon.Temperature and distance.StochasticKernel together.")
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -857,7 +858,7 @@ class ABCSMC:
             partial_sum_stats = sample.first_n_sum_stats(
                 self.max_number_particles_for_distance_update)
             df_updated = self.distance_function.update(
-                t + 1, partial_sum_stats)
+                t+1, partial_sum_stats)
 
             # compute distances with the new distance measure
             if df_updated:
@@ -868,12 +869,12 @@ class ABCSMC:
 
             # update acceptor
             self.acceptor.update(
-                t + 1, population.get_weighted_distances())
+                t+1, population.get_weighted_distances())
 
             # update epsilon
-            self.eps.update(t + 1, population.get_weighted_distances(),
-                            acceptance_rate,
-                            self.acceptor.get_epsilon_config(t + 1))
+            self.eps.update(
+                t+1, population.get_weighted_distances(),
+                acceptance_rate, self.acceptor.get_epsilon_config(t+1))
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon

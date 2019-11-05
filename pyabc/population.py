@@ -217,7 +217,7 @@ class Population:
 
     def get_accepted_sum_stats(self) -> List[dict]:
         """
-        Return a list of all summary statistics.
+        Return a list of all accepted summary statistics.
         """
         sum_stats = []
         for particle in self._list:
