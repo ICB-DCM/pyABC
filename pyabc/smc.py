@@ -16,8 +16,8 @@ import pandas as pd
 import copy
 from typing import Union
 
-from .distance import Distance, PNormDistance, to_distance
-from .epsilon import Epsilon, MedianEpsilon
+from .distance import Distance, PNormDistance, to_distance, StochasticKernel
+from .epsilon import Epsilon, MedianEpsilon, Temperature
 from .model import Model
 from .population import Particle
 from .transition import Transition, MultivariateNormalTransition
@@ -28,7 +28,8 @@ from .pyabc_rand_choice import fast_random_choice
 from .model import SimpleModel
 from .populationstrategy import ConstantPopulationSize
 from .platform_factory import DefaultSampler
-from .acceptor import Acceptor, UniformAcceptor, SimpleFunctionAcceptor
+from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
+                       StochasticAcceptor)
 from .sampler import Sampler
 
 
@@ -149,7 +150,6 @@ class ABCSMC:
                   Bioinformatics 26, no. 1, 104–10, 2010.
                   doi:10.1093/bioinformatics/btp619.
     """
-
     def __init__(self,
                  models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
@@ -217,6 +217,7 @@ class ABCSMC:
             acceptor = UniformAcceptor()
         self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
+        # will be set later
         self.stop_if_only_single_model_alive = False
         self.max_number_particles_for_distance_update = 1000
         self.x_0 = None
@@ -225,6 +226,19 @@ class ABCSMC:
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
+
+        self._sanity_check()
+
+    def _sanity_check(self):
+        # check stochastic setting
+        stochastics = [isinstance(self.acceptor, StochasticAcceptor),
+                       isinstance(self.eps, Temperature),
+                       isinstance(self.distance_function, StochasticKernel)]
+        # check if usage is consistent
+        if not all(stochastics) and any(stochastics):
+            raise ValueError(
+                "Please only use acceptor.StochasticAcceptor, "
+                "epsilon.Temperature and distance.StochasticKernel together.")
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -402,11 +416,12 @@ class ABCSMC:
         # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
             t, get_initial_sum_stats, self.x_0)
-        self.eps.initialize(
-            t, get_initial_weighted_distances)
         self.acceptor.initialize(
+            t, get_initial_weighted_distances, self.distance_function,
+            self.x_0)
+        self.eps.initialize(
             t, get_initial_weighted_distances, self.max_nr_populations,
-            self.distance_function, self.x_0)
+            self.acceptor.get_epsilon_config(t))
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
@@ -706,6 +721,7 @@ class ABCSMC:
         if t == 0:
             weight = (len(distance_list)
                       / nr_samples_per_parameter)
+            weight *= np.prod(acceptance_weights)
         else:
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
@@ -779,7 +795,6 @@ class ABCSMC:
         # argument handling
         if len(kwargs) > 1:
             raise TypeError("Keyword arguments are not allowed.")
-
         self.minimum_epsilon = minimum_epsilon
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
@@ -801,6 +816,7 @@ class ABCSMC:
 
             # get epsilon for generation t
             current_eps = self.eps(t)
+
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # do some adaptations
@@ -842,22 +858,23 @@ class ABCSMC:
             partial_sum_stats = sample.first_n_sum_stats(
                 self.max_number_particles_for_distance_update)
             df_updated = self.distance_function.update(
-                t + 1, partial_sum_stats)
+                t+1, partial_sum_stats)
 
             # compute distances with the new distance measure
             if df_updated:
                 def distance_to_ground_truth(x, par):
-                    return self.distance_function(x, self.x_0, t + 1, par)
+                    return self.distance_function(x, self.x_0, t+1, par)
 
                 population.update_distances(distance_to_ground_truth)
 
-            # update epsilon
-            self.eps.update(t + 1, population.get_weighted_distances())
-
             # update acceptor
             self.acceptor.update(
-                t + 1, population.get_weighted_distances(),
-                self.distance_function, acceptance_rate)
+                t+1, population.get_weighted_distances())
+
+            # update epsilon
+            self.eps.update(
+                t+1, population.get_weighted_distances(),
+                acceptance_rate, self.acceptor.get_epsilon_config(t+1))
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon
@@ -906,7 +923,6 @@ class ABCSMC:
         t: int
             Time for which to update the kernel density estimator.
         """
-
         if t == 0:  # we need a particle population to do the fitting
             return
 

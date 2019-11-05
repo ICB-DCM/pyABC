@@ -42,6 +42,15 @@ from .scale import (
     span,
     mean,
     median)
+from .kernel import (
+    StochasticKernel,
+    SCALE_LIN,
+    SCALE_LOG,
+    SimpleFunctionKernel,
+    NormalKernel,
+    IndependentNormalKernel,
+    IndependentLaplaceKernel,
+    BinomialKernel)
 
 
 __all__ = [
@@ -77,4 +86,13 @@ __all__ = [
     "span",
     "mean",
     "median",
+    # kernel
+    "StochasticKernel",
+    "SCALE_LIN",
+    "SCALE_LOG",
+    "SimpleFunctionKernel",
+    "NormalKernel",
+    "IndependentNormalKernel",
+    "IndependentLaplaceKernel",
+    "BinomialKernel",
 ]

@@ -12,6 +12,11 @@ from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
     UniformAcceptor,
+    StochasticAcceptor,
+)
+from .pdf_norm import (
+    pdf_norm_from_kernel,
+    pdf_norm_max_found,
 )
 
 
@@ -21,4 +26,8 @@ __all__ = [
     'Acceptor',
     'SimpleFunctionAcceptor',
     'UniformAcceptor',
+    'StochasticAcceptor',
+    # pdf norm
+    'pdf_norm_from_kernel',
+    'pdf_norm_max_found',
 ]

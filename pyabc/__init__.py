@@ -9,7 +9,6 @@ ABCSMC algorithms for Bayesian model selection.
 import os
 import logging
 
-
 from .parameters import Parameter
 from .random_variables import (
     Distribution,
@@ -33,14 +32,26 @@ from .distance import (
     MinMaxDistance,
     PercentileDistance,
     RangeEstimatorDistance,
-    DistanceWithMeasureList)
+    DistanceWithMeasureList,
+    NormalKernel,
+    IndependentNormalKernel,
+    IndependentLaplaceKernel,
+    BinomialKernel)
 from .epsilon import (
     Epsilon,
     NoEpsilon,
     ConstantEpsilon,
     QuantileEpsilon,
     MedianEpsilon,
-    ListEpsilon)
+    ListEpsilon,
+    Temperature,
+    TemperatureScheme,
+    AcceptanceRateScheme,
+    ExponentialDecayScheme,
+    PolynomialDecayScheme,
+    DalyScheme,
+    FrielPettittScheme,
+    EssScheme)
 from .smc import ABCSMC
 from .storage import (
     History,
@@ -48,7 +59,10 @@ from .storage import (
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
-    UniformAcceptor)
+    UniformAcceptor,
+    StochasticAcceptor,
+    pdf_norm_from_kernel,
+    pdf_norm_max_found)
 from .model import (
     Model,
     SimpleModel,
@@ -87,6 +101,10 @@ __all__ = [
     "PercentileDistance",
     "RangeEstimatorDistance",
     "DistanceWithMeasureList",
+    "NormalKernel",
+    "IndependentNormalKernel",
+    "IndependentLaplaceKernel",
+    "BinomialKernel",
     # epsilon
     "Epsilon",
     "NoEpsilon",
@@ -94,6 +112,14 @@ __all__ = [
     "ListEpsilon",
     "QuantileEpsilon",
     "MedianEpsilon",
+    "Temperature",
+    "TemperatureScheme",
+    "AcceptanceRateScheme",
+    "ExponentialDecayScheme",
+    "PolynomialDecayScheme",
+    "DalyScheme",
+    "FrielPettittScheme",
+    "EssScheme",
     # random variable
     "RVBase",
     "RV",
@@ -118,6 +144,9 @@ __all__ = [
     "Acceptor",
     "SimpleFunctionAcceptor",
     "UniformAcceptor",
+    "StochasticAcceptor",
+    "pdf_norm_from_kernel",
+    "pdf_norm_max_found",
     # model
     "ModelResult",
     "Model",

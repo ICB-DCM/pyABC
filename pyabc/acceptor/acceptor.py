@@ -14,13 +14,15 @@ when the distance measure and epsilon criteria develop over
 time.
 """
 
+import numpy as np
 import pandas as pd
 from typing import Callable
 import logging
 
-from ..distance import Distance
+from ..distance import Distance, SCALE_LIN
 from ..epsilon import Epsilon
 from ..parameters import Parameter
+from .pdf_norm import pdf_norm_max_found
 
 
 logger = logging.getLogger("Acceptor")
@@ -78,7 +80,6 @@ class Acceptor:
             self,
             t: int,
             get_weighted_distances: Callable[[], pd.DataFrame],
-            max_nr_populations: int,
             distance_function: Distance,
             x_0: dict):
         """
@@ -93,8 +94,6 @@ class Acceptor:
             The timepoint to initialize the acceptor for.
         get_weighted_distances: Callable[[], pd.DataFrame]
             Returns on demand the distances for initializing the acceptor.
-        max_nr_populations: int
-            Maximum number of populations in current run.
         distance_function: Distance
             Distance object. The acceptor should not modify it, but might
             extract some meta information.
@@ -105,9 +104,7 @@ class Acceptor:
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
-               distance_function: Distance,
-               acceptance_rate: float):
+               weighted_distances: pd.DataFrame):
         """
         Update the acceptance criterion.
 
@@ -118,10 +115,6 @@ class Acceptor:
             The timepoint to initialize the acceptor for.
         weighted_distances: Callable[[], pd.DataFrame]
             The current generation's weighted distances.
-        distance_function: Distance
-            Distance object.
-        acceptance_rate: float
-            The current generation's acceptance rate.
         """
         pass
 
@@ -171,6 +164,24 @@ class Acceptor:
         """
         raise NotImplementedError()
 
+    # pylint: disable=R0201
+    def get_epsilon_config(self, t: int) -> dict:
+        """
+        Create a configuration object that contains all values of interest for
+        the update of the Epsilon object.
+
+        Parameters
+        ----------
+        t: int
+            The timepoint for which to get the config.
+
+        Returns
+        -------
+        config: dict
+            The relevant information.
+        """
+        return None
+
 
 class SimpleFunctionAcceptor(Acceptor):
     """
@@ -183,7 +194,7 @@ class SimpleFunctionAcceptor(Acceptor):
         Callable with the same signature as the __call__ method.
     """
 
-    def __init__(self, fun=None):
+    def __init__(self, fun: Callable):
         super().__init__()
         self.fun = fun
 
@@ -220,7 +231,6 @@ def accept_use_current_time(
     Use only the distance function and epsilon criterion at the current time
     point to evaluate whether to accept or reject.
     """
-
     d = distance_function(x, x_0, t, par)
     accept = d <= eps(t)
 
@@ -287,3 +297,147 @@ class UniformAcceptor(Acceptor):
         else:  # use only current time
             return accept_use_current_time(
                 distance_function, eps, x, x_0, t, par)
+
+
+class StochasticAcceptor(Acceptor):
+    """
+    This acceptor implements a stochastic acceptance step based on a
+    probability density, generalizing from the uniform acceptance kernel.
+    A particle is accepted if for the simulated summary statistics x,
+    observed summary statistics x_0 and parameters theta holds
+
+    .. math::
+
+       \\frac{\\text{pdf}(x_0|x,\\theta)}{c}\\geq u
+
+    where u ~ U[0,1], and c is a normalizing constant.
+
+    The concept is based on [#wilkinson]_. In addition, we introduce
+    acceptance kernel temperation and rejection control importance sampling
+    to permit a more flexible choice and adaptation of c.
+
+    .. [#wilkinson] Wilkinson, Richard David; "Approximate Bayesian
+        computation (ABC) gives exact results under the assumption of model
+        error"; Statistical applications in genetics and molecular biology
+        12.2 (2013): 129-141.
+
+    """
+
+    def __init__(
+            self,
+            pdf_norm_method: Callable = None):
+        """
+        Parameters
+        ----------
+        pdf_norm_method: Callable
+            Function to calculate a pdf normalization (denoted `c` above).
+            Shipped are `pyabc.acceptor.pdf_norm_from_kernel` to use the
+            value provided by the StochasticKernel, and
+            `pyabc.acceptor.pdf_norm_max_found` (default) to always use
+            the maximum value among accepted particles so far.
+            Note that re-weighting based on ideas from rejection control
+            importance sampling to handle the normalization constant being
+            insufficient, and thus avoiding an importance sampling bias,
+            is included either way.
+        """
+        super().__init__()
+
+        if pdf_norm_method is None:
+            pdf_norm_method = pdf_norm_max_found
+        self.pdf_norm_method = pdf_norm_method
+
+        # maximum pdfs, indexed by time
+        self.pdf_norms = {}
+
+        # fields to be filled later
+        self.x_0 = None
+        self.kernel_scale = None
+        self.kernel_pdf_max = None
+
+    def initialize(
+            self,
+            t: int,
+            get_weighted_distances: Callable[[], pd.DataFrame],
+            distance_function: Distance,
+            x_0: dict):
+        """
+        Initialize temperature and maximum pdf.
+        """
+        self.x_0 = x_0
+        self.kernel_scale = distance_function.ret_scale
+        self.kernel_pdf_max = distance_function.pdf_max
+
+        # update
+        self._update(t, get_weighted_distances)
+
+    def update(self,
+               t: int,
+               weighted_distances: pd.DataFrame):
+        self._update(t, lambda: weighted_distances)
+
+    def _update(self,
+                t: int,
+                get_weighted_distances: Callable[[], pd.DataFrame]):
+        """
+        Update schemes for the upcoming time point t.
+        """
+        # update pdf normalization
+        pdf_norm = self.pdf_norm_method(
+            kernel_val=self.kernel_pdf_max,
+            get_weighted_distances=get_weighted_distances,
+            prev_pdf_norm=None if not self.pdf_norms
+            else max(self.pdf_norms.values()))
+        self.pdf_norms[t] = pdf_norm
+
+        logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
+
+    def get_epsilon_config(self, t: int) -> dict:
+        """
+        Pack the pdf normalization and the kernel scale.
+        """
+        return dict(
+            pdf_norm=self.pdf_norms[t],
+            kernel_scale=self.kernel_scale,  # TODO Refactor
+        )
+
+    def __call__(self, distance_function, eps, x, x_0, t, par):
+        # rename
+        kernel = distance_function
+
+        # temperature
+        temp = eps(t)
+
+        # compute probability density
+        pd = kernel(x, x_0, t, par)
+        pdf_norm = self.pdf_norms[t]
+
+        # rescale
+        if kernel.ret_scale == SCALE_LIN:
+            pd_rescaled = pd / pdf_norm
+        else:  # kernel.ret_scale == SCALE_LOG
+            pd_rescaled = np.exp(pd - pdf_norm)
+
+        # acceptance probability
+        acceptance_probability = pd_rescaled ** (1 / temp)
+
+        # accept
+        threshold = np.random.uniform(low=0, high=1)
+        if acceptance_probability >= threshold:
+            accept = True
+        else:
+            accept = False
+
+        # weight
+        if acceptance_probability == 0.0:
+            weight = 0.0
+        else:
+            weight = acceptance_probability / min(1, acceptance_probability)
+
+        # check pdf max ok
+        if pdf_norm < pd:
+            logger.debug(
+                f"Encountered pd={pd:.4e} > c={pdf_norm:.4e}, "
+                f"thus weight={weight:.4e}.")
+
+        # return unscaled density value and the acceptance flag
+        return AcceptorResult(pd, accept, weight)
