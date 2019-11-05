@@ -40,7 +40,7 @@ class Epsilon(ABC):
             Returns on demand the distances for initializing the epsilon.
         max_nr_populations: int
             The maximum number of populations.
-        acceptor_config:
+        acceptor_config: dict
             An object provided by the Acceptor class.
         """
         pass
