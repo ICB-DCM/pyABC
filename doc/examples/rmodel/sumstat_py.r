@@ -3,7 +3,7 @@ sumstat <- function(model_output){
     # print(model_result)
     sumstat = list(
         loc=model_output$loc,
-        x=model_result$s0,
-	y=model_result$s1
+        x=sum(model_result$s0),
+        y=sum(model_result$s1)
     )
 }
