@@ -11,7 +11,7 @@ Release Notes
 0.9.22 (2019-11-05)
 -------------------
 
-* Fix error that prevented using rpy2-based summary statistics with non rpy2
+* Fix error that prevented using rpy2 based summary statistics with non rpy2
   based models (#213).
 
 
