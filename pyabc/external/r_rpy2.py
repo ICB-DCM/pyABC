@@ -66,7 +66,6 @@ class R:
 
     Parameters
     ----------
-
     source_file: str
 
         Path to the file which contains the definitions for
@@ -120,7 +119,6 @@ class R:
 
         Returns
         -------
-
         model: callable
             The model.
 
@@ -148,7 +146,6 @@ class R:
 
         Returns
         -------
-
         distance: callable
             The distance function.
 
@@ -177,7 +174,9 @@ class R:
           Name of the function in the R script which defines the summary
           statistics function.
         is_py_model: bool
-            Whether or not the model result is a python object.
+            Whether or not the model result is a python object. If True,
+            then it is expected to be a dictionary that will be converted
+            to a ListVector.
 
         Returns
         -------
