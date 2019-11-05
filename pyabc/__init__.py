@@ -8,7 +8,12 @@ ABCSMC algorithms for Bayesian model selection.
 
 import os
 import logging
+import collections
 
+try:
+    collectionsAbc = collections.abc
+except AttributeError:
+    collectionsAbc = collections
 
 from .parameters import Parameter
 from .random_variables import (
