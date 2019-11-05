@@ -8,6 +8,19 @@ Release Notes
 ..........
 
 
+0.9.21 (2019-11-05)
+-------------------
+
+* Introduce acceptor.StochasticAcceptor to encode the stochastic acceptance
+  step generalizing the standard uniform criterion.
+* Introduce distance.StochasticKernel to encode noise distributions, with
+  several concrete implementations already.
+* Introduce epsilon.Temperature to capture the temperature replacing the
+  traditional epsilons. In addition, multiple concrete
+  pyabc.epsilon.TemperatureSchemes have been implemented that handle the
+  calculation of the next temperature value (all #197).
+
+
 0.9.20 (2019-10-30)
 -------------------
 

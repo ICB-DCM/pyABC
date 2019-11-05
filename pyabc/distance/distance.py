@@ -15,7 +15,7 @@ logger = logging.getLogger("Distance")
 
 class PNormDistance(Distance):
     """
-    Use weighted p-norm
+    Use a weighted p-norm
 
     .. math::
 
@@ -620,7 +620,6 @@ class ZScoreDistance(DistanceWithMeasureList):
     Hence
 
     .. math::
-
         d(x, y) = \
         \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """

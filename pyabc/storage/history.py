@@ -286,13 +286,11 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = -1)
             Population index.
 
         Returns
         -------
-
         model_names: List[str]
             List of model names.
         """

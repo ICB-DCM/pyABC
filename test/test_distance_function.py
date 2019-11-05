@@ -1,14 +1,16 @@
 import numpy as np
 import scipy as sp
-from pyabc import (PercentileDistance,
-                   MinMaxDistance,
-                   PNormDistance,
-                   AdaptivePNormDistance,
-                   AggregatedDistance,
-                   AdaptiveAggregatedDistance)
-
-
 from pyabc.distance import (
+    PercentileDistance,
+    MinMaxDistance,
+    PNormDistance,
+    AdaptivePNormDistance,
+    AggregatedDistance,
+    AdaptiveAggregatedDistance,
+    NormalKernel,
+    IndependentNormalKernel,
+    IndependentLaplaceKernel,
+    BinomialKernel,
     median_absolute_deviation,
     mean_absolute_deviation,
     standard_deviation,
@@ -21,7 +23,8 @@ from pyabc.distance import (
     standard_deviation_to_observation,
     span,
     mean,
-    median)
+    median,
+    SCALE_LIN,)
 
 
 class MockABC:
@@ -78,6 +81,7 @@ def test_pnormdistance():
 
     # call distance function, also to initialize w
     d = dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+
     expected = pow(1**2 + 2**2, 1 / 2)
     assert expected == d
 
@@ -159,3 +163,131 @@ def test_adaptiveaggregateddistance():
         val = distance(
             abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
         assert isinstance(val, float)
+
+
+def test_normalkernel():
+    x0 = {'y0': np.array([1, 0]), 'y1': 1}
+    x = {'y0': np.array([2, 2]), 'y1': 2}
+
+    # use default cov
+    kernel = NormalKernel()
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    # expected value
+    logterm = 3 * np.log(2 * np.pi * 1)
+    quadterm = 1**2 + 2**2 + 1**2
+    expected = - 0.5 * (logterm + quadterm)
+    assert np.isclose(ret, expected)
+
+    # define own cov
+    cov = np.array([[2, 1, 0], [0, 2, 1], [0, 1, 3]])
+    kernel = NormalKernel(cov=cov)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = sp.stats.multivariate_normal(cov=cov).logpdf([1, 2, 1])
+    assert np.isclose(ret, expected)
+
+    # define own keys, linear output
+    kernel = NormalKernel(keys=['y0'], ret_scale=SCALE_LIN)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = sp.stats.multivariate_normal(cov=np.eye(2)).pdf([1, 2])
+    assert np.isclose(ret, expected)
+
+
+def test_independentnormalkernel():
+    x0 = {'y0': np.array([1, 2]), 'y1': 2.5}
+    x = {'y0': np.array([0, 0]), 'y1': 7}
+
+    # use default var
+    kernel = IndependentNormalKernel()
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1**2 + 2**2 + 4.5**2)
+    assert np.isclose(ret, expected)
+
+    # define own var
+    kernel = IndependentNormalKernel([1, 2, 3])
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = -0.5 * (3 * np.log(2 * np.pi) + np.log(1) + np.log(2)
+                       + np.log(3) + 1**2 / 1 + 2**2 / 2 + 4.5**2 / 3)
+    assert np.isclose(ret, expected)
+
+    # compare to normal kernel
+    normal_kernel = NormalKernel(cov=np.diag([1, 2, 3]))
+    normal_kernel.initialize(0, None, x0)
+    normal_ret = normal_kernel(x, x0)
+    assert np.isclose(ret, normal_ret)
+
+    # function var
+    def var(p):
+        if p is None:
+            return 42
+        return np.array([p['th0'], p['th1'], 3])
+
+    kernel = IndependentNormalKernel(var)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0, par={'th0': 1, 'th1': 2})
+    assert np.isclose(ret, expected)
+
+
+def test_independentlaplacekernel():
+    x0 = {'y0': np.array([1, 2]), 'y1': 2.5}
+    x = {'y0': np.array([0, 0]), 'y1': 7}
+
+    # use default var
+    kernel = IndependentLaplaceKernel()
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = - (3 * np.log(2 * 1) + 1 + 2 + 4.5)
+    assert np.isclose(ret, expected)
+
+    # define own var
+    kernel = IndependentLaplaceKernel([1, 2, 3])
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = - (np.log(2 * 1) + np.log(2 * 2) + np.log(2 * 3)
+                  + 1 / 1 + 2 / 2 + 4.5 / 3)
+    assert np.isclose(ret, expected)
+
+    # function var
+    def var(par):
+        return np.array([par['th0'], par['th1'], 3])
+
+    kernel = IndependentLaplaceKernel(var)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0, par={'th0': 1, 'th1': 2})
+    assert np.isclose(ret, expected)
+
+
+def test_binomialkernel():
+    x0 = {'y0': np.array([4, 5]), 'y1': 7}
+    x = {'y0': np.array([7, 7]), 'y1': 7}
+
+    kernel = BinomialKernel(p=0.9)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
+    assert np.isclose(ret, expected)
+
+    # 0 likelihood
+    ret = kernel(x, {'y0': np.array([4, 10]), 'y1': 7})
+    assert np.isclose(ret, -np.inf)
+
+    # linear output
+    kernel = BinomialKernel(p=0.9, ret_scale=SCALE_LIN)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.prod(sp.stats.binom.pmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
+    assert np.isclose(ret, expected)
+
+    # function p
+    def p(par):
+        return np.array([0.9, 0.8, 0.7])
+    kernel = BinomialKernel(p=p)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.binom.logpmf(
+        k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
+    assert np.isclose(ret, expected)
