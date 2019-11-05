@@ -36,7 +36,7 @@ from .distance import (
     NormalKernel,
     IndependentNormalKernel,
     IndependentLaplaceKernel,
-    BinomialKernel,)
+    BinomialKernel)
 from .epsilon import (
     Epsilon,
     NoEpsilon,

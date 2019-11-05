@@ -12,10 +12,12 @@ from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
     UniformAcceptor,
-    StochasticAcceptor,)
+    StochasticAcceptor,
+)
 from .pdf_norm import (
     pdf_norm_from_kernel,
-    pdf_norm_max_found,)
+    pdf_norm_max_found,
+)
 
 
 __all__ = [

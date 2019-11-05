@@ -38,7 +38,7 @@ class StochasticKernel(Distance):
         Defaults to None and is then computed as the density at (x_0, x_0),
         where x_0 denotes the observed summary statistics.
         Must be overridden if pdf_max is to be used in the analysis by the
-        acceptor.
+        acceptor and the default is not applicable.
         This value should be in the scale specified by ret_scale already.
     """
 
@@ -120,9 +120,7 @@ class NormalKernel(StochasticKernel):
 
     ret_scale, keys, pdf_max: As in StochasticKernel.
 
-
     .. note::
-
        The order of the entries in the mean and cov vectors is assumed
        to be the same as the one in keys. If keys is None, it is assumed to
        be the same as the one obtained via sorted(x.keys()) for summary
@@ -181,6 +179,7 @@ class NormalKernel(StochasticKernel):
         Return the value of the normal distribution at x - x_0, or its
         logarithm.
         """
+        # safety check
         if self.keys is None:
             self.initialize_keys(x_0)
 
@@ -257,6 +256,7 @@ class IndependentNormalKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None):
+        # safety check
         if self.keys is None:
             self.initialize_keys(x_0)
 
@@ -342,6 +342,7 @@ class IndependentLaplaceKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None):
+        # safety check
         if self.keys is None:
             self.initialize_keys(x_0)
 
@@ -370,10 +371,7 @@ class BinomialKernel(StochasticKernel):
 
     p: Union[float, Callable]
         The success probability.
-    ret_scale: str, optional (default = SCALE_LIN)
-        The scale on which the distribution is to be returned.
-    keys: List[str], optional (see StochasticKernel.keys)
-    pdf_max: float, optional (see StochasticKernel.pdf_max)
+    ret_scale, keys, pdf_max: See StochasticKernel.
     """
 
     def __init__(
@@ -433,6 +431,8 @@ def binomial_pdf_max(x_0, keys, p, ret_scale):
 
     Note that since we interpret x_0 as the noisy k value, we search
     the model value over arbitrary n.
+
+    The optimal value was calculated by checking p(n+1,k) / p(n,k).
     """
     ks = np.array(_arr(x_0, keys), dtype=int)
     ns = np.maximum(np.floor((ks - p) / p), 0)

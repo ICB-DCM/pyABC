@@ -214,6 +214,12 @@ def test_independentnormalkernel():
                        + np.log(3) + 1**2 / 1 + 2**2 / 2 + 4.5**2 / 3)
     assert np.isclose(ret, expected)
 
+    # compare to normal kernel
+    normal_kernel = NormalKernel(cov=np.diag([1, 2, 3]))
+    normal_kernel.initialize(0, None, x0)
+    normal_ret = normal_kernel(x, x0)
+    assert np.isclose(ret, normal_ret)
+
     # function var
     def var(p):
         if p is None:

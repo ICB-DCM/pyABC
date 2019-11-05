@@ -22,7 +22,7 @@ class Temperature(Epsilon):
         Temperature schemes returning proposed
         temperatures for the next time point, e.g.
         instances of :class:`pyabc.epsilon.TemperatureScheme`.
-    aggregate_fun: Callable[List[int], int]
+    aggregate_fun: Callable[List[float], float]
         The function to aggregate the schemes by, of the form
         ``Callable[List[float], float]``.
         Defaults to taking the minimum.
@@ -31,15 +31,15 @@ class Temperature(Epsilon):
         is used.
     maximum_nr_populations: int
         The maximum number of iterations as passed to ABCSMC.
-        May be inf.
+        May be inf, but not all schemes can handle that (and will complain).
     temperatures: Dict[int, float]
-        The temperatures, format key:temperature.
+        Times as keys and temperatures as values.
     """
 
     def __init__(
             self,
             schemes: Union[Callable, List[Callable]] = None,
-            aggregate_fun: Callable[[List[int]], int] = None,
+            aggregate_fun: Callable[[List[float]], float] = None,
             initial_temperature: float = None):
         if schemes is None:
             # this combination proved rather stable
@@ -51,8 +51,11 @@ class Temperature(Epsilon):
             aggregate_fun = min
         self.aggregate_fun = aggregate_fun
 
+        if initial_temperature is None:
+            initial_temperature = AcceptanceRateScheme()
         self.initial_temperature = initial_temperature
 
+        # to be filled later
         self.max_nr_populations = None
         self.temperatures = {}
 
@@ -63,7 +66,7 @@ class Temperature(Epsilon):
                    acceptor_config: dict):
         self.max_nr_populations = max_nr_populations
 
-        # set initial temperature
+        # set initial temperature for time t
         self._update(t, get_weighted_distances, 1.0, acceptor_config)
 
     def update(self,
@@ -71,6 +74,7 @@ class Temperature(Epsilon):
                weighted_distances: pd.DataFrame,
                acceptance_rate: float,
                acceptor_config: dict):
+        # set temperature for time t
         self._update(t, lambda: weighted_distances, acceptance_rate,
                      acceptor_config)
 
@@ -96,7 +100,7 @@ class Temperature(Epsilon):
         if t >= self.max_nr_populations - 1:
             # t is last time
             temperature = 1.0
-        elif not self.temperatures and self.initial_temperature is not None:
+        elif not self.temperatures:  # need an initial value
             if callable(self.initial_temperature):
                 # execute scheme
                 temperature = self.initial_temperature(**kwargs)
@@ -115,7 +119,7 @@ class Temperature(Epsilon):
 
             # compute next temperature based on proposals and fallback
             # should not be higher than before
-            fallback = self.temperatures[t - 1] \
+            fallback = self.temperatures[t-1] \
                 if t-1 in self.temperatures else np.inf
             proposed_value = self.aggregate_fun(temps)
             # also a value lower than 1.0 does not make sense
@@ -134,6 +138,24 @@ class TemperatureScheme:
     A TemperatureScheme suggests the next temperature value. It is used as
     one of potentially multiple schemes employed in the Temperature class.
     This class is abstract.
+
+    Parameters
+    ----------
+    t:
+        The time to compute for.
+    get_weighted_distances:
+        Callable to obtain the weights and kernel values to be used for
+        the scheme.
+    max_nr_populations:
+        The maximum number of populations that are supposed to be taken.
+    pdf_norm:
+        The normalization constant c that will be used in the acceptance step.
+    kernel_scale:
+        Scale on which the pdf values are (linear or logarithmic).
+    prev_temperature:
+        The temperature that was used last time (or None if not applicable).
+    acceptance_rate:
+        The recently obtained rate.
     """
 
     def __init__(self):
