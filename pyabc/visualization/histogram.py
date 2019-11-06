@@ -190,7 +190,7 @@ def plot_histogram_matrix(
     """
     df, w = history.get_distribution(m=m, t=t)
 
-    return plot_histogram_matrix_lowlevel(df, w, refval, **kwargs)
+    return plot_histogram_matrix_lowlevel(df, w, size, refval, **kwargs)
 
 
 def plot_histogram_matrix_lowlevel(

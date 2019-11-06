@@ -8,6 +8,14 @@ Release Notes
 ..........
 
 
+0.9.23 (2019-11-06)
+-------------------
+
+* Fix extras_require directive.
+* Fix error with histogram plot arguments.
+* Extend test coverage for visualization (all #215).
+
+
 0.9.22 (2019-11-05)
 -------------------
 

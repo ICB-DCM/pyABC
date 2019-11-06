@@ -3,6 +3,7 @@ import tempfile
 import pytest
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
@@ -45,36 +46,45 @@ for j in range(n_history):
 
 
 def test_epsilons():
-    pyabc.visualization.plot_sample_numbers(histories)
-    pyabc.visualization.plot_sample_numbers(histories, labels)
-    with pytest.raises(ValueError):
-        pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
+    pyabc.visualization.plot_epsilons(histories, labels)
     plt.close()
 
 
 def test_sample_numbers():
-    pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
+    pyabc.visualization.plot_sample_numbers(
+        histories, rotation=43, size=(5, 5))
+    _, ax = plt.subplots()
+    pyabc.visualization.plot_sample_numbers(histories, labels, ax=ax)
+    with pytest.raises(ValueError):
+        pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
     plt.close()
 
 
 def test_sample_numbers_trajectory():
     pyabc.visualization.plot_sample_numbers_trajectory(
         histories, labels, yscale='log', rotation=90)
+    _, ax = plt.subplots()
+    pyabc.visualization.plot_sample_numbers_trajectory(
+        histories, labels, yscale='log10', size=(8, 8), ax=ax)
     plt.close()
 
 
 def test_acceptance_rates_trajectory():
     pyabc.visualization.plot_acceptance_rates_trajectory(
-        histories, labels, yscale='log10', rotation=76)
+        histories, labels, yscale='log', rotation=76)
+    _, ax = plt.subplots()
+    pyabc.visualization.plot_acceptance_rates_trajectory(
+        histories, labels, yscale='log10', rotation=76, size=(10, 5), ax=ax)
     plt.close()
 
 
 def test_total_sample_numbers():
     pyabc.visualization.plot_total_sample_numbers(histories)
     pyabc.visualization.plot_total_sample_numbers(
-        histories, labels, yscale='log')
+        histories, labels, yscale='log', size=(10, 5))
+    _, ax = plt.subplots()
     pyabc.visualization.plot_total_sample_numbers(
-        histories, rotation=75, yscale='log10')
+        histories, rotation=75, yscale='log10', ax=ax)
     plt.close()
 
 
@@ -85,9 +95,18 @@ def test_effective_sample_sizes():
 
 
 def test_histograms():
-    pyabc.visualization.plot_histogram_1d(histories[0], 'p0', bins=20)
+    # 1d
+    pyabc.visualization.plot_histogram_1d(
+        histories[0], 'p0', bins=20,
+        xmin=limits['p0'][0], xmax=limits['p0'][1], size=(5, 5), refval=p_true)
+    # 2d
     pyabc.visualization.plot_histogram_2d(histories[0], 'p0', 'p1')
-    pyabc.visualization.plot_histogram_matrix(histories[0], bins=1000)
+    pyabc.visualization.plot_histogram_2d(
+        histories[0], 'p0', 'p1', xmin=limits['p0'][0], xmax=limits['p0'][1],
+        ymin=limits['p1'][0], ymax=limits['p1'][1], size=(5, 6), refval=p_true)
+    # matrix
+    pyabc.visualization.plot_histogram_matrix(
+        histories[0], bins=1000, size=(6, 7), refval=p_true)
     plt.close()
 
 
@@ -102,10 +121,13 @@ def test_kdes():
     pyabc.visualization.plot_kde_matrix(df, w)
 
     # also use the highlevel interfaces
-    pyabc.visualization.plot_kde_1d_highlevel(history, x='p0')
+    pyabc.visualization.plot_kde_1d_highlevel(history, x='p0', size=(4, 5),
+                                              refval=p_true)
     pyabc.visualization.plot_kde_2d_highlevel(history, x='p0', y='p1',
-                                              size=(7, 5))
-    pyabc.visualization.plot_kde_matrix_highlevel(history, height=27.43)
+                                              size=(7, 5),
+                                              refval=p_true)
+    pyabc.visualization.plot_kde_matrix_highlevel(history, height=27.43,
+                                                  refval=p_true)
     plt.close()
 
 
@@ -126,8 +148,10 @@ def test_model_probabilities():
 
 
 def test_data_plot():
-    obs_dict = {1: 0.7}
-    sim_dict = {1: 6.5}
+    obs_dict = {1: 0.7, 2: np.array([43, 423, 5.5]),
+                3: pd.DataFrame({'a': [1, 2], 'b': [4, 6]})}
+    sim_dict = {1: 6.5, 2: np.array([32, 5, 6]),
+                3: pd.DataFrame({'a': [1.55, -0.1], 'b': [54, 6]})}
     pyabc.visualization.plot_data(obs_dict, sim_dict)
     for i in range(5):
         obs_dict[i] = i + 1
