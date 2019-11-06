@@ -66,7 +66,6 @@ class R:
 
     Parameters
     ----------
-
     source_file: str
 
         Path to the file which contains the definitions for
@@ -74,9 +73,7 @@ class R:
         well as the observed data.
     """
     def __init__(self, source_file: str):
-        warnings.warn("The support of the R language for ABC-SMC is "
-                      "considered experimental. The API might change in the "
-                      "future.")
+        warnings.warn("The support of R via rpy2 is considered experimental.")
         self.source_file = source_file
         self._read_source()
 
@@ -120,7 +117,6 @@ class R:
 
         Returns
         -------
-
         model: callable
             The model.
 
@@ -148,7 +144,6 @@ class R:
 
         Returns
         -------
-
         distance: callable
             The distance function.
 
@@ -165,7 +160,9 @@ class R:
         distance_py._R = self
         return distance_py
 
-    def summary_statistics(self, function_name: str):
+    def summary_statistics(self,
+                           function_name: str,
+                           is_py_model: bool = False):
         """
         The R-summary statistics.
 
@@ -174,10 +171,13 @@ class R:
         function_name: str
           Name of the function in the R script which defines the summary
           statistics function.
+        is_py_model: bool
+            Whether or not the model result is a python object. If True,
+            then it is expected to be a dictionary that will be converted
+            to a ListVector.
 
         Returns
         -------
-
         summary_statistics: callable
             The summary statistics function.
         """
@@ -186,6 +186,13 @@ class R:
         # set reference to this class to ensure the source file is
         # read again when unpickling
         summary_statistics._R = self
+
+        if is_py_model:
+            def summary_statistics_py(model_output):
+                return summary_statistics(
+                    dict_to_named_list(model_output))
+            return summary_statistics_py
+
         return summary_statistics
 
     def observation(self, name: str):
@@ -194,14 +201,12 @@ class R:
 
         Parameters
         ----------
-
         name: str
             Name of the named list defined in the R script which holds
             the observed data.
 
         Returns
         -------
-
         observation: r named list
             A dictionary like object which holds the summary statistics
             of the observed data.
