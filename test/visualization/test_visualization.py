@@ -3,6 +3,7 @@ import tempfile
 import pytest
 import os
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
@@ -45,15 +46,15 @@ for j in range(n_history):
 
 
 def test_epsilons():
-    pyabc.visualization.plot_sample_numbers(histories)
-    pyabc.visualization.plot_sample_numbers(histories, labels)
-    with pytest.raises(ValueError):
-        pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
+    pyabc.visualization.plot_epsilons(histories, labels)
     plt.close()
 
 
 def test_sample_numbers():
-    pyabc.visualization.plot_sample_numbers(histories, labels, rotation=90)
+    pyabc.visualization.plot_sample_numbers(histories, rotation=43)
+    pyabc.visualization.plot_sample_numbers(histories, labels)
+    with pytest.raises(ValueError):
+        pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
     plt.close()
 
 
@@ -126,8 +127,10 @@ def test_model_probabilities():
 
 
 def test_data_plot():
-    obs_dict = {1: 0.7}
-    sim_dict = {1: 6.5}
+    obs_dict = {1: 0.7, 2: np.array([43, 423, 5.5]),
+                3: pd.DataFrame({'a': [1, 2], 'b': [4, 6]})}
+    sim_dict = {1: 6.5, 2: np.array([32, 5, 6]),
+                3: pd.DataFrame({'a': [1.55, -0.1], 'b': [54, 6]})}
     pyabc.visualization.plot_data(obs_dict, sim_dict)
     for i in range(5):
         obs_dict[i] = i + 1
