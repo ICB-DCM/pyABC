@@ -416,8 +416,21 @@ class ABCSMC:
         self.acceptor.initialize(
             t, get_initial_weighted_distances, self.distance_function,
             self.x_0)
+        def get_stuff():
+            population = self._get_initial_population(t)
+            def distance_to_ground_truth(x, par):
+                return self.distance_function(x, self.x_0, t, par)
+
+            population.update_distances(distance_to_ground_truth)
+            weighted_distances = population.get_weighted_distances()
+            vals = []
+            print(weighted_distances)
+            for d in weighted_distances['distance']:
+                vals.append({'distance': d, 'transition_pdf_prev': 1.0, 'transition_pdf': 1.0})
+            df = pd.DataFrame(vals)
+            return df
         self.eps.initialize(
-            t, get_initial_weighted_distances, self.max_nr_populations,
+            t, get_initial_weighted_distances, get_stuff, self.max_nr_populations,
             self.acceptor.get_epsilon_config(t))
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
@@ -690,7 +703,7 @@ class ABCSMC:
         Create transition probability density function for time `t`.
         """
         if t == 0:
-            return self._create_prior_pdf()
+            return lambda d, m, p: self._create_prior_pdf()(m, p)
 
         # copy references to avoid self references when pickling
         model_probabilities = self.history.get_model_probabilities(
@@ -700,7 +713,7 @@ class ABCSMC:
         nr_samples_per_parameter = \
             self.population_strategy.nr_samples_per_parameter
 
-        def transition_pdf(distance_list, m_ss, theta_ss, acceptance_weights):
+        def transition_pdf(distance_list, m_ss, theta_ss):
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
                 for m, row in model_probabilities.iterrows())
@@ -712,12 +725,8 @@ class ABCSMC:
             fraction_accepted_runs_for_single_parameter = \
                 len(distance_list) / nr_samples_per_parameter
 
-            # account for stochastic acceptance
-            # TODO This is only valid for single samples (see #54)
-            acceptance_weight = np.prod(acceptance_weights)
-
             transition_pd = (
-                model_factor * particle_factor * acceptance_weight
+                model_factor * particle_factor
                 / fraction_accepted_runs_for_single_parameter)
 
             if transition_pd == 0:
@@ -727,6 +736,9 @@ class ABCSMC:
         return transition_pdf
 
     def _create_prior_pdf(self):
+        """
+        Create a function that calculates a sample's prior density.
+        """
         model_prior = self.model_prior
         parameter_priors = self.parameter_priors
 
@@ -738,7 +750,10 @@ class ABCSMC:
         return prior_pdf
 
     def _create_weight_function(self, t: int):
-        # for efficiency
+        """
+        Create a function that calculates a sample's weight at time `t`.
+        """
+        # for efficiency, don't just compute prior / prior
         if t == 0:
             nr_samples_per_parameter = \
                 self.population_strategy.nr_samples_per_parameter
@@ -758,8 +773,13 @@ class ABCSMC:
 
         def weight_function(
                 distance_list, m_ss, theta_ss, acceptance_weights):
-            weight = prior_pdf(m_ss, theta_ss) / transition_pdf(
-                distance_list, m_ss, theta_ss, acceptance_weights)
+            # account for stochastic acceptance
+            # TODO This is only valid for single samples (see #54)
+            acceptance_weight = np.prod(acceptance_weights)
+            
+            normalization = transition_pdf(
+                distance_list, m_ss, theta_ss) * acceptance_weight
+            weight = prior_pdf(m_ss, theta_ss) / normalization
             return weight
 
         return weight_function
@@ -903,15 +923,28 @@ class ABCSMC:
         acceptance_rate: float
             The current iteration's acceptance rate.
         """
+        recorded_particles = sample.first_m_particles(self.max_nr_recorded_particles)
+        vals = []
+        transition_pdf = self._create_transition_pdf(t-1)
+        for particle in recorded_particles:
+            t_pdf_prev = transition_pdf(particle.accepted_distances,
+                                      particle.m, particle.parameter)
+            vals.append({'transition_pdf_prev': t_pdf_prev,
+                         'm': particle.m,
+                         'parameter': particle.parameter,
+                         'transition_pdf': None,
+                         'accepted_distances': particle.accepted_distances})
+
         # update transitions
         self._fit_transitions(t)
 
         # update population size
         self._adapt_population_size(t)
 
-        # update distance function
-        partial_sum_stats = sample.first_n_sum_stats(
+        partial_sum_stats = sample.first_m_sum_stats(
             self.max_nr_recorded_particles)
+
+        # update distance
         df_updated = self.distance_function.update(t, partial_sum_stats)
 
         # compute distances with the new distance measure
@@ -923,10 +956,24 @@ class ABCSMC:
 
         # update acceptor
         self.acceptor.update(t, population.get_weighted_distances())
+        
+        transition_pdf = self._create_transition_pdf(t)
+        for val in vals:
+            t_pdf = transition_pdf(val['accepted_distances'], val['m'], val['parameter'])
+            val['transition_pdf'] = t_pdf
+
+        dvals = []
+        for val in vals:
+            for d in val['accepted_distances']:
+                dvals.append({'transition_pdf_prev': val['transition_pdf_prev'],
+                              'transition_pdf': val['transition_pdf'],
+                              'distance': d})
+        df = pd.DataFrame(dvals)
 
         # update epsilon
         self.eps.update(
             t, population.get_weighted_distances(),
+            df,
             acceptance_rate, self.acceptor.get_epsilon_config(t))
 
     def _adapt_population_size(self, t):
