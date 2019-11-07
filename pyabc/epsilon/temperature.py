@@ -7,6 +7,7 @@ import logging
 
 from .base import Epsilon
 from ..distance import SCALE_LIN
+from ..sampler import Sampler
 
 logger = logging.getLogger("Epsilon")
 
@@ -68,6 +69,12 @@ class Temperature(Epsilon):
 
         # set initial temperature for time t
         self._update(t, get_weighted_distances, 1.0, acceptor_config)
+
+    def configure_sampler(self, sampler: Sampler):
+        if callable(self.initial_temperature):
+            self.initial_temperature.configure_sampler(sampler)
+        for scheme in self.schemes:
+            scheme.configure_sampler(sampler)
 
     def update(self,
                t: int,
@@ -161,6 +168,9 @@ class TemperatureScheme:
     def __init__(self):
         pass
 
+    def configure_sampler(self, sampler: Sampler):
+        """TODO"""
+
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable,
@@ -189,6 +199,9 @@ class AcceptanceRateScheme(TemperatureScheme):
 
     def __init__(self, target_rate: float = 0.5):
         self.target_rate = target_rate
+
+    def configure_sampler(self, sampler: Sampler):
+        sampler.sample_factory.record_rejected = True
 
     def __call__(self,
                  t: int,

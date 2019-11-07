@@ -535,7 +535,6 @@ class ABCSMC:
         # cache model_probabilities to not query the database so often
         model_probabilities = self.history.get_model_probabilities(
             self.history.max_t)
-
         m = sp.array(model_probabilities.index)
         p = sp.array(model_probabilities.p)
 
@@ -552,6 +551,8 @@ class ABCSMC:
         acceptor = self.acceptor
         x_0 = self.x_0
 
+        weight_function = self._create_weight_function(t)
+
         # simulation function
         def simulate_one():
             parameter = ABCSMC._generate_valid_proposal(
@@ -563,7 +564,6 @@ class ABCSMC:
             particle = ABCSMC._evaluate_proposal(
                 *parameter,
                 t,
-                model_probabilities,
                 nr_samples_per_parameter,
                 models,
                 summary_statistics,
@@ -571,10 +571,7 @@ class ABCSMC:
                 eps,
                 acceptor,
                 x_0,
-                model_prior,
-                parameter_priors,
-                model_perturbation_kernel,
-                transitions)
+                weight_function)
             return particle
 
         return simulate_one
@@ -630,7 +627,6 @@ class ABCSMC:
     def _evaluate_proposal(
             m_ss, theta_ss,
             t,
-            model_probabilities,
             nr_samples_per_parameter,
             models,
             summary_statistics,
@@ -638,10 +634,7 @@ class ABCSMC:
             eps,
             acceptor,
             x_0,
-            model_prior,
-            parameter_priors,
-            model_perturbation_kernel,
-            transitions) -> Particle:
+            weight_function) -> Particle:
         """
         Corresponds to Sampler.simulate_one. Data for the given parameters
         theta_ss are simulated, summary statistics computed and evaluated.
@@ -677,15 +670,8 @@ class ABCSMC:
         accepted = len(accepted_sum_stats) > 0
 
         if accepted:
-            weight = ABCSMC._calc_proposal_weight(
-                accepted_distances, m_ss, theta_ss,
-                accepted_weights, t,
-                model_probabilities,
-                model_prior,
-                parameter_priors,
-                nr_samples_per_parameter,
-                model_perturbation_kernel,
-                transitions)
+            weight = weight_function(
+                accepted_distances, m_ss, theta_ss, accepted_weights)
         else:
             weight = 0
 
@@ -699,49 +685,84 @@ class ABCSMC:
             rejected_distances=rejected_distances,
             accepted=accepted)
 
-    @staticmethod
-    def _calc_proposal_weight(
-            distance_list,
-            m_ss,
-            theta_ss,
-            acceptance_weights,
-            t,
-            model_probabilities,
-            model_prior,
-            parameter_priors,
-            nr_samples_per_parameter,
-            model_perturbation_kernel,
-            transitions):
+    def _create_transition_pdf(self, t: int):
         """
-        Calculate the weight for the generated parameter.
+        Create transition probability density function for time `t`.
         """
         if t == 0:
-            weight = (len(distance_list)
-                      / nr_samples_per_parameter)
-            weight *= np.prod(acceptance_weights)
-        else:
+            return self._create_prior_pdf()
+
+        # copy references to avoid self references when pickling
+        model_probabilities = self.history.get_model_probabilities(
+            self.history.max_t)
+        model_perturbation_kernel = self.model_perturbation_kernel
+        transitions = self.transitions
+        nr_samples_per_parameter = \
+            self.population_strategy.nr_samples_per_parameter
+
+        def transition_pdf(distance_list, m_ss, theta_ss, acceptance_weights):
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
                 for m, row in model_probabilities.iterrows())
             particle_factor = transitions[m_ss].pdf(
                 pd.Series(dict(theta_ss)))
             normalization = model_factor * particle_factor
-            if normalization == 0:
-                print('normalization is zero!')
-            # reflects stochasticity of the model
-            fraction_accepted_runs_for_single_parameter = (
-                len(distance_list)
-                / nr_samples_per_parameter)
-            weight = (model_prior.pmf(m_ss)
-                      * parameter_priors[m_ss].pdf(theta_ss)
-                      * fraction_accepted_runs_for_single_parameter
-                      / normalization)
 
-            # account for acceptance weights
+            # account for multiple tries
+            fraction_accepted_runs_for_single_parameter = \
+                len(distance_list) / nr_samples_per_parameter
+
+            # account for stochastic acceptance
             # TODO This is only valid for single samples (see #54)
-            weight *= np.prod(acceptance_weights)
+            acceptance_weight = np.prod(acceptance_weights)
 
-        return weight
+            transition_pd = (
+                model_factor * particle_factor * acceptance_weight
+                / fraction_accepted_runs_for_single_parameter)
+
+            if transition_pd == 0:
+                logger.info("Transition density is zero!")
+            return transition_pd
+
+        return transition_pdf
+
+    def _create_prior_pdf(self):
+        model_prior = self.model_prior
+        parameter_priors = self.parameter_priors
+
+        def prior_pdf(m_ss, theta_ss):
+            prior_pd = (model_prior.pmf(m_ss)
+                        * parameter_priors[m_ss].pdf(theta_ss))
+            return prior_pd
+
+        return prior_pdf
+
+    def _create_weight_function(self, t):
+        # for efficiency
+        if t == 0:    
+            nr_samples_per_parameter = \
+                self.population_strategy.nr_samples_per_parameter
+
+            def weight_function(
+                    distance_list, m_ss, theta_ss, acceptance_weights):
+                weight = (len(distance_list)
+                          / nr_samples_per_parameter)
+                # the acceptance weights should be 1 here anyway
+                weight *= np.prod(acceptance_weights)
+                return weight
+
+            return weight_function
+
+        transition_pdf = self._create_transition_pdf(t)
+        prior_pdf = self._create_prior_pdf()
+
+        def weight_function(
+                distance_list, m_ss, theta_ss, acceptance_weights):
+            weight = prior_pdf(m_ss, theta_ss) / transition_pdf(
+                distance_list, m_ss, theta_ss, acceptance_weights)
+            return weight
+
+        return weight_function
 
     def run(self,
             minimum_epsilon: float = 0.,
@@ -808,6 +829,7 @@ class ABCSMC:
         # configure recording of rejected particles
         self._set_max_nr_recorded_particles()
         self.distance_function.configure_sampler(self.sampler)
+        self.eps.configure_sampler(self.sampler)
 
         # one after the last time point
         t_max = t0 + max_nr_populations

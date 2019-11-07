@@ -4,6 +4,8 @@ import json
 from abc import ABC, abstractmethod
 from typing import Callable
 
+from ..sampler import Sampler
+
 
 class Epsilon(ABC):
     """
@@ -44,6 +46,9 @@ class Epsilon(ABC):
             An object provided by the Acceptor class.
         """
         pass
+
+    def configure_sampler(self, sampler: Sampler):
+        """TODO"""
 
     def update(self,
                t: int,
