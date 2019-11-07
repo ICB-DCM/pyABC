@@ -615,8 +615,8 @@ class ABCSMC:
                 m_s = m[index]
                 m_ss = model_perturbation_kernel.rvs(m_s)
                 # theta_s is None if the population m_ss has died out.
-                # This can happen since the model_perturbation
-                # _kernel can return  a model nr which has died out.
+                # This can happen since the model_perturbation_kernel
+                # can return a model nr which has died out.
                 if m_ss not in m:
                     continue
             else:
