@@ -737,9 +737,9 @@ class ABCSMC:
 
         return prior_pdf
 
-    def _create_weight_function(self, t):
+    def _create_weight_function(self, t: int):
         # for efficiency
-        if t == 0:    
+        if t == 0:
             nr_samples_per_parameter = \
                 self.population_strategy.nr_samples_per_parameter
 
