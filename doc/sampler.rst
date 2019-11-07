@@ -316,3 +316,57 @@ Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is 
 and adapt the worker script. For both, there exist many more configuration options. For further details see the respective documentation.
 
 Note that when planning for the number of overall redis workers, batches, and cpus per batch, also the parallelization on the level of the simulations has to be taken into account. Also, memory requirements should be checked in advance.
+
+
+Pickling
+--------
+
+For most of the samplers, pyABC uses
+`cloudpickle <https://github.com/cloudpipe/cloudpickle>`_ to serialize objects
+over the network and run simulations on remote nodes. In particular, this
+enables us to use lambda functions.
+
+However, care must be taken w.r.t. the size of the serialized object, i.e. to
+only include what is really required. This is why in the `pyabc.ABCSMC` class
+we had to write some functions that prevent the whole ABCSMC object from being
+serialized. For developers, the following example illustrates the problem:
+
+.. code-block:: python
+   
+   import cloudpickle as pickle
+   import numpy as np
+
+   class A:
+
+      def __init__(self):
+         self.big_arr = np.eye(10000)
+         self.small_arr = np.zeros(2)
+
+      def costly_function(self):
+         def fun(x):
+            print(self.small_arr, x)
+
+         return fun
+
+      def efficient_function(self):
+         small_arr = self.small_arr
+
+         def fun(x):
+            print(small_arr, x)
+
+        return fun
+
+
+   a = A()
+
+   print("The whole class:")
+   print(len(pickle.dumps(a)))
+   # 800001025
+
+   print("Costly function:")
+   print(len(pickle.dumps(a.costly_function())))
+   # 800001087
+
+   print("Efficient function:")
+   print(len(pickle.dumps(a.efficient_function())))
+   # 522
