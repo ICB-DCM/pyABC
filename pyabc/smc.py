@@ -128,19 +128,15 @@ class ABCSMC:
         of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
         acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
 
-
-    Attributes
-    ----------
-
-    max_number_particles_for_distance_update: int
-        Defaults to 1000. Set this to the maximum number of particles that an
-        adaptive distance measure (e.g. AdaptivePNormDistance) uses to update
-        itself each iteration.
-
     stop_if_only_single_model_alive: bool
         Defaults to False. Set this to true if you want to stop ABCSMC
         automatically as soon as only a single model has survived.
 
+    max_nr_recorded_particles: int
+        Defaults to 10 times the number of particles in the first population.
+        Set this to the maximum number of accepted and rejected particles
+        that methods like the AdaptivePNormDistance function use to update
+        themselves each iteration.
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -160,7 +156,9 @@ class ABCSMC:
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
                  sampler: Sampler = None,
-                 acceptor: Acceptor = None):
+                 acceptor: Acceptor = None,
+                 stop_if_only_single_model_alive: bool = False,
+                 max_nr_recorded_particles: int = None):
 
         if not isinstance(models, list):
             models = [models]
@@ -215,9 +213,10 @@ class ABCSMC:
             acceptor = UniformAcceptor()
         self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
+        self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
+        self.max_nr_recorded_particles = max_nr_recorded_particles
+
         # will be set later
-        self.stop_if_only_single_model_alive = False
-        self.max_number_particles_for_distance_update = 1000
         self.x_0 = None
         self.history = None
         self._initial_population = None
@@ -806,7 +805,8 @@ class ABCSMC:
         # sample from prior to calibrate distance, epsilon, and acceptor
         self._initialize_dist_eps_acc(t0)
 
-        # configure sampler by whoever wants to
+        # configure recording of rejected particles
+        self._set_max_nr_recorded_particles()
         self.distance_function.configure_sampler(self.sampler)
 
         # one after the last time point
@@ -889,7 +889,7 @@ class ABCSMC:
 
         # update distance function
         partial_sum_stats = sample.first_n_sum_stats(
-            self.max_number_particles_for_distance_update)
+            self.max_nr_recorded_particles)
         df_updated = self.distance_function.update(t, partial_sum_stats)
 
         # compute distances with the new distance measure
@@ -945,3 +945,8 @@ class ABCSMC:
         for m in self.history.alive_models(t - 1):
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
+
+    def _set_max_nr_recorded_particles(self):
+        if self.max_nr_recorded_particles is None:
+            self.max_nr_recorded_particles = \
+                10 * self.population_strategy.nr_particles
