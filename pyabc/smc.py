@@ -16,21 +16,19 @@ import pandas as pd
 import copy
 from typing import Union
 
-from .distance import Distance, PNormDistance, to_distance, StochasticKernel
-from .epsilon import Epsilon, MedianEpsilon, Temperature
-from .model import Model
-from .population import Particle
-from .transition import Transition, MultivariateNormalTransition
-from .random_variables import RV, ModelPerturbationKernel, Distribution
-from .storage import History
-from .populationstrategy import PopulationStrategy
-from .pyabc_rand_choice import fast_random_choice
-from .model import SimpleModel
-from .populationstrategy import ConstantPopulationSize
-from .platform_factory import DefaultSampler
 from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
                        StochasticAcceptor)
-from .sampler import Sampler
+from .distance import Distance, PNormDistance, to_distance, StochasticKernel
+from .epsilon import Epsilon, MedianEpsilon, Temperature
+from .model import Model, SimpleModel
+from .platform_factory import DefaultSampler
+from .population import Particle, Population
+from .populationstrategy import PopulationStrategy, ConstantPopulationSize
+from .pyabc_rand_choice import fast_random_choice
+from .random_variables import RV, ModelPerturbationKernel, Distribution
+from .sampler import Sampler, Sample
+from .storage import History
+from .transition import Transition, MultivariateNormalTransition
 
 
 logger = logging.getLogger("ABC")
@@ -130,19 +128,14 @@ class ABCSMC:
         of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
         acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
 
-
-    Attributes
-    ----------
-
-    max_number_particles_for_distance_update: int
-        Defaults to 1000. Set this to the maximum number of particles that an
-        adaptive distance measure (e.g. AdaptivePNormDistance) uses to update
-        itself each iteration.
-
     stop_if_only_single_model_alive: bool
         Defaults to False. Set this to true if you want to stop ABCSMC
         automatically as soon as only a single model has survived.
 
+    max_nr_recorded_particles: int
+        Defaults to inf. Set this to the maximum number of accepted and
+        rejected particles that methods like the AdaptivePNormDistance
+        function use to update themselves each iteration.
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -162,7 +155,9 @@ class ABCSMC:
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
                  sampler: Sampler = None,
-                 acceptor: Acceptor = None):
+                 acceptor: Acceptor = None,
+                 stop_if_only_single_model_alive: bool = False,
+                 max_nr_recorded_particles: int = np.inf):
 
         if not isinstance(models, list):
             models = [models]
@@ -217,9 +212,10 @@ class ABCSMC:
             acceptor = UniformAcceptor()
         self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
+        self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
+        self.max_nr_recorded_particles = max_nr_recorded_particles
+
         # will be set later
-        self.stop_if_only_single_model_alive = False
-        self.max_number_particles_for_distance_update = 1000
         self.x_0 = None
         self.history = None
         self._initial_population = None
@@ -250,7 +246,7 @@ class ABCSMC:
             *,
             gt_model: int = None,
             gt_par: dict = None,
-            meta_info=None) -> int:
+            meta_info=None) -> History:
         """
         Make a new ABCSMC run.
 
@@ -315,9 +311,9 @@ class ABCSMC:
         Returns
         -------
 
-        run_id: int
-            The history.id, which is the id under which the generated ABCSMC
-            run entry in the database can be identified.
+        history: History
+            The history, with set history.id, which is the id under which the
+            generated ABCSMC run entry in the database can be identified.
         """
         # record observed summary statistics
         if observed_sum_stat is None:
@@ -341,12 +337,13 @@ class ABCSMC:
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
 
-        # return id generated in store_initial_data
-        return self.history.id
+        # return history
+        # contains id generated in store_initial_data
+        return self.history
 
     def load(self, db: str,
              abc_id: int = 1,
-             observed_sum_stat: dict = None) -> int:
+             observed_sum_stat: dict = None) -> History:
         """
         Load an ABC-SMC run for continuation.
 
@@ -377,8 +374,8 @@ class ABCSMC:
             observed_sum_stat = self.history.observed_sum_stat()
         self.x_0 = observed_sum_stat
 
-        # just return the id again
-        return self.history.id
+        # just return the history
+        return self.history
 
     def _initialize_dist_eps_acc(self, t: int):
         """
@@ -749,8 +746,7 @@ class ABCSMC:
     def run(self,
             minimum_epsilon: float = 0.,
             max_nr_populations: int = np.inf,
-            min_acceptance_rate: float = 0.,
-            **kwargs) -> History:
+            min_acceptance_rate: float = 0.) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -792,20 +788,22 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
-        # argument handling
-        if len(kwargs) > 1:
-            raise TypeError("Keyword arguments are not allowed.")
+        # handle arguments
         self.minimum_epsilon = minimum_epsilon
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
 
-        # sample from prior to calibrate distance, epsilon, and acceptor
-        self._initialize_dist_eps_acc(self.history.max_t + 1)
-
+        # initial time
         t0 = self.history.max_t + 1
+        # log start time
         self.history.start_time = datetime.datetime.now()
-        # not saved as attribute b/c Mapper of type
-        # "ipython_cluster" is not pickleable
+
+        # initialize transitions
+        self._fit_transitions(t0)
+        # initialize population size
+        self._adapt_population_size(t0)
+        # sample from prior to calibrate distance, epsilon, and acceptor
+        self._initialize_dist_eps_acc(t0)
 
         # configure sampler by whoever wants to
         self.distance_function.configure_sampler(self.sampler)
@@ -818,10 +816,6 @@ class ABCSMC:
             current_eps = self.eps(t)
 
             logger.info(f"t: {t}, eps: {current_eps}.")
-
-            # do some adaptations
-            self._fit_transitions(t)
-            self._adapt_population_size(t)
 
             # create simulate function
             simulate_one = self._create_simulate_function(t)
@@ -836,45 +830,24 @@ class ABCSMC:
             population = sample.get_accepted_population()
             logger.debug(f"Population {t} done.")
 
-            # save to database before making any changes to the population
-            nr_evaluations = self.sampler.nr_evaluations_
+            # save to database
+            n_sim = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
-                t, current_eps, population, nr_evaluations,
-                model_names)
+                t, current_eps, population, n_sim, model_names)
             logger.debug(
                 f"Total samples up to t = {t}: "
                 f"{self.history.total_nr_simulations}.")
 
-            # prepare next iteration
-
             # acceptance rate
             pop_size = len(population.get_list())
-            acceptance_rate = pop_size / nr_evaluations
-            logger.info(f"Acceptance rate: {pop_size} / {nr_evaluations} = "
+            acceptance_rate = pop_size / n_sim
+            logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
                         f"{acceptance_rate:.4e}.")
 
-            # update distance function
-            partial_sum_stats = sample.first_n_sum_stats(
-                self.max_number_particles_for_distance_update)
-            df_updated = self.distance_function.update(
-                t+1, partial_sum_stats)
-
-            # compute distances with the new distance measure
-            if df_updated:
-                def distance_to_ground_truth(x, par):
-                    return self.distance_function(x, self.x_0, t+1, par)
-
-                population.update_distances(distance_to_ground_truth)
-
-            # update acceptor
-            self.acceptor.update(
-                t+1, population.get_weighted_distances())
-
-            # update epsilon
-            self.eps.update(
-                t+1, population.get_weighted_distances(),
-                acceptance_rate, self.acceptor.get_epsilon_config(t+1))
+            # prepare next iteration
+            self._prepare_next_iteration(
+                t+1, sample, population, acceptance_rate)
 
             # check early termination conditions
             if (current_eps <= minimum_epsilon
@@ -883,13 +856,60 @@ class ABCSMC:
                     or acceptance_rate < min_acceptance_rate):
                 break
 
-        # end of run loop
-
         # close session and store end time
         self.history.done()
 
         # return used history object
         return self.history
+
+    def _prepare_next_iteration(
+            self, t: int, sample: Sample, population: Population,
+            acceptance_rate: float):
+        """
+        Update actors for the upcoming iteration.
+        Be aware: The current (finished) iteration is t-1, the next t.
+
+        Parameters
+        ----------
+        t: int
+            The upcoming iteration time index to prepare for.
+        sample: pyabc.Sample
+            The current iteration's sample object.
+        population: pyabc.Population
+            The current iteration's population object.
+        acceptance_rate: float
+            The current iteration's acceptance rate.
+        """
+        # update transitions
+        self._fit_transitions(t)
+
+        # update population size
+        self._adapt_population_size(t)
+
+        def get_recorded_sum_stats():
+            partial_sum_stats = sample.first_m_sum_stats(
+                self.max_nr_recorded_particles)
+            return partial_sum_stats
+
+        # update distance
+        df_updated = self.distance_function.update(t, get_recorded_sum_stats)
+
+        # compute distances with the new distance measure
+        def get_weighted_distances():
+            if df_updated:
+                def distance_to_ground_truth(x, par):
+                    return self.distance_function(x, self.x_0, t, par)
+
+                population.update_distances(distance_to_ground_truth)
+            return population.get_weighted_distances()
+
+        # update acceptor
+        self.acceptor.update(t, get_weighted_distances)
+
+        # update epsilon
+        self.eps.update(
+            t, get_weighted_distances,
+            acceptance_rate, self.acceptor.get_epsilon_config(t))
 
     def _adapt_population_size(self, t):
         """

@@ -47,7 +47,7 @@ class Epsilon(ABC):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
+               get_weighted_distances: Callable[[], pd.DataFrame],
                acceptance_rate: float,
                acceptor_config: dict):
         """
@@ -62,7 +62,7 @@ class Epsilon(ABC):
         t: int
             The generation index to update / set epsilon for. Counting is
             zero-based. So the first population has t=0.
-        weighted_distances: pd.DataFrame
+        get_weighted_distances: Callable[[], pd.DataFrame]
             The distances that should be used to update epsilon, as returned
             by Population.get_weighted_distances(). These are usually the
             distances of samples accepted in population t-1. The distances may
