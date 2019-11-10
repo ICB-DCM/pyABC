@@ -8,12 +8,15 @@ Release Notes
 ..........
 
 
-0.9.23 (2019-11-06)
+0.9.23 (2019-11-10)
 -------------------
 
 * Fix extras_require directive.
 * Fix error with histogram plot arguments.
 * Extend test coverage for visualization (all #215).
+* Document pickling paradigm of ABCSMC class (see doc/sampler.rst).
+* Always use lazy evaluation in updates.
+* Restructure run function of ABCSMC class.
 
 
 0.9.22 (2019-11-05)
