@@ -18,6 +18,7 @@ Release Notes
 * Document pickling paradigm of ABCSMC class (see doc/sampler.rst).
 * Always use lazy evaluation in updates.
 * Restructure run function of ABCSMC class (all #216).
+* Run notebooks on travis only on pull requests (#217).
 
 
 0.9.22 (2019-11-05)
