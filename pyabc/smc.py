@@ -747,7 +747,7 @@ class ABCSMC:
             nr_samples_per_parameter = \
                 self.population_strategy.nr_samples_per_parameter
 
-            def weight_function(
+            def prior_weight_function(
                     distance_list, m_ss, theta_ss, acceptance_weights):
                 weight = (len(distance_list)
                           / nr_samples_per_parameter)
@@ -755,7 +755,7 @@ class ABCSMC:
                 weight *= np.prod(acceptance_weights)
                 return weight
 
-            return weight_function
+            return prior_weight_function
 
         transition_pdf = self._create_transition_pdf(t)
         prior_pdf = self._create_prior_pdf()
