@@ -130,19 +130,14 @@ class ABCSMC:
         of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
         acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
 
-
-    Attributes
-    ----------
-
-    max_number_particles_for_distance_update: int
-        Defaults to 1000. Set this to the maximum number of particles that an
-        adaptive distance measure (e.g. AdaptivePNormDistance) uses to update
-        itself each iteration.
-
     stop_if_only_single_model_alive: bool
         Defaults to False. Set this to true if you want to stop ABCSMC
         automatically as soon as only a single model has survived.
 
+    max_nr_recorded_particles: int
+        Defaults to inf. Set this to the maximum number of accepted and
+        rejected particles that methods like the AdaptivePNormDistance
+        function use to update themselves each iteration.
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -162,7 +157,9 @@ class ABCSMC:
                  transitions: List[Transition] = None,
                  eps: Epsilon = None,
                  sampler: Sampler = None,
-                 acceptor: Acceptor = None):
+                 acceptor: Acceptor = None,
+                 stop_if_only_single_model_alive: bool = False,
+                 max_nr_recorded_particles: int = np.inf):
 
         if not isinstance(models, list):
             models = [models]
@@ -217,9 +214,10 @@ class ABCSMC:
             acceptor = UniformAcceptor()
         self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
 
+        self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
+        self.max_nr_recorded_particles = max_nr_recorded_particles
+
         # will be set later
-        self.stop_if_only_single_model_alive = False
-        self.max_number_particles_for_distance_update = 1000
         self.x_0 = None
         self.history = None
         self._initial_population = None
