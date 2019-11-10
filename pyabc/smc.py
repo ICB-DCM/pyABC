@@ -246,7 +246,7 @@ class ABCSMC:
             *,
             gt_model: int = None,
             gt_par: dict = None,
-            meta_info=None) -> int:
+            meta_info=None) -> History:
         """
         Make a new ABCSMC run.
 
@@ -311,9 +311,9 @@ class ABCSMC:
         Returns
         -------
 
-        run_id: int
-            The history.id, which is the id under which the generated ABCSMC
-            run entry in the database can be identified.
+        history: History
+            The history, with set history.id, which is the id under which the
+            generated ABCSMC run entry in the database can be identified.
         """
         # record observed summary statistics
         if observed_sum_stat is None:
@@ -343,7 +343,7 @@ class ABCSMC:
 
     def load(self, db: str,
              abc_id: int = 1,
-             observed_sum_stat: dict = None) -> int:
+             observed_sum_stat: dict = None) -> History:
         """
         Load an ABC-SMC run for continuation.
 
