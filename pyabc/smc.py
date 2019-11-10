@@ -158,7 +158,7 @@ class ABCSMC:
                  sampler: Sampler = None,
                  acceptor: Acceptor = None,
                  stop_if_only_single_model_alive: bool = False,
-                 max_nr_recorded_particles: int = None):
+                 max_nr_recorded_particles: int = np.inf):
 
         if not isinstance(models, list):
             models = [models]
@@ -338,8 +338,9 @@ class ABCSMC:
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
 
-        # return id generated in store_initial_data
-        return self.history.id
+        # return history
+        # contains id generated in store_initial_data
+        return self.history
 
     def load(self, db: str,
              abc_id: int = 1,
@@ -374,8 +375,8 @@ class ABCSMC:
             observed_sum_stat = self.history.observed_sum_stat()
         self.x_0 = observed_sum_stat
 
-        # just return the id again
-        return self.history.id
+        # just return the history
+        return self.history
 
     def _initialize_dist_eps_acc(self, t: int):
         """
@@ -400,13 +401,17 @@ class ABCSMC:
             sum_stats = population.get_accepted_sum_stats()
             return sum_stats
 
-        def get_initial_weighted_distances():
+        def _get_initial_population_with_distances():
             population = self._get_initial_population(t)
 
             def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
 
             population.update_distances(distance_to_ground_truth)
+            return population
+
+        def get_initial_weighted_distances():
+            population = _get_initial_population_with_distances()
             weighted_distances = population.get_weighted_distances()
             return weighted_distances
 
@@ -416,21 +421,22 @@ class ABCSMC:
         self.acceptor.initialize(
             t, get_initial_weighted_distances, self.distance_function,
             self.x_0)
-        def get_stuff():
-            population = self._get_initial_population(t)
-            def distance_to_ground_truth(x, par):
-                return self.distance_function(x, self.x_0, t, par)
 
-            population.update_distances(distance_to_ground_truth)
-            weighted_distances = population.get_weighted_distances()
-            vals = []
-            print(weighted_distances)
-            for d in weighted_distances['distance']:
-                vals.append({'distance': d, 'transition_pdf_prev': 1.0, 'transition_pdf': 1.0})
-            df = pd.DataFrame(vals)
-            return df
+        def get_initial_records():
+            population = _get_initial_population_with_distances()
+            records = []
+            for particle in population.get_list():
+                for d in particle.accepted_distances:
+                    records.append({
+                        'distance': d,
+                        'transition_pd_prev': 1.0,
+                        'transition_pd': 1.0,
+                        'accepted': True})
+            return records
+
         self.eps.initialize(
-            t, get_initial_weighted_distances, get_stuff, self.max_nr_populations,
+            t, get_initial_weighted_distances, get_initial_records,
+            self.max_nr_populations,
             self.acceptor.get_epsilon_config(t))
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
@@ -698,7 +704,7 @@ class ABCSMC:
             rejected_distances=rejected_distances,
             accepted=accepted)
 
-    def _create_transition_pdf(self, t: int):
+    def _create_transition_pdf(self, t: int, transitions=None):
         """
         Create transition probability density function for time `t`.
         """
@@ -709,7 +715,8 @@ class ABCSMC:
         model_probabilities = self.history.get_model_probabilities(
             self.history.max_t)
         model_perturbation_kernel = self.model_perturbation_kernel
-        transitions = self.transitions
+        if transitions is None:
+            transitions = self.transitions
         nr_samples_per_parameter = \
             self.population_strategy.nr_samples_per_parameter
 
@@ -719,7 +726,6 @@ class ABCSMC:
                 for m, row in model_probabilities.iterrows())
             particle_factor = transitions[m_ss].pdf(
                 pd.Series(dict(theta_ss)))
-            normalization = model_factor * particle_factor
 
             # account for multiple tries
             fraction_accepted_runs_for_single_parameter = \
@@ -776,7 +782,7 @@ class ABCSMC:
             # account for stochastic acceptance
             # TODO This is only valid for single samples (see #54)
             acceptance_weight = np.prod(acceptance_weights)
-            
+
             normalization = transition_pdf(
                 distance_list, m_ss, theta_ss) * acceptance_weight
             weight = prior_pdf(m_ss, theta_ss) / normalization
@@ -923,17 +929,8 @@ class ABCSMC:
         acceptance_rate: float
             The current iteration's acceptance rate.
         """
-        recorded_particles = sample.first_m_particles(self.max_nr_recorded_particles)
-        vals = []
-        transition_pdf = self._create_transition_pdf(t-1)
-        for particle in recorded_particles:
-            t_pdf_prev = transition_pdf(particle.accepted_distances,
-                                      particle.m, particle.parameter)
-            vals.append({'transition_pdf_prev': t_pdf_prev,
-                         'm': particle.m,
-                         'parameter': particle.parameter,
-                         'transition_pdf': None,
-                         'accepted_distances': particle.accepted_distances})
+        # make a copy
+        prev_transitions = copy.deepcopy(self.transitions)
 
         # update transitions
         self._fit_transitions(t)
@@ -941,39 +938,58 @@ class ABCSMC:
         # update population size
         self._adapt_population_size(t)
 
-        partial_sum_stats = sample.first_m_sum_stats(
-            self.max_nr_recorded_particles)
+        def get_recorded_sum_stats():
+            partial_sum_stats = sample.first_m_sum_stats(
+                self.max_nr_recorded_particles)
+            return partial_sum_stats
 
         # update distance
-        df_updated = self.distance_function.update(t, partial_sum_stats)
+        df_updated = self.distance_function.update(t, get_recorded_sum_stats)
 
         # compute distances with the new distance measure
-        if df_updated:
-            def distance_to_ground_truth(x, par):
-                return self.distance_function(x, self.x_0, t, par)
+        def get_weighted_distances():
+            if df_updated:
+                def distance_to_ground_truth(x, par):
+                    return self.distance_function(x, self.x_0, t, par)
 
-            population.update_distances(distance_to_ground_truth)
+                population.update_distances(distance_to_ground_truth)
+            return population.get_weighted_distances()
 
         # update acceptor
-        self.acceptor.update(t, population.get_weighted_distances())
-        
-        transition_pdf = self._create_transition_pdf(t)
-        for val in vals:
-            t_pdf = transition_pdf(val['accepted_distances'], val['m'], val['parameter'])
-            val['transition_pdf'] = t_pdf
+        self.acceptor.update(t, get_weighted_distances)
 
-        dvals = []
-        for val in vals:
-            for d in val['accepted_distances']:
-                dvals.append({'transition_pdf_prev': val['transition_pdf_prev'],
-                              'transition_pdf': val['transition_pdf'],
-                              'distance': d})
-        df = pd.DataFrame(dvals)
+        def get_all_records():
+            recorded_particles = sample.first_m_particles(
+                self.max_nr_recorded_particles)
+
+            # create list of all records
+            records = []
+            # get transition functions
+            transition_pdf_prev = self._create_transition_pdf(
+                t-1, prev_transitions)
+            transition_pdf = self._create_transition_pdf(t)
+
+            # iterate over all particles
+            for particle in recorded_particles:
+                all_distances = \
+                    particle.accepted_distances + particle.rejected_distances
+                # evaluate previous and currenttransition density
+                transition_pd_prev = transition_pdf_prev(
+                    all_distances, particle.m, particle.parameter)
+                transition_pd = transition_pdf(
+                    all_distances, particle.m, particle.parameter)
+                # iterate over all distances
+                for d in all_distances:
+                    records.append({
+                        'distance': d,
+                        'transition_pd_prev': transition_pd_prev,
+                        'transition_pd': transition_pd,
+                        'accepted': particle.accepted})
+            return records
 
         # update epsilon
         self.eps.update(
-            t, population.get_weighted_distances(),
-            df,
+            t, get_weighted_distances, get_all_records,
             acceptance_rate, self.acceptor.get_epsilon_config(t))
 
     def _adapt_population_size(self, t):

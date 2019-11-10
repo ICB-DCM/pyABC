@@ -104,7 +104,7 @@ class Acceptor:
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame):
+               get_weighted_distances: Callable[[], pd.DataFrame]):
         """
         Update the acceptance criterion.
 
@@ -372,8 +372,8 @@ class StochasticAcceptor(Acceptor):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame):
-        self._update(t, lambda: weighted_distances)
+               get_weighted_distances: Callable[[], pd.DataFrame]):
+        self._update(t, get_weighted_distances)
 
     def _update(self,
                 t: int,

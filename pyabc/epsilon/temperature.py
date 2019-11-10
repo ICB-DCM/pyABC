@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 import numbers
-from typing import Callable, List, Union
+from typing import Callable, Dict, List, Union
 import logging
 
 from .base import Epsilon
@@ -63,13 +63,14 @@ class Temperature(Epsilon):
     def initialize(self,
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_stuff,
+                   get_all_records: Callable[[], List[Dict]],
                    max_nr_populations: int,
                    acceptor_config: dict):
         self.max_nr_populations = max_nr_populations
 
         # set initial temperature for time t
-        self._update(t, get_weighted_distances, get_stuff, 1.0, acceptor_config)
+        self._update(t, get_weighted_distances, get_all_records,
+                     1.0, acceptor_config)
 
     def configure_sampler(self, sampler: Sampler):
         if callable(self.initial_temperature):
@@ -79,18 +80,19 @@ class Temperature(Epsilon):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
-               stuff,
+               get_weighted_distances: Callable[[], pd.DataFrame],
+               get_all_records: Callable[[], List[Dict]],
                acceptance_rate: float,
                acceptor_config: dict):
         # set temperature for time t
-        self._update(t, lambda: weighted_distances, lambda: stuff, acceptance_rate,
+        self._update(t, get_weighted_distances,
+                     get_all_records, acceptance_rate,
                      acceptor_config)
 
     def _update(self,
                 t: int,
                 get_weighted_distances: Callable[[], pd.DataFrame],
-                get_stuff,
+                get_all_records: Callable[[], List[Dict]],
                 acceptance_rate: float,
                 acceptor_config):
         """
@@ -100,7 +102,7 @@ class Temperature(Epsilon):
         kwargs = dict(
             t=t,
             get_weighted_distances=get_weighted_distances,
-            get_stuff=get_stuff,
+            get_all_records=get_all_records,
             max_nr_populations=self.max_nr_populations,
             pdf_norm=acceptor_config['pdf_norm'],
             kernel_scale=acceptor_config['kernel_scale'],
@@ -136,6 +138,8 @@ class Temperature(Epsilon):
             # also a value lower than 1.0 does not make sense
             temperature = max(min(proposed_value, fallback), 1.0)
 
+        if not np.isfinite(temperature):
+            raise ValueError("Temperature must be finite.")
         # record found value
         self.temperatures[t] = temperature
 
@@ -157,6 +161,8 @@ class TemperatureScheme:
     get_weighted_distances:
         Callable to obtain the weights and kernel values to be used for
         the scheme.
+    get_all_records:
+        Callable returning a List[Dict] of all recorded particles.
     max_nr_populations:
         The maximum number of populations that are supposed to be taken.
     pdf_norm:
@@ -177,8 +183,8 @@ class TemperatureScheme:
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -202,7 +208,7 @@ class AcceptanceRateScheme(TemperatureScheme):
         The target acceptance rate to match.
     """
 
-    def __init__(self, target_rate: float = 0.5):
+    def __init__(self, target_rate: float = 0.3):
         self.target_rate = target_rate
 
     def configure_sampler(self, sampler: Sampler):
@@ -210,42 +216,41 @@ class AcceptanceRateScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
                  prev_temperature: float,
                  acceptance_rate: float):
         # execute function (expensive if in calibration)
-        df = get_stuff()
+        records = get_all_records()
+        # convert to dataframe for easier extraction
+        records = pd.DataFrame(records)
 
-        #print(get_stuff())
-        #print(get_weighted_distances())
-
-        t_pdf_prev = np.array(df['transition_pdf_prev'], dtype=float)
-        t_pdf = np.array(df['transition_pdf'], dtype=float)
-        pdfs = np.array(df['distance'], dtype=float)
+        # previous and current transition densities
+        t_pd_prev = np.array(records['transition_pd_prev'], dtype=float)
+        t_pd = np.array(records['transition_pd'], dtype=float)
+        # acceptance kernel likelihoods
+        pds = np.array(records['distance'], dtype=float)
 
         # compute rescaled posterior densities
         if kernel_scale == SCALE_LIN:
-            values = pdfs / pdf_norm
+            acc_probs = pds / pdf_norm
         else:  # kernel_scale == SCALE_LOG
-            values = np.exp(pdfs - pdf_norm)
+            acc_probs = np.exp(pds - pdf_norm)
 
         # to acceptance probabilities
-        values = np.minimum(values, 1.0)
+        acc_probs = np.minimum(acc_probs, 1.0)
 
-        # to pmf
-        # TODO: We currently use the weights from the previous iteration.
-        # It might be better to use weights based on `transition / prior`
-        # for the next proposal transition kernel.
-        weights = t_pdf / t_pdf_prev
-        weights /= len(weights)
+        # compute importance weights
+        weights = t_pd / t_pd_prev
+        # len would suffice, but maybe rather not rely on things to be normed
+        weights /= sum(weights)
 
         # objective function which we wish to find a root for
         def obj(beta):
-            val = np.sum(weights * values**beta) - self.target_rate
+            val = np.sum(weights * acc_probs**beta) - self.target_rate
             return val
 
         if obj(1) > 0:
@@ -256,8 +261,10 @@ class AcceptanceRateScheme(TemperatureScheme):
         else:
             # perform binary search
             # TODO: check out more efficient optimization approach
-            beta_opt = sp.optimize.bisect(obj, 0, 1)
-
+            # TODO: When the weigts are low, there are numeric problems close
+            # to 1 (especially in the first iteration)
+            beta_opt = sp.optimize.bisect(
+                obj, 0, 1, maxiter=100000)
         # temperature is inverse beta
         temperature = 1.0 / beta_opt
         return temperature
@@ -307,8 +314,8 @@ class ExponentialDecayScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -364,8 +371,8 @@ class PolynomialDecayScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -420,8 +427,8 @@ class DalyScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -467,8 +474,8 @@ class FrielPettittScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -512,8 +519,8 @@ class EssScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
-                 get_stuff,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[Dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,

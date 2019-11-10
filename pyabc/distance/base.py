@@ -67,7 +67,7 @@ class Distance(ABC):
     def update(
             self,
             t: int,
-            sum_stats: List[dict]) -> bool:
+            get_sum_stats: Callable[[], List[dict]]) -> bool:
         """
         Update the distance for the upcoming generation t.
 
@@ -78,9 +78,9 @@ class Distance(ABC):
 
         t: int
             Time point for which to update the distance.
-        sum_stats: List[dict]
-            List of all summary statistics from the finished generation
-            that should be used to update the distance.
+        get_sum_stats: Callable[[], List[dict]]
+            Returns list of all summary statistics from the finished
+            generation that should be used to update the distance.
 
         Returns
         -------
@@ -141,7 +141,7 @@ class Distance(ABC):
         -------
 
         config: dict
-            Dictionary describing the distance.
+            dictionary describing the distance.
         """
         return {"name": self.__class__.__name__}
 

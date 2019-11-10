@@ -1,6 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
 from typing import List, Callable
-import pandas as pd
 
 from pyabc.population import Particle, Population
 

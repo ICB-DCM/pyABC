@@ -31,7 +31,7 @@ class PNormDistance(Distance):
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
     weights: dict, optional (default = 1)
-        Weights. Dictionary indexed by time points. Each entry contains a
+        Weights. dictionary indexed by time points. Each entry contains a
         dictionary of numeric weights, indexed by summary statistics labels.
         If None is passed, a weight of 1 is considered for every summary
         statistic. If no entry is available in `weights` for a given time
@@ -228,14 +228,14 @@ class AdaptivePNormDistance(PNormDistance):
 
     def update(self,
                t: int,
-               sum_stats: List[dict]):
+               get_sum_stats: Callable[[], List[dict]]):
         """
         Update weights.
         """
         if not self.adaptive:
             return False
 
-        self._update(t, sum_stats)
+        self._update(t, get_sum_stats())
 
         return True
 
@@ -403,14 +403,14 @@ class AggregatedDistance(Distance):
     def update(
             self,
             t: int,
-            sum_stats: List[dict]) -> bool:
+            get_sum_stats: Callable[[], List[dict]]) -> bool:
         """
         The `sum_stats` are passed on to all distance functions, each of
         which may then update using these. If any update occurred, a value
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.
         """
-        return any([distance.update(t, sum_stats)
+        return any([distance.update(t, get_sum_stats)
                     for distance in self.distances])
 
     def __call__(
@@ -439,7 +439,7 @@ class AggregatedDistance(Distance):
         -------
 
         config: dict
-            Dictionary describing the distance.
+            dictionary describing the distance.
         """
         config = {}
         for j, distance in enumerate(self.distances):
@@ -532,16 +532,16 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     def update(self,
                t: int,
-               sum_stats: List[dict]):
+               get_sum_stats: Callable[[], List[dict]]):
         """
         Update weights based on all simulations.
         """
-        super().update(t, sum_stats)
+        super().update(t, get_sum_stats)
 
         if not self.adaptive:
             return False
 
-        self._update(t, sum_stats)
+        self._update(t, get_sum_stats)
 
         return True
 

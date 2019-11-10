@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import json
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, List
 
 from ..sampler import Sampler
 
@@ -24,7 +24,7 @@ class Epsilon(ABC):
     def initialize(self,
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_stuff,
+                   get_all_records: Callable[[], List[dict]],
                    max_nr_populations: int,
                    acceptor_config: dict):
         """
@@ -41,6 +41,9 @@ class Epsilon(ABC):
             The time point to initialize the epsilon for.
         get_weighted_distances: Callable[[], pd.DataFrame]
             Returns on demand the distances for initializing the epsilon.
+        get_all_records: Callable[[], List[dict]]
+            Returns on demand a list of information obtained from all
+            particles.
         max_nr_populations: int
             The maximum number of populations.
         acceptor_config: dict
@@ -53,8 +56,8 @@ class Epsilon(ABC):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
-               get_stuff,
+               get_weighted_distances: Callable[[], pd.DataFrame],
+               get_all_records: Callable[[], List[dict]],
                acceptance_rate: float,
                acceptor_config: dict):
         """
@@ -69,12 +72,15 @@ class Epsilon(ABC):
         t: int
             The generation index to update / set epsilon for. Counting is
             zero-based. So the first population has t=0.
-        weighted_distances: pd.DataFrame
+        get_weighted_distances: Callable[[], pd.DataFrame]
             The distances that should be used to update epsilon, as returned
             by Population.get_weighted_distances(). These are usually the
             distances of samples accepted in population t-1. The distances may
             differ from those used for acceptance in population t-1, if the
             distance function for population t has been updated.
+        get_all_records: Callable[[], List[dict]]
+            Returns on demand a list of information obtained from all
+            particles.
         acceptance_rate: float
             The current generation's acceptance rate.
         acceptor_config: dict
