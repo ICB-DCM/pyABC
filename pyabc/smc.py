@@ -533,8 +533,7 @@ class ABCSMC:
             in particular not contain references to the ABCSMC class.
         """
         # cache model_probabilities to not query the database so often
-        model_probabilities = self.history.get_model_probabilities(
-            self.history.max_t)
+        model_probabilities = self.history.get_model_probabilities(t-1)
         m = sp.array(model_probabilities.index)
         p = sp.array(model_probabilities.p)
 
@@ -594,9 +593,7 @@ class ABCSMC:
 
         Returns
         -------
-
         Model, parameter.
-
         """
         # first generation
         if t == 0:  # sample from prior
