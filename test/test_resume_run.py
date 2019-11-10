@@ -20,7 +20,8 @@ def test_resume(db_path, gt_model):
         return abs(x_data - y_data)
 
     abc = ABCSMC(model, prior, distance)
-    run_id = abc.new(db_path, {"data": 2.5}, gt_model=gt_model)
+    history = abc.new(db_path, {"data": 2.5}, gt_model=gt_model)
+    run_id = history.id
     print("Run ID:", run_id)
     hist_new = abc.run(minimum_epsilon=0, max_nr_populations=1)
     assert hist_new.n_populations == 1
