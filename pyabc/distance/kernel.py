@@ -120,6 +120,7 @@ class NormalKernel(StochasticKernel):
 
     ret_scale, keys, pdf_max: As in StochasticKernel.
 
+
     .. note::
        The order of the entries in the mean and cov vectors is assumed
        to be the same as the one in keys. If keys is None, it is assumed to

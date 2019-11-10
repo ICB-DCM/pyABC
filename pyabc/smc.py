@@ -137,6 +137,7 @@ class ABCSMC:
         rejected particles that methods like the AdaptivePNormDistance
         function use to update themselves each iteration.
 
+
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
                   Systems in Systems and Population Biology”.
@@ -533,9 +534,7 @@ class ABCSMC:
             in particular not contain references to the ABCSMC class.
         """
         # cache model_probabilities to not query the database so often
-        model_probabilities = self.history.get_model_probabilities(
-            self.history.max_t)
-
+        model_probabilities = self.history.get_model_probabilities(t-1)
         m = sp.array(model_probabilities.index)
         p = sp.array(model_probabilities.p)
 
@@ -552,6 +551,8 @@ class ABCSMC:
         acceptor = self.acceptor
         x_0 = self.x_0
 
+        weight_function = self._create_weight_function(t)
+
         # simulation function
         def simulate_one():
             parameter = ABCSMC._generate_valid_proposal(
@@ -563,7 +564,6 @@ class ABCSMC:
             particle = ABCSMC._evaluate_proposal(
                 *parameter,
                 t,
-                model_probabilities,
                 nr_samples_per_parameter,
                 models,
                 summary_statistics,
@@ -571,10 +571,7 @@ class ABCSMC:
                 eps,
                 acceptor,
                 x_0,
-                model_prior,
-                parameter_priors,
-                model_perturbation_kernel,
-                transitions)
+                weight_function)
             return particle
 
         return simulate_one
@@ -597,9 +594,7 @@ class ABCSMC:
 
         Returns
         -------
-
         Model, parameter.
-
         """
         # first generation
         if t == 0:  # sample from prior
@@ -614,8 +609,8 @@ class ABCSMC:
                 m_s = m[index]
                 m_ss = model_perturbation_kernel.rvs(m_s)
                 # theta_s is None if the population m_ss has died out.
-                # This can happen since the model_perturbation
-                # _kernel can return  a model nr which has died out.
+                # This can happen since the model_perturbation_kernel
+                # can return  a model nr which has died out.
                 if m_ss not in m:
                     continue
             else:
@@ -630,7 +625,6 @@ class ABCSMC:
     def _evaluate_proposal(
             m_ss, theta_ss,
             t,
-            model_probabilities,
             nr_samples_per_parameter,
             models,
             summary_statistics,
@@ -638,10 +632,7 @@ class ABCSMC:
             eps,
             acceptor,
             x_0,
-            model_prior,
-            parameter_priors,
-            model_perturbation_kernel,
-            transitions) -> Particle:
+            weight_function) -> Particle:
         """
         Corresponds to Sampler.simulate_one. Data for the given parameters
         theta_ss are simulated, summary statistics computed and evaluated.
@@ -677,15 +668,8 @@ class ABCSMC:
         accepted = len(accepted_sum_stats) > 0
 
         if accepted:
-            weight = ABCSMC._calc_proposal_weight(
-                accepted_distances, m_ss, theta_ss,
-                accepted_weights, t,
-                model_probabilities,
-                model_prior,
-                parameter_priors,
-                nr_samples_per_parameter,
-                model_perturbation_kernel,
-                transitions)
+            weight = weight_function(
+                accepted_distances, m_ss, theta_ss, accepted_weights)
         else:
             weight = 0
 
@@ -699,49 +683,92 @@ class ABCSMC:
             rejected_distances=rejected_distances,
             accepted=accepted)
 
-    @staticmethod
-    def _calc_proposal_weight(
-            distance_list,
-            m_ss,
-            theta_ss,
-            acceptance_weights,
-            t,
-            model_probabilities,
-            model_prior,
-            parameter_priors,
-            nr_samples_per_parameter,
-            model_perturbation_kernel,
-            transitions):
+    def _create_transition_pdf(self, t: int, transitions=None):
         """
-        Calculate the weight for the generated parameter.
+        Create transition probability density function for time `t`.
         """
         if t == 0:
-            weight = (len(distance_list)
-                      / nr_samples_per_parameter)
-            weight *= np.prod(acceptance_weights)
-        else:
+            return self._create_prior_pdf()
+
+        # copy references to avoid self references when pickling
+        model_probabilities = self.history.get_model_probabilities(t-1)
+        model_perturbation_kernel = self.model_perturbation_kernel
+        if transitions is None:
+            transitions = self.transitions
+
+        def transition_pdf(m_ss, theta_ss):
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
                 for m, row in model_probabilities.iterrows())
             particle_factor = transitions[m_ss].pdf(
                 pd.Series(dict(theta_ss)))
-            normalization = model_factor * particle_factor
-            if normalization == 0:
-                print('normalization is zero!')
-            # reflects stochasticity of the model
-            fraction_accepted_runs_for_single_parameter = (
-                len(distance_list)
-                / nr_samples_per_parameter)
-            weight = (model_prior.pmf(m_ss)
-                      * parameter_priors[m_ss].pdf(theta_ss)
-                      * fraction_accepted_runs_for_single_parameter
-                      / normalization)
 
-            # account for acceptance weights
+            transition_pd = model_factor * particle_factor
+
+            if transition_pd == 0:
+                logger.info("Transition density is zero!")
+            return transition_pd
+
+        return transition_pdf
+
+    def _create_prior_pdf(self):
+        """
+        Create a function that calculates a sample's prior density.
+        """
+        model_prior = self.model_prior
+        parameter_priors = self.parameter_priors
+
+        def prior_pdf(m_ss, theta_ss):
+            prior_pd = (model_prior.pmf(m_ss)
+                        * parameter_priors[m_ss].pdf(theta_ss))
+            return prior_pd
+
+        return prior_pdf
+
+    def _create_weight_function(self, t: int):
+        """
+        Create a function that calculates a sample's weight at time `t`.
+        The weight is the prior divided by the transition density and the
+        acceptance setp weight.
+        """
+        nr_samples_per_parameter = \
+            self.population_strategy.nr_samples_per_parameter
+
+        # for efficiency, don't just compute prior / prior
+        if t == 0:
+            def prior_weight_function(
+                    distance_list, m_ss, theta_ss, acceptance_weights):
+                weight = (len(distance_list)
+                          / nr_samples_per_parameter)
+                # the acceptance weights should be 1 here anyway
+                # TODO This is only valid for single samples (see #54)
+                weight *= np.prod(acceptance_weights)
+                return weight
+
+            return prior_weight_function
+
+        transition_pdf = self._create_transition_pdf(t)
+        prior_pdf = self._create_prior_pdf()
+
+        def weight_function(
+                distance_list, m_ss, theta_ss, acceptance_weights):
+            prior_pd = prior_pdf(m_ss, theta_ss)
+            transition_pd = transition_pdf(m_ss, theta_ss)
+            # account for stochastic acceptance
             # TODO This is only valid for single samples (see #54)
-            weight *= np.prod(acceptance_weights)
+            acceptance_weight = np.prod(acceptance_weights)
+            # account for multiple tries
+            fraction_accepted_runs_for_single_parameter = \
+                len(distance_list) / nr_samples_per_parameter
 
-        return weight
+            # calculate weight
+            weight = (
+                prior_pd * acceptance_weight
+                * fraction_accepted_runs_for_single_parameter
+                / transition_pd)
+            return weight
+
+        return weight_function
 
     def run(self,
             minimum_epsilon: float = 0.,
