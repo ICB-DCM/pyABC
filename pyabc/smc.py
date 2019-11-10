@@ -341,8 +341,9 @@ class ABCSMC:
                                         self.eps.to_json(),
                                         self.population_strategy.to_json())
 
-        # return id generated in store_initial_data
-        return self.history.id
+        # return history
+        # contains id generated in store_initial_data
+        return self.history
 
     def load(self, db: str,
              abc_id: int = 1,
@@ -377,8 +378,8 @@ class ABCSMC:
             observed_sum_stat = self.history.observed_sum_stat()
         self.x_0 = observed_sum_stat
 
-        # just return the id again
-        return self.history.id
+        # just return the history
+        return self.history
 
     def _initialize_dist_eps_acc(self, t: int):
         """
