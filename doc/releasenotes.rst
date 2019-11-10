@@ -14,6 +14,7 @@ Release Notes
 * Fix extras_require directive.
 * Fix error with histogram plot arguments.
 * Extend test coverage for visualization (all #215).
+* ABCSMC.{new,load,run} all return the history with set id for convenience.
 * Document pickling paradigm of ABCSMC class (see doc/sampler.rst).
 * Always use lazy evaluation in updates.
 * Restructure run function of ABCSMC class (all #216).
