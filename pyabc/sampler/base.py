@@ -34,22 +34,21 @@ class Sample:
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
                     for particle in self._particles), [])
 
-    def first_n_sum_stats(self, n):
+    def first_m_sum_stats(self, m):
         """
-        Get (at most) the first n summary statistics.
+        Get (at most) the first `m` summary statistics.
 
         Returns
         -------
 
-        n_sum_stats: List
-            Concatenation of all the all_sum_stats lists of the first <= n
+        sum_stats: List
+            Concatenation of all the all_sum_stats lists of the first <= m
             particles added and accepted to this sample via append().
         """
-        if n >= len(self._particles):
-            return self.all_sum_stats
+        m = min(len(self._particles), m)
 
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles[:n]), [])
+                    for particle in self._particles[:m]), [])
 
     @property
     def _accepted_particles(self) -> List[Particle]:
