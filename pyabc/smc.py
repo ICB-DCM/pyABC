@@ -137,6 +137,7 @@ class ABCSMC:
         rejected particles that methods like the AdaptivePNormDistance
         function use to update themselves each iteration.
 
+
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
                   Systems in Systems and Population Biology”.
