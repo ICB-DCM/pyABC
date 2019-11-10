@@ -71,11 +71,11 @@ class Temperature(Epsilon):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
+               get_weighted_distances: Callable[[], pd.DataFrame],
                acceptance_rate: float,
                acceptor_config: dict):
         # set temperature for time t
-        self._update(t, lambda: weighted_distances, acceptance_rate,
+        self._update(t, get_weighted_distances, acceptance_rate,
                      acceptor_config)
 
     def _update(self,
@@ -163,7 +163,7 @@ class TemperatureScheme:
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -192,7 +192,7 @@ class AcceptanceRateScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -283,7 +283,7 @@ class ExponentialDecayScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -339,7 +339,7 @@ class PolynomialDecayScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -394,7 +394,7 @@ class DalyScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -440,7 +440,7 @@ class FrielPettittScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -484,7 +484,7 @@ class EssScheme(TemperatureScheme):
 
     def __call__(self,
                  t: int,
-                 get_weighted_distances: Callable,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,

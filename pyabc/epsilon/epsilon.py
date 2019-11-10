@@ -181,13 +181,15 @@ class QuantileEpsilon(Epsilon):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame,
+               get_weighted_distances: Callable[[], pd.DataFrame],
                acceptance_rate: float,
                acceptor_config: dict):
         """
         Compute quantile of the (weighted) distances given in population,
         and use this to update epsilon.
         """
+        # execute function
+        weighted_distances = get_weighted_distances()
 
         self._update(t, weighted_distances)
 
