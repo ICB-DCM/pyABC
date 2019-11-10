@@ -690,31 +690,22 @@ class ABCSMC:
         Create transition probability density function for time `t`.
         """
         if t == 0:
-            return lambda d, m, p: self._create_prior_pdf()(m, p)
+            return self._create_prior_pdf()
 
         # copy references to avoid self references when pickling
-        model_probabilities = self.history.get_model_probabilities(
-            self.history.max_t)
+        model_probabilities = self.history.get_model_probabilities(t-1)
         model_perturbation_kernel = self.model_perturbation_kernel
         if transitions is None:
             transitions = self.transitions
-        nr_samples_per_parameter = \
-            self.population_strategy.nr_samples_per_parameter
 
-        def transition_pdf(distance_list, m_ss, theta_ss):
+        def transition_pdf(m_ss, theta_ss):
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
                 for m, row in model_probabilities.iterrows())
             particle_factor = transitions[m_ss].pdf(
                 pd.Series(dict(theta_ss)))
 
-            # account for multiple tries
-            fraction_accepted_runs_for_single_parameter = \
-                len(distance_list) / nr_samples_per_parameter
-
-            transition_pd = (
-                model_factor * particle_factor
-                / fraction_accepted_runs_for_single_parameter)
+            transition_pd = model_factor * particle_factor
 
             if transition_pd == 0:
                 logger.info("Transition density is zero!")
@@ -742,16 +733,17 @@ class ABCSMC:
         The weight is the prior divided by the transition density and the
         acceptance setp weight.
         """
+        nr_samples_per_parameter = \
+            self.population_strategy.nr_samples_per_parameter
+
         # for efficiency, don't just compute prior / prior
         if t == 0:
-            nr_samples_per_parameter = \
-                self.population_strategy.nr_samples_per_parameter
-
             def prior_weight_function(
                     distance_list, m_ss, theta_ss, acceptance_weights):
                 weight = (len(distance_list)
                           / nr_samples_per_parameter)
                 # the acceptance weights should be 1 here anyway
+                # TODO This is only valid for single samples (see #54)
                 weight *= np.prod(acceptance_weights)
                 return weight
 
@@ -762,12 +754,20 @@ class ABCSMC:
 
         def weight_function(
                 distance_list, m_ss, theta_ss, acceptance_weights):
+            prior_pd = prior_pdf(m_ss, theta_ss)
+            transition_pd = transition_pdf(m_ss, theta_ss)
             # account for stochastic acceptance
             # TODO This is only valid for single samples (see #54)
             acceptance_weight = np.prod(acceptance_weights)
-            normalization = transition_pdf(
-                distance_list, m_ss, theta_ss) * acceptance_weight
-            weight = prior_pdf(m_ss, theta_ss) / normalization
+            # account for multiple tries
+            fraction_accepted_runs_for_single_parameter = \
+                len(distance_list) / nr_samples_per_parameter
+
+            # calculate weight
+            weight = (
+                prior_pd * acceptance_weight
+                * fraction_accepted_runs_for_single_parameter
+                / transition_pd)
             return weight
 
         return weight_function
