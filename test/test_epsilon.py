@@ -37,7 +37,7 @@ def test_quantileepsilon():
     assert np.isclose(eps(0), 5.1)
 
     # check if quantile is computed correctly
-    eps.update(1, df, None, None)
+    eps.update(1, lambda: df, None, None)
     assert np.isclose(eps(1), mpl * 2.5)
 
     # use other quantile
@@ -66,11 +66,11 @@ def test_temperature():
     # check if initial value is respected
     assert np.isclose(eps(0), 42)
 
-    eps.update(1, df, 0.4, acceptor_config)
+    eps.update(1, lambda: df, 0.4, acceptor_config)
     assert eps(1) < 42
 
     # last time
-    eps.update(2, df, 0.2, acceptor_config)
+    eps.update(2, lambda: df, 0.2, acceptor_config)
     assert eps(2) == 1
 
 
