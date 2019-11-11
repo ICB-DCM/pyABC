@@ -179,7 +179,10 @@ class TemperatureScheme:
         pass
 
     def configure_sampler(self, sampler: Sampler):
-        """TODO"""
+        """
+        Modify the sampler. As in, and redirected from,
+        :func:`pyabc.epsilon.Temperature.configure_sampler`.
+        """
 
     def __call__(self,
                  t: int,
