@@ -16,9 +16,10 @@ Release Notes
 * Extend test coverage for visualization (all #215).
 * ABCSMC.{new,load,run} all return the history with set id for convenience.
 * Document pickling paradigm of ABCSMC class (see doc/sampler.rst).
-* Always use lazy evaluation in updates.
-* Restructure run function of ABCSMC class (all #216).
+* Always use lazy evaluation in updates (all #216).
+* Restructure run function of ABCSMC class (#216, #218).
 * Run notebooks on travis only on pull requests (#217).
+* Correct weighting in AcceptanceRateScheme (#219).
 
 
 0.9.22 (2019-11-05)

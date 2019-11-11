@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 import numbers
-from typing import Callable, Dict, List, Union
+from typing import Callable, List, Union
 import logging
 
 from .base import Epsilon
@@ -63,7 +63,7 @@ class Temperature(Epsilon):
     def initialize(self,
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_all_records: Callable[[], List[Dict]],
+                   get_all_records: Callable[[], List[dict]],
                    max_nr_populations: int,
                    acceptor_config: dict):
         self.max_nr_populations = max_nr_populations
@@ -81,7 +81,7 @@ class Temperature(Epsilon):
     def update(self,
                t: int,
                get_weighted_distances: Callable[[], pd.DataFrame],
-               get_all_records: Callable[[], List[Dict]],
+               get_all_records: Callable[[], List[dict]],
                acceptance_rate: float,
                acceptor_config: dict):
         # set temperature for time t
@@ -92,7 +92,7 @@ class Temperature(Epsilon):
     def _update(self,
                 t: int,
                 get_weighted_distances: Callable[[], pd.DataFrame],
-                get_all_records: Callable[[], List[Dict]],
+                get_all_records: Callable[[], List[dict]],
                 acceptance_rate: float,
                 acceptor_config):
         """
@@ -162,7 +162,7 @@ class TemperatureScheme:
         Callable to obtain the weights and kernel values to be used for
         the scheme.
     get_all_records:
-        Callable returning a List[Dict] of all recorded particles.
+        Callable returning a List[dict] of all recorded particles.
     max_nr_populations:
         The maximum number of populations that are supposed to be taken.
     pdf_norm:
@@ -184,7 +184,7 @@ class TemperatureScheme:
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -217,7 +217,7 @@ class AcceptanceRateScheme(TemperatureScheme):
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -315,7 +315,7 @@ class ExponentialDecayScheme(TemperatureScheme):
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -372,7 +372,7 @@ class PolynomialDecayScheme(TemperatureScheme):
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -428,7 +428,7 @@ class DalyScheme(TemperatureScheme):
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -475,7 +475,7 @@ class FrielPettittScheme(TemperatureScheme):
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,
@@ -520,7 +520,7 @@ class EssScheme(TemperatureScheme):
     def __call__(self,
                  t: int,
                  get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[Dict]],
+                 get_all_records: Callable[[], List[dict]],
                  max_nr_populations: int,
                  pdf_norm: float,
                  kernel_scale: str,

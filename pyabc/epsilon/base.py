@@ -52,7 +52,24 @@ class Epsilon(ABC):
         pass
 
     def configure_sampler(self, sampler: Sampler):
-        """TODO"""
+        """
+        This is called by the ABCSMC class and gives the epsilon
+        the opportunity to configure the sampler.
+        For example, it might request the sampler to
+        also return rejected particles in order to adapt the
+        epsilon to the statistics of the sample.
+        The method is called by the ABCSMC framework before the first
+        use of the epsilon (at the beginning of ABCSMC.run()), after
+        initialize().
+
+        The default is to do nothing.
+
+        Parameters
+        ----------
+
+        sampler: Sampler
+            The sampler used in ABCSMC.
+        """
 
     def update(self,
                t: int,

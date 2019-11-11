@@ -427,6 +427,8 @@ class ABCSMC:
             records = []
             for particle in population.get_list():
                 for d in particle.accepted_distances:
+                    # we use dummy densities here, since only the quotient
+                    # is of interest
                     records.append({
                         'distance': d,
                         'transition_pd_prev': 1.0,

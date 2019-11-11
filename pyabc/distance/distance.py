@@ -31,7 +31,7 @@ class PNormDistance(Distance):
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
     weights: dict, optional (default = 1)
-        Weights. dictionary indexed by time points. Each entry contains a
+        Weights. Dictionary indexed by time points. Each entry contains a
         dictionary of numeric weights, indexed by summary statistics labels.
         If None is passed, a weight of 1 is considered for every summary
         statistic. If no entry is available in `weights` for a given time
@@ -442,7 +442,7 @@ class AggregatedDistance(Distance):
         -------
 
         config: dict
-            dictionary describing the distance.
+            Dictionary describing the distance.
         """
         config = {}
         for j, distance in enumerate(self.distances):

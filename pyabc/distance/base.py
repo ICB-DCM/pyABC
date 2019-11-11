@@ -139,7 +139,7 @@ class Distance(ABC):
         -------
 
         config: dict
-            dictionary describing the distance.
+            Dictionary describing the distance.
         """
         return {"name": self.__class__.__name__}
 
