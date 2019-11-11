@@ -791,7 +791,7 @@ class ABCSMC:
         return weight_function
 
     def run(self,
-            minimum_epsilon: float = 0.,
+            minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
             min_acceptance_rate: float = 0.) -> History:
         """
@@ -801,8 +801,9 @@ class ABCSMC:
         Parameters
         ----------
 
-        minimum_epsilon: float, optional (default = 0.0)
+        minimum_epsilon: float, optional
             Stop if epsilon is smaller than minimum epsilon specified here.
+            Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
 
         max_nr_populations: int, optional (default = np.inf)
             The maximum number of populations. Stop if this number is reached.
@@ -836,7 +837,13 @@ class ABCSMC:
         after sampling was stopped once.
         """
         # handle arguments
+        if minimum_epsilon is None:
+            if isinstance(self.eps, Temperature):
+                minimum_epsilon = 1.0
+            else:
+                minimum_epsilon = 0.0
         self.minimum_epsilon = minimum_epsilon
+
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
 

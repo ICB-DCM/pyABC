@@ -144,3 +144,33 @@ def test_scheme_exponentialdecay():
     assert 1.0 < temp and temp < np.inf
     temp = scheme(t=2, **scheme_args)
     assert temp == 1.0
+
+
+def test_default_eps():
+    def model(par):
+        return {'s0': par['p0'] + np.random.random(),
+                's1': np.random.random()}
+
+    x_0 = {'s0': 0.4, 's1': 0.6}
+
+    prior = pyabc.Distribution(p0=pyabc.RV('uniform', -1, 2))
+
+    # usual setting
+    abc = pyabc.ABCSMC(model, prior, population_size=10)
+    abc.new(pyabc.create_sqlite_db_id(), x_0)
+    abc.run(max_nr_populations=3)
+
+    assert abc.minimum_epsilon == 0.0
+
+    # noisy setting
+    acceptor = pyabc.StochasticAcceptor()
+    eps = pyabc.Temperature()
+
+    distance = pyabc.IndependentNormalKernel(var=np.array([1, 1]))
+
+    abc = pyabc.ABCSMC(model, prior, distance, eps=eps,
+                       acceptor=acceptor, population_size=10)
+    abc.new(pyabc.create_sqlite_db_id(), x_0)
+    abc.run(max_nr_populations=3)
+
+    assert abc.minimum_epsilon == 1.0
