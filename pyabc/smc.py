@@ -21,14 +21,14 @@ from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
 from .distance import Distance, PNormDistance, to_distance, StochasticKernel
 from .epsilon import Epsilon, MedianEpsilon, Temperature
 from .model import Model, SimpleModel
-from .transition import Transition, MultivariateNormalTransition
-from .random_variables import RV, ModelPerturbationKernel, Distribution
-from .storage import History
 from .platform_factory import DefaultSampler
 from .population import Particle, Population
 from .populationstrategy import PopulationStrategy, ConstantPopulationSize
 from .pyabc_rand_choice import fast_random_choice
+from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .sampler import Sampler, Sample
+from .storage import History
+from .transition import Transition, MultivariateNormalTransition
 
 
 logger = logging.getLogger("ABC")
@@ -133,10 +133,10 @@ class ABCSMC:
         automatically as soon as only a single model has survived.
 
     max_nr_recorded_particles: int
-        Defaults to 10 times the number of particles in the first population.
-        Set this to the maximum number of accepted and rejected particles
-        that methods like the AdaptivePNormDistance function use to update
-        themselves each iteration.
+        Defaults to inf. Set this to the maximum number of accepted and
+        rejected particles that methods like the AdaptivePNormDistance
+        function use to update themselves each iteration.
+
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -247,7 +247,7 @@ class ABCSMC:
             *,
             gt_model: int = None,
             gt_par: dict = None,
-            meta_info=None) -> int:
+            meta_info=None) -> History:
         """
         Make a new ABCSMC run.
 
@@ -312,9 +312,9 @@ class ABCSMC:
         Returns
         -------
 
-        run_id: int
-            The history.id, which is the id under which the generated ABCSMC
-            run entry in the database can be identified.
+        history: History
+            The history, with set history.id, which is the id under which the
+            generated ABCSMC run entry in the database can be identified.
         """
         # record observed summary statistics
         if observed_sum_stat is None:
@@ -344,7 +344,7 @@ class ABCSMC:
 
     def load(self, db: str,
              abc_id: int = 1,
-             observed_sum_stat: dict = None) -> int:
+             observed_sum_stat: dict = None) -> History:
         """
         Load an ABC-SMC run for continuation.
 
@@ -552,8 +552,7 @@ class ABCSMC:
             in particular not contain references to the ABCSMC class.
         """
         # cache model_probabilities to not query the database so often
-        model_probabilities = self.history.get_model_probabilities(
-            self.history.max_t)
+        model_probabilities = self.history.get_model_probabilities(t-1)
         m = sp.array(model_probabilities.index)
         p = sp.array(model_probabilities.p)
 
@@ -613,9 +612,7 @@ class ABCSMC:
 
         Returns
         -------
-
         Model, parameter.
-
         """
         # first generation
         if t == 0:  # sample from prior
@@ -709,31 +706,22 @@ class ABCSMC:
         Create transition probability density function for time `t`.
         """
         if t == 0:
-            return lambda d, m, p: self._create_prior_pdf()(m, p)
+            return self._create_prior_pdf()
 
         # copy references to avoid self references when pickling
-        model_probabilities = self.history.get_model_probabilities(
-            self.history.max_t)
+        model_probabilities = self.history.get_model_probabilities(t-1)
         model_perturbation_kernel = self.model_perturbation_kernel
         if transitions is None:
             transitions = self.transitions
-        nr_samples_per_parameter = \
-            self.population_strategy.nr_samples_per_parameter
 
-        def transition_pdf(distance_list, m_ss, theta_ss):
+        def transition_pdf(m_ss, theta_ss):
             model_factor = sum(
                 row.p * model_perturbation_kernel.pmf(m_ss, m)
                 for m, row in model_probabilities.iterrows())
             particle_factor = transitions[m_ss].pdf(
                 pd.Series(dict(theta_ss)))
 
-            # account for multiple tries
-            fraction_accepted_runs_for_single_parameter = \
-                len(distance_list) / nr_samples_per_parameter
-
-            transition_pd = (
-                model_factor * particle_factor
-                / fraction_accepted_runs_for_single_parameter)
+            transition_pd = model_factor * particle_factor
 
             if transition_pd == 0:
                 logger.info("Transition density is zero!")
@@ -758,34 +746,44 @@ class ABCSMC:
     def _create_weight_function(self, t: int):
         """
         Create a function that calculates a sample's weight at time `t`.
+        The weight is the prior divided by the transition density and the
+        acceptance setp weight.
         """
+        nr_samples_per_parameter = \
+            self.population_strategy.nr_samples_per_parameter
+
         # for efficiency, don't just compute prior / prior
         if t == 0:
-            nr_samples_per_parameter = \
-                self.population_strategy.nr_samples_per_parameter
-
-            def weight_function(
+            def prior_weight_function(
                     distance_list, m_ss, theta_ss, acceptance_weights):
                 weight = (len(distance_list)
                           / nr_samples_per_parameter)
                 # the acceptance weights should be 1 here anyway
+                # TODO This is only valid for single samples (see #54)
                 weight *= np.prod(acceptance_weights)
                 return weight
 
-            return weight_function
+            return prior_weight_function
 
         transition_pdf = self._create_transition_pdf(t)
         prior_pdf = self._create_prior_pdf()
 
         def weight_function(
                 distance_list, m_ss, theta_ss, acceptance_weights):
+            prior_pd = prior_pdf(m_ss, theta_ss)
+            transition_pd = transition_pdf(m_ss, theta_ss)
             # account for stochastic acceptance
             # TODO This is only valid for single samples (see #54)
             acceptance_weight = np.prod(acceptance_weights)
+            # account for multiple tries
+            fraction_accepted_runs_for_single_parameter = \
+                len(distance_list) / nr_samples_per_parameter
 
-            normalization = transition_pdf(
-                distance_list, m_ss, theta_ss) * acceptance_weight
-            weight = prior_pdf(m_ss, theta_ss) / normalization
+            # calculate weight
+            weight = (
+                prior_pd * acceptance_weight
+                * fraction_accepted_runs_for_single_parameter
+                / transition_pd)
             return weight
 
         return weight_function
@@ -835,13 +833,13 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
+        # handle arguments
         self.minimum_epsilon = minimum_epsilon
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
 
         # initial time
         t0 = self.history.max_t + 1
-
         # log start time
         self.history.start_time = datetime.datetime.now()
 
@@ -853,7 +851,6 @@ class ABCSMC:
         self._initialize_dist_eps_acc(t0)
 
         # configure recording of rejected particles
-        self._set_max_nr_recorded_particles()
         self.distance_function.configure_sampler(self.sampler)
         self.eps.configure_sampler(self.sampler)
 
@@ -912,14 +909,14 @@ class ABCSMC:
         return self.history
 
     def _prepare_next_iteration(
-            self, t: int, sample: Sample,
-            population: Population, acceptance_rate: float):
+            self, t: int, sample: Sample, population: Population,
+            acceptance_rate: float):
         """
         Update actors for the upcoming iteration.
-        Be aware: The current iteration is t-1, the next t.
+        Be aware: The current (finished) iteration is t-1, the next t.
 
-        Parametes
-        ---------
+        Parameters
+        ----------
         t: int
             The upcoming iteration time index to prepare for.
         sample: pyabc.Sample
@@ -975,9 +972,9 @@ class ABCSMC:
                     particle.accepted_distances + particle.rejected_distances
                 # evaluate previous and currenttransition density
                 transition_pd_prev = transition_pdf_prev(
-                    all_distances, particle.m, particle.parameter)
+                    particle.m, particle.parameter)
                 transition_pd = transition_pdf(
-                    all_distances, particle.m, particle.parameter)
+                    particle.m, particle.parameter)
                 # iterate over all distances
                 for d in all_distances:
                     records.append({
@@ -1030,8 +1027,3 @@ class ABCSMC:
         for m in self.history.alive_models(t - 1):
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
-
-    def _set_max_nr_recorded_particles(self):
-        if self.max_nr_recorded_particles is None:
-            self.max_nr_recorded_particles = \
-                10 * self.population_strategy.nr_particles

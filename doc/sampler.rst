@@ -332,7 +332,7 @@ we had to write some functions that prevent the whole ABCSMC object from being
 serialized. For developers, the following example illustrates the problem:
 
 .. code-block:: python
-   
+
    import cloudpickle as pickle
    import numpy as np
 
@@ -353,8 +353,8 @@ serialized. For developers, the following example illustrates the problem:
 
          def fun(x):
             print(small_arr, x)
-
-        return fun
+         
+         return fun
 
 
    a = A()

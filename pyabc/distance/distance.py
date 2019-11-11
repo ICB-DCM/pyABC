@@ -64,9 +64,9 @@ class PNormDistance(Distance):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_all_sum_stats: Callable[[], List[dict]],
                    x_0: dict = None):
-        super().initialize(t, get_sum_stats, x_0)
+        super().initialize(t, get_all_sum_stats, x_0)
         self.format_weights_and_factors(t, x_0.keys())
 
     def format_weights_and_factors(self, t, sum_stat_keys):
@@ -212,36 +212,39 @@ class AdaptivePNormDistance(PNormDistance):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_all_sum_stats: Callable[[], List[dict]],
                    x_0: dict = None):
         """
         Initialize weights.
         """
-        super().initialize(t, get_sum_stats, x_0)
+        super().initialize(t, get_all_sum_stats, x_0)
         self.x_0 = x_0
 
         # execute function
-        sum_stats = get_sum_stats()
+        all_sum_stats = get_all_sum_stats()
 
         # update weights from samples
-        self._update(t, sum_stats)
+        self._update(t, all_sum_stats)
 
     def update(self,
                t: int,
-               get_sum_stats: Callable[[], List[dict]]):
+               get_all_sum_stats: Callable[[], List[dict]]):
         """
         Update weights.
         """
         if not self.adaptive:
             return False
 
-        self._update(t, get_sum_stats())
+        # execute function
+        all_sum_stats = get_all_sum_stats()
+
+        self._update(t, all_sum_stats)
 
         return True
 
     def _update(self,
                 t: int,
-                sum_stats: List[dict]):
+                all_sum_stats: List[dict]):
         """
         Here the real update of weights happens.
         """
@@ -249,7 +252,7 @@ class AdaptivePNormDistance(PNormDistance):
         keys = self.x_0.keys()
 
         # number of samples
-        n_samples = len(sum_stats)
+        n_samples = len(all_sum_stats)
 
         # to-be-filled-and-appended weights dictionary
         w = {}
@@ -258,8 +261,8 @@ class AdaptivePNormDistance(PNormDistance):
             # prepare list for key
             current_list = []
             for j in range(n_samples):
-                if key in sum_stats[j]:
-                    current_list.append(sum_stats[j][key])
+                if key in all_sum_stats[j]:
+                    current_list.append(all_sum_stats[j][key])
 
             # compute scaling
             scale = self.scale_function(data=current_list, x_0=self.x_0[key])
@@ -382,11 +385,11 @@ class AggregatedDistance(Distance):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
-        super().initialize(t, get_sum_stats, x_0)
+        super().initialize(t, get_all_sum_stats, x_0)
         for distance in self.distances:
-            distance.initialize(t, get_sum_stats, x_0)
+            distance.initialize(t, get_all_sum_stats, x_0)
         self.format_weights_and_factors(t)
 
     def configure_sampler(
@@ -403,14 +406,14 @@ class AggregatedDistance(Distance):
     def update(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]]) -> bool:
+            get_all_sum_stats: Callable[[], List[dict]]) -> bool:
         """
         The `sum_stats` are passed on to all distance functions, each of
         which may then update using these. If any update occurred, a value
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.
         """
-        return any([distance.update(t, get_sum_stats)
+        return any([distance.update(t, get_all_sum_stats)
                     for distance in self.distances])
 
     def __call__(
@@ -516,32 +519,35 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_all_sum_stats: Callable[[], List[dict]],
                    x_0: dict = None):
         """
         Initialize weights.
         """
-        super().initialize(t, get_sum_stats, x_0)
+        super().initialize(t, get_all_sum_stats, x_0)
         self.x_0 = x_0
 
         # execute function
-        sum_stats = get_sum_stats()
+        all_sum_stats = get_all_sum_stats()
 
         # update weights from samples
-        self._update(t, sum_stats)
+        self._update(t, all_sum_stats)
 
     def update(self,
                t: int,
-               get_sum_stats: Callable[[], List[dict]]):
+               get_all_sum_stats: Callable[[], List[dict]]):
         """
         Update weights based on all simulations.
         """
-        super().update(t, get_sum_stats)
+        super().update(t, get_all_sum_stats)
 
         if not self.adaptive:
             return False
 
-        self._update(t, get_sum_stats)
+        # execute function
+        all_sum_stats = get_all_sum_stats()
+
+        self._update(t, all_sum_stats)
 
         return True
 
@@ -601,7 +607,7 @@ class DistanceWithMeasureList(Distance):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_all_sum_stats: Callable[[], List[dict]],
                    x_0: dict = None):
         if self.measures_to_use == 'all':
             self.measures_to_use = x_0.keys()
@@ -667,14 +673,14 @@ class PCADistance(DistanceWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_all_sum_stats: Callable[[], List[dict]],
                    x_0: dict = None):
-        super().initialize(t, get_sum_stats, x_0)
+        super().initialize(t, get_all_sum_stats, x_0)
 
         # execute function
-        sum_stats = get_sum_stats()
+        all_sum_stats = get_all_sum_stats()
 
-        self._calculate_whitening_transformation_matrix(sum_stats)
+        self._calculate_whitening_transformation_matrix(all_sum_stats)
 
     def __call__(self,
                  x: dict,
@@ -763,14 +769,14 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
     def initialize(self,
                    t: int,
-                   get_sum_stats: Callable[[], List[dict]],
+                   get_all_sum_stats: Callable[[], List[dict]],
                    x_0: dict = None):
-        super().initialize(t, get_sum_stats, x_0)
+        super().initialize(t, get_all_sum_stats, x_0)
 
         # execute function
-        sum_stats = get_sum_stats()
+        all_sum_stats = get_all_sum_stats()
 
-        self._calculate_normalization(sum_stats)
+        self._calculate_normalization(all_sum_stats)
 
     def __call__(self,
                  x: dict,

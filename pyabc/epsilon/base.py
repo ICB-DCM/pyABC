@@ -43,7 +43,7 @@ class Epsilon(ABC):
             Returns on demand the distances for initializing the epsilon.
         get_all_records: Callable[[], List[dict]]
             Returns on demand a list of information obtained from all
-            particles.
+            particles sampled in the previous iteration.
         max_nr_populations: int
             The maximum number of populations.
         acceptor_config: dict

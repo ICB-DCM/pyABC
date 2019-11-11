@@ -47,11 +47,13 @@ class Sample:
             particles added and accepted to this sample via append().
         """
         m = min(len(self._particles), m)
+
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
                     for particle in self._particles[:m]), [])
 
     def first_m_particles(self, m) -> List:
         m = min(len(self._particles), m)
+
         return self._particles[:m]
 
     @property

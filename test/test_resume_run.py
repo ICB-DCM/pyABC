@@ -19,7 +19,7 @@ def test_resume(db_path, gt_model):
         y_data = y["data"]
         return abs(x_data - y_data)
 
-    abc = ABCSMC(model, prior, distance)
+    abc = ABCSMC(model, prior, distance, population_size=10)
     history = abc.new(db_path, {"data": 2.5}, gt_model=gt_model)
     run_id = history.id
     print("Run ID:", run_id)
