@@ -21,6 +21,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/aggregated_distances.ipynb
    examples/external_simulators.ipynb
    examples/data_plots.ipynb
+   examples/noise.ipynb
 
 
 Download the examples as notebooks
@@ -40,6 +41,7 @@ Download the examples as notebooks
 * :download:`Aggregated Distances <examples/aggregated_distances.ipynb>`
 * :download:`External Simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
+* :download:`Measurement noise assessment <examples/noise.ipynb>`
 
 
 .. warning::
