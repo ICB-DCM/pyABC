@@ -863,10 +863,11 @@ class ABCSMC:
         self.distance_function.configure_sampler(self.sampler)
         self.eps.configure_sampler(self.sampler)
 
-        # one after the last time point
-        t_max = t0 + max_nr_populations
+        # last time point
+        t_max = t0 + max_nr_populations - 1
         # run loop over time points
-        for t in range(t0, t_max):
+        t = t0
+        while t <= t_max:
             # get epsilon for generation t
             current_eps = self.eps(t)
 
@@ -910,6 +911,9 @@ class ABCSMC:
                         and self.history.nr_of_models_alive() <= 1)
                     or acceptance_rate < min_acceptance_rate):
                 break
+
+            # increment t
+            t += 1
 
         # close session and store end time
         self.history.done()
