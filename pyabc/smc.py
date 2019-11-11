@@ -401,13 +401,17 @@ class ABCSMC:
             sum_stats = population.get_accepted_sum_stats()
             return sum_stats
 
-        def get_initial_weighted_distances():
+        def _get_initial_population_with_distances():
             population = self._get_initial_population(t)
 
             def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
 
             population.update_distances(distance_to_ground_truth)
+            return population
+
+        def get_initial_weighted_distances():
+            population = _get_initial_population_with_distances()
             weighted_distances = population.get_weighted_distances()
             return weighted_distances
 
@@ -417,8 +421,24 @@ class ABCSMC:
         self.acceptor.initialize(
             t, get_initial_weighted_distances, self.distance_function,
             self.x_0)
+
+        def get_initial_records():
+            population = _get_initial_population_with_distances()
+            records = []
+            for particle in population.get_list():
+                for d in particle.accepted_distances:
+                    # we use dummy densities here, since only the quotient
+                    # is of interest
+                    records.append({
+                        'distance': d,
+                        'transition_pd_prev': 1.0,
+                        'transition_pd': 1.0,
+                        'accepted': True})
+            return records
+
         self.eps.initialize(
-            t, get_initial_weighted_distances, self.max_nr_populations,
+            t, get_initial_weighted_distances, get_initial_records,
+            self.max_nr_populations,
             self.acceptor.get_epsilon_config(t))
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
@@ -610,7 +630,7 @@ class ABCSMC:
                 m_ss = model_perturbation_kernel.rvs(m_s)
                 # theta_s is None if the population m_ss has died out.
                 # This can happen since the model_perturbation_kernel
-                # can return  a model nr which has died out.
+                # can return a model nr which has died out.
                 if m_ss not in m:
                     continue
             else:
@@ -771,7 +791,7 @@ class ABCSMC:
         return weight_function
 
     def run(self,
-            minimum_epsilon: float = 0.,
+            minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
             min_acceptance_rate: float = 0.) -> History:
         """
@@ -781,8 +801,9 @@ class ABCSMC:
         Parameters
         ----------
 
-        minimum_epsilon: float, optional (default = 0.0)
+        minimum_epsilon: float, optional
             Stop if epsilon is smaller than minimum epsilon specified here.
+            Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
 
         max_nr_populations: int, optional (default = np.inf)
             The maximum number of populations. Stop if this number is reached.
@@ -816,7 +837,13 @@ class ABCSMC:
         after sampling was stopped once.
         """
         # handle arguments
+        if minimum_epsilon is None:
+            if isinstance(self.eps, Temperature):
+                minimum_epsilon = 1.0
+            else:
+                minimum_epsilon = 0.0
         self.minimum_epsilon = minimum_epsilon
+
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
 
@@ -832,13 +859,14 @@ class ABCSMC:
         # sample from prior to calibrate distance, epsilon, and acceptor
         self._initialize_dist_eps_acc(t0)
 
-        # configure sampler by whoever wants to
+        # configure recording of rejected particles
         self.distance_function.configure_sampler(self.sampler)
+        self.eps.configure_sampler(self.sampler)
 
-        # run loop over time points
+        # one after the last time point
         t_max = t0 + max_nr_populations
+        # run loop over time points
         for t in range(t0, t_max):
-
             # get epsilon for generation t
             current_eps = self.eps(t)
 
@@ -907,6 +935,9 @@ class ABCSMC:
         acceptance_rate: float
             The current iteration's acceptance rate.
         """
+        # make a copy
+        prev_transitions = copy.deepcopy(self.transitions)
+
         # update transitions
         self._fit_transitions(t)
 
@@ -933,9 +964,38 @@ class ABCSMC:
         # update acceptor
         self.acceptor.update(t, get_weighted_distances)
 
+        def get_all_records():
+            recorded_particles = sample.first_m_particles(
+                self.max_nr_recorded_particles)
+
+            # create list of all records
+            records = []
+            # get transition functions
+            transition_pdf_prev = self._create_transition_pdf(
+                t-1, prev_transitions)
+            transition_pdf = self._create_transition_pdf(t)
+
+            # iterate over all particles
+            for particle in recorded_particles:
+                all_distances = \
+                    particle.accepted_distances + particle.rejected_distances
+                # evaluate previous and currenttransition density
+                transition_pd_prev = transition_pdf_prev(
+                    particle.m, particle.parameter)
+                transition_pd = transition_pdf(
+                    particle.m, particle.parameter)
+                # iterate over all distances
+                for d in all_distances:
+                    records.append({
+                        'distance': d,
+                        'transition_pd_prev': transition_pd_prev,
+                        'transition_pd': transition_pd,
+                        'accepted': particle.accepted})
+            return records
+
         # update epsilon
         self.eps.update(
-            t, get_weighted_distances,
+            t, get_weighted_distances, get_all_records,
             acceptance_rate, self.acceptor.get_epsilon_config(t))
 
     def _adapt_population_size(self, t):

@@ -75,7 +75,6 @@ class Distance(ABC):
 
         Parameters
         ----------
-
         t: int
             Time point for which to update the distance.
         get_all_sum_stats: Callable[[], List[dict]]
@@ -84,7 +83,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         is_updated: bool
             Whether the distance has changed compared to beforehand.
             Depending on the result, the population needs to be updated

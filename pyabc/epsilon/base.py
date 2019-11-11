@@ -2,7 +2,9 @@ import numpy as np
 import pandas as pd
 import json
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, List
+
+from ..sampler import Sampler
 
 
 class Epsilon(ABC):
@@ -22,6 +24,7 @@ class Epsilon(ABC):
     def initialize(self,
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame],
+                   get_all_records: Callable[[], List[dict]],
                    max_nr_populations: int,
                    acceptor_config: dict):
         """
@@ -38,6 +41,9 @@ class Epsilon(ABC):
             The time point to initialize the epsilon for.
         get_weighted_distances: Callable[[], pd.DataFrame]
             Returns on demand the distances for initializing the epsilon.
+        get_all_records: Callable[[], List[dict]]
+            Returns on demand a list of information obtained from all
+            particles sampled in the previous iteration.
         max_nr_populations: int
             The maximum number of populations.
         acceptor_config: dict
@@ -45,9 +51,30 @@ class Epsilon(ABC):
         """
         pass
 
+    def configure_sampler(self, sampler: Sampler):
+        """
+        This is called by the ABCSMC class and gives the epsilon
+        the opportunity to configure the sampler.
+        For example, it might request the sampler to
+        also return rejected particles in order to adapt the
+        epsilon to the statistics of the sample.
+        The method is called by the ABCSMC framework before the first
+        use of the epsilon (at the beginning of ABCSMC.run()), after
+        initialize().
+
+        The default is to do nothing.
+
+        Parameters
+        ----------
+
+        sampler: Sampler
+            The sampler used in ABCSMC.
+        """
+
     def update(self,
                t: int,
                get_weighted_distances: Callable[[], pd.DataFrame],
+               get_all_records: Callable[[], List[dict]],
                acceptance_rate: float,
                acceptor_config: dict):
         """
@@ -68,6 +95,9 @@ class Epsilon(ABC):
             distances of samples accepted in population t-1. The distances may
             differ from those used for acceptance in population t-1, if the
             distance function for population t has been updated.
+        get_all_records: Callable[[], List[dict]]
+            Returns on demand a list of information obtained from all
+            particles.
         acceptance_rate: float
             The current generation's acceptance rate.
         acceptor_config: dict

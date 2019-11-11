@@ -138,6 +138,7 @@ class QuantileEpsilon(Epsilon):
     def initialize(self,
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame],
+                   get_all_records: Callable[[], List[dict]],
                    max_nr_populations: int,
                    acceptor_config: dict):
         if self._initial_epsilon != 'from_sample':
@@ -182,6 +183,7 @@ class QuantileEpsilon(Epsilon):
     def update(self,
                t: int,
                get_weighted_distances: Callable[[], pd.DataFrame],
+               get_all_records: Callable[[], List[dict]],
                acceptance_rate: float,
                acceptor_config: dict):
         """
@@ -191,6 +193,7 @@ class QuantileEpsilon(Epsilon):
         # execute function
         weighted_distances = get_weighted_distances()
 
+        # update epsilon
         self._update(t, weighted_distances)
 
         # logger

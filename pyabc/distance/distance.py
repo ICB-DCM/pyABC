@@ -535,7 +535,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     def update(self,
                t: int,
-               get_all_sum_stats: List[dict]):
+               get_all_sum_stats: Callable[[], List[dict]]):
         """
         Update weights based on all simulations.
         """

@@ -1,6 +1,7 @@
 from abc import ABC, ABCMeta, abstractmethod
-from pyabc.population import Particle, Population
 from typing import List, Callable
+
+from pyabc.population import Particle, Population
 
 
 class Sample:
@@ -49,6 +50,11 @@ class Sample:
 
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
                     for particle in self._particles[:m]), [])
+
+    def first_m_particles(self, m) -> List:
+        m = min(len(self._particles), m)
+
+        return self._particles[:m]
 
     @property
     def _accepted_particles(self) -> List[Particle]:
