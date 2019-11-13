@@ -30,7 +30,10 @@ class Temperature(Epsilon):
     initial_temperature: float
         The initial temperature. If None provided, an AcceptanceRateScheme
         is used.
-    maximum_nr_populations: int
+
+    Properties
+    ----------
+    max_nr_populations: int
         The maximum number of iterations as passed to ABCSMC.
         May be inf, but not all schemes can handle that (and will complain).
     temperatures: Dict[int, float]
@@ -42,9 +45,6 @@ class Temperature(Epsilon):
             schemes: Union[Callable, List[Callable]] = None,
             aggregate_fun: Callable[[List[float]], float] = None,
             initial_temperature: float = None):
-        if schemes is None:
-            # this combination proved rather stable
-            schemes = [AcceptanceRateScheme(), ExponentialDecayScheme()]
         self.schemes = schemes
 
         if aggregate_fun is None:
@@ -67,6 +67,15 @@ class Temperature(Epsilon):
                    max_nr_populations: int,
                    acceptor_config: dict):
         self.max_nr_populations = max_nr_populations
+
+        # set default schemes
+        if self.schemes is None:
+            # this combination proved rather stable
+            acc_rate_scheme = AcceptanceRateScheme()
+            decay_scheme = (
+                ExpDecayFixedIterScheme() if np.isfinite(max_nr_populations)
+                else ExpDecayFixedRatioScheme())
+            self.schemes = [acc_rate_scheme, decay_scheme]
 
         # set initial temperature for time t
         self._update(t, get_weighted_distances, get_all_records,
@@ -273,9 +282,9 @@ class AcceptanceRateScheme(TemperatureScheme):
         return temperature
 
 
-class ExponentialDecayScheme(TemperatureScheme):
+class ExpDecayFixedIterScheme(TemperatureScheme):
     """
-    If `max_nr_populations` is finite:
+    The next temperature is set as
 
     .. math::
         T_j = T_{max}^{(n-j)/n}
@@ -288,13 +297,6 @@ class ExponentialDecayScheme(TemperatureScheme):
 
     This ensures that a temperature of 1.0 is reached after exactly the
     remaining number of steps.
-
-    If `max_nr_populations` is infinite, the next temperature is
-
-    .. math::
-        T_j = \\alpha \\cdot T_{j-1},
-
-    where by default alpha=0.25.
 
     So, in both cases the sequence of temperatures follows an exponential
     decay, also known as a geometric progression, or a linear progression
@@ -312,8 +314,8 @@ class ExponentialDecayScheme(TemperatureScheme):
         is infinite.
     """
 
-    def __init__(self, alpha: float = 0.25):
-        self.alpha = alpha
+    def __init__(self):
+        pass
 
     def __call__(self,
                  t: int,
@@ -324,6 +326,12 @@ class ExponentialDecayScheme(TemperatureScheme):
                  kernel_scale: str,
                  prev_temperature: float,
                  acceptance_rate: float):
+        # needs a finite number of iterations
+        if max_nr_populations == np.inf:
+            raise ValueError(
+                "The ExpDecayFixedIterScheme requires a finite "
+                "`max_nr_populations`.")
+
         # needs a starting temperature
         # if not available, return infinite temperature
         if prev_temperature is None:
@@ -331,11 +339,6 @@ class ExponentialDecayScheme(TemperatureScheme):
 
         # base temperature
         temp_base = prev_temperature
-
-        if max_nr_populations == np.inf:
-            # just decrease by a factor of alpha each round
-            temperature = self.alpha * temp_base
-            return temperature
 
         # how many steps left?
         t_to_go = max_nr_populations - t
@@ -346,7 +349,76 @@ class ExponentialDecayScheme(TemperatureScheme):
         return temperature
 
 
-class PolynomialDecayScheme(TemperatureScheme):
+class ExpDecayFixedRatioScheme(TemperatureScheme):
+    """
+    The next temperature is chosen as
+
+    .. math::
+        T_j = \\alpha \\cdot T_{j-1}.
+
+    Like the :class:`pyabc.epsilon.ExpDecayFixedIterScheme`,
+    this yields a geometric progression, however with a fixed ratio,
+    irrespective of the number of iterations. If a finite number of
+    iterations is specified in ABCSMC, there is no influence on the final
+    jump to a temperature of 1.0.
+
+    This is quite similar to the :class:`pyabc.epsilon.DalyScheme`, although
+    simpler in implementation. The alpha value here corresponds to a value of
+    1 - alpha there.
+
+    Parameters
+    ----------
+    alpha: float, optional
+        The ratio of subsequent temperatures.
+    min_rate: float, optional
+        A minimum acceptance rate. If this rate has been violated in the
+        previous iteration, the alpha value is increased.
+    max_rate: float, optional
+        Maximum rate to not be exceeded, otherwise the alpha value is
+        decreased.
+    """
+    def __init__(self, alpha: float = 0.5,
+                 min_rate: float = 1e-4, max_rate: float = 0.5):
+        self.alpha = alpha
+        self.min_rate = min_rate
+        self.max_rate = max_rate
+        self.alphas = {}
+
+    def __call__(self,
+                 t: int,
+                 get_weighted_distances: Callable[[], pd.DataFrame],
+                 get_all_records: Callable[[], List[dict]],
+                 max_nr_populations: int,
+                 pdf_norm: float,
+                 kernel_scale: str,
+                 prev_temperature: float,
+                 acceptance_rate: float):
+        if prev_temperature is None:
+            return np.inf
+
+        # previous alpha
+        alpha = self.alphas.get(t-1, self.alpha)
+
+        # check if acceptance rate criterion violated
+        if acceptance_rate > self.max_rate and t > 1:
+            logger.debug("ExpDecayFixedRatioScheme: "
+                         "Reacting to high acceptance rate.")
+            alpha = max(alpha / 2, alpha - (1 - alpha) * 2)
+        if acceptance_rate < self.min_rate:
+            logger.debug("ExpDecayFixedRatioScheme: "
+                         "Reacting to low acceptance rate.")
+            # increase alpha
+            alpha = alpha + (1 - alpha) / 2
+        # record
+        self.alphas[t] = alpha
+
+        # reduce temperature
+        temperature = self.alphas[t] * prev_temperature
+
+        return temperature
+
+
+class PolynomialDecayFixedIterScheme(TemperatureScheme):
     """
     Compute next temperature as pre-last entry in
 
@@ -355,8 +427,9 @@ class PolynomialDecayScheme(TemperatureScheme):
 
     Requires finite `max_nr_populations`.
 
-    Note that this is similar to the `scheme_exponential_decay`, which is
-    indeed the limit for `temp_decay_exponent -> infinity`. For smaller
+    Note that this is similar to the
+    :class:`pyabc.epsilon.ExpDecayFixedIterScheme`, which is
+    indeed the limit for `exponent -> infinity`. For smaller
     exponent, the sequence makes larger steps for low temperatures. This
     can be useful in cases, where lower temperatures (which are usually
     more expensive) can be traversed in few larger steps, however also
@@ -417,13 +490,24 @@ class DalyScheme(TemperatureScheme):
     too low acceptance rates, such that this can only be done ex-posteriori
     here.
 
-    .. [#daly2017] Daly Aidan C., Cooper Jonathan, Gavaghan David J. ,
+    Parameters
+    ----------
+    alpha: float, optional
+        The ratio by which to decrease the temperature value. More
+        specifically, the next temperature is given as
+        `(1-alpha) * temperature`.
+    min_rate: float, optional
+        A minimum acceptance rate. If this rate has been violated in the
+        previous iteration, the alpha value is decreased.
+
+
+    .. [#daly2017] Daly Aidan C., Cooper Jonathan, Gavaghan David J.,
             and Holmes Chris. "Comparing two sequential Monte Carlo samplers
             for exact and approximate Bayesian inference on biological
-            models". Journal of The Royal Society Interface, 2017
+            models". Journal of The Royal Society Interface, 2017.
     """
 
-    def __init__(self, alpha: float = 0.5, min_rate: float = 1e-4):
+    def __init__(self, alpha: float = 0.25, min_rate: float = 1e-4):
         self.alpha = alpha
         self.min_rate = min_rate
         self.k = {}
