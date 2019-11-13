@@ -104,8 +104,9 @@ scheme_args = dict(
 def test_scheme_basic():
     schemes = [
         pyabc.AcceptanceRateScheme(),
-        pyabc.ExponentialDecayScheme(),
-        pyabc.PolynomialDecayScheme(),
+        pyabc.ExpDecayFixedIterScheme(),
+        pyabc.ExpDecayFixedRatioScheme(),
+        pyabc.PolynomialDecayFixedIterScheme(),
         pyabc.DalyScheme(),
         pyabc.FrielPettittScheme(),
         pyabc.EssScheme()
@@ -131,7 +132,7 @@ def test_scheme_acceptancerate():
 
 
 def test_scheme_exponentialdecay():
-    scheme = pyabc.ExponentialDecayScheme()
+    scheme = pyabc.ExpDecayFixedIterScheme()
 
     # check no base temperature
     _scheme_args = copy.deepcopy(scheme_args)
