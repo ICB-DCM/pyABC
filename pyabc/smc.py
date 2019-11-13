@@ -902,7 +902,7 @@ class ABCSMC:
             ess = effective_sample_size(
                 population.get_weighted_distances()['w'])
             logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
-                        f"{acceptance_rate:.4e}, ESS={ess}.")
+                        f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
 
             # prepare next iteration
             self._prepare_next_iteration(
