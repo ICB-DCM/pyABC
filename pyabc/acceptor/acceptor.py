@@ -104,7 +104,7 @@ class Acceptor:
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame):
+               get_weighted_distances: Callable[[], pd.DataFrame]):
         """
         Update the acceptance criterion.
 
@@ -113,7 +113,7 @@ class Acceptor:
 
         t: int
             The timepoint to initialize the acceptor for.
-        weighted_distances: Callable[[], pd.DataFrame]
+        get_weighted_distances: Callable[[], pd.DataFrame]
             The current generation's weighted distances.
         """
         pass
@@ -325,11 +325,12 @@ class StochasticAcceptor(Acceptor):
 
     def __init__(
             self,
-            pdf_norm_method: Callable = None):
+            pdf_norm_method: Callable = None,
+            apply_importance_weighting: bool = True):
         """
         Parameters
         ----------
-        pdf_norm_method: Callable
+        pdf_norm_method: Callable, optional
             Function to calculate a pdf normalization (denoted `c` above).
             Shipped are `pyabc.acceptor.pdf_norm_from_kernel` to use the
             value provided by the StochasticKernel, and
@@ -339,12 +340,18 @@ class StochasticAcceptor(Acceptor):
             importance sampling to handle the normalization constant being
             insufficient, and thus avoiding an importance sampling bias,
             is included either way.
+        apply_importance_weighting: bool, optional
+            Whether to apply weights to correct for a bias induced by
+            samples exceeding the density normalization. This may be False
+            usually only for testing purposes.
         """
         super().__init__()
 
         if pdf_norm_method is None:
             pdf_norm_method = pdf_norm_max_found
         self.pdf_norm_method = pdf_norm_method
+
+        self.apply_importance_weighting = apply_importance_weighting
 
         # maximum pdfs, indexed by time
         self.pdf_norms = {}
@@ -372,8 +379,8 @@ class StochasticAcceptor(Acceptor):
 
     def update(self,
                t: int,
-               weighted_distances: pd.DataFrame):
-        self._update(t, lambda: weighted_distances)
+               get_weighted_distances: Callable[[], pd.DataFrame]):
+        self._update(t, get_weighted_distances)
 
     def _update(self,
                 t: int,
@@ -430,8 +437,10 @@ class StochasticAcceptor(Acceptor):
         # weight
         if acceptance_probability == 0.0:
             weight = 0.0
-        else:
+        elif self.apply_importance_weighting:
             weight = acceptance_probability / min(1, acceptance_probability)
+        else:
+            weight = 1.0
 
         # check pdf max ok
         if pdf_norm < pd:

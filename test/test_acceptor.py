@@ -81,3 +81,11 @@ def test_stochastic_acceptor():
                        acceptor=acceptor, population_size=10)
     abc.new(pyabc.create_sqlite_db_id(), x_0)
     abc.run(max_nr_populations=1, minimum_epsilon=1.)
+
+    # use no initial temperature and adaptive c
+    acceptor = pyabc.StochasticAcceptor()
+    eps = pyabc.Temperature()
+    abc = pyabc.ABCSMC(model, prior, distance, eps=eps,
+                       acceptor=acceptor, population_size=10)
+    abc.new(pyabc.create_sqlite_db_id(), x_0)
+    abc.run(max_nr_populations=3, minimum_epsilon=1.)

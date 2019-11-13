@@ -21,7 +21,7 @@ class Distance(ABC):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         """
         This method is called by the ABCSMC framework before the first
@@ -35,7 +35,7 @@ class Distance(ABC):
 
         t: int
             Time point for which to initialize the distance.
-        get_sum_stats: Callable[[], List[dict]]
+        get_all_sum_stats: Callable[[], List[dict]]
             Returns on command the initial summary statistics.
         x_0: dict, optional
             The observed summary statistics.
@@ -67,7 +67,7 @@ class Distance(ABC):
     def update(
             self,
             t: int,
-            sum_stats: List[dict]) -> bool:
+            get_all_sum_stats: Callable[[], List[dict]]) -> bool:
         """
         Update the distance for the upcoming generation t.
 
@@ -75,16 +75,14 @@ class Distance(ABC):
 
         Parameters
         ----------
-
         t: int
             Time point for which to update the distance.
-        sum_stats: List[dict]
-            List of all summary statistics from the finished generation
-            that should be used to update the distance.
+        get_all_sum_stats: Callable[[], List[dict]]
+            Returns on demand a list of all summary statistics from the
+            finished generation that should be used to update the distance.
 
         Returns
         -------
-
         is_updated: bool
             Whether the distance has changed compared to beforehand.
             Depending on the result, the population needs to be updated

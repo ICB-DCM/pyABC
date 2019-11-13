@@ -10,9 +10,9 @@ of the generations.
 
 import json
 import logging
-
 import numpy as np
 from typing import List
+import warnings
 
 from pyabc.cv.bootstrap import calc_cv
 from .transition import Transition
@@ -43,6 +43,11 @@ class PopulationStrategy:
     def __init__(self, nr_particles: int, *,
                  nr_samples_per_parameter: int = 1):
         self.nr_particles = nr_particles
+        if nr_samples_per_parameter != 1:
+            warnings.warn(
+                "A nr_samples_per_parameter != 1 is deprecated "
+                "since version 0.9.23, the parameter will be removed "
+                "in a future release.", DeprecationWarning)
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
     def adapt_population_size(self, transitions: List[Transition],
