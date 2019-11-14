@@ -260,26 +260,45 @@ class AcceptanceRateScheme(TemperatureScheme):
         # len would suffice, but maybe rather not rely on things to be normed
         weights /= sum(weights)
 
-        # objective function which we wish to find a root for
-        def obj(beta):
-            val = np.sum(weights * acc_probs**beta) - self.target_rate
-            return val
+        temperature = match_acceptance_rate(
+            weights, acc_probs, self.target_rate)
 
-        if obj(1) > 0:
-            # function is monotonically decreasing
-            # smallest possible value already > 0
-            beta_opt = 1.0
-            # it is obj(0) >= 0 always
-        else:
-            # perform binary search
-            # TODO: check out more efficient optimization approach
-            # TODO: When the weigts are low, there are numeric problems close
-            # to 1 (especially in the first iteration)
-            beta_opt = sp.optimize.bisect(
-                obj, 0, 1, maxiter=100000)
-        # temperature is inverse beta
-        temperature = 1.0 / beta_opt
         return temperature
+
+
+def match_acceptance_rate(
+        weights, acc_probs, target_rate):
+    """
+    For large temperature, changes become effective on an exponential scale,
+    thus we optimize the logarithm of the inverse temperature beta.
+
+    For a temperature close to 1, subtler changes are neccesary, however here
+    the logarhtm is nearly linear anyway.
+    """
+    # objective function which we wish to find a root for
+    def obj(b):
+        beta = np.exp(b)
+        val = np.sum(weights * acc_probs**beta) - target_rate
+        return val
+
+    # TODO the lower boundary min_b is somewhat arbitrary
+    min_b = -100
+    if obj(0) > 0:
+        # function is monotonically decreasing
+        # smallest possible value already > 0
+        b_opt = 0
+    elif obj(min_b) < 0:
+        # it is obj(-inf) > 0 always
+        logger.info("AcceptanceRateScheme: Numerics limit temperature.")
+        b_opt = min_b
+    else:
+        # perform binary search
+        b_opt = sp.optimize.bisect(obj, min_b, 0, maxiter=100000)
+
+    beta_opt = np.exp(b_opt)
+
+    temperature = 1. / beta_opt
+    return temperature
 
 
 class ExpDecayFixedIterScheme(TemperatureScheme):
