@@ -246,28 +246,19 @@ class AcceptanceRateScheme(TemperatureScheme):
         # acceptance kernel likelihoods
         pds = np.array(records['distance'], dtype=float)
 
-        # compute rescaled posterior densities
-        if kernel_scale == SCALE_LIN:
-            acc_probs = pds / pdf_norm
-        else:  # kernel_scale == SCALE_LOG
-            acc_probs = np.exp(pds - pdf_norm)
-
-        # to acceptance probabilities
-        acc_probs = np.minimum(acc_probs, 1.0)
-
         # compute importance weights
         weights = t_pd / t_pd_prev
         # len would suffice, but maybe rather not rely on things to be normed
         weights /= sum(weights)
 
         temperature = match_acceptance_rate(
-            weights, acc_probs, self.target_rate)
+            weights, pds, pdf_norm, kernel_scale, self.target_rate)
 
         return temperature
 
 
 def match_acceptance_rate(
-        weights, acc_probs, target_rate):
+        weights, pds, pdf_norm, kernel_scale, target_rate):
     """
     For large temperature, changes become effective on an exponential scale,
     thus we optimize the logarithm of the inverse temperature beta.
@@ -278,7 +269,18 @@ def match_acceptance_rate(
     # objective function which we wish to find a root for
     def obj(b):
         beta = np.exp(b)
-        val = np.sum(weights * acc_probs**beta) - target_rate
+
+        # compute rescaled posterior densities
+        if kernel_scale == SCALE_LIN:
+            acc_probs = (pds / pdf_norm) ** beta
+        else:  # kernel_scale == SCALE_LOG
+            acc_probs = np.exp((pds - pdf_norm) * beta)
+
+        # to acceptance probabilities to be sure
+        acc_probs = np.minimum(acc_probs, 1.0)
+
+        # objective function
+        val = np.sum(weights * acc_probs) - target_rate
         return val
 
     # TODO the lower boundary min_b is somewhat arbitrary
