@@ -74,16 +74,20 @@ def test_temperature():
     assert eps(2) == 1
 
 
-get_weighted_distances = lambda: pd.DataFrame({
+def get_weighted_distances():
+    return pd.DataFrame({
         'distance': [1, 2, 3, 4],
         'w': [2, 1, 1, 0]})
 
-get_all_records=lambda: [
-    dict(distance=np.random.randn(),
-         transition_pd_prev=np.random.randn(),
-         transition_pd=np.random.randn(),
-         accepted=True if np.random.random() > 0.5 else False)
-    for _ in range(20)]
+
+def get_all_records():
+    return [
+        dict(distance=np.random.randn(),
+             transition_pd_prev=np.random.randn(),
+             transition_pd=np.random.randn(),
+             accepted=True if np.random.random() > 0.5 else False)
+        for _ in range(20)]
+
 
 scheme_args = dict(
     get_weighted_distances=get_weighted_distances,
