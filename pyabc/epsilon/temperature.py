@@ -528,7 +528,7 @@ class DalyScheme(TemperatureScheme):
             models". Journal of The Royal Society Interface, 2017.
     """
 
-    def __init__(self, alpha: float = 0.25, min_rate: float = 1e-4):
+    def __init__(self, alpha: float = 0.5, min_rate: float = 1e-4):
         self.alpha = alpha
         self.min_rate = min_rate
         self.k = {}

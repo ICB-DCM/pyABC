@@ -419,7 +419,7 @@ class StochasticAcceptor(Acceptor):
 
         pdf_norm = self.pdf_norms[t]
 
-        # rescale
+        # compute acceptance probability
         if kernel.ret_scale == SCALE_LIN:
             acc_prob = (pd / pdf_norm) ** (1 / temp)
         else:  # kernel.ret_scale == SCALE_LOG
