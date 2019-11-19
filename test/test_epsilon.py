@@ -53,8 +53,6 @@ def test_medianepsilon():
 
 
 def test_temperature():
-    weighted_distances = get_weighted_distances()
-    all_records = get_all_records(),
     acceptor_config = {
         'pdf_norm': 5,
         'kernel_scale': pyabc.distance.SCALE_LOG}
