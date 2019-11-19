@@ -55,7 +55,7 @@ class StochasticKernel(Distance):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         """
         Remember the summary statistic keys in sorted order,
@@ -141,12 +141,12 @@ class NormalKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # initialize distribution
@@ -229,12 +229,12 @@ class IndependentNormalKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # dimension
@@ -315,12 +315,12 @@ class IndependentLaplaceKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # dimension
@@ -392,12 +392,12 @@ class BinomialKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # cache pdf_max (from now on __call__ can be used)

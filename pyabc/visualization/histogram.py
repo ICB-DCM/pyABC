@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from ..storage import History
+from .util import format_plot_matrix
 
 
 def plot_histogram_1d(
@@ -243,7 +244,7 @@ def plot_histogram_matrix_lowlevel(
             scatter(y, x, ax, refval=refval)
 
     # format
-    _format_histogram_matrix(arr_ax, par_names)
+    format_plot_matrix(arr_ax, par_names)
 
     # set size
     if size is not None:
@@ -252,29 +253,3 @@ def plot_histogram_matrix_lowlevel(
     fig.tight_layout()
 
     return arr_ax
-
-
-def _format_histogram_matrix(arr_ax, par_names):
-    """
-    Apply some post-formatting to tidy up the plot.
-    """
-    n_par = len(par_names)
-
-    for i in range(0, n_par):
-        for j in range(0, n_par):
-            # clear labels
-            arr_ax[i, j].set_xlabel("")
-            arr_ax[i, j].set_ylabel("")
-
-            # clear legends
-            arr_ax[i, j].legend = None
-
-            # remove spines
-            arr_ax[i, j].spines['right'].set_visible(False)
-            arr_ax[i, j].spines['top'].set_visible(False)
-
-    # set left-most and bottom-most labels to parameter names
-    for ax, label in zip(arr_ax[-1, :], par_names):
-        ax.set_xlabel(label)
-    for ax, label in zip(arr_ax[:, 0], par_names):
-        ax.set_ylabel(label)

@@ -416,29 +416,27 @@ class StochasticAcceptor(Acceptor):
 
         # compute probability density
         pd = kernel(x, x_0, t, par)
+
         pdf_norm = self.pdf_norms[t]
 
-        # rescale
+        # compute acceptance probability
         if kernel.ret_scale == SCALE_LIN:
-            pd_rescaled = pd / pdf_norm
+            acc_prob = (pd / pdf_norm) ** (1 / temp)
         else:  # kernel.ret_scale == SCALE_LOG
-            pd_rescaled = np.exp(pd - pdf_norm)
-
-        # acceptance probability
-        acceptance_probability = pd_rescaled ** (1 / temp)
+            acc_prob = np.exp((pd - pdf_norm) * (1 / temp))
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
-        if acceptance_probability >= threshold:
+        if acc_prob >= threshold:
             accept = True
         else:
             accept = False
 
         # weight
-        if acceptance_probability == 0.0:
+        if acc_prob == 0.0:
             weight = 0.0
         elif self.apply_importance_weighting:
-            weight = acceptance_probability / min(1, acceptance_probability)
+            weight = acc_prob / min(1, acc_prob)
         else:
             weight = 1.0
 

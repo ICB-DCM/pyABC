@@ -29,6 +29,7 @@ from .random_variables import RV, ModelPerturbationKernel, Distribution
 from .sampler import Sampler, Sample
 from .storage import History
 from .transition import Transition, MultivariateNormalTransition
+from .weighted_statistics import effective_sample_size
 
 
 logger = logging.getLogger("ABC")
@@ -863,10 +864,11 @@ class ABCSMC:
         self.distance_function.configure_sampler(self.sampler)
         self.eps.configure_sampler(self.sampler)
 
-        # one after the last time point
-        t_max = t0 + max_nr_populations
+        # last time point
+        t_max = t0 + max_nr_populations - 1
         # run loop over time points
-        for t in range(t0, t_max):
+        t = t0
+        while t <= t_max:
             # get epsilon for generation t
             current_eps = self.eps(t)
 
@@ -894,11 +896,13 @@ class ABCSMC:
                 f"Total samples up to t = {t}: "
                 f"{self.history.total_nr_simulations}.")
 
-            # acceptance rate
+            # acceptance rate and ess
             pop_size = len(population.get_list())
             acceptance_rate = pop_size / n_sim
+            ess = effective_sample_size(
+                population.get_weighted_distances()['w'])
             logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
-                        f"{acceptance_rate:.4e}.")
+                        f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
 
             # prepare next iteration
             self._prepare_next_iteration(
@@ -910,6 +914,9 @@ class ABCSMC:
                         and self.history.nr_of_models_alive() <= 1)
                     or acceptance_rate < min_acceptance_rate):
                 break
+
+            # increment t
+            t += 1
 
         # close session and store end time
         self.history.done()
