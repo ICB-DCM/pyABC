@@ -7,7 +7,7 @@ def test_flake8compliant():
     path = pathlib.Path(__file__).parent.parent
     exec_ = sys.executable
     exclude = (path / "flake8_exclude.txt").read_text()
-    cmd = (f"cd {path}; {exec_} -m flake8 --exclude={exclude}")
+    cmd = f"cd {path}; {exec_} -m flake8 --exclude={exclude}"
     r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE)
     print(r.stdout.decode())
