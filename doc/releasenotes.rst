@@ -13,8 +13,8 @@ Release Notes
 
 * In ABCSMC.run, allow a default infinite number of iterations, and log the
   ESS in each iteration.
-* Reformulate exponential temperature decay allowing for fixed number of
-  iterations or decrease step.
+* Reformulate exponential temperature decay, allowing for fixed number of
+  iterations or fixed ratios.
 * Solve acceptance rate temperature match in log space for numeric stability.
 * Perform temperation of likelihood ratio in log space for numeric stability
   (all #221).
