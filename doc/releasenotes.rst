@@ -18,6 +18,7 @@ Release Notes
 * Solve acceptance rate temperature match in log space for numeric stability.
 * Perform temperation of likelihood ratio in log space for numeric stability
   (all #221).
+* Allow passing id to history directly (#225).
 
 
 0.9.23 (2019-11-10)
