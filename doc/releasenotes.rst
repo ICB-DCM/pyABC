@@ -18,6 +18,8 @@ Release Notes
 * Solve acceptance rate temperature match in log space for numeric stability.
 * Perform temperation of likelihood ratio in log space for numeric stability
   (all #221).
+* Fix wrong maximum density value in binomial kernel.
+* Allow not fixing the final temperature to 1 (all #223).
 
 
 0.9.23 (2019-11-10)
