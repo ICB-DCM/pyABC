@@ -19,17 +19,20 @@ class Temperature(Epsilon):
 
     Parameters
     ----------
-    schemes: Union[Callable, List[Callable]]
+    schemes: Union[Callable, List[Callable]], optional
         Temperature schemes returning proposed
         temperatures for the next time point, e.g.
         instances of :class:`pyabc.epsilon.TemperatureScheme`.
-    aggregate_fun: Callable[List[float], float]
+    aggregate_fun: Callable[List[float], float], optional
         The function to aggregate the schemes by, of the form
         ``Callable[List[float], float]``.
         Defaults to taking the minimum.
-    initial_temperature: float
+    initial_temperature: float, optional
         The initial temperature. If None provided, an AcceptanceRateScheme
         is used.
+    enforce_exact_final_temperature: bool, optional
+        Whether to force the final temperature (if max_nr_populations < inf)
+        to be 1.0, giving exact inference.
 
     Properties
     ----------
@@ -44,7 +47,8 @@ class Temperature(Epsilon):
             self,
             schemes: Union[Callable, List[Callable]] = None,
             aggregate_fun: Callable[[List[float]], float] = None,
-            initial_temperature: float = None):
+            initial_temperature: float = None,
+            enforce_exact_final_temperature: bool = True):
         self.schemes = schemes
 
         if aggregate_fun is None:
@@ -55,6 +59,8 @@ class Temperature(Epsilon):
         if initial_temperature is None:
             initial_temperature = AcceptanceRateScheme()
         self.initial_temperature = initial_temperature
+
+        self.enforce_exact_final_temperature = enforce_exact_final_temperature
 
         # to be filled later
         self.max_nr_populations = None
@@ -119,7 +125,8 @@ class Temperature(Epsilon):
             acceptance_rate=acceptance_rate,
         )
 
-        if t >= self.max_nr_populations - 1:
+        if t >= self.max_nr_populations - 1 \
+                and self.enforce_exact_final_temperature:
             # t is last time
             temperature = 1.0
         elif not self.temperatures:  # need an initial value
