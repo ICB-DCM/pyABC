@@ -436,8 +436,10 @@ def binomial_pdf_max(x_0, keys, p, ret_scale):
     The optimal value was calculated by checking p(n+1,k) / p(n,k).
     """
     ks = np.array(_arr(x_0, keys), dtype=int)
-    ns = np.maximum(np.floor((ks - p) / p), 0)
+    ns = np.maximum(np.ceil((ks - p) / p), 0)
     pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
+
+    # sum over all log values
     log_pdf_max = np.sum(pms)
 
     if ret_scale == SCALE_LIN:
