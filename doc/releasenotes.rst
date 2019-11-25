@@ -20,6 +20,7 @@ Release Notes
   (all #221).
 * Fix wrong maximum density value in binomial kernel.
 * Allow not fixing the final temperature to 1 (all #223).
+* Allow passing id to history directly (#225).
 
 
 0.9.23 (2019-11-10)

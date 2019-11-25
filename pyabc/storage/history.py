@@ -117,7 +117,7 @@ class History:
     # time before first population time
     PRE_TIME = -1
 
-    def __init__(self, db: str, stores_sum_stats: bool = True):
+    def __init__(self, db: str, stores_sum_stats: bool = True, _id=None):
         """
         Initialize history object.
         """
@@ -129,7 +129,9 @@ class History:
         self._engine = None
 
         # find id in database
-        self._id = self._find_latest_id()
+        if _id is None:
+            _id = self._find_latest_id()
+        self._id = _id
 
     def db_file(self):
         f = self.db_identifier.split(":")[-1][3:]

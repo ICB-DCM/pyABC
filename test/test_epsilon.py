@@ -123,8 +123,9 @@ def test_scheme_acceptancerate():
     # high acceptance probabilities
     _scheme_args = copy.deepcopy(scheme_args)
     # change normalization s.t. most have 1.0 acceptance rate
-    records = pd.DataFrame(_scheme_args['get_all_records']())
-    _scheme_args['pdf_norm'] = min(records['distance'])
+    records = _scheme_args['get_all_records']()
+    _scheme_args['pdf_norm'] = min(pd.DataFrame(records)['distance'])
+    _scheme_args['get_all_records'] = lambda: records
     temp = scheme(t=0, **_scheme_args)
     assert temp == 1.0
 
