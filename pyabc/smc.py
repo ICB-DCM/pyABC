@@ -969,7 +969,8 @@ class ABCSMC:
             return population.get_weighted_distances()
 
         # update acceptor
-        self.acceptor.update(t, get_weighted_distances)
+        self.acceptor.update(
+            t, get_weighted_distances, self.eps(t-1), acceptance_rate)
 
         def get_all_records():
             recorded_particles = sample.first_m_particles(

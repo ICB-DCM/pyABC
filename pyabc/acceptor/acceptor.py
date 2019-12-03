@@ -104,7 +104,9 @@ class Acceptor:
 
     def update(self,
                t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame]):
+               get_weighted_distances: Callable[[], pd.DataFrame],
+               prev_temp: float,
+               acceptance_rate: float):
         """
         Update the acceptance criterion.
 
@@ -114,7 +116,11 @@ class Acceptor:
         t: int
             The timepoint to initialize the acceptor for.
         get_weighted_distances: Callable[[], pd.DataFrame]
-            The current generation's weighted distances.
+            The past generation's weighted distances.
+        prev_temp: float
+            The past generation's temperature.
+        acceptance_rate: float
+            The past generation's acceptance rate.
         """
         pass
 
@@ -379,12 +385,16 @@ class StochasticAcceptor(Acceptor):
 
     def update(self,
                t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame]):
-        self._update(t, get_weighted_distances)
+               get_weighted_distances: Callable[[], pd.DataFrame],
+               prev_temp: float,
+               acceptance_rate: float):
+        self._update(t, get_weighted_distances, prev_temp, acceptance_rate)
 
     def _update(self,
                 t: int,
-                get_weighted_distances: Callable[[], pd.DataFrame]):
+                get_weighted_distances: Callable[[], pd.DataFrame],
+                prev_temp: float = None,
+                acceptance_rate: float = 1.0):
         """
         Update schemes for the upcoming time point t.
         """
@@ -393,7 +403,9 @@ class StochasticAcceptor(Acceptor):
             kernel_val=self.kernel_pdf_max,
             get_weighted_distances=get_weighted_distances,
             prev_pdf_norm=None if not self.pdf_norms
-            else max(self.pdf_norms.values()))
+            else max(self.pdf_norms.values()),
+            acceptance_rate=acceptance_rate,
+            prev_temp=prev_temp)
         self.pdf_norms[t] = pdf_norm
 
         logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
