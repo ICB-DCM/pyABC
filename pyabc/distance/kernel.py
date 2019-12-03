@@ -55,7 +55,7 @@ class StochasticKernel(Distance):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         """
         Remember the summary statistic keys in sorted order,
@@ -141,12 +141,12 @@ class NormalKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # initialize distribution
@@ -229,12 +229,12 @@ class IndependentNormalKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # dimension
@@ -273,7 +273,6 @@ class IndependentNormalKernel(StochasticKernel):
         squares = np.sum((diff**2) / var)
 
         log_pdf = - 0.5 * (log_2_pi + squares)
-
         return log_pdf
 
 
@@ -315,12 +314,12 @@ class IndependentLaplaceKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # dimension
@@ -392,12 +391,12 @@ class BinomialKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_sum_stats: Callable[[], List[dict]],
+            get_all_sum_stats: Callable[[], List[dict]],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_sum_stats=get_sum_stats,
+            get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
         # cache pdf_max (from now on __call__ can be used)
@@ -436,8 +435,10 @@ def binomial_pdf_max(x_0, keys, p, ret_scale):
     The optimal value was calculated by checking p(n+1,k) / p(n,k).
     """
     ks = np.array(_arr(x_0, keys), dtype=int)
-    ns = np.maximum(np.floor((ks - p) / p), 0)
+    ns = np.maximum(np.ceil((ks - p) / p), 0)
     pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
+
+    # sum over all log values
     log_pdf_max = np.sum(pms)
 
     if ret_scale == SCALE_LIN:

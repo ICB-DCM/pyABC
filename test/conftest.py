@@ -14,5 +14,5 @@ def db_path():
         try:
             if REMOVE_DB:
                 os.remove(db_file_location)
-        except FileNotFoundError:
+        except OSError:
             pass

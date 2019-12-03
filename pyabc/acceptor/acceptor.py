@@ -104,7 +104,9 @@ class Acceptor:
 
     def update(self,
                t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame]):
+               get_weighted_distances: Callable[[], pd.DataFrame],
+               prev_temp: float,
+               acceptance_rate: float):
         """
         Update the acceptance criterion.
 
@@ -114,7 +116,11 @@ class Acceptor:
         t: int
             The timepoint to initialize the acceptor for.
         get_weighted_distances: Callable[[], pd.DataFrame]
-            The current generation's weighted distances.
+            The past generation's weighted distances.
+        prev_temp: float
+            The past generation's temperature.
+        acceptance_rate: float
+            The past generation's acceptance rate.
         """
         pass
 
@@ -379,12 +385,16 @@ class StochasticAcceptor(Acceptor):
 
     def update(self,
                t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame]):
-        self._update(t, get_weighted_distances)
+               get_weighted_distances: Callable[[], pd.DataFrame],
+               prev_temp: float,
+               acceptance_rate: float):
+        self._update(t, get_weighted_distances, prev_temp, acceptance_rate)
 
     def _update(self,
                 t: int,
-                get_weighted_distances: Callable[[], pd.DataFrame]):
+                get_weighted_distances: Callable[[], pd.DataFrame],
+                prev_temp: float = None,
+                acceptance_rate: float = 1.0):
         """
         Update schemes for the upcoming time point t.
         """
@@ -393,7 +403,9 @@ class StochasticAcceptor(Acceptor):
             kernel_val=self.kernel_pdf_max,
             get_weighted_distances=get_weighted_distances,
             prev_pdf_norm=None if not self.pdf_norms
-            else max(self.pdf_norms.values()))
+            else max(self.pdf_norms.values()),
+            acceptance_rate=acceptance_rate,
+            prev_temp=prev_temp)
         self.pdf_norms[t] = pdf_norm
 
         logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
@@ -416,29 +428,27 @@ class StochasticAcceptor(Acceptor):
 
         # compute probability density
         pd = kernel(x, x_0, t, par)
+
         pdf_norm = self.pdf_norms[t]
 
-        # rescale
+        # compute acceptance probability
         if kernel.ret_scale == SCALE_LIN:
-            pd_rescaled = pd / pdf_norm
+            acc_prob = (pd / pdf_norm) ** (1 / temp)
         else:  # kernel.ret_scale == SCALE_LOG
-            pd_rescaled = np.exp(pd - pdf_norm)
-
-        # acceptance probability
-        acceptance_probability = pd_rescaled ** (1 / temp)
+            acc_prob = np.exp((pd - pdf_norm) * (1 / temp))
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
-        if acceptance_probability >= threshold:
+        if acc_prob >= threshold:
             accept = True
         else:
             accept = False
 
         # weight
-        if acceptance_probability == 0.0:
+        if acc_prob == 0.0:
             weight = 0.0
         elif self.apply_importance_weighting:
-            weight = acceptance_probability / min(1, acceptance_probability)
+            weight = acc_prob / min(1, acc_prob)
         else:
             weight = 1.0
 

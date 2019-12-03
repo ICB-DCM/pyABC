@@ -8,6 +8,24 @@ Release Notes
 ..........
 
 
+0.9.24 (2019-11-19)
+-------------------
+
+* In ABCSMC.run, allow a default infinite number of iterations, and log the
+  ESS in each iteration.
+* Reformulate exponential temperature decay, allowing for a fixed number of
+  iterations or fixed ratios.
+* Solve acceptance rate temperature match in log space for numeric stability.
+* Perform temperation of likelihood ratio in log space for numeric stability
+  (all #221).
+* Fix wrong maximum density value in binomial kernel.
+* Allow not fixing the final temperature to 1 (all #223).
+* Allow passing id to history directly (#225).
+* Pass additional arguments to Acceptor.update.
+* Give optional min_rate argument to AcceptanceRateScheme (all #226).
+* In plot functions, add parameter specifying the reference value color (#227).
+
+
 0.9.23 (2019-11-10)
 -------------------
 
