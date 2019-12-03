@@ -273,7 +273,6 @@ class IndependentNormalKernel(StochasticKernel):
         squares = np.sum((diff**2) / var)
 
         log_pdf = - 0.5 * (log_2_pi + squares)
-        print(log_pdf)
         return log_pdf
 
 
