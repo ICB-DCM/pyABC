@@ -71,7 +71,7 @@ def plot_histogram_1d_lowlevel(
     else:
         range_ = None
     if refval is not None:
-        ax.axvline(refval[x], color=refval_color, linestyle='dashed')
+        ax.axvline(refval[x], color=refval_color, linestyle='dotted')
 
     # plot
     ax.hist(x=df[x], range=range_, weights=w, density=True, **kwargs)
