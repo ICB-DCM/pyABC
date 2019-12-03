@@ -380,9 +380,6 @@ class StochasticAcceptor(Acceptor):
         self.kernel_scale = distance_function.ret_scale
         self.kernel_pdf_max = distance_function.pdf_max
 
-        # remember the last temperature
-        self._temp = None
-
         # update
         self._update(t, get_weighted_distances)
 
@@ -428,8 +425,6 @@ class StochasticAcceptor(Acceptor):
 
         # temperature
         temp = eps(t)
-        # log for internal use
-        self._temp = temp
 
         # compute probability density
         pd = kernel(x, x_0, t, par)
