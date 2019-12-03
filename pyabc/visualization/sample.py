@@ -262,7 +262,8 @@ def plot_acceptance_rates_trajectory(
         title: str = "Acceptance rates",
         yscale: str = 'lin',
         size: tuple = None,
-        ax: mpl.axes.Axes = None):
+        ax: mpl.axes.Axes = None,
+        colors: List[str] = None):
     """
     Plot of acceptance rates over all iterations, i.e. one trajectory
     per history.
@@ -295,7 +296,8 @@ def plot_acceptance_rates_trajectory(
     """
     # preprocess input
     histories, labels = to_lists_or_default(histories, labels)
-
+    if colors is None:
+        colors = [None] * len(histories)
     # create figure
     if ax is None:
         fig, ax = plt.subplots()
@@ -329,8 +331,8 @@ def plot_acceptance_rates_trajectory(
         ylabel = "log10(" + ylabel + ")"
 
     # plot
-    for t, rate, label in zip(times, rates, labels):
-        ax.plot(t, rate, 'x-', label=label)
+    for t, rate, label, color in zip(times, rates, labels, colors):
+        ax.plot(t, rate, 'x-', label=label, color=color)
 
     # add labels
     ax.legend()
