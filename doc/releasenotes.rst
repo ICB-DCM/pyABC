@@ -23,6 +23,7 @@ Release Notes
 * Allow passing id to history directly (#225).
 * Pass additional arguments to Acceptor.update.
 * Give optional min_rate argument to AcceptanceRateScheme (all #226).
+* In plot functions, add parameter specifying the reference value color (#227).
 
 
 0.9.23 (2019-11-10)
