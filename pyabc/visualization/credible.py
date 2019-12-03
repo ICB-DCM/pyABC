@@ -20,6 +20,7 @@ def plot_credible_intervals(
         show_kde_max_1d: bool = False,
         size: tuple = None,
         refval: dict = None,
+        refval_color: str = 'C1',
         kde: Transition = None,
         kde_1d: Transition = None):
     """
@@ -53,6 +54,8 @@ def plot_credible_intervals(
     refval: dict, optional (default = None)
         A dictionary of reference parameter values to plot for each of
         `par_names`.
+    refval_color: str, optional
+        Color to use for the reference value.
     kde: Transition, optional (default = MultivariateNormalTransition)
         The KDE to use for `show_kde_max`.
     kde_1d: Transition, optional (default = MultivariateNormalTransition)
@@ -150,7 +153,7 @@ def plot_credible_intervals(
                     label="Max KDE 1d")
         # reference value
         if refval is not None:
-            ax.hlines(refval[par], xmin=0, xmax=n_pop - 1,
+            ax.hlines(refval[par], xmin=0, xmax=n_pop - 1, color=refval_color,
                       label="Reference value")
         ax.set_xticks(range(n_pop))
         ax.set_xticklabels(ts)

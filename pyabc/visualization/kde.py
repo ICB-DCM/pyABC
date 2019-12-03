@@ -77,7 +77,8 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 def plot_kde_1d_highlevel(
         history: History, x: str, m: int = 0, t: int = None,
         xmin=None, xmax=None, numx=50, ax=None,
-        size=None, title: str = None, refval=None, kde=None, **kwargs):
+        size=None, title: str = None, refval=None, refval_color='C1',
+        kde=None, **kwargs):
     """
     Plot 1d kernel density estimate of parameter samples.
 
@@ -112,6 +113,8 @@ def plot_kde_1d_highlevel(
         A reference value for x (as refval[x]: float).
         If not None, the value will be highlighted in the plot.
         Default: None.
+    refval_color: str, optional
+        Color to use for the reference value.
     kde: pyabc.Transition, optional
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
@@ -125,12 +128,12 @@ def plot_kde_1d_highlevel(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_kde_1d(df, w, x, xmin, xmax, numx, ax, size, title, refval,
-                       kde, **kwargs)
+                       refval_color, kde, **kwargs)
 
 
 def plot_kde_1d(df, w, x, xmin=None, xmax=None,
                 numx=50, ax=None, size=None, title: str = None,
-                refval=None, kde=None, **kwargs):
+                refval=None, refval_color='C1', kde=None, **kwargs):
     """
     Lowlevel interface for plot_kde_1d_highlevel (see there for the remaining
     parameters).
@@ -157,7 +160,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     if title is not None:
         ax.set_title(title)
     if refval is not None:
-        ax.axvline(refval[x], color='C1', linestyle='dashed')
+        ax.axvline(refval[x], color=refval_color, linestyle='dotted')
 
     # set size
     if size is not None:
@@ -247,8 +250,8 @@ def plot_kde_2d_highlevel(
         history: History, x: str, y: str, m: int = 0, t: int = None,
         xmin: float = None, xmax: float = None, ymin: float = None,
         ymax: float = None, numx: int = 50, numy: int = 50, ax=None,
-        size=None, colorbar=True, title: str = None, refval=None, kde=None,
-        **kwargs):
+        size=None, colorbar=True, title: str = None, refval=None,
+        refval_color='C1', kde=None, **kwargs):
     """
     Plot 2d kernel density estimate of parameter samples.
 
@@ -296,6 +299,8 @@ def plot_kde_2d_highlevel(
         Title for the plot. Defaults to None.
     refval: dict, optional
         A reference parameter to be shown in the plots. Default: None.
+    refval_color: str, optional
+        Color to use for the reference value.
     kde: pyabc.Transition, optional
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
@@ -310,12 +315,13 @@ def plot_kde_2d_highlevel(
 
     return plot_kde_2d(
         df, w, x, y, xmin, xmax, ymin, ymax, numx, numy, ax, size, colorbar,
-        title, refval, kde, **kwargs)
+        title, refval, refval_color, kde, **kwargs)
 
 
 def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                 numx=50, numy=50, ax=None, size=None, colorbar=True,
-                title: str = None, refval=None, kde=None, **kwargs):
+                title: str = None, refval=None, refval_color='C1', kde=None,
+                **kwargs):
     """
     Plot a 2d kernel density estimate of parameter samples.
 
@@ -348,7 +354,7 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         plt.colorbar(mesh, ax=ax)
         # cbar.set_label("PDF")
     if refval is not None:
-        ax.scatter([refval[x]], [refval[y]], color='C1')
+        ax.scatter([refval[x]], [refval[y]], color=refval_color)
 
     # set size
     if size is not None:
@@ -360,7 +366,8 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 def plot_kde_matrix_highlevel(
         history, m: int = 0, t: int = None, limits=None,
         colorbar: bool = True, height: float = 2.5,
-        numx: int = 50, numy: int = 50, refval=None, kde=None):
+        numx: int = 50, numy: int = 50, refval=None, refval_color='C1',
+        kde=None):
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
@@ -388,6 +395,8 @@ def plot_kde_matrix_highlevel(
         A reference parameter to be shown in the plots (e.g. the
         underlying ground truth parameter used to simulate the data
         for testing purposes). Default: None.
+    refval_color: str, optional
+        Color to use for the reference value.
     kde: pyabc.Transition, optional
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
@@ -400,16 +409,12 @@ def plot_kde_matrix_highlevel(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_kde_matrix(
-        df, w, limits, colorbar, height, numx, numy, refval, kde)
+        df, w, limits, colorbar, height, numx, numy, refval, refval_color,
+        kde)
 
 
-def plot_kde_matrix(df, w,
-                    limits=None,
-                    colorbar=True,
-                    height=2.5,
-                    numx=50,
-                    numy=50,
-                    refval=None,
+def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
+                    numx=50, numy=50, refval=None, refval_color='C1',
                     kde=None):
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
@@ -448,7 +453,8 @@ def plot_kde_matrix(df, w,
                     ymax=limits.get(y.name, default)[1],
                     numx=numx, numy=numy,
                     ax=ax, title=False, colorbar=colorbar,
-                    refval=refval, kde=kde)
+                    refval=refval, refval_color=refval_color,
+                    kde=kde)
 
     def scatter(x, y, ax):
         alpha = w / w.max()
@@ -456,7 +462,7 @@ def plot_kde_matrix(df, w,
         colors[:, 3] = alpha
         ax.scatter(x, y, color="k")
         if refval is not None:
-            ax.scatter([refval[x.name]], [refval[y.name]], color='C1')
+            ax.scatter([refval[x.name]], [refval[y.name]], color=refval_color)
         ax.set_xlim(*limits.get(x.name, default))
         ax.set_ylim(*limits.get(y.name, default))
 
@@ -466,7 +472,8 @@ def plot_kde_matrix(df, w,
                     xmin=limits.get(x.name, default)[0],
                     xmax=limits.get(x.name, default)[1],
                     numx=numx,
-                    ax=ax, refval=refval, kde=kde)
+                    ax=ax, refval=refval, refval_color=refval_color,
+                    kde=kde)
 
     # fill all subplots
     for i in range(0, n_par):
