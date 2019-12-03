@@ -223,12 +223,19 @@ class AcceptanceRateScheme(TemperatureScheme):
 
     Parameters
     ----------
-    target_rate: float
+    target_rate: float, optional
         The target acceptance rate to match.
+    min_rate: float, optional
+        The minimum rate below which not to apply the acceptance step scheme
+        any more. Setting this to a value of e.g. 0.05 can make sense
+        1) because it may be unlikely that the acceptance rate scheme will
+        propose a useful temperature at such low acceptance levels, and
+        2) to avoid uneccessary computations.
     """
 
-    def __init__(self, target_rate: float = 0.3):
+    def __init__(self, target_rate: float = 0.3, min_rate: float = None):
         self.target_rate = target_rate
+        self.min_rate = min_rate
 
     def configure_sampler(self, sampler: Sampler):
         sampler.sample_factory.record_rejected = True
@@ -242,6 +249,10 @@ class AcceptanceRateScheme(TemperatureScheme):
                  kernel_scale: str,
                  prev_temperature: float,
                  acceptance_rate: float):
+        # check minimum rate
+        if self.min_rate is not None and acceptance_rate < self.min_rate:
+            return np.inf
+
         # execute function (expensive if in calibration)
         records = get_all_records()
         # convert to dataframe for easier extraction
