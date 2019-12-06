@@ -147,14 +147,28 @@ def test_model_probabilities():
     plt.close()
 
 
-def test_data_plot():
+def test_data_callback():
+    def plot_data(sum_stat, weight, ax, **kwargs):
+        ax.plot(sum_stat['ss0'], **kwargs, alpha=weight)
+
+    def plot_data_aggregated(sum_stats, weights, ax, **kwargs):
+        data = np.array([sum_stat['ss0'] for sum_stat in sum_stats])
+        weights = np.array(weights).reshape((-1, 1))
+        mean = (data * weights).sum(axis=0)
+        plot_data({'ss0': mean}, 1.0, ax)
+
+    pyabc.visualization.plot_data_callback(
+        histories[0], plot_data, plot_data_aggregated)
+
+
+def test_data_default():
     obs_dict = {1: 0.7, 2: np.array([43, 423, 5.5]),
                 3: pd.DataFrame({'a': [1, 2], 'b': [4, 6]})}
     sim_dict = {1: 6.5, 2: np.array([32, 5, 6]),
                 3: pd.DataFrame({'a': [1.55, -0.1], 'b': [54, 6]})}
-    pyabc.visualization.plot_data(obs_dict, sim_dict)
+    pyabc.visualization.plot_data_default(obs_dict, sim_dict)
     for i in range(5):
         obs_dict[i] = i + 1
         sim_dict[i] = i + 2
-    pyabc.visualization.plot_data(obs_dict, sim_dict)
+    pyabc.visualization.plot_data_default(obs_dict, sim_dict)
     plt.close()

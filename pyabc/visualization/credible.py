@@ -22,7 +22,8 @@ def plot_credible_intervals(
         refval: dict = None,
         refval_color: str = 'C1',
         kde: Transition = None,
-        kde_1d: Transition = None):
+        kde_1d: Transition = None,
+        arr_ax: List = None):
     """
     Plot credible intervals over time.
 
@@ -60,6 +61,8 @@ def plot_credible_intervals(
         The KDE to use for `show_kde_max`.
     kde_1d: Transition, optional (default = MultivariateNormalTransition)
         The KDE to use for `show_kde_max_1d`.
+    arr_ax: List, optional
+        Array of axes to use. Assumed to be a 1-dimensional list.
 
     Returns
     -------
@@ -81,10 +84,13 @@ def plot_credible_intervals(
     n_pop = len(ts)
 
     # prepare axes
-    fig, arr_ax = plt.subplots(
-        nrows=n_par, ncols=1, sharex=False, sharey=False, figsize=size)
-    if n_par == 1:
+    fig = None
+    if arr_ax is None:
+        _, arr_ax = plt.subplots(
+            nrows=n_par, ncols=1, sharex=False, sharey=False, figsize=size)
+    if not isinstance(arr_ax, list):
         arr_ax = [arr_ax]
+    fig = arr_ax[0].get_figure()
 
     # prepare matrices
     cis = np.empty((n_par, n_pop, 2 * n_confidence))
@@ -157,6 +163,7 @@ def plot_credible_intervals(
                       label="Reference value")
         ax.set_xticks(range(n_pop))
         ax.set_xticklabels(ts)
+        ax.set_ylabel(par)
         ax.legend()
 
     # format
