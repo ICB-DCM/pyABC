@@ -84,11 +84,10 @@ def plot_credible_intervals(
     n_pop = len(ts)
 
     # prepare axes
-    fig = None
     if arr_ax is None:
         _, arr_ax = plt.subplots(
             nrows=n_par, ncols=1, sharex=False, sharey=False, figsize=size)
-    if not isinstance(arr_ax, list):
+    if not isinstance(arr_ax, (list, np.ndarray)):
         arr_ax = [arr_ax]
     fig = arr_ax[0].get_figure()
 
