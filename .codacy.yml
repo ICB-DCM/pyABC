@@ -1,3 +1,4 @@
 engines:
-  enabled: true
-  python_version: 3
+  pylint:
+    enabled: true
+    python_version: 3
