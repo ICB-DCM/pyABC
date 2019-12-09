@@ -149,7 +149,7 @@ def test_model_probabilities():
 
 def test_data_callback():
     def plot_data(sum_stat, weight, ax, **kwargs):
-        ax.plot(sum_stat['ss0'], **kwargs, alpha=weight)
+        ax.plot(sum_stat['ss0'], alpha=weight, **kwargs)
 
     def plot_data_aggregated(sum_stats, weights, ax, **kwargs):
         data = np.array([sum_stat['ss0'] for sum_stat in sum_stats])
