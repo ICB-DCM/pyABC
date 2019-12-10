@@ -180,9 +180,10 @@ def work_on_population(redis: StrictRedis,
                    'h, (H,) d, (D) for seconds, minutes, hours and days. '
                    'E.g. for 12 hours you would pass --runtime=12h, for half '
                    'a day you could do 0.5d.')
+@click.option('--password', default=None, help='Password for a secure connection.')
 @click.option('--processes', type=int, default=1, help="The number of worker "
                                                        "processes to start")
-def work(host="localhost", port=6379, runtime="2h", processes=1):
+def work(host="localhost", port=6379, runtime="2h", password=None, processes=1):
     """
     Corresponds to the entry point abc-redis-worker.
     """
@@ -190,14 +191,14 @@ def work(host="localhost", port=6379, runtime="2h", processes=1):
         # start a single process right here, not within pool
         # this handles the problem of starting a daemon process within a
         # daemon process
-        return _work(host, port, runtime)
+        return _work(host, port, runtime, password)
 
     with Pool(processes) as pool:
-        res = pool.starmap(_work, [(host, port, runtime)] * processes)
+        res = pool.starmap(_work, [(host, port, runtime, password)] * processes)
     return res
 
 
-def _work(host="localhost", port=6379, runtime="2h"):
+def _work(host="localhost", port=6379, runtime="2h", password=None):
     np.random.seed()
     random.seed()
 
@@ -208,7 +209,7 @@ def _work(host="localhost", port=6379, runtime="2h"):
     logger.info(
         f"Start redis worker. Max run time {max_runtime_s}s, "
         f"HOST={socket.gethostname()}, PID={os.getpid()}")
-    redis = StrictRedis(host=host, port=port)
+    redis = StrictRedis(host=host, port=port, password=password)
 
     p = redis.pubsub()
     p.subscribe(MSG)
