@@ -420,7 +420,6 @@ class StochasticAcceptor(Acceptor):
 
         if self.log_file:
             save_pnorms(self.pdf_norms, self.log_file)
-        
 
     def get_epsilon_config(self, t: int) -> dict:
         """

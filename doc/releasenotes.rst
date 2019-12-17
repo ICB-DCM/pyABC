@@ -12,7 +12,7 @@ Release Notes
 -------------------
 
 * Add summary statistics callback plot function.
-
+* Add possibility to log employed norms in StochasticAcceptor (all #231).
 
 0.9.24 (2019-11-19)
 -------------------
