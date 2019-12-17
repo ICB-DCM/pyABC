@@ -23,6 +23,7 @@ from ..distance import Distance, SCALE_LIN
 from ..epsilon import Epsilon
 from ..parameters import Parameter
 from .pdf_norm import pdf_norm_max_found
+from .util import save_pnorms
 
 
 logger = logging.getLogger("Acceptor")
@@ -332,7 +333,8 @@ class StochasticAcceptor(Acceptor):
     def __init__(
             self,
             pdf_norm_method: Callable = None,
-            apply_importance_weighting: bool = True):
+            apply_importance_weighting: bool = True,
+            log_file: str = None):
         """
         Parameters
         ----------
@@ -350,14 +352,17 @@ class StochasticAcceptor(Acceptor):
             Whether to apply weights to correct for a bias induced by
             samples exceeding the density normalization. This may be False
             usually only for testing purposes.
+        log_file: str, optional
+            A log file for storing data of the acceptor that is currently not
+            saved in the database. The data are saved in json format.
         """
         super().__init__()
 
         if pdf_norm_method is None:
             pdf_norm_method = pdf_norm_max_found
         self.pdf_norm_method = pdf_norm_method
-
         self.apply_importance_weighting = apply_importance_weighting
+        self.log_file = log_file
 
         # maximum pdfs, indexed by time
         self.pdf_norms = {}
@@ -408,7 +413,13 @@ class StochasticAcceptor(Acceptor):
             prev_temp=prev_temp)
         self.pdf_norms[t] = pdf_norm
 
+        self.log(t)
+
+    def log(self, t):
         logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
+
+        if self.log_file:
+            save_pnorms(self.pdf_norms, self.log_file)
 
     def get_epsilon_config(self, t: int) -> dict:
         """
