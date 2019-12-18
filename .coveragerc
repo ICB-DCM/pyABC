@@ -1,0 +1,8 @@
+[run]
+branch = True
+source = pyabc
+
+[report]
+omit = 
+    test*
+    pyabc/sge

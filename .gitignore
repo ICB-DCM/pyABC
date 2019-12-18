@@ -89,4 +89,3 @@ doc/*.log
 .pytest_cache
 dask-worker-space
 *.lock
-.coverage*
