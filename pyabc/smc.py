@@ -556,8 +556,8 @@ class ABCSMC:
         """
         # cache model_probabilities to not query the database so often
         model_probabilities = self.history.get_model_probabilities(t-1)
-        m = sp.array(model_probabilities.index)
-        p = sp.array(model_probabilities.p)
+        m = np.array(model_probabilities.index)
+        p = np.array(model_probabilities.p)
 
         model_prior = self.model_prior
         parameter_priors = self.parameter_priors
