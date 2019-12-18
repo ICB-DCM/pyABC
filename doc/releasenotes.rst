@@ -11,8 +11,10 @@ Release Notes
 0.9.25 (2019-12-17)
 -------------------
 
-* Add summary statistics callback plot function.
-* Add possibility to log employed norms in StochasticAcceptor (all #231).
+* Add summary statistics callback plot function (#231)
+* Add possibility to log employed norms in StochasticAcceptor (#231) and
+  temperature proposals in Temperature (all #232).
+
 
 0.9.24 (2019-11-19)
 -------------------
