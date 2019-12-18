@@ -13,7 +13,7 @@ Release Notes
 
 * Add summary statistics callback plot function (#231)
 * Add possibility to log employed norms in StochasticAcceptor (#231) and
-  temperature proposals in Temperature (all #232).
+  temperature proposals in Temperature (#232).
 
 
 0.9.24 (2019-11-19)
