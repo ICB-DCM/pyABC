@@ -87,7 +87,7 @@ def test_stochastic_acceptor():
     h = abc.run(max_nr_populations=1, minimum_epsilon=1.)
 
     # check pnorms
-    pnorms = pyabc.acceptor.load_pnorms(pnorm_file)
+    pnorms = pyabc.storage.load_dict_from_json(pnorm_file)
     assert len(pnorms) == h.max_t + 2  # +1 t0, +1 one final update
     assert isinstance(list(pnorms.keys())[0], int)
     assert isinstance(pnorms[0], float)
