@@ -8,6 +8,7 @@ import logging
 from .base import Epsilon
 from ..distance import SCALE_LIN
 from ..sampler import Sampler
+from ..storage import save_dict_to_json
 
 logger = logging.getLogger("Epsilon")
 
@@ -33,6 +34,9 @@ class Temperature(Epsilon):
     enforce_exact_final_temperature: bool, optional
         Whether to force the final temperature (if max_nr_populations < inf)
         to be 1.0, giving exact inference.
+    log_file: str, optional
+        A log file for storing data of the temperature that are currently not
+        saved in the database. The data are saved in json format.
 
     Properties
     ----------
@@ -48,7 +52,8 @@ class Temperature(Epsilon):
             schemes: Union[Callable, List[Callable]] = None,
             aggregate_fun: Callable[[List[float]], float] = None,
             initial_temperature: float = None,
-            enforce_exact_final_temperature: bool = True):
+            enforce_exact_final_temperature: bool = True,
+            log_file: str = None):
         self.schemes = schemes
 
         if aggregate_fun is None:
@@ -61,10 +66,12 @@ class Temperature(Epsilon):
         self.initial_temperature = initial_temperature
 
         self.enforce_exact_final_temperature = enforce_exact_final_temperature
+        self.log_file = log_file
 
         # to be filled later
         self.max_nr_populations = None
         self.temperatures = {}
+        self.temperature_proposals = {}
 
     def initialize(self,
                    t: int,
@@ -128,13 +135,13 @@ class Temperature(Epsilon):
         if t >= self.max_nr_populations - 1 \
                 and self.enforce_exact_final_temperature:
             # t is last time
-            temperature = 1.0
+            temps = [1.0]
         elif not self.temperatures:  # need an initial value
             if callable(self.initial_temperature):
                 # execute scheme
-                temperature = self.initial_temperature(**kwargs)
+                temps = [self.initial_temperature(**kwargs)]
             elif isinstance(self.initial_temperature, numbers.Number):
-                temperature = self.initial_temperature
+                temps = [self.initial_temperature]
             else:
                 raise ValueError(
                     "Initial temperature must be a float or a callable")
@@ -144,20 +151,25 @@ class Temperature(Epsilon):
             for scheme in self.schemes:
                 temp = scheme(**kwargs)
                 temps.append(temp)
-            logger.debug(f"Proposed temperatures: {temps}.")
 
-            # compute next temperature based on proposals and fallback
-            # should not be higher than before
-            fallback = self.temperatures[t-1] \
-                if t-1 in self.temperatures else np.inf
-            proposed_value = self.aggregate_fun(temps)
-            # also a value lower than 1.0 does not make sense
-            temperature = max(min(proposed_value, fallback), 1.0)
+        # compute next temperature based on proposals and fallback
+        # should not be higher than before
+        fallback = self.temperatures[t-1] \
+            if t-1 in self.temperatures else np.inf
+        temperature = self.aggregate_fun(temps)
+        # also a value lower than 1.0 does not make sense
+        temperature = max(min(temperature, fallback), 1.0)
 
         if not np.isfinite(temperature):
             raise ValueError("Temperature must be finite.")
         # record found value
         self.temperatures[t] = temperature
+
+        # logging
+        logger.debug(f"Proposed temperatures for {t}: {temps}.")
+        self.temperature_proposals[t] = temps
+        if self.log_file:
+            save_dict_to_json(self.temperature_proposals, self.log_file)
 
     def __call__(self,
                  t: int) -> float:

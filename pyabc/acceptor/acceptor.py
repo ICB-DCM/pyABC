@@ -23,7 +23,7 @@ from ..distance import Distance, SCALE_LIN
 from ..epsilon import Epsilon
 from ..parameters import Parameter
 from .pdf_norm import pdf_norm_max_found
-from .util import save_pnorms
+from ..storage import save_dict_to_json
 
 
 logger = logging.getLogger("Acceptor")
@@ -353,7 +353,7 @@ class StochasticAcceptor(Acceptor):
             samples exceeding the density normalization. This may be False
             usually only for testing purposes.
         log_file: str, optional
-            A log file for storing data of the acceptor that is currently not
+            A log file for storing data of the acceptor that are currently not
             saved in the database. The data are saved in json format.
         """
         super().__init__()
@@ -419,7 +419,7 @@ class StochasticAcceptor(Acceptor):
         logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
 
         if self.log_file:
-            save_pnorms(self.pdf_norms, self.log_file)
+            save_dict_to_json(self.pdf_norms, self.log_file)
 
     def get_epsilon_config(self, t: int) -> dict:
         """

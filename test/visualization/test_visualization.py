@@ -134,7 +134,9 @@ def test_kdes():
 def test_credible_intervals():
     pyabc.visualization.plot_credible_intervals(histories[0])
     pyabc.visualization.plot_credible_intervals(
-        histories[0], levels=[0.2, 0.5, 0.9])
+        histories[0], levels=[0.2, 0.5, 0.9],
+        show_kde_max_1d=True, show_kde_max=True, show_mean=True,
+        refval=p_true)
     pyabc.visualization.plot_credible_intervals_for_time(
         histories, levels=[0.5, 0.99],
         show_kde_max_1d=True, show_kde_max=True, show_mean=True,
