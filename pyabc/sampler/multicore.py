@@ -19,7 +19,7 @@ def feed(feed_q, n_jobs, n_proc):
         feed_q.put(SENTINEL)
 
 
-def work(feed_q, result_q, simulate_one, single_core_sampler):
+def work(feed_q, result_q, simulate_one, max_eval, single_core_sampler):
     random.seed()
     np.random.seed()
 
@@ -29,7 +29,7 @@ def work(feed_q, result_q, simulate_one, single_core_sampler):
             break
 
         res = single_core_sampler.sample_until_n_accepted(
-            1, simulate_one)
+            1, simulate_one, max_eval)
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
@@ -66,7 +66,8 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
     """
 
-    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
+    def sample_until_n_accepted(
+            self, n, simulate_one, max_eval, all_accepted=False):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
@@ -78,11 +79,14 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         feed_process = Process(target=feed, args=(feed_q, n,
                                                   n_procs))
 
-        single_core_sampler = SingleCoreSampler()
+        single_core_sampler = SingleCoreSampler(
+            check_max_eval=self.check_max_eval)
+        # the max_eval handling in this sampler is certainly not optimal
         single_core_sampler.sample_factory = self.sample_factory
 
         worker_processes = [Process(target=work, args=(feed_q, result_q,
                                                        simulate_one,
+                                                       max_eval,
                                                        single_core_sampler))
                             for _ in range(n_procs)]
 
@@ -112,5 +116,8 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         sample = self._create_empty_sample()
         for result in results:
             sample += result
+
+        if sample.n_accepted < n:
+            sample.ok = False
 
         return sample

@@ -11,7 +11,6 @@ import datetime
 import logging
 from typing import List, Callable, TypeVar
 import numpy as np
-import scipy as sp
 import pandas as pd
 import copy
 from typing import Union
@@ -871,17 +870,25 @@ class ABCSMC:
         while t <= t_max:
             # get epsilon for generation t
             current_eps = self.eps(t)
-
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # create simulate function
             simulate_one = self._create_simulate_function(t)
 
-            logger.debug(f"Now submitting population {t}.")
+            # population size and maximum number of evaluations
+            pop_size = self.population_strategy.nr_particles
+            max_eval = np.inf if min_acceptance_rate == 0. \
+                else pop_size / min_acceptance_rate
 
             # perform the sampling
+            logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
-                self.population_strategy.nr_particles, simulate_one)
+                pop_size, simulate_one, max_eval)
+
+            # check sample health
+            if not sample.ok:
+                logger.info("Stopping: sample not ok.")
+                break
 
             # retrieve accepted population
             population = sample.get_accepted_population()
@@ -908,11 +915,16 @@ class ABCSMC:
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
 
-            # check early termination conditions
-            if (current_eps <= minimum_epsilon
-                    or (self.stop_if_only_single_model_alive
-                        and self.history.nr_of_models_alive() <= 1)
-                    or acceptance_rate < min_acceptance_rate):
+            # check termination conditions
+            if current_eps <= minimum_epsilon:
+                logger.info("Stopping: minimum epsilon.")
+                break
+            elif self.stop_if_only_single_model_alive \
+                    and self.history.nr_of_models_alive() <= 1:
+                logger.info("Stopping: single model alive.")
+                break
+            elif acceptance_rate < min_acceptance_rate:
+                logger.info("Stopping: minimum acceptance rate.")
                 break
 
             # increment t
