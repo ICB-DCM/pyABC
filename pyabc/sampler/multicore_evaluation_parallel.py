@@ -141,4 +141,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         for result in results:
             sample += result
 
+        if sample.n_accepted < n:
+            sample.ok = False
+
         return sample
