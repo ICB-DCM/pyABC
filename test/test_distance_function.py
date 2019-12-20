@@ -241,6 +241,10 @@ def test_independentlaplacekernel():
     kernel.initialize(0, None, x0)
     ret = kernel(x, x0)
     expected = - (3 * np.log(2 * 1) + 1 + 2 + 4.5)
+    sp_expected = np.log(
+        np.prod([sp.stats.laplace.pdf(x=x, loc=0, scale=1)
+                 for x in [1, 2, 4.5]]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # define own var
@@ -249,6 +253,10 @@ def test_independentlaplacekernel():
     ret = kernel(x, x0)
     expected = - (np.log(2 * 1) + np.log(2 * 2) + np.log(2 * 3)
                   + 1 / 1 + 2 / 2 + 4.5 / 3)
+    sp_expected = np.log(
+        np.prod([sp.stats.laplace.pdf(x=x, loc=0, scale=s)
+                 for x, s in zip([1, 2, 4.5], [1, 2, 3])]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # function var
