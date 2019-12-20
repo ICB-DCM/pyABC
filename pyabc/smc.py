@@ -523,7 +523,7 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             self.population_strategy.nr_particles, simulate_one,
-            all_accepted=True)
+            max_eval=np.inf, all_accepted=True)
 
         # extract accepted population
         population = sample.get_accepted_population()

@@ -22,7 +22,6 @@ def work(simulate_one,
     np.random.seed()
 
     sample = sample_factory()
-
     while (n_acc.value < n and
            (not all_accepted or n_eval.value < n) and
            (not check_max_eval or n_eval.value < max_eval)):
