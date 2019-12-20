@@ -6,7 +6,6 @@ Functions performing statistical operations on weighted points
 generated via importance sampling.
 """
 
-import scipy as sp
 import numpy as np
 from functools import wraps
 
@@ -31,15 +30,15 @@ def weighted_quantile(points, weights=None, alpha=0.5):
     """
 
     # sort input and set weights
-    sorted_indices = sp.argsort(points)
+    sorted_indices = np.argsort(points)
     points = points[sorted_indices]
     if weights is None:
         len_points = len(points)
-        weights = sp.ones(len_points) / len_points
+        weights = np.ones(len_points) / len_points
     else:
         weights = weights[sorted_indices]
 
-    cs = sp.cumsum(weights)
+    cs = np.cumsum(weights)
     quantile = np.interp(alpha, cs - 0.5*weights, points)
     return quantile
 
@@ -67,7 +66,7 @@ def weighted_std(points, weights):
     weighted mean.
     """
     mean = weighted_mean(points, weights)
-    std = sp.sqrt(((points - mean)**2 * weights).sum())
+    std = np.sqrt(((points - mean)**2 * weights).sum())
     return std
 
 
