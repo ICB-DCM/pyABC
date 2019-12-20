@@ -23,12 +23,16 @@ class SingleCoreSampler(Sampler):
 
         for _ in range(n):
             while True:
+                if self.check_max_eval and nr_simulations >= max_eval:
+                    break
                 new_sim = simulate_one()
                 sample.append(new_sim)
                 nr_simulations += 1
-                if new_sim.accepted or \
-                        (self.check_max_eval and nr_simulations > max_eval):
+                if new_sim.accepted:
                     break
         self.nr_evaluations_ = nr_simulations
+
+        if sample.n_accepted < n:
+            sample.ok = False
 
         return sample

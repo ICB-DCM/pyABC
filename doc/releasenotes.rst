@@ -15,7 +15,9 @@ Release Notes
 * Add possibility to log employed norms in StochasticAcceptor (#231) and
   temperature proposals in Temperature (#232).
 * Implement optional early stopping in the MulticoreEvalParallelSampler and
-  the SingleCoreSampler, when a maximum simulation number is exceeded (#236).
+  the SingleCoreSampler, when a maximum simulation number is exceeded
+  (default behavior untouched).
+* Log stopping reason in ABCSMC.run (all #236).
 
 
 0.9.24 (2019-11-19)
