@@ -1,4 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
+import numpy as np
 from typing import List, Callable
 
 from pyabc.population import Particle, Population
@@ -146,7 +147,7 @@ def wrap_sample(f):
     Checks whether the sampling output is valid.
     """
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         sample = f(self, n, simulate_one, max_eval, all_accepted)
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
@@ -196,7 +197,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
             self,
             n: int,
             simulate_one: Callable,
-            max_eval: int,
+            max_eval: int = np.inf,
             all_accepted: bool = False) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
@@ -214,7 +215,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
             data to check for acceptance, as indicated via the
             particle.accepted flag.
 
-        max_eval: int
+        max_eval: int, optional
             Maximum number of evaluations to perform. Some samplers can check
             this condition directly and can thus terminate proactively.
 

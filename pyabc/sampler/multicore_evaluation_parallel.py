@@ -90,7 +90,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         return nr_cores_available()
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
