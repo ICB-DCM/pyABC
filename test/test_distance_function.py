@@ -204,6 +204,10 @@ def test_independentnormalkernel():
     kernel.initialize(0, None, x0)
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1**2 + 2**2 + 4.5**2)
+    sp_expected = np.log(
+        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=1)
+                 for x in [1, 2, 4.5]]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # define own var
@@ -212,6 +216,10 @@ def test_independentnormalkernel():
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi) + np.log(1) + np.log(2)
                        + np.log(3) + 1**2 / 1 + 2**2 / 2 + 4.5**2 / 3)
+    sp_expected = np.log(
+        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=s)
+                 for x, s in zip([1, 2, 4.5], np.sqrt([1, 2, 3]))]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # compare to normal kernel
