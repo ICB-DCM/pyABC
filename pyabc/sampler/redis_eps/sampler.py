@@ -1,3 +1,4 @@
+import numpy as np
 import pickle
 from time import sleep
 import cloudpickle
@@ -71,7 +72,7 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         # open pipeline
         pipeline = self.redis.pipeline()
 
