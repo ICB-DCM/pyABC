@@ -11,7 +11,7 @@ Release Notes
 0.9.25 (2019-12-20)
 -------------------
 
-* Add summary statistics callback plot function (#231)
+* Add summary statistics callback plot function (#231).
 * Add possibility to log employed norms in StochasticAcceptor (#231) and
   temperature proposals in Temperature (#232).
 * Implement optional early stopping in the MulticoreEvalParallelSampler and
