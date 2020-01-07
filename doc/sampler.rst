@@ -114,8 +114,9 @@ the server, and reject all unauthorised access. To run Redis server with
 authentication required you need first to modify the redis.conf file.
 
 The redis.conf is the file that contains Redis configuration. Usually,
-it can be found on `/etc/redis/`. to allow safe and secure communication,
-redis.conf file should be reconfigure as follow:
+it can be found on `/etc/redis/`. To allow safe and secure communication,
+redis.conf file should be reconfigure. You can copy the file to your home
+directory and then modify it as follow:
 
 1. The Redis server should be configured in a way that allows it to bind to
 network interfaces other than localhost (127.0.0.1). To enable that, be sure
@@ -128,9 +129,9 @@ appropriate network interface IP address.
     #bind 127.0.0.1
 
 2. The password authentication must be enabled. To configure that, be sure
-that the masterauth and requirepass configuration options are uncommented, and
-their values are the SAME. Note: it advised to select complex password string
-(e.g., thW0K5tB4URO5a9wsykBH8ja4AdwkQcw).
+that the ``masterauth`` and ``requirepass`` configuration options are
+uncommented, and their values are the SAME. Note: it advised to select complex
+password string.
 
 .. code:: bash
 
@@ -140,7 +141,8 @@ their values are the SAME. Note: it advised to select complex password string
 
     requirepass your_redis_password
 
-3. Finally, you need to restart the Redis server to reload the new configuration.
+3. Finally, you need to restart the Redis server to reload the new
+configuration.
 
 .. code:: bash
 
@@ -151,7 +153,8 @@ Step 2: Start a Redis server with password authentication
 
 Start one machine, which is reachable by the machine running the pyABC
 main application and by the workers, a Redis server, specifying the
-location of the configuration file for redis and the port number:
+location of the configuration file for redis server that you modify in the first
+step and the port number:
 
 
 .. code:: bash
@@ -238,9 +241,9 @@ with several cores.
 Optional: Running redis server without password authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 In some cases, a user might want to run the redis server without password
-authentication. To do so, you need to undo all configuration in
-the first step. Then, you can start the redis server without specifying
-the location of the ``redis.conf`` file and use the flag ``--protected-mode`` with value no
+authentication. To do so, you can start the redis server without specifying
+the location of the ``redis.conf`` file and use the flag ``--protected-mode``
+with value no
 
 .. code:: bash
 
