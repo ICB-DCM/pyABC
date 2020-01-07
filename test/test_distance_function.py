@@ -11,6 +11,7 @@ from pyabc.distance import (
     IndependentNormalKernel,
     IndependentLaplaceKernel,
     BinomialKernel,
+    PoissonKernel,
     median_absolute_deviation,
     mean_absolute_deviation,
     standard_deviation,
@@ -306,4 +307,22 @@ def test_binomialkernel():
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.binom.logpmf(
         k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
+    assert np.isclose(ret, expected)
+
+
+def test_poissonkernel():
+    x0 = {'y0': np.array([4, 5]), 'y1': 7}
+    x = {'y0': np.array([7, 7]), 'y1': 7}
+
+    kernel = PoissonKernel()
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.poisson.logpmf(k=[4, 5, 7], mu=[7, 7, 7]))
+    assert np.isclose(ret, expected)
+
+    # linear output
+    kernel = PoissonKernel(ret_scale=SCALE_LIN)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.prod(sp.stats.poisson.pmf(k=[4, 5, 7], mu=[7, 7, 7]))
     assert np.isclose(ret, expected)

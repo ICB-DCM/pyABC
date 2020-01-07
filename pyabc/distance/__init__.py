@@ -16,7 +16,8 @@ from .base import (
     IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
-    to_distance)
+    to_distance,
+)
 from .distance import (
     PNormDistance,
     AdaptivePNormDistance,
@@ -27,7 +28,8 @@ from .distance import (
     MinMaxDistance,
     PercentileDistance,
     RangeEstimatorDistance,
-    DistanceWithMeasureList)
+    DistanceWithMeasureList,
+)
 from .scale import (
     median_absolute_deviation,
     mean_absolute_deviation,
@@ -41,7 +43,8 @@ from .scale import (
     standard_deviation_to_observation,
     span,
     mean,
-    median)
+    median,
+)
 from .kernel import (
     StochasticKernel,
     SCALE_LIN,
@@ -50,7 +53,9 @@ from .kernel import (
     NormalKernel,
     IndependentNormalKernel,
     IndependentLaplaceKernel,
-    BinomialKernel)
+    BinomialKernel,
+    PoissonKernel,
+)
 
 
 __all__ = [
@@ -95,4 +100,5 @@ __all__ = [
     "IndependentNormalKernel",
     "IndependentLaplaceKernel",
     "BinomialKernel",
+    "PoissonKernel",
 ]
