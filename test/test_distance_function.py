@@ -12,6 +12,7 @@ from pyabc.distance import (
     IndependentLaplaceKernel,
     BinomialKernel,
     PoissonKernel,
+    NegativeBinomialKernel,
     median_absolute_deviation,
     mean_absolute_deviation,
     standard_deviation,
@@ -325,4 +326,32 @@ def test_poissonkernel():
     kernel.initialize(0, None, x0)
     ret = kernel(x, x0)
     expected = np.prod(sp.stats.poisson.pmf(k=[4, 5, 7], mu=[7, 7, 7]))
+    assert np.isclose(ret, expected)
+
+
+def test_negativebinomialkernel():
+    x0 = {'y0': np.array([4, 5]), 'y1': 8}
+    x = {'y0': np.array([7, 7]), 'y1': 7}
+
+    kernel = NegativeBinomialKernel(p=0.9)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
+    assert np.isclose(ret, expected)
+
+    # linear output
+    kernel = NegativeBinomialKernel(p=0.9, ret_scale=SCALE_LIN)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.prod(sp.stats.nbinom.pmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
+    assert np.isclose(ret, expected)
+
+    # function p
+    def p(par):
+        return np.array([0.9, 0.8, 0.7])
+    kernel = NegativeBinomialKernel(p=p)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.nbinom.logpmf(
+        k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
     assert np.isclose(ret, expected)

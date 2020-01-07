@@ -55,6 +55,7 @@ from .kernel import (
     IndependentLaplaceKernel,
     BinomialKernel,
     PoissonKernel,
+    NegativeBinomialKernel,
 )
 
 
@@ -101,4 +102,5 @@ __all__ = [
     "IndependentLaplaceKernel",
     "BinomialKernel",
     "PoissonKernel",
+    "NegativeBinomialKernel",
 ]
