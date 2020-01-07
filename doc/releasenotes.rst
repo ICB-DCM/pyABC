@@ -18,6 +18,7 @@ Release Notes
   the SingleCoreSampler, when a maximum simulation number is exceeded
   (default behavior untouched).
 * Log stopping reason in ABCSMC.run (all #236).
+* Implement Poisson stochastic kernel (#237).
 
 
 0.9.24 (2019-11-19)
