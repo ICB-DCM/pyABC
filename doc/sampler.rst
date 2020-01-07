@@ -105,23 +105,62 @@ How to setup a Redis based distributed cluster
 ----------------------------------------------
 
 
-Step 1: Start a Redis server without password authentication
+Step 1: Reconfigure the redis.conf file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Start one some machine, which is reachable by the machine running the pyABC
-main application and by the workers, a Redis server, disabling password
-authentication:
+It is advised to run Redis server in protected mode. Authenticated
+communication will allow only for authenticated access to communicated with
+the server, and reject all unauthorised access. To run Redis server with
+authentication required you need first to modify the redis.conf file.
+
+The redis.conf is the file that contains Redis configuration. Usually,
+it can be found on `/etc/redis/`. to allow safe and secure communication,
+redis.conf file should be reconfigure as follow:
+
+1. The Redis server should be configured in a way that allows it to bind to
+network interfaces other than localhost (127.0.0.1). To enable that, be sure
+that the bind configuration option is either commented out or modified to an
+appropriate network interface IP address.
 
 
 .. code:: bash
 
-   redis-server --protected-mode no
+    #bind 127.0.0.1
+
+2. The password authentication must be enabled. To configure that, be sure
+that the masterauth and requirepass configuration options are uncommented, and
+their values are the SAME. Note: it advised to select complex password string
+(e.g., thW0K5tB4URO5a9wsykBH8ja4AdwkQcw).
+
+.. code:: bash
+
+    masterauth your_redis_password
+
+.. code:: bash
+
+    requirepass your_redis_password
+
+3. Finally, you need to restart the Redis server to reload the new configuration.
+
+.. code:: bash
+
+    service redis-server restart
+
+Step 2: Start a Redis server with password authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Start one machine, which is reachable by the machine running the pyABC
+main application and by the workers, a Redis server, specifying the
+location of the configuration file for redis and the port number:
 
 
-You should get an output looking similar to the one below:
+.. code:: bash
 
-.. literalinclude:: redis_setup/redis_start_output.txt
-   :language: bash
+   redis-server /path/to/redis.conf --port 6379
+
+Note that if you didn't specify a port, redis will assign a default port,
+that is 6379, for your server.
+
 
 If you're on Linux, you can install redis either via your package manager
 of if you're using anaconda via
@@ -135,7 +174,7 @@ We assume for now, that the IP address of the machine running the Redis server
 is 111.111.111.111.
 
 
-Step 2 or 3: Start pyABC
+Step 3 or 4: Start pyABC
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 It does not matter what you do first: starting pyABC or starting the
@@ -161,21 +200,23 @@ server. Then start the ABC-SMC run as usual with
 passing the stopping conditions.
 
 
-Step 2 or 3: Start the workers
+Step 3 or 4: Start the workers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It does not matter what you do first: starting pyABC or starting the
 workers. You can even dynamically add workers after the sampling has started.
-Start as many workers as you whish on the machines you whish. Up to 10,000
+Start as many workers as you wish on the machines you wish. Up to 10,000
 workers should not pose any problem if the model evaluation times are on the
 second scale or longer.
 
 .. code:: bash
 
-    abc-redis-worker --host=111.111.111.111
+    abc-redis-worker --host=111.111.111.111 --port 6379 --password mypass
 
 Again, 111.111.111.111 is the IP address of the machine running the Redis
-server. You should get an output similar to
+server and we use the default port number. You also need to specify the password
+that you use in the configuration file ``redis.conf``. In our case that password
+was ``mypass``. You should get an output similar to
 
 
 .. code:: bash
@@ -193,6 +234,30 @@ The ``abc-redis-worker`` command also has an option ``--processes`` which
 allows you to start several worker procecces in parallel.
 This might be handy in situations where you have to use a whole cluster node
 with several cores.
+
+Optional: Running redis server without password authentication
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In some cases, a user might want to run the redis server without password
+authentication. To do so, you need to undo all configuration in
+the first step. Then, you can start the redis server without specifying
+the location of the ``redis.conf`` file and use the flag ``--protected-mode`` with value no
+
+.. code:: bash
+
+   redis-server --protected-mode no
+
+You should get an output looking similar to the one below:
+
+.. literalinclude:: redis_setup/redis_start_output.txt
+   :language: bash
+
+
+Later, to start workers, you don't need use the password flag
+
+.. code:: bash
+
+
+    abc-redis-worker --host=111.111.111.111
 
 
 Optional: Monitoring
