@@ -474,6 +474,65 @@ class PoissonKernel(StochasticKernel):
         return ret
 
 
+class NegativeBinomialKernel(StochasticKernel):
+    """
+    A kernel with a negative binomial probability mass function.
+
+    Parameters
+    ----------
+
+    p: Union[float, Callable]
+        The success probability.
+    ret_scale, keys, pdf_max: See StochasticKernel.
+    """
+
+    def __init__(
+            self,
+            p: float,
+            ret_scale: str = SCALE_LOG,
+            keys: List[str] = None,
+            pdf_max: float = None):
+        super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
+
+        if not callable(p) and (p > 1 or p < 0):
+            raise ValueError(
+                f"The success probability p={p} must be in the interval"
+                f"[0, 1].")
+        self.p = p
+
+    def initialize(
+            self,
+            t: int,
+            get_all_sum_stats: Callable[[], List[dict]],
+            x_0: dict = None):
+        # in particular set keys
+        super().initialize(
+            t=t,
+            get_all_sum_stats=get_all_sum_stats,
+            x_0=x_0)
+
+        # pdf_max is not computed
+
+    def __call__(
+            self,
+            x: dict,
+            x_0: dict,
+            t: int = None,
+            par: dict = None) -> float:
+        x = np.array(_arr(x, self.keys), dtype=int)
+        x_0 = np.array(_arr(x_0, self.keys), dtype=int)
+
+        # compute p
+        p = self.p if not callable(self.p) else self.p(par)
+
+        if self.ret_scale == SCALE_LIN:
+            ret = np.prod(sp.stats.nbinom.pmf(k=x_0, n=x, p=p))
+        else:  # self.ret_scale == SCALE_LOG
+            ret = np.sum(sp.stats.nbinom.logpmf(k=x_0, n=x, p=p))
+
+        return ret
+
+
 def binomial_pdf_max(x_0, keys, p, ret_scale):
     """
     Compute the model value of the binomial distribution.

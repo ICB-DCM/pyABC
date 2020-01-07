@@ -8,7 +8,7 @@ Release Notes
 ..........
 
 
-0.9.25 (2019-12-20)
+0.9.25 (2020-01-07)
 -------------------
 
 * Add summary statistics callback plot function (#231).
@@ -18,7 +18,7 @@ Release Notes
   the SingleCoreSampler, when a maximum simulation number is exceeded
   (default behavior untouched).
 * Log stopping reason in ABCSMC.run (all #236).
-* Implement Poisson stochastic kernel (#237).
+* Implement Poisson (#237) and negative binomial (#239) stochastic kernels.
 
 
 0.9.24 (2019-11-19)
