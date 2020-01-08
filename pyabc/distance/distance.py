@@ -1,5 +1,3 @@
-import scipy as sp
-
 import numpy as np
 from scipy import linalg as la
 from typing import List, Callable, Union
@@ -658,10 +656,10 @@ class PCADistance(DistanceWithMeasureList):
         self._whitening_transformation_matrix = None
 
     def _dict_to_vect(self, x):
-        return sp.asarray([x[key] for key in self.measures_to_use])
+        return np.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
-        samples_vec = sp.asarray([self._dict_to_vect(x)
+        samples_vec = np.asarray([self._dict_to_vect(x)
                                   for x in sum_stats])
         # samples_vec is an array of shape nr_samples x nr_features
         means = samples_vec.mean(axis=0)
@@ -669,7 +667,7 @@ class PCADistance(DistanceWithMeasureList):
         covariance = centered.T.dot(centered)
         w, v = la.eigh(covariance)
         self._whitening_transformation_matrix = (
-            v.dot(sp.diag(1. / sp.sqrt(w))).dot(v.T))
+            v.dot(np.diag(1. / np.sqrt(w))).dot(v.T))
 
     def initialize(self,
                    t: int,
@@ -813,12 +811,12 @@ class PercentileDistance(RangeEstimatorDistance):
 
     @staticmethod
     def upper(parameter_list):
-        return sp.percentile(parameter_list,
+        return np.percentile(parameter_list,
                              100 - PercentileDistance.PERCENTILE)
 
     @staticmethod
     def lower(parameter_list):
-        return sp.percentile(parameter_list,
+        return np.percentile(parameter_list,
                              PercentileDistance.PERCENTILE)
 
     def get_config(self):

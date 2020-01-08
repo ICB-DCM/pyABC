@@ -4,7 +4,6 @@ from typing import List, Union
 import json
 import numpy as np
 import pandas as pd
-import scipy as sp
 from sqlalchemy import func
 from sqlalchemy.orm import subqueryload
 from functools import wraps
@@ -911,7 +910,7 @@ class History:
                 for ss in sample.summary_statistics:
                     sum_stats[ss.name] = ss.value
                 results.append(sum_stats)
-        return sp.array(weights), results
+        return np.array(weights), results
 
     @with_session
     def get_weighted_sum_stats(self, t: int = None) \

@@ -1,4 +1,4 @@
-import scipy as sp
+import numpy as np
 import pandas as pd
 import logging
 from typing import Callable, List, Union
@@ -218,7 +218,7 @@ class QuantileEpsilon(Epsilon):
             weights /= weights.sum()
         else:
             len_distances = len(distances)
-            weights = sp.ones(len_distances) / len_distances
+            weights = np.ones(len_distances) / len_distances
 
         # compute weighted quantile
         quantile = weighted_quantile(
