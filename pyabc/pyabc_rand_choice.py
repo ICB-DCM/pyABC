@@ -1,4 +1,4 @@
-import scipy as sp
+import numpy as np
 
 
 def fast_random_choice(weights):
@@ -9,7 +9,7 @@ def fast_random_choice(weights):
     of a factor of 2
     """
     cs = 0
-    u = sp.random.rand()
+    u = np.random.rand()
     for k in range(weights.size):
         cs += weights[k]
         if u <= cs:

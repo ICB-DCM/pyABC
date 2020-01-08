@@ -67,7 +67,7 @@ def test_single_parameter_percentile():
     dist_f.initialize(0, abc.sample_from_prior)
     d = dist_f({"a": 1}, {"a": 2})
     expected = (
-        1 / (sp.percentile([-3, 3, 10], 80) - sp.percentile([-3, 3, 10], 20))
+        1 / (np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20))
     )
     assert expected == d
 

@@ -1,5 +1,5 @@
 import numpy.linalg as la
-import scipy as sp
+import numpy as np
 import pandas as pd
 from .base import Transition
 from scipy.spatial import cKDTree
@@ -84,29 +84,29 @@ class LocalTransition(Transition):
 
         covs, inv_covs, dets = list(zip(*[self._cov_and_inv(n, indices)
                                     for n in range(X.shape[0])]))
-        self.covs = sp.array(covs)
-        self.inv_covs = sp.array(inv_covs)
-        self.determinants = sp.array(dets)
+        self.covs = np.array(covs)
+        self.inv_covs = np.array(inv_covs)
+        self.determinants = np.array(dets)
 
-        self.normalization = sp.sqrt(
-            (2 * sp.pi) ** self.X_arr.shape[1] * self.determinants)
+        self.normalization = np.sqrt(
+            (2 * np.pi) ** self.X_arr.shape[1] * self.determinants)
 
-        if not sp.isreal(self.normalization).all():
+        if not np.isreal(self.normalization).all():
             raise Exception("Normalization not real")
-        self.normalization = sp.real(self.normalization)
+        self.normalization = np.real(self.normalization)
 
     def pdf(self, x):
         x = x[self.X.columns].values
         if len(x.shape) == 1:
             return self._pdf_single(x)
         else:
-            return sp.array([self._pdf_single(x) for x in x])
+            return np.array([self._pdf_single(x) for x in x])
 
     def _pdf_single(self, x):
         distance = self.X_arr - x
-        cov_distance = sp.einsum("ij,ijk,ik->i",
+        cov_distance = np.einsum("ij,ijk,ik->i",
                                  distance, self.inv_covs, distance)
-        return sp.average(sp.exp(-.5 * cov_distance) / self.normalization,
+        return np.average(np.exp(-.5 * cov_distance) / self.normalization,
                           weights=self.w)
 
     def _cov_and_inv(self, n, indices):
@@ -117,7 +117,7 @@ class LocalTransition(Transition):
         cov = self._cov(indices, n)
         det = la.det(cov)
         while det <= 0:
-            cov += sp.identity(cov.shape[0]) * self.EPS
+            cov += np.identity(cov.shape[0]) * self.EPS
             det = la.det(cov)
         inv_cov = la.inv(cov)
         return cov, inv_cov, det
@@ -129,17 +129,17 @@ class LocalTransition(Transition):
                                      - self.X_arr[n])
             local_weights = self.w[surrounding_indices]
         else:
-            nearest_vector_deltas = sp.absolute(self.X_arr)
-            local_weights = sp.array([1])
+            nearest_vector_deltas = np.absolute(self.X_arr)
+            local_weights = np.array([1])
         cov = smart_cov(nearest_vector_deltas,
                         local_weights / local_weights.sum())
-        if sp.absolute(cov.sum()) == 0:
+        if np.absolute(cov.sum()) == 0:
             for k in range(cov.shape[0]):
-                cov[k, k] = sp.absolute(self.X_arr[0, k])
+                cov[k, k] = np.absolute(self.X_arr[0, k])
         return cov * self.scaling
 
     def rvs_single(self):
-        support_index = sp.random.choice(self.w.shape[0], p=self.w)
-        sample = sp.random.multivariate_normal(self.X_arr[support_index],
+        support_index = np.random.choice(self.w.shape[0], p=self.w)
+        sample = np.random.multivariate_normal(self.X_arr[support_index],
                                                self.covs[support_index])
         return pd.Series(sample, index=self.X.columns)
