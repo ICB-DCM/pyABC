@@ -180,10 +180,14 @@ def work_on_population(redis: StrictRedis,
                    'h, (H,) d, (D) for seconds, minutes, hours and days. '
                    'E.g. for 12 hours you would pass --runtime=12h, for half '
                    'a day you could do 0.5d.')
-@click.option('--password', default=None, help='Password for a secure connection.')
+@click.option('--password', default=None, help='Password for a secure '
+                                               'connection.')
 @click.option('--processes', type=int, default=1, help="The number of worker "
                                                        "processes to start")
-def work(host="localhost", port=6379, runtime="2h", password=None, processes=1):
+def work(host="localhost",
+         port=6379, runtime="2h",
+         password=None,
+         processes=1):
     """
     Corresponds to the entry point abc-redis-worker.
     """
@@ -194,7 +198,8 @@ def work(host="localhost", port=6379, runtime="2h", password=None, processes=1):
         return _work(host, port, runtime, password)
 
     with Pool(processes) as pool:
-        res = pool.starmap(_work, [(host, port, runtime, password)] * processes)
+        res = pool.starmap(_work, [(host, port, runtime, password)]
+                           * processes)
     return res
 
 
