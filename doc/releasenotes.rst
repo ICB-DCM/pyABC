@@ -19,6 +19,7 @@ Release Notes
   (default behavior untouched).
 * Log stopping reason in ABCSMC.run (all #236).
 * Implement Poisson (#237) and negative binomial (#239) stochastic kernels.
+* Enable password protection for Redis sampler (#238).
 
 
 0.9.24 (2019-11-19)
