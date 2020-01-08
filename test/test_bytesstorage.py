@@ -3,7 +3,6 @@ from pyabc.storage.bytes_storage import to_bytes, from_bytes
 from pyabc.storage.numpy_bytes_storage import _primitive_types
 import pandas as pd
 import numpy as np
-import scipy as sp
 from rpy2.robjects import r
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
@@ -38,24 +37,24 @@ def object_(request):
     if par == "empty":
         return pd.DataFrame()
     if par == "df-int":
-        return pd.DataFrame({"a": sp.random.randint(-20, 20, 100),
-                             "b": sp.random.randint(-20, 20, 100)})
+        return pd.DataFrame({"a": np.random.randint(-20, 20, 100),
+                             "b": np.random.randint(-20, 20, 100)})
     if par == "df-float":
-        return pd.DataFrame({"a": sp.randn(100),
-                             "b": sp.randn(100)})
+        return pd.DataFrame({"a": np.random.randn(100),
+                             "b": np.random.randn(100)})
     if par == "df-non_numeric_str":
         return pd.DataFrame({"a": ["foo", "bar"],
                              "b": ["bar", "foo"]})
 
     if par == "df-numeric_str":
-        return pd.DataFrame({"a": list(map(str, sp.randn(100))),
+        return pd.DataFrame({"a": list(map(str, np.random.randn(100))),
                              "b": list(map(str,
-                                           sp.random.randint(-20, 20, 100)))})
+                                           np.random.randint(-20, 20, 100)))})
     if par == "df-int-float-numeric_str":
-        return pd.DataFrame({"a": sp.random.randint(-20, 20, 100),
-                             "b": sp.randn(100),
+        return pd.DataFrame({"a": np.random.randint(-20, 20, 100),
+                             "b": np.random.randn(100),
                              "c": list(map(str,
-                                           sp.random.randint(-20, 20, 100)))})
+                                           np.random.randint(-20, 20, 100)))})
     if par == "df-int-float-non_numeric_str-str_ind":
         return pd.DataFrame({"a": [1, 2],
                              "b": [1.1, 2.2],
@@ -69,7 +68,7 @@ def object_(request):
     if par == "series":
         return pd.Series({'a': 42, 'b': 3.8, 'c': 4.2})
     if par == "series-no_ind":
-        return pd.Series(sp.randn(10))
+        return pd.Series(np.random.randn(10))
     if par == "py-int":
         return 42
     if par == "py-float":
@@ -77,9 +76,9 @@ def object_(request):
     if par == "py-str":
         return "foo bar"
     if par == "np-int":
-        return sp.random.randint(-20, 20, 100)
+        return np.random.randint(-20, 20, 100)
     if par == "np-float":
-        return sp.random.randn(100)
+        return np.random.randn(100)
     if par == "np-str":
         return np.array(["foo", "bar"])
     if par == "np-single-int":
@@ -151,7 +150,7 @@ def _check_type(object_, rebuilt):
 
 def test_reference_parameter():
     def model(parameter):
-        return {"data": parameter["mean"] + 0.5 * sp.randn()}
+        return {"data": parameter["mean"] + 0.5 * np.random.randn()}
 
     prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 5),
                                p1=pyabc.RV("uniform", 0, 1))

@@ -8,6 +8,21 @@ Release Notes
 ..........
 
 
+0.9.25 (2020-01-08)
+-------------------
+
+* Add summary statistics callback plot function (#231).
+* Add possibility to log employed norms in StochasticAcceptor (#231) and
+  temperature proposals in Temperature (#232).
+* Implement optional early stopping in the MulticoreEvalParallelSampler and
+  the SingleCoreSampler, when a maximum simulation number is exceeded
+  (default behavior untouched).
+* Log stopping reason in ABCSMC.run (all #236).
+* Implement Poisson (#237) and negative binomial (#239) stochastic kernels.
+* Enable password protection for Redis sampler (#238).
+* Fix scipy deprecations (#234, #241).
+
+
 0.9.24 (2019-11-19)
 -------------------
 

@@ -36,7 +36,9 @@ from .distance import (
     NormalKernel,
     IndependentNormalKernel,
     IndependentLaplaceKernel,
-    BinomialKernel)
+    BinomialKernel,
+    PoissonKernel,
+    NegativeBinomialKernel)
 from .epsilon import (
     Epsilon,
     NoEpsilon,
@@ -106,6 +108,8 @@ __all__ = [
     "IndependentNormalKernel",
     "IndependentLaplaceKernel",
     "BinomialKernel",
+    "PoissonKernel",
+    "NegativeBinomialKernel",
     # epsilon
     "Epsilon",
     "NoEpsilon",
