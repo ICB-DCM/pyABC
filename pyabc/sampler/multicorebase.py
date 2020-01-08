@@ -10,12 +10,25 @@ class MultiCoreSampler(Sampler):
     Multi-core sampler base class. This sampler is not functional but provides
     the number of cores selection functionality used by all the multiprocessing
     samplers.
+
+    Parameters
+    ----------
+    n_procs: int
+        Number of processes.
+    daemon: bool
+        Whether to spawn workers in daemon mode.
+    check_max_eval: bool
+        Whether to check the maximum number of evaluations on the fly.
     """
 
-    def __init__(self, n_procs=None, daemon=True):
+    def __init__(self,
+                 n_procs: int = None,
+                 daemon: bool = True,
+                 check_max_eval: bool = False):
         super().__init__()
         self._n_procs = n_procs
         self.daemon = daemon
+        self.check_max_eval = check_max_eval
 
     @property
     def n_procs(self):

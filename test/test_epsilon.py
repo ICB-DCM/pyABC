@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import copy
+import tempfile
 
 
 def test_noepsilon():
@@ -57,7 +58,8 @@ def test_temperature():
         'pdf_norm': 5,
         'kernel_scale': pyabc.distance.SCALE_LOG}
     nr_pop = 3
-    eps = pyabc.Temperature(initial_temperature=42)
+    log_file = tempfile.mkstemp(suffix='.json')[1]
+    eps = pyabc.Temperature(initial_temperature=42, log_file=log_file)
     eps.initialize(0, get_weighted_distances, get_all_records,
                    nr_pop, acceptor_config)
 
@@ -72,6 +74,12 @@ def test_temperature():
     eps.update(2, get_weighted_distances, get_all_records,
                0.2, acceptor_config)
     assert eps(2) == 1
+
+    # check log file
+    proposed_temps = pyabc.storage.load_dict_from_json(log_file)
+    assert proposed_temps[0][0] == 42
+    assert len(proposed_temps[1]) == 2
+    assert len(proposed_temps[2]) == 1
 
 
 def get_weighted_distances():

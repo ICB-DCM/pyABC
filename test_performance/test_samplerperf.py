@@ -50,17 +50,18 @@ class MultiProcessingMappingSampler(MappingSampler):
 
 class DaskDistributedSamplerBatch(DaskDistributedSampler):
     def __init__(self, map=None):
-        batchsize = 10
-        super().__init__(batchsize=batchsize)
+        batch_size = 10
+        super().__init__(batch_size=batch_size)
 
 
 class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
     def __init__(self, map=None):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
-        batchsize = 10
+        batch_size = 10
         super().__init__(cfuture_executor=cfuture_executor,
-                         client_max_jobs=client_max_jobs, batchsize=batchsize)
+                         client_max_jobs=client_max_jobs,
+                         batch_size=batch_size)
 
 
 @pytest.fixture(params=[GenericFutureWithProcessPoolBatch,

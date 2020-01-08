@@ -14,15 +14,17 @@ def work(simulate_one,
          n_eval: Value,
          n_acc: Value,
          n: int,
+         check_max_eval: bool,
+         max_eval: int,
          all_accepted: bool,
          sample_factory):
     random.seed()
     np.random.seed()
 
     sample = sample_factory()
-
-    while n_acc.value < n and \
-            (not all_accepted or n_eval.value < n):
+    while (n_acc.value < n and
+           (not all_accepted or n_eval.value < n) and
+           (not check_max_eval or n_eval.value < max_eval)):
         with n_eval.get_lock():
             particle_id = n_eval.value
             n_eval.value += 1
@@ -87,7 +89,8 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             return self._n_procs
         return nr_cores_available()
 
-    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
+    def sample_until_n_accepted(
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -98,8 +101,9 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         processes = [
             Process(target=work,
-                    args=(simulate_one,
-                          queue, n_eval, n_acc, n, all_accepted,
+                    args=(simulate_one, queue,
+                          n_eval, n_acc, n,
+                          self.check_max_eval, max_eval, all_accepted,
                           self._create_empty_sample),
                     daemon=self.daemon)
             for _ in range(self.n_procs)
@@ -125,7 +129,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
-        id_results = id_results[:n]
+        id_results = id_results[:min(len(id_results), n)]
 
         self.nr_evaluations_ = n_eval.value
 
@@ -133,7 +137,10 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         # create 1 to-be-returned sample from results
         sample = self._create_empty_sample()
-        for j in range(n):
-            sample += results[j]
+        for result in results:
+            sample += result
+
+        if sample.n_accepted < n:
+            sample.ok = False
 
         return sample
