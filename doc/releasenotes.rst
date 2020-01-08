@@ -8,7 +8,7 @@ Release Notes
 ..........
 
 
-0.9.25 (2020-01-07)
+0.9.25 (2020-01-08)
 -------------------
 
 * Add summary statistics callback plot function (#231).
@@ -20,6 +20,7 @@ Release Notes
 * Log stopping reason in ABCSMC.run (all #236).
 * Implement Poisson (#237) and negative binomial (#239) stochastic kernels.
 * Enable password protection for Redis sampler (#238).
+* Fix scipy deprecations (#234, #241).
 
 
 0.9.24 (2019-11-19)
