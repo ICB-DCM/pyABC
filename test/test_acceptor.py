@@ -1,4 +1,5 @@
 import numpy as np
+import tempfile
 
 import pyabc
 from pyabc.acceptor import AcceptorResult
@@ -66,8 +67,11 @@ def test_uniform_acceptor():
 
 
 def test_stochastic_acceptor():
+    # store pnorms
+    pnorm_file = tempfile.mkstemp(suffix=".json")[1]
     acceptor = pyabc.StochasticAcceptor(
-        pdf_norm_method=pyabc.pdf_norm_max_found)
+        pdf_norm_method=pyabc.pdf_norm_max_found,
+        log_file=pnorm_file)
     eps = pyabc.Temperature(initial_temperature=1)
     distance = pyabc.IndependentNormalKernel(var=np.array([1, 1]))
 
@@ -80,7 +84,13 @@ def test_stochastic_acceptor():
     abc = pyabc.ABCSMC(model, prior, distance, eps=eps,
                        acceptor=acceptor, population_size=10)
     abc.new(pyabc.create_sqlite_db_id(), x_0)
-    abc.run(max_nr_populations=1, minimum_epsilon=1.)
+    h = abc.run(max_nr_populations=1, minimum_epsilon=1.)
+
+    # check pnorms
+    pnorms = pyabc.storage.load_dict_from_json(pnorm_file)
+    assert len(pnorms) == h.max_t + 2  # +1 t0, +1 one final update
+    assert isinstance(list(pnorms.keys())[0], int)
+    assert isinstance(pnorms[0], float)
 
     # use no initial temperature and adaptive c
     acceptor = pyabc.StochasticAcceptor()

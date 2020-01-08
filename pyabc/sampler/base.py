@@ -1,4 +1,5 @@
 from abc import ABC, ABCMeta, abstractmethod
+import numpy as np
 from typing import List, Callable
 
 from pyabc.population import Particle, Population
@@ -14,11 +15,15 @@ class Sample:
     record_rejected: bool
         Whether to record rejected particles as well, along with accepted
         ones.
+    ok: bool
+        Whether the sampling process succeeded (usually in generating the
+        requested number of particles).
     """
 
-    def __init__(self, record_rejected: bool = False):
+    def __init__(self, record_rejected: bool = False, ok: bool = True):
         self._particles = []
         self.record_rejected = record_rejected
+        self.ok = ok
 
     @property
     def all_sum_stats(self):
@@ -141,9 +146,11 @@ def wrap_sample(f):
     Wrapper for Sampler.sample_until_n_accepted.
     Checks whether the sampling output is valid.
     """
-    def sample_until_n_accepted(self, n, simulate_one, all_accepted=False):
-        sample = f(self, n, simulate_one, all_accepted)
-        if sample.n_accepted != n:
+    def sample_until_n_accepted(
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+        sample = f(self, n, simulate_one, max_eval, all_accepted)
+        if sample.n_accepted != n and sample.ok:
+            # this should not happen if the sampler is configured correctly
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
         return sample
@@ -190,6 +197,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
             self,
             n: int,
             simulate_one: Callable,
+            max_eval: int = np.inf,
             all_accepted: bool = False) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
@@ -206,6 +214,10 @@ class Sampler(ABC, metaclass=SamplerMeta):
             sampling parameters, simulating data, and comparing to observed
             data to check for acceptance, as indicated via the
             particle.accepted flag.
+
+        max_eval: int, optional
+            Maximum number of evaluations to perform. Some samplers can check
+            this condition directly and can thus terminate proactively.
 
         all_accepted: bool, optional (default = False)
             If it is known in advance that all sampled particles will have

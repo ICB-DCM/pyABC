@@ -2,15 +2,87 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import logging
-from typing import List, Union
+from typing import Callable, List, Union
+
+from ..storage import History
 
 
 logger = logging.getLogger("Data_plot")
 
 
-def plot_data(obs_data: dict,
-              sim_data: dict,
-              keys: Union[List[str], str] = None):
+def plot_data_callback(
+        history: History,
+        f_plot: Callable = None,
+        f_plot_aggregated: Callable = None,
+        t: int = None,
+        ax=None, **kwargs):
+    """
+    Plot the summary statistics from the history using callback functions
+    to plot single statistics or aggregated values.
+
+    Parameters
+    ----------
+
+    history: History
+        The history object to use.
+    f_plot: Callable, optional
+        Function to plot a single summary statistic. Takes the parameters
+        (sum_stat, weight, ax, **kwargs).
+    f_plot_aggregated: Callable
+        Function to plot aggregated values on summary statistics. Takes
+        the parameters (sum_stats, weights, ax, **kwargs).
+    t: int, optional
+        Time point to extract data from the history for.
+    ax: maplotlib.axes.Axes
+        Axis object for the plot. This object is not touched directly and
+        can thus be also e.g. a list of axis objects.
+    **kwargs:
+        Additional arguments are passed on to the plotting functions.
+
+    Returns
+    -------
+
+    ax: Axis of the generated plot.
+    """
+    weights, sum_stats = history.get_weighted_sum_stats(t=t)
+    return plot_data_callback_lowlevel(
+        sum_stats, weights, f_plot, f_plot_aggregated, ax, **kwargs)
+
+
+def plot_data_callback_lowlevel(
+        sum_stats: List,
+        weights: List,
+        f_plot: Callable,
+        f_plot_aggregated: Callable = None,
+        ax=None, **kwargs):
+    """
+    Lowlevel interface for plot_data_callback (see there for the remaining
+    parameters).
+
+    Parameters
+    ----------
+
+    sum_stats: List
+        List of summary statistics.
+    weights: List
+        List of corresponding (usually normalized) weights.
+    """
+    if ax is None:
+        _, ax = plt.subplots()
+
+    if f_plot is not None:
+        for sum_stat, weight in zip(sum_stats, weights):
+            f_plot(sum_stat, weight, ax, **kwargs)
+
+    if f_plot_aggregated is not None:
+        f_plot_aggregated(sum_stats, weights, ax, **kwargs)
+
+    return ax
+
+
+def plot_data_default(obs_data: dict,
+                      sim_data: dict,
+                      keys: Union[List[str], str] = None):
     """
     Plot summary statistic data.
 

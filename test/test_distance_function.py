@@ -11,6 +11,8 @@ from pyabc.distance import (
     IndependentNormalKernel,
     IndependentLaplaceKernel,
     BinomialKernel,
+    PoissonKernel,
+    NegativeBinomialKernel,
     median_absolute_deviation,
     mean_absolute_deviation,
     standard_deviation,
@@ -204,6 +206,10 @@ def test_independentnormalkernel():
     kernel.initialize(0, None, x0)
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1**2 + 2**2 + 4.5**2)
+    sp_expected = np.log(
+        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=1)
+                 for x in [1, 2, 4.5]]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # define own var
@@ -212,6 +218,10 @@ def test_independentnormalkernel():
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi) + np.log(1) + np.log(2)
                        + np.log(3) + 1**2 / 1 + 2**2 / 2 + 4.5**2 / 3)
+    sp_expected = np.log(
+        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=s)
+                 for x, s in zip([1, 2, 4.5], np.sqrt([1, 2, 3]))]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # compare to normal kernel
@@ -241,6 +251,10 @@ def test_independentlaplacekernel():
     kernel.initialize(0, None, x0)
     ret = kernel(x, x0)
     expected = - (3 * np.log(2 * 1) + 1 + 2 + 4.5)
+    sp_expected = np.log(
+        np.prod([sp.stats.laplace.pdf(x=x, loc=0, scale=1)
+                 for x in [1, 2, 4.5]]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # define own var
@@ -249,6 +263,10 @@ def test_independentlaplacekernel():
     ret = kernel(x, x0)
     expected = - (np.log(2 * 1) + np.log(2 * 2) + np.log(2 * 3)
                   + 1 / 1 + 2 / 2 + 4.5 / 3)
+    sp_expected = np.log(
+        np.prod([sp.stats.laplace.pdf(x=x, loc=0, scale=s)
+                 for x, s in zip([1, 2, 4.5], [1, 2, 3])]))
+    assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
     # function var
@@ -290,4 +308,50 @@ def test_binomialkernel():
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.binom.logpmf(
         k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
+    assert np.isclose(ret, expected)
+
+
+def test_poissonkernel():
+    x0 = {'y0': np.array([4, 5]), 'y1': 7}
+    x = {'y0': np.array([7, 7]), 'y1': 7}
+
+    kernel = PoissonKernel()
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.poisson.logpmf(k=[4, 5, 7], mu=[7, 7, 7]))
+    assert np.isclose(ret, expected)
+
+    # linear output
+    kernel = PoissonKernel(ret_scale=SCALE_LIN)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.prod(sp.stats.poisson.pmf(k=[4, 5, 7], mu=[7, 7, 7]))
+    assert np.isclose(ret, expected)
+
+
+def test_negativebinomialkernel():
+    x0 = {'y0': np.array([4, 5]), 'y1': 8}
+    x = {'y0': np.array([7, 7]), 'y1': 7}
+
+    kernel = NegativeBinomialKernel(p=0.9)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
+    assert np.isclose(ret, expected)
+
+    # linear output
+    kernel = NegativeBinomialKernel(p=0.9, ret_scale=SCALE_LIN)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.prod(sp.stats.nbinom.pmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
+    assert np.isclose(ret, expected)
+
+    # function p
+    def p(par):
+        return np.array([0.9, 0.8, 0.7])
+    kernel = NegativeBinomialKernel(p=p)
+    kernel.initialize(0, None, x0)
+    ret = kernel(x, x0)
+    expected = np.sum(sp.stats.nbinom.logpmf(
+        k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
     assert np.isclose(ret, expected)
