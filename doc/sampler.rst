@@ -141,12 +141,6 @@ password string.
 
     requirepass your_redis_password
 
-3. Finally, you need to restart the Redis server to reload the new
-configuration.
-
-.. code:: bash
-
-    service redis-server restart
 
 Step 2: Start a Redis server with password authentication
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
