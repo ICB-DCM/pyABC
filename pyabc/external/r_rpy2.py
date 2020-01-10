@@ -19,14 +19,14 @@ Currently, the R language is supported.
 from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
-import numbers
 import warnings
 import logging
 
 logger = logging.getLogger("External")
 
 try:
-    from rpy2.robjects import ListVector, r
+    from rpy2.robjects import (ListVector, r, default_converter, conversion,
+                               pandas2ri, numpy2ri)
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     logger.error(
         "Install rpy2 to enable simple support for the R language.")
@@ -40,12 +40,12 @@ def dict_to_named_list(dct):
             or isinstance(dct, Parameter)
             or isinstance(dct, pd.core.series.Series)):
         dct = {key: val for key, val in dct.items()}
-        # convert numbers to builtin types before conversion (see rpy2 #548)
-        for key, val in dct.items():
-            if isinstance(val, numbers.Integral):
-                dct[key] = int(val)
-            elif isinstance(val, numbers.Number):
-                dct[key] = float(val)
+        # convert numbers, numpy arrays and pandas dataframes to builtin
+        # types before conversion (see rpy2 #548)
+        with conversion.localconverter(
+                default_converter + pandas2ri.converter + numpy2ri.converter):
+            for key, val in dct.items():
+                dct[key] = conversion.py2rpy(val)
         r_list = ListVector(dct)
         return r_list
     return dct
