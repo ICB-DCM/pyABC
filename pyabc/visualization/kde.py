@@ -452,7 +452,7 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
                     numx=numx, numy=numy,
-                    ax=ax, title=False, colorbar=colorbar,
+                    ax=ax, title=None, colorbar=colorbar,
                     refval=refval, refval_color=refval_color,
                     kde=kde)
 
