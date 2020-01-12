@@ -81,3 +81,19 @@ def effective_sample_size(weights):
     weights = np.array(weights)
     n_eff = np.sum(weights)**2 / np.sum(weights**2)
     return n_eff
+
+
+def resample(points, weights, n):
+    """
+    Resample from weighted samples.
+
+    Parameters
+    ----------
+    points: The random samples.
+    weights: Weights of each sample point.
+    n: Number of samples to resample.
+    """
+    weights = np.array(weights)
+    weights /= np.sum(weights)
+    resampled = np.random.choice(points, size=n, p=weights)
+    return resampled
