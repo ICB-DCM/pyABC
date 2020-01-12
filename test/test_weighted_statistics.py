@@ -62,5 +62,30 @@ def test_resample():
     points3 = np.random.randn(nw)
     resampled3 = ws.resample(points3, weights, n)
     # should be different distributions
-    D, p = ks_2samp(resampled1, resampled3)
+    _, p = ks_2samp(resampled1, resampled3)
     assert p < 1e-2
+
+
+def test_resample_deterministic():
+    """
+    Test the deterministic resampling routine.
+    """
+    nw = 50  # number of weighed points
+    points = np.random.randn(nw)
+    weights = np.random.rand(nw)
+    weights /= np.sum(weights)
+
+    n = 1000  # number of non-weighted points
+    resampled_det = ws.resample_deterministic(points, weights, n, False)
+
+    resampled = ws.resample(points, weights, n)
+
+    # should be same distribution
+    _, p = ks_2samp(resampled_det, resampled)
+    assert p > 1e-2
+
+    resampled_det2 = ws.resample_deterministic(points, weights, n, True)
+    assert len(resampled_det2) == n
+
+    _, p = ks_2samp(resampled_det2, resampled)
+    assert p > 1e-2
