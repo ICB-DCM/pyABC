@@ -90,7 +90,7 @@ def test_total_sample_numbers():
 
 def test_effective_sample_sizes():
     pyabc.visualization.plot_effective_sample_sizes(
-        histories, labels, rotation=45)
+        histories, labels, rotation=45, relative=True)
     plt.close()
 
 
