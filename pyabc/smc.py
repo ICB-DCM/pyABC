@@ -18,7 +18,7 @@ from typing import Union
 from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
                        StochasticAcceptor)
 from .distance import Distance, PNormDistance, to_distance, StochasticKernel
-from .epsilon import Epsilon, MedianEpsilon, Temperature
+from .epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from .model import Model, SimpleModel
 from .platform_factory import DefaultSampler
 from .population import Particle, Population
@@ -229,13 +229,14 @@ class ABCSMC:
     def _sanity_check(self):
         # check stochastic setting
         stochastics = [isinstance(self.acceptor, StochasticAcceptor),
-                       isinstance(self.eps, Temperature),
+                       isinstance(self.eps, TemperatureBase),
                        isinstance(self.distance_function, StochasticKernel)]
         # check if usage is consistent
         if not all(stochastics) and any(stochastics):
             raise ValueError(
                 "Please only use acceptor.StochasticAcceptor, "
-                "epsilon.Temperature and distance.StochasticKernel together.")
+                "epsilon.TemperatureBase and distance.StochasticKernel "
+                "together.")
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -838,7 +839,7 @@ class ABCSMC:
         """
         # handle arguments
         if minimum_epsilon is None:
-            if isinstance(self.eps, Temperature):
+            if isinstance(self.eps, TemperatureBase):
                 minimum_epsilon = 1.0
             else:
                 minimum_epsilon = 0.0

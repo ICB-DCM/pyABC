@@ -53,6 +53,15 @@ def test_medianepsilon():
     assert np.isclose(eps.alpha, 0.5)
 
 
+def test_listtemperature():
+    eps = pyabc.ListTemperature(values=[10, 5, 1.5])
+
+    # might be useful to test integration, but for the moment
+    # standalone tests may suffice
+    assert eps(0) == 10
+    assert eps(2) == 1.5
+
+
 def test_temperature():
     acceptor_config = {
         'pdf_norm': 5,
