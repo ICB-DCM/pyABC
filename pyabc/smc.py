@@ -18,7 +18,7 @@ from typing import Union
 from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
                        StochasticAcceptor)
 from .distance import Distance, PNormDistance, to_distance, StochasticKernel
-from .epsilon import Epsilon, MedianEpsilon, TemperatureBase, Temperature
+from .epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from .model import Model, SimpleModel
 from .platform_factory import DefaultSampler
 from .population import Particle, Population
@@ -839,7 +839,7 @@ class ABCSMC:
         """
         # handle arguments
         if minimum_epsilon is None:
-            if isinstance(self.eps, Temperature):
+            if isinstance(self.eps, TemperatureBase):
                 minimum_epsilon = 1.0
             else:
                 minimum_epsilon = 0.0
