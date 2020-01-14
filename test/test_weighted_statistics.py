@@ -55,7 +55,7 @@ def test_resample():
     resampled2 = ws.resample(points, weights, n)
 
     # should be same distribution
-    D, p = ks_2samp(resampled1, resampled2)
+    _, p = ks_2samp(resampled1, resampled2)
     assert p > 1e-2
 
     # use different points
