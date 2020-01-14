@@ -8,6 +8,15 @@ Release Notes
 ..........
 
 
+0.9.26 (2020-01-14)
+-------------------
+
+* Make samplers available in global namespace (#249).
+* Implement ListTemperature (#248).
+* Allow plotting the relative ESS (#245).
+* Allow resampling of weighted particles (#244).
+
+
 0.9.25 (2020-01-08)
 -------------------
 
