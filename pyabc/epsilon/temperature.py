@@ -13,10 +13,41 @@ from ..storage import save_dict_to_json
 logger = logging.getLogger("Epsilon")
 
 
-class Temperature(Epsilon):
+class TemperatureBase(Epsilon):
     """
     A temperature scheme handles the decrease of the temperatures employed
     by a :class:`pyabc.acceptor.StochasticAcceptor` over time.
+
+    This class is not functional on its own, its derivatives must be used.
+    """
+
+
+class ListTemperature(TemperatureBase):
+    """
+    Pass a list of temperature values to use successively.
+
+    Parameters
+    ----------
+    values:
+        The array of temperatures to use successively.
+        For exact inference, finish with 1.
+    """
+
+    def __init__(self, values: List[float]):
+        self.values = values
+
+    def __call__(self,
+                 t: int) -> float:
+        return self.values[t]
+
+
+class Temperature(TemperatureBase):
+    """
+    This class implements a highly adaptive and configurable temperature
+    scheme. Via the argument `schemes`, arbitrary temperature schemes can be
+    passed to calculate the next generation's temperature, via `aggregate_fun`
+    one can define how to combine multiple guesses, via `initial_temperature`
+    the initial temperature can be set.
 
     Parameters
     ----------

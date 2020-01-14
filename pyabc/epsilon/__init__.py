@@ -19,6 +19,8 @@ from .epsilon import (
     MedianEpsilon,
 )
 from .temperature import (
+    TemperatureBase,
+    ListTemperature,
     Temperature,
     TemperatureScheme,
     AcceptanceRateScheme,
@@ -41,6 +43,8 @@ __all__ = [
     'QuantileEpsilon',
     'MedianEpsilon',
     # temperature
+    'TemperatureBase',
+    'ListTemperature',
     'Temperature',
     'TemperatureScheme',
     'AcceptanceRateScheme',
