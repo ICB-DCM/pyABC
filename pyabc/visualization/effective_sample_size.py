@@ -13,6 +13,7 @@ def plot_effective_sample_sizes(
         labels: Union[List, str] = None,
         rotation: int = 0,
         title: str = "Effective sample size",
+        relative: bool = False,
         colors: List = None,
         size: tuple = None,
         ax: mpl.axes.Axes = None):
@@ -32,6 +33,9 @@ def plot_effective_sample_sizes(
         a tilting of 45 or even 90 can be preferable.
     title: str, optional (default = "Total required samples")
         Title for the plot.
+    relative: bool, optional (default = False)
+        Whether to show relative sizes (to 1) or w.r.t. the real number
+        of particles.
     colors: List, optional
         Colors to use for the lines. If None, then the matplotlib
         default values are used.
@@ -64,6 +68,8 @@ def plot_effective_sample_sizes(
             # we need the weights not normalized to 1 for each model
             w = history.get_weighted_distances(t=t)['w']
             ess = effective_sample_size(w)
+            if relative:
+                ess /= len(w)
             esss.append(ess)
         essss.append(esss)
 
