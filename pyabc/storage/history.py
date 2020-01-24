@@ -83,7 +83,7 @@ def create_sqlite_db_id(
     return "sqlite:///" + os.path.join(dir_, file_)
 
 
-def check_db_exists(db: str):
+def assert_db_exists(db: str):
     """
     Check if db exists. If it is a file and does not exist, raise
     an error. This is helpful to avoid misspelling a file name and
@@ -148,7 +148,7 @@ class History:
             If False, an error is thrown if the database does not exist.
         """
         if not create:
-            check_db_exists(db)
+            assert_db_exists(db)
 
         self.db = db
         self.stores_sum_stats = stores_sum_stats
