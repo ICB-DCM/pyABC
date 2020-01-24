@@ -1,14 +1,14 @@
 from pyabc import ABCSMC, Distribution
 from pyabc.sampler import MulticoreEvalParallelSampler, SingleCoreSampler
 import scipy.stats as st
-import scipy as sp
+import numpy as np
 
 
 set_acc_rate = 0.2
 
 
 def model(x):
-    return {"par": x["par"] + sp.randn()}
+    return {"par": x["par"] + np.random.randn()}
 
 
 def dist(x, y):
