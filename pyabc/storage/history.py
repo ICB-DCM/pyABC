@@ -83,6 +83,23 @@ def create_sqlite_db_id(
     return "sqlite:///" + os.path.join(dir_, file_)
 
 
+def check_db_exists(db: str):
+    """
+    Check if db exists. If it is a file and does not exist, raise
+    an error. This is helpful to avoid misspelling a file name and
+    then working with an empty history.
+
+    Parameters
+    ----------
+    db: As passed to History.
+    """
+    if not db.startswith("sqlite:///"):
+        return
+    file_ = db[10:]
+    if not os.path.exists(file_):
+        raise ValueError(f"Database file {db} does not exist.")
+
+
 class History:
     """
     History for ABCSMC.
@@ -116,10 +133,24 @@ class History:
     # time before first population time
     PRE_TIME = -1
 
-    def __init__(self, db: str, stores_sum_stats: bool = True, _id=None):
+    def __init__(self,
+                 db: str,
+                 stores_sum_stats: bool = True,
+                 _id: int = None,
+                 create: bool = True):
         """
         Initialize history object.
+
+        Parameters
+        ----------
+        db: Corresponds to `db_identifier`.
+        stores_sum_stats: See property.
+        _id: See property.
+        create: If False, an error is thrown if the database does not exist.
         """
+        if not create:
+            check_db_exists(db)
+
         self.db_identifier = db
         self.stores_sum_stats = stores_sum_stats
 

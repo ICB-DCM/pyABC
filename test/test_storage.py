@@ -442,3 +442,16 @@ def test_dict_from_and_to_json():
     pyabc.storage.save_dict_to_json(dct, file_)
     re_dct = pyabc.storage.load_dict_from_json(file_)
     assert dct == re_dct
+
+
+def test_create_db():
+    # temporary file name
+    file_ = tempfile.mkstemp(suffix=".db")[1]
+
+    # should work just fine though file empty
+    pyabc.History("sqlite:///" + file_, create=False)
+
+    # delete file and check we cannot create a History object
+    os.remove(file_)
+    with pytest.raises(ValueError):
+        pyabc.History("sqlite:///" + file_, create=False)
