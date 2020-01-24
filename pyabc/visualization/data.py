@@ -22,26 +22,24 @@ def plot_data_callback(
 
     Parameters
     ----------
-
     history: History
         The history object to use.
     f_plot: Callable, optional
         Function to plot a single summary statistic. Takes the parameters
-        (sum_stat, weight, ax, **kwargs).
+        ``(sum_stat, weight, ax, **kwargs)``.
     f_plot_aggregated: Callable
         Function to plot aggregated values on summary statistics. Takes
-        the parameters (sum_stats, weights, ax, **kwargs).
+        the parameters ``(sum_stats, weights, ax, **kwargs)``.
     t: int, optional
         Time point to extract data from the history for.
     ax: maplotlib.axes.Axes
         Axis object for the plot. This object is not touched directly and
         can thus be also e.g. a list of axis objects.
-    **kwargs:
-        Additional arguments are passed on to the plotting functions.
+
+    Additional arguments are passed on to the plotting functions.
 
     Returns
     -------
-
     ax: Axis of the generated plot.
     """
     weights, sum_stats = history.get_weighted_sum_stats(t=t)
