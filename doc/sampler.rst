@@ -105,73 +105,70 @@ How to setup a Redis based distributed cluster
 ----------------------------------------------
 
 
-Step 1: Reconfigure the redis.conf file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Optional: Use password protection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is advised to run Redis server in protected mode. Authenticated
-communication will allow only for authenticated access to communicated with
-the server, and reject all unauthorised access. To run Redis server with
-authentication required you need first to modify the redis.conf file.
 
-The redis.conf is the file that contains Redis configuration. Usually,
-it can be found on `/etc/redis/`. To allow safe and secure communication,
-redis.conf file should be reconfigure. You can copy the file to your home
-directory and then modify it as follow:
-
-1. The Redis server should be configured in a way that allows it to bind to
-network interfaces other than localhost (127.0.0.1). To enable that, be sure
-that the bind configuration option is either commented out or modified to an
-appropriate network interface IP address.
-
+To read the configuration file, redis must now be started as
 
 .. code:: bash
 
-    #bind 127.0.0.1
-
-2. The password authentication must be enabled. To configure that, be sure
-that the ``masterauth`` and ``requirepass`` configuration options are
-uncommented, and their values are the SAME. Note: it advised to select complex
-password string.
-
-.. code:: bash
-
-    masterauth your_redis_password
-
-.. code:: bash
-
-    requirepass your_redis_password
+    redis-server /path/to/redis.conf --port 6379
 
 
-Step 2: Start a Redis server with password authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Start one machine, which is reachable by the machine running the pyABC
-main application and by the workers, a Redis server, specifying the
-location of the configuration file for redis server that you modify in the first
-step and the port number:
+Step 0: Prepare the redis server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-.. code:: bash
-
-   redis-server /path/to/redis.conf --port 6379
-
-Note that if you didn't specify a port, redis will assign a default port,
-that is 6379, for your server.
-
-
-If you're on Linux, you can install redis either via your package manager
-of if you're using anaconda via
+To run the redis-server, use a machine which is reachable both by the main
+application and by the workers. If you're on Linux, you can install redis
+either via your package manager, or if you're using anaconda, via
 
 .. code:: bash
 
    conda install redis
 
 At this point, Windows is not officially supported by the Redis developers.
-We assume for now, that the IP address of the machine running the Redis server
-is 111.111.111.111.
+
+It is recommended to run a redis server only with password protection, since
+it otherwise accepts any incoming connections. To set up password protection
+on the server, you need to modify the `redis.conf` file. Usually, such a file
+exists under `REDIS_INSTALL_DIR/etc/redis.conf`. You can however also set
+up your own file. It suffices to add or uncomment the line
+
+.. code:: bash
+   
+    requirepass PASSWORD
+
+where `PASSWORD` should be replaced by a more secure password.
 
 
-Step 3 or 4: Start pyABC
+Step 1: Start a redis server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In this example, we assume that the IP address of the machine running the
+redis server is 111.111.111.111, and that the server should listen on port
+6379 (the redis default).
+
+If password protection is to be used, start the server via
+
+.. code:: bash
+
+    redis-server /path/to/redis.conf --port 6379
+
+If no password protection is required, use instead
+
+.. code:: bash
+
+    redis-server --port 6379 --protected-mode no
+
+You should get an output looking similar to the one below:
+
+.. literalinclude:: redis_setup/redis_start_output.txt
+   :language: bash
+
+
+Step 2 or 3: Start pyABC
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 It does not matter what you do first: starting pyABC or starting the
@@ -182,12 +179,14 @@ configure pyABC to use the Redis sampler
 
    from pyabc.sampler import RedisEvalParallelSampler
 
-   redis_sampler = RedisEvalParallelSampler(host="111.111.111.111")
+   redis_sampler = RedisEvalParallelSampler(host="111.111.111.111", port=6379)
 
    abc = pyabc.ABCSMC(models, priors, distance, sampler=redis_sampler)
 
-Note that 111.111.111.111 is the IP address of the machine running the Redis
-server. Then start the ABC-SMC run as usual with
+If password protection is used, in addition pass the argument
+``password=PASSWORD`` to the RedisEvalParallelSampler.
+   
+Then start the ABC-SMC run as usual with
 
 .. code:: python
 
@@ -197,64 +196,37 @@ server. Then start the ABC-SMC run as usual with
 passing the stopping conditions.
 
 
-Step 3 or 4: Start the workers
+Step 2 or 3: Start the workers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It does not matter what you do first: starting pyABC or starting the
 workers. You can even dynamically add workers after the sampling has started.
 Start as many workers as you wish on the machines you wish. Up to 10,000
 workers should not pose any problem if the model evaluation times are on the
-second scale or longer.
+scale or seconds or longer.
 
 .. code:: bash
 
-    abc-redis-worker --host=111.111.111.111 --port 6379 --password mypass
+    abc-redis-worker --host=111.111.111.111 --port=6379
 
-Again, 111.111.111.111 is the IP address of the machine running the Redis
-server and we use the default port number. You also need to specify the password
-that you use in the configuration file ``redis.conf``. In our case that password
-was ``mypass``. You should get an output similar to
-
+If password protection is used, you need to in addition specify it by
+appending ``--password=PASSWORD``. You should get an output similar to
 
 .. code:: bash
 
    INFO:REDIS-WORKER:Start redis worker. Max run time 7200.0s, PID=2731
 
-Note that the ``abc-redis-worker`` command also has options to set the
+The ``abc-redis-worker`` command has further options (see them via
+``abc-redis-worker --help``), in particular to set the
 maximal runtime of a worker, e.g. ``--runtime=2h``, ``--runtime=3600s``,
 ``--runtime=2d``, to start a worker running for 2 hours, 3600 seconds
-or 2 days.
-The default is 2 hours. It is OK if a worker
+or 2 days (the default is 2 hours). It is OK if a worker
 stops during the sampling of a generation. You can add new workers during
-the sampling process.
+the sampling process at any time.
 The ``abc-redis-worker`` command also has an option ``--processes`` which
-allows you to start several worker procecces in parallel.
-This might be handy in situations where you have to use a whole cluster node
-with several cores.
-
-Optional: Running redis server without password authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In some cases, a user might want to run the redis server without password
-authentication. To do so, you can start the redis server without specifying
-the location of the ``redis.conf`` file and use the flag ``--protected-mode``
-with value no
-
-.. code:: bash
-
-   redis-server --protected-mode no
-
-You should get an output looking similar to the one below:
-
-.. literalinclude:: redis_setup/redis_start_output.txt
-   :language: bash
-
-
-Later, to start workers, you don't need use the password flag
-
-.. code:: bash
-
-
-    abc-redis-worker --host=111.111.111.111
+allows you to start several worker procecces in parallel, e.g.
+``--processes=12``. This might be handy in situations where you have to use
+a whole cluster node with several cores.
 
 
 Optional: Monitoring
@@ -268,12 +240,14 @@ To monitor the ongoing sampling, execute
 
    abc-redis-manager info --host=111.111.111.111
 
-again, assuming 111.111.111.111 is the IP of the Redis server. If no sampling
-has happened yet, the output should look like
+again, assuming 111.111.111.111 is the IP of the Redis server. If password
+protection is used, you need to specify the password via
+``--password=PASSWORD``.
+If no sampling has happened yet, the output should look like
 
 .. code:: bash
 
-   Workers=None Evaluations=None Particles=None
+   Workers=None Evaluations=None Acceptances=None/None
 
 The keys are to be read as follows:
 
@@ -282,11 +256,9 @@ The keys are to be read as follows:
   at the end of a generation.
 * Evaluations: Number of accumulated model evaluations for the current
   generations. This is a sum across all workers.
-* Particles: Number of particles which remain to be accepted.
-  This number decreases over the
-  course of a population and reaches 0 (or a negative number due to excess
-  sampling) at the end of a population. At the very start, this is just the
-  population size.
+* Acceptances: In ``i/n``, ``i`` particles out of a requested population
+  size of ``n`` have been accepted already. It can be ``i>n`` at the end of
+  a population due to excess sampling.
 
 
 Optional: Stopping workers
