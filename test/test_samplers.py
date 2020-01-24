@@ -221,7 +221,6 @@ def test_redis_multiprocess():
 
     def simulate_one():
         accepted = np.random.randint(2)
-        print(accepted)
         return Particle(0, {}, 0.1, [], [], accepted)
 
     sample = sampler.sample_until_n_accepted(10, simulate_one)
@@ -251,4 +250,17 @@ def test_redis_catch_error():
 
     abc.run(minimum_epsilon=.1, max_nr_populations=3)
 
+    sampler.cleanup()
+
+
+def test_redis_pw_protection():
+    sampler = RedisEvalParallelSamplerServerStarter(
+        password="youshallnotpass", port=8888)
+
+    def simulate_one():
+        accepted = np.random.randint(2)
+        return Particle(0, {}, 0.1, [], [], accepted)
+
+    sample = sampler.sample_until_n_accepted(10, simulate_one)
+    assert 10 == len(sample.get_accepted_population())
     sampler.cleanup()
