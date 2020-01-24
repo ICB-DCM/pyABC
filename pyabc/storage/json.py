@@ -7,8 +7,10 @@ def save_dict_to_json(dct: dict, file_: str):
 
     Parameters
     ----------
-    dct: The dictionary to write to file.
-    file_: Name of the file to write to.
+    dct:
+        The dictionary to write to file.
+    file_:
+        Name of the file to write to.
     """
     with open(file_, 'w') as f:
         json.dump(dct, f)
@@ -21,8 +23,10 @@ def load_dict_from_json(file_: str, key_type: type = int):
 
     Parameters
     ----------
-    file_: Name of the file to read in.
-    key_type: Type to convert the keys into.
+    file_:
+        Name of the file to read in.
+    key_type:
+        Type to convert the keys into.
 
     Returns
     -------

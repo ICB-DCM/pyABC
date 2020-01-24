@@ -143,10 +143,14 @@ class History:
 
         Parameters
         ----------
-        db: Corresponds to `db_identifier`.
-        stores_sum_stats: See property.
-        _id: See property.
-        create: If False, an error is thrown if the database does not exist.
+        db:
+            Corresponds to `db_identifier`.
+        stores_sum_stats:
+            See property.
+        _id:
+            See property.
+        create:
+            If False, an error is thrown if the database does not exist.
         """
         if not create:
             check_db_exists(db)
