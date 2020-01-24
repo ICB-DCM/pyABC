@@ -36,7 +36,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         else:
             maybe_redis_conf = []
 
-        self.__redis_server = Popen(
+        self.__redis_server = Popen(  # noqa: B607, B603
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
 
         # give redis-server time to start
