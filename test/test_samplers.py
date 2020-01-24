@@ -254,7 +254,7 @@ def test_redis_catch_error():
 
 
 def test_redis_pw_protection():
-    sampler = RedisEvalParallelSamplerServerStarter(
+    sampler = RedisEvalParallelSamplerServerStarter(  # nosec
         password="daenerys", port=8888)
 
     def simulate_one():
