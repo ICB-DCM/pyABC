@@ -254,9 +254,8 @@ def test_redis_catch_error():
 
 
 def test_redis_pw_protection():
-    # noqa: B106
-    sampler = RedisEvalParallelSamplerServerStarter(  # noqa: B106
-        password="youshallnotpass", port=8888)  # noqa: B106
+    sampler = RedisEvalParallelSamplerServerStarter(
+        password="daenerys", port=8888)
 
     def simulate_one():
         accepted = np.random.randint(2)
