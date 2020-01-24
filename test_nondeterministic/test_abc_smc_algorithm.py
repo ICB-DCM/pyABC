@@ -259,7 +259,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path,
 
 def test_continuous_non_gaussian(db_path, sampler):
     def model(args):
-        return {"result": sp.rand() * args['u']}
+        return {"result": np.random.rand() * args['u']}
 
     models = [model]
     models = list(map(SimpleModel, models))
@@ -279,30 +279,30 @@ def test_continuous_non_gaussian(db_path, sampler):
     history = abc.run(minimum_epsilon, max_nr_populations=2)
     posterior_x, posterior_weight = history.get_distribution(0, None)
     posterior_x = posterior_x["u"].values
-    sort_indices = sp.argsort(posterior_x)
-    f_empirical = sp.interpolate.interp1d(sp.hstack((-200,
+    sort_indices = np.argsort(posterior_x)
+    f_empirical = np.interpolate.interp1d(np.hstack((-200,
                                                      posterior_x[sort_indices],
                                                      200)),
-                                          sp.hstack((0,
-                                                     sp.cumsum(
+                                          np.hstack((0,
+                                                     np.cumsum(
                                                          posterior_weight[
                                                              sort_indices]),
                                                      1)))
 
     @sp.vectorize
     def f_expected(u):
-        return (sp.log(u)-sp.log(d_observed)) / (- sp.log(d_observed)) * \
+        return (np.log(u)-np.log(d_observed)) / (- np.log(d_observed)) * \
                (u > d_observed)
 
-    x = sp.linspace(0.1, 1)
-    max_distribution_difference = sp.absolute(f_empirical(x) -
+    x = np.linspace(0.1, 1)
+    max_distribution_difference = np.absolute(f_empirical(x) -
                                               f_expected(x)).max()
     assert max_distribution_difference < 0.12
 
 
 def mean_and_std(values, weights):
     mean = (values * weights).sum()
-    std = sp.sqrt(((values - mean)**2 * weights).sum())
+    std = np.sqrt(((values - mean)**2 * weights).sum())
     return mean, std
 
 
@@ -335,15 +335,15 @@ def test_gaussian_single_population(db_path, sampler):
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
     posterior_x = posterior_x["x"].values
-    sort_indices = sp.argsort(posterior_x)
-    f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
-                                          sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
+    sort_indices = np.argsort(posterior_x)
+    f_empirical = sp.interpolate.interp1d(np.hstack((-200, posterior_x[sort_indices], 200)),
+                                          np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)))
 
-    sigma_x_given_y = 1 / sp.sqrt(1 / sigma_prior**2 + 1 / sigma_ground_truth**2)
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_prior**2 + 1 / sigma_ground_truth**2)
     mu_x_given_y = sigma_x_given_y**2 * observed_data / sigma_ground_truth**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
-    x = sp.linspace(-8, 8)
-    max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
+    x = np.linspace(-8, 8)
+    max_distribution_difference = np.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
     assert max_distribution_difference < 0.12
     assert history.max_t == nr_populations-1
     mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
@@ -378,15 +378,15 @@ def test_gaussian_multiple_populations(db_path, sampler):
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
     posterior_x = posterior_x["x"].values
-    sort_indices = sp.argsort(posterior_x)
-    f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
-                                          sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
+    sort_indices = np.argsort(posterior_x)
+    f_empirical = sp.interpolate.interp1d(np.hstack((-200, posterior_x[sort_indices], 200)),
+                                          np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)))
 
-    sigma_x_given_y = 1 / sp.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
     mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
-    x = sp.linspace(-8, 8)
-    max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
+    x = np.linspace(-8, 8)
+    max_distribution_difference = np.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
     assert max_distribution_difference < 0.052
     assert history.max_t == nr_populations-1
     mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
@@ -408,7 +408,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [Distribution(x=st.norm(0, sigma_x))]
     parameter_perturbation_kernels = [GridSearchCV(MultivariateNormalTransition(),
-                                      {"scaling": sp.logspace(-1, 1.5, 5)})]
+                                      {"scaling": np.logspace(-1, 1.5, 5)})]
     abc = ABCSMC(models, parameter_given_model_prior_distribution,
                  MinMaxDistance(measures_to_use=["y"]),
                  population_size,
@@ -423,15 +423,15 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
     posterior_x = posterior_x["x"].values
-    sort_indices = sp.argsort(posterior_x)
-    f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
-                                          sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
+    sort_indices = np.argsort(posterior_x)
+    f_empirical = sp.interpolate.interp1d(np.hstack((-200, posterior_x[sort_indices], 200)),
+                                          np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)))
 
-    sigma_x_given_y = 1 / sp.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
     mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
-    x = sp.linspace(-8, 8)
-    max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
+    x = np.linspace(-8, 8)
+    max_distribution_difference = np.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
     assert max_distribution_difference < 0.052
     assert history.max_t == nr_populations-1
     mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
@@ -469,7 +469,7 @@ def test_two_competing_gaussians_single_population(db_path, sampler, transition)
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        return st.norm(mu_x_model, sp.sqrt(sigma_y**2+sigma_x**2)).pdf(y_observed)
+        return st.norm(mu_x_model, np.sqrt(sigma_y**2+sigma_x**2)).pdf(y_observed)
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
@@ -521,7 +521,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler, transitio
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        return st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
+        return st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
@@ -612,15 +612,15 @@ def test_gaussian_multiple_populations_adpative_population_size(db_path, sampler
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
     posterior_x = posterior_x["x"].values
-    sort_indices = sp.argsort(posterior_x)
-    f_empirical = sp.interpolate.interp1d(sp.hstack((-200, posterior_x[sort_indices], 200)),
-                                          sp.hstack((0, sp.cumsum(posterior_weight[sort_indices]), 1)))
+    sort_indices = np.argsort(posterior_x)
+    f_empirical = sp.interpolate.interp1d(np.hstack((-200, posterior_x[sort_indices], 200)),
+                                          np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)))
 
-    sigma_x_given_y = 1 / sp.sqrt(1 / sigma_x ** 2 + 1 / sigma_y ** 2)
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x ** 2 + 1 / sigma_y ** 2)
     mu_x_given_y = sigma_x_given_y ** 2 * y_observed / sigma_y ** 2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
-    x = sp.linspace(-8, 8)
-    max_distribution_difference = sp.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
+    x = np.linspace(-8, 8)
+    max_distribution_difference = np.absolute(f_empirical(x) - expected_posterior_x.cdf(x)).max()
     assert max_distribution_difference < 0.15
     assert history.max_t == nr_populations - 1
     mean_emp, std_emp = mean_and_std(posterior_x, posterior_weight)
@@ -674,7 +674,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(db_
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        return st.norm(mu_x_model, sp.sqrt(sigma ** 2 + sigma ** 2)).pdf(y_observed)
+        return st.norm(mu_x_model, np.sqrt(sigma ** 2 + sigma ** 2)).pdf(y_observed)
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)

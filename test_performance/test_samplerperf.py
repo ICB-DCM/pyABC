@@ -3,7 +3,7 @@ import os
 import tempfile
 import time
 import pytest
-import scipy as sp
+import numpy as np
 import scipy.stats as st
 
 from pyabc import (ABCSMC, RV, Distribution,
@@ -126,7 +126,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
+        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
         return res
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
