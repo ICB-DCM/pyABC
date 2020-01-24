@@ -46,18 +46,25 @@ class RedisEvalParallelSampler(Sampler):
         Port of the Redis server.
         Default is 6379.
 
+    password: str, optional
+        Password for a protected server. Default is None (no protection).
+
     batch_size: int, optional
         Number of model evaluations the workers perform before contacting
         the REDIS server. Defaults to 1. Increase this value if model
         evaluation times are short or the number of workers is large
         to reduce communication overhead.
     """
-    def __init__(self, host="localhost", port=6379, batch_size=1):
+    def __init__(self,
+                 host: str = "localhost",
+                 port: int = 6379,
+                 password: str = None,
+                 batch_size: int = 1):
         super().__init__()
         logger.debug(
             f"Redis sampler: host={host} port={port}")
         # handles the connection to the redis-server
-        self.redis = StrictRedis(host=host, port=port)
+        self.redis = StrictRedis(host=host, port=port, password=password)
         self.batch_size = batch_size
 
     def n_worker(self):
