@@ -91,7 +91,8 @@ def check_db_exists(db: str):
 
     Parameters
     ----------
-    db: As passed to History.
+    db:
+        As passed to History.
     """
     if not db.startswith("sqlite:///"):
         return
@@ -110,7 +111,7 @@ class History:
     Attributes
     ----------
 
-    db_identifier: str
+    db: str
         SQLalchemy database identifier. For a relative path use the
         template "sqlite:///file.db", for an absolute path
         "sqlite:////path/to/file.db", and for an in-memory database
@@ -143,19 +144,13 @@ class History:
 
         Parameters
         ----------
-        db:
-            Corresponds to `db_identifier`.
-        stores_sum_stats:
-            See property.
-        _id:
-            See property.
         create:
             If False, an error is thrown if the database does not exist.
         """
         if not create:
             check_db_exists(db)
 
-        self.db_identifier = db
+        self.db = db
         self.stores_sum_stats = stores_sum_stats
 
         # to be filled using the session wrappers
@@ -168,7 +163,7 @@ class History:
         self._id = _id
 
     def db_file(self):
-        f = self.db_identifier.split(":")[-1][3:]
+        f = self.db.split(":")[-1][3:]
         return f
 
     @property
@@ -576,7 +571,7 @@ class History:
         # but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db_identifier,
+        engine = create_engine(self.db,
                                connect_args={'timeout': self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)

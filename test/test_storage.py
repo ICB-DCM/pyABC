@@ -361,7 +361,7 @@ def test_observed_sum_stats(history_uninitialized: History, gt_model):
                      "s4": np.random.rand(10)}
     h.store_initial_data(gt_model, {}, obs_sum_stats, {}, [""], "", "", "")
 
-    h2 = History(h.db_identifier)
+    h2 = History(h.db)
     loaded_sum_stats = h2.observed_sum_stat()
 
     for k in ["s1", "s2", "s3"]:
@@ -379,7 +379,7 @@ def test_model_name_load(history_uninitialized: History):
     model_names = ["m1", "m2", "m3"]
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
 
-    h2 = History(h.db_identifier)
+    h2 = History(h.db)
     model_names_loaded = h2.model_names()
     assert model_names == model_names_loaded
 
@@ -389,7 +389,7 @@ def test_model_name_load_no_gt_model(history_uninitialized: History):
     model_names = ["m1", "m2", "m3"]
     h.store_initial_data(None, {}, {}, {}, model_names, "", "", "")
 
-    h2 = History(h.db_identifier)
+    h2 = History(h.db)
     model_names_loaded = h2.model_names()
     assert model_names == model_names_loaded
 
@@ -406,7 +406,7 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
                  accepted_distances=[.1])]
     h.append_population(0, 42, Population(particle_list), 2, model_names)
 
-    h2 = History(h.db_identifier)
+    h2 = History(h.db)
     model_names_loaded = h2.model_names()
     assert model_names == model_names_loaded
 
