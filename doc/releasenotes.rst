@@ -14,6 +14,7 @@ Release Notes
 * Add optional check whether database is non-existent, to detect typos.
 * Set lower bound in 1-dim KDEs to <= 0 to not wrongly display near-uniform
   distributions. (both #257)
+* Implement redis password protection for sampler and manage routine (#256).
 * Make samplers available in global namespace (#249).
 * Implement ListTemperature (#248).
 * Allow plotting the relative ESS (#245).
