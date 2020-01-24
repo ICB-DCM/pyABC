@@ -31,7 +31,7 @@ install:
 # run tests
 
 script:
-- travis_wait 15 python -m pytest --cov=pyabc test/test_*
+- travis_wait 20 python -m pytest --cov=pyabc test/test_*
 - travis_wait 5 xvfb-run -a python -m pytest --cov=pyabc --cov-append test/visualization/test_*
 - if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 15 test/run_notebooks.sh; fi
 
