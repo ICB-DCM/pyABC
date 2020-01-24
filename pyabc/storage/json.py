@@ -1,20 +1,38 @@
 import json
 
 
-def save_dict_to_json(dct, log_file):
+def save_dict_to_json(dct: dict, file_: str):
     """
-    Save dict to file.
+    Save dict to file. Inverse to `load_dict_from_json`.
+
+    Parameters
+    ----------
+    dct:
+        The dictionary to write to file.
+    file_:
+        Name of the file to write to.
     """
-    with open(log_file, 'w') as f:
+    with open(file_, 'w') as f:
         json.dump(dct, f)
 
 
-def load_dict_from_json(log_file, key_type: type = int):
+def load_dict_from_json(file_: str, key_type: type = int):
     """
-    Read in json file.
-    Convert keys to `key_type'.
+    Read in json file. Convert keys to `key_type'.
+    Inverse to `save_dict_to_json`.
+
+    Parameters
+    ----------
+    file_:
+        Name of the file to read in.
+    key_type:
+        Type to convert the keys into.
+
+    Returns
+    -------
+    dct: The json file contents.
     """
-    with open(log_file, 'r') as f:
+    with open(file_, 'r') as f:
         _dct = json.load(f)
     dct = {}
     for key, val in _dct.items():

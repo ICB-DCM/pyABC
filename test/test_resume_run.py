@@ -1,6 +1,6 @@
 from pyabc import (ABCSMC, Distribution, RV)
-import scipy as sp
 import pytest
+import numpy as np
 
 
 @pytest.fixture(params=[0, None])
@@ -10,7 +10,7 @@ def gt_model(request):
 
 def test_resume(db_path, gt_model):
     def model(parameter):
-        return {"data": parameter["mean"] + sp.randn()}
+        return {"data": parameter["mean"] + np.random.randn()}
 
     prior = Distribution(mean=RV("uniform", 0, 5))
 
