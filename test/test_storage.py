@@ -1,12 +1,12 @@
 from pyabc import History
 import pytest
 import os
+import pyabc
 from pyabc.parameters import Parameter
 from pyabc.population import Particle, Population
 import numpy as np
-import tempfile
-import scipy as sp
 import pandas as pd
+import tempfile
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
@@ -77,13 +77,13 @@ def rand_pop_list(m: int):
         Particle(m=m,
                  parameter=Parameter({"a": np.random.randint(10),
                                       "b": np.random.randn()}),
-                 weight=sp.rand() * 42,
+                 weight=np.random.rand() * 42,
                  accepted_sum_stats=[{"ss_float": 0.1,
                                       "ss_int": 42,
                                       "ss_str": "foo bar string",
-                                      "ss_np": sp.rand(13, 42),
+                                      "ss_np": np.random.rand(13, 42),
                                       "ss_df": example_df()}],
-                 accepted_distances=[sp.rand()])
+                 accepted_distances=[np.random.rand()])
         for _ in range(np.random.randint(10) + 3)]
     return pop
 
@@ -200,8 +200,8 @@ def test_single_particle_save_load_np_int64(history: History):
 
 
 def test_sum_stats_save_load(history: History):
-    arr = sp.random.rand(10)
-    arr2 = sp.random.rand(10, 2)
+    arr = np.random.rand(10)
+    arr2 = np.random.rand(10, 2)
     particle_list = [
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
@@ -326,7 +326,6 @@ def test_population_retrieval(history: History):
     assert history.alive_models(1) == [0]
     assert history.alive_models(2) == [0, 5]
     assert history.alive_models(3) == [30]
-    print("ID", history.id)
 
 
 def test_population_strategy_storage(history):
@@ -435,3 +434,11 @@ def test_update_nr_samples(history: History):
 
 def test_pickle(history: History):
     pickle.dumps(history)
+
+
+def test_dict_from_and_to_json():
+    dct = {1: 0.5, 2: 42, 3: [1, 2, 0.1]}
+    file_ = tempfile.mkstemp()[1]
+    pyabc.storage.save_dict_to_json(dct, file_)
+    re_dct = pyabc.storage.load_dict_from_json(file_)
+    assert dct == re_dct
