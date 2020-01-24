@@ -18,7 +18,8 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                  port: int = 6379,
                  password: str = None,
                  batch_size: int = 1,
-                 workers=2, processes_per_worker=1):
+                 workers: int = 2,
+                 processes_per_worker: int = 1):
         # start server
         conn = psutil.net_connections()
         ports = [c.laddr[1] for c in conn]
