@@ -253,16 +253,17 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
                     "if workers were unexpectedly killed.")
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
+@click.option('--password', default=None, type=str, help='Redis password.')
 @click.argument('command', type=str)
-def manage(command, host="localhost", port=6379):
+def manage(command, host="localhost", port=6379, password=None):
     """
     Corresponds to the entry point abc-redis-manager.
     """
-    return _manage(command, host=host, port=port)
+    return _manage(command, host=host, port=port, password=password)
 
 
-def _manage(command, host="localhost", port=6379):
-    redis = StrictRedis(host=host, port=port)
+def _manage(command, host="localhost", port=6379, password=None):
+    redis = StrictRedis(host=host, port=port, password=password)
     if command == "info":
         pipe = redis.pipeline()
         pipe.get(N_WORKER)

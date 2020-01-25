@@ -101,93 +101,80 @@ environments
 Check the :doc:`API documentation <api_sampler>` for more details.
 
 
-How to setup a Redis based distributed cluster
-----------------------------------------------
+How to set up a Redis based distributed cluster
+-----------------------------------------------
 
 
-Step 1: Reconfigure the redis.conf file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Step 0: Prepare the redis server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is advised to run Redis server in protected mode. Authenticated
-communication will allow only for authenticated access to communicated with
-the server, and reject all unauthorised access. To run Redis server with
-authentication required you need first to modify the redis.conf file.
-
-The redis.conf is the file that contains Redis configuration. Usually,
-it can be found on `/etc/redis/`. To allow safe and secure communication,
-redis.conf file should be reconfigure. You can copy the file to your home
-directory and then modify it as follow:
-
-1. The Redis server should be configured in a way that allows it to bind to
-network interfaces other than localhost (127.0.0.1). To enable that, be sure
-that the bind configuration option is either commented out or modified to an
-appropriate network interface IP address.
-
-
-.. code:: bash
-
-    #bind 127.0.0.1
-
-2. The password authentication must be enabled. To configure that, be sure
-that the ``masterauth`` and ``requirepass`` configuration options are
-uncommented, and their values are the SAME. Note: it advised to select complex
-password string.
-
-.. code:: bash
-
-    masterauth your_redis_password
-
-.. code:: bash
-
-    requirepass your_redis_password
-
-
-Step 2: Start a Redis server with password authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Start one machine, which is reachable by the machine running the pyABC
-main application and by the workers, a Redis server, specifying the
-location of the configuration file for redis server that you modify in the first
-step and the port number:
-
-
-.. code:: bash
-
-   redis-server /path/to/redis.conf --port 6379
-
-Note that if you didn't specify a port, redis will assign a default port,
-that is 6379, for your server.
-
-
-If you're on Linux, you can install redis either via your package manager
-of if you're using anaconda via
+To run the redis server, use a machine which is reachable both by the main
+application and by the workers. If you're on Linux, you can install redis
+either via your package manager, or, if you're using anaconda, via
 
 .. code:: bash
 
    conda install redis
 
-At this point, Windows is not officially supported by the Redis developers.
-We assume for now, that the IP address of the machine running the Redis server
-is 111.111.111.111.
+Windows is currently not officially supported by the redis developers.
+
+It is recommended to run a redis server only with password protection, since
+it otherwise accepts any incoming connection. To set up password protection
+on the server, you need to modify the ``redis.conf`` file. Usually, such a file
+exists under ``REDIS_INSTALL_DIR/etc/redis.conf``. You can however also set
+up your own file. It suffices to add or uncomment the line
+
+.. code:: bash
+   
+    requirepass PASSWORD
+
+where `PASSWORD` should be replaced by a more secure password.
 
 
-Step 3 or 4: Start pyABC
+Step 1: Start a redis server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In this example, we assume that the IP address of the machine running the
+redis server is ``111.111.111.111`` (the default is ``localhost``),
+and that the server should listen on port ``6379`` (the redis default).
+
+If password protection is used, start the server via
+
+.. code:: bash
+
+    redis-server /path/to/redis.conf --port 6379
+
+If no password protection is required, instead use
+
+.. code:: bash
+
+    redis-server --port 6379 --protected-mode no
+
+You should get an output looking similar to the one below:
+
+.. literalinclude:: redis_setup/redis_start_output.txt
+   :language: bash
+
+
+Step 2 or 3: Start pyABC
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 It does not matter what you do first: starting pyABC or starting the
-workers. Assuming the models, priors and the distance function are defined,
-configure pyABC to use the Redis sampler
+workers. In your main program, assuming the models, priors and the distance
+function are defined, configure pyABC to use the redis sampler
 
 .. code:: python
 
    from pyabc.sampler import RedisEvalParallelSampler
 
-   redis_sampler = RedisEvalParallelSampler(host="111.111.111.111")
+   redis_sampler = RedisEvalParallelSampler(host="111.111.111.111", port=6379)
 
    abc = pyabc.ABCSMC(models, priors, distance, sampler=redis_sampler)
 
-Note that 111.111.111.111 is the IP address of the machine running the Redis
-server. Then start the ABC-SMC run as usual with
+If password protection is used, in addition pass the argument
+``password=PASSWORD`` to the RedisEvalParallelSampler.
+   
+Then start the ABC-SMC run as usual with
 
 .. code:: python
 
@@ -197,64 +184,37 @@ server. Then start the ABC-SMC run as usual with
 passing the stopping conditions.
 
 
-Step 3 or 4: Start the workers
+Step 2 or 3: Start the workers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It does not matter what you do first: starting pyABC or starting the
 workers. You can even dynamically add workers after the sampling has started.
 Start as many workers as you wish on the machines you wish. Up to 10,000
 workers should not pose any problem if the model evaluation times are on the
-second scale or longer.
+scale or seconds or longer. You start workers on your cluster via
 
 .. code:: bash
 
-    abc-redis-worker --host=111.111.111.111 --port 6379 --password mypass
+    abc-redis-worker --host=111.111.111.111 --port=6379
 
-Again, 111.111.111.111 is the IP address of the machine running the Redis
-server and we use the default port number. You also need to specify the password
-that you use in the configuration file ``redis.conf``. In our case that password
-was ``mypass``. You should get an output similar to
-
+If password protection is used, you need to append ``--password=PASSWORD``.
+You should get an output similar to
 
 .. code:: bash
 
    INFO:REDIS-WORKER:Start redis worker. Max run time 7200.0s, PID=2731
 
-Note that the ``abc-redis-worker`` command also has options to set the
+The ``abc-redis-worker`` command has further options (see them via
+``abc-redis-worker --help``), in particular to set the
 maximal runtime of a worker, e.g. ``--runtime=2h``, ``--runtime=3600s``,
 ``--runtime=2d``, to start a worker running for 2 hours, 3600 seconds
-or 2 days.
-The default is 2 hours. It is OK if a worker
+or 2 days (the default is 2 hours). It is OK if a worker
 stops during the sampling of a generation. You can add new workers during
-the sampling process.
+the sampling process at any time.
 The ``abc-redis-worker`` command also has an option ``--processes`` which
-allows you to start several worker procecces in parallel.
-This might be handy in situations where you have to use a whole cluster node
-with several cores.
-
-Optional: Running redis server without password authentication
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In some cases, a user might want to run the redis server without password
-authentication. To do so, you can start the redis server without specifying
-the location of the ``redis.conf`` file and use the flag ``--protected-mode``
-with value no
-
-.. code:: bash
-
-   redis-server --protected-mode no
-
-You should get an output looking similar to the one below:
-
-.. literalinclude:: redis_setup/redis_start_output.txt
-   :language: bash
-
-
-Later, to start workers, you don't need use the password flag
-
-.. code:: bash
-
-
-    abc-redis-worker --host=111.111.111.111
+allows you to start several worker procecces in parallel, e.g.
+``--processes=12``. This might be handy in situations where you have to use
+a whole cluster node with several cores.
 
 
 Optional: Monitoring
@@ -268,12 +228,13 @@ To monitor the ongoing sampling, execute
 
    abc-redis-manager info --host=111.111.111.111
 
-again, assuming 111.111.111.111 is the IP of the Redis server. If no sampling
-has happened yet, the output should look like
+If password protection is used, you need to specify the password via
+``--password=PASSWORD``.
+If no sampling has happened yet, the output should look like
 
 .. code:: bash
 
-   Workers=None Evaluations=None Particles=None
+   Workers=None Evaluations=None Acceptances=None/None
 
 The keys are to be read as follows:
 
@@ -282,11 +243,9 @@ The keys are to be read as follows:
   at the end of a generation.
 * Evaluations: Number of accumulated model evaluations for the current
   generations. This is a sum across all workers.
-* Particles: Number of particles which remain to be accepted.
-  This number decreases over the
-  course of a population and reaches 0 (or a negative number due to excess
-  sampling) at the end of a population. At the very start, this is just the
-  population size.
+* Acceptances: In ``i/n``, ``i`` particles out of a requested population
+  size of ``n`` have been accepted already. It can be ``i>n`` at the end of
+  a population due to excess sampling.
 
 
 Optional: Stopping workers
@@ -324,15 +283,30 @@ pyABC has been successfully employed on various high-performance computing (HPC)
 Long-running master process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-While most of the work happens on parallel workers, pyABC requires one long-running master process in the background for all of the analysis (or rather two processes, namely the master process running the execution script, and in addition possibly a task scheduler like the redis server). If the HPC infrastructure does not allow for such long-running processes with low CPU and memory requirements, one has to find a way around. Eventually, it is planned for pyABC to support loss-free automatic checkpointing and restarting, but presently this is not yet implemented. If possible, the master process can be run on external servers, login nodes, or on execution nodes while taking maximum runtimes and reliability of server and connections into consideration.
+While most of the work happens on parallel workers, pyABC requires one
+long-running master process in the background for all of the analysis
+(or rather two processes, namely the master process running the execution
+script, and in addition possibly a task scheduler like the redis server).
+If the HPC infrastructure does not allow for such long-running processes
+with low CPU and memory requirements, one has to find a way around.
+Eventually, it is planned for pyABC to support loss-free automatic
+checkpointing and restarting, but presently this is not yet implemented.
+If possible, the master process can be run on external servers, login nodes,
+or on execution nodes while taking maximum runtimes and reliability of
+server and connections into consideration.
 
 
 Job scheduling
 ~~~~~~~~~~~~~~
 
-HPC environments usually employ a job scheduler for distributing work to the execution nodes. Here, we shortly outline how pyABC can be integrated in such a setup. Exemplarily, we use a redis sampler, usage of in particular the dask sampler being similar.
+HPC environments usually employ a job scheduler for distributing work to the
+execution nodes. Here, we shortly outline how pyABC can be integrated in such
+a setup. Exemplarily, we use a redis sampler, usage of in particular the dask
+sampler being similar.
 
-Let us consider the widely used job scheduler `slurm <https://slurm.schedmd.com>`_. First, we need a script `script_redis_worker.sh` that starts the redis worker:
+Let us consider the widely used job scheduler
+`slurm <https://slurm.schedmd.com>`_. First, we need a script
+``script_redis_worker.sh`` that starts the redis worker:
 
 .. code:: bash
 
@@ -351,9 +325,13 @@ Let us consider the widely used job scheduler `slurm <https://slurm.schedmd.com>
    abs-redis-worker --host={host_ip} --port={port} --runtime={runtime} \
        --processes={n_processes}
 
-Here, `n_processes` defines the number of processes started for that batch job via multiprocessing. Some HPC setups prefer larger batch jobs, e.g. on a node level, so here each job can already be given some parallelity. The `SBATCH` macros define the slurm setting to be used.
+Here, ``n_processes`` defines the number of processes started for that batch
+job via multiprocessing. Some HPC setups prefer larger batch jobs, e.g. on a
+node level, so here each job can already be given some parallelity. The
+``SBATCH`` macros define the slurm setting to be used.
 
-The above script would be submitted to the slurm job manager via `sbatch`. It makes sense to define a script for this as well:
+The above script would be submitted to the slurm job manager via ``sbatch``.
+It makes sense to define a script for this as well:
 
 .. code:: bash
 
@@ -364,7 +342,8 @@ The above script would be submitted to the slurm job manager via `sbatch`. It ma
      sbatch script_redis_worker.sh
    done
 
-Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is based on qsub, e.g. SGE/UGE, instead use a script like
+Here, ``n_jobs`` would be the number of jobs submitted. When the job scheduler
+is based on qsub, e.g. SGE/UGE, instead use a script like
 
 .. code:: bash
 
@@ -375,13 +354,22 @@ Here, `n_jobs` would be the number of jobs submitted. When the job scheduler is 
      qsub -o {output_file_name} -e {error_file_name} \
          script_redis_worker.sh
 
-and adapt the worker script. For both, there exist many more configuration options. For further details see the respective documentation.
+and adapt the worker script. For both, there exist many more configuration
+options. For further details see the respective documentation.
 
-Note that when planning for the number of overall redis workers, batches, and cpus per batch, also the parallelization on the level of the simulations has to be taken into account. Also, memory requirements should be checked in advance.
+Note that when planning for the number of overall redis workers, batches, and
+cpus per batch, also the parallelization on the level of the simulations has
+to be taken into account. Also, memory requirements should be checked in
+advance.
 
 
 Pickling
 --------
+
+.. note::
+
+   This section is of interest to developers, of if you encounter memory
+   problems.
 
 For most of the samplers, pyABC uses
 `cloudpickle <https://github.com/cloudpipe/cloudpickle>`_ to serialize objects
