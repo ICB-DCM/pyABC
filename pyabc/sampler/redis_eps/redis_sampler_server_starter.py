@@ -27,15 +27,13 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         self.__port = port
         self.__password = password
 
-        # create password file
+        # create config file
+        maybe_redis_conf = []
         if password is not None:
             fname = tempfile.mkstemp()[1]
             with open(fname, 'w') as f:
                 f.write(f"requirepass {password}\n")
-                print(fname)
             maybe_redis_conf = [fname]
-        else:
-            maybe_redis_conf = []
 
         self.__redis_server = Popen(  # nosec
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
