@@ -455,7 +455,11 @@ class PoissonKernel(StochasticKernel):
             get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
-        # pdf_max is not computed
+        # cache pdf_max (from now on __call__ can be used)
+        if self.pdf_max is None and not callable(self.scale):
+            # take value at observed summary statistics
+            # this is the optimal value
+            self.pdf_max = self(x_0, x_0)
 
     def __call__(
             self,
