@@ -246,7 +246,7 @@ class IndependentNormalKernel(StochasticKernel):
         if not callable(self.var):
             self.var = np.array(self.var) * np.ones(dim)
 
-        # cache pdf_max (from now on __call__ can be used)
+        # cache pdf_max
         if self.pdf_max is None and not callable(self.var):
             # take value at observed summary statistics
             self.pdf_max = self(x_0, x_0)
@@ -331,7 +331,7 @@ class IndependentLaplaceKernel(StochasticKernel):
         if not callable(self.scale):
             self.scale = np.array(self.scale) * np.ones(dim)
 
-        # cache pdf_max (from now on __call__ can be used)
+        # cache pdf_max
         if self.pdf_max is None and not callable(self.scale):
             # take value at observed summary statistics
             self.pdf_max = self(x_0, x_0)
@@ -399,7 +399,7 @@ class BinomialKernel(StochasticKernel):
             get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
-        # cache pdf_max (from now on __call__ can be used)
+        # cache pdf_max
         if self.pdf_max is None and not callable(self.p):
             # take value at observed summary statistics
             self.pdf_max = binomial_pdf_max(
@@ -455,7 +455,11 @@ class PoissonKernel(StochasticKernel):
             get_all_sum_stats=get_all_sum_stats,
             x_0=x_0)
 
-        # pdf_max is not computed
+        # cache pdf_max
+        if self.pdf_max is None:
+            # take value at observed summary statistics
+            # this is the optimal value
+            self.pdf_max = self(x_0, x_0)
 
     def __call__(
             self,
