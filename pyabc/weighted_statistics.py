@@ -81,3 +81,80 @@ def effective_sample_size(weights):
     weights = np.array(weights)
     n_eff = np.sum(weights)**2 / np.sum(weights**2)
     return n_eff
+
+
+def resample(points, weights, n):
+    """
+    Resample from weighted samples.
+
+    Parameters
+    ----------
+    points:
+        The random samples.
+    weights:
+        Weights of each sample point.
+    n:
+        Number of samples to resample.
+
+    Returns
+    -------
+    resampled:
+        A total of `n` points sampled from `points` with putting back
+        according to `weights`.
+    """
+    weights = np.array(weights)
+    weights /= np.sum(weights)
+    resampled = np.random.choice(points, size=n, p=weights)
+    return resampled
+
+
+def resample_deterministic(points, weights, n, enforce_n=False):
+    """
+    Resample from weighted samples in a deterministic manner. Essentially,
+    multiplicities are picked as follows:
+    The weights are multiplied by the target number `n` and rounded to the
+    nearest integer, potentially with correction if `enforce_n`.
+
+    Parameters
+    ----------
+    points:
+        The random samples.
+    weights:
+        Weights of each sample point.
+    n:
+        Number of samples to resample.
+    enforce_n:
+        Whether to enforce the returned array to have length `n`.
+        If not, its length can be slightly off, but it may be more
+        representative.
+
+    Returns
+    -------
+    resampled:
+        A total of (roughly) `n` points resampled from `points`
+        deterministically using a rational representation of the `weights`.
+    """
+    weights = np.array(weights)
+    numbers_f = weights * (n / np.sum(weights))
+
+    numbers = np.round(numbers_f)
+
+    # enforce return array length
+    if enforce_n and np.sum(numbers) != n:
+        residuals = numbers_f - numbers
+        # sort the residuals mon. inc.
+        order = np.argsort(residuals)
+        # increment numbers with largest offsets
+        while np.sum(numbers) < n:
+            numbers[order[-1]] += 1
+            order = order[:-1]
+        # decrement numbers with largest negative offsets
+        while np.sum(numbers) > n:
+            numbers[order[0]] -= 1
+            order = order[1:]
+
+    resampled = []
+    for i, ni in enumerate(numbers):
+        resampled.extend([points[i]] * int(ni))
+
+    return resampled

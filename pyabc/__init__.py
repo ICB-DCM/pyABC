@@ -46,6 +46,8 @@ from .epsilon import (
     QuantileEpsilon,
     MedianEpsilon,
     ListEpsilon,
+    TemperatureBase,
+    ListTemperature,
     Temperature,
     TemperatureScheme,
     AcceptanceRateScheme,
@@ -55,6 +57,14 @@ from .epsilon import (
     DalyScheme,
     FrielPettittScheme,
     EssScheme)
+from .sampler import (
+    SingleCoreSampler,
+    MulticoreParticleParallelSampler,
+    MappingSampler,
+    DaskDistributedSampler,
+    RedisEvalParallelSampler,
+    MulticoreEvalParallelSampler,
+    ConcurrentFutureSampler)
 from .smc import ABCSMC
 from .storage import (
     History,
@@ -87,6 +97,7 @@ from .version import __version__  # noqa: F401
 
 
 __all__ = [
+    # smc
     "ABCSMC",
     # distance
     "Distance",
@@ -117,6 +128,8 @@ __all__ = [
     "ListEpsilon",
     "QuantileEpsilon",
     "MedianEpsilon",
+    "TemperatureBase",
+    "ListTemperature",
     "Temperature",
     "TemperatureScheme",
     "AcceptanceRateScheme",
@@ -126,6 +139,14 @@ __all__ = [
     "DalyScheme",
     "FrielPettittScheme",
     "EssScheme",
+    # sampler
+    "SingleCoreSampler",
+    "MulticoreParticleParallelSampler",
+    "MappingSampler",
+    "DaskDistributedSampler",
+    "RedisEvalParallelSampler",
+    "MulticoreEvalParallelSampler",
+    "ConcurrentFutureSampler",
     # random variable
     "RVBase",
     "RV",
@@ -158,7 +179,7 @@ __all__ = [
     "Model",
     "SimpleModel",
     "IntegratedModel",
-    # history
+    # storage
     "History",
     "create_sqlite_db_id",
     # visualization

@@ -154,6 +154,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     if ax is None:
         _, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
+    ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
     ax.set_xlim(xmin, xmax)
@@ -367,7 +368,7 @@ def plot_kde_matrix_highlevel(
         history, m: int = 0, t: int = None, limits=None,
         colorbar: bool = True, height: float = 2.5,
         numx: int = 50, numy: int = 50, refval=None, refval_color='C1',
-        kde=None):
+        kde=None, arr_ax=None):
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
@@ -401,21 +402,24 @@ def plot_kde_matrix_highlevel(
         The kernel density estimator to use for creating a smooth density
         from the sample. If None, a multivariate normal kde with
         cross-validated scaling is used.
+    arr_ax:
+        Array of axes objects to use.
 
     Returns
     -------
-    arr_ax: Array of the generated plots' axes.
+    arr_ax:
+        Array of the generated plots' axes.
     """
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_kde_matrix(
         df, w, limits, colorbar, height, numx, numy, refval, refval_color,
-        kde)
+        kde, arr_ax)
 
 
 def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
                     numx=50, numy=50, refval=None, refval_color='C1',
-                    kde=None):
+                    kde=None, arr_ax=None):
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
@@ -430,14 +434,19 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
 
     Returns
     -------
-    arr_ax: Array of the generated plots' axes.
+    arr_ax:
+        Array of the generated plots' axes.
     """
 
     n_par = df.shape[1]
     par_names = list(df.columns.values)
-    fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par,
-                               sharex=False, sharey=False,
-                               figsize=(height * n_par, height * n_par))
+
+    if arr_ax is None:
+        fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par,
+                                   sharex=False, sharey=False,
+                                   figsize=(height * n_par, height * n_par))
+    else:
+        fig = arr_ax[0, 0].get_figure()
 
     if limits is None:
         limits = {}
@@ -452,7 +461,7 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
                     ymin=limits.get(y.name, default)[0],
                     ymax=limits.get(y.name, default)[1],
                     numx=numx, numy=numy,
-                    ax=ax, title=False, colorbar=colorbar,
+                    ax=ax, title=None, colorbar=colorbar,
                     refval=refval, refval_color=refval_color,
                     kde=kde)
 

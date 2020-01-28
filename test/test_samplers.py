@@ -1,7 +1,6 @@
 import multiprocessing
 import pytest
 import numpy as np
-import scipy as sp
 import scipy.stats as st
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pyabc import (ABCSMC, RV, Distribution,
@@ -155,7 +154,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, sp.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
+        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
         return res
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
@@ -176,7 +175,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     except KeyError:
         mp1 = 0
 
-    assert abs(mp0 - p1_expected) + abs(mp1 - p2_expected) < sp.inf
+    assert abs(mp0 - p1_expected) + abs(mp1 - p2_expected) < np.inf
 
     # check that sampler only did nr_particles samples in first round
     pops = history.get_all_populations()
@@ -221,7 +220,6 @@ def test_redis_multiprocess():
 
     def simulate_one():
         accepted = np.random.randint(2)
-        print(accepted)
         return Particle(0, {}, 0.1, [], [], accepted)
 
     sample = sampler.sample_until_n_accepted(10, simulate_one)
@@ -251,4 +249,17 @@ def test_redis_catch_error():
 
     abc.run(minimum_epsilon=.1, max_nr_populations=3)
 
+    sampler.cleanup()
+
+
+def test_redis_pw_protection():
+    sampler = RedisEvalParallelSamplerServerStarter(  # nosec
+        password="daenerys", port=8888)
+
+    def simulate_one():
+        accepted = np.random.randint(2)
+        return Particle(0, {}, 0.1, [], [], accepted)
+
+    sample = sampler.sample_until_n_accepted(10, simulate_one)
+    assert 10 == len(sample.get_accepted_population())
     sampler.cleanup()

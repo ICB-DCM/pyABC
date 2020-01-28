@@ -36,16 +36,25 @@ def test_rpy2(sampler):
     model = r.model("myModel")
     distance = r.distance("myDistance")
     sum_stat = r.summary_statistics("mySummaryStatistics")
+    data = r.observation("mySumStatData")
     prior = pyabc.Distribution(meanX=pyabc.RV("uniform", 0, 10),
                                meanY=pyabc.RV("uniform", 0, 10))
     abc = pyabc.ABCSMC(model, prior, distance,
                        summary_statistics=sum_stat,
-                       sampler=sampler,
-                       population_size=3)
+                       sampler=sampler, population_size=5)
     db = pyabc.create_sqlite_db_id(file_="test_external.db")
-    abc.new(db, r.observation("mySumStatData"))
+    abc.new(db, data)
     history = abc.run(minimum_epsilon=0.9, max_nr_populations=2)
     history.get_weighted_sum_stats_for_model(m=0, t=1)[1][0]["cars"].head()
+
+    # try load
+    id_ = history.id
+    abc = pyabc.ABCSMC(model, prior, distance,
+                       summary_statistics=sum_stat,
+                       sampler=sampler, population_size=6)
+    # shan't even need to pass the observed data again
+    abc.load(db, id_)
+    abc.run(minimum_epsilon=0.1, max_nr_populations=2)
 
 
 def test_rpy2_details():
