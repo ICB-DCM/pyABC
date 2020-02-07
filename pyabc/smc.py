@@ -225,6 +225,13 @@ class ABCSMC:
         self.min_acceptance_rate = None
 
         self._sanity_check()
+        self.aknowledge_n_procs()
+
+    def aknowledge_n_procs(self):
+        # if sampler is MulticoreEvalParallelSampler, then print number of cores
+        if type(self.sampler) is MulticoreEvalParallelSampler:
+            logger.info(f"Total number of used cores is: 
+                    {self.sampler.n_procs}.")
 
     def _sanity_check(self):
         # check stochastic setting
