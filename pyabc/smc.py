@@ -231,8 +231,7 @@ class ABCSMC:
         # if sampler is MulticoreEvalParallelSampler, 
         # then print number of cores
         if type(self.sampler) is MulticoreEvalParallelSampler:
-            logger.info(f"Total number of used cores is: 
-                    {self.sampler.n_procs}.")
+            logger.info(f"Parallelizing the sampling on {self.n_procs} cores.")
 
     def _sanity_check(self):
         # check stochastic setting
