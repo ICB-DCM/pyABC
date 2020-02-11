@@ -1,5 +1,3 @@
-import sys
-import os
 import logging
 
 import pyabc
@@ -26,20 +24,50 @@ class AmiciPetabImporter:
             self,
             petab_problem: petab.Problem,
             amici_model: amici.Model,
-            amici_solver: amici.Solver,
-    ):      
+            amici_solver: amici.Solver):
         self.petab_problem = petab_problem
         self.amici_model = amici_model
         self.amici_solver = amici_solver
 
     def get_prior(self):
-        lbs = self.petab_problem.get_lb(fixed=False, scaled=True)
-        ubs = self.petab_problem.get_ub(fixed=False, scaled=True)
-        x_ids = self.petab_problem.get_x_ids(fixed=False)
-        dct = {}
-        for lb, ub, x_id in zip(lbs, ubs, x_ids):
-            dct[x_id] = pyabc.RV('uniform', lb, ub-lb)
-        prior = pyabc.Distribution(**dct)
+        parameter_df = petab.normalize_parameter_df(
+            self.petab_problem.parameter_df)
+
+        prior_dct = {}
+        for _, row in parameter_df.reset_index().iterrows():
+            if row[petab.C.ESTIMATE] == 0:
+                continue
+            # pyabc currently does not have initialization priors
+            prior_type = row[petab.C.OBJECTIVE_PRIOR_TYPE]
+
+            pars_str = row[petab.C.OBJECTIVE_PRIOR_PARAMETERS]
+            prior_pars = tuple([float(val) for val in pars_str.split(';')])
+
+            if prior_type in [petab.C.PARAMETER_SCALE_UNIFORM,
+                              petab.C.UNIFORM]:
+                lb, ub = prior_pars
+                rv = pyabc.RV('uniform', lb, ub-lb)
+            elif prior_type in [petab.C.PARAMETER_SCALE_NORMAL,
+                                petab.C.NORMAL]:
+                mean, std = prior_pars
+                rv = pyabc.RV('norm', mean, std)
+            elif prior_type in [petab.C.PARAMETER_SCALE_LAPLACE,
+                                petab.C.LAPLACE]:
+                mean, scale = prior_pars
+                rv = pyabc.RV('laplace', mean, scale)
+            elif prior_type == petab.C.LOG_NORMAL:
+                mean, std = prior_pars
+                rv = pyabc.RV('lognorm', mean, std)
+            elif prior_type == petab.C.LOG_LAPLACE:
+                mean, scale = prior_pars
+                rv = pyabc.RV('loglaplace', mean, scale)
+            else:
+                raise ValueError(f"Cannot handle rior type {prior_type}.")
+
+            prior_dct[row[petab.C.PARAMETER_ID]] = rv
+
+        prior = pyabc.Distribution(**prior_dct)
+
         return prior
 
     def get_model(self):
@@ -57,7 +85,7 @@ class AmiciPetabImporter:
             return {'llh': ret['llh']}
 
         return model
-    
+
     def get_kernel(self):
         def kernel_fun(x, x_0, t, par):
             return x['llh']
