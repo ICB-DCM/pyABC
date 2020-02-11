@@ -71,6 +71,7 @@ Thumbs.db
 
 #documentation
 doc/_build
+doc/examples/amici_models
 
 
 # data
