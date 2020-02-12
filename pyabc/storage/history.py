@@ -55,7 +55,7 @@ def git_hash():
         return "Install pyABC's optional git dependency for git support"
     try:
         git_hash = git.Repo(os.getcwd()).head.commit.hexsha
-    except (git.exc.NoSuchPathError, KeyError,
+    except (git.exc.NoSuchPathError, KeyError, ValueError,
             git.exc.InvalidGitRepositoryError) as e:
         git_hash = str(e)
     return git_hash
