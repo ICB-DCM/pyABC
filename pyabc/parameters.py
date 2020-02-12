@@ -1,7 +1,4 @@
-from collections import UserDict
-
-
-class ParameterStructure(UserDict):
+class ParameterStructure(dict):
     """
     Basic functionality of a structure containing parameters.
     """
