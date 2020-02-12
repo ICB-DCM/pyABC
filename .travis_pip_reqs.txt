@@ -31,4 +31,4 @@ pytest
 codecov
 pytest-cov
 git+https://github.com/icb-dcm/petab.git@develop
-git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
+amici
