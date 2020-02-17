@@ -25,7 +25,7 @@ from .population import Particle, Population
 from .populationstrategy import PopulationStrategy, ConstantPopulationSize
 from .pyabc_rand_choice import fast_random_choice
 from .random_variables import RV, ModelPerturbationKernel, Distribution
-from .sampler import Sampler, Sample
+from .sampler import Sampler, Sample, multicorebase
 from .storage import History
 from .transition import Transition, MultivariateNormalTransition
 from .weighted_statistics import effective_sample_size
@@ -225,13 +225,8 @@ class ABCSMC:
         self.min_acceptance_rate = None
 
         self._sanity_check()
-        self.aknowledge_n_procs()
+        multicorebase.aknowledge_n_procs()
 
-    def aknowledge_n_procs(self):
-        # if sampler is MulticoreEvalParallelSampler, 
-        # then print number of cores
-        if type(self.sampler) is MulticoreEvalParallelSampler:
-            logger.info(f"Parallelizing the sampling on {self.n_procs} cores.")
 
     def _sanity_check(self):
         # check stochastic setting

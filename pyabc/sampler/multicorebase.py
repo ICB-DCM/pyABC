@@ -37,6 +37,13 @@ class MultiCoreSampler(Sampler):
         return nr_cores_available()
 
 
+def acknowledge_n_procs(self):
+    # if sampler is MulticoreEvalParallelSampler, 
+    # then print number of cores
+    if type(self.sampler) is MulticoreEvalParallelSampler:
+        logger.info(f"Parallelizing the sampling on {self.n_procs} cores.")
+
+
 def healthy(worker):
     return all(worker.exitcode in [0, None] for worker in worker)
 
