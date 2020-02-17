@@ -17,6 +17,7 @@ from .acceptor import (
 from .pdf_norm import (
     pdf_norm_from_kernel,
     pdf_norm_max_found,
+    ScaledPDFNorm,
 )
 
 
@@ -30,4 +31,5 @@ __all__ = [
     # pdf norm
     'pdf_norm_from_kernel',
     'pdf_norm_max_found',
+    'ScaledPDFNorm',
 ]

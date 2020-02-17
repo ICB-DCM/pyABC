@@ -1,5 +1,6 @@
 import numpy as np
-from typing import Callable
+from typing import Callable, Union
+import pandas as pd
 
 
 def pdf_norm_from_kernel(
@@ -41,9 +42,24 @@ class ScaledPDFNorm:
     Finds the previously found maximum density value, but then scales it
     by a factor `factor**T` such that the probabiliy of particles getting
     accepted is increased by y value of up to `factor`.
-    Some additional rules are applied to make the scheme stable: The
-    scaling is applied only after a minimum acceptance rate has been
+
+    Some additional rules are applied to make the scheme stable. The scaling
+    is in particular applied only after a minimum acceptance rate has been
     violated.
+
+    Parameters
+    ----------
+    factor:
+        The factor by which to effectively rescale the acceptance step's
+        normalization constant.
+    alpha:
+        The ratio by which the subsequent temperature is assumed to be
+        reduced relative to the current one. This is only accurate if a
+        pyabc.ExponentialDecayFixedRatioScheme with corresponding ratio
+        is employed.
+    min_acceptance_rate:
+        The scaling is applied once the acceptance rates fall below this
+        value for the first time.
     """
 
     def __init__(
@@ -54,6 +70,7 @@ class ScaledPDFNorm:
         self.factor = 10
         self.alpha = alpha
         self.min_acceptance_rate = min_acceptance_rate
+        self._hit = False
 
     def __call__(
             self,
