@@ -1,5 +1,6 @@
 import numpy as np
-from typing import Callable
+from typing import Callable, Union
+import pandas as pd
 
 
 def pdf_norm_from_kernel(
