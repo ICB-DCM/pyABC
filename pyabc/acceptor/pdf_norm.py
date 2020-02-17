@@ -14,8 +14,8 @@ def pdf_norm_from_kernel(
 
 
 def pdf_norm_max_found(
-        prev_pdf_norm: float,
-        get_weighted_distances: Callable,
+        prev_pdf_norm: Union[float, None],
+        get_weighted_distances: Callable[[], pd.DataFrame],
         **kwargs):
     """
     Take as pdf_max the maximum over the values found so far in the history,
