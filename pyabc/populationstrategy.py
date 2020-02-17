@@ -198,7 +198,7 @@ class AdaptivePopulationSize(PopulationStrategy):
                     .format(reference_nr_part, self.nr_particles))
 
         
- class ListPopulation(PopulationStrategy):
+class ListPopulation(PopulationStrategy):
     """
     Return Population values from a predefined list. For every time point
     enquired later, a Population value must exist in the list.
