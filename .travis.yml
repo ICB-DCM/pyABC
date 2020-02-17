@@ -7,6 +7,8 @@ os:
 dist:
 # take the latest supported LTS version
 - xenial
+compiler:
+- gcc
 
 # install dependencies
 
@@ -22,6 +24,7 @@ addons:
     update: true
     packages:
     - redis-server
+    - libhdf5-serial-dev
     - libatlas-base-dev
     - swig3.0
 
