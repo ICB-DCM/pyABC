@@ -912,10 +912,6 @@ class ABCSMC:
             logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
                         f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
 
-            # prepare next iteration
-            self._prepare_next_iteration(
-                t+1, sample, population, acceptance_rate)
-
             # check termination conditions
             if current_eps <= minimum_epsilon:
                 logger.info("Stopping: minimum epsilon.")
@@ -928,6 +924,14 @@ class ABCSMC:
                 logger.info("Stopping: minimum acceptance rate.")
                 break
 
+            if t==t_max:
+                break
+                
+            # prepare next iteration
+            self._prepare_next_iteration(
+                t+1, sample, population, acceptance_rate)
+              
+                
             # increment t
             t += 1
 
@@ -1040,7 +1044,7 @@ class ABCSMC:
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
         copied_transitions = copy.deepcopy(self.transitions)
-        self.population_strategy.adapt_population_size(copied_transitions, w)
+        self.population_strategy.adapt_population_size(copied_transitions, w, t)
 
     def _fit_transitions(self, t):
         """
