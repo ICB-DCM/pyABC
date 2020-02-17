@@ -40,9 +40,7 @@ def test_stop_early(db_path):
 
         # offset with n_procs as more processes can have run at termination
         n_procs = sampler.n_procs if hasattr(sampler, 'n_procs') else 1
-
         df["corrected_acceptance_rate"] = \
             (df["particles"] - (n_procs-1)) / df["samples"]
 
-        bound_acc_rate = set_acc_rate - n_procs / pop_size
-        assert df["corrected_acceptance_rate"].iloc[-1] >= bound_acc_rate
+        assert df["corrected_acceptance_rate"].iloc[-1] >= set_acc_rate
