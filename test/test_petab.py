@@ -24,14 +24,14 @@ def test_import():
         pass
 
     # create problem
-    petab_problem = petab.Problem.from_yaml(
-        os.path.join(benchmark_dir, "hackathon_contributions_new_data_format",
+    petab_problem = petab.Problem.from_yaml(os.path.join(
+        benchmark_dir, "hackathon_contributions_new_data_format",
         "Boehm_JProteomeRes2014", "Boehm_JProteomeRes2014.yaml"))
 
     # compile amici
     model = amici.petab_import.import_petab_problem(petab_problem)
     solver = model.getSolver()
-    
+
     # import to pyabc
     importer = pyabc.petab.AmiciPetabImporter(petab_problem, model, solver)
 
