@@ -3,6 +3,7 @@ from collections.abc import Sequence, Mapping
 from typing import Callable, Union
 
 import pyabc
+from .base import PetabImporter
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,9 @@ except ImportError:
                  "the amici functionality.")
 
 
-class AmiciPetabImporter:
+class AmiciPetabImporter(PetabImporter):
     """
     Import a PEtab model using AMICI to simulate it as a deterministic ODE.
-
-    This class provides methods to generate prior, model, and stochastic kernel
-    for a pyABC analysis.
 
     Parameters
     ----------
@@ -33,6 +31,12 @@ class AmiciPetabImporter:
     petab_problem:
         A PEtab problem containing all information on the parameter estimation
         problem.
+    free_parameters:
+        Whether to estimate free parameters (column ESTIMATE=1 in the
+        parameters table).
+    fixed_parameters:
+        Whether to estimate fixed parameters (column ESTIMATE=0 in the
+        parameters table).
     amici_model:
         A corresponding compiled AMICI model that allows simulating data for
         parameters. If not provided, one is created using
@@ -40,6 +44,10 @@ class AmiciPetabImporter:
     amici_solver:
         An AMICI model to simulate the model. If not provided, one is created
         using `amici_model.getSolver()`.
+    store_simulations:
+        Whether to store performed simulations. Per default, only parameters
+        and likelihood valuaes are stored. Since an ODE model
+        is deterministic, the trajectories can easily be reproduced.
     """
 
     def __init__(
@@ -50,7 +58,10 @@ class AmiciPetabImporter:
             free_parameters: bool = True,
             fixed_parameters: bool = False,
             store_simulations: bool = False):
-        self.petab_problem = petab_problem
+        super().__init__(
+            petab_problem=petab_problem,
+            free_parameters=free_parameters,
+            fixed_parameters=fixed_parameters)
 
         if amici_model is None:
             amici_model = amici.getab_import.import_petab_problem(
@@ -61,69 +72,7 @@ class AmiciPetabImporter:
             amici_solver = self.amici_model.getSolver()
         self.amici_solver = amici_solver
 
-        self.free_parameters = free_parameters
-        self.fixed_parameters = fixed_parameters
         self.store_simulations = store_simulations
-
-    def create_prior(self) -> pyabc.Distribution:
-        """
-        Create prior.
-
-        Returns
-        -------
-        prior:
-            A valid pyabc.Distribution for the parameters to estimate.
-        """
-        # add default values
-        parameter_df = petab.normalize_parameter_df(
-            self.petab_problem.parameter_df)
-
-        prior_dct = {}
-
-        # iterate over parameters
-        for _, row in parameter_df.reset_index().iterrows():
-            # check whether we can ignore
-            if not self.fixed_parameters and row[petab.C.ESTIMATE] == 0:
-                # ignore fixed parameters
-                continue
-            if not self.free_parameters and row[petab.C.ESTIMATE] == 1:
-                # ignore free parameters
-                continue
-
-            # pyabc currently only knows objective priors, no
-            #  initialization priors
-            prior_type = row[petab.C.OBJECTIVE_PRIOR_TYPE]
-            pars_str = row[petab.C.OBJECTIVE_PRIOR_PARAMETERS]
-            prior_pars = tuple([float(val) for val in pars_str.split(';')])
-
-            # create random variable from table entry
-            if prior_type in [petab.C.PARAMETER_SCALE_UNIFORM,
-                              petab.C.UNIFORM]:
-                lb, ub = prior_pars
-                rv = pyabc.RV('uniform', lb, ub-lb)
-            elif prior_type in [petab.C.PARAMETER_SCALE_NORMAL,
-                                petab.C.NORMAL]:
-                mean, std = prior_pars
-                rv = pyabc.RV('norm', mean, std)
-            elif prior_type in [petab.C.PARAMETER_SCALE_LAPLACE,
-                                petab.C.LAPLACE]:
-                mean, scale = prior_pars
-                rv = pyabc.RV('laplace', mean, scale)
-            elif prior_type == petab.C.LOG_NORMAL:
-                mean, std = prior_pars
-                rv = pyabc.RV('lognorm', mean, std)
-            elif prior_type == petab.C.LOG_LAPLACE:
-                mean, scale = prior_pars
-                rv = pyabc.RV('loglaplace', mean, scale)
-            else:
-                raise ValueError(f"Cannot handle rior type {prior_type}.")
-
-            prior_dct[row[petab.C.PARAMETER_ID]] = rv
-
-        # create prior distribution
-        prior = pyabc.Distribution(**prior_dct)
-
-        return prior
 
     def create_model(
         self
