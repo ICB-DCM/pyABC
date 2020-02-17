@@ -91,3 +91,4 @@ doc/*.log
 dask-worker-space
 *.lock
 *tmp*
+*amici_models*
