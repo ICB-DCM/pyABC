@@ -108,7 +108,7 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of samples to draw for a proposed parameter
     """
 
-    def adapt_population_size(self, transitions, model_weights):
+    def adapt_population_size(self, transitions, model_weights, t):
         pass
 
 
@@ -177,7 +177,7 @@ class AdaptivePopulationSize(PopulationStrategy):
                 "mean_cv": self.mean_cv}
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray):
+                              model_weights: np.ndarray, t: int):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
