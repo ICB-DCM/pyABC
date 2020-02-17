@@ -196,3 +196,25 @@ class AdaptivePopulationSize(PopulationStrategy):
 
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))
+
+        
+ class ListPopulation(PopulationStrategy):
+    """
+    Return Population values from a predefined list. For every time point
+    enquired later, a Population value must exist in the list.
+    Parameters
+    ----------
+    values: List[float]
+        List of Population values.
+        ``values[t]`` is the value for population t.
+    """
+
+    def __init__(self,
+                 values: List[float]):
+        super().__init__(list(values)[0])
+        self.population_values = list(values)
+
+    def adapt_population_size(self, transitions: List[Transition],
+                              model_weights: np.ndarray,
+                              t: int):
+        self.nr_particles = self.population_values[t]
