@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import tempfile
 
 import pyabc
@@ -6,6 +7,7 @@ from pyabc.acceptor import AcceptorResult
 
 
 def test_simple_function_acceptor():
+    """Test the simple function acceptor."""
 
     def distance(x, x_0):
         return sum(abs(x[key] - x_0[key]) for key in x_0)
@@ -41,6 +43,7 @@ def test_simple_function_acceptor():
 
 
 def test_uniform_acceptor():
+    """Test the uniform acceptor."""
     def dist(x, x_0):
         return sum(abs(x[key] - x_0[key]) for key in x_0)
 
@@ -67,6 +70,7 @@ def test_uniform_acceptor():
 
 
 def test_stochastic_acceptor():
+    """Test the stochastic acceptor's features."""
     # store pnorms
     pnorm_file = tempfile.mkstemp(suffix=".json")[1]
     acceptor = pyabc.StochasticAcceptor(
@@ -99,3 +103,57 @@ def test_stochastic_acceptor():
                        acceptor=acceptor, population_size=10)
     abc.new(pyabc.create_sqlite_db_id(), x_0)
     abc.run(max_nr_populations=3, minimum_epsilon=1.)
+
+
+def test_pdf_norm_methods_integration():
+    """Test integration of pdf normalization methods in ABCSMC."""
+    def model(par):
+        return {'s0': par['p0'] + np.array([0.3, 0.7])}
+
+    x_0 = {'s0': np.array([0.4, -0.6])}
+
+    for pdf_norm in [pyabc.pdf_norm_max_found,
+                     pyabc.pdf_norm_from_kernel,
+                     pyabc.ScaledPDFNorm(),
+                     ]:
+        # just run
+        acceptor = pyabc.StochasticAcceptor(pdf_norm_method=pdf_norm)
+        eps = pyabc.Temperature(enforce_exact_final_temperature=False)
+        distance = pyabc.IndependentNormalKernel(var=np.array([1, 1]))
+        prior = pyabc.Distribution(p0=pyabc.RV('uniform', -1, 2))
+
+        abc = pyabc.ABCSMC(model, prior, distance, eps=eps, acceptor=acceptor,
+                           population_size=5)
+        abc.new(pyabc.create_sqlite_db_id(), x_0)
+        abc.run(max_nr_populations=2)
+
+
+def test_pdf_norm_methods():
+    """Test pdf normalization methods standalone."""
+    # preparations
+
+    def _get_weighted_distances():
+        return pd.DataFrame({
+            'distance': [1, 2, 3, 4],
+            'w': [2, 1, 1, 0]})
+
+    pdf_norm_args = dict(
+        kernel_val=42,
+        prev_pdf_norm=3.5,
+        get_weighted_distances=_get_weighted_distances,
+        prev_temp=10.3,
+        acceptance_rate=0.3
+    )
+
+    # run functions
+    max_found = max(pdf_norm_args['get_weighted_distances']()['distance'])
+    assert pyabc.pdf_norm_max_found(**pdf_norm_args) == max_found
+    assert pyabc.pdf_norm_from_kernel(**pdf_norm_args) == 42
+    assert pyabc.ScaledPDFNorm()(**pdf_norm_args) == max_found
+
+    # test additional setups
+    pdf_norm_args['prev_pdf_norm'] = 4.5
+    pdf_norm_args['acceptance_rate'] = 0.05
+    assert pyabc.pdf_norm_max_found(**pdf_norm_args) == 4.5
+    offsetted_pdf = 4.5 - np.log(10) * 0.5 * pdf_norm_args['prev_temp']
+    assert pyabc.ScaledPDFNorm()(**pdf_norm_args) == offsetted_pdf
