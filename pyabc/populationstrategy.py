@@ -211,7 +211,7 @@ class ListPopulation(PopulationStrategy):
 
     def __init__(self,
                  values: List[float]):
-        super().__init__(list(values)[0])
+        super().__init__(nr_particles=list(values)[0])
         self.population_values = list(values)
 
     def adapt_population_size(self, transitions: List[Transition],
