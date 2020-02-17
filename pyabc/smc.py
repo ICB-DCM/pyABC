@@ -225,7 +225,6 @@ class ABCSMC:
         self.min_acceptance_rate = None
 
         self._sanity_check()
-        multicorebase.aknowledge_n_procs()
 
 
     def _sanity_check(self):

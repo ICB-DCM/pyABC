@@ -3,6 +3,9 @@ from ..sge import nr_cores_available
 from multiprocessing import ProcessError, Process, Queue
 from queue import Empty
 from typing import List
+import logging
+
+logger = logging.getLogger("Sampler")
 
 
 class MultiCoreSampler(Sampler):
@@ -30,18 +33,14 @@ class MultiCoreSampler(Sampler):
         self.daemon = daemon
         self.check_max_eval = check_max_eval
 
+        # inform user about number of cores used
+        logger.info(f"Parallelizing the sampling on {self.n_procs} cores.")
+
     @property
     def n_procs(self):
         if self._n_procs is not None:
             return self._n_procs
         return nr_cores_available()
-
-
-def acknowledge_n_procs(self):
-    # if sampler is MulticoreEvalParallelSampler, 
-    # then print number of cores
-    if type(self.sampler) is MulticoreEvalParallelSampler:
-        logger.info(f"Parallelizing the sampling on {self.n_procs} cores.")
 
 
 def healthy(worker):
