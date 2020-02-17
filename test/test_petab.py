@@ -11,11 +11,10 @@ def test_import():
     # download archive
     benchmark_dir = "doc/examples/tmp/benchmark-models"
     if not os.path.exists(benchmark_dir):
-        g = git.Repo.clone_from(
+        git.Repo.clone_from(
             "https://github.com/LeonardSchmiester/Benchmark-Models.git",
             benchmark_dir, depth=1)
-    else:
-        g = git.Git(benchmark_dir)
+    g = git.Git(benchmark_dir)
 
     # update repo if online
     try:
