@@ -42,7 +42,7 @@ class AmiciPetabImporter(PetabImporter):
         parameters. If not provided, one is created using
         `amici.petab_import.import_petab_problem`.
     amici_solver:
-        An AMICI model to simulate the model. If not provided, one is created
+        An AMICI solver to simulate the model. If not provided, one is created
         using `amici_model.getSolver()`.
     store_simulations:
         Whether to store performed simulations. Per default, only parameters
