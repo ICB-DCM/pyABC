@@ -7,6 +7,8 @@ os:
 dist:
 # take the latest supported LTS version
 - xenial
+compiler:
+- gcc
 
 # install dependencies
 
@@ -16,14 +18,18 @@ before_install:
 - sudo add-apt-repository 'deb https://cran.rstudio.com/bin/linux/ubuntu xenial/'
 - sudo apt-get update
 - sudo apt-get install r-base r-base-dev r-base-core r-recommended
-# from apt
+
 addons:
   apt:
     update: true
     packages:
     - redis-server
-# from pip
+    - libhdf5-serial-dev
+    - libatlas-base-dev
+    - swig3.0
+
 install:
+- mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
 - pip install --upgrade .
 - pip install --upgrade -r .travis_pip_reqs.txt
 - pip install --upgrade pytest
