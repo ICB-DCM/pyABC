@@ -126,7 +126,7 @@ class AmiciPetabImporter(PetabImporter):
         kernel:
             A pyabc distribution encoding the kernel function.
         """
-        def kernel_fun(x, x_0, t, par):
+        def kernel_fun(x, x_0, t, par) -> float:
             """The kernel function."""
             # the kernel value is computed by amici already
             return x['llh']
