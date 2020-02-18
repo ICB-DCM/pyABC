@@ -15,7 +15,7 @@ except ImportError:
 
 try:
     import amici
-    from amici.petab_objective import simulate_petab
+    from amici.petab_objective import simulate_petab, LLH, RDATAS
 except ImportError:
     logger.error("Install amici (see https://github.com/icb-dcm/amici) to use "
                  "the amici functionality.")
@@ -106,9 +106,9 @@ class AmiciPetabImporter(PetabImporter):
                 scaled_parameters=True)
 
             # return values of interest
-            ret = {'llh': sim['llh']}
+            ret = {'llh': sim[LLH]}
             if store_simulations:
-                for i_rdata, rdata in enumerate(ret['rdatas']):
+                for i_rdata, rdata in enumerate(ret[RDATAS]):
                     ret[f'y_{i_rdata}'] = rdata['y']
 
             return ret
@@ -127,7 +127,8 @@ class AmiciPetabImporter(PetabImporter):
             A pyabc distribution encoding the kernel function.
         """
         def kernel_fun(x, x_0, t, par):
-            # we cheat: the kernel value is computed by the model already
+            """The kernel function."""
+            # the kernel value is computed by amici already
             return x['llh']
 
         # create a kernel from function, returning log-scaled values

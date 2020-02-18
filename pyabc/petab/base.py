@@ -96,7 +96,7 @@ class PetabImporter(abc.ABC):
                 mean, scale = prior_pars
                 rv = pyabc.RV('loglaplace', mean, scale)
             else:
-                raise ValueError(f"Cannot handle rior type {prior_type}.")
+                raise ValueError(f"Cannot handle prior type {prior_type}.")
 
             prior_dct[row[petab.C.PARAMETER_ID]] = rv
 
@@ -119,7 +119,7 @@ class PetabImporter(abc.ABC):
         Returns
         -------
         model:
-            Employs some model formalsm to generate simulated data for the
+            Employs some model formalism to generate simulated data for the
             analyzed system given parameters.
         """
 
