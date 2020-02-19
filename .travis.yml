@@ -29,7 +29,7 @@ addons:
       #- swig3.0
 
 install:
-- mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
+  #- mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
 - pip install --upgrade .
 - pip install --upgrade -r .travis_pip_reqs.txt
 - pip install --upgrade pytest
