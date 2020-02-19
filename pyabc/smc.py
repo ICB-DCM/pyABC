@@ -923,8 +923,7 @@ class ABCSMC:
             elif acceptance_rate < min_acceptance_rate:
                 logger.info("Stopping: minimum acceptance rate.")
                 break
-
-            if t==t_max:
+            elif t==t_max:
                 break
                 
             # prepare next iteration
