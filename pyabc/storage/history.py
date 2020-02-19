@@ -209,8 +209,11 @@ class History:
         """
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
-            return abcs[-1].id
+            for abc in reversed(abcs):
+                if abc.end_time is not None:
+                    return abc.id
         return None
+
 
     @property
     @with_session
