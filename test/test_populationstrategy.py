@@ -113,9 +113,3 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
    
 def test_ListPopulationSize():
     pop_size = pyabc.ListPopulationSize(values=[10, 5, 1.5])
-
-    # might be useful to test integration, but for the moment
-    # standalone tests may suffice
-    assert pop_size(0) == 10
-    assert pop_size(2) == 1.5
-    
