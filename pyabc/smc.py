@@ -727,7 +727,7 @@ class ABCSMC:
             transition_pd = model_factor * particle_factor
 
             if transition_pd == 0:
-                logger.info("Transition density is zero!")
+                logger.debug("Transition density is zero!")
             return transition_pd
 
         return transition_pdf
