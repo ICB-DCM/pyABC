@@ -33,6 +33,8 @@ install:
 - pip install --upgrade .
 - pip install --upgrade -r .travis_pip_reqs.txt
 - pip install --upgrade pytest
+- pip install https://github.com/icb-dcm/petab/archive/develop.zip
+- pip install -e git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
 
 # run tests
 

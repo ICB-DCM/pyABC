@@ -30,5 +30,3 @@ flake8
 pytest
 codecov
 pytest-cov
-git+https://github.com/icb-dcm/petab.git@develop
-amici
