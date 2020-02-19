@@ -214,7 +214,6 @@ class History:
                     return abc.id
         return None
 
-
     @property
     @with_session
     def id(self):
