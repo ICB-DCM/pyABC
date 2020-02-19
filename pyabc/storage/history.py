@@ -210,7 +210,7 @@ class History:
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
             for abc in reversed(abcs):
-                if abc.end_time is not None:
+                if len(abc.populations):
                     return abc.id
         return None
 
