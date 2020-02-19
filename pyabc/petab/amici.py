@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Sequence, Mapping
 from typing import Callable, Union
+import copy
 
 import pyabc
 from .base import PetabImporter
@@ -82,6 +83,13 @@ class AmiciPetabImporter(PetabImporter):
         x_ids = self.petab_problem.get_x_ids(
             free=self.free_parameters, fixed=self.fixed_parameters)
 
+        # fixed paramters
+        x_fixed_ids = self.petab_problem.get_x_ids(
+            free=not self.free_parameters, fixed=not self.fixed_parameters)
+        x_fixed_vals = self.petab_problem.get_x_nominal(
+            scaled=True,
+            free=not self.free_parameters, fixed=not self.fixed_parameters)
+
         # extract variables for improved pickling
         petab_problem = self.petab_problem
         amici_model = self.amici_model
@@ -93,9 +101,16 @@ class AmiciPetabImporter(PetabImporter):
 
         def model(par: Union[Sequence, Mapping]) -> Mapping:
             """The model function."""
+            # copy since we add fixed parameters
+            par = copy.deepcopy(par)
+
             # convenience to allow calling model not only with dicts
             if not isinstance(par, Mapping):
                 par = {key: val for key, val in zip(x_ids, par)}
+
+            # add fixed parameters
+            for key, val in zip(x_fixed_ids, x_fixed_vals):
+                par[key] = val
 
             # simulate model
             sim = simulate_petab(
