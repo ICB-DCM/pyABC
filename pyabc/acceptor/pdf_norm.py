@@ -40,7 +40,7 @@ def pdf_norm_max_found(
 class ScaledPDFNorm:
     """
     Finds the previously found maximum density value, but then scales it
-    by a factor `factor**T` such that the probabiliy of particles getting
+    by a factor `factor**T` such that the probability of particles getting
     accepted is increased by y value of up to `factor`.
 
     Some additional rules are applied to make the scheme stable. The scaling
