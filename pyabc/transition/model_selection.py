@@ -26,7 +26,7 @@ class GridSearchCV(GridSearchCVSKL):
     """
     def __init__(self, estimator=None, param_grid=None,
                  scoring=None,
-                 n_jobs=1, refit=True, cv=5,
+                 n_jobs=1, iid=True, refit=True, cv=5,
                  verbose=0, pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score=True):
 
@@ -35,9 +35,12 @@ class GridSearchCV(GridSearchCVSKL):
         if param_grid is None:
             param_grid = {'scaling': np.linspace(0.05, 1.0, 5)}
 
-        super().__init__(estimator, param_grid, scoring, n_jobs,
-                         refit, cv, verbose, pre_dispatch,
-                         error_score, return_train_score)
+        super().__init__(
+            estimator=estimator, param_grid=param_grid, scoring=scoring,
+            n_jobs=n_jobs, pre_dispatch=pre_dispatch, iid=iid,
+            cv=cv, refit=refit, verbose=verbose,
+            error_score=error_score,
+            return_train_score=return_train_score)
 
     def fit(self, X, y=None, groups=None):
         if len(X) == 1:
