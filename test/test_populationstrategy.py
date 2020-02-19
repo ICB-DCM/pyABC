@@ -1,5 +1,6 @@
 import pytest
-from pyabc.populationstrategy import (AdaptivePopulationSize,
+from pyabc.populationstrategy import (ListPopulationSize,
+                                      AdaptivePopulationSize,
                                       ConstantPopulationSize,
                                       PopulationStrategy)
 from pyabc.transition import MultivariateNormalTransition
@@ -108,3 +109,13 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
                " modified the transitions".format(population_strategy))
 
     assert same, err_msg
+
+   
+def test_ListPopulationSize():
+    pop_size = pyabc.ListPopulationSize(values=[10, 5, 1.5])
+
+    # might be useful to test integration, but for the moment
+    # standalone tests may suffice
+    assert pop_size(0) == 10
+    assert pop_size(2) == 1.5
+    
