@@ -200,12 +200,12 @@ class AdaptivePopulationSize(PopulationStrategy):
         
 class ListPopulationSize(PopulationStrategy):
     """
-    Return Population values from a predefined list. For every time point
-    enquired later, a Population value must exist in the list.
+    Return PopulationSize values from a predefined list. For every time point
+    enquired later, a PopulationSize value must exist in the list.
     Parameters
     ----------
     values: List[float]
-        List of Population values.
+        List of PopulationSize values.
         ``values[t]`` is the value for population t.
     """
 
