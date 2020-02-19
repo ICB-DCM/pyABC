@@ -202,6 +202,7 @@ class ListPopulationSize(PopulationStrategy):
     """
     Return PopulationSize values from a predefined list. For every time point
     enquired later, a PopulationSize value must exist in the list.
+    
     Parameters
     ----------
     values: List[float]
