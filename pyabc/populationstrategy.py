@@ -213,6 +213,11 @@ class ListPopulationSize(PopulationStrategy):
                  values: List[float]):
         super().__init__(nr_particles=list(values)[0])
         self.population_values = list(values)
+        
+    def get_config(self):
+        config = super().get_config()
+        config["population_values"] = self.population_values
+        return config
 
     def adapt_population_size(self, transitions: List[Transition],
                               model_weights: np.ndarray,
