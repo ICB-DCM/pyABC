@@ -929,7 +929,6 @@ class ABCSMC:
             # prepare next iteration
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
-              
                 
             # increment t
             t += 1
