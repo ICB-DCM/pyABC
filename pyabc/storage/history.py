@@ -203,13 +203,15 @@ class History:
     def _find_latest_id(self):
         """
         If there are analysis objects saved in the database already,
-        the id of the latest appended one is returned.
+        the id of the last successful run is returned.
         This is because that is usually the run the user will be
         interested in.
         """
         abcs = self._session.query(ABCSMC).all()
         if len(abcs) > 0:
-            return abcs[-1].id
+            for abc in reversed(abcs):
+                if len(abc.populations):
+                    return abc.id
         return None
 
     @property
