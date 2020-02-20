@@ -51,7 +51,7 @@ class PopulationStrategy:
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray):
+                              model_weights: np.ndarray, t: int = None):
         """
         Select the population size for the next population.
 
@@ -59,6 +59,7 @@ class PopulationStrategy:
         ----------
         transitions: List of Transitions
         model_weights: array of model weights
+        t: Time to adapt for
 
         Returns
         -------
@@ -108,7 +109,8 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of samples to draw for a proposed parameter
     """
 
-    def adapt_population_size(self, transitions, model_weights, t):
+    def adapt_population_size(self, transitions: List[Transition],
+                              model_weights: np.ndarray, t: int = None):
         pass
 
 
@@ -177,7 +179,7 @@ class AdaptivePopulationSize(PopulationStrategy):
                 "mean_cv": self.mean_cv}
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int):
+                              model_weights: np.ndarray, t: int = None):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
@@ -200,13 +202,13 @@ class AdaptivePopulationSize(PopulationStrategy):
         
 class ListPopulationSize(PopulationStrategy):
     """
-    Return PopulationSize values from a predefined list. For every time point
-    enquired later, a PopulationSize value must exist in the list.
+    Return population size values from a predefined list. For every time point
+    enquired later (specified by time t), an entry must exist in the list.
     
     Parameters
     ----------
     values: List[float]
-        List of PopulationSize values.
+        List of population size values.
         ``values[t]`` is the value for population t.
     """
 
@@ -221,6 +223,5 @@ class ListPopulationSize(PopulationStrategy):
         return config
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray,
-                              t: int):
+                              model_weights: np.ndarray, t: int = None):
         self.nr_particles = self.population_values[t]
