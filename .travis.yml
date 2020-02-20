@@ -24,17 +24,17 @@ addons:
     update: true
     packages:
     - redis-server
-      - libhdf5-serial-dev
-      - libatlas-base-dev
-      - swig3.0
+    - libhdf5-serial-dev
+    - libatlas-base-dev
+    - swig3.0
 
 install:
-  - mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
+- mkdir -p ~/bin/ && ln -s /usr/bin/swig3.0 ~/bin/swig && export PATH=~/bin/:$PATH
 - pip install --upgrade .
 - pip install --upgrade -r .travis_pip_reqs.txt
 - pip install --upgrade pytest
-  - pip install https://github.com/icb-dcm/petab/archive/develop.zip
-  - pip install -e git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
+- pip install https://github.com/icb-dcm/petab/archive/develop.zip
+- pip install -e git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
 
 # run tests
 
