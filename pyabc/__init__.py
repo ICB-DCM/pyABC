@@ -33,6 +33,7 @@ from .distance import (
     PercentileDistance,
     RangeEstimatorDistance,
     DistanceWithMeasureList,
+    StochasticKernel,
     NormalKernel,
     IndependentNormalKernel,
     IndependentLaplaceKernel,
@@ -75,7 +76,8 @@ from .acceptor import (
     UniformAcceptor,
     StochasticAcceptor,
     pdf_norm_from_kernel,
-    pdf_norm_max_found)
+    pdf_norm_max_found,
+    ScaledPDFNorm)
 from .model import (
     Model,
     SimpleModel,
@@ -115,6 +117,7 @@ __all__ = [
     "PercentileDistance",
     "RangeEstimatorDistance",
     "DistanceWithMeasureList",
+    "StochasticKernel",
     "NormalKernel",
     "IndependentNormalKernel",
     "IndependentLaplaceKernel",
@@ -174,6 +177,7 @@ __all__ = [
     "StochasticAcceptor",
     "pdf_norm_from_kernel",
     "pdf_norm_max_found",
+    "ScaledPDFNorm",
     # model
     "ModelResult",
     "Model",

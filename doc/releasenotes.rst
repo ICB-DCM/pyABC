@@ -4,6 +4,23 @@ Release Notes
 =============
 
 
+0.10 series
+...........
+
+
+0.10.0 (2020-02-20)
+-------------------
+
+* Exact inference via stochastic acceptor finalized and tested (developed
+  throughout the 0.9 series).
+* Support basic PEtab functionality using AMICI ODE simulations (#268).
+* Various error fixes (#265, #267).
+* Log number of processes used by multiprocessing samplers (#263).
+* Implement pyabc.acceptor.ScaledPDFNorm (#269).
+* Implement list population size (#274, #276).
+* On history loading, automatically find an id of a successful run (#273).
+
+
 0.9 series
 ..........
 

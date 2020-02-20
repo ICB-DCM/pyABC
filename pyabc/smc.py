@@ -727,7 +727,7 @@ class ABCSMC:
             transition_pd = model_factor * particle_factor
 
             if transition_pd == 0:
-                logger.info("Transition density is zero!")
+                logger.debug("Transition density is zero!")
             return transition_pd
 
         return transition_pdf
@@ -1040,7 +1040,8 @@ class ABCSMC:
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
         copied_transitions = copy.deepcopy(self.transitions)
-        self.population_strategy.adapt_population_size(copied_transitions, w)
+        self.population_strategy.adapt_population_size(
+            copied_transitions, w, t)
 
     def _fit_transitions(self, t):
         """

@@ -22,6 +22,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/external_simulators.ipynb
    examples/data_plots.ipynb
    examples/noise.ipynb
+   examples/petab.ipynb
 
 
 Download the examples as notebooks
@@ -42,6 +43,7 @@ Download the examples as notebooks
 * :download:`External Simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise assessment <examples/noise.ipynb>`
+* :download:`PEtab import <examples/petab.ipynb>`
 
 
 .. warning::
