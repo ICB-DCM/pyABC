@@ -108,7 +108,7 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of samples to draw for a proposed parameter
     """
 
-    def adapt_population_size(self, transitions, model_weights):
+    def adapt_population_size(self, transitions, model_weights, t):
         pass
 
 
@@ -177,7 +177,7 @@ class AdaptivePopulationSize(PopulationStrategy):
                 "mean_cv": self.mean_cv}
 
     def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray):
+                              model_weights: np.ndarray, t: int):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
@@ -196,3 +196,31 @@ class AdaptivePopulationSize(PopulationStrategy):
 
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))
+
+        
+class ListPopulationSize(PopulationStrategy):
+    """
+    Return PopulationSize values from a predefined list. For every time point
+    enquired later, a PopulationSize value must exist in the list.
+    
+    Parameters
+    ----------
+    values: List[float]
+        List of PopulationSize values.
+        ``values[t]`` is the value for population t.
+    """
+
+    def __init__(self,
+                 values: List[float]):
+        super().__init__(nr_particles=list(values)[0])
+        self.population_values = list(values)
+        
+    def get_config(self):
+        config = super().get_config()
+        config["population_values"] = self.population_values
+        return config
+
+    def adapt_population_size(self, transitions: List[Transition],
+                              model_weights: np.ndarray,
+                              t: int):
+        self.nr_particles = self.population_values[t]
