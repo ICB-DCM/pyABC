@@ -199,12 +199,12 @@ class AdaptivePopulationSize(PopulationStrategy):
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))
 
-        
+
 class ListPopulationSize(PopulationStrategy):
     """
     Return population size values from a predefined list. For every time point
     enquired later (specified by time t), an entry must exist in the list.
-    
+
     Parameters
     ----------
     values: List[float]
@@ -216,7 +216,7 @@ class ListPopulationSize(PopulationStrategy):
                  values: List[float]):
         super().__init__(nr_particles=list(values)[0])
         self.population_values = list(values)
-        
+
     def get_config(self):
         config = super().get_config()
         config["population_values"] = self.population_values

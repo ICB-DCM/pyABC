@@ -110,7 +110,11 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 
     assert same, err_msg
 
-   
+
 def test_list_population_size():
     """Test list population size."""
-    pop_size = pyabc.ListPopulationSize(values=[10, 5, 1.5])
+    pop_size = ListPopulationSize(values=[100, 1000, 1000])
+    pop_size.adapt_population_size(None, None, 0)
+    assert pop_size.nr_particles == 100
+    pop_size.adapt_population_size(None, None, 2)
+    assert pop_size.nr_particles == 1000
