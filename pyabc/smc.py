@@ -1040,7 +1040,8 @@ class ABCSMC:
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
         copied_transitions = copy.deepcopy(self.transitions)
-        self.population_strategy.adapt_population_size(copied_transitions, w)
+        self.population_strategy.adapt_population_size(
+            copied_transitions, w, t)
 
     def _fit_transitions(self, t):
         """
