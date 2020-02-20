@@ -123,9 +123,9 @@ def test_pdf_norm_methods_integration():
         prior = pyabc.Distribution(p0=pyabc.RV('uniform', -1, 2))
 
         abc = pyabc.ABCSMC(model, prior, distance, eps=eps, acceptor=acceptor,
-                           population_size=5)
+                           population_size=20)
         abc.new(pyabc.create_sqlite_db_id(), x_0)
-        abc.run(max_nr_populations=2)
+        abc.run(max_nr_populations=1)
 
 
 def test_pdf_norm_methods():
