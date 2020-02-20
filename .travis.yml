@@ -33,13 +33,15 @@ install:
 - pip install --upgrade .
 - pip install --upgrade -r .travis_pip_reqs.txt
 - pip install --upgrade pytest
+- pip install https://github.com/icb-dcm/petab/archive/develop.zip
+- pip install -e git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
 
 # run tests
 
 script:
-- travis_wait 25 python -m pytest --cov=pyabc test/test_*
+- travis_wait 20 python -m pytest --cov=pyabc test/test_*
 - travis_wait 5 xvfb-run -a python -m pytest --cov=pyabc --cov-append test/visualization/test_*
-- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 20 test/run_notebooks.sh; fi
+- if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then travis_wait 15 test/run_notebooks.sh; fi
 
 after_success:
 - codecov

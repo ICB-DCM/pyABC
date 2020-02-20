@@ -33,7 +33,7 @@ def wrap_rvs_single(f):
     @functools.wraps(f)
     def rvs_single(self):
         if self.no_parameters:
-            return pd.Series()
+            return pd.Series(dtype=float)
         return f(self)
     return rvs_single
 
