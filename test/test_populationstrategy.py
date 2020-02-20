@@ -112,4 +112,5 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 
    
 def test_list_population_size():
+    """Test list population size."""
     pop_size = pyabc.ListPopulationSize(values=[10, 5, 1.5])
