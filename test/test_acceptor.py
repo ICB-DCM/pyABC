@@ -100,9 +100,9 @@ def test_stochastic_acceptor():
     acceptor = pyabc.StochasticAcceptor()
     eps = pyabc.Temperature()
     abc = pyabc.ABCSMC(model, prior, distance, eps=eps,
-                       acceptor=acceptor, population_size=10)
+                       acceptor=acceptor, population_size=20)
     abc.new(pyabc.create_sqlite_db_id(), x_0)
-    abc.run(max_nr_populations=3, minimum_epsilon=1.)
+    abc.run(max_nr_populations=3)
 
 
 def test_pdf_norm_methods_integration():
@@ -118,14 +118,14 @@ def test_pdf_norm_methods_integration():
                      ]:
         # just run
         acceptor = pyabc.StochasticAcceptor(pdf_norm_method=pdf_norm)
-        eps = pyabc.Temperature(enforce_exact_final_temperature=False)
+        eps = pyabc.Temperature()
         distance = pyabc.IndependentNormalKernel(var=np.array([1, 1]))
         prior = pyabc.Distribution(p0=pyabc.RV('uniform', -1, 2))
 
         abc = pyabc.ABCSMC(model, prior, distance, eps=eps, acceptor=acceptor,
                            population_size=20)
         abc.new(pyabc.create_sqlite_db_id(), x_0)
-        abc.run(max_nr_populations=1)
+        abc.run(max_nr_populations=3)
 
 
 def test_pdf_norm_methods():
