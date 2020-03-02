@@ -32,7 +32,7 @@ def test_adapt_single_model(population_strategy: PopulationStrategy):
     kernel.fit(df, w)
 
     population_strategy.update([kernel], np.array([1.]))
-    assert population_strategy.nr_particles > 0
+    assert population_strategy() > 0
 
 
 def test_adapt_two_models(population_strategy: PopulationStrategy):
@@ -46,7 +46,7 @@ def test_adapt_two_models(population_strategy: PopulationStrategy):
         kernels.append(kernel)
 
     population_strategy.update(kernels, np.array([.7, .2]))
-    assert population_strategy.nr_particles > 0
+    assert population_strategy() > 0
 
 
 def test_no_parameters(population_strategy: PopulationStrategy):
@@ -61,7 +61,7 @@ def test_no_parameters(population_strategy: PopulationStrategy):
         kernels.append(kernel)
 
     population_strategy.update(kernels, np.array([.7, .3]))
-    assert population_strategy.nr_particles > 0
+    assert population_strategy() > 0
 
 
 def test_one_with_one_without_parameters(population_strategy:
@@ -82,7 +82,7 @@ def test_one_with_one_without_parameters(population_strategy:
     kernels.append(kernel_with)
 
     population_strategy.update(kernels, np.array([.7, .3]))
-    assert population_strategy.nr_particles > 0
+    assert population_strategy() > 0
 
 
 def test_transitions_not_modified(population_strategy: PopulationStrategy):
@@ -114,7 +114,5 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 def test_list_population_size():
     """Test list population size."""
     pop_size = ListPopulationSize(values=[100, 1000, 1000])
-    pop_size.update(None, None, 0)
-    assert pop_size.nr_particles == 100
-    pop_size.update(None, None, 2)
-    assert pop_size.nr_particles == 1000
+    assert pop_size(0) == 100
+    assert pop_size(2) == 1000

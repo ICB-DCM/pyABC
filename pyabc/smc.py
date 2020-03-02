@@ -203,7 +203,7 @@ class ABCSMC:
         if isinstance(population_size, int):
             population_size = ConstantPopulationSize(
                 population_size)
-        self.population_strategy = population_size
+        self.population_size = population_size
 
         if sampler is None:
             sampler = DefaultSampler()
@@ -337,7 +337,7 @@ class ABCSMC:
                                         model_names,
                                         self.distance_function.to_json(),
                                         self.eps.to_json(),
-                                        self.population_strategy.to_json())
+                                        self.population_size.to_json())
 
         # return history
         # contains id generated in store_initial_data
@@ -523,7 +523,7 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            self.population_strategy.nr_particles, simulate_one,
+            self.population_size(-1), simulate_one,
             max_eval=np.inf, all_accepted=True)
 
         # extract accepted population
@@ -564,7 +564,7 @@ class ABCSMC:
         model_perturbation_kernel = self.model_perturbation_kernel
         transitions = self.transitions
         nr_samples_per_parameter = \
-            self.population_strategy.nr_samples_per_parameter
+            self.population_size.nr_samples_per_parameter
         models = self.models
         summary_statistics = self.summary_statistics
         distance_function = self.distance_function
@@ -753,7 +753,7 @@ class ABCSMC:
         acceptance setp weight.
         """
         nr_samples_per_parameter = \
-            self.population_strategy.nr_samples_per_parameter
+            self.population_size.nr_samples_per_parameter
 
         # for efficiency, don't just compute prior / prior
         if t == 0:
@@ -877,7 +877,7 @@ class ABCSMC:
             simulate_one = self._create_simulate_function(t)
 
             # population size and maximum number of evaluations
-            pop_size = self.population_strategy.nr_particles
+            pop_size = self.population_size(t)
             max_eval = np.inf if min_acceptance_rate == 0. \
                 else pop_size / min_acceptance_rate
 
@@ -1040,7 +1040,7 @@ class ABCSMC:
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
         copied_transitions = copy.deepcopy(self.transitions)
-        self.population_strategy.update(copied_transitions, w, t)
+        self.population_size.update(copied_transitions, w, t)
 
     def _fit_transitions(self, t):
         """
