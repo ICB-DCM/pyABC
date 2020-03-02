@@ -31,7 +31,7 @@ def test_adapt_single_model(population_strategy: PopulationStrategy):
     kernel = MultivariateNormalTransition()
     kernel.fit(df, w)
 
-    population_strategy.adapt_population_size([kernel], np.array([1.]))
+    population_strategy.update([kernel], np.array([1.]))
     assert population_strategy.nr_particles > 0
 
 
@@ -45,7 +45,7 @@ def test_adapt_two_models(population_strategy: PopulationStrategy):
         kernel.fit(df, w)
         kernels.append(kernel)
 
-    population_strategy.adapt_population_size(kernels, np.array([.7, .2]))
+    population_strategy.update(kernels, np.array([.7, .2]))
     assert population_strategy.nr_particles > 0
 
 
@@ -60,7 +60,7 @@ def test_no_parameters(population_strategy: PopulationStrategy):
         kernel.fit(df, w)
         kernels.append(kernel)
 
-    population_strategy.adapt_population_size(kernels, np.array([.7, .3]))
+    population_strategy.update(kernels, np.array([.7, .3]))
     assert population_strategy.nr_particles > 0
 
 
@@ -81,7 +81,7 @@ def test_one_with_one_without_parameters(population_strategy:
     kernel_with.fit(df_with, w_with)
     kernels.append(kernel_with)
 
-    population_strategy.adapt_population_size(kernels, np.array([.7, .3]))
+    population_strategy.update(kernels, np.array([.7, .3]))
     assert population_strategy.nr_particles > 0
 
 
@@ -99,7 +99,7 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 
     test_weights = [k.pdf(test_points) for k in kernels]
 
-    population_strategy.adapt_population_size(kernels, np.array([.7, .2]))
+    population_strategy.update(kernels, np.array([.7, .2]))
 
     after_adaptation_weights = [k.pdf(test_points) for k in kernels]
 
@@ -114,7 +114,7 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 def test_list_population_size():
     """Test list population size."""
     pop_size = ListPopulationSize(values=[100, 1000, 1000])
-    pop_size.adapt_population_size(None, None, 0)
+    pop_size.update(None, None, 0)
     assert pop_size.nr_particles == 100
-    pop_size.adapt_population_size(None, None, 2)
+    pop_size.update(None, None, 2)
     assert pop_size.nr_particles == 1000

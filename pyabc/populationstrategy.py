@@ -26,8 +26,7 @@ class PopulationStrategy:
     Strategy to select the sizes of the populations.
 
     This is a non-functional abstract base implementation. Do not use this
-    class directly. Subclasses must override the `adapt_population_size`
-    method.
+    class directly. Subclasses must override the `update` method.
 
     Parameters
     ----------
@@ -50,8 +49,8 @@ class PopulationStrategy:
                 "in a future release.", DeprecationWarning)
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
+    def update(self, transitions: List[Transition],
+               model_weights: np.ndarray, t: int = None):
         """
         Select the population size for the next population.
 
@@ -109,8 +108,8 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of samples to draw for a proposed parameter
     """
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
+    def update(self, transitions: List[Transition],
+               model_weights: np.ndarray, t: int = None):
         pass
 
 
@@ -178,8 +177,8 @@ class AdaptivePopulationSize(PopulationStrategy):
                 "max_population_size": self.max_population_size,
                 "mean_cv": self.mean_cv}
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
+    def update(self, transitions: List[Transition],
+               model_weights: np.ndarray, t: int = None):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
@@ -222,6 +221,6 @@ class ListPopulationSize(PopulationStrategy):
         config["population_values"] = self.population_values
         return config
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
+    def update(self, transitions: List[Transition],
+               model_weights: np.ndarray, t: int = None):
         self.nr_particles = self.population_values[t]
