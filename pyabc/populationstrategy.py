@@ -242,9 +242,11 @@ class ListPopulationSize(PopulationStrategy):
 
     def __init__(self,
                  values: Union[List[int], Dict[int, int]],
-                 nr_calibration_particles: int = None):
+                 nr_calibration_particles: int = None,
+                 nr_samples_per_parameter: int = 1):
         super().__init__(
-            nr_calibration_particles=nr_calibration_particles)
+            nr_calibration_particles=nr_calibration_particles,
+            nr_samples_per_parameter=nr_samples_per_parameter)
         self.values = values
 
     def get_config(self) -> dict:
