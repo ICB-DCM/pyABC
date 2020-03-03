@@ -13,7 +13,6 @@ import json
 import logging
 import numpy as np
 from typing import Dict, List, Union
-from collections.abc import Mapping
 import warnings
 
 from pyabc.cv.bootstrap import calc_cv
@@ -204,8 +203,8 @@ class AdaptivePopulationSize(PopulationStrategy):
 
         if not np.isnan(cv_estimate.n_estimated):
             self.nr_particles = max(min(int(cv_estimate.n_estimated),
-                                         self.max_population_size),
-                                     self.min_population_size)
+                                        self.max_population_size),
+                                    self.min_population_size)
 
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))
