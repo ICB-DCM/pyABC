@@ -168,6 +168,7 @@ class AdaptivePNormDistance(PNormDistance):
         smallest non-zero absolute weight. In practice usually not necessary,
         it is theoretically required to ensure convergence.
 
+
     .. [#prangle] Prangle, Dennis. "Adapting the ABC Distance Function".
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
     """
