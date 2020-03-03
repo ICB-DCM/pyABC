@@ -31,13 +31,17 @@ class PopulationStrategy(ABC):
 
     Parameters
     ----------
+    nr_calibration_particles:
+        Number of calibration particles.
     nr_samples_per_parameter:
         Number of samples to draw for a proposed parameter.
         Default is 1.
     """
 
     def __init__(self,
+                 nr_calibration_particles: int = None,
                  nr_samples_per_parameter: int = 1):
+        self.nr_calibration_particles = nr_calibration_particles
         if nr_samples_per_parameter != 1:
             warnings.warn(
                 "A nr_samples_per_parameter != 1 is deprecated "
