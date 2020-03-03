@@ -161,6 +161,7 @@ class AdaptivePopulationSize(PopulationStrategy):
     nr_calibration_particles:
         Number of calibration particles.
 
+
     .. [#klingerhasenaueradaptive] Klinger, Emmanuel, and Jan Hasenauer.
             “A Scheme for Adaptive Selection of Population Sizes in "
             Approximate Bayesian Computation - Sequential Monte Carlo."

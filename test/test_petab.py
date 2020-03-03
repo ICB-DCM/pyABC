@@ -9,10 +9,11 @@ import numpy as np
 
 def test_import():
     # download archive
-    benchmark_dir = "doc/examples/tmp/benchmark-models"
+    benchmark_dir = "doc/examples/tmp/benchmark-models-petab"
     if not os.path.exists(benchmark_dir):
         git.Repo.clone_from(
-            "https://github.com/LeonardSchmiester/Benchmark-Models.git",
+            "https://github.com/benchmarking-initiative"
+            "/benchmark-models-petab.git",
             benchmark_dir, depth=1)
     g = git.Git(benchmark_dir)
 
@@ -24,7 +25,7 @@ def test_import():
 
     # create problem
     petab_problem = petab.Problem.from_yaml(os.path.join(
-        benchmark_dir, "hackathon_contributions_new_data_format",
+        benchmark_dir, "Benchmark-Models",
         "Boehm_JProteomeRes2014", "Boehm_JProteomeRes2014.yaml"))
 
     # compile amici
