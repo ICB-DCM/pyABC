@@ -11,6 +11,8 @@ Release Notes
 0.10.1 (2020-03-03)
 -------------------
 
+* Allow specifying initial weights for adaptive distances, then without
+  sampling from the prior (#279).
 * Allow separate calibration population sizes, slightly reformulate
   PopulationStrategy class (#278).
 
