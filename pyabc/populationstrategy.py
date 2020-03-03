@@ -168,7 +168,7 @@ class AdaptivePopulationSize(PopulationStrategy):
 
     def __init__(self,
                  start_nr_particles,
-                 mean_cv=0.05,
+                 mean_cv: float = 0.05,
                  max_population_size: int = np.inf,
                  min_population_size: int = 10,
                  nr_samples_per_parameter: int = 1,
