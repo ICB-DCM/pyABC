@@ -77,7 +77,9 @@ class PopulationStrategy(ABC):
         config:
             Configuration of the class as dictionary
         """
-        return {"name": self.__class__.__name__}
+        return {"name": self.__class__.__name__,
+                "nr_calibration_particles": self.nr_calibration_particles,
+                "nr_samples_per_parameter": self.nr_samples_per_parameter}
 
     def to_json(self) -> str:
         """
@@ -111,9 +113,10 @@ class ConstantPopulationSize(PopulationStrategy):
                  nr_particles: int,
                  nr_calibration_particles: int = None,
                  nr_samples_per_parameter: int = 1):
-        super().__init__(nr_samples_per_parameter)
+        super().__init__(
+            nr_calibration_particles=nr_calibration_particles,
+            nr_samples_per_parameter=nr_samples_per_parameter)
         self.nr_particles = nr_particles
-        self.nr_calibration_particles = nr_calibration_particles
 
     def __call__(self, t: int = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
@@ -121,8 +124,9 @@ class ConstantPopulationSize(PopulationStrategy):
         return self.nr_particles
 
     def get_config(self) -> dict:
-        return {"name": self.__class__.__name__,
-                "nr_particles": self.nr_particles}
+        config = super().get_config()
+        config["nr_particles"] = self.nr_particles
+        return config
 
 
 class AdaptivePopulationSize(PopulationStrategy):
@@ -174,23 +178,26 @@ class AdaptivePopulationSize(PopulationStrategy):
                  nr_samples_per_parameter: int = 1,
                  n_bootstrap: int = 10,
                  nr_calibration_particles: int = None):
-        super().__init__(nr_samples_per_parameter)
+        super().__init__(
+            nr_calibration_particles=nr_calibration_particles,
+            nr_samples_per_parameter=nr_samples_per_parameter)
         self.start_nr_particles = start_nr_particles
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
         self.mean_cv = mean_cv
         self.n_bootstrap = n_bootstrap
-        self.nr_calibration_particles = nr_calibration_particles
 
         # to hold the current value
         self.nr_particles = start_nr_particles
 
     def get_config(self) -> dict:
-        return {"name": self.__class__.__name__,
-                "max_population_size": self.max_population_size,
-                "min_population_size": self.min_population_size,
-                "mean_cv": self.mean_cv,
-                "n_bootstrap": self.n_bootstrap}
+        config = super().get_config()
+        config["start_nr_particles"] = self.start_nr_particles
+        config["max_population_size"] = self.max_population_size
+        config["min_population_size"] = self.min_population_size
+        config["mean_cv"] = self.mean_cv
+        config["n_bootstrap"] = self.n_bootstrap
+        return config
 
     def update(self, transitions: List[Transition],
                model_weights: np.ndarray, t: int = None):
@@ -236,9 +243,9 @@ class ListPopulationSize(PopulationStrategy):
     def __init__(self,
                  values: Union[List[int], Dict[int, int]],
                  nr_calibration_particles: int = None):
-        super().__init__()
+        super().__init__(
+            nr_calibration_particles=nr_calibration_particles)
         self.values = values
-        self.nr_calibration_particles = nr_calibration_particles
 
     def get_config(self) -> dict:
         config = super().get_config()
