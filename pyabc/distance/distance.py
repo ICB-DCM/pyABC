@@ -143,6 +143,9 @@ class AdaptivePNormDistance(PNormDistance):
 
     p: float, optional (default = 2)
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
+    initial_weights: dict, optional
+        Weights to be used in the initial iteration. Dictionary with
+        observables as keys and weights as values.
     factors: dict, optional
         As in PNormDistance.
     adaptive: bool, optional (default = True)
@@ -165,13 +168,13 @@ class AdaptivePNormDistance(PNormDistance):
         smallest non-zero absolute weight. In practice usually not necessary,
         it is theoretically required to ensure convergence.
 
-
     .. [#prangle] Prangle, Dennis. "Adapting the ABC Distance Function".
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
     """
 
     def __init__(self,
                  p: float = 2,
+                 initial_weights: dict = None,
                  factors: dict = None,
                  adaptive: bool = True,
                  scale_function=None,
@@ -180,6 +183,7 @@ class AdaptivePNormDistance(PNormDistance):
         # call p-norm constructor
         super().__init__(p=p, weights=None, factors=factors)
 
+        self.initial_weights = initial_weights
         self.factors = factors
         self.adaptive = adaptive
 
@@ -217,6 +221,11 @@ class AdaptivePNormDistance(PNormDistance):
         """
         super().initialize(t, get_all_sum_stats, x_0)
         self.x_0 = x_0
+
+        # initial weights pre-defined
+        if self.initial_weights is not None:
+            self.weights[t] = self.initial_weights
+            return
 
         # execute function
         all_sum_stats = get_all_sum_stats()
@@ -488,6 +497,9 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     distances: List[Distance]
         As in AggregatedDistance.
+    initial_weights: list, optional
+        Weights to be used in the initial iteration. List with
+        a weight for each distance function.
     factors: Union[List, dict]
         As in AggregatedDistance.
     adaptive: bool, optional (default = True)
@@ -504,10 +516,12 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
     def __init__(
             self,
             distances: List[Distance],
+            initial_weights: List = None,
             factors: Union[List, dict] = None,
             adaptive: bool = True,
             scale_function: Callable = None):
         super().__init__(distances=distances)
+        self.initial_weights = initial_weights
         self.factors = factors
         self.adaptive = adaptive
         self.x_0 = None
@@ -524,6 +538,10 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         """
         super().initialize(t, get_all_sum_stats, x_0)
         self.x_0 = x_0
+
+        if self.initial_weights is not None:
+            self.weights[t] = self.initial_weights
+            return
 
         # execute function
         all_sum_stats = get_all_sum_stats()
