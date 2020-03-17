@@ -16,6 +16,7 @@ except ImportError:
 
 try:
     import amici
+    import amici.petab_import
     from amici.petab_objective import simulate_petab, LLH, RDATAS
 except ImportError:
     logger.error("Install amici (see https://github.com/icb-dcm/amici) to use "
@@ -45,10 +46,6 @@ class AmiciPetabImporter(PetabImporter):
     amici_solver:
         An AMICI solver to simulate the model. If not provided, one is created
         using `amici_model.getSolver()`.
-    store_simulations:
-        Whether to store performed simulations. Per default, only parameters
-        and likelihood valuaes are stored. Since an ODE model
-        is deterministic, the trajectories can easily be reproduced.
     """
 
     def __init__(
@@ -57,15 +54,14 @@ class AmiciPetabImporter(PetabImporter):
             amici_model: amici.Model = None,
             amici_solver: amici.Solver = None,
             free_parameters: bool = True,
-            fixed_parameters: bool = False,
-            store_simulations: bool = False):
+            fixed_parameters: bool = False):
         super().__init__(
             petab_problem=petab_problem,
             free_parameters=free_parameters,
             fixed_parameters=fixed_parameters)
 
         if amici_model is None:
-            amici_model = amici.getab_import.import_petab_problem(
+            amici_model = amici.petab_import.import_petab_problem(
                 petab_problem)
         self.amici_model = amici_model
 
@@ -73,12 +69,32 @@ class AmiciPetabImporter(PetabImporter):
             amici_solver = self.amici_model.getSolver()
         self.amici_solver = amici_solver
 
-        self.store_simulations = store_simulations
-
     def create_model(
-        self
+            self,
+            return_simulations: bool = False,
+            return_rdatas: bool = False
     ) -> Callable[[Union[Sequence, Mapping]], Mapping]:
-        """Create model."""
+        """Create model.
+
+        Note that since AMICI uses deterministic ODE simulations,
+        it is usually not necessary to store simulations, as these can
+        be reproduced from the parameters.
+
+        Parameters
+        ----------
+        return_simulations:
+            Whether to return the simulations also (large, can be stored
+            in database).
+        return_rdatas:
+            Whether to return the full `List[amici.ExpData]` objects (large,
+            cannot be stored in database).
+
+        Returns
+        -------
+        model:
+            The model function, taking parameters and returning simulations.
+            The model returns already the likelihood value.
+        """
         # parameter ids to consider
         x_ids = self.petab_problem.get_x_ids(
             free=self.free_parameters, fixed=self.fixed_parameters)
@@ -94,7 +110,6 @@ class AmiciPetabImporter(PetabImporter):
         petab_problem = self.petab_problem
         amici_model = self.amici_model
         amici_solver = self.amici_solver
-        store_simulations = self.store_simulations
 
         # no gradients for pyabc
         amici_solver.setSensitivityOrder(0)
@@ -122,9 +137,11 @@ class AmiciPetabImporter(PetabImporter):
 
             # return values of interest
             ret = {'llh': sim[LLH]}
-            if store_simulations:
-                for i_rdata, rdata in enumerate(ret[RDATAS]):
+            if return_simulations:
+                for i_rdata, rdata in enumerate(sim[RDATAS]):
                     ret[f'y_{i_rdata}'] = rdata['y']
+            if return_rdatas:
+                ret[RDATAS] = sim[RDATAS]
 
             return ret
 
