@@ -84,7 +84,7 @@ def test_pnormdistance():
     # call distance function, also to initialize w
     d = dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
 
-    expected = pow(1**2 + 2**2, 1 / 2)
+    expected = pow(1**2 + 2**2, 1/2)
     assert expected == d
 
     assert sum(abs(a - b) for a, b in
@@ -117,6 +117,7 @@ def test_adaptivepnormdistance():
             scale_function=scale_function)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
         dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        assert dist_f.weights[0] != {'s1': 1, 's2': 1, 's3': 1}
 
     # test max weight ratio
     for scale_function in scale_functions:
@@ -125,6 +126,28 @@ def test_adaptivepnormdistance():
             max_weight_ratio=20)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
         dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        assert dist_f.weights[0] != {'s1': 1, 's2': 1, 's3': 1}
+
+
+def test_adaptivepnormdistance_initial_weights():
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1}])
+    x_0 = {'s1': 0, 's2': 0, 's3': 1}
+
+    # first test that for PNormDistance, the weights stay constant
+    initial_weights = {'s1': 1, 's2': 2, 's3': 3}
+    dist_f = AdaptivePNormDistance(initial_weights=initial_weights)
+    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+    assert dist_f.weights[0] == initial_weights
+
+    # call distance function
+    d = dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+    expected = pow(sum([(2*1)**2, (3*2)**2]), 1/2)
+    assert expected == d
+
+    # check updating works
+    dist_f.update(1, abc.sample_from_prior)
+    assert dist_f.weights[1] != dist_f.weights[0]
 
 
 def test_aggregateddistance():
@@ -165,6 +188,33 @@ def test_adaptiveaggregateddistance():
         val = distance(
             abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
         assert isinstance(val, float)
+        assert (distance.weights[0] != [1, 1]).any()
+
+
+def test_adaptiveaggregateddistance_calibration():
+    abc = MockABC([{'s0': -1, 's1': -1},
+                   {'s0': -1, 's1': 0}])
+    x_0 = {'s0': 0, 's1': 0}
+
+    def distance0(x, x_0):
+        return abs(x['s0'] - x_0['s0'])
+
+    def distance1(x, x_0):
+        return np.sqrt((x['s1'] - x_0['s1'])**2)
+
+    scale_functions = [span, mean, median]
+    initial_weights = np.array([2, 3])
+    for scale_function in scale_functions:
+        distance = AdaptiveAggregatedDistance(
+            [distance0, distance1], scale_function=scale_function,
+            initial_weights=initial_weights)
+        distance.initialize(0, abc.sample_from_prior, x_0=x_0)
+        val = distance(
+            abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        assert isinstance(val, float)
+        assert (distance.weights[0] == initial_weights).all()
+        distance.update(1, abc.sample_from_prior)
+        assert (distance.weights[1] != distance.weights[0]).all()
 
 
 def test_normalkernel():

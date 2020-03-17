@@ -8,10 +8,11 @@ The population size can be constant or can change over the course
 of the generations.
 """
 
+from abc import ABC, abstractmethod
 import json
 import logging
 import numpy as np
-from typing import List
+from typing import Dict, List, Union
 import warnings
 
 from pyabc.cv.bootstrap import calc_cv
@@ -21,28 +22,26 @@ from .transition.predict_population_size import predict_population_size
 logger = logging.getLogger("Adaptation")
 
 
-class PopulationStrategy:
+class PopulationStrategy(ABC):
     """
     Strategy to select the sizes of the populations.
 
     This is a non-functional abstract base implementation. Do not use this
-    class directly. Subclasses must override the `adapt_population_size`
-    method.
+    class directly. Subclasses must override the `update` method.
 
     Parameters
     ----------
-
-    nr_particles: int
-       Number of particles per populations
-
-    nr_samples_per_parameter: int, optional
+    nr_calibration_particles:
+        Number of calibration particles.
+    nr_samples_per_parameter:
         Number of samples to draw for a proposed parameter.
         Default is 1.
     """
 
-    def __init__(self, nr_particles: int, *,
+    def __init__(self,
+                 nr_calibration_particles: int = None,
                  nr_samples_per_parameter: int = 1):
-        self.nr_particles = nr_particles
+        self.nr_calibration_particles = nr_calibration_particles
         if nr_samples_per_parameter != 1:
             warnings.warn(
                 "A nr_samples_per_parameter != 1 is deprecated "
@@ -50,37 +49,39 @@ class PopulationStrategy:
                 "in a future release.", DeprecationWarning)
         self.nr_samples_per_parameter = nr_samples_per_parameter
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
+    def update(self, transitions: List[Transition],
+               model_weights: np.ndarray, t: int = None):
         """
         Select the population size for the next population.
 
         Parameters
         ----------
-        transitions: List of Transitions
-        model_weights: array of model weights
-        t: Time to adapt for
-
-        Returns
-        -------
-        n: int
-            The new population size
+        transitions:
+            List of transitions.
+        model_weights:
+            Array of model weights.
+        t:
+            Time to adapt for.
         """
-        raise NotImplementedError
 
-    def get_config(self):
+    @abstractmethod
+    def __call__(self, t: int = None) -> int:
+        raise NotImplementedError()
+
+    def get_config(self) -> dict:
         """
         Get the configuration of this object.
 
         Returns
         -------
-        dict
+        config:
             Configuration of the class as dictionary
         """
         return {"name": self.__class__.__name__,
-                "nr_particles": self.nr_particles}
+                "nr_calibration_particles": self.nr_calibration_particles,
+                "nr_samples_per_parameter": self.nr_samples_per_parameter}
 
-    def to_json(self):
+    def to_json(self) -> str:
         """
         Return the configuration as json string.
         Per default, this converts the dictionary returned
@@ -88,8 +89,7 @@ class PopulationStrategy:
 
         Returns
         -------
-
-        str
+        config:
             Configuration of the class as json string.
         """
         return json.dumps(self.get_config())
@@ -101,17 +101,32 @@ class ConstantPopulationSize(PopulationStrategy):
 
     Parameters
     ----------
-
-    nr_particles: int
-       Number of particles per populations
-
-    nr_samples_per_parameter: int
-        Number of samples to draw for a proposed parameter
+    nr_particles:
+        Number of particles per population.
+    nr_calibration_particles:
+        Number of calibration particles.
+    nr_samples_per_parameter:
+        Number of samples to draw for a proposed parameter.
     """
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
-        pass
+    def __init__(self,
+                 nr_particles: int,
+                 nr_calibration_particles: int = None,
+                 nr_samples_per_parameter: int = 1):
+        super().__init__(
+            nr_calibration_particles=nr_calibration_particles,
+            nr_samples_per_parameter=nr_samples_per_parameter)
+        self.nr_particles = nr_particles
+
+    def __call__(self, t: int = None) -> int:
+        if t == -1 and self.nr_calibration_particles is not None:
+            return self.nr_calibration_particles
+        return self.nr_particles
+
+    def get_config(self) -> dict:
+        config = super().get_config()
+        config["nr_particles"] = self.nr_particles
+        return config
 
 
 class AdaptivePopulationSize(PopulationStrategy):
@@ -125,30 +140,26 @@ class AdaptivePopulationSize(PopulationStrategy):
 
     Parameters
     ----------
-
-    start_nr_particles: int
+    start_nr_particles:
         Number of particles in the first populations
-
-    mean_cv: float, optional
+    mean_cv:
         The error criterion. Defaults to 0.05.
         A smaller value leads generally to larger populations.
         The error criterion is the mean coefficient of variation of
         the estimated KDE.
-
-    max_population_size: int, optional
+    max_population_size:
         Max nr of allowed particles in a population.
         Defaults to infinity.
-
-    min_population_size: int, optional
+    min_population_size:
         Min number of particles allowed in a population.
         Defaults to 10
-
-    nr_samples_per_parameter: int, optional
+    nr_samples_per_parameter:
         Defaults to 1.
-
-    n_bootstrap: int, optional
+    n_bootstrap:
         Number of bootstrapped populations to use to estimate the CV.
         Defaults to 10.
+    nr_calibration_particles:
+        Number of calibration particles.
 
 
     .. [#klingerhasenaueradaptive] Klinger, Emmanuel, and Jan Hasenauer.
@@ -160,26 +171,37 @@ class AdaptivePopulationSize(PopulationStrategy):
             https://doi.org/10.1007/978-3-319-67471-1_8.
     """
 
-    def __init__(self, start_nr_particles, mean_cv=0.05,
-                 *,
-                 max_population_size=float("inf"),
-                 min_population_size=10,
-                 nr_samples_per_parameter=1,
-                 n_bootstrap=10):
-        super().__init__(start_nr_particles,
-                         nr_samples_per_parameter=nr_samples_per_parameter)
+    def __init__(self,
+                 start_nr_particles,
+                 mean_cv: float = 0.05,
+                 max_population_size: int = np.inf,
+                 min_population_size: int = 10,
+                 nr_samples_per_parameter: int = 1,
+                 n_bootstrap: int = 10,
+                 nr_calibration_particles: int = None):
+        super().__init__(
+            nr_calibration_particles=nr_calibration_particles,
+            nr_samples_per_parameter=nr_samples_per_parameter)
+        self.start_nr_particles = start_nr_particles
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
         self.mean_cv = mean_cv
         self.n_bootstrap = n_bootstrap
 
-    def get_config(self):
-        return {"name": self.__class__.__name__,
-                "max_population_size": self.max_population_size,
-                "mean_cv": self.mean_cv}
+        # to hold the current value
+        self.nr_particles = start_nr_particles
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
+    def get_config(self) -> dict:
+        config = super().get_config()
+        config["start_nr_particles"] = self.start_nr_particles
+        config["max_population_size"] = self.max_population_size
+        config["min_population_size"] = self.min_population_size
+        config["mean_cv"] = self.mean_cv
+        config["n_bootstrap"] = self.n_bootstrap
+        return config
+
+    def update(self, transitions: List[Transition],
+               model_weights: np.ndarray, t: int = None):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
@@ -199,6 +221,11 @@ class AdaptivePopulationSize(PopulationStrategy):
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))
 
+    def __call__(self, t: int = None) -> int:
+        if t == -1 and self.nr_calibration_particles is not None:
+            return self.nr_calibration_particles
+        return self.nr_particles
+
 
 class ListPopulationSize(PopulationStrategy):
     """
@@ -210,18 +237,25 @@ class ListPopulationSize(PopulationStrategy):
     values: List[float]
         List of population size values.
         ``values[t]`` is the value for population t.
+    nr_calibration_particles:
+        Number of calibration particles.
     """
 
     def __init__(self,
-                 values: List[float]):
-        super().__init__(nr_particles=list(values)[0])
-        self.population_values = list(values)
+                 values: Union[List[int], Dict[int, int]],
+                 nr_calibration_particles: int = None,
+                 nr_samples_per_parameter: int = 1):
+        super().__init__(
+            nr_calibration_particles=nr_calibration_particles,
+            nr_samples_per_parameter=nr_samples_per_parameter)
+        self.values = values
 
-    def get_config(self):
+    def get_config(self) -> dict:
         config = super().get_config()
         config["population_values"] = self.population_values
         return config
 
-    def adapt_population_size(self, transitions: List[Transition],
-                              model_weights: np.ndarray, t: int = None):
-        self.nr_particles = self.population_values[t]
+    def __call__(self, t: int = None) -> int:
+        if t == -1 and self.nr_calibration_particles is not None:
+            return self.nr_calibration_particles
+        return self.values[t]
