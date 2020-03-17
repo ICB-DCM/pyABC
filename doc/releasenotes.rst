@@ -8,13 +8,14 @@ Release Notes
 ...........
 
 
-0.10.1 (2020-03-03)
+0.10.1 (2020-03-17)
 -------------------
 
-* Allow specifying initial weights for adaptive distances, then without
-  sampling from the prior (#279).
 * Allow separate calibration population sizes, slightly reformulate
   PopulationStrategy class (#278).
+* Allow specifying initial weights for adaptive distances, then without
+  sampling from the prior (#279).
+* Check PEtab test suite in tests (#281).
 
 
 0.10.0 (2020-02-20)
