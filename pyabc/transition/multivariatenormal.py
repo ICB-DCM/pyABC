@@ -83,13 +83,6 @@ class MultivariateNormalTransition(Transition):
 
 
     def rvs_single(self):
-        """
-        sample = self.X.sample(weights=self.w).iloc[0]
-        sample = np.random.choice(self._X_arr[0], p=self.w)
-        perturbed = (sample +
-                     np.random.multivariate_normal(
-                         np.zeros(self.cov.shape[0]), self.cov))
-        """
         perturbed = self.rvs(size=1)
         return perturbed.item()
 
