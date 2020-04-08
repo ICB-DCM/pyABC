@@ -41,7 +41,7 @@ def weights(n_per_model, transitions, test_transitions, test_X):
 
 
 def calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w,
-            transitions, test_X):
+                  transitions, test_X, client):
     """
     Calculate the Coefficient of Variation.
 
@@ -66,6 +66,8 @@ def calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w,
     test_X: List[np.ndarray]
         test_X[m] are the test points with weights test_w[m]
 
+    client: Client to execute on
+
     Returns
     -------
 
@@ -82,9 +84,11 @@ def calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w,
 
     # N_BOOTSTR times, train test_transitions on n_per_model points, and
     # calculate the weights associated with test_X, for each model
-    bootstr_w_at_test_X = [weights(n_per_model, transitions, test_transitions,
-                                   test_X)
-                           for _ in range(N_BOOTSTR)]
+
+    bootstr_w_at_test_X = client.map(
+        lambda _: weights(n_per_model, transitions, test_transitions,
+                          test_X),
+        range(N_BOOTSTR))
 
     # sort by model
     per_model_w = [np.array(arr) for arr in zip(*bootstr_w_at_test_X)]

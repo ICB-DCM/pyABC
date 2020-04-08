@@ -129,6 +129,12 @@ class ConstantPopulationSize(PopulationStrategy):
         return config
 
 
+class LocalClient(object):
+
+    def map(func, iterable):
+        return [func(i) for i in iterable]
+
+
 class AdaptivePopulationSize(PopulationStrategy):
     """
     Adapt the population size according to the mean coefficient of variation
@@ -178,10 +184,16 @@ class AdaptivePopulationSize(PopulationStrategy):
                  min_population_size: int = 10,
                  nr_samples_per_parameter: int = 1,
                  n_bootstrap: int = 10,
-                 nr_calibration_particles: int = None):
+                 nr_calibration_particles: int = None,
+                 client= None):
         super().__init__(
             nr_calibration_particles=nr_calibration_particles,
             nr_samples_per_parameter=nr_samples_per_parameter)
+
+        if client is None:
+            client = LocalClient()
+        self.client = client
+
         self.start_nr_particles = start_nr_particles
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
@@ -211,7 +223,8 @@ class AdaptivePopulationSize(PopulationStrategy):
             reference_nr_part, target_cv,
             lambda nr_particles: calc_cv(nr_particles, model_weights,
                                          self.n_bootstrap, test_w, transitions,
-                                         test_X)[0])
+                                         test_X,
+                                         self.client)[0])
 
         if not np.isnan(cv_estimate.n_estimated):
             self.nr_particles = max(min(int(cv_estimate.n_estimated),
