@@ -1,5 +1,8 @@
 import numpy as np
 import scipy as sp
+import scipy.stats
+import tempfile
+
 from pyabc.distance import (
     PercentileDistance,
     MinMaxDistance,
@@ -27,6 +30,7 @@ from pyabc.distance import (
     mean,
     median,
     SCALE_LIN,)
+from pyabc.storage import load_dict_from_json
 
 
 class MockABC:
@@ -405,3 +409,30 @@ def test_negativebinomialkernel():
     expected = np.sum(sp.stats.nbinom.logpmf(
         k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
     assert np.isclose(ret, expected)
+
+
+def test_store_weights():
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1}])
+    x_0 = {'s1': 0, 's2': 0, 's3': 1}
+
+    weights_file = tempfile.mkstemp(suffix=".json")[1]
+    print(weights_file)
+
+    def distance0(x, x_0):
+        return abs(x['s0'] - x_0['s0'])
+
+    def distance1(x, x_0):
+        return np.sqrt((x['s1'] - x_0['s1'])**2)
+
+    for distance in [AdaptivePNormDistance(log_file=weights_file),
+                     AdaptiveAggregatedDistance(
+                         [distance0, distance1], log_file=weights_file)]:
+        distance = AdaptivePNormDistance(log_file=weights_file)
+        distance.initialize(0, abc.sample_from_prior, x_0=x_0)
+        distance.update(1, abc.sample_from_prior)
+        distance.update(2, abc.sample_from_prior)
+
+        weights = load_dict_from_json(weights_file)
+        assert set(weights.keys()) == {0, 1, 2}
+        assert weights == distance.weights

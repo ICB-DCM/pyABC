@@ -19,7 +19,7 @@ import pandas as pd
 from typing import Callable
 import logging
 
-from ..distance import Distance, SCALE_LIN
+from ..distance import Distance, SCALE_LIN, StochasticKernel
 from ..epsilon import Epsilon
 from ..parameters import Parameter
 from .pdf_norm import pdf_norm_max_found
@@ -354,7 +354,8 @@ class StochasticAcceptor(Acceptor):
             usually only for testing purposes.
         log_file: str, optional
             A log file for storing data of the acceptor that are currently not
-            saved in the database. The data are saved in json format.
+            saved in the database. The data are saved in json format and can
+            be retrieved via `pyabc.storage.load_dict_from_json`.
         """
         super().__init__()
 
@@ -376,7 +377,7 @@ class StochasticAcceptor(Acceptor):
             self,
             t: int,
             get_weighted_distances: Callable[[], pd.DataFrame],
-            distance_function: Distance,
+            distance_function: StochasticKernel,
             x_0: dict):
         """
         Initialize temperature and maximum pdf.
@@ -430,7 +431,9 @@ class StochasticAcceptor(Acceptor):
             kernel_scale=self.kernel_scale,  # TODO Refactor
         )
 
-    def __call__(self, distance_function, eps, x, x_0, t, par):
+    def __call__(self,
+                 distance_function: StochasticKernel,
+                 eps, x, x_0, t, par):
         # rename
         kernel = distance_function
 
@@ -438,15 +441,15 @@ class StochasticAcceptor(Acceptor):
         temp = eps(t)
 
         # compute probability density
-        pd = kernel(x, x_0, t, par)
+        density = kernel(x, x_0, t, par)
 
         pdf_norm = self.pdf_norms[t]
 
         # compute acceptance probability
         if kernel.ret_scale == SCALE_LIN:
-            acc_prob = (pd / pdf_norm) ** (1 / temp)
+            acc_prob = (density / pdf_norm) ** (1 / temp)
         else:  # kernel.ret_scale == SCALE_LOG
-            acc_prob = np.exp((pd - pdf_norm) * (1 / temp))
+            acc_prob = np.exp((density - pdf_norm) * (1 / temp))
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
@@ -464,10 +467,10 @@ class StochasticAcceptor(Acceptor):
             weight = 1.0
 
         # check pdf max ok
-        if pdf_norm < pd:
+        if pdf_norm < density:
             logger.debug(
-                f"Encountered pd={pd:.4e} > c={pdf_norm:.4e}, "
+                f"Encountered density={density:.4e} > c={pdf_norm:.4e}, "
                 f"thus weight={weight:.4e}.")
 
         # return unscaled density value and the acceptance flag
-        return AcceptorResult(pd, accept, weight)
+        return AcceptorResult(density, accept, weight)

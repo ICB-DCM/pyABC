@@ -6,6 +6,7 @@ import logging
 from ..sampler import Sampler
 from .scale import standard_deviation, span
 from .base import Distance, to_distance
+from ..storage import save_dict_to_json
 
 
 logger = logging.getLogger("Distance")
@@ -141,33 +142,37 @@ class AdaptivePNormDistance(PNormDistance):
     Parameters
     ----------
 
-    p: float, optional (default = 2)
+    p:
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
-    initial_weights: dict, optional
+        Default: p=2.
+    initial_weights:
         Weights to be used in the initial iteration. Dictionary with
         observables as keys and weights as values.
-    factors: dict, optional
+    factors:
         As in PNormDistance.
-    adaptive: bool, optional (default = True)
+    adaptive:
         True: Adapt distance after each iteration.
         False: Adapt distance only once at the beginning in initialize().
         This corresponds to a pre-calibration.
-    scale_function: Callable, optional (default = standard_deviation)
+    scale_function:
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
         denotes the list of simulated summary statistics, and x_0 the observed
         summary statistic. Implemented are absolute_median_deviation,
         standard_deviation (default), centered_absolute_median_deviation,
         centered_standard_deviation.
-    normalize_weights: bool, optional (default = True)
+    normalize_weights:
         Whether to normalize the weights to have mean 1. This just possibly
         smoothes the decrease of epsilon and might aid numeric stability, but
         is not strictly necessary.
-    max_weight_ratio: float, optional (default = None)
+    max_weight_ratio:
         If not None, large weights will be bounded by the ratio times the
         smallest non-zero absolute weight. In practice usually not necessary,
         it is theoretically required to ensure convergence.
-
+    log_file:
+        A log file to store weights for each time point in. Weights are
+        currently not stored in the database. The data are saved in json
+        format and can be retrieved via `pyabc.storage.load_dict_from_json`.
 
     .. [#prangle] Prangle, Dennis. "Adapting the ABC Distance Function".
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
@@ -178,9 +183,10 @@ class AdaptivePNormDistance(PNormDistance):
                  initial_weights: dict = None,
                  factors: dict = None,
                  adaptive: bool = True,
-                 scale_function=None,
+                 scale_function: Callable = None,
                  normalize_weights: bool = True,
-                 max_weight_ratio: float = None):
+                 max_weight_ratio: float = None,
+                 log_file: str = None):
         # call p-norm constructor
         super().__init__(p=p, weights=None, factors=factors)
 
@@ -194,6 +200,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         self.normalize_weights = normalize_weights
         self.max_weight_ratio = max_weight_ratio
+        self.log_file = log_file
 
         self.x_0 = None
 
@@ -294,7 +301,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.weights[t] = w
 
         # logging
-        logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+        self.log(t)
 
     def _normalize_weights(self, w):
         """
@@ -346,6 +353,12 @@ class AdaptivePNormDistance(PNormDistance):
                 "normalize_weights": self.normalize_weights,
                 "max_weight_ratio": self.max_weight_ratio}
 
+    def log(self, t: int) -> None:
+        logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+
+        if self.log_file:
+            save_dict_to_json(self.weights, self.log_file)
+
 
 class AggregatedDistance(Distance):
     """
@@ -383,6 +396,8 @@ class AggregatedDistance(Distance):
             can remain static while weights adapt over time, allowing for
             greater flexibility.
         """
+        super().__init__()
+
         if not isinstance(distances, list):
             distances = [distances]
         self.distances = [to_distance(distance) for distance in distances]
@@ -440,7 +455,7 @@ class AggregatedDistance(Distance):
         self.format_weights_and_factors(t)
         weights = AggregatedDistance.get_for_t_or_latest(self.weights, t)
         factors = AggregatedDistance.get_for_t_or_latest(self.factors, t)
-        return np.dot(weights * factors, values)
+        return float(np.dot(weights * factors, values))
 
     def get_config(self) -> dict:
         """
@@ -495,23 +510,26 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     Parameters
     ----------
-
-    distances: List[Distance]
+    distances:
         As in AggregatedDistance.
-    initial_weights: list, optional
+    initial_weights:
         Weights to be used in the initial iteration. List with
         a weight for each distance function.
-    factors: Union[List, dict]
+    factors:
         As in AggregatedDistance.
-    adaptive: bool, optional (default = True)
+    adaptive:
         True: Adapt weights after each iteration.
         False: Adapt weights only once at the beginning in initialize().
         This corresponds to a pre-calibration.
-    scale_function: Callable, optional (default = scale_span)
+    scale_function:
         Function that takes a list of floats, namely the values obtained
         by applying one of the distances passed to a set of samples,
         and returns a single float, namely the weight to apply to this
-        distance function.
+        distance function. Default: scale_span.
+    log_file:
+        A log file to store weights for each time point in. Weights are
+        currently not stored in the database. The data are saved in json
+        format and can be retrieved via `pyabc.storage.load_dict_from_json`.
     """
 
     def __init__(
@@ -520,7 +538,8 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
             initial_weights: List = None,
             factors: Union[List, dict] = None,
             adaptive: bool = True,
-            scale_function: Callable = None):
+            scale_function: Callable = None,
+            log_file: str = None):
         super().__init__(distances=distances)
         self.initial_weights = initial_weights
         self.factors = factors
@@ -529,6 +548,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         if scale_function is None:
             scale_function = span
         self.scale_function = scale_function
+        self.log_file = log_file
 
     def initialize(self,
                    t: int,
@@ -599,7 +619,13 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         self.weights[t] = np.array(w)
 
         # logging
+        self.log(t)
+
+    def log(self, t: int) -> None:
         logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+
+        if self.log_file:
+            save_dict_to_json(self.weights, self.log_file)
 
 
 class DistanceWithMeasureList(Distance):
