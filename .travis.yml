@@ -5,8 +5,8 @@ sudo: true
 os:
 - linux
 dist:
-# take the latest supported LTS version
-- xenial
+# take the latest supported version
+- bionic
 compiler:
 - gcc
 
