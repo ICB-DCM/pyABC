@@ -174,6 +174,7 @@ class AdaptivePNormDistance(PNormDistance):
         currently not stored in the database. The data are saved in json
         format and can be retrieved via `pyabc.storage.load_dict_from_json`.
 
+
     .. [#prangle] Prangle, Dennis. "Adapting the ABC Distance Function".
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
     """
