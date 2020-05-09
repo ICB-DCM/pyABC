@@ -1,7 +1,7 @@
 name: CI pull request
 
 # trigger
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   pr:
@@ -31,6 +31,3 @@ jobs:
     - name: Run notebooks
       run: |
         test/run_notebooks.sh
-
-    - name: Coverage
-      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
