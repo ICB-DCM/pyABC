@@ -20,6 +20,7 @@ jobs:
     - name: Cache pip
       uses: actions/cache@v1
       with:
+        path: ~/.cache/pip
         key: ${{ runner.os }}
 
     - name: Install R
@@ -42,8 +43,8 @@ jobs:
         pip install -r .ci_pip_reqs.txt
         pip install https://github.com/icb-dcm/petab/archive/develop.zip
         pip install -e git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
-        git clone --depth 1 htps://github.com/petab-dev/petab-dev/petab_test_suite tmp/petab_test_suite
-        pip install -e tmp/petab_test_suite
+        git clone --depth 1 htps://github.com/petab-dev/petab-dev/petab_test_suite .tmp/petab_test_suite
+        pip install -e .tmp/petab_test_suite
 
     - name: Install package
       run: pip install -e .
