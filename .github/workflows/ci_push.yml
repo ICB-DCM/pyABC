@@ -31,13 +31,15 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=pyabc test/test_*
-        codecov -t ${{ secrets.CODECOV_TOKEN }}
+        python -m pytest --cov=pyabc --covtest/test_*
 
-    - name : Run visualization tests
+    - name: Run visualization tests
       run: |
         python -m pytest --cov=pyabc --cov-append test/visualization/test_*
-        codecov -t ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Codecov
+      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
+
 
   external:
     runs-on: ubuntu-latest
