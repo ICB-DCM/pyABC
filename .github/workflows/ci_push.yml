@@ -24,6 +24,7 @@ jobs:
       with:
         path: ~/.cache
         key: ${{ runner.os }}-ci-base
+        restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
       run: .github/workflows/ci_dependencies.sh R
@@ -57,6 +58,7 @@ jobs:
       with:
         path: ~/.cache
         key: ${{ runner.os }}-ci-external
+        restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
       run: .github/workflows/ci_dependencies.sh R
@@ -88,6 +90,7 @@ jobs:
       with:
         path: ~/.cache
         key: ${{ runner.os }}-ci-petab
+        restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
       run: .github/workflows/ci_dependencies.sh petab
