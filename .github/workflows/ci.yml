@@ -40,7 +40,7 @@ jobs:
         sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
     - name: Install pip dependencies
       run: |
-        pythom -m pip install --upgrade pip
+        python -m pip install --upgrade pip
         pip install -r .ci_pip_reqs.txt
         pip install https://github.com/icb-dcm/petab/archive/develop.zip
         pip install -e git+https://github.com/icb-dcm/amici.git@develop#egg=amici\&subdirectory=python/sdist
