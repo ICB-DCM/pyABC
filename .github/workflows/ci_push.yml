@@ -29,13 +29,13 @@ jobs:
     - name: Install dependencies
       run: .github/workflows/ci_dependencies.sh R
 
-    - name: Run tests
-      run: |
-        python -m pytest --cov=pyabc test/test_*
-
     - name: Run visualization tests
       run: |
-        python -m pytest --cov=pyabc --cov-append test/visualization/test_*
+        python -m pytest --cov=pyabc test/visualization/test_*
+
+    - name: Run tests
+      run: |
+        python -m pytest --cov=pyabc --cov-append test/test_*
 
     - name: Codecov
       run: codecov -t ${{ secrets.CODECOV_TOKEN }}
