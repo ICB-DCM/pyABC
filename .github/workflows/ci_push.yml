@@ -33,10 +33,11 @@ jobs:
       run: |
         python -m pytest --cov=pyabc test/test_*
         codecov -t ${{ secrets.CODECOV_TOKEN }}
-        python -m pytest --cov=pyabc --cov-append test/visualization/test_*
 
-    - name: Coverage
-      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
+    - name : Run visualization tests
+      run: |
+        python -m pytest --cov=pyabc test/visualization/test_*
+        codecov -t ${{ secrets.CODECOV_TOKEN }}
 
   external:
     runs-on: ubuntu-latest
