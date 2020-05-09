@@ -31,7 +31,8 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=pyabc test/test_* test/visualization/test_*
+        python -m pytest --cov=pyabc --cov-report=xml \
+          test/test_* test/visualization/test_*
 
     - name: Codecov
       run: codecov -t ${{ secrets.CODECOV_TOKEN }}
@@ -64,7 +65,8 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=pyabc test/external/test_*
+        python -m pytest --cov=pyabc --cov-report=xaml \
+          test/external/test_*
 
     - name: Coverage
       run: codecov -t ${{ secrets.CODECOV_TOKEN }}
@@ -96,7 +98,8 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=pyabc test/petab/test_*
+        python -m pytest --cov=pyabc --cov-report=xml \
+          test/petab/test_*
 
     - name: Coverage
       run: codecov -t ${{ secrets.CODECOV_TOKEN }}
