@@ -1,3 +1,4 @@
+wheel
 cloudpickle
 gitpython
 sqlalchemy
