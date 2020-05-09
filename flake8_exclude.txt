@@ -1,1 +1,0 @@
-doc/conf.py,test_nondeterministic,build,test_performance,tmp,*amici_models*

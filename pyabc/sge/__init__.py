@@ -1,6 +1,9 @@
 """
-Parallel job execution on SGE like environments
-===============================================
+
+SGE
+===
+
+Parallel job execution on SGE like environments.
 
 The functions and classes in the pyabc.sge package can be used for at least
 two purposes:
