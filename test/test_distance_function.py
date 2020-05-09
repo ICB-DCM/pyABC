@@ -412,6 +412,7 @@ def test_negativebinomialkernel():
 
 
 def test_store_weights():
+    """Test whether storing distance weights works."""
     abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
                    {'s1': -1, 's2': 0, 's3': 1}])
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
