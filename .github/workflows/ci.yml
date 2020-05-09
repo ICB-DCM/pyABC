@@ -45,10 +45,10 @@ jobs:
         git clone --depth 1 htps://github.com/petab-dev/petab-dev/petab_test_suite tmp/petab_test_suite
         pip install -e tmp/petab_test_suite
     - name: Install package
-        pip install -e .
+      run: pip install -e .
 
     - name: Run flake8
-        python -m flake8 --exclude=build,doc
+      run: python -m flake8 --exclude=build,doc
     - name: Run tests
-        python -m pytest --cov=pyabc test/test_*
+      run: python -m pytest --cov=pyabc test/test_*
 
