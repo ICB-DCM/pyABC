@@ -36,7 +36,7 @@ jobs:
 
     - name : Run visualization tests
       run: |
-        python -m pytest --cov=pyabc test/visualization/test_*
+        python -m pytest --cov=pyabc --cov-append test/visualization/test_*
         codecov -t ${{ secrets.CODECOV_TOKEN }}
 
   external:
