@@ -19,11 +19,18 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
+    - name: Cache
       uses: actions/cache@v1
       with:
-        path: ~/.cache/pip
+        path: ~/.cache
         key: ${{ runner.os }}-ci
+
+    - name: Install R
+      run: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+        sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+        sudo apt-get update
+        sudo apt-get install r-base
 
     - name: Install apt dependencies
       run: |
@@ -34,6 +41,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r .ci_pip_reqs.txt
+        pip install rpy2>=3.2.0 cffi>=1.13.1
 
     - name: Install package
       run: pip install -e .
@@ -61,10 +69,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
+    - name: Cache
       uses: actions/cache@v1
       with:
-        path: ~/.cache/pip
+        path: ~/.cache
         key: ${{ runner.os }}-ci-external
 
     - name: Install R
@@ -110,10 +118,10 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip
+    - name: Cache
       uses: actions/cache@v1
       with:
-        path: ~/.cache/pip
+        path: ~/.cache
         key: ${{ runner.os }}-ci-petab
 
     - name: Install apt dependencies
