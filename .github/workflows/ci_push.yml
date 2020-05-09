@@ -31,7 +31,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=pyabc --covtest/test_*
+        python -m pytest --cov=pyabc test/test_*
 
     - name: Run visualization tests
       run: |
