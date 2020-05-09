@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/ICB-DCM/pyABC/master/doc/logo/logo.png" alt="pyABC logo" width="30%"/>
 
-![CI](https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg)
+[![CI](https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg)](https://github.com/ICB-DCM/pyABC/actions)
 [![docs](https://readthedocs.org/projects/pyabc/badge/?version=latest)](http://pyabc.readthedocs.io/en/latest/)
 [![codacy](https://api.codacy.com/project/badge/Grade/923a9ab160e6420b9fc468701be60a98)](https://www.codacy.com/app/yannikschaelte/pyABC?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ICB-DCM/pyABC&amp;utm_campaign=Badge_Grade)
 [![codecov](https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg)](https://codecov.io/gh/ICB-DCM/pyABC)
