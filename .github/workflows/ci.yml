@@ -41,6 +41,7 @@ jobs:
       matrix:
         python-version: [3.8]
 
+    steps:
     - name: Install amici apt dependencies
       run: |
         sudo apt-get update
