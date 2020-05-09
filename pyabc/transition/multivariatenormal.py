@@ -69,18 +69,29 @@ class MultivariateNormalTransition(Transition):
         self.cov = sample_cov * bw_factor**2 * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
-    def rvs_single(self):
-        sample = self.X.sample(weights=self.w).iloc[0]
+    def rvs(self, size=None):
+        arr = np.arange(len(self.X))
+        sample_ind = np.random.choice(arr, size=size, p=self.w, replace=True)
+        sample = self.X.iloc[sample_ind]
         perturbed = (sample +
                      np.random.multivariate_normal(
-                         np.zeros(self.cov.shape[0]), self.cov))
+                         np.zeros(self.cov.shape[0]), self.cov,
+                         size=size))
+        return perturbed
+
+
+    def rvs_single(self):
+        perturbed = self.rvs(size=1)
         return perturbed
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]):
         x = x[self.X.columns]
-        x = np.array(x)
-        if len(x.shape) == 1:
-            x = x[None, :]
-        dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
-                         for xs in x])
-        return dens if dens.size != 1 else float(dens)
+        x = np.atleast_3d(x.values)
+        dens = (
+            self.normal.pdf(
+                np.swapaxes(x-self._X_arr.T, 1,2))
+                * self.w)
+        dens = np.atleast_2d(dens).sum(axis=1).squeeze()
+        if dens.size == 1:
+            return dens.item()
+        return dens
