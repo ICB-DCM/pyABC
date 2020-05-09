@@ -4,12 +4,9 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8]
-        
+  setup:
+    name: Set up basic dependencies
+
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
@@ -36,6 +33,13 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install redis-server
+  
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
 
     - name: Install amici apt dependencies
       run: |
@@ -56,9 +60,6 @@ jobs:
 
     - name: Install package
       run: pip install -e .
-
-    - name: Run flake8
-      run: python -m flake8 pyabc test
 
     - name: Run tests
       run: |
