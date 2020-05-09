@@ -1,4 +1,4 @@
-name: CI
+name: CI push
 
 # trigger
 on: [push]
@@ -100,4 +100,7 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest --cov=pyabc test/petab/test_*
+
+    - name: Coverage
+      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
 
