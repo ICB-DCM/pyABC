@@ -38,6 +38,7 @@ do
             git clone --depth 1 \
                 https://github.com/petab-dev/petab_test_suite .tmp/petab_test_suite
             pip install -e .tmp/petab_test_suite
+        ;;
 
         *)
             echo "Unknown argument" >&2
