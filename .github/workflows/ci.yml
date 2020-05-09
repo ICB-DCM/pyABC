@@ -26,7 +26,7 @@ jobs:
         key: ${{ runner.os }}-ci
 
     - name: Install dependencies
-      run: ./ci_dependencies.sh R
+      run: .github/workflows/ci_dependencies.sh R
 
     - name: Run tests
       run: |
@@ -58,7 +58,7 @@ jobs:
         key: ${{ runner.os }}-ci-external
 
     - name: Install dependencies
-      run: ./ci_dependencies.sh R
+      run: .github/workflows/ci_dependencies.sh R
 
     - name: Run tests
       run: |
@@ -95,7 +95,7 @@ jobs:
 
 
     - name: Install dependencies
-      run: ./ci_dependencies.sh petab
+      run: .github/workflows/ci_dependencies.sh petab
 
     - name: Run tests
       run: |
