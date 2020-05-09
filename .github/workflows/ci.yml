@@ -19,7 +19,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Cache pip
       uses: actions/cach@v1
-      key: ${{ runner.os }}
+      with:
+        key: ${{ runner.os }}
 
     - name: Install R
       run: |
