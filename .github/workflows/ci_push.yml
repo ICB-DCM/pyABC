@@ -34,9 +34,11 @@ jobs:
         python -m pytest --cov=pyabc --cov-report=xml \
           test/test_* test/visualization/test_*
 
-    - name: Codecov
-      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
-
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
 
   external:
     runs-on: ubuntu-latest
@@ -69,7 +71,10 @@ jobs:
           test/external/test_*
 
     - name: Coverage
-      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
 
   petab:
     runs-on: ubuntu-latest
@@ -102,5 +107,7 @@ jobs:
           test/petab/test_*
 
     - name: Coverage
-      run: codecov -t ${{ secrets.CODECOV_TOKEN }}
-
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
