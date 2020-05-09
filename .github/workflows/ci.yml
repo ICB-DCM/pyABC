@@ -51,7 +51,7 @@ jobs:
       run: pip install -e .
 
     - name: Run flake8
-      run: python -m flake8 --exclude=build,doc
+      run: python -m flake8 --exclude=build,doc,test_*,*tmp*,*amici_models*
     - name: Run tests
       run: python -m pytest --cov=pyabc test/test_*
 
