@@ -26,7 +26,7 @@ jobs:
         key: ${{ runner.os }}-pr
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R
+      run: .github/workflows/ci_dependencies.sh R petab
 
     - name: Run notebooks
       run: |
