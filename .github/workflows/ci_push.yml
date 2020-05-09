@@ -23,7 +23,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci
+        key: ${{ runner.os }}-ci-base
 
     - name: Install dependencies
       run: .github/workflows/ci_dependencies.sh R
@@ -31,6 +31,7 @@ jobs:
     - name: Run tests
       run: |
         python -m pytest --cov=pyabc test/test_*
+        codecov -t ${{ secrets.CODECOV_TOKEN }}
         python -m pytest --cov=pyabc --cov-append test/visualization/test_*
 
     - name: Coverage
