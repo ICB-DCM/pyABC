@@ -65,7 +65,7 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m pytest --cov=pyabc --cov-report=xaml \
+        python -m pytest --cov=pyabc --cov-report=xml \
           test/external/test_*
 
     - name: Coverage
