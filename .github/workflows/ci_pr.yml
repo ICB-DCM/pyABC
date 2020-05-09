@@ -1,4 +1,4 @@
-name: CI pull request
+name: CI
 
 # trigger
 on: [pull_request]
