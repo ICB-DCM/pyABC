@@ -368,7 +368,7 @@ Pickling
 
 .. note::
 
-   This section is of interest to developers, of if you encounter memory
+   This section is of interest to developers, or if you encounter memory
    problems.
 
 For most of the samplers, pyABC uses

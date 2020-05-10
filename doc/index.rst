@@ -1,8 +1,8 @@
 Welcome to pyABC's documentation!
 =================================
 
-.. image:: https://travis-ci.org/ICB-DCM/pyABC.svg?branch=master
-   :target: https://travis-ci.org/ICB-DCM/pyABC
+.. image:: https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg
+   :target: https://github.com/ICB-DCM/pyABC/actions
 .. image:: https://readthedocs.org/projects/pyabc/badge/?version=latest
    :target: https://pyabc.readthedocs.io/en/latest
 .. image:: https://api.codacy.com/project/badge/Grade/923a9ab160e6420b9fc468701be60a98

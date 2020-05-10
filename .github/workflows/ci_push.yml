@@ -1,0 +1,113 @@
+name: CI
+
+# trigger
+on: [push]
+
+jobs:
+  base:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ${{ runner.os }}-ci-base
+        restore-keys: ${{ runner.os }}-
+
+    - name: Install dependencies
+      run: .github/workflows/ci_dependencies.sh R
+
+    - name: Run tests
+      run: |
+        python -m pytest --cov=pyabc --cov-report=xml \
+          test/test_* test/visualization/test_*
+
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+
+  external:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ${{ runner.os }}-ci-external
+        restore-keys: ${{ runner.os }}-
+
+    - name: Install dependencies
+      run: .github/workflows/ci_dependencies.sh R
+
+    - name: Run tests
+      run: |
+        python -m pytest --cov=pyabc --cov-report=xml \
+          test/external/test_*
+
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+
+  petab:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ${{ runner.os }}-ci-petab
+        restore-keys: ${{ runner.os }}-
+
+    - name: Install dependencies
+      run: .github/workflows/ci_dependencies.sh petab
+
+    - name: Run tests
+      run: |
+        python -m pytest --cov=pyabc --cov-report=xml \
+          test/petab/test_*
+
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml

@@ -226,7 +226,7 @@ class SGE:
 
     def map(self, function, array):
         """
-        Da what map(function, array) would do, but do it
+        Do what map(function, array) would do, but do it
         via a array job on the SGE by pickling objects, storing
         them in a temporary folder, submitting them to SGE and
         then reading and returning the results.

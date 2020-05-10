@@ -35,6 +35,8 @@ class GridSearchCV(GridSearchCVSKL):
         if param_grid is None:
             param_grid = {'scaling': np.linspace(0.05, 1.0, 5)}
 
+        self.best_estimator_ = None
+
         super().__init__(
             estimator=estimator, param_grid=param_grid, scoring=scoring,
             n_jobs=n_jobs, pre_dispatch=pre_dispatch, iid=iid,
@@ -43,6 +45,9 @@ class GridSearchCV(GridSearchCVSKL):
             return_train_score=return_train_score)
 
     def fit(self, X, y=None, groups=None):
+        """
+        Fit the density estimator (perturber) to the sampled data.
+        """
         if len(X) == 1:
             res = self.estimator.fit(X, y)
             self.best_estimator_ = self.estimator
