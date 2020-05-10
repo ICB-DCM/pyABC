@@ -8,6 +8,15 @@ Release Notes
 ...........
 
 
+0.10.2 (2020-05-09)
+-------------------
+
+* Update CI test system: latest Ubuntu, python 3.8, simplify R build (#296).
+* Add weights logging to adaptive distances (#295).
+* Migrate CI tests to GitHub Actions for speed-up, reliability and
+  maintainability (#297, #298).
+
+
 0.10.1 (2020-03-17)
 -------------------
 
