@@ -1,9 +1,10 @@
 import numpy as np
 
 
-def smart_cov(X_arr, w):
-    """
-    Also returns a covariance of X_arr consists of only one single sample
+def smart_cov(X_arr: np.ndarray, w: np.ndarray) -> np.ndarray:
+    """Create sample covariance matrix.
+
+    Also returns a covariance if X_arr consists of only one single sample
     """
     if X_arr.shape[0] == 1:
         cov_diag = X_arr[0]

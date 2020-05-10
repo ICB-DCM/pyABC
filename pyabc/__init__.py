@@ -3,6 +3,10 @@ Approximate Bayesian computation - Sequential Monte Carlo
 =========================================================
 
 ABCSMC algorithms for Bayesian model selection.
+
+.. note::
+    If the environment variable OMP_NUM_THREADS is not set, pyABC assumes
+    a default of 1.
 """
 
 
@@ -192,8 +196,11 @@ __all__ = [
 
 
 try:
-    loglevel = os.environ["ABC_LOG_LEVEL"].upper()
+    loglevel = os.environ['ABC_LOG_LEVEL'].upper()
 except KeyError:
-    loglevel = "INFO"
+    loglevel = 'INFO'
 
 logging.basicConfig(level=loglevel)
+
+if 'OMP_NUM_THREADS' not in os.environ:
+    os.environ['OMP_NUM_THREADS'] = '1'

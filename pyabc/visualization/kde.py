@@ -154,7 +154,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     if ax is None:
         _, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
-    ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
+    # ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
     ax.set_xlabel(x)
     ax.set_ylabel("Posterior")
     ax.set_xlim(xmin, xmax)
