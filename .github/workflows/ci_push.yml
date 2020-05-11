@@ -20,7 +20,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Prepare R
-      uses: actions/setup-R@v1
+      uses: r-lib/actions/setup-r@master
 
     - name: Cache
       uses: actions/cache@v1
@@ -59,7 +59,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Prepare R
-      uses: actions/setup-R@v1
+      uses: r-lib/actions/setup-r@master
 
     - name: Cache
       uses: actions/cache@v1
