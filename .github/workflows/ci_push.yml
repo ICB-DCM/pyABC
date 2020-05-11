@@ -22,7 +22,7 @@ jobs:
     - name: Prepare R
       uses: r-lib/actions/setup-r@master
       with:
-        r-version: '3.6.1'
+        r-version: '3.6.3'
 
     - name: Cache
       uses: actions/cache@v1
@@ -64,6 +64,11 @@ jobs:
       uses: r-lib/actions/setup-r@master
       with:
         r-version: '3.6.1'
+
+    - run: |
+        install.packages(c("base"))
+        remotes::install_deps(dependencies = TRUE)
+      shell: RScript {0}
 
     - name: Cache
       uses: actions/cache@v1
