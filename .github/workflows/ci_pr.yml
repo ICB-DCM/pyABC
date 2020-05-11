@@ -21,6 +21,8 @@ jobs:
 
     - name: Prepare R
       uses: r-lib/actions/setup-r@master
+      with:
+        r-version: '3.6.1'
 
     - name: Cache
       uses: actions/cache@v1
