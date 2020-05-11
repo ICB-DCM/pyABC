@@ -21,7 +21,6 @@ jobs:
 
     - name: Prepare R
       uses: actions/setup-R@v1
-      run: R --version
 
     - name: Cache
       uses: actions/cache@v1
@@ -61,7 +60,6 @@ jobs:
 
     - name: Prepare R
       uses: actions/setup-R@v1
-      run: R --version
 
     - name: Cache
       uses: actions/cache@v1
