@@ -68,7 +68,7 @@ jobs:
     - run: |
         install.packages(c("base"))
         remotes::install_deps(dependencies = TRUE)
-      shell: RScript {0}
+      shell: Rscript {0}
 
     - name: Cache
       uses: actions/cache@v1
