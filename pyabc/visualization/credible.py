@@ -311,7 +311,7 @@ def plot_credible_intervals_for_time(
             # reference value
             if refvals[i_run] is not None:
                 ax.plot([i_run], [refvals[i_run][par]], 'x',
-                        color=f'black')
+                        color='black')
         ax.set_title(f"Parameter {par}")
         # mean
         if show_mean:
