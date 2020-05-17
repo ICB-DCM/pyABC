@@ -8,6 +8,15 @@ Release Notes
 ...........
 
 
+0.10.3 (2020-05-17)
+-------------------
+
+* Speed up multivariate normal multiple sampling (#299).
+* Set default value for OMP_NUM_THREADS=1, stops warnings (#299).
+* Base default number of parallel cores on PYABC_NUM_PROCS (#309).
+* Update all notebooks to the latest numpy/scipy (#310).
+
+
 0.10.2 (2020-05-09)
 -------------------
 

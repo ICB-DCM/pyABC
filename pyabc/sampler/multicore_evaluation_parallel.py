@@ -1,7 +1,6 @@
 from multiprocessing import Process, Queue, Value
 from ctypes import c_longlong
 from .multicorebase import MultiCoreSampler
-from ..sge import nr_cores_available
 import numpy as np
 import random
 from .multicorebase import get_if_worker_healthy
@@ -82,12 +81,6 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         If set to None, the Number of cores is determined according to
         :func:`pyabc.sge.nr_cores_available`.
     """
-
-    @property
-    def n_procs(self):
-        if self._n_procs is not None:
-            return self._n_procs
-        return nr_cores_available()
 
     def sample_until_n_accepted(
             self, n, simulate_one, max_eval=np.inf, all_accepted=False):
