@@ -61,7 +61,7 @@ class MultivariateNormalTransition(Transition):
             self, scaling: float = 1,
             bandwidth_selector: BandwidthSelector = silverman_rule_of_thumb):
         self.scaling: float = scaling
-        self.bandwidth_selector = bandwidth_selector
+        self.bandwidth_selector: BandwidthSelector = bandwidth_selector
         # base population as an array
         self._X_arr: Union[np.ndarray, None] = None
         # perturbation covariance matrix
