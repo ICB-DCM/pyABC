@@ -30,6 +30,7 @@ jobs:
       run: .github/workflows/ci_dependencies.sh R
 
     - name: Run tests
+      timeout-minutes: 10
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
           test/test_* test/visualization/test_*
@@ -66,6 +67,7 @@ jobs:
       run: .github/workflows/ci_dependencies.sh R
 
     - name: Run tests
+      timeout-minutes: 10
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
           test/external/test_*
@@ -102,6 +104,7 @@ jobs:
       run: .github/workflows/ci_dependencies.sh petab
 
     - name: Run tests
+      timeout-minutes: 10
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
           test/petab/test_*
