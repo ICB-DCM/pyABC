@@ -1,8 +1,8 @@
 from .base import Sampler
-from ..sge import nr_cores_available
 from multiprocessing import ProcessError, Process, Queue
 from queue import Empty
 from typing import List
+import os
 import logging
 
 logger = logging.getLogger("Sampler")
@@ -41,6 +41,23 @@ class MultiCoreSampler(Sampler):
         if self._n_procs is not None:
             return self._n_procs
         return nr_cores_available()
+
+
+def nr_cores_available():
+    """
+    Determine the number of cores available: If set, the environment variable
+    `PYABC_NUM_PROCS` is used, otherwise `os.cpu_count()` is used.
+
+    Returns
+    -------
+    nr_cores: int
+        The number of cores available.
+    """
+    try:
+        return int(os.environ['PYABC_NUM_PROCS'])
+    except KeyError:
+        pass
+    return os.cpu_count()
 
 
 def healthy(worker):
