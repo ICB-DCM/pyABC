@@ -24,14 +24,14 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
             Hence, you can safely assume that you encounter at least one
             parameter. All the defined transitions will then automatically
-            generalize to the case of no paramter.
+            generalize to the case of no parameter.
     """
     NR_BOOTSTRAP = 5
     X = None
     w = None
 
     @abstractmethod
-    def fit(self, X: pd.DataFrame, w: np.ndarray):
+    def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         """
         Fit the density estimator (perturber) to the sampled data.
         Concrete implementations might do something like fitting a KDE.
@@ -60,7 +60,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             A sample from the fitted model.
         """
 
-    def rvs(self, size=None):
+    def rvs(self, size: int = None) -> Union[pd.Series, pd.DataFrame]:
         """
         Sample from the density.
 
@@ -84,7 +84,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         This method can be overridden for efficient implementations.
         The default is to call rvs_single repeatedly (which might
         not be the most efficient way).
-
         """
         if size is None:
             return self.rvs_single()
