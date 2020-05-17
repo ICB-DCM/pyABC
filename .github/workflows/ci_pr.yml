@@ -29,6 +29,7 @@ jobs:
       run: .github/workflows/ci_dependencies.sh R petab
 
     - name: Run notebooks
+      timeout-minutes: 10
       run: |
         test/run_notebooks.sh
 
@@ -61,4 +62,5 @@ jobs:
         pip install sphinx nbsphinx nbconvert sphinx-rtd-theme
 
     - name: Build docs
+      timeout-minutes: 10
       run: sphinx-build -W -b html doc/ doc/_build/html
