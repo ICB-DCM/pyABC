@@ -8,6 +8,13 @@ Release Notes
 ...........
 
 
+0.10.3 (2020-05-17)
+-------------------
+
+* Speed up multivariate normal multiple sampling (#299).
+* Set default value for OMP_NUM_THREADS=1, stops warnings (#299).
+
+
 0.10.2 (2020-05-09)
 -------------------
 
