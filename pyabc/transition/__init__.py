@@ -1,5 +1,5 @@
 """
-Transitions (Perturbation Kernels)
+Transitions (Perturbation kernels)
 ==================================
 
 Perturbation strategies. The classes defined here transition the current

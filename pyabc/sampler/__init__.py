@@ -1,5 +1,5 @@
 """
-Parallel Sampling
+Parallel sampling
 =================
 
 Parallel multi-core and distributed sampling.
