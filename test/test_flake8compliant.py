@@ -6,8 +6,8 @@ import pathlib
 def test_flake8compliant():
     path = pathlib.Path(__file__).parent.parent
     exec_ = sys.executable
-    cmd = "cd {path}; {exec_} -m flake8 pyabc test".format(
-        path=path, exec_=exec_)
+    cmd = f"cd {path}; {exec_} -m flake8 pyabc test " \
+        "--per-file-ignores='*/__init__.py:F401'"
     r = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE)
     print(r.stdout.decode())

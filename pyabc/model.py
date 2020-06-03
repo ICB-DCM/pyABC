@@ -2,7 +2,7 @@
 Models
 ======
 
-Models for ABCSMC.
+A model defines how input parameters relate to output simulated data.
 """
 
 from .parameters import Parameter

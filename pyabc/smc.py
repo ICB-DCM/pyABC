@@ -1,6 +1,8 @@
 """
-Parallel Approximate Bayesian Computation - Sequential Monte Carlo
-==================================================================
+ABCSMC
+======
+
+Parallel Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
 
 The ABCSMC class is the most central class of the pyABC package.
 Most of the other classes serve to configure it. (I.e. the other classes
