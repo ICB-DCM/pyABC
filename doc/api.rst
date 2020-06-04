@@ -1,6 +1,9 @@
 API reference
 =============
 
+
+.. automodule:: pyabc
+
 .. toctree::
    :maxdepth: 2
 

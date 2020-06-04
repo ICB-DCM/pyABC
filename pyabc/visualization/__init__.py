@@ -37,30 +37,3 @@ from .effective_sample_size import (
 from .data import (
     plot_data_callback,
     plot_data_default)
-
-
-__all__ = [
-    "plot_kde_1d",
-    "plot_kde_1d_highlevel",
-    "plot_kde_2d",
-    "plot_kde_2d_highlevel",
-    "plot_kde_matrix",
-    "plot_kde_matrix_highlevel",
-    "plot_sample_numbers",
-    "plot_total_sample_numbers",
-    "plot_sample_numbers_trajectory",
-    "plot_acceptance_rates_trajectory",
-    "plot_epsilons",
-    "plot_histogram_1d",
-    "plot_histogram_1d_lowlevel",
-    "plot_histogram_2d",
-    "plot_histogram_2d_lowlevel",
-    "plot_histogram_matrix",
-    "plot_histogram_matrix_lowlevel",
-    "plot_credible_intervals",
-    "plot_credible_intervals_for_time",
-    "plot_model_probabilities",
-    "plot_effective_sample_sizes",
-    "plot_data_callback",
-    "plot_data_default",
-]

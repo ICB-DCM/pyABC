@@ -1,1 +1,1 @@
-#  Run the tests with pytest
+"""Unit tests for pyABC."""

@@ -1,6 +1,6 @@
 """
-Population strategy
-===================
+Population strategies
+=====================
 
 Strategies to choose the population size.
 
