@@ -421,19 +421,23 @@ def test_store_weights():
     print(weights_file)
 
     def distance0(x, x_0):
-        return abs(x['s0'] - x_0['s0'])
+        return abs(x['s1'] - x_0['s1'])
 
     def distance1(x, x_0):
-        return np.sqrt((x['s1'] - x_0['s1'])**2)
+        return np.sqrt((x['s2'] - x_0['s2'])**2)
 
     for distance in [AdaptivePNormDistance(log_file=weights_file),
                      AdaptiveAggregatedDistance(
                          [distance0, distance1], log_file=weights_file)]:
-        distance = AdaptivePNormDistance(log_file=weights_file)
         distance.initialize(0, abc.sample_from_prior, x_0=x_0)
         distance.update(1, abc.sample_from_prior)
         distance.update(2, abc.sample_from_prior)
 
         weights = load_dict_from_json(weights_file)
         assert set(weights.keys()) == {0, 1, 2}
+
+        expected = distance.weights
+        for key, val in expected.items():
+            if isinstance(val, np.ndarray):
+                expected[key] = val.tolist()
         assert weights == distance.weights
