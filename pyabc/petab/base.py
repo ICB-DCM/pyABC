@@ -74,7 +74,7 @@ class PetabImporter(abc.ABC):
             #  initialization priors
             prior_type = row[petab.C.OBJECTIVE_PRIOR_TYPE]
             pars_str = row[petab.C.OBJECTIVE_PRIOR_PARAMETERS]
-            prior_pars = tuple([float(val) for val in pars_str.split(';')])
+            prior_pars = tuple(float(val) for val in pars_str.split(';'))
 
             # create random variable from table entry
             if prior_type in [petab.C.PARAMETER_SCALE_UNIFORM,
@@ -107,7 +107,7 @@ class PetabImporter(abc.ABC):
 
     @abc.abstractmethod
     def create_model(
-        self
+        self,
     ) -> Callable[[Union[Sequence, Mapping]], Mapping]:
         """
         Create model. The model takes parameters and simulates data
@@ -125,7 +125,7 @@ class PetabImporter(abc.ABC):
 
     @abc.abstractmethod
     def create_kernel(
-        self
+        self,
     ) -> pyabc.StochasticKernel:
         """
         Create acceptance kernel. The kernel takes the simulation result

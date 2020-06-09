@@ -142,7 +142,7 @@ def plot_data_default(obs_data: dict,
                 ax.set_ylabel(obs.columns[0])
             else:
                 # nd: scatter
-                for j, key in enumerate(obs.columns):
+                for key in obs.columns:
                     ax.scatter(obs[key].values, sim[key].values, label=key)
                 ax.set_xlabel("Data")
                 ax.set_ylabel("Simulation")

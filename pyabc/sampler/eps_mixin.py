@@ -94,7 +94,7 @@ class EPSMixin:
                                           self.client_cores()).astype(int)
                                - len(running_jobs)):
                     job_id_batch = []
-                    for i in range(self.batch_size):
+                    for _ in range(self.batch_size):
                         job_id_batch.append(next_job_id)
                         next_job_id += 1
 

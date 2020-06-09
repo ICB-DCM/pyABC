@@ -1,6 +1,6 @@
 import numpy as np
 import tempfile
-import subprocess
+import subprocess  # noqa: S404
 import os
 from typing import List
 import logging
@@ -120,10 +120,11 @@ class ExternalHandler:
 
         # call
         if cmd is not None:
-            status = subprocess.run(cmd, shell=True, **stdout, **stderr)
+            status = subprocess.run(
+                    cmd, shell=True, **stdout, **stderr)  # noqa: S602
         else:
             executable = self.create_executable(loc)
-            status = subprocess.run(
+            status = subprocess.run(  # noqa: S603
                 [executable, self.file, *self.fixed_args, *args,
                  f'target={loc}'], **stdout, **stderr)
         if status.returncode:
