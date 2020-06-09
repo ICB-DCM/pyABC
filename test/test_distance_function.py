@@ -29,7 +29,8 @@ from pyabc.distance import (
     span,
     mean,
     median,
-    SCALE_LIN,)
+    SCALE_LIN,
+)
 from pyabc.storage import load_dict_from_json
 
 
@@ -113,7 +114,7 @@ def test_adaptivepnormdistance():
         mean_absolute_deviation_to_observation,
         combined_median_absolute_deviation,
         combined_mean_absolute_deviation,
-        standard_deviation_to_observation
+        standard_deviation_to_observation,
     ]
 
     for scale_function in scale_functions:

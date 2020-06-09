@@ -26,7 +26,7 @@ def test_quantileepsilon():
     mpl = 1.1
     df = pd.DataFrame({
         'distance': [1, 2, 3, 4],
-        'w': [2, 1, 1, 1]
+        'w': [2, 1, 1, 1],
     })
 
     eps = pyabc.QuantileEpsilon(
@@ -124,7 +124,7 @@ def test_scheme_basic():
         pyabc.PolynomialDecayFixedIterScheme(),
         pyabc.DalyScheme(),
         pyabc.FrielPettittScheme(),
-        pyabc.EssScheme()
+        pyabc.EssScheme(),
     ]
     for scheme in schemes:
         # call them

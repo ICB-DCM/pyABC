@@ -5,6 +5,7 @@ import argparse
 from redis import Redis
 
 
+# flake8: noqa: T001
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--show-list", action="store_true")
@@ -44,7 +45,7 @@ def main():
         print("\n\nNeither started nor finished jobs")
         for job, state in results.items():
             print("\nJob", job)
-            print(sorted(list(state["jobs"])))
+            print(sorted(state["jobs"]))
 
 
 if __name__ == "__main__":

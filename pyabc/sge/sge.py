@@ -2,16 +2,19 @@ import inspect
 import os
 import pickle
 import shutil
-import subprocess
+import subprocess  # noqa: S404
 import tempfile
 import time
 import sys
 import cloudpickle
+import warnings
+import logging
 from .config import get_config
 from .execution_contexts import DefaultContext
 from .db import job_db_factory
 from .util import sge_available
-import warnings
+
+logger = logging.getLogger("SGE")
 
 
 class SGESignatureMismatchException(Exception):
@@ -171,7 +174,7 @@ class SGE:
                           "This can potentially have bad side effect.")
 
         if not sge_available():
-            print("Warning: Could not find SGE installation.", file=sys.stderr)
+            logger.error("Could not find SGE installation.")
 
         # python interpreter which executes the jobs
         if not isinstance(time_h, int):
@@ -284,13 +287,14 @@ class SGE:
         with open(os.path.join(tmp_dir, 'job.sh'), 'w') as my_file:
             my_file.write(batch_file)
 
-        # crate job jd
+        # create job id
         job_db = job_db_factory(tmp_dir)
         job_db.create(len(array))
 
         # start the job with qsub
-        subprocess.run(['qsub', os.path.join(tmp_dir, 'job.sh')],
-                       stdout=subprocess.PIPE)
+        subprocess.run(  # noqa: S607,S603
+            ['qsub', os.path.join(tmp_dir, 'job.sh')],
+            stdout=subprocess.PIPE)
 
         # wait for the tasks to be finished
         finished = False

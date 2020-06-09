@@ -11,6 +11,9 @@ iteration.
 from typing import List, Callable
 import pandas as pd
 from pyabc.parameters import Parameter
+import logging
+
+logger = logging.getLogger("Population")
 
 
 class Particle:
@@ -273,7 +276,7 @@ class Population:
             each model as values.
         """
 
-        store = dict()
+        store = {}
 
         for particle in self._list:
             if particle is not None:
@@ -281,6 +284,6 @@ class Population:
                 # if key not yet existent
                 store.setdefault(particle.m, []).append(particle)
             else:
-                print("Warning: Empty particle.")
+                logger.warning("Empty particle.")
 
         return store

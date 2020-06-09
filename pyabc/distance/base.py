@@ -1,3 +1,5 @@
+"""Distance base classes."""
+
 from abc import ABC, abstractmethod
 from typing import List, Callable
 import json

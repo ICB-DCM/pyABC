@@ -94,7 +94,7 @@ def test_single_particle_save_load(history: History):
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
                  accepted_sum_stats=[{"ss": .1}],
-                 accepted_distances=[.1])
+                 accepted_distances=[.1]),
     ]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 

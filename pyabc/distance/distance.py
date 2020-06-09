@@ -1,3 +1,5 @@
+"""Distance functions."""
+
 import numpy as np
 from scipy import linalg as la
 from typing import List, Callable, Union
@@ -437,8 +439,8 @@ class AggregatedDistance(Distance):
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.
         """
-        return any([distance.update(t, get_all_sum_stats)
-                    for distance in self.distances])
+        return any(distance.update(t, get_all_sum_stats)
+                   for distance in self.distances)
 
     def __call__(
             self,

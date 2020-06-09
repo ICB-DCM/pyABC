@@ -117,7 +117,8 @@ class RedisEvalParallelSampler(Sampler):
 
         # make sure all results are collected
         while self.redis.llen(QUEUE) > 0:
-            id_results.append(pickle.loads(self.redis.blpop(QUEUE)[1]))
+            id_results.append(
+                pickle.loads(self.redis.blpop(QUEUE)[1]))
 
         # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(N_EVAL).decode())

@@ -1,11 +1,14 @@
 import os
 import pickle
 import sys
-
+import logging
 import cloudpickle
 from .db import job_db_factory
 
 from pyabc.sge.execution_contexts import NamedPrinter
+
+
+logger = logging.getLogger("SGE")
 
 tmp_path = sys.argv[1]
 job_nr = sys.argv[2]
@@ -37,8 +40,9 @@ for element in array:
              ExecutionContext(tmp_path, job_nr):
             single_result = function(element)
     except Exception as e:
-        print("execute_sge_array_job: Exception in sge-worker path=",
-              tmp_path, 'jobnr=', job_nr, "exception", e, file=sys.stderr)
+        logger.error(
+            "execute_sge_array_job: Exception in sge-worker path=",
+            tmp_path, 'jobnr=', job_nr, "exception", e)
         single_result = e
     else:
         pass

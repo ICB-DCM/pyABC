@@ -1,5 +1,5 @@
 from time import sleep
-from subprocess import Popen
+from subprocess import Popen  # noqa: S404
 from multiprocessing import Process
 import tempfile
 import psutil
@@ -35,7 +35,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                 f.write(f"requirepass {password}\n")
             maybe_redis_conf = [fname]
 
-        self.__redis_server = Popen(  # nosec
+        self.__redis_server = Popen(  # noqa: S607,S603
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
 
         # give redis-server time to start

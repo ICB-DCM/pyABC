@@ -56,8 +56,8 @@ class SQLiteJobDB:
             job_start_time = results[0][1]
             # job took to long
             if not within_time(job_start_time, max_run_time_h):
-                print('Job ' + str(ID) + ' timed out.')
-                return False  # job took to long
+                print('Job ' + str(ID) + ' timed out.')  # noqa: T001
+                return False  # job took too long
             else:  # still time left
                 return True
         if nr_rows == 2:  # job finished

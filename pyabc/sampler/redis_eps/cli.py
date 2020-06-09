@@ -272,10 +272,11 @@ def _manage(command, host="localhost", port=6379, password=None):
         pipe.get(N_REQ)
         res = pipe.execute()
         res = [r.decode() if r is not None else r for r in res]
-        print("Workers={} Evaluations={} Acceptances={}/{}".format(*res))
+        print("Workers={} Evaluations={} Acceptances={}/{}"  # noqa: T001
+              .format(*res))
     elif command == "stop":
         redis.publish(MSG, STOP)
     elif command == "reset-workers":
         redis.set(N_WORKER, 0)
     else:
-        print("Unknown command:", command)
+        print("Unknown command:", command)  # noqa: T001
