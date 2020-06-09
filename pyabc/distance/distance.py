@@ -1,3 +1,5 @@
+"""Distance functions."""
+
 import numpy as np
 from scipy import linalg as la
 from typing import List, Callable, Union
