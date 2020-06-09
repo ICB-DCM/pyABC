@@ -440,4 +440,4 @@ def test_store_weights():
         for key, val in expected.items():
             if isinstance(val, np.ndarray):
                 expected[key] = val.tolist()
-        assert weights == distance.weights
+        assert weights == expected
