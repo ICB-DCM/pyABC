@@ -1,4 +1,6 @@
 import json
+import numpy as np
+import copy
 
 
 def save_dict_to_json(dct: dict, file_: str):
@@ -12,6 +14,11 @@ def save_dict_to_json(dct: dict, file_: str):
     file_:
         Name of the file to write to.
     """
+    dct = copy.deepcopy(dct)
+    for key, val in dct.items():
+        # cannot handle ndarrays
+        if isinstance(val, np.ndarray):
+            dct[key] = list(val)
     with open(file_, 'w') as f:
         json.dump(dct, f)
 
