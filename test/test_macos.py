@@ -6,7 +6,8 @@ import numpy as np
 import pyabc
 
 
-@pytest.fixture(params=[pyabc.SingleCoreSampler,
+@pytest.fixture(params=[lambda: None,
+                        pyabc.SingleCoreSampler,
                         pyabc.MulticoreEvalParallelSampler,
                         pyabc.MulticoreParticleParallelSampler,
                         ])
