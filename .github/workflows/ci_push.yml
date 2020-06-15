@@ -143,8 +143,7 @@ jobs:
       - name: Run tests
         timeout-minutes: 10
         run: |
-          python -m pytest --cov=pyabc --cov-report=xml \
-            test/test_samplers.py
+          python -m pytest --cov=pyabc --cov-report=xml test/test_macos.py
 
       - name: Coverage
         uses: codecov/codecov-action@v1
