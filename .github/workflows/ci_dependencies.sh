@@ -1,8 +1,12 @@
 #!/bin/sh
 
-# apt
-sudo apt-get update
-sudo apt-get install redis-server
+if [ "$(uname)" == "Linux" ]; then
+    # apt
+    sudo apt-get update
+    sudo apt-get install redis-server
+else
+    brew install redis
+fi
 
 # pip
 python -m pip install --upgrade pip
