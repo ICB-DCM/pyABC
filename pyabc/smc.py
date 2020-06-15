@@ -22,6 +22,7 @@ from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
 from .distance import Distance, PNormDistance, to_distance, StochasticKernel
 from .epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from .model import Model, SimpleModel
+from .parameters import Parameter
 from .platform_factory import DefaultSampler
 from .population import Particle, Population
 from .populationstrategy import PopulationStrategy, ConstantPopulationSize
@@ -147,7 +148,7 @@ class ABCSMC:
                   doi:10.1093/bioinformatics/btp619.
     """
     def __init__(self,
-                 models: Union[List[Model], Model],
+                 models: Union[List[Model], Model, Callable],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function: Union[Distance, Callable] = None,
@@ -155,7 +156,7 @@ class ABCSMC:
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
-                 transitions: List[Transition] = None,
+                 transitions: Union[List[Transition], Transition] = None,
                  eps: Epsilon = None,
                  sampler: Sampler = None,
                  acceptor: Acceptor = None,
@@ -638,7 +639,7 @@ class ABCSMC:
                     continue
             else:
                 m_ss = m[0]
-            theta_ss = transitions[m_ss].rvs()
+            theta_ss = Parameter(**transitions[m_ss].rvs().to_dict())
 
             if (model_prior.pmf(m_ss)
                     * parameter_priors[m_ss].pdf(theta_ss) > 0):
