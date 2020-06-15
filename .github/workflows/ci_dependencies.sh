@@ -23,7 +23,7 @@ do
 
     R)
 	    # R environment
-	    if [ "$(uname)" == "Darwin" ]; then
+      if [ "$(uname)" == "Darwin" ]; then
         # MacOS
         brew install r
       else

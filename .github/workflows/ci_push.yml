@@ -141,7 +141,7 @@ jobs:
         run: .github/workflows/ci_dependencies.sh
 
       - name: Run tests
-        timeout-minutes: 10
+        timeout-minutes: 5
         run: |
           python -m pytest --cov=pyabc --cov-report=xml test/test_macos.py
 
