@@ -27,7 +27,7 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R
+      run: .github/workflows/ci_dependencies.sh
 
     - name: Run tests
       timeout-minutes: 10
