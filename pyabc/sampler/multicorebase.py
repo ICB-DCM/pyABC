@@ -21,6 +21,10 @@ class MultiCoreSampler(Sampler):
         Number of processes.
     daemon: bool
         Whether to spawn workers in daemon mode.
+    pickle:
+        Whether to manually pickle (we employ cloudpickle) certain objects
+        that are passed to the parallel processes. This may be necessary on
+        some systems, while pickling is usually not necessary at all on Linux.
     check_max_eval: bool
         Whether to check the maximum number of evaluations on the fly.
     """
