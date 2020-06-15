@@ -3,6 +3,8 @@ from ctypes import c_longlong
 from .multicorebase import MultiCoreSampler
 import numpy as np
 import random
+import cloudpickle as pickle
+
 from .multicorebase import get_if_worker_healthy
 
 DONE = "Done"
@@ -17,6 +19,10 @@ def work(simulate_one,
          max_eval: int,
          all_accepted: bool,
          sample_factory):
+    # unwrap args
+    if isinstance(simulate_one, bytes):
+        simulate_one = pickle.loads(simulate_one)
+
     random.seed()
     np.random.seed()
 
@@ -92,15 +98,16 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         queue = Queue()
 
-        processes = [
-            Process(target=work,
-                    args=(simulate_one, queue,
-                          n_eval, n_acc, n,
-                          self.check_max_eval, max_eval, all_accepted,
-                          self._create_empty_sample),
-                    daemon=self.daemon)
-            for _ in range(self.n_procs)
-        ]
+        # wrap args
+        if self.pickle:
+            simulate_one = pickle.dumps(simulate_one)
+        args = (simulate_one, queue,
+                n_eval, n_acc, n,
+                self.check_max_eval, max_eval, all_accepted,
+                self._create_empty_sample)
+
+        processes = [Process(target=work, args=args, daemon=self.daemon)
+                     for _ in range(self.n_procs)]
 
         for proc in processes:
             proc.start()

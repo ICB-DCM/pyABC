@@ -3,6 +3,7 @@ from multiprocessing import ProcessError, Process, Queue
 from queue import Empty
 from typing import List
 import os
+import platform
 import logging
 
 logger = logging.getLogger("Sampler")
@@ -27,10 +28,16 @@ class MultiCoreSampler(Sampler):
     def __init__(self,
                  n_procs: int = None,
                  daemon: bool = True,
+                 pickle: bool = None,
                  check_max_eval: bool = False):
         super().__init__()
         self._n_procs = n_procs
         self.daemon = daemon
+        if pickle is None:
+            pickle = False
+            if platform.system() == "Darwin":  # macos
+                pickle = True
+        self.pickle = pickle
         self.check_max_eval = check_max_eval
 
         # inform user about number of cores used

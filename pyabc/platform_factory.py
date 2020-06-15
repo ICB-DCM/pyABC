@@ -3,7 +3,7 @@ from .sampler import MulticoreEvalParallelSampler, SingleCoreSampler
 
 
 _linux = {"sampler": MulticoreEvalParallelSampler}
-_macos = {"sampler": SingleCoreSampler}
+_macos = {"sampler": MulticoreEvalParallelSampler}
 _windows = {"sampler": SingleCoreSampler}
 
 if platform.system() == "Windows":
