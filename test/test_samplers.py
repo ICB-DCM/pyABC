@@ -74,11 +74,21 @@ def RedisEvalParallelSamplerServerStarterWrapper():
     return RedisEvalParallelSamplerServerStarter(batch_size=5)
 
 
+def PicklingMulticoreParticleParallelSampler():
+    return MulticoreParticleParallelSampler(pickle=True)
+
+
+def PicklingMulticoreEvalParallelSampler():
+    return MulticoreEvalParallelSampler(pickle=True)
+
+
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerServerStarterWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
+                        PicklingMulticoreParticleParallelSampler,
+                        PicklingMulticoreEvalParallelSampler,
                         MappingSampler,
                         DaskDistributedSampler,
                         DaskDistributedSamplerBatch,
