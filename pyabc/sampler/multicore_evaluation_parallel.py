@@ -19,7 +19,7 @@ def work(simulate_one,
          max_eval: int,
          all_accepted: bool,
          sample_factory):
-    # unwrap args
+    # unwrap arguments
     if isinstance(simulate_one, bytes):
         simulate_one = pickle.loads(simulate_one)
 
@@ -98,7 +98,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         queue = Queue()
 
-        # wrap args
+        # wrap arguments
         if self.pickle:
             simulate_one = pickle.dumps(simulate_one)
         args = (simulate_one, queue,
