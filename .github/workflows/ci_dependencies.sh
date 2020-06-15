@@ -1,11 +1,12 @@
 #!/bin/sh
 
-if [ "$(uname)" == "Linux" ]; then
-    # apt
+if [ "$(uname)" == "Darwin" ]; then
+    # MacOS
+    brew install redis
+else
+    # Linux
     sudo apt-get update
     sudo apt-get install redis-server
-else
-    brew install redis
 fi
 
 # pip
