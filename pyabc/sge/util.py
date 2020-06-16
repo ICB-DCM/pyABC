@@ -1,5 +1,5 @@
 import os
-import subprocess
+import subprocess  # noqa: S404
 
 
 def sge_available():
@@ -17,7 +17,7 @@ def sge_available():
         Whether SGE is available or not.
     """
     try:
-        subprocess.run("qstat", stdout=subprocess.PIPE)
+        subprocess.run("qstat", stdout=subprocess.PIPE)  # noqa: S607,S603
         return True
     except FileNotFoundError:
         return False

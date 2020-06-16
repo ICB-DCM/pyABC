@@ -2,7 +2,7 @@
 Models
 ======
 
-Models for ABCSMC.
+A model defines how input parameters relate to output simulated data.
 """
 
 from .parameters import Parameter
@@ -56,7 +56,6 @@ class Model:
 
     Parameters
     ----------
-
     name: str, optional (default = "model")
         A descriptive name of the model. This name can simplify further
         analysis for the user as it is stored in the database.
@@ -77,13 +76,11 @@ class Model:
 
         Parameters
         ----------
-
         pars: Parameter
             Dictionary of parameters.
 
         Returns
         -------
-
         sample: any
             The sampled data.
         """
@@ -100,13 +97,10 @@ class Model:
 
         Parameters
         ----------
-
         t: int
             Current time point.
-
         pars: Parameter
             Model parameters.
-
         sum_stats_calculator: Callable
             A function which calculates summary statistics, as passed to
             :class:`pyabc.smc.ABCSMC`.
@@ -114,7 +108,6 @@ class Model:
 
         Returns
         -------
-
         model_result: ModelResult
             The result with filled summary statistics.
         """
@@ -135,29 +128,23 @@ class Model:
 
         Parameters
         ----------
-
         t: int
             Current time point.
-
         pars: Parameter
             Model parameters.
-
         sum_stats_calculator: Callable
             A function which calculates summary statistics, as passed to
             :class:`pyabc.smc.ABCSMC`.
             The user is free to use or ignore this function.
-
         distance_calculator: Callable
             A function which calculates the distance, as passed to
             :class:`pyabc.smc.ABCSMC`.
             The user is free to use or ignore this function.
-
         x_0: dict
             Observed summary statistics.
 
         Returns
         -------
-
         model_result: ModelResult
             The result with filled distance.
         """
@@ -190,34 +177,26 @@ class Model:
 
         Parameters
         ----------
-
         t: int
             Current time point.
-
         pars: Parameter
             The model parameters.
-
         sum_stats_calculator: Callable
             A function which calculates summary statistics.
             The user is free to use or ignore this function.
-
         distance_calculator: pyabc.Distance
             The distance function.
             The user is free to use or ignore this function.
-
         eps_calculator: pyabc.Epsilon
             The acceptance thresholds.
-
         acceptor: pyabc.Acceptor
             The acceptor judging whether to accept, based on distance and
             epsilon.
-
         x_0: dict
             The observed summary statistics.
 
         Returns
         -------
-
         model_result: ModelResult
             The result with filled accepted field.
 
@@ -248,11 +227,9 @@ class SimpleModel(Model):
 
     Parameters
     ----------
-
     sample_function: Callable[[Parameter], Any]
         Returns the sample to be passed to the summary statistics method.
         This function as a single argument which is a Parameter.
-
     name: str. optional
         The name of the model. If not provided, the names if inferred from
         the function name of `sample_function`.
@@ -275,7 +252,6 @@ class SimpleModel(Model):
         Alternative constructor. Accepts either a Model instance or a
         function and returns always a Model instance.
 
-
         Parameters
         ----------
         model_or_function: Model, function
@@ -285,7 +261,6 @@ class SimpleModel(Model):
 
         Returns
         -------
-
         model: SimpleModel or Model
 
         """
@@ -318,10 +293,8 @@ class IntegratedModel(Model):
 
         Parameters
         ----------
-
         pars: Parameter
             Parameters at which to evaluate the model
-
         eps: float
             Current acceptance threshold. If required, it is effortlessly
             possible to instead use the entire epsilon_calculator object
@@ -329,7 +302,6 @@ class IntegratedModel(Model):
 
         Returns
         -------
-
         model_result: ModelResult
             In case the parameter evaluation is rejected, this method
             should simply return ``ModelResult(accepted=False)``.

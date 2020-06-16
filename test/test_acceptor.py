@@ -142,7 +142,7 @@ def test_pdf_norm_methods():
         prev_pdf_norm=3.5,
         get_weighted_distances=_get_weighted_distances,
         prev_temp=10.3,
-        acceptance_rate=0.3
+        acceptance_rate=0.3,
     )
 
     # run functions

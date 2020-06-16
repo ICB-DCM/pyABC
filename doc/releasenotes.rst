@@ -8,6 +8,18 @@ Release Notes
 ...........
 
 
+0.10.4 (2020-06-15)
+-------------------
+
+* Refactor `__all__` imports and docs API build (#312).
+* Fix json export of aggregated adaptive distances (#316).
+* Apply additional flake8 checks on code quality (#317).
+* Assert model input is of type `pyabc.Parameter` (#318).
+* Extend noise notebook to estimated noise parameters (#319).
+* Implement optional pickling for multicore samplers; add MacOS
+  pipeline tests (#320).
+
+
 0.10.3 (2020-05-17)
 -------------------
 

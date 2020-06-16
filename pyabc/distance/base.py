@@ -1,3 +1,5 @@
+"""Distance base classes."""
+
 from abc import ABC, abstractmethod
 from typing import List, Callable
 import json
@@ -12,11 +14,6 @@ class Distance(ABC):
     Any object that computes the similarity between observed and simulated data
     should inherit from this class.
     """
-
-    def __init__(self):
-        """
-        Default constructor.
-        """
 
     def initialize(
             self,
@@ -226,8 +223,7 @@ class SimpleFunctionDistance(Distance):
 
     Parameters
     ----------
-
-    function: Callable[[dict, dict], float]
+    fun: Callable[[dict, dict], float]
         A Callable accepting as parameters (a subset of) the arguments of the
         pyabc.Distance.__call__ function. Usually at least the summary
         statistics x and x_0. Returns the distance between both.

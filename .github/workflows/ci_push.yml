@@ -114,3 +114,39 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
+
+  mac:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Prepare python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.cache
+          key: ${{ runner.os }}-ci-base
+          restore-keys: ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: .github/workflows/ci_dependencies.sh
+
+      - name: Run tests
+        timeout-minutes: 5
+        run: |
+          python -m pytest --cov=pyabc --cov-report=xml test/test_macos.py
+
+      - name: Coverage
+        uses: codecov/codecov-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml

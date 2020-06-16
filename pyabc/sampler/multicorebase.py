@@ -3,6 +3,7 @@ from multiprocessing import ProcessError, Process, Queue
 from queue import Empty
 from typing import List
 import os
+import platform
 import logging
 
 logger = logging.getLogger("Sampler")
@@ -20,6 +21,10 @@ class MultiCoreSampler(Sampler):
         Number of processes.
     daemon: bool
         Whether to spawn workers in daemon mode.
+    pickle:
+        Whether to manually pickle (we employ cloudpickle) certain objects
+        that are passed to the parallel processes. This may be necessary on
+        some systems, while pickling is usually not necessary at all on Linux.
     check_max_eval: bool
         Whether to check the maximum number of evaluations on the fly.
     """
@@ -27,10 +32,16 @@ class MultiCoreSampler(Sampler):
     def __init__(self,
                  n_procs: int = None,
                  daemon: bool = True,
+                 pickle: bool = None,
                  check_max_eval: bool = False):
         super().__init__()
         self._n_procs = n_procs
         self.daemon = daemon
+        if pickle is None:
+            pickle = False
+            if platform.system() == "Darwin":  # macos
+                pickle = True
+        self.pickle = pickle
         self.check_max_eval = check_max_eval
 
         # inform user about number of cores used

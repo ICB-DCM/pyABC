@@ -1,5 +1,7 @@
+"""Stochastic kernels."""
+
 import numpy as np
-import scipy as sp
+from scipy import stats
 from typing import Callable, List, Union
 
 from .base import Distance
@@ -24,15 +26,12 @@ class StochasticKernel(Distance):
 
     Parameters
     -----------
-
     ret_scale: str, optional (default = SCALE_LIN)
         The scale of the value returned in __call__:
         Given a proability density p(x,x_0), the returned value
         can be either of p(x,x_0), or log(p(x,x_0)).
-
     keys: List[str], optional
         The keys of the summary statistics, specifying the order to be used.
-
     pdf_max: float, optional
         The maximum possible probability density function value.
         Defaults to None and is then computed as the density at (x_0, x_0),
@@ -164,11 +163,11 @@ class NormalKernel(StochasticKernel):
         if self.cov is None:
             dim = sum(np.size(x_0[key]) for key in self.keys)
             self.cov = np.eye(dim)
-        self.cov = np.array(self.cov)
+        self.cov = np.asarray(self.cov)
         # create frozen multivariate normal distribution
         dim = self.cov.shape[0]
         mean = np.zeros(dim)
-        self.rv = sp.stats.multivariate_normal(mean=mean, cov=self.cov)
+        self.rv = stats.multivariate_normal(mean=mean, cov=self.cov)
 
     def __call__(
             self,
@@ -244,7 +243,7 @@ class IndependentNormalKernel(StochasticKernel):
         if self.var is None:
             self.var = np.ones(dim)
         if not callable(self.var):
-            self.var = np.array(self.var) * np.ones(dim)
+            self.var = np.asarray(self.var) * np.ones(dim)
 
         # cache pdf_max
         if self.pdf_max is None and not callable(self.var):
@@ -263,9 +262,13 @@ class IndependentNormalKernel(StochasticKernel):
 
         # compute variance
         var = self.var(par) if callable(self.var) else self.var
+        var = np.asarray(var)
 
         # difference to array
         diff = _diff_arr(x, x_0, self.keys)
+
+        if var.size == 1:
+            var = var * np.ones(diff.size)
 
         # compute pdf
         log_2_pi = np.sum(np.log(2) + np.log(np.pi) + np.log(var))
@@ -329,7 +332,7 @@ class IndependentLaplaceKernel(StochasticKernel):
         if self.scale is None:
             self.scale = np.ones(dim)
         if not callable(self.scale):
-            self.scale = np.array(self.scale) * np.ones(dim)
+            self.scale = np.asarray(self.scale) * np.ones(dim)
 
         # cache pdf_max
         if self.pdf_max is None and not callable(self.scale):
@@ -348,9 +351,13 @@ class IndependentLaplaceKernel(StochasticKernel):
 
         # compute variance
         scale = self.scale(par) if callable(self.scale) else self.scale
+        scale = np.asarray(scale)
 
         # difference to array
         diff = _diff_arr(x, x_0, self.keys)
+
+        if scale.size == 1:
+            scale = scale * np.ones(diff.size)
 
         # compute pdf
         log_2_b = np.sum(np.log(2) + np.log(scale))
@@ -411,18 +418,18 @@ class BinomialKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        x = np.array(_arr(x, self.keys), dtype=int)
-        x_0 = np.array(_arr(x_0, self.keys), dtype=int)
+        x = np.asarray(_arr(x, self.keys), dtype=int)
+        x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
 
         # compute p
         p = self.p if not callable(self.p) else self.p(par)
 
         if self.ret_scale == SCALE_LIN:
-            ret = np.prod(sp.stats.binom.pmf(k=x_0, n=x, p=p))
+            ret = np.prod(stats.binom.pmf(k=x_0, n=x, p=p))
         else:  # self.ret_scale == SCALE_LOG
-            ret = np.sum(sp.stats.binom.logpmf(k=x_0, n=x, p=p))
+            ret = np.sum(stats.binom.logpmf(k=x_0, n=x, p=p))
 
-        return ret
+        return float(ret)
 
 
 class PoissonKernel(StochasticKernel):
@@ -431,9 +438,6 @@ class PoissonKernel(StochasticKernel):
 
     Parameters
     ----------
-
-    p: Union[float, Callable]
-        The success probability.
     ret_scale, keys, pdf_max: See StochasticKernel.
     """
 
@@ -467,15 +471,15 @@ class PoissonKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        x = np.array(_arr(x, self.keys), dtype=int)
-        x_0 = np.array(_arr(x_0, self.keys), dtype=int)
+        x = np.asarray(_arr(x, self.keys), dtype=int)
+        x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
 
         if self.ret_scale == SCALE_LIN:
-            ret = np.prod(sp.stats.poisson.pmf(k=x_0, mu=x))
+            ret = np.prod(stats.poisson.pmf(k=x_0, mu=x))
         else:  # self.ret_scale == SCALE_LOG
-            ret = np.sum(sp.stats.poisson.logpmf(k=x_0, mu=x))
+            ret = np.sum(stats.poisson.logpmf(k=x_0, mu=x))
 
-        return ret
+        return float(ret)
 
 
 class NegativeBinomialKernel(StochasticKernel):
@@ -523,18 +527,18 @@ class NegativeBinomialKernel(StochasticKernel):
             x_0: dict,
             t: int = None,
             par: dict = None) -> float:
-        x = np.array(_arr(x, self.keys), dtype=int)
-        x_0 = np.array(_arr(x_0, self.keys), dtype=int)
+        x = np.asarray(_arr(x, self.keys), dtype=int)
+        x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
 
         # compute p
         p = self.p if not callable(self.p) else self.p(par)
 
         if self.ret_scale == SCALE_LIN:
-            ret = np.prod(sp.stats.nbinom.pmf(k=x_0, n=x, p=p))
+            ret = np.prod(stats.nbinom.pmf(k=x_0, n=x, p=p))
         else:  # self.ret_scale == SCALE_LOG
-            ret = np.sum(sp.stats.nbinom.logpmf(k=x_0, n=x, p=p))
+            ret = np.sum(stats.nbinom.logpmf(k=x_0, n=x, p=p))
 
-        return ret
+        return float(ret)
 
 
 def binomial_pdf_max(x_0, keys, p, ret_scale):
@@ -546,9 +550,9 @@ def binomial_pdf_max(x_0, keys, p, ret_scale):
 
     The optimal value was calculated by checking p(n+1,k) / p(n,k).
     """
-    ks = np.array(_arr(x_0, keys), dtype=int)
+    ks = np.asarray(_arr(x_0, keys), dtype=int)
     ns = np.maximum(np.ceil((ks - p) / p), 0)
-    pms = sp.stats.binom.logpmf(k=ks, n=ns, p=p)
+    pms = stats.binom.logpmf(k=ks, n=ns, p=p)
 
     # sum over all log values
     log_pdf_max = np.sum(pms)
@@ -569,7 +573,7 @@ def _diff_arr(x, x_0, keys):
             diff.extend(d)
         except Exception:
             diff.append(d)
-    diff = np.array(diff)
+    diff = np.asarray(diff)
     return diff
 
 
@@ -584,5 +588,5 @@ def _arr(x, keys):
             arr.extend(val)
         except Exception:
             arr.append(val)
-    arr = np.array(arr)
+    arr = np.asarray(arr)
     return arr

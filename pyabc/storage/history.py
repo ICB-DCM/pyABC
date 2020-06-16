@@ -263,7 +263,7 @@ class History:
                  .filter(ABCSMC.id == self.id)
                  .filter(Population.t == t)).all()
 
-        return sorted([a[0] for a in alive])
+        return sorted(a[0] for a in alive)
 
     @with_session
     def get_distribution(self, m: int = 0, t: int = None) \

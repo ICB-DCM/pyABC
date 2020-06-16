@@ -1,6 +1,6 @@
 """
-Weighted Statistics
--------------------
+Weighted statistics
+===================
 
 Functions performing statistical operations on weighted points
 generated via importance sampling.

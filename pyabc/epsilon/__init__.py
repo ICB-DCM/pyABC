@@ -1,6 +1,8 @@
 """
-Epsilon threshold scheduling strategies
-=======================================
+Epsilons
+========
+
+Epsilon threshold updating strategies.
 
 Acceptance thresholds (= epsilon) can be calculated based on the distances from
 the observed data, can follow a pre-defined list, can be constant, or can have
@@ -31,27 +33,3 @@ from .temperature import (
     FrielPettittScheme,
     EssScheme,
 )
-
-
-__all__ = [
-    # base
-    'Epsilon',
-    'NoEpsilon',
-    # epsilon
-    'ConstantEpsilon',
-    'ListEpsilon',
-    'QuantileEpsilon',
-    'MedianEpsilon',
-    # temperature
-    'TemperatureBase',
-    'ListTemperature',
-    'Temperature',
-    'TemperatureScheme',
-    'AcceptanceRateScheme',
-    'ExpDecayFixedIterScheme',
-    'ExpDecayFixedRatioScheme',
-    'PolynomialDecayFixedIterScheme',
-    'DalyScheme',
-    'FrielPettittScheme',
-    'EssScheme',
-]

@@ -15,13 +15,3 @@ from .base import (
     ExternalSumStat,
     ExternalDistance,
     create_sum_stat)
-
-
-__all__ = [
-    'R',
-    'ExternalHandler',
-    'ExternalModel',
-    'ExternalSumStat',
-    'ExternalDistance',
-    'create_sum_stat',
-]

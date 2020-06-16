@@ -295,8 +295,8 @@ def plot_credible_intervals_for_time(
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
-        for i_run, h in enumerate(histories):
-            for i_c, confidence in reversed(list(enumerate(levels))):
+        for i_run in range(len(histories)):
+            for i_c in reversed(range(len(levels))):
                 y_err = np.array(
                     [median[i_par, i_run] - cis[i_par, i_run, i_c],
                      cis[i_par, i_run, -1 - i_c] - median[i_par, i_run]])

@@ -115,8 +115,8 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 
     after_adaptation_weights = [k.pdf(test_points) for k in kernels]
 
-    same = all([(k1 == k2).all()
-                for k1, k2 in zip(test_weights, after_adaptation_weights)])
+    same = all((k1 == k2).all()
+               for k1, k2 in zip(test_weights, after_adaptation_weights))
     err_msg = ("Population strategy {}"
                " modified the transitions".format(population_strategy))
 

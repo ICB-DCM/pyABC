@@ -74,17 +74,27 @@ def RedisEvalParallelSamplerServerStarterWrapper():
     return RedisEvalParallelSamplerServerStarter(batch_size=5)
 
 
+def PicklingMulticoreParticleParallelSampler():
+    return MulticoreParticleParallelSampler(pickle=True)
+
+
+def PicklingMulticoreEvalParallelSampler():
+    return MulticoreEvalParallelSampler(pickle=True)
+
+
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerServerStarterWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
+                        PicklingMulticoreParticleParallelSampler,
+                        PicklingMulticoreEvalParallelSampler,
                         MappingSampler,
                         DaskDistributedSampler,
                         DaskDistributedSamplerBatch,
                         GenericFutureWithThreadPool,
                         GenericFutureWithProcessPool,
-                        GenericFutureWithProcessPoolBatch
+                        GenericFutureWithProcessPoolBatch,
                         ])
 def sampler(request):
     s = request.param()
@@ -128,7 +138,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
         Distribution(x=RV("norm", mu_x_1, sigma)),
-        Distribution(x=RV("norm", mu_x_2, sigma))
+        Distribution(x=RV("norm", mu_x_2, sigma)),
     ]
 
     # We plug all the ABC setup together
@@ -253,7 +263,7 @@ def test_redis_catch_error():
 
 
 def test_redis_pw_protection():
-    sampler = RedisEvalParallelSamplerServerStarter(  # nosec
+    sampler = RedisEvalParallelSamplerServerStarter(  # noqa: S106
         password="daenerys", port=8888)
 
     def simulate_one():

@@ -72,7 +72,7 @@ class AmiciPetabImporter(PetabImporter):
     def create_model(
             self,
             return_simulations: bool = False,
-            return_rdatas: bool = False
+            return_rdatas: bool = False,
     ) -> Callable[[Union[Sequence, Mapping]], Mapping]:
         """Create model.
 
@@ -148,7 +148,7 @@ class AmiciPetabImporter(PetabImporter):
         return model
 
     def create_kernel(
-        self
+        self,
     ) -> pyabc.StochasticKernel:
         """
         Create acceptance kernel.

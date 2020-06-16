@@ -3,6 +3,7 @@ from .singlecore import SingleCoreSampler
 import numpy as np
 import random
 import logging
+import cloudpickle as pickle
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 
 
@@ -20,6 +21,10 @@ def feed(feed_q, n_jobs, n_proc):
 
 
 def work(feed_q, result_q, simulate_one, max_eval, single_core_sampler):
+    # unwrap arguments
+    if isinstance(simulate_one, bytes):
+        simulate_one = pickle.loads(simulate_one)
+
     random.seed()
     np.random.seed()
 
@@ -51,12 +56,11 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     However, if your summary statistics are large numpy arrays
     or similar, this could cause overhead
 
-
     Parameters
     ----------
-        n_procs: int, optional
-            If set to None, the Number of cores is determined according to
-            :func:`pyabc.sge.nr_cores_available`.
+    n_procs: int, optional
+        If set to None, the Number of cores is determined according to
+        :func:`pyabc.sge.nr_cores_available`.
 
 
     .. warning::
@@ -84,10 +88,12 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         # the max_eval handling in this sampler is certainly not optimal
         single_core_sampler.sample_factory = self.sample_factory
 
-        worker_processes = [Process(target=work, args=(feed_q, result_q,
-                                                       simulate_one,
-                                                       max_eval,
-                                                       single_core_sampler))
+        # wrap arguments
+        if self.pickle:
+            simulate_one = pickle.dumps(simulate_one)
+        args = (feed_q, result_q, simulate_one, max_eval, single_core_sampler)
+
+        worker_processes = [Process(target=work, args=args)
                             for _ in range(n_procs)]
 
         for proc in worker_processes:

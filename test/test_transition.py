@@ -1,9 +1,11 @@
-from pyabc.transition import NotEnoughParticles, LocalTransition, Transition
-from pyabc import MultivariateNormalTransition
 import pandas as pd
 import numpy as np
 import pytest
-from pyabc import GridSearchCV
+
+from pyabc.transition import NotEnoughParticles, LocalTransition, Transition
+from pyabc import (
+    ABCSMC, Distribution, GridSearchCV, MultivariateNormalTransition,
+    Parameter, RV, create_sqlite_db_id)
 
 
 @pytest.fixture(params=[LocalTransition, MultivariateNormalTransition])
@@ -202,3 +204,19 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)
     transition.mean_cv()
+
+
+def test_model_gets_parameter(transition: Transition):
+    """Check that we use Parameter objects as model input throughout.
+
+    This should be the case both when the parameter is created from the prior,
+    and from the transition.
+    """
+    def model(p):
+        assert isinstance(p, Parameter)
+        return {'s0': p['p0'] + 0.1 * np.random.normal()}
+    prior = Distribution(p0=RV('uniform', -5, 10))
+
+    abc = ABCSMC(model, prior, transitions=transition, population_size=10)
+    abc.new(create_sqlite_db_id(), {'s0': 3.5})
+    abc.run(max_nr_populations=3)
