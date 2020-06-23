@@ -10,7 +10,7 @@ import click
 from .redis_logging import logger
 from .cmd import (N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   N_WORKER, SSA, QUEUE, START, STOP,
-                  MSG, BATCH_SIZE)
+                  MSG, BATCH_SIZE, IS_PREL, GENERATION)
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -49,16 +49,24 @@ def work_on_population(redis: StrictRedis,
     Here the actual sampling happens.
     """
 
+
     # set timers
     population_start_time = time()
     cumulative_simulation_time = 0
 
     # read from pipeline
     pipeline = redis.pipeline()
+
+    t = int(pipeline.get(GENERATION).decode())
+
+    # debug
+    print("start work on pop gen t=" + str(t))
+
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b \
-        = (pipeline.get(SSA).get(BATCH_SIZE)
-           .get(ALL_ACCEPTED).get(N_REQ).get(N_ACC).execute())
+    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b, is_prel_b \
+        = (pipeline.get(SSA + "_" + str(t)).get(BATCH_SIZE)
+           .get(ALL_ACCEPTED + "_" + str(t)).get(N_REQ + "_" + str(t))
+           .get(N_ACC + "_" + str(t)).get(IS_PREL+"_"+str(t)).execute())
 
     if ssa_b is None:
         return
@@ -73,9 +81,10 @@ def work_on_population(redis: StrictRedis,
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
     n_req = int(n_req_b.decode())
+    is_prel = bool(int(is_prel_b.decode))
 
     # notify sign up as worker
-    n_worker = redis.incr(N_WORKER)
+    n_worker = redis.incr(N_WORKER + "_" + str(t))
     logger.info(
         f"Begin population, batch size {batch_size}. "
         f"I am worker {n_worker}")
@@ -87,15 +96,15 @@ def work_on_population(redis: StrictRedis,
     sample = sample_factory()
 
     # loop until no more particles required
-    while int(redis.get(N_ACC).decode()) < n_req \
-            and (not all_accepted or int(redis.get(N_EVAL).decode()) < n_req):
+    while int(redis.get(N_ACC + "_" + str(t)).decode()) < n_req \
+            and (not all_accepted or int(redis.get(N_EVAL + "_" + str(t)).decode()) < n_req):
         if kill_handler.killed:
             logger.info(
                 f"Worker {n_worker} received stop signal. "
                 f"Terminating in the middle of a population "
                 f"after {internal_counter} samples.")
             # notify quit
-            redis.decr(N_WORKER)
+            redis.decr(N_WORKER + "_" + str(t))
             sys.exit(0)
 
         # check whether time's up
@@ -106,11 +115,22 @@ def work_on_population(redis: StrictRedis,
                 f"runtime {current_runtime} exceeds "
                 f"max runtime {max_runtime_s}")
             # notify quit
-            redis.decr(N_WORKER)
+            redis.decr(N_WORKER + "_" + str(t))
             return
 
+        # check whether preliminary data is still active and update if not
+        if is_prel is True:
+            if bool(int(pipeline.get(IS_PREL + "_" + str(t)).decode())) is False:
+
+                # debug
+                print("update simulate_one t=" + str(t))
+
+                is_prel = False
+                ssa_b = pipeline.get(SSA + "_" + str(t))
+                simulate_one, sample_factory = pickle.loads(ssa_b)
+
         # increase global number of evaluations counter
-        particle_max_id = redis.incr(N_EVAL, batch_size)
+        particle_max_id = redis.incr(N_EVAL + "_" + str(t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
@@ -149,19 +169,22 @@ def work_on_population(redis: StrictRedis,
 
         # push to pipeline if at least one sample got accepted
         if len(accepted_samples) > 0:
+
+            # debug
+            print(str(len(accepted_samples))+ "samples added to Queue" + str(t))
+
             # new pipeline
             pipeline = redis.pipeline()
             # update particles counter
-            pipeline.incr(N_ACC, len(accepted_samples))
+            pipeline.incr(N_ACC + "_" + str(t), len(accepted_samples))
             # note: samples are appended 1-by-1
-            pipeline.rpush(QUEUE, *accepted_samples)
+            pipeline.rpush(QUEUE + "_" + str(t), *accepted_samples)
             # execute all commands
-            pipeline.execute()
 
     # end of sampling loop
 
     # notify quit
-    redis.decr(N_WORKER)
+    redis.decr(N_WORKER + "_" + str(t))
     kill_handler.exit = True
     population_total_time = time() - population_start_time
     logger.info(
@@ -207,6 +230,9 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
     np.random.seed()
     random.seed()
 
+    # debug
+    print("something")
+
     kill_handler = KillHandler()
 
     start_time = time()
@@ -224,6 +250,9 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
             data = msg["data"].decode()
         except AttributeError:
             data = msg["data"]
+
+        # debug
+        print("something", msg)
 
         # check if it is int to (first iteration) run at least once
         if data == START or isinstance(data, int):
@@ -264,19 +293,19 @@ def manage(command, host="localhost", port=6379, password=None):
 
 def _manage(command, host="localhost", port=6379, password=None):
     redis = StrictRedis(host=host, port=port, password=password)
+    pipe = redis.pipeline()
+    t = pipe.get(GENERATION)
     if command == "info":
-        pipe = redis.pipeline()
-        pipe.get(N_WORKER)
-        pipe.get(N_EVAL)
-        pipe.get(N_ACC)
-        pipe.get(N_REQ)
+        pipe.get(N_WORKER+"_"+str(t))
+        pipe.get(N_EVAL+"_"+str(t))
+        pipe.get(N_ACC+"_"+str(t))
+        pipe.get(N_REQ+"_"+str(t))
         res = pipe.execute()
         res = [r.decode() if r is not None else r for r in res]
-        print("Workers={} Evaluations={} Acceptances={}/{}"  # noqa: T001
-              .format(*res))
+        print("Workers={} Evaluations={} Acceptances={}/{}".format(*res))
     elif command == "stop":
         redis.publish(MSG, STOP)
     elif command == "reset-workers":
-        redis.set(N_WORKER, 0)
+        redis.set(N_WORKER+"_"+str(t), 0)
     else:
-        print("Unknown command:", command)  # noqa: T001
+        print("Unknown command:", command)

@@ -146,7 +146,7 @@ def wrap_sample(f):
     Wrapper for Sampler.sample_until_n_accepted.
     Checks whether the sampling output is valid.
     """
-    def sample_until_n_accepted(
+    def sample_parallel_until_n_accepted(
             self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         sample = f(self, n, simulate_one, max_eval, all_accepted)
         if sample.n_accepted != n and sample.ok:
@@ -154,7 +154,7 @@ def wrap_sample(f):
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
         return sample
-    return sample_until_n_accepted
+    return sample_parallel_until_n_accepted
 
 
 class SamplerMeta(ABCMeta):

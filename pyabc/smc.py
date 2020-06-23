@@ -1,8 +1,6 @@
 """
-ABCSMC
-======
-
-Parallel Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
+Parallel Approximate Bayesian Computation - Sequential Monte Carlo
+==================================================================
 
 The ABCSMC class is the most central class of the pyABC package.
 Most of the other classes serve to configure it. (I.e. the other classes
@@ -22,7 +20,6 @@ from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
 from .distance import Distance, PNormDistance, to_distance, StochasticKernel
 from .epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from .model import Model, SimpleModel
-from .parameters import Parameter
 from .platform_factory import DefaultSampler
 from .population import Particle, Population
 from .populationstrategy import PopulationStrategy, ConstantPopulationSize
@@ -148,7 +145,7 @@ class ABCSMC:
                   doi:10.1093/bioinformatics/btp619.
     """
     def __init__(self,
-                 models: Union[List[Model], Model, Callable],
+                 models: Union[List[Model], Model],
                  parameter_priors: Union[List[Distribution],
                                          Distribution, Callable],
                  distance_function: Union[Distance, Callable] = None,
@@ -156,7 +153,7 @@ class ABCSMC:
                  summary_statistics: Callable[[model_output], dict] = identity,
                  model_prior: RV = None,
                  model_perturbation_kernel: ModelPerturbationKernel = None,
-                 transitions: Union[List[Transition], Transition] = None,
+                 transitions: List[Transition] = None,
                  eps: Epsilon = None,
                  sampler: Sampler = None,
                  acceptor: Acceptor = None,
@@ -525,8 +522,8 @@ class ABCSMC:
         logger.info(f"Calibration sample before t={t}.")
 
         # call sampler
-        sample = self.sampler.sample_until_n_accepted(
-            self.population_size(-1), simulate_one,
+        sample = self.sampler.sample_parallel_until_n_accepted(
+            self.population_size(-1), t, simulate_one, self,
             max_eval=np.inf, all_accepted=True)
 
         # extract accepted population
@@ -639,7 +636,7 @@ class ABCSMC:
                     continue
             else:
                 m_ss = m[0]
-            theta_ss = Parameter(**transitions[m_ss].rvs().to_dict())
+            theta_ss = transitions[m_ss].rvs()
 
             if (model_prior.pmf(m_ss)
                     * parameter_priors[m_ss].pdf(theta_ss) > 0):
@@ -886,8 +883,8 @@ class ABCSMC:
 
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
-            sample = self.sampler.sample_until_n_accepted(
-                pop_size, simulate_one, max_eval)
+            sample = self.sampler.sample_parallel_until_n_accepted(pop_size, t, simulate_one,
+                        max_eval, self)
 
             # check sample health
             if not sample.ok:

@@ -13,3 +13,6 @@ START = "start"
 STOP = "stop"
 BATCH_SIZE = "batch_size"
 SLEEP_TIME = .1
+
+IS_PREL = "is_prel"
+GENERATION = "generation"
