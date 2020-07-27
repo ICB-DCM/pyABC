@@ -22,7 +22,7 @@ setup(
                       "sqlalchemy>=1.3.18", "click>=7.1.2",
                       "feather-format>=0.4.1",
                       "distributed>=2.21.0", "pygments>=2.6.1",
-                      "IPython>=7.16.1", "pyarrow>=1.0.0"],
+                      "ipython>=7.16.1", "pyarrow>=1.0.0"],
     extras_require={"R": ["rpy2>=3.2.0", "cffi>=1.13.1"],
                     "amici-petab": ["petab>=0.1.1", "amici>=0.10.18"]},
     python_requires='>=3.6',
