@@ -36,8 +36,7 @@ Bootstrap(app)
 
 @app.route('/')
 def maina():
-    return "blob"
-    #return render_template("index.html")
+    return render_template("index.html")
 
 
 @app.route("/abc")
