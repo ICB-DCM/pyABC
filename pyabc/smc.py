@@ -1,8 +1,6 @@
 """
-ABCSMC
-======
-
-Parallel Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
+Parallel Approximate Bayesian Computation - Sequential Monte Carlo
+==================================================================
 
 The ABCSMC class is the most central class of the pyABC package.
 Most of the other classes serve to configure it. (I.e. the other classes
@@ -525,9 +523,15 @@ class ABCSMC:
         logger.info(f"Calibration sample before t={t}.")
 
         # call sampler
+
         sample = self.sampler.sample_until_n_accepted(
-            self.population_size(-1), simulate_one,
-            max_eval=np.inf, all_accepted=True)
+            self.population_size(-1),
+            simulate_one,
+            max_eval=np.inf,
+            all_accepted=True,
+            t=0,
+            ABCSMC=None
+        )
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -707,7 +711,7 @@ class ABCSMC:
             rejected_distances=rejected_distances,
             accepted=accepted)
 
-    def _create_transition_pdf(self, t: int, transitions=None):
+    def _create_transition_pdf(self, t: int, transitions=None, model_probabilities=None):
         """
         Create transition probability density function for time `t`.
         """
@@ -715,7 +719,9 @@ class ABCSMC:
             return self._create_prior_pdf()
 
         # copy references to avoid self references when pickling
-        model_probabilities = self.history.get_model_probabilities(t-1)
+        if model_probabilities is None:
+            model_probabilities = self.history.get_model_probabilities(t-1)
+        
         model_perturbation_kernel = self.model_perturbation_kernel
         if transitions is None:
             transitions = self.transitions
@@ -886,8 +892,8 @@ class ABCSMC:
 
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
-            sample = self.sampler.sample_until_n_accepted(
-                pop_size, simulate_one, max_eval)
+            sample = self.sampler.sample_until_n_accepted(n=pop_size, simulate_one=simulate_one,
+                        max_eval=max_eval, t=t, ABCSMC=self)
 
             # check sample health
             if not sample.ok:
@@ -1060,3 +1066,4 @@ class ABCSMC:
         for m in self.history.alive_models(t - 1):
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
+

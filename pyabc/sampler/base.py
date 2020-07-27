@@ -3,8 +3,6 @@ import numpy as np
 from typing import List, Callable
 
 from pyabc.population import Particle, Population
-
-
 class Sample:
     """
     A Sample is created and filled during the sampling process by the Sampler.
@@ -147,8 +145,8 @@ def wrap_sample(f):
     Checks whether the sampling output is valid.
     """
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
-        sample = f(self, n, simulate_one, max_eval, all_accepted)
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False, t=0, ABCSMC=None):
+        sample = f(self, n, simulate_one, max_eval, all_accepted, t, ABCSMC)
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
@@ -232,3 +230,4 @@ class Sampler(ABC, metaclass=SamplerMeta):
         sample: :class:`pyabc.sampler.Sample`
             The generated sample, which contains the new population.
         """
+

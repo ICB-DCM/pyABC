@@ -12,7 +12,7 @@ from typing import List, Callable
 import pandas as pd
 from pyabc.parameters import Parameter
 import logging
-
+import numpy as np
 logger = logging.getLogger("Population")
 
 
@@ -93,6 +93,9 @@ class Particle:
             rejected_distances = []
         self.rejected_distances = rejected_distances
         self.accepted = accepted
+    def as_dict(self):
+        return {'name': next(iter(self.parameter.keys())), 'value': next(iter(self.parameter.values())), 'w': self.weight}
+
 
 
 class Population:
@@ -199,6 +202,39 @@ class Population:
         weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
+
+    def get_distribution(self, m: int = 0) \
+            -> (pd.DataFrame):
+        """
+        Returns the weighted population sample for model m and timepoint t
+        as a pandas DataFrame.
+
+        Parameters
+        ----------
+
+        m: int, optional (default = 0)
+            Model index.
+
+
+        Returns
+        -------
+
+        df, w: pandas.DataFrame, np.ndarray
+            * df: a DataFrame of parameters
+            * w: are the weights associated with each parameter
+        """
+        m = int(m)
+
+
+        df = pd.DataFrame([x.as_dict() for x in self._list])
+        df["id"]=df.reset_index().index
+        pars = df.pivot("id", "name", "value").sort_index()
+        w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
+        w_arr = w.w.values
+        if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
+            raise AssertionError(
+                "Weight not close to 1, w.sum()={}".format(w_arr.sum()))
+        return pars, w_arr
 
     def get_weighted_sum_stats(self) -> tuple:
         """
