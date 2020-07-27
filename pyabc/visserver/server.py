@@ -35,7 +35,7 @@ Bootstrap(app)
 
 
 @app.route('/')
-def maina():
+def main():
     return render_template("index.html")
 
 
