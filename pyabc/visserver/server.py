@@ -3,15 +3,29 @@ import json
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import click
-from pyabc import History
 import pandas as pd
-
+import logging
 from bokeh.plotting import figure
 from bokeh.embed import components  # noqa: E402
 from bokeh.resources import INLINE  # noqa: E402
 from bokeh.models.widgets import Panel, Tabs  # noqa: E402
+import signal
+import sys
+
+from pyabc import History
+
+logger = logging.getLogger(__name__)
 
 
+# enable ctrl+c handling (python+R fight for it otherwise)
+def signal_handler(sig, frame):
+    logger.info("Handling SIGINT with an exit.")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
+
+# default color palette
 DEFAULT_PALETTE = ['#000000',  # Wong nature colorblind palette
                    '#e69f00',
                    '#56b4e9',
