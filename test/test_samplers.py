@@ -7,7 +7,7 @@ from pyabc import (ABCSMC, RV, Distribution,
                    MedianEpsilon,
                    PercentileDistance, SimpleModel,
                    ConstantPopulationSize,
-                   History)
+                   History, create_sqlite_db_id)
 from pyabc.sampler import (SingleCoreSampler,
                            MappingSampler,
                            MulticoreParticleParallelSampler,
@@ -65,9 +65,11 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
 
 class WrongOutputSampler(SingleCoreSampler):
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
+            show_progress=False):
         return super().sample_until_n_accepted(
-            n+1, simulate_one, max_eval, all_accepted=False)
+            n+1, simulate_one, max_eval, all_accepted=False,
+            show_progress=show_progress)
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():
@@ -205,6 +207,23 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
             f"Had {pre_evals} simulations in the calibration iteration, "
             f"but a maximum of {max_expected} would have been sufficient for "
             f"the population size of {pop_size.nr_particles}.")
+
+
+def test_progressbar(sampler):
+    """Test whether using a progress bar gives any errors."""
+    def model(p):
+        return {"y": p['p0'] + 0.1 * np.random.randn(10)}
+
+    def distance(y1, y2):
+        return np.abs(y1['y'] - y2['y']).sum()
+
+    prior = Distribution(p0=RV('uniform', -5, 10))
+    obs = {'y': 1}
+
+    abc = ABCSMC(model, prior, distance, sampler=sampler, population_size=20,
+                 show_progress=True)
+    abc.new(db=create_sqlite_db_id(), observed_sum_stat=obs)
+    abc.run(max_nr_populations=3)
 
 
 def test_in_memory(redis_starter_sampler):
