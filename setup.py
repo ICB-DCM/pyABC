@@ -11,7 +11,6 @@ with open(os.path.join(os.path.dirname(__file__), "pyabc", "version.py")) as f:
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-
 setup(
     install_requires=["numpy>=1.19.1", "scipy>=1.5.2",
                       "pandas>=1.0.5", "cloudpickle>=1.5.0",
