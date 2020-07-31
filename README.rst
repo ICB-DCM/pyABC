@@ -3,6 +3,8 @@ pyABC
 
 .. image:: https://raw.githubusercontent.com/ICB-DCM/pyABC/master/doc/logo/logo.png
    :alt: pyABC logo
+   :width: 200 px
+   :align: center
 
 
 [![CI](https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg)](https://github.com/ICB-DCM/pyABC/actions)
