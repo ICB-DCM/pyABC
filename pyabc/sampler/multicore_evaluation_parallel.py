@@ -4,6 +4,7 @@ from .multicorebase import MultiCoreSampler
 import numpy as np
 import random
 import cloudpickle as pickle
+from jabbar import jabbar
 
 from .multicorebase import get_if_worker_healthy
 
@@ -89,7 +90,8 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
+            show_progress=False):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -117,12 +119,14 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         # make sure all results are collected
         # and the queue is emptied to prevent deadlocks
         n_done = 0
-        while n_done < len(processes):
-            val = get_if_worker_healthy(processes, queue)
-            if val == DONE:
-                n_done += 1
-            else:
-                id_results.append(val)
+        with jabbar(total=n, enable=show_progress, keep=False) as bar:
+            while n_done < len(processes):
+                val = get_if_worker_healthy(processes, queue)
+                if val == DONE:
+                    n_done += 1
+                else:
+                    id_results.append(val)
+                    bar.update(len(id_results))
 
         for proc in processes:
             proc.join()

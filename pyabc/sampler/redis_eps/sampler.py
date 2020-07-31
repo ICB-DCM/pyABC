@@ -3,6 +3,8 @@ import pickle
 from time import sleep
 import cloudpickle
 from redis import StrictRedis
+from jabbar import jabbar
+
 from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
@@ -79,7 +81,8 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
+            show_progress=False):
         # open pipeline
         pipeline = self.redis.pipeline()
 
@@ -103,13 +106,15 @@ class RedisEvalParallelSampler(Sampler):
         self.redis.publish(MSG, START)
 
         # wait until n acceptances
-        while len(id_results) < n:
-            # pop result from queue, block until one is available
-            dump = self.redis.blpop(QUEUE)[1]
-            # extract pickled object
-            particle_with_id = pickle.loads(dump)
-            # append to collected results
-            id_results.append(particle_with_id)
+        with jabbar(total=n, enable=show_progress, keep=False) as bar:
+            while len(id_results) < n:
+                # pop result from queue, block until one is available
+                dump = self.redis.blpop(QUEUE)[1]
+                # extract pickled object
+                particle_with_id = pickle.loads(dump)
+                # append to collected results
+                id_results.append(particle_with_id)
+                bar.update(len(id_results))
 
         # wait until all workers done
         while int(self.redis.get(N_WORKER).decode()) > 0:
