@@ -126,7 +126,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
                     n_done += 1
                 else:
                     id_results.append(val)
-                    bar.update(len(id_results))
+                    bar.inc()
 
         for proc in processes:
             proc.join()

@@ -114,7 +114,7 @@ class RedisEvalParallelSampler(Sampler):
                 particle_with_id = pickle.loads(dump)
                 # append to collected results
                 id_results.append(particle_with_id)
-                bar.update(len(id_results))
+                bar.inc()
 
         # wait until all workers done
         while int(self.redis.get(N_WORKER).decode()) > 0:
