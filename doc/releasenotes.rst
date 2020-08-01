@@ -8,6 +8,16 @@ Release Notes
 ...........
 
 
+0.10.5 (2020-08-01)
+-------------------
+
+* Remove bkcharts dependency (#328).
+* Add optional progress bar to various samplers (#330).
+* Refactor package metadata (#330).
+* Refactor CI build, add code quality tests (#331).
+* Add warning when many zero-prior samples are generated (#331).
+
+
 0.10.4 (2020-06-15)
 -------------------
 

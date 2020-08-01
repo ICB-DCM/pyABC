@@ -1,5 +1,6 @@
 from .base import Sampler
 import numpy as np
+from jabbar import jabbar
 
 
 class SingleCoreSampler(Sampler):
@@ -17,11 +18,12 @@ class SingleCoreSampler(Sampler):
         self.check_max_eval = check_max_eval
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
+            show_progress=False):
         nr_simulations = 0
         sample = self._create_empty_sample()
 
-        for _ in range(n):
+        for _ in jabbar(range(n), enable=show_progress, keep=False):
             while True:
                 if self.check_max_eval and nr_simulations >= max_eval:
                     break

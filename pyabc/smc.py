@@ -140,6 +140,10 @@ class ABCSMC:
         rejected particles that methods like the AdaptivePNormDistance
         function use to update themselves each iteration.
 
+    show_progress:
+        Whether to show the progress of a sampler. Some samplers support this
+        e.g. via a status bar.
+
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
                   “Simulation-Based Model Selection for Dynamical
@@ -161,7 +165,8 @@ class ABCSMC:
                  sampler: Sampler = None,
                  acceptor: Acceptor = None,
                  stop_if_only_single_model_alive: bool = False,
-                 max_nr_recorded_particles: int = np.inf):
+                 max_nr_recorded_particles: int = np.inf,
+                 show_progress: bool = False):
 
         if not isinstance(models, list):
             models = [models]
@@ -218,6 +223,7 @@ class ABCSMC:
 
         self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
         self.max_nr_recorded_particles = max_nr_recorded_particles
+        self.show_progress = show_progress
 
         # will be set later
         self.x_0 = None
@@ -527,7 +533,8 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             self.population_size(-1), simulate_one,
-            max_eval=np.inf, all_accepted=True)
+            max_eval=np.inf, all_accepted=True,
+            show_progress=self.show_progress)
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -627,7 +634,10 @@ class ABCSMC:
             return m_ss, theta_ss
 
         # later generation
-        while True:  # find m_s and theta_ss, valid according to prior
+        # counter
+        n_sample, n_sample_soft_limit = 0, 1000
+        # sample until the prior density is positive
+        while True:
             if len(m) > 1:
                 index = fast_random_choice(p)
                 m_s = m[index]
@@ -644,6 +654,12 @@ class ABCSMC:
             if (model_prior.pmf(m_ss)
                     * parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
+
+            n_sample += 1
+            if n_sample == n_sample_soft_limit:
+                logger.warning(
+                    "Unusually many (model, parameter) samples have prior "
+                    "density zero. The transition might be inappropriate.")
 
     @staticmethod
     def _evaluate_proposal(
@@ -887,7 +903,8 @@ class ABCSMC:
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
-                pop_size, simulate_one, max_eval)
+                pop_size, simulate_one, max_eval,
+                show_progress=self.show_progress)
 
             # check sample health
             if not sample.ok:
