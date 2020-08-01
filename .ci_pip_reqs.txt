@@ -8,5 +8,4 @@ flake8-commas
 flake8-comprehensions
 flake8-print
 pytest
-codecov
 pytest-cov

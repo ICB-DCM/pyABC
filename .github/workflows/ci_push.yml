@@ -33,7 +33,7 @@ jobs:
       timeout-minutes: 10
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
-          test/test_* test/visualization/test_*
+          test/base test/visualization
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -69,8 +69,7 @@ jobs:
     - name: Run tests
       timeout-minutes: 10
       run: |
-        python -m pytest --cov=pyabc --cov-report=xml \
-          test/external/test_*
+        python -m pytest --cov=pyabc --cov-report=xml test/external
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -106,8 +105,7 @@ jobs:
     - name: Run tests
       timeout-minutes: 10
       run: |
-        python -m pytest --cov=pyabc --cov-report=xml \
-          test/petab/test_*
+        python -m pytest --cov=pyabc --cov-report=xml test/petab
 
     - name: Coverage
       uses: codecov/codecov-action@v1

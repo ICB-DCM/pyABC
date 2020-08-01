@@ -58,8 +58,7 @@ jobs:
       run: |
         sudo apt-get install pandoc
         python -m pip install --upgrade pip
-        pip install -e .
-        pip install sphinx nbsphinx nbconvert sphinx-rtd-theme
+        pip install -e .[docs]
 
     - name: Build docs
       timeout-minutes: 10
