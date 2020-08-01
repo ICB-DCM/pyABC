@@ -634,7 +634,10 @@ class ABCSMC:
             return m_ss, theta_ss
 
         # later generation
-        while True:  # find m_s and theta_ss, valid according to prior
+        # counter
+        n_sample, n_sample_soft_limit = 0, 1000
+        # sample until the prior density is positive
+        while True:
             if len(m) > 1:
                 index = fast_random_choice(p)
                 m_s = m[index]
@@ -651,6 +654,12 @@ class ABCSMC:
             if (model_prior.pmf(m_ss)
                     * parameter_priors[m_ss].pdf(theta_ss) > 0):
                 return m_ss, theta_ss
+
+            n_sample += 1
+            if n_sample == n_sample_soft_limit:
+                logger.warning(
+                    "Unusually many (model, parameter) samples have prior "
+                    "density zero. The transition might be inappropriate.")
 
     @staticmethod
     def _evaluate_proposal(
