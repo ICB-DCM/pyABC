@@ -67,7 +67,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh R
+        .github/workflows/ci_dependencies.sh base R
         pip install -e .[R,test]
 
     - name: Run tests
