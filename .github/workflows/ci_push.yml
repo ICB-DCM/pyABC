@@ -106,7 +106,7 @@ jobs:
     - name: Install dependencies
       run: |
         .github/workflows/ci_dependencies.sh petab
-        pip install -e .[petab]
+        pip install -e .[petab,test]
 
     - name: Run tests
       timeout-minutes: 10
@@ -144,7 +144,7 @@ jobs:
       - name: Install dependencies
         run: |
           .github/workflows/ci_dependencies.sh
-          pip install -e .
+          pip install -e .[test]
 
       - name: Run tests
         timeout-minutes: 3
@@ -156,3 +156,40 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
+
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ${{ runner.os }}-ci-quality
+        restore-keys: ${{ runner.os }}-
+
+    - name: Install dependencies
+      run: |
+        pip install -e .[quality]
+
+    - name: Run flake8
+      timeout-minutes: 1
+      run: ./run_flake8.sh
+
+    - name: Run pyroma
+      run: pyroma --min=10 .
+
+    - name: Run rst-lint
+      run: rst-lint README.rst
+
