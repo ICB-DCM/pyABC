@@ -137,7 +137,7 @@ jobs:
       - name: Cache
         uses: actions/cache@v1
         with:
-          path: ~/.cache
+          path: ~/Library/Caches/pip
           key: ${{ runner.os }}-ci-base
           restore-keys: ${{ runner.os }}-
 
