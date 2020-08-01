@@ -3,6 +3,9 @@
 # pip
 python -m pip install --upgrade pip
 
+# wheel
+pip install wheel
+
 # optional dependencies
 for par in "$@"
 do
