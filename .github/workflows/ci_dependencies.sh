@@ -14,7 +14,6 @@ do
         brew install redis
       else
         # Linux
-        sudo apt-get update
         sudo apt-get install redis-server
       fi
     ;;
@@ -45,14 +44,15 @@ do
       pip install -e .tmp/petab_test_suite
     ;;
 
+    docs)
+      # documentation
+      sudo apt-get install pandoc
+    ;;
+
     *)
       echo "Unknown argument" >&2
 	  exit 1
     ;;
 
-    docs)
-      # documentation
-      sudo apt-get install pandoc
-    ;;
   esac
 done
