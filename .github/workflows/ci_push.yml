@@ -27,7 +27,9 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R
+      run: |
+        .github/workflows/ci_dependencies.sh R
+        pip install -e .[base,R]
 
     - name: Run tests
       timeout-minutes: 10
@@ -64,7 +66,9 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R
+      run: |
+        .github/workflows/ci_dependencies.sh R
+        pip install -e .[base,R]
 
     - name: Run tests
       timeout-minutes: 10
@@ -100,7 +104,9 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh petab
+      run: |
+        .github/workflows/ci_dependencies.sh petab
+        pip install -e .[petab]
 
     - name: Run tests
       timeout-minutes: 10
@@ -136,12 +142,14 @@ jobs:
           restore-keys: ${{ runner.os }}-
 
       - name: Install dependencies
-        run: .github/workflows/ci_dependencies.sh
+        run: |
+          .github/workflows/ci_dependencies.sh
+          pip install -e .
 
       - name: Run tests
-        timeout-minutes: 5
+        timeout-minutes: 3
         run: |
-          python -m pytest --cov=pyabc --cov-report=xml test/test_macos.py
+          python -m pytest --cov=pyabc --cov-report=xml test/base/test_macos.py
 
       - name: Coverage
         uses: codecov/codecov-action@v1

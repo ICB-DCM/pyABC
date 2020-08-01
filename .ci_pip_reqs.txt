@@ -1,5 +1,3 @@
-wheel
-jupyter
 flake8
 flake8-colors
 flake8-bandit
