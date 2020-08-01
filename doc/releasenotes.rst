@@ -14,7 +14,7 @@ Release Notes
 * Remove bkcharts dependency (#328).
 * Add optional progress bar to various samplers (#330).
 * Refactor package metadata (#330).
-* Refactor CI build, add code quality tests (#331)
+* Refactor CI build, add code quality tests (#331).
 * Add warning when many zero-prior samples are generated (#331).
 
 
