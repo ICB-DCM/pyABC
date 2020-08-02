@@ -13,25 +13,26 @@ import datetime
 import logging
 from typing import List, Callable, TypeVar
 import numpy as np
-import pandas as pd
 import copy
 from typing import Union
 
-from .acceptor import (Acceptor, UniformAcceptor, SimpleFunctionAcceptor,
-                       StochasticAcceptor)
-from .distance import Distance, PNormDistance, to_distance, StochasticKernel
-from .epsilon import Epsilon, MedianEpsilon, TemperatureBase
-from .model import Model, SimpleModel
-from .parameters import Parameter
-from .platform_factory import DefaultSampler
-from .population import Particle, Population
-from .populationstrategy import PopulationStrategy, ConstantPopulationSize
-from .pyabc_rand_choice import fast_random_choice
-from .random_variables import RV, ModelPerturbationKernel, Distribution
-from .sampler import Sampler, Sample
-from .storage import History
-from .transition import Transition, MultivariateNormalTransition
-from .weighted_statistics import effective_sample_size
+from pyabc.acceptor import (
+    Acceptor, UniformAcceptor, SimpleFunctionAcceptor, StochasticAcceptor)
+from pyabc.distance import (
+    Distance, PNormDistance, to_distance, StochasticKernel)
+from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
+from pyabc.model import Model, SimpleModel
+from pyabc.platform_factory import DefaultSampler
+from pyabc.population import Population
+from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
+from pyabc.random_variables import RV, ModelPerturbationKernel, Distribution
+from pyabc.sampler import Sampler, Sample
+from pyabc.storage import History
+from pyabc.transition import Transition, MultivariateNormalTransition
+from pyabc.weighted_statistics import effective_sample_size
+from .util import (
+    create_simulate_from_prior_function, create_prior_pdf,
+    create_transition_pdf, create_simulate_function)
 
 
 logger = logging.getLogger("ABC")
@@ -483,44 +484,13 @@ class ABCSMC:
         Similar to _create_simulate_function, apart here we sample from the
         prior and accept all.
         """
-        model_prior = self.model_prior
-        parameter_priors = self.parameter_priors
-        models = self.models
-        summary_statistics = self.summary_statistics
+        return create_simulate_from_prior_function(
+            t=t, model_prior=self.model_prior,
+            parameter_priors=self.parameter_priors, models=self.models,
+            summary_statistics=self.summary_statistics,
+        )
 
-        # simulation function, simplifying some parts compared to later
-
-        def simulate_one():
-            # sample model
-            m = int(model_prior.rvs())
-            # sample parameter
-            theta = parameter_priors[m].rvs()
-            # simulate summary statistics
-            model_result = models[m].summary_statistics(
-                t, theta, summary_statistics)
-            # sampled from prior, so all have uniform weight
-            weight = 1.0
-            # remember sum stat as accepted
-            accepted_sum_stats = [model_result.sum_stats]
-            # distance will be computed after initialization of the
-            # distance function
-            accepted_distances = [np.inf]
-            # all are happy and accepted
-            accepted = True
-
-            return Particle(
-                m=m,
-                parameter=theta,
-                weight=weight,
-                accepted_sum_stats=accepted_sum_stats,
-                accepted_distances=accepted_distances,
-                rejected_sum_stats=[],
-                rejected_distances=[],
-                accepted=accepted)
-
-        return simulate_one
-
-    def _sample_from_prior(self, t: int) -> List[dict]:
+    def _sample_from_prior(self, t: int) -> Population:
         """
         Only sample from prior and return results without changing
         the history of the distance function or the epsilon.
@@ -564,251 +534,30 @@ class ABCSMC:
             happens. Therefore, the returned function should be light, and
             in particular not contain references to the ABCSMC class.
         """
-        # cache model_probabilities to not query the database so often
-        model_probabilities = self.history.get_model_probabilities(t-1)
-        m = np.array(model_probabilities.index)
-        p = np.array(model_probabilities.p)
-
-        model_prior = self.model_prior
-        parameter_priors = self.parameter_priors
-        model_perturbation_kernel = self.model_perturbation_kernel
-        transitions = self.transitions
         nr_samples_per_parameter = \
             self.population_size.nr_samples_per_parameter
-        models = self.models
-        summary_statistics = self.summary_statistics
-        distance_function = self.distance_function
-        eps = self.eps
-        acceptor = self.acceptor
-        x_0 = self.x_0
+        return create_simulate_function(
+            t=t, model_probabilities=self.history.get_model_probabilities(t-1),
+            model_perturbation_kernel=self.model_perturbation_kernel,
+            transitions=self.transitions, model_prior=self.model_prior,
+            parameter_priors=self.parameter_priors,
+            nr_samples_per_parameter=nr_samples_per_parameter,
+            models=self.models, summary_statistics=self.summary_statistics,
+            distance_function=self.distance_function, eps=self.eps,
+            acceptor=self.acceptor, x_0=self.x_0,
+        )
 
-        weight_function = self._create_weight_function(t)
-
-        # simulation function
-        def simulate_one():
-            parameter = ABCSMC._generate_valid_proposal(
-                t, m, p,
-                model_prior,
-                parameter_priors,
-                model_perturbation_kernel,
-                transitions)
-            particle = ABCSMC._evaluate_proposal(
-                *parameter,
-                t,
-                nr_samples_per_parameter,
-                models,
-                summary_statistics,
-                distance_function,
-                eps,
-                acceptor,
-                x_0,
-                weight_function)
-            return particle
-
-        return simulate_one
-
-    @staticmethod
-    def _generate_valid_proposal(
-            t, m, p,
-            model_prior,
-            parameter_priors,
-            model_perturbation_kernel,
-            transitions):
-        """
-        Sample a parameter for a model.
-
-        Parameters
-        ----------
-        t: Population number
-        m: Indices of alive models
-        p: Probabilities of alive models
-
-        Returns
-        -------
-        Model, parameter.
-        """
-        # first generation
-        if t == 0:  # sample from prior
-            m_ss = int(model_prior.rvs())
-            theta_ss = parameter_priors[m_ss].rvs()
-            return m_ss, theta_ss
-
-        # later generation
-        # counter
-        n_sample, n_sample_soft_limit = 0, 1000
-        # sample until the prior density is positive
-        while True:
-            if len(m) > 1:
-                index = fast_random_choice(p)
-                m_s = m[index]
-                m_ss = model_perturbation_kernel.rvs(m_s)
-                # theta_s is None if the population m_ss has died out.
-                # This can happen since the model_perturbation_kernel
-                # can return a model nr which has died out.
-                if m_ss not in m:
-                    continue
-            else:
-                m_ss = m[0]
-            theta_ss = Parameter(**transitions[m_ss].rvs().to_dict())
-
-            if (model_prior.pmf(m_ss)
-                    * parameter_priors[m_ss].pdf(theta_ss) > 0):
-                return m_ss, theta_ss
-
-            n_sample += 1
-            if n_sample == n_sample_soft_limit:
-                logger.warning(
-                    "Unusually many (model, parameter) samples have prior "
-                    "density zero. The transition might be inappropriate.")
-
-    @staticmethod
-    def _evaluate_proposal(
-            m_ss, theta_ss,
-            t,
-            nr_samples_per_parameter,
-            models,
-            summary_statistics,
-            distance_function,
-            eps,
-            acceptor,
-            x_0,
-            weight_function) -> Particle:
-        """
-        Corresponds to Sampler.simulate_one. Data for the given parameters
-        theta_ss are simulated, summary statistics computed and evaluated.
-
-        This is where the actual model evaluation happens.
-        """
-
-        # from here, theta_ss is valid according to the prior
-
-        accepted_sum_stats = []
-        accepted_distances = []
-        rejected_sum_stats = []
-        rejected_distances = []
-        accepted_weights = []
-
-        for _ in range(nr_samples_per_parameter):
-            model_result = models[m_ss].accept(
-                t,
-                theta_ss,
-                summary_statistics,
-                distance_function,
-                eps,
-                acceptor,
-                x_0)
-            if model_result.accepted:
-                accepted_sum_stats.append(model_result.sum_stats)
-                accepted_distances.append(model_result.distance)
-                accepted_weights.append(model_result.weight)
-            else:
-                rejected_sum_stats.append(model_result.sum_stats)
-                rejected_distances.append(model_result.distance)
-
-        accepted = len(accepted_sum_stats) > 0
-
-        if accepted:
-            weight = weight_function(
-                accepted_distances, m_ss, theta_ss, accepted_weights)
-        else:
-            weight = 0
-
-        return Particle(
-            m=m_ss,
-            parameter=theta_ss,
-            weight=weight,
-            accepted_sum_stats=accepted_sum_stats,
-            accepted_distances=accepted_distances,
-            rejected_sum_stats=rejected_sum_stats,
-            rejected_distances=rejected_distances,
-            accepted=accepted)
-
-    def _create_transition_pdf(self, t: int, transitions=None):
-        """
-        Create transition probability density function for time `t`.
-        """
+    def _create_transition_pdf(self, t: int, transitions):
+        """Create transition probability density function for time `t>=0`."""
         if t == 0:
-            return self._create_prior_pdf()
+            return create_prior_pdf(
+                model_prior=self.model_prior,
+                parameter_priors=self.parameter_priors)
 
-        # copy references to avoid self references when pickling
-        model_probabilities = self.history.get_model_probabilities(t-1)
-        model_perturbation_kernel = self.model_perturbation_kernel
-        if transitions is None:
-            transitions = self.transitions
-
-        def transition_pdf(m_ss, theta_ss):
-            model_factor = sum(
-                row.p * model_perturbation_kernel.pmf(m_ss, m)
-                for m, row in model_probabilities.iterrows())
-            particle_factor = transitions[m_ss].pdf(
-                pd.Series(dict(theta_ss)))
-
-            transition_pd = model_factor * particle_factor
-
-            if transition_pd == 0:
-                logger.debug("Transition density is zero!")
-            return transition_pd
-
-        return transition_pdf
-
-    def _create_prior_pdf(self):
-        """
-        Create a function that calculates a sample's prior density.
-        """
-        model_prior = self.model_prior
-        parameter_priors = self.parameter_priors
-
-        def prior_pdf(m_ss, theta_ss):
-            prior_pd = (model_prior.pmf(m_ss)
-                        * parameter_priors[m_ss].pdf(theta_ss))
-            return prior_pd
-
-        return prior_pdf
-
-    def _create_weight_function(self, t: int):
-        """
-        Create a function that calculates a sample's weight at time `t`.
-        The weight is the prior divided by the transition density and the
-        acceptance setp weight.
-        """
-        nr_samples_per_parameter = \
-            self.population_size.nr_samples_per_parameter
-
-        # for efficiency, don't just compute prior / prior
-        if t == 0:
-            def prior_weight_function(
-                    distance_list, m_ss, theta_ss, acceptance_weights):
-                weight = (len(distance_list)
-                          / nr_samples_per_parameter)
-                # the acceptance weights should be 1 here anyway
-                # TODO This is only valid for single samples (see #54)
-                weight *= np.prod(acceptance_weights)
-                return weight
-
-            return prior_weight_function
-
-        transition_pdf = self._create_transition_pdf(t)
-        prior_pdf = self._create_prior_pdf()
-
-        def weight_function(
-                distance_list, m_ss, theta_ss, acceptance_weights):
-            prior_pd = prior_pdf(m_ss, theta_ss)
-            transition_pd = transition_pdf(m_ss, theta_ss)
-            # account for stochastic acceptance
-            # TODO This is only valid for single samples (see #54)
-            acceptance_weight = np.prod(acceptance_weights)
-            # account for multiple tries
-            fraction_accepted_runs_for_single_parameter = \
-                len(distance_list) / nr_samples_per_parameter
-
-            # calculate weight
-            weight = (
-                prior_pd * acceptance_weight
-                * fraction_accepted_runs_for_single_parameter
-                / transition_pd)
-            return weight
-
-        return weight_function
+        return create_transition_pdf(
+            transitions=transitions,
+            model_probabilities=self.history.get_model_probabilities(t-1),
+            model_perturbation_kernel=self.model_perturbation_kernel)
 
     def run(self,
             minimum_epsilon: float = None,
@@ -1013,8 +762,8 @@ class ABCSMC:
             records = []
             # get transition functions
             transition_pdf_prev = self._create_transition_pdf(
-                t-1, prev_transitions)
-            transition_pdf = self._create_transition_pdf(t)
+                    t-1, prev_transitions)
+            transition_pdf = self._create_transition_pdf(t, self.transitions)
 
             # iterate over all particles
             for particle in recorded_particles:
