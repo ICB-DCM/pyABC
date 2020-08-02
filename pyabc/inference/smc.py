@@ -794,13 +794,13 @@ class ABCSMC:
 
         Parameters
         ----------
-
         t: int
             Time for which to adapt the population size.
         """
         if t == 0:  # we need a particle population to do the fitting
             return
 
+        # model probabilities
         w = self.history.get_model_probabilities(
             self.history.max_t)["p"].values
 
@@ -809,6 +809,8 @@ class ABCSMC:
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
         copied_transitions = copy.deepcopy(self.transitions)
+
+        # update the population size
         self.population_size.update(copied_transitions, w, t)
 
     def _fit_transitions(self, t):
