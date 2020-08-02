@@ -1,20 +1,10 @@
-"""
-ABCSMC
-======
-
-Parallel Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
-
-The ABCSMC class is the most central class of the pyABC package.
-Most of the other classes serve to configure it. (I.e. the other classes
-implement a Strategy pattern.)
-"""
+"""ABC-SMC"""
 
 import datetime
 import logging
-from typing import List, Callable, TypeVar
+from typing import List, Callable, TypeVar, Union
 import numpy as np
 import copy
-from typing import Union
 
 from pyabc.acceptor import (
     Acceptor, UniformAcceptor, SimpleFunctionAcceptor, StochasticAcceptor)
@@ -51,43 +41,44 @@ class ABCSMC:
     This is an implementation of an ABCSMC algorithm similar to
     [#tonistumpf]_.
 
+    The ABCSMC class is the most central class of the pyABC package.
+    Most of the other classes serve to configure it (i.e. the other classes
+    implement a strategy pattern).
 
     Parameters
     ----------
+    models:
+        Can be a list of models, a single model, a list of functions, or a
+        single function.
 
-    models: list of models, single model, list of functions, or single function
-       * If models is a function, then the function should have a single
-         parameter, which is of dictionary type, and should return a single
-         dictionary, which contains the simulated data.
-       * If models is a list of functions, then the first point applies to
-         each function.
-       * Models can also be a list of Model instances or a single
-         Model instance.
+        * If models is a function, then the function should have a single
+          parameter, which is of dictionary type, and should return a single
+          dictionary, which contains the simulated data.
+        * If models is a list of functions, then the first point applies to
+          each function.
+        * Models can also be a list of Model instances or a single
+          Model instance.
 
-       This model's output is passed to the summary statistics calculation.
-       Per default, the model is assumed to already return the calculated
-       summary statistics. Accordingly, the default summary_statistics
-       function is just the identity. Note that the sampling and evaluation of
-       particles happens in the model's methods, so overriding these offers a
-       great deal of flexibility, in particular the freedom to use or ignore
-       the distance_function, summary_statistics, and eps parameters here.
-
-    parameter_priors: List[Distribution]
+        This model's output is passed to the summary statistics calculation.
+        Per default, the model is assumed to already return the calculated
+        summary statistics. Accordingly, the default summary_statistics
+        function is just the identity. Note that the sampling and evaluation of
+        particles happens in the model's methods, so overriding these offers a
+        great deal of flexibility, in particular the freedom to use or ignore
+        the distance_function, summary_statistics, and eps parameters here.
+    parameter_priors:
         A list of prior distributions for the models' parameters.
         Each list entry is the prior distribution for the corresponding model.
-
-    distance_function: Distance, optional
+    distance_function:
         Measures the distance of the tentatively sampled particle to the
         measured data.
-
-    population_size: int, PopulationStrategy, optional
+    population_size:
         Specify the size of the population.
         If ``population_specification`` is an ``int``, then the size is
         constant. Adaptive population sizes are also possible by passing a
         :class:`pyabc.populationstrategy.PopulationStrategy` object.
         The default is 100 particles per population.
-
-    summary_statistics: Callable[[model_output], dict]
+    summary_statistics:
         A function which takes the raw model output as returned by
         any ot the models and calculates the corresponding summary
         statistics. Note that the default value is just the identity
@@ -95,52 +86,43 @@ class ABCSMC:
         the summary statistics. However, in a model selection setting
         it can make sense to have the model produce some kind or raw output
         and then take the same summary statistics function for all the models.
-
-    model_prior: RV, optional
+    model_prior:
         A random variable giving the prior weights of the model classes.
         The default is a uniform prior over the model classes,
         ``RV("randint", 0, len(models))``.
-
-    model_perturbation_kernel: ModelPerturbationKernel
+    model_perturbation_kernel:
         Kernel which governs with which probability to switch from one
         model to another model for a given sample while generating proposals
         for the subsequent population from the current population.
-
-    transitions: List[Transition], Transition, optional
+    transitions:
         A list of :class:`pyabc.transition.Transition` objects
         or a single :class:`pyabc.transition.Transition` in case
         of a single model. Defaults to multivariate normal transitions for
         every model.
-
-    eps: Epsilon, optional
+    eps:
         Accepts any :class:`pyabc.epsilon.Epsilon` subclass.
         The default is the :class:`pyabc.epsilon.MedianEpsilon` which adapts
         automatically. The object passed here determines how the acceptance
         threshold scheduling is performed.
-
-    sampler: Sampler, optional
+    sampler:
         In some cases, a mapper implementation will require initialization
         to run properly, e.g. database connection, grid setup, etc..
         The sampler is an object that encapsulates this information.
         The default sampler :class:`pyabc.sampler.MulticoreEvalParallelSampler`
         will parallelize across the cores of a single
         machine only.
-
-    acceptor: Acceptor, optional
+    acceptor:
         Takes a distance function, summary statistics and an epsilon threshold
         to decide about acceptance of a particle. Argument accepts any subclass
         of :class:`pyabc.acceptor.Acceptor`, or a function convertible to an
         acceptor. Defaults to a :class:`pyabc.acceptor.UniformAcceptor`.
-
-    stop_if_only_single_model_alive: bool
+    stop_if_only_single_model_alive:
         Defaults to False. Set this to true if you want to stop ABCSMC
         automatically as soon as only a single model has survived.
-
-    max_nr_recorded_particles: int
+    max_nr_recorded_particles:
         Defaults to inf. Set this to the maximum number of accepted and
         rejected particles that methods like the AdaptivePNormDistance
         function use to update themselves each iteration.
-
     show_progress:
         Whether to show the progress of a sampler. Some samplers support this
         e.g. via a status bar.
@@ -152,23 +134,23 @@ class ABCSMC:
                   Bioinformatics 26, no. 1, 104–10, 2010.
                   doi:10.1093/bioinformatics/btp619.
     """
-    def __init__(self,
-                 models: Union[List[Model], Model, Callable],
-                 parameter_priors: Union[List[Distribution],
-                                         Distribution, Callable],
-                 distance_function: Union[Distance, Callable] = None,
-                 population_size: Union[PopulationStrategy, int] = 100,
-                 summary_statistics: Callable[[model_output], dict] = identity,
-                 model_prior: RV = None,
-                 model_perturbation_kernel: ModelPerturbationKernel = None,
-                 transitions: Union[List[Transition], Transition] = None,
-                 eps: Epsilon = None,
-                 sampler: Sampler = None,
-                 acceptor: Acceptor = None,
-                 stop_if_only_single_model_alive: bool = False,
-                 max_nr_recorded_particles: int = np.inf,
-                 show_progress: bool = False):
-
+    def __init__(
+            self,
+            models: Union[List[Model], Model, Callable],
+            parameter_priors: Union[List[Distribution],
+                                    Distribution, Callable],
+            distance_function: Union[Distance, Callable] = None,
+            population_size: Union[PopulationStrategy, int] = 100,
+            summary_statistics: Callable[[model_output], dict] = identity,
+            model_prior: RV = None,
+            model_perturbation_kernel: ModelPerturbationKernel = None,
+            transitions: Union[List[Transition], Transition] = None,
+            eps: Epsilon = None,
+            sampler: Sampler = None,
+            acceptor: Acceptor = None,
+            stop_if_only_single_model_alive: bool = False,
+            max_nr_recorded_particles: int = np.inf,
+            show_progress: bool = False):
         if not isinstance(models, list):
             models = [models]
         models = list(map(SimpleModel.assert_model, models))
@@ -543,8 +525,8 @@ class ABCSMC:
             parameter_priors=self.parameter_priors,
             nr_samples_per_parameter=nr_samples_per_parameter,
             models=self.models, summary_statistics=self.summary_statistics,
-            distance_function=self.distance_function, eps=self.eps,
-            acceptor=self.acceptor, x_0=self.x_0,
+            x_0=self.x_0, distance_function=self.distance_function,
+            eps=self.eps, acceptor=self.acceptor,
         )
 
     def _create_transition_pdf(self, t: int, transitions):

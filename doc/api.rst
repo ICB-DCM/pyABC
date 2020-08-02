@@ -7,7 +7,7 @@ API reference
 .. toctree::
    :maxdepth: 2
 
-   api_abcsmc
+   api_inference
    api_distance
    api_acceptor
    api_model

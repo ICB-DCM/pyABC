@@ -1,7 +1,16 @@
+"""Inference util functions."""
+
 import numpy as np
 import pandas as pd
 import logging
-from typing import Callable
+from typing import List, Callable
+
+from pyabc.acceptor import Acceptor
+from pyabc.distance import Distance
+from pyabc.epsilon import Epsilon
+from pyabc.model import Model
+from pyabc.random_variables import RV, ModelPerturbationKernel, Distribution
+from pyabc.transition import Transition
 
 from pyabc.pyabc_rand_choice import fast_random_choice
 from pyabc.parameters import Parameter
@@ -11,11 +20,27 @@ logger = logging.getLogger(__name__)
 
 
 def create_simulate_from_prior_function(
-        t: int, model_prior, parameter_priors, models, summary_statistics):
+        t: int, model_prior: RV, parameter_priors: List[Distribution],
+        models: List[Model], summary_statistics: Callable,
+) -> Callable:
     """Create a function that simulates from the prior.
 
     Similar to _create_simulate_function, apart here we sample from the
     prior and accept all.
+
+    Parameters
+    ----------
+    t: The time to create the simulation function for.
+    model_prior: The model prior.
+    parameter_priors: The parameter priors.
+    models: List of all models.
+    summary_statistics:
+        Function to compute summary statistics from model output.
+
+    Returns
+    -------
+    simulate_one:
+        A function that returns a sampled particle.
     """
     # simulation function, simplifying some parts compared to later
 
@@ -51,22 +76,25 @@ def create_simulate_from_prior_function(
 
 
 def generate_valid_proposal(
-        t, m, p,
-        model_prior,
-        parameter_priors,
-        model_perturbation_kernel,
-        transitions):
+        t: int, m: np.ndarray, p: np.ndarray,
+        model_prior: RV, parameter_priors: List[Distribution],
+        model_perturbation_kernel: ModelPerturbationKernel,
+        transitions: List[Transition]):
     """Sample a parameter for a model.
 
     Parameters
     ----------
-    t: Population number
-    m: Indices of alive models
-    p: Probabilities of alive models
+    t: Population index to generate for.
+    m: Indices of alive models.
+    p: Probabilities of alive models.
+    model_prior: The model prior.
+    parameter_priors: The parameter priors.
+    model_perturbation_kernel: The model perturbation kernel.
+    transitions: The transitions, one per model.
 
     Returns
     -------
-    Model, parameter.
+    (m_ss, theta_ss): Model, parameter.
     """
     # first generation
     if t == 0:
@@ -90,13 +118,16 @@ def generate_valid_proposal(
             if m_ss not in m:
                 continue
         else:
+            # only one model
             m_ss = m[0]
         theta_ss = Parameter(**transitions[m_ss].rvs().to_dict())
 
+        # check if positive under prior
         if (model_prior.pmf(m_ss)
                 * parameter_priors[m_ss].pdf(theta_ss) > 0):
             return m_ss, theta_ss
 
+        # unhealthy sampling detection
         n_sample += 1
         if n_sample == n_sample_soft_limit:
             logger.warning(
@@ -105,24 +136,34 @@ def generate_valid_proposal(
 
 
 def evaluate_proposal(
-        m_ss, theta_ss,
-        t,
-        nr_samples_per_parameter,
-        models,
-        summary_statistics,
-        distance_function,
-        eps,
-        acceptor,
-        x_0,
-        weight_function) -> Particle:
+        m_ss: int, theta_ss: Parameter, t: int,
+        nr_samples_per_parameter: int, models: List[Model],
+        summary_statistics: Callable,
+        distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
+        x_0: dict, weight_function: Callable) -> Particle:
     """Evaluate a proposed parameter.
+
+    Parameters
+    ----------
+    m_ss, theta_ss: The proposed (model, parameter) sample.
+    t: The current time.
+    nr_samples_per_parameter: Number of samples per parameter.
+    models: List of all models.
+    summary_statistics:
+        Function to compute summary statistics from model output.
+    distance_function: The distance function.
+    eps: The epsilon threshold.
+    acceptor: The acceptor.
+    x_0: The observed summary statistics.
+    weight_function: Function by which to reweight the sample.
+
+    Returns
+    -------
+    particle: A particle containing all information.
 
     Data for the given parameters theta_ss are simulated, summary statistics
     computed and evaluated.
     """
-
-    # from here, theta_ss is valid according to the prior
-
     accepted_sum_stats = []
     accepted_distances = []
     rejected_sum_stats = []
@@ -165,15 +206,18 @@ def evaluate_proposal(
         accepted=accepted)
 
 
-def create_prior_pdf(model_prior, parameter_priors) -> Callable:
+def create_prior_pdf(
+        model_prior: RV, parameter_priors: List[Distribution]) -> Callable:
     """Create a function that calculates a sample's prior density.
 
     Parameters
     ----------
-    model_prior:
-        The model prior.
-    parameter_priors:
-        The parameter priors, one for each model.
+    model_prior: The model prior.
+    parameter_priors: The parameter priors, one for each model.
+
+    Returns
+    -------
+    prior_pdf: The prior density function.
     """
     def prior_pdf(m_ss, theta_ss):
         prior_pd = (model_prior.pmf(m_ss)
@@ -184,12 +228,20 @@ def create_prior_pdf(model_prior, parameter_priors) -> Callable:
 
 
 def create_transition_pdf(
-        transitions, model_probabilities, model_perturbation_kernel):
-    """Create transition probability density function for time `t`.
+        transitions: List[Transition],
+        model_probabilities: pd.DataFrame,
+        model_perturbation_kernel: ModelPerturbationKernel) -> Callable:
+    """Create the transition probability density function for time `t`.
 
     Parameters
     ----------
-    TODO
+    transitions: The list of parameter transition functions.
+    model_probabilities: The last generation's model probabilities.
+    model_perturbation_kernel: The kernel perturbing the models.
+
+    Returns
+    -------
+    transition_pdf: The transition density function.
     """
     def transition_pdf(m_ss, theta_ss):
         model_factor = sum(
@@ -208,10 +260,22 @@ def create_transition_pdf(
 
 
 def create_weight_function(
-        nr_samples_per_parameter: int, prior_pdf, transition_pdf):
-    """Create a function that calculates a sample's weight at time `t`.
+        nr_samples_per_parameter: int,
+        prior_pdf: Callable,
+        transition_pdf: Callable) -> Callable:
+    """Create a function that calculates a sample's importance weight.
     The weight is the prior divided by the transition density and the
-    acceptance setp weight.
+    acceptance step weight.
+
+    Parameters
+    ----------
+    nr_samples_per_parameter: Number of samples per parameter.
+    prior_pdf: The prior density.
+    transition_pdf: The transition density.
+
+    Returns
+    -------
+    weight_function: The importance sample weight function.
     """
     def weight_function(
             distance_list, m_ss, theta_ss, acceptance_weights):
@@ -237,11 +301,14 @@ def create_weight_function(
 
 
 def create_simulate_function(
-        t: int, model_probabilities, model_perturbation_kernel,
-        transitions, model_prior, parameter_priors,
-        nr_samples_per_parameter,
-        models, summary_statistics, distance_function, eps, acceptor, x_0,
-):
+        t: int, model_probabilities: pd.DataFrame,
+        model_perturbation_kernel: ModelPerturbationKernel,
+        transitions: List[Transition],
+        model_prior: RV, parameter_priors: List[Distribution],
+        nr_samples_per_parameter: int, models: List[Model],
+        summary_statistics: Callable, x_0: dict,
+        distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
+) -> Callable:
     """
     Create a simulation function which performs the sampling of parameters,
     simulation of data and acceptance checking, and which is then passed
@@ -249,8 +316,20 @@ def create_simulate_function(
 
     Parameters
     ----------
-    t: int
-        Time index
+    t: The time index to simulate for.
+    model_probabilities: The last generation's model probabilities.
+    model_perturbation_kernel: The model perturbation kernel.
+    transitions: The parameter transition kernels.
+    model_prior: The model prior.
+    parameter_priors: The parameter priors.
+    nr_samples_per_parameter: Number of samples per parameter.
+    models: List of all models.
+    summary_statistics:
+        Function to compute summary statistics from model output.
+    x_0: The observed summary statistics.
+    distance_function: The distance function.
+    eps: The epsilon threshold.
+    acceptor: The acceptor.
 
     Returns
     -------
@@ -285,22 +364,16 @@ def create_simulate_function(
     # simulation function
     def simulate_one():
         parameter = generate_valid_proposal(
-            t, m, p,
-            model_prior,
-            parameter_priors,
-            model_perturbation_kernel,
-            transitions)
+            t=t, m=m, p=p,
+            model_prior=model_prior, parameter_priors=parameter_priors,
+            model_perturbation_kernel=model_perturbation_kernel,
+            transitions=transitions)
         particle = evaluate_proposal(
-            *parameter,
-            t,
-            nr_samples_per_parameter,
-            models,
-            summary_statistics,
-            distance_function,
-            eps,
-            acceptor,
-            x_0,
-            weight_function)
+            *parameter, t=t,
+            nr_samples_per_parameter=nr_samples_per_parameter,
+            models=models, summary_statistics=summary_statistics,
+            distance_function=distance_function, eps=eps, acceptor=acceptor,
+            x_0=x_0, weight_function=weight_function)
         return particle
 
     return simulate_one
