@@ -8,6 +8,13 @@ Release Notes
 ...........
 
 
+0.10.6 (2020-08-04)
+-------------------
+
+* Refactor and modularize ABCSMC inference module (#333).
+* Make fast random choice function robust across dimensions (#333).
+
+
 0.10.5 (2020-08-01)
 -------------------
 
