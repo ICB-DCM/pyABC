@@ -26,7 +26,10 @@ jobs:
         key: ${{ runner.os }}-ci-notebooks
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R petab
+      run: |
+        .github/workflows/ci_dependencies.sh R petab
+        pip install jupyter
+        pip install -e .[petab,R]
 
     - name: Run notebooks
       timeout-minutes: 10
@@ -56,10 +59,8 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get install pandoc
-        python -m pip install --upgrade pip
-        pip install -e .
-        pip install sphinx nbsphinx nbconvert sphinx-rtd-theme
+        .github/workflows/ci_dependencies.sh docs
+        pip install -e .[docs]
 
     - name: Build docs
       timeout-minutes: 10

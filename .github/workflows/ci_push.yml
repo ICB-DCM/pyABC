@@ -27,13 +27,15 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R
+      run: |
+        .github/workflows/ci_dependencies.sh base R
+        pip install -e .[R,test,code_quality]
 
     - name: Run tests
       timeout-minutes: 10
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
-          test/test_* test/visualization/test_*
+          test/base test/visualization
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -64,13 +66,14 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh R
+      run: |
+        .github/workflows/ci_dependencies.sh base R
+        pip install -e .[R,test]
 
     - name: Run tests
       timeout-minutes: 10
       run: |
-        python -m pytest --cov=pyabc --cov-report=xml \
-          test/external/test_*
+        python -m pytest --cov=pyabc --cov-report=xml test/external
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -101,13 +104,14 @@ jobs:
         restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: .github/workflows/ci_dependencies.sh petab
+      run: |
+        .github/workflows/ci_dependencies.sh petab
+        pip install -e .[petab,test]
 
     - name: Run tests
       timeout-minutes: 10
       run: |
-        python -m pytest --cov=pyabc --cov-report=xml \
-          test/petab/test_*
+        python -m pytest --cov=pyabc --cov-report=xml test/petab
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -133,20 +137,59 @@ jobs:
       - name: Cache
         uses: actions/cache@v1
         with:
-          path: ~/.cache
+          path: ~/Library/Caches/pip
           key: ${{ runner.os }}-ci-base
           restore-keys: ${{ runner.os }}-
 
       - name: Install dependencies
-        run: .github/workflows/ci_dependencies.sh
+        run: |
+          .github/workflows/ci_dependencies.sh
+          pip install -e .[test]
 
       - name: Run tests
-        timeout-minutes: 5
+        timeout-minutes: 3
         run: |
-          python -m pytest --cov=pyabc --cov-report=xml test/test_macos.py
+          python -m pytest --cov=pyabc --cov-report=xml test/base/test_macos.py
 
       - name: Coverage
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
+
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ${{ runner.os }}-ci-quality
+        restore-keys: ${{ runner.os }}-
+
+    - name: Install dependencies
+      run: |
+        pip install -e .[quality]
+
+    - name: Run flake8
+      timeout-minutes: 1
+      run: ./run_flake8.sh
+
+    - name: Run pyroma
+      run: pyroma --min=10 .
+
+    - name: Run rst-lint
+      run: rst-lint README.rst
+
