@@ -75,7 +75,7 @@ from .sampler import (
     RedisEvalParallelSampler,
     MulticoreEvalParallelSampler,
     ConcurrentFutureSampler)
-from .smc import ABCSMC
+from .inference import ABCSMC
 from .storage import (
     History,
     create_sqlite_db_id)

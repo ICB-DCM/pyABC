@@ -3,22 +3,37 @@ import json
 from flask import Flask, render_template
 from flask_bootstrap import Bootstrap
 import click
-from pyabc import History
 import pandas as pd
-import bokeh.plotting.helpers as helpers
+import logging
 from bokeh.plotting import figure
-# this has to be set before the other bokeh imports
-helpers.DEFAULT_PALETTE = ['#000000',   # Wong nature colorblind palette
-                           '#e69f00',
-                           '#56b4e9',
-                           '#009e73',
-                           '#f0e442',
-                           '#0072b2',
-                           '#d55e00',
-                           '#cc79a7']
 from bokeh.embed import components  # noqa: E402
 from bokeh.resources import INLINE  # noqa: E402
 from bokeh.models.widgets import Panel, Tabs  # noqa: E402
+import signal
+import sys
+
+from pyabc import History
+
+logger = logging.getLogger(__name__)
+
+
+# enable ctrl+c handling (python+R fight for it otherwise)
+def signal_handler(sig, frame):
+    logger.info("Handling SIGINT with an exit.")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
+
+# default color palette
+DEFAULT_PALETTE = ['#000000',  # Wong nature colorblind palette
+                   '#e69f00',
+                   '#56b4e9',
+                   '#009e73',
+                   '#f0e442',
+                   '#0072b2',
+                   '#d55e00',
+                   '#cc79a7']
 
 BOKEH = INLINE
 
@@ -84,9 +99,9 @@ def abc_detail(abc_id):
         prob_plot = figure()
         prob_plot.xaxis.axis_label = 'Generation t'
         prob_plot.yaxis.axis_label = 'Probability'
-        for c, (m, data) in zip(helpers.DEFAULT_PALETTE, melted.groupby("m")):
+        for c, (m, data) in zip(DEFAULT_PALETTE, melted.groupby("m")):
             prob_plot.line(data["t"], data["p"],
-                           legend="Model " + str(m), color=c,
+                           legend_label="Model " + str(m), color=c,
                            line_width=2)
 
         particles_fig = figure()
@@ -159,7 +174,7 @@ def abc_model(abc_id, model_id, t):
                            BOKEH=BOKEH,
                            model_ids=model_ids,
                            t=t,
-                           available_t=list(range(history.max_t+1)))
+                           available_t=list(range(history.max_t + 1)))
 
 
 @app.route("/info")

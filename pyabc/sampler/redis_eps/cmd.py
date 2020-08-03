@@ -1,6 +1,6 @@
 # mostly redis keys
 
-QUEUE = "queue" 
+QUEUE = "queue"
 N_EVAL = "n_eval"
 N_ACC = "n_acc"
 N_REQ = "n_req"
@@ -13,6 +13,3 @@ START = "start"
 STOP = "stop"
 BATCH_SIZE = "batch_size"
 SLEEP_TIME = .1
-
-IS_PREL = "is_prel"
-GENERATION = "generation"

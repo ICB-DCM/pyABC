@@ -240,13 +240,11 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
-
         alive: List
             A list which contains the indices of those
             models which are still alive.

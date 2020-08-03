@@ -3,6 +3,8 @@ import numpy as np
 from typing import List, Callable
 
 from pyabc.population import Particle, Population
+
+
 class Sample:
     """
     A Sample is created and filled during the sampling process by the Sampler.
@@ -145,8 +147,10 @@ def wrap_sample(f):
     Checks whether the sampling output is valid.
     """
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False, t=0, ABCSMC=None):
-        sample = f(self, n, simulate_one, max_eval, all_accepted, t, ABCSMC)
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
+            show_progress=False):
+        sample = f(
+            self, n, simulate_one, max_eval, all_accepted, show_progress)
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
@@ -173,12 +177,10 @@ class Sampler(ABC, metaclass=SamplerMeta):
 
     Parameters
     ----------
-
     nr_evaluations_: int
         This is set after a population and counts the total number
         of model evaluations. This can be used to calculate the acceptance
         rate.
-
     sample_factory: SampleFactory
         A factory to create empty samples.
     """
@@ -196,38 +198,36 @@ class Sampler(ABC, metaclass=SamplerMeta):
             n: int,
             simulate_one: Callable,
             max_eval: int = np.inf,
-            all_accepted: bool = False) -> Sample:
+            all_accepted: bool = False,
+            show_progress: bool = False) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
         population) of particles.
 
         Parameters
         ----------
-
-        n: int
+        n:
             The number of samples to be accepted. I.e. the population size.
-
-        simulate_one: Callable[[A], Particle]
+        simulate_one:
             A function which internally performs the whole process of
             sampling parameters, simulating data, and comparing to observed
             data to check for acceptance, as indicated via the
             particle.accepted flag.
-
-        max_eval: int, optional
+        max_eval:
             Maximum number of evaluations to perform. Some samplers can check
             this condition directly and can thus terminate proactively.
-
-        all_accepted: bool, optional (default = False)
+        all_accepted:
             If it is known in advance that all sampled particles will have
             particle.accepted == True, then setting all_accepted = True can
             reduce the computational overhead for dynamic schedulers. This
             is usually in particular the case in the initial calibration
             iteration.
+        show_progress:
+            Whether to show the progress. Some samplers support this by e.g.
+            showing a progress bar.
 
         Returns
         -------
-
         sample: :class:`pyabc.sampler.Sample`
             The generated sample, which contains the new population.
         """
-
