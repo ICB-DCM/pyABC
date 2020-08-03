@@ -744,7 +744,7 @@ class ABCSMC:
             records = []
             # get transition functions
             transition_pdf_prev = self._create_transition_pdf(
-                    t-1, prev_transitions)
+                t-1, prev_transitions)
             transition_pdf = self._create_transition_pdf(t, self.transitions)
 
             # iterate over all particles

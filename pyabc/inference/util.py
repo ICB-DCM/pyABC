@@ -170,7 +170,9 @@ def evaluate_proposal(
     rejected_distances = []
     accepted_weights = []
 
+    # perform nr_samples_per_parameter simulations and check acceptance
     for _ in range(nr_samples_per_parameter):
+        # simulate, compute distance, check acceptance
         model_result = models[m_ss].accept(
             t,
             theta_ss,
@@ -179,6 +181,7 @@ def evaluate_proposal(
             eps,
             acceptor,
             x_0)
+        # check whether to append to accepted particles
         if model_result.accepted:
             accepted_sum_stats.append(model_result.sum_stats)
             accepted_distances.append(model_result.distance)
@@ -187,8 +190,10 @@ def evaluate_proposal(
             rejected_sum_stats.append(model_result.sum_stats)
             rejected_distances.append(model_result.distance)
 
+    # check whether any simulation got accepted
     accepted = len(accepted_sum_stats) > 0
 
+    # compute acceptance weight
     if accepted:
         weight = weight_function(
             accepted_distances, m_ss, theta_ss, accepted_weights)
@@ -347,6 +352,7 @@ def create_simulate_function(
     m = np.array(model_probabilities.index)
     p = np.array(model_probabilities.p)
 
+    # create prior and transition densities for weight function
     prior_pdf = create_prior_pdf(
         model_prior=model_prior, parameter_priors=parameter_priors)
     if t == 0:
@@ -357,6 +363,7 @@ def create_simulate_function(
             model_probabilities=model_probabilities,
             model_perturbation_kernel=model_perturbation_kernel)
 
+    # create weight function
     weight_function = create_weight_function(
         nr_samples_per_parameter=nr_samples_per_parameter,
         prior_pdf=prior_pdf, transition_pdf=transition_pdf)
