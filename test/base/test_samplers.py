@@ -65,11 +65,9 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
 
 class WrongOutputSampler(SingleCoreSampler):
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
-            show_progress=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         return super().sample_until_n_accepted(
-            n+1, simulate_one, max_eval, all_accepted=False,
-            show_progress=show_progress)
+            n+1, simulate_one, max_eval, all_accepted=False)
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():
@@ -220,8 +218,7 @@ def test_progressbar(sampler):
     prior = Distribution(p0=RV('uniform', -5, 10))
     obs = {'y': 1}
 
-    abc = ABCSMC(model, prior, distance, sampler=sampler, population_size=20,
-                 show_progress=True)
+    abc = ABCSMC(model, prior, distance, sampler=sampler, population_size=20)
     abc.new(db=create_sqlite_db_id(), observed_sum_stat=obs)
     abc.run(max_nr_populations=3)
 

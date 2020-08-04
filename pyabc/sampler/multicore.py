@@ -72,8 +72,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
-            show_progress=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
@@ -105,7 +104,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
 
         collected_results = []
 
-        for _ in jabbar(range(n), enable=show_progress, keep=False):
+        for _ in jabbar(range(n), enable=self.show_progress, keep=False):
             res = get_if_worker_healthy(worker_processes, result_q)
             collected_results.append(res)
 
