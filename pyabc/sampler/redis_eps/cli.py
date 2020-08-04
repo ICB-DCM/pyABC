@@ -42,8 +42,8 @@ class KillHandler:
 
 
 def work_on_population(redis: StrictRedis,
-                       start_time: int,
-                       max_runtime_s: int,
+                       start_time: float,
+                       max_runtime_s: float,
                        kill_handler: KillHandler):
     """
     Here the actual sampling happens.
@@ -214,12 +214,19 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
     logger.info(
         f"Start redis worker. Max run time {max_runtime_s}s, "
         f"HOST={socket.gethostname()}, PID={os.getpid()}")
+
+    # connect to the redis server
     redis = StrictRedis(host=host, port=port, password=password)
 
+    # subscribe to the server's MSG channel
     p = redis.pubsub()
     p.subscribe(MSG)
-    listener = p.listen()
-    for msg in listener:
+
+    # Block-wait for publications. Every message on the channel that has not
+    #  been overridden yet is processed by all workers exactly once via
+    #  listen(), even if the workers were started after publication.
+    #  When the server is stopped, an error makes the workers stop too.
+    for msg in p.listen():
         try:
             data = msg["data"].decode()
         except AttributeError:
