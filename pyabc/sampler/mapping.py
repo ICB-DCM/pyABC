@@ -56,7 +56,7 @@ latest/task.html#quick-and-easy-parallelism)
         `True` for better performance.
     """
 
-    def __init__(self, map_=map, mapper_pickles=False):
+    def __init__(self, map_=map, mapper_pickles: bool = False):
         super().__init__()
         self.map_ = map_
         self.pickle, self.unpickle = ((identity, identity)
@@ -89,8 +89,7 @@ latest/task.html#quick-and-easy-parallelism)
         return sample, nr_simulations
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
-            show_progress=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.

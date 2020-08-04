@@ -90,8 +90,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
-            show_progress=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -119,7 +118,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         # make sure all results are collected
         # and the queue is emptied to prevent deadlocks
         n_done = 0
-        with jabbar(total=n, enable=show_progress, keep=False) as bar:
+        with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while n_done < len(processes):
                 val = get_if_worker_healthy(processes, queue)
                 if val == DONE:
