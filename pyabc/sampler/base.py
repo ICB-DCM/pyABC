@@ -147,10 +147,8 @@ def wrap_sample(f):
     Checks whether the sampling output is valid.
     """
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
-            show_progress=False):
-        sample = f(
-            self, n, simulate_one, max_eval, all_accepted, show_progress)
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+        sample = f(self, n, simulate_one, max_eval, all_accepted)
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
