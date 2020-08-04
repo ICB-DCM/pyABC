@@ -175,7 +175,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
 
     Produce valid particles: :class:`pyabc.parameters.ValidParticle`.
 
-    Parameters
+    Attributes
     ----------
     nr_evaluations_: int
         This is set after a population and counts the total number
@@ -183,11 +183,19 @@ class Sampler(ABC, metaclass=SamplerMeta):
         rate.
     sample_factory: SampleFactory
         A factory to create empty samples.
+    show_progress: bool
+        Whether to show progress within a generation.
+        Some samplers support this by e.g. showing a progress bar.
+        Set via
+        >>> sampler = Sampler()
+        >>> sampler.show_progress = True
     """
 
     def __init__(self):
-        self.nr_evaluations_ = 0
-        self.sample_factory = SampleFactory(record_rejected=False)
+        self.nr_evaluations_: int = 0
+        self.sample_factory: SampleFactory = \
+            SampleFactory(record_rejected=False)
+        self.show_progress: bool = False
 
     def _create_empty_sample(self) -> Sample:
         return self.sample_factory()
@@ -198,8 +206,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
             n: int,
             simulate_one: Callable,
             max_eval: int = np.inf,
-            all_accepted: bool = False,
-            show_progress: bool = False) -> Sample:
+            all_accepted: bool = False) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
         population) of particles.
@@ -222,9 +229,6 @@ class Sampler(ABC, metaclass=SamplerMeta):
             reduce the computational overhead for dynamic schedulers. This
             is usually in particular the case in the initial calibration
             iteration.
-        show_progress:
-            Whether to show the progress. Some samplers support this by e.g.
-            showing a progress bar.
 
         Returns
         -------

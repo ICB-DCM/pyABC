@@ -81,8 +81,7 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False,
-            show_progress=False):
+            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
         # open pipeline
         pipeline = self.redis.pipeline()
 
@@ -106,7 +105,7 @@ class RedisEvalParallelSampler(Sampler):
         self.redis.publish(MSG, START)
 
         # wait until n acceptances
-        with jabbar(total=n, enable=show_progress, keep=False) as bar:
+        with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while len(id_results) < n:
                 # pop result from queue, block until one is available
                 dump = self.redis.blpop(QUEUE)[1]
