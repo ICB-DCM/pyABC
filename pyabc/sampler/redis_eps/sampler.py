@@ -69,6 +69,14 @@ class RedisEvalParallelSampler(Sampler):
         self.redis = StrictRedis(host=host, port=port, password=password)
         self.batch_size = batch_size
 
+        # check if there is still something going on
+        if (self.redis.exists(N_WORKER) and
+                int(self.redis.get(N_WORKER).decode()) > 0) or (
+                self.redis.exists(QUEUE) and self.redis.llen(QUEUE) > 0):
+            raise ValueError(
+                "This server seems to be still in use. A redis server cannot "
+                "be used for more than one pyABC inference at a time.")
+
     def n_worker(self):
         """
         Get the number of connected workers.
