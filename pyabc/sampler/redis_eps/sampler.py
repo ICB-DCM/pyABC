@@ -3,12 +3,13 @@ import pickle
 from time import sleep
 import cloudpickle
 from redis import StrictRedis
+from typing import Callable
 from jabbar import jabbar
 
 from ...sampler import Sampler
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
-                  SLEEP_TIME, BATCH_SIZE)
+                  SLEEP_TIME, BATCH_SIZE, IS_PREL, GENERATION, idfy)
 from .redis_logging import logger
 
 
@@ -61,21 +62,16 @@ class RedisEvalParallelSampler(Sampler):
                  host: str = "localhost",
                  port: int = 6379,
                  password: str = None,
-                 batch_size: int = 1):
+                 batch_size: int = 1,
+                 look_ahead: bool = False):
         super().__init__()
         logger.debug(
             f"Redis sampler: host={host} port={port}")
         # handles the connection to the redis-server
-        self.redis = StrictRedis(host=host, port=port, password=password)
-        self.batch_size = batch_size
-
-        # check if there is still something going on
-        if (self.redis.exists(N_WORKER) and
-                int(self.redis.get(N_WORKER).decode()) > 0) or (
-                self.redis.exists(QUEUE) and self.redis.llen(QUEUE) > 0):
-            raise ValueError(
-                "This server seems to be still in use. A redis server cannot "
-                "be used for more than one pyABC inference at a time.")
+        self.redis: StrictRedis = StrictRedis(
+            host=host, port=port, password=password)
+        self.batch_size: int = batch_size
+        self.look_ahead: bool = look_ahead
 
     def n_worker(self):
         """
@@ -89,61 +85,47 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
-        # open pipeline
-        pipeline = self.redis.pipeline()
-
-        # write initial values to pipeline
-        self.redis.set(
-            SSA, cloudpickle.dumps((simulate_one, self.sample_factory)))
-        pipeline.set(N_EVAL, 0)
-        pipeline.set(N_ACC, 0)
-        pipeline.set(N_REQ, n)
-        pipeline.set(ALL_ACCEPTED, int(all_accepted))  # encode as int
-        pipeline.set(N_WORKER, 0)
-        pipeline.set(BATCH_SIZE, self.batch_size)
-        # delete previous results
-        pipeline.delete(QUEUE)
-        # execute all commands
-        pipeline.execute()
+            self, n, simulate_one, t, analysis_info,
+            max_eval=np.inf, all_accepted=False):
+        if self.generation_t_was_started(t):
+            # update the SSA function
+            self.redis.set(
+                idfy(SSA, t),
+                cloudpickle.dumps((simulate_one, self.sample_factory)))
+        else:
+            # set up all variables for the new generation
+            self.start_generation_t(
+                n=n, t=t, simulate_one=simulate_one, all_accepted=all_accepted,
+                is_prel=False)
 
         id_results = []
-
-        # publish start message
-        self.redis.publish(MSG, START)
 
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while len(id_results) < n:
                 # pop result from queue, block until one is available
-                dump = self.redis.blpop(QUEUE)[1]
+                dump = self.redis.blpop(idfy(QUEUE, t))[1]
                 # extract pickled object
                 particle_with_id = pickle.loads(dump)
+                # TODO check whether the acceptance criterion changed
                 # append to collected results
                 id_results.append(particle_with_id)
                 bar.inc()
 
         # wait until all workers done
-        while int(self.redis.get(N_WORKER).decode()) > 0:
+        while int(self.redis.get(idfy(N_WORKER, t)).decode()) > 0:
             sleep(SLEEP_TIME)
 
         # make sure all results are collected
-        while self.redis.llen(QUEUE) > 0:
+        while self.redis.llen(idfy(QUEUE, t)) > 0:
             id_results.append(
-                pickle.loads(self.redis.blpop(QUEUE)[1]))
+                pickle.loads(self.redis.blpop(idfy(QUEUE, t))[1]))
 
         # set total number of evaluations
-        self.nr_evaluations_ = int(self.redis.get(N_EVAL).decode())
+        self.nr_evaluations_ = int(self.redis.get(idfy(N_EVAL, t)).decode())
 
-        # delete keys from pipeline
-        pipeline = self.redis.pipeline()
-        pipeline.delete(SSA)
-        pipeline.delete(N_EVAL)
-        pipeline.delete(N_ACC)
-        pipeline.delete(N_REQ)
-        pipeline.delete(ALL_ACCEPTED)
-        pipeline.delete(BATCH_SIZE)
-        pipeline.execute()
+        # remove all time-specific variables
+        self.clear_generation_t(t)
 
         # avoid bias toward short running evaluations (for
         # dynamic scheduling)
@@ -158,3 +140,49 @@ class RedisEvalParallelSampler(Sampler):
             sample += results[j]
 
         return sample
+
+    def start_generation_t(
+            self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
+            is_prel: bool):
+        """Start generation `t`."""
+        # write initial values to pipeline
+        pipeline = self.redis.pipeline()
+
+        # initialize variables for time t
+        self.redis.set(idfy(SSA, t),
+                       cloudpickle.dumps((simulate_one, self.sample_factory)))
+        pipeline.set(idfy(N_EVAL, t), 0)
+        pipeline.set(idfy(N_ACC, t), 0)
+        pipeline.set(idfy(N_REQ, t), n)
+        pipeline.set(idfy(ALL_ACCEPTED, t), int(all_accepted))  # encode as int
+        pipeline.set(idfy(N_WORKER, t), 0)
+        pipeline.set(idfy(BATCH_SIZE, t), self.batch_size)
+        pipeline.set(idfy(IS_PREL, t), int(is_prel))  # encode as int
+
+        # update the current generation variable
+        pipeline.set(GENERATION, t)
+
+        # execute all commands
+        pipeline.execute()
+
+        # publish start message
+        self.redis.publish(MSG, START)
+
+    def generation_t_was_started(self, t: int):
+        """Check whether generation `t` was started already."""
+        # just check any of the variables for time t
+        return self.redis.exists(idfy(N_REQ, t))
+
+    def clear_generation_t(self, t: int):
+        """Clean up after generation `t` has finished."""
+        # delete keys from pipeline
+        pipeline = self.redis.pipeline()
+        pipeline.delete(idfy(SSA, t))
+        pipeline.delete(idfy(N_EVAL, t))
+        pipeline.delete(idfy(N_ACC, t))
+        pipeline.delete(idfy(N_REQ, t))
+        pipeline.delete(idfy(ALL_ACCEPTED, t))
+        pipeline.delete(idfy(N_WORKER, t))
+        pipeline.delete(idfy(BATCH_SIZE, t))
+        pipeline.delete(idfy(QUEUE, t))
+        pipeline.execute()

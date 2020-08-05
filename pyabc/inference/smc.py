@@ -479,8 +479,8 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            self.population_size(-1), simulate_one,
-            max_eval=np.inf, all_accepted=True)
+            n=self.population_size(-1), simulate_one=simulate_one, t=t,
+            analysis_info=None, max_eval=np.inf, all_accepted=True)
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -628,7 +628,8 @@ class ABCSMC:
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
-                pop_size, simulate_one, max_eval)
+                n=pop_size, simulate_one=simulate_one, t=t,
+                analysis_info=None, max_eval=max_eval)
 
             # check sample health
             if not sample.ok:
