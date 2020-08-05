@@ -268,7 +268,7 @@ class History:
             -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample for model m and timepoint t
-        as a pandas DataFrame.
+        as a tuple.
 
         Parameters
         ----------
@@ -617,7 +617,7 @@ class History:
                                current_epsilon: float,
                                nr_simulations: int,
                                store: dict,
-                               model_probabilities: dict,
+                               model_probabilities: pd.DataFrame,
                                model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
@@ -636,7 +636,8 @@ class History:
         # iterate over models
         for m, model_population in store.items():
             # create new model
-            model = Model(m=int(m), p_model=float(model_probabilities[m]),
+            model = Model(m=int(m),
+                          p_model=float(model_probabilities.loc[m, 'p']),
                           name=str(model_names[m]))
             # append model
             population.models.append(model)

@@ -1,9 +1,11 @@
 import numpy as np
+import pandas as pd
 import pickle
 from time import sleep
 import cloudpickle
+import copy
 from redis import StrictRedis
-from typing import Callable
+from typing import Callable, List, Tuple
 from jabbar import jabbar
 
 from ...sampler import Sampler
@@ -85,13 +87,14 @@ class RedisEvalParallelSampler(Sampler):
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, analysis_info,
-            max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
+            **kwargs):
         if self.generation_t_was_started(t):
             # update the SSA function
             self.redis.set(
                 idfy(SSA, t),
                 cloudpickle.dumps((simulate_one, self.sample_factory)))
+            self.redis.set(idfy(IS_PREL, t), int(False))
         else:
             # set up all variables for the new generation
             self.start_generation_t(
@@ -112,6 +115,19 @@ class RedisEvalParallelSampler(Sampler):
                 id_results.append(particle_with_id)
                 bar.inc()
 
+        # start the next generation already
+        if self.look_ahead:
+            # create a result sample
+            sample = self.create_sample(id_results, n)
+            # create a preliminary simulate_one function
+            simulate_one_prel = create_preliminary_simulate_one(
+                sample=sample, t=t+1, **kwargs)
+            # head-start the next generation
+            #  all_accepted is most certainly False for t>0
+            self.start_generation_t(
+                n=n, t=t+1, simulate_one=simulate_one_prel,
+                all_accepted=False, is_prel=True)
+
         # wait until all workers done
         while int(self.redis.get(idfy(N_WORKER, t)).decode()) > 0:
             sleep(SLEEP_TIME)
@@ -127,17 +143,8 @@ class RedisEvalParallelSampler(Sampler):
         # remove all time-specific variables
         self.clear_generation_t(t)
 
-        # avoid bias toward short running evaluations (for
-        # dynamic scheduling)
-        id_results.sort(key=lambda x: x[0])
-        id_results = id_results[:n]
-
-        results = [res[1] for res in id_results]
-
-        # create 1 to-be-returned sample from results
-        sample = self._create_empty_sample()
-        for j in range(n):
-            sample += results[j]
+        # create a single sample result, with start time correction
+        sample = self.create_sample(id_results, n)
 
         return sample
 
@@ -186,3 +193,55 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.delete(idfy(BATCH_SIZE, t))
         pipeline.delete(idfy(QUEUE, t))
         pipeline.execute()
+
+    def create_sample(self, id_results: List[Tuple], n: int):
+        """Create a single sample result.
+        Order the results by starting point to avoid a bias towards
+        short-running simulations (dynamic scheduling).
+        """
+        # sort
+        id_results.sort(key=lambda x: x[0])
+        # cut off
+        id_results = id_results[:n]
+
+        # extract simulations
+        results = [res[1] for res in id_results]
+
+        # create 1 to-be-returned sample from results
+        sample = self._create_empty_sample()
+        for j in range(n):
+            sample += results[j]
+
+        return sample
+
+
+def create_preliminary_simulate_one(
+        sample, t,
+        model_perturbation_kernel, transitions, model_prior, parameter_priors,
+        nr_samples_per_parameter, models, summary_statistics, x_0,
+        distance_function, eps, acceptor) -> Callable:
+    from pyabc.util import create_simulate_function
+    # copy as we modify the particles
+    sample = copy.deepcopy(sample)
+
+    population = sample.get_accepted_population()
+    model_probabilities = population.get_model_probabilities()
+
+    # fit transition
+    transitions = copy.deepcopy(transitions)
+    for m in population.get_alive_models():
+        parameters, w = population.get_distribution(m)
+        transitions[m].fit(parameters, w)
+
+    # TODO fit distance, eps, acceptor
+
+    return create_simulate_function(
+        t=t, model_probabilities=model_probabilities,
+        model_perturbation_kernel=model_perturbation_kernel,
+        transitions=transitions, model_prior=model_prior,
+        parameter_priors=parameter_priors,
+        nr_samples_per_parameter=nr_samples_per_parameter,
+        models=models, summary_statistics=summary_statistics,
+        x_0=x_0, distance_function=distance_function,
+        eps=eps, acceptor=acceptor,
+    )

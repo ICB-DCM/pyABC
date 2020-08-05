@@ -127,7 +127,7 @@ def work_on_population(redis: StrictRedis,
         # check if is preliminary
         if is_prel and not bool(int(redis.get(idfy(IS_PREL, t)).decode())):
             # reload SSA object
-            ssa_b = pipeline.get(idfy(SSA, t))
+            ssa_b = redis.get(idfy(SSA, t))
             simulate_one, sample_factory = pickle.loads(ssa_b)
             # cache
             is_prel = False

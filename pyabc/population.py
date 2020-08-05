@@ -8,7 +8,8 @@ iteration.
 """
 
 
-from typing import List, Callable
+from typing import Callable, List, Tuple
+import numpy as np
 import pandas as pd
 from pyabc.parameters import Parameter
 import logging
@@ -161,7 +162,7 @@ class Population:
                 particle.accepted_distances[i] = distance_to_ground_truth(
                     particle.accepted_sum_stats[i], particle.parameter)
 
-    def get_model_probabilities(self) -> dict:
+    def get_model_probabilities(self) -> pd.DataFrame:
         """
         Get probabilities of the individual models.
 
@@ -173,7 +174,19 @@ class Population:
         """
 
         # _model_probabilities are assigned during normalization
-        return self._model_probabilities
+        vars = [(key, val) for key, val in self._model_probabilities.items()]
+        ms = [var[0] for var in vars]
+        ps = [var[1] for var in vars]
+        return pd.DataFrame({'m': ms, 'p': ps}).set_index('m')
+
+    def get_alive_models(self) -> List:
+        return self._model_probabilities.keys()
+
+    def get_distribution(self, m: int) -> Tuple[pd.DataFrame, np.ndarray]:
+        particles = self.to_dict()[m]
+        parameters = pd.DataFrame([p.parameter for p in particles])
+        weights = np.array([p.weight for p in particles])
+        return parameters, weights
 
     def get_weighted_distances(self) -> pd.DataFrame:
         """

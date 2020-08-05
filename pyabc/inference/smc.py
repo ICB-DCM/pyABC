@@ -20,7 +20,7 @@ from pyabc.sampler import Sampler, Sample
 from pyabc.storage import History
 from pyabc.transition import Transition, MultivariateNormalTransition
 from pyabc.weighted_statistics import effective_sample_size
-from .util import (
+from pyabc.util import (
     create_simulate_from_prior_function, create_prior_pdf,
     create_transition_pdf, create_simulate_function)
 
@@ -480,7 +480,7 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             n=self.population_size(-1), simulate_one=simulate_one, t=t,
-            analysis_info=None, max_eval=np.inf, all_accepted=True)
+            max_eval=np.inf, all_accepted=True, **self._vars_dict())
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -629,7 +629,7 @@ class ABCSMC:
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
-                analysis_info=None, max_eval=max_eval)
+                max_eval=max_eval, **self._vars_dict())
 
             # check sample health
             if not sample.ok:
@@ -804,3 +804,21 @@ class ABCSMC:
         for m in self.history.alive_models(t - 1):
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
+
+    def _vars_dict(self):
+        """Create a dictionary of analysis variables of interest."""
+        nr_samples_per_parameter = \
+            self.population_size.nr_samples_per_parameter
+        return dict(
+            model_perturbation_kernel=self.model_perturbation_kernel,
+            transitions=self.transitions,
+            model_prior=self.model_prior,
+            parameter_priors=self.parameter_priors,
+            nr_samples_per_parameter=nr_samples_per_parameter,
+            models=self.models,
+            summary_statistics=self.summary_statistics,
+            x_0=self.x_0,
+            distance_function=self.distance_function,
+            eps=self.eps,
+            acceptor=self.acceptor,
+        )
