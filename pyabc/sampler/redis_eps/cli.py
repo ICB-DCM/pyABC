@@ -294,7 +294,14 @@ def manage(command, host="localhost", port=6379, password=None, time=None):
 
 
 def _manage(command, host="localhost", port=6379, password=None, time=None):
+    if command not in ["info", "stop", "reset-workers"]:
+        print("Unknown command: ", command)
+        return
+
     redis = StrictRedis(host=host, port=port, password=password)
+    if command == "stop":
+        redis.publish(MSG, STOP)
+        return
 
     # check whether an analysis is running
     if not is_server_used(redis):
@@ -314,12 +321,8 @@ def _manage(command, host="localhost", port=6379, password=None, time=None):
         res = [r.decode() if r is not None else r for r in res]
         print("Workers={} Evaluations={} Acceptances={}/{} (generation {})"
               .format(*res, time))
-    elif command == "stop":
-        redis.publish(MSG, STOP)
     elif command == "reset-workers":
         redis.set(idfy(N_WORKER, time), 0)
-    else:
-        print("Unknown command: ", command)
 
 
 def is_server_used(redis: StrictRedis):
