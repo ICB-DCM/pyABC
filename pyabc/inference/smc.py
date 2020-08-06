@@ -22,7 +22,8 @@ from pyabc.transition import Transition, MultivariateNormalTransition
 from pyabc.weighted_statistics import effective_sample_size
 from pyabc.util import (
     create_simulate_from_prior_function, create_prior_pdf,
-    create_transition_pdf, create_simulate_function)
+    create_transition_pdf, create_simulate_function,
+    termination_criteria_fulfilled)
 
 
 logger = logging.getLogger("ABC")
@@ -210,6 +211,7 @@ class ABCSMC:
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
+        self.max_t = None
 
         self._sanity_check()
 
@@ -545,14 +547,11 @@ class ABCSMC:
 
         Parameters
         ----------
-
         minimum_epsilon: float, optional
             Stop if epsilon is smaller than minimum epsilon specified here.
             Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
-
         max_nr_populations: int, optional (default = np.inf)
             The maximum number of populations. Stop if this number is reached.
-
         min_acceptance_rate: float, optional (default = 0.0)
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
@@ -609,10 +608,10 @@ class ABCSMC:
         self.eps.configure_sampler(self.sampler)
 
         # last time point
-        t_max = t0 + max_nr_populations - 1
+        self.max_t = t0 + max_nr_populations - 1
         # run loop over time points
         t = t0
-        while t <= t_max:
+        while True:
             # get epsilon for generation t
             current_eps = self.eps(t)
             logger.info(f"t: {t}, eps: {current_eps}.")
@@ -661,16 +660,14 @@ class ABCSMC:
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
 
-            # check termination conditions
-            if current_eps <= minimum_epsilon:
-                logger.info("Stopping: minimum epsilon.")
-                break
-            elif self.stop_if_only_single_model_alive \
-                    and self.history.nr_of_models_alive() <= 1:
-                logger.info("Stopping: single model alive.")
-                break
-            elif acceptance_rate < min_acceptance_rate:
-                logger.info("Stopping: minimum acceptance rate.")
+            if termination_criteria_fulfilled(
+                    current_eps=current_eps, min_eps=minimum_epsilon,
+                    stop_if_single_model_alive=self
+                    .stop_if_only_single_model_alive,
+                    nr_of_models_alive=self.history.nr_of_models_alive(),
+                    acceptance_rate=acceptance_rate,
+                    min_acceptance_rate=min_acceptance_rate,
+                    t=t, max_t=self.max_t):
                 break
 
             # increment t
@@ -821,4 +818,8 @@ class ABCSMC:
             distance_function=self.distance_function,
             eps=self.eps,
             acceptor=self.acceptor,
+            min_acceptance_rate=self.min_acceptance_rate,
+            min_eps=self.minimum_epsilon,
+            stop_if_single_model_alive=self.stop_if_only_single_model_alive,
+            max_t=self.max_t,
         )

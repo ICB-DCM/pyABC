@@ -182,6 +182,9 @@ class Population:
     def get_alive_models(self) -> List:
         return self._model_probabilities.keys()
 
+    def nr_of_models_alive(self) -> int:
+        return len(self.get_alive_models())
+
     def get_distribution(self, m: int) -> Tuple[pd.DataFrame, np.ndarray]:
         particles = self.to_dict()[m]
         parameters = pd.DataFrame([p.parameter for p in particles])

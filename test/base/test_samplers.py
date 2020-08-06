@@ -65,9 +65,10 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
 
 class WrongOutputSampler(SingleCoreSampler):
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
+            **kwargs):
         return super().sample_until_n_accepted(
-            n+1, simulate_one, max_eval, all_accepted=False)
+            n+1, simulate_one, t, max_eval, all_accepted=False, **kwargs)
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():

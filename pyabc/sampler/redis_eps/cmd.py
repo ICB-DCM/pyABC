@@ -1,6 +1,4 @@
 """Communication keys"""
-from typing import Any
-
 QUEUE = "queue"
 N_EVAL = "n_eval"
 N_ACC = "n_acc"
@@ -18,6 +16,8 @@ BATCH_SIZE = "batch_size"
 SLEEP_TIME = .1
 
 
-def idfy(var: str, id_: Any):
-    """Append the id to the variable."""
-    return var + '_' + str(id_)
+def idfy(var: str, *args):
+    """Append ids to the variable."""
+    for arg in args:
+        var += '_' + str(arg)
+    return var

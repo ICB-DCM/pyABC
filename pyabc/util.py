@@ -384,3 +384,38 @@ def create_simulate_function(
         return particle
 
     return simulate_one
+
+
+def termination_criteria_fulfilled(
+        current_eps: float, min_eps: float, stop_if_single_model_alive: bool,
+        nr_of_models_alive: int, acceptance_rate: float,
+        min_acceptance_rate: float, t: int, max_t: int):
+    """Check termination conditions.
+
+    Parameters
+    ----------
+    current_eps: The last generation's epsilon value.
+    min_eps: The minimum allowed epsilon value.
+    stop_if_single_model_alive: Whether to stop with a single model left.
+    nr_of_models_alive: The number of models alive in the last generation.
+    acceptance_rate: The lat generation's acceptance rate.
+    min_acceptance_rate: The minimum acceptance rate.
+    t: The last generation's time index.
+    max_t: The maximum allowed time index.
+
+    Returns
+    -------
+    True if any criterion is met, otherwise False.
+    """
+    if t >= max_t:
+        return True
+    if current_eps <= min_eps:
+        logger.info("Stopping: minimum epsilon.")
+        return True
+    elif stop_if_single_model_alive and nr_of_models_alive <= 1:
+        logger.info("Stopping: single model alive.")
+        return True
+    elif acceptance_rate < min_acceptance_rate:
+        logger.info("Stopping: minimum acceptance rate.")
+        return True
+    return False

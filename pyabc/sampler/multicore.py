@@ -72,7 +72,8 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
+            **kwargs):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)

@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pickle
 from time import sleep
 import cloudpickle
@@ -8,7 +7,7 @@ from redis import StrictRedis
 from typing import Callable, List, Tuple
 from jabbar import jabbar
 
-from ...sampler import Sampler
+from ...sampler import Sampler, Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME, BATCH_SIZE, IS_PREL, GENERATION, idfy)
@@ -42,23 +41,24 @@ class RedisEvalParallelSampler(Sampler):
 
     Parameters
     ----------
-
-    host: str, optional
+    host:
         IP address or name of the Redis server.
         Default is "localhost".
-
-    port: int, optional
+    port:
         Port of the Redis server.
         Default is 6379.
-
-    password: str, optional
+    password:
         Password for a protected server. Default is None (no protection).
-
-    batch_size: int, optional
+    batch_size:
         Number of model evaluations the workers perform before contacting
         the REDIS server. Defaults to 1. Increase this value if model
         evaluation times are short or the number of workers is large
         to reduce communication overhead.
+    look_ahead:
+        Whether to start sampling for the next generation already with
+        preliminary results although the current generation has not completely
+        finished yet. This increases parallel efficiency, but can lead to
+        a higher Monte-Carlo error.
     """
     def __init__(self,
                  host: str = "localhost",
@@ -75,7 +75,7 @@ class RedisEvalParallelSampler(Sampler):
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
 
-    def n_worker(self):
+    def n_worker(self) -> int:
         """
         Get the number of connected workers.
 
@@ -115,18 +115,9 @@ class RedisEvalParallelSampler(Sampler):
                 id_results.append(particle_with_id)
                 bar.inc()
 
-        # start the next generation already
-        if self.look_ahead:
-            # create a result sample
-            sample = self.create_sample(id_results, n)
-            # create a preliminary simulate_one function
-            simulate_one_prel = create_preliminary_simulate_one(
-                sample=sample, t=t+1, **kwargs)
-            # head-start the next generation
-            #  all_accepted is most certainly False for t>0
-            self.start_generation_t(
-                n=n, t=t+1, simulate_one=simulate_one_prel,
-                all_accepted=False, is_prel=True)
+        # maybe head-start the next generation already
+        self.maybe_start_next_generation(
+            t=t, n=n, id_results=id_results, **kwargs)
 
         # wait until all workers done
         while int(self.redis.get(idfy(N_WORKER, t)).decode()) > 0:
@@ -150,7 +141,7 @@ class RedisEvalParallelSampler(Sampler):
 
     def start_generation_t(
             self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
-            is_prel: bool):
+            is_prel: bool) -> None:
         """Start generation `t`."""
         # write initial values to pipeline
         pipeline = self.redis.pipeline()
@@ -175,13 +166,23 @@ class RedisEvalParallelSampler(Sampler):
         # publish start message
         self.redis.publish(MSG, START)
 
-    def generation_t_was_started(self, t: int):
-        """Check whether generation `t` was started already."""
+    def generation_t_was_started(self, t: int) -> bool:
+        """Check whether generation `t` was started already.
+
+        Parameters
+        ----------
+        t: The time for which to check.
+        """
         # just check any of the variables for time t
         return self.redis.exists(idfy(N_REQ, t))
 
-    def clear_generation_t(self, t: int):
-        """Clean up after generation `t` has finished."""
+    def clear_generation_t(self, t: int) -> None:
+        """Clean up after generation `t` has finished.
+
+        Parameters
+        ----------
+        t: The time for which to clear.
+        """
         # delete keys from pipeline
         pipeline = self.redis.pipeline()
         pipeline.delete(idfy(SSA, t))
@@ -194,7 +195,7 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.delete(idfy(QUEUE, t))
         pipeline.execute()
 
-    def create_sample(self, id_results: List[Tuple], n: int):
+    def create_sample(self, id_results: List[Tuple], n: int) -> Sample:
         """Create a single sample result.
         Order the results by starting point to avoid a bias towards
         short-running simulations (dynamic scheduling).
@@ -214,21 +215,125 @@ class RedisEvalParallelSampler(Sampler):
 
         return sample
 
+    def maybe_start_next_generation(
+            self, t, n, id_results,
+            eps, min_eps, stop_if_single_model_alive, min_acceptance_rate,
+            max_t, **kwargs) -> None:
+        """Start the next generation already, if that looks reasonable.
+
+        Parameters
+        ----------
+        t: The current time.
+        n: The current population size.
+        id_results: The so-far returned samples.
+        eps: The epsilon threshold scheme.
+        min_eps: The minimum epsilon value.
+        stop_if_single_model_alive: Whether to stop with only one model left.
+        min_acceptance_rate: The minimum acceptance rate.
+        max_t: The maximum generation time index.
+
+        Note
+        ----
+        Currently we assume that
+        * `n` is fixed,
+        * distance and epsilon scheme are non-adaptive.
+        """
+        # not in a look-ahead mood
+        if not self.look_ahead:
+            return
+
+        from pyabc.util import termination_criteria_fulfilled
+
+        # create a result sample
+        sample = self.create_sample(id_results, n)
+        # copy as we modify the particles
+        sample = copy.deepcopy(sample)
+
+        # extract population
+        population = sample.get_accepted_population()
+
+        # acceptance rate
+        nr_evaluations = int(self.redis.get(idfy(N_EVAL, t)).decode())
+        acceptance_rate = len(population.get_list()) / nr_evaluations
+
+        # check if any termination criterion (based on the current data)
+        #  is likely to be fulfilled after the current generation
+        if termination_criteria_fulfilled(
+                current_eps=eps(t), min_eps=min_eps,
+                stop_if_single_model_alive=stop_if_single_model_alive,
+                nr_of_models_alive=population.nr_of_models_alive(),
+                acceptance_rate=acceptance_rate,
+                min_acceptance_rate=min_acceptance_rate, t=t, max_t=max_t):
+            return
+
+        # create a preliminary simulate_one function
+        simulate_one_prel = create_preliminary_simulate_one(
+            t=t+1, sample=sample,
+            eps=eps, **kwargs)
+
+        # head-start the next generation
+        #  all_accepted is most certainly False for t>0
+        self.start_generation_t(
+            n=n, t=t+1, simulate_one=simulate_one_prel,
+            all_accepted=False, is_prel=True)
+
 
 def create_preliminary_simulate_one(
-        sample, t,
+        t, sample,
         model_perturbation_kernel, transitions, model_prior, parameter_priors,
         nr_samples_per_parameter, models, summary_statistics, x_0,
         distance_function, eps, acceptor) -> Callable:
-    from pyabc.util import create_simulate_function
-    # copy as we modify the particles
-    sample = copy.deepcopy(sample)
+    """Create a preliminary simulate_one function for generation `t+1`.
 
+    Based on preliminary results, update transitions, distance function,
+    epsilon threshold etc., and return a function that samples parameters,
+    simulates data and checks their preliminary acceptance.
+    As the actual acceptance criteria may be different, samples generated by
+    this function must be checked anew afterwards.
+
+    Parameters
+    ----------
+    t: The time index for which to create the function (i.e. call with t+1).
+    sample: The preliminary sample object.
+    model_perturbation_kernel: The used model perturbation kernel.
+    transitions:
+        The parameter transition kernels. A deep copy of them is created here,
+        as we need to fit them to the preliminary data.
+    model_prior: The model prior.
+    parameter_priors: The parameter priors.
+    nr_samples_per_parameter: Number of samples per parameter.
+    models: The models.
+    summary_statistics: The summary statistics function.
+    x_0: The observed summary statistics.
+    distance_function:
+        The distance function. A deep copy of it is created here, as we need
+        to fit it to the preliminary data.
+    eps:
+        The epsilon threshold. A deep copy of it is created here, as we need
+        to fit it to the preliminary data.
+    acceptor:
+        The acceptor. A deep copy of it is created here, as we need
+        to fit it to the preliminary data.
+
+    Returns
+    -------
+    simulate_one: The preliminary sampling function.
+    """
+    # check whether to maybe stop
+    from pyabc.util import create_simulate_function
+
+    # extract accepted population
     population = sample.get_accepted_population()
+
     model_probabilities = population.get_model_probabilities()
 
-    # fit transition
+    # create deep copies of potentially modified objects
     transitions = copy.deepcopy(transitions)
+    distance_function = copy.deepcopy(distance_function)
+    eps = copy.deepcopy(eps)
+    acceptor = copy.deepcopy(acceptor)
+
+    # fit transitions
     for m in population.get_alive_models():
         parameters, w = population.get_distribution(m)
         transitions[m].fit(parameters, w)

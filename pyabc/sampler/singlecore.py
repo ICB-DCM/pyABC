@@ -19,7 +19,8 @@ class SingleCoreSampler(Sampler):
         self.check_max_eval = check_max_eval
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
+            **kwargs):
         nr_simulations = 0
         sample = self._create_empty_sample()
 
