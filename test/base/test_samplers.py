@@ -238,7 +238,7 @@ def test_wrong_output_sampler():
                         accepted_sum_stats=[], accepted_distances=[],
                         accepted=True)
     with pytest.raises(AssertionError):
-        sampler.sample_until_n_accepted(5, simulate_one)
+        sampler.sample_until_n_accepted(5, simulate_one, 0)
 
 
 def test_redis_multiprocess():
@@ -249,7 +249,7 @@ def test_redis_multiprocess():
         accepted = np.random.randint(2)
         return Particle(0, {}, 0.1, [], [], accepted)
 
-    sample = sampler.sample_until_n_accepted(10, simulate_one)
+    sample = sampler.sample_until_n_accepted(10, simulate_one, 0)
     assert 10 == len(sample.get_accepted_population())
     sampler.cleanup()
 
@@ -287,6 +287,6 @@ def test_redis_pw_protection():
         accepted = np.random.randint(2)
         return Particle(0, {}, 0.1, [], [], accepted)
 
-    sample = sampler.sample_until_n_accepted(10, simulate_one)
+    sample = sampler.sample_until_n_accepted(10, simulate_one, 0)
     assert 10 == len(sample.get_accepted_population())
     sampler.cleanup()
