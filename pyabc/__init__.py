@@ -21,7 +21,6 @@ import logging
 from .parameters import Parameter
 from .random_variables import (
     Distribution,
-    ModelPerturbationKernel,
     RV,
     RVBase,
     RVDecorator,
@@ -96,7 +95,8 @@ from .transition import (
     MultivariateNormalTransition,
     LocalTransition,
     DiscreteRandomWalkTransition,
-    GridSearchCV)
+    GridSearchCV,
+    ModelPerturbationKernel)
 from .population import (
     Particle,
     Population)

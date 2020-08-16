@@ -66,7 +66,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Parameters
         ----------
-
         size: int, optional
             Number of independent samples to draw.
             Defaults to 1 and is in this case equivalent to calling
@@ -74,7 +73,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-
         samples: The samples as pandas DataFrame
 
 
@@ -106,7 +104,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-
         density: float
             Probability density at `x`.
         """
@@ -132,7 +129,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-
         mean_cv: float
             The estimated average coefficient of variation.
 

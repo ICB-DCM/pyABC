@@ -17,6 +17,7 @@ from .multivariatenormal import (MultivariateNormalTransition,
                                  silverman_rule_of_thumb,
                                  scott_rule_of_thumb)
 from .exceptions import NotEnoughParticles
-from .model_selection import GridSearchCV
+from .grid_search import GridSearchCV
 from .local_transition import LocalTransition
 from .randomwalk import DiscreteRandomWalkTransition
+from .model import ModelPerturbationKernel
