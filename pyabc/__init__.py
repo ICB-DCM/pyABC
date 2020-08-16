@@ -96,6 +96,8 @@ from .transition import (
     LocalTransition,
     DiscreteRandomWalkTransition,
     GridSearchCV,
+    AggregatedTransition,
+    DiscreteJumpTransition,
     ModelPerturbationKernel)
 from .population import (
     Particle,
