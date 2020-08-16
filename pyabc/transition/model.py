@@ -63,7 +63,6 @@ class ModelPerturbationKernel:
         ----------
         n: int
             Model target nr.
-
         m: int
             Model source nr.
 

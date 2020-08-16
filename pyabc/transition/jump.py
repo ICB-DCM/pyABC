@@ -91,9 +91,11 @@ class DiscreteJumpTransition(DiscreteTransition):
 
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         """Fit starting weights to the distribution of samples."""
+        # this is only meant to be used with a single parameter
         if len(X.columns) != 1:
             raise ValueError(
                 "This transition can only handle a single parameter.")
+        # compute a single weight per unique parameter value
         x = np.array(X).flatten()
         self.values = []
         self.weights = []
@@ -104,16 +106,18 @@ class DiscreteJumpTransition(DiscreteTransition):
         self.weights /= self.weights.sum()
 
     def rvs_single(self) -> pd.Series:
-        """"""
+        """Generate a single random variable."""
         # sample a starting index
         index = fast_random_choice(self.weights)
+        # get value at that index
         value = self.values[index]
+        # maybe jump to another value
         value = self.perturbation_kernel.rvs(value)
         return pd.Series({self.X.columns[0]: value})
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
-        """"""
+        """Compute the probability mass function at `x`."""
         x = float(np.array(x))
         return sum(w * self.perturbation_kernel.pdf(x, start)
                    for w, start in zip(self.weights, self.values))

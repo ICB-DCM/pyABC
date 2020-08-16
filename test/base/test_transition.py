@@ -2,14 +2,50 @@ import pandas as pd
 import numpy as np
 import pytest
 
-from pyabc.transition import NotEnoughParticles, LocalTransition, Transition
+from pyabc.transition import NotEnoughParticles, Transition
 from pyabc import (
     ABCSMC, Distribution, GridSearchCV, MultivariateNormalTransition,
+    LocalTransition, AggregatedTransition,
     Parameter, RV, create_sqlite_db_id)
 
 
-@pytest.fixture(params=[LocalTransition, MultivariateNormalTransition])
+class SimpleAggregatedTransition(AggregatedTransition):
+    """Two different transitions for the keys."""
+
+    def __init__(self):
+        mapping = {'a': LocalTransition(),
+                   ('b',): MultivariateNormalTransition()}
+        super().__init__(mapping=mapping)
+
+
+class SimpleAggregatedTransition2(AggregatedTransition):
+    """Only a single transitions with two keys."""
+
+    def __init__(self):
+        mapping = {('a', 'b'): MultivariateNormalTransition()}
+        super().__init__(mapping=mapping)
+
+
+class SimpleAggregatedTransitionSingle(AggregatedTransition):
+    """For a single key."""
+
+    def __init__(self):
+        mapping = {'a': MultivariateNormalTransition()}
+        super().__init__(mapping=mapping)
+
+
+@pytest.fixture(params=[LocalTransition,
+                        MultivariateNormalTransition,
+                        SimpleAggregatedTransition,
+                        SimpleAggregatedTransition2])
 def transition(request):
+    return request.param()
+
+
+@pytest.fixture(params=[LocalTransition,
+                        MultivariateNormalTransition,
+                        SimpleAggregatedTransitionSingle])
+def transition_single(request):
     return request.param()
 
 
@@ -41,10 +77,10 @@ def test_pdf_return_types(transition: Transition):
     assert multiple.shape == (20,)
 
 
-def test_many_particles_single_par(transition: Transition):
+def test_many_particles_single_par(transition_single: Transition):
     df, w = data_single(20)
-    transition.fit(df, w)
-    transition.required_nr_samples(.1)
+    transition_single.fit(df, w)
+    transition_single.required_nr_samples(.1)
 
 
 def test_variance_estimate(transition: Transition):
@@ -206,7 +242,7 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(
     transition.mean_cv()
 
 
-def test_model_gets_parameter(transition: Transition):
+def test_model_gets_parameter(transition_single: Transition):
     """Check that we use Parameter objects as model input throughout.
 
     This should be the case both when the parameter is created from the prior,
@@ -214,9 +250,22 @@ def test_model_gets_parameter(transition: Transition):
     """
     def model(p):
         assert isinstance(p, Parameter)
-        return {'s0': p['p0'] + 0.1 * np.random.normal()}
-    prior = Distribution(p0=RV('uniform', -5, 10))
+        return {'s0': p['a'] + 0.1 * np.random.normal()}
+    prior = Distribution(a=RV('uniform', -5, 10))
 
-    abc = ABCSMC(model, prior, transitions=transition, population_size=10)
+    abc = ABCSMC(
+        model, prior, transitions=transition_single, population_size=10)
+    abc.new(create_sqlite_db_id(), {'s0': 3.5})
+    abc.run(max_nr_populations=3)
+
+
+def test_pipeline(transition: Transition):
+    """Test the various transitions in a full pipeline."""
+    def model(p):
+        return {'s0': p['a'] + p['b'] * np.random.normal()}
+    prior = Distribution(a=RV('uniform', -5, 10), b=RV('uniform', 0.01, 0.09))
+
+    abc = ABCSMC(
+        model, prior, transitions=transition, population_size=10)
     abc.new(create_sqlite_db_id(), {'s0': 3.5})
     abc.run(max_nr_populations=3)
