@@ -44,7 +44,6 @@ class ModelPerturbationKernel:
 
         Returns
         -------
-
         target: int
             Target model nr.
         """
