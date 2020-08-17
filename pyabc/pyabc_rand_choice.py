@@ -9,7 +9,7 @@ def fast_random_choice(weights):
     """
     # rough heuristic when it makes sense to use numpy's implementation
     if len(weights) >= 15:
-        return np.random.choice(weights)
+        return np.random.choice(len(weights), p=weights)
 
     # cumulative weights
     cs = 0
