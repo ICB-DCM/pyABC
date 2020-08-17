@@ -5,7 +5,7 @@ import pytest
 from pyabc.transition import NotEnoughParticles, Transition
 from pyabc import (
     ABCSMC, Distribution, GridSearchCV, MultivariateNormalTransition,
-    LocalTransition, AggregatedTransition,
+    LocalTransition, AggregatedTransition, DiscreteJumpTransition,
     Parameter, RV, create_sqlite_db_id)
 
 
@@ -240,6 +240,61 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)
     transition.mean_cv()
+
+
+def test_discrete_jump_transition():
+    """Test that the DiscreteJumpTransition does what it's supposed to do."""
+    # domain
+    domain = np.array([5, 4, 2.5, 0.5])
+    n_domain = len(domain)
+
+    # sampler
+    p_stay = 0.7
+    p_move = (1 - p_stay) / (n_domain - 1)
+    trans = DiscreteJumpTransition(domain, p_stay=p_stay)
+
+    # fit to distribution
+    df = pd.DataFrame({'a': [5, 4, 4, 4, 2.5, 2.5, 0.5]})
+    w = np.array([0.0, 0.2, 0.2, 0.1, 0.1, 0.1, 0.3])
+    trans.fit(df, w)
+
+    # test sampling
+    n_sample = 1000
+    res = trans.rvs(n_sample)
+
+    def freq(weight):
+        return p_stay * weight + p_move * (1 - weight)
+
+    assert 0 < sum(res.a == 5) / n_sample <= p_move + 0.05
+    assert freq(0.45) < sum(res.a == 4) / n_sample < freq(0.55)
+    assert freq(0.15) < sum(res.a == 2.5) / n_sample < freq(0.25)
+    assert freq(0.25) < sum(res.a == 0.5) / n_sample < freq(0.35)
+
+    # test density calculation
+    assert np.isclose(trans.pdf(pd.Series({'a': 5})), freq(0.))
+    assert np.isclose(trans.pdf(pd.Series({'a': 4})), freq(0.5))
+    assert np.isclose(trans.pdf(pd.Series({'a': 2.5})), freq(0.2))
+    assert np.isclose(trans.pdf(pd.Series({'a': 0.5})), freq(0.3))
+
+
+def test_discrete_jump_transition_errors():
+    """Test that the DiscreteJumpTransition correctly raises."""
+    # stay probability
+    with pytest.raises(ValueError):
+        DiscreteJumpTransition(np.array([1, 2, 3]), p_stay=1.1)
+    with pytest.raises(ValueError):
+        DiscreteJumpTransition(np.array([1, 2, 3]), p_stay=-0.1)
+
+    # fitting
+    trans = DiscreteJumpTransition(np.array([1, 2, 3]))
+    with pytest.raises(ValueError):
+        trans.fit(pd.DataFrame({'a': [1, 1, 2], 'b': [2, 2, 3]}),
+                  np.array([1., 1., 1.]))
+
+    # density calculation
+    trans.fit(pd.DataFrame({'a': [42, 42, 43]}), np.ones(3))
+    with pytest.raises(ValueError):
+        trans.pdf(pd.Series({'a': 44}))
 
 
 def test_model_gets_parameter(transition_single: Transition):

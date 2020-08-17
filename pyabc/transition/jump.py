@@ -27,7 +27,7 @@ class PerturbationKernel:
 
         if len(domain) == 1:
             p_stay = 1.
-        if not 0 < p_stay < 1:
+        if not 0 <= p_stay <= 1:
             raise ValueError("p_stay must be in [0, 1].")
         self.p_stay = p_stay
         self.p_move = (1 - p_stay) / (len(self.domain) - 1)
@@ -40,7 +40,7 @@ class PerturbationKernel:
     def rvs(self, a: float) -> float:
         """Sample a kernel jump from parameter `a` to another parameter."""
         if a not in self.domain:
-            raise Exception("The parameter value is not in the domain.")
+            raise ValueError("The parameter value is not in the domain.")
         if len(self.domain) == 1:
             return a
 
@@ -62,7 +62,7 @@ class PerturbationKernel:
         """Probability mass function for a jump to target `b` from source `a`.
         """
         if a not in self.domain or b not in self.domain:
-            raise Exception(
+            raise ValueError(
                 "At least one parameter value is not in the domain.")
         return self.p_stay if b == a else self.p_move
 
@@ -70,7 +70,9 @@ class PerturbationKernel:
 class DiscreteJumpTransition(DiscreteTransition):
     """
     Transition with positive random jump probability for discrete parameters.
-    Adapts base draw probabilities to the last generation's histogram.
+    Adapts base draw probabilities to the last generation's histogram and then
+    jumps to an arbitrary other parameter with a positive jump probability to
+    ensure that the prior is absolutely continuous w.r.t. the proposal.
 
     Parameters
     ----------
