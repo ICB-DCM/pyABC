@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from typing import Union
 
-from ..pyabc_rand_choice import fast_random_choice
+from ..random_choice import fast_random_choice
 from ..random_variables import RV
 from .base import DiscreteTransition
 

@@ -22,4 +22,4 @@ def fast_random_choice(weights):
             return k
 
     # error when u > sum(weights) < 1 (not checked pro-actively)
-    raise Exception("Random choice error {}".format(weights))
+    raise ValueError("Random choice error {}".format(weights))

@@ -12,7 +12,7 @@ from pyabc.model import Model
 from pyabc.random_variables import RV, Distribution
 from pyabc.transition import Transition, ModelPerturbationKernel
 
-from pyabc.pyabc_rand_choice import fast_random_choice
+from pyabc.random_choice import fast_random_choice
 from pyabc.parameters import Parameter
 from pyabc.population import Particle
 
