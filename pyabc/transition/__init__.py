@@ -20,5 +20,5 @@ from .exceptions import NotEnoughParticles
 from .grid_search import GridSearchCV
 from .local_transition import LocalTransition
 from .randomwalk import DiscreteRandomWalkTransition
-from .jump import DiscreteJumpTransition
+from .jump import PerturbationKernel, DiscreteJumpTransition
 from .model import ModelPerturbationKernel
