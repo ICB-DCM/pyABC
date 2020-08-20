@@ -8,6 +8,14 @@ Release Notes
 ...........
 
 
+0.10.7 (2020-08-20)
+-------------------
+
+* Move progress usage to attribute level (#336).
+* Add check for whether redis is up already (#337).
+* Add a self-tuned finite-space discrete transition (#341).
+
+
 0.10.6 (2020-08-04)
 -------------------
 
