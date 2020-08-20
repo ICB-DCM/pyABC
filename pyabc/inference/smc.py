@@ -15,10 +15,11 @@ from pyabc.model import Model, SimpleModel
 from pyabc.platform_factory import DefaultSampler
 from pyabc.population import Population
 from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
-from pyabc.random_variables import RV, ModelPerturbationKernel, Distribution
+from pyabc.random_variables import RV, Distribution
 from pyabc.sampler import Sampler, Sample
 from pyabc.storage import History
-from pyabc.transition import Transition, MultivariateNormalTransition
+from pyabc.transition import (
+    Transition, MultivariateNormalTransition, ModelPerturbationKernel)
 from pyabc.weighted_statistics import effective_sample_size
 from pyabc.util import (
     create_simulate_from_prior_function, create_prior_pdf,

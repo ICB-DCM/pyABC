@@ -23,6 +23,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/data_plots.ipynb
    examples/noise.ipynb
    examples/petab.ipynb
+   examples/discrete_parameters.ipynb
 
 
 Download the examples as notebooks
@@ -44,6 +45,7 @@ Download the examples as notebooks
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise assessment <examples/noise.ipynb>`
 * :download:`PEtab import <examples/petab.ipynb>`
+* :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
 
 
 .. warning::

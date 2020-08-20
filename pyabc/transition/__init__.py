@@ -12,11 +12,13 @@ These can be passed to :class:`pyabc.smc.ABCSMC` via the ``transitions``
 keyword argument.
 """
 
-from .base import Transition, DiscreteTransition
+from .base import Transition, DiscreteTransition, AggregatedTransition
 from .multivariatenormal import (MultivariateNormalTransition,
                                  silverman_rule_of_thumb,
                                  scott_rule_of_thumb)
 from .exceptions import NotEnoughParticles
-from .model_selection import GridSearchCV
+from .grid_search import GridSearchCV
 from .local_transition import LocalTransition
 from .randomwalk import DiscreteRandomWalkTransition
+from .jump import PerturbationKernel, DiscreteJumpTransition
+from .model import ModelPerturbationKernel
