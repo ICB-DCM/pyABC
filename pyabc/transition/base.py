@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Union
+from typing import Dict, Tuple, Union
 import logging
 import numpy as np
 import pandas as pd
@@ -66,7 +66,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Parameters
         ----------
-
         size: int, optional
             Number of independent samples to draw.
             Defaults to 1 and is in this case equivalent to calling
@@ -74,7 +73,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-
         samples: The samples as pandas DataFrame
 
 
@@ -106,7 +104,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-
         density: float
             Probability density at `x`.
         """
@@ -132,7 +129,6 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-
         mean_cv: float
             The estimated average coefficient of variation.
 
@@ -182,3 +178,53 @@ class DiscreteTransition(Transition):
     """
     This is a base class for discrete transition kernels.
     """
+
+
+class AggregatedTransition(Transition):
+    """Different transitions for different subsets of the parameters.
+
+    The transitions are applied independently of each other, i.e. the
+    transition density factorizes. Correlations betweeen parameters must be
+    handled inside a single transition, if needed.
+
+    Parameters
+    ----------
+    mapping:
+        The mapping of parameters (as tuples of str or single str) to the
+        transition kernel to be used for those parameters.
+    """
+
+    def __init__(self, mapping: Dict[Union[str, Tuple[str, ...]], Transition]):
+        # normalize input
+        tidy_mapping = {}
+        for keys, transition in mapping.items():
+            if isinstance(keys, str):
+                keys = (keys,)
+            tidy_mapping[keys] = transition
+        self.mapping = tidy_mapping
+
+    def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
+        # fit each transition separately
+        for keys, transition in self.mapping.items():
+            # get parameters for that transition
+            X_for_keys = X[list(keys)]
+            # fit it
+            transition.fit(X_for_keys, w)
+
+    def rvs_single(self) -> pd.Series:
+        sample = pd.Series({key: np.nan for key in self.X.columns})
+        for transition in self.mapping.values():
+            sample_for_keys = transition.rvs_single()
+            sample.update(sample_for_keys)
+        return sample
+
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+            -> Union[float, np.ndarray]:
+        # density
+        pd = 1.
+        for keys, transition in self.mapping.items():
+            # extract values for parameters
+            x_for_keys = x[list(keys)]
+            # compute transition density (numpy will automatically broadcast)
+            pd *= transition.pdf(x_for_keys)
+        return pd

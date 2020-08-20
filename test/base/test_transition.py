@@ -2,14 +2,50 @@ import pandas as pd
 import numpy as np
 import pytest
 
-from pyabc.transition import NotEnoughParticles, LocalTransition, Transition
+from pyabc.transition import NotEnoughParticles, Transition
 from pyabc import (
     ABCSMC, Distribution, GridSearchCV, MultivariateNormalTransition,
+    LocalTransition, AggregatedTransition, DiscreteJumpTransition,
     Parameter, RV, create_sqlite_db_id)
 
 
-@pytest.fixture(params=[LocalTransition, MultivariateNormalTransition])
+class SimpleAggregatedTransition(AggregatedTransition):
+    """Two different transitions for the keys."""
+
+    def __init__(self):
+        mapping = {'a': LocalTransition(),
+                   ('b',): MultivariateNormalTransition()}
+        super().__init__(mapping=mapping)
+
+
+class SimpleAggregatedTransition2(AggregatedTransition):
+    """Only a single transitions with two keys."""
+
+    def __init__(self):
+        mapping = {('a', 'b'): MultivariateNormalTransition()}
+        super().__init__(mapping=mapping)
+
+
+class SimpleAggregatedTransitionSingle(AggregatedTransition):
+    """For a single key."""
+
+    def __init__(self):
+        mapping = {'a': MultivariateNormalTransition()}
+        super().__init__(mapping=mapping)
+
+
+@pytest.fixture(params=[LocalTransition,
+                        MultivariateNormalTransition,
+                        SimpleAggregatedTransition,
+                        SimpleAggregatedTransition2])
 def transition(request):
+    return request.param()
+
+
+@pytest.fixture(params=[LocalTransition,
+                        MultivariateNormalTransition,
+                        SimpleAggregatedTransitionSingle])
+def transition_single(request):
     return request.param()
 
 
@@ -41,10 +77,10 @@ def test_pdf_return_types(transition: Transition):
     assert multiple.shape == (20,)
 
 
-def test_many_particles_single_par(transition: Transition):
+def test_many_particles_single_par(transition_single: Transition):
     df, w = data_single(20)
-    transition.fit(df, w)
-    transition.required_nr_samples(.1)
+    transition_single.fit(df, w)
+    transition_single.required_nr_samples(.1)
 
 
 def test_variance_estimate(transition: Transition):
@@ -206,7 +242,62 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(
     transition.mean_cv()
 
 
-def test_model_gets_parameter(transition: Transition):
+def test_discrete_jump_transition():
+    """Test that the DiscreteJumpTransition does what it's supposed to do."""
+    # domain
+    domain = np.array([5, 4, 2.5, 0.5])
+    n_domain = len(domain)
+
+    # sampler
+    p_stay = 0.7
+    p_move = (1 - p_stay) / (n_domain - 1)
+    trans = DiscreteJumpTransition(domain, p_stay=p_stay)
+
+    # fit to distribution
+    df = pd.DataFrame({'a': [5, 4, 4, 4, 2.5, 2.5, 0.5]})
+    w = np.array([0.0, 0.2, 0.2, 0.1, 0.1, 0.1, 0.3])
+    trans.fit(df, w)
+
+    # test sampling
+    n_sample = 1000
+    res = trans.rvs(n_sample)
+
+    def freq(weight):
+        return p_stay * weight + p_move * (1 - weight)
+
+    assert 0 < sum(res.a == 5) / n_sample <= p_move + 0.05
+    assert freq(0.45) < sum(res.a == 4) / n_sample < freq(0.55)
+    assert freq(0.15) < sum(res.a == 2.5) / n_sample < freq(0.25)
+    assert freq(0.25) < sum(res.a == 0.5) / n_sample < freq(0.35)
+
+    # test density calculation
+    assert np.isclose(trans.pdf(pd.Series({'a': 5})), freq(0.))
+    assert np.isclose(trans.pdf(pd.Series({'a': 4})), freq(0.5))
+    assert np.isclose(trans.pdf(pd.Series({'a': 2.5})), freq(0.2))
+    assert np.isclose(trans.pdf(pd.Series({'a': 0.5})), freq(0.3))
+
+
+def test_discrete_jump_transition_errors():
+    """Test that the DiscreteJumpTransition correctly raises."""
+    # stay probability
+    with pytest.raises(ValueError):
+        DiscreteJumpTransition(np.array([1, 2, 3]), p_stay=1.1)
+    with pytest.raises(ValueError):
+        DiscreteJumpTransition(np.array([1, 2, 3]), p_stay=-0.1)
+
+    # fitting
+    trans = DiscreteJumpTransition(np.array([1, 2, 3]))
+    with pytest.raises(ValueError):
+        trans.fit(pd.DataFrame({'a': [1, 1, 2], 'b': [2, 2, 3]}),
+                  np.array([1., 1., 1.]))
+
+    # density calculation
+    trans.fit(pd.DataFrame({'a': [42, 42, 43]}), np.ones(3))
+    with pytest.raises(ValueError):
+        trans.pdf(pd.Series({'a': 44}))
+
+
+def test_model_gets_parameter(transition_single: Transition):
     """Check that we use Parameter objects as model input throughout.
 
     This should be the case both when the parameter is created from the prior,
@@ -214,9 +305,22 @@ def test_model_gets_parameter(transition: Transition):
     """
     def model(p):
         assert isinstance(p, Parameter)
-        return {'s0': p['p0'] + 0.1 * np.random.normal()}
-    prior = Distribution(p0=RV('uniform', -5, 10))
+        return {'s0': p['a'] + 0.1 * np.random.normal()}
+    prior = Distribution(a=RV('uniform', -5, 10))
 
-    abc = ABCSMC(model, prior, transitions=transition, population_size=10)
+    abc = ABCSMC(
+        model, prior, transitions=transition_single, population_size=10)
+    abc.new(create_sqlite_db_id(), {'s0': 3.5})
+    abc.run(max_nr_populations=3)
+
+
+def test_pipeline(transition: Transition):
+    """Test the various transitions in a full pipeline."""
+    def model(p):
+        return {'s0': p['a'] + p['b'] * np.random.normal()}
+    prior = Distribution(a=RV('uniform', -5, 10), b=RV('uniform', 0.01, 0.09))
+
+    abc = ABCSMC(
+        model, prior, transitions=transition, population_size=10)
     abc.new(create_sqlite_db_id(), {'s0': 3.5})
     abc.run(max_nr_populations=3)
