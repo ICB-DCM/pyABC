@@ -26,7 +26,7 @@ class GridSearchCV(GridSearchCVSKL):
     """
     def __init__(self, estimator=None, param_grid=None,
                  scoring=None,
-                 n_jobs=1, iid=True, refit=True, cv=5,
+                 n_jobs=1, refit=True, cv=5,
                  verbose=0, pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score=True):
 
@@ -39,7 +39,7 @@ class GridSearchCV(GridSearchCVSKL):
 
         super().__init__(
             estimator=estimator, param_grid=param_grid, scoring=scoring,
-            n_jobs=n_jobs, pre_dispatch=pre_dispatch, iid=iid,
+            n_jobs=n_jobs, pre_dispatch=pre_dispatch,
             cv=cv, refit=refit, verbose=verbose,
             error_score=error_score,
             return_train_score=return_train_score)
@@ -58,13 +58,13 @@ class GridSearchCV(GridSearchCVSKL):
         if self.cv > len(X):  # pylint: disable=E0203
             old_cv = self.cv  # pylint: disable=E0203
             self.cv = len(X)
-            res = super().fit(X, y, groups)
+            res = super().fit(X, y, groups=groups)
             self.cv = old_cv
             logging.info("Reduced CV Gridsearch {} -> {}. Best params: {}"
                          .format(self.cv, len(X), self.best_params_))
             return res
 
-        res = super().fit(X, y, groups)
+        res = super().fit(X, y, groups=groups)
         logging.info("Best params: {}".format(self.best_params_))
         return res
 

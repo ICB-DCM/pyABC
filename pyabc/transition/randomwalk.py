@@ -10,7 +10,7 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
     """
     This transition is based on a discrete random walk. This may be useful
     for discrete ordinal parameter distributions that can be described as
-    lieing on the grid of integers.
+    lying on the grid of integers.
 
     .. note::
         This transition does not adapt to the problem structure and thus has
@@ -21,7 +21,6 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
 
     Parameters
     ----------
-
     n_steps: int, optional (default = 1)
         Number of random walk steps to take.
     """

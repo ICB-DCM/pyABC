@@ -40,8 +40,13 @@ do
 
     petab)
       # PEtab
+      # AMICI dependencies
       sudo apt-get install swig3.0 libatlas-base-dev libhdf5-serial-dev
       sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
+      # install dev AMICI for latest changes
+      pip install \
+        git+https://github.com/amici-dev/amici.git@develop#egg=amici\&subdirectory=python/sdist
+      # install test suite
       git clone --depth 1 \
         https://github.com/petab-dev/petab_test_suite .tmp/petab_test_suite
       pip install -e .tmp/petab_test_suite

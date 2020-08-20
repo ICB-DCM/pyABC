@@ -15,10 +15,11 @@ from pyabc.model import Model, SimpleModel
 from pyabc.platform_factory import DefaultSampler
 from pyabc.population import Population
 from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
-from pyabc.random_variables import RV, ModelPerturbationKernel, Distribution
+from pyabc.random_variables import RV, Distribution
 from pyabc.sampler import Sampler, Sample
 from pyabc.storage import History
-from pyabc.transition import Transition, MultivariateNormalTransition
+from pyabc.transition import (
+    Transition, MultivariateNormalTransition, ModelPerturbationKernel)
 from pyabc.weighted_statistics import effective_sample_size
 from .util import (
     create_simulate_from_prior_function, create_prior_pdf,
@@ -123,9 +124,6 @@ class ABCSMC:
         Defaults to inf. Set this to the maximum number of accepted and
         rejected particles that methods like the AdaptivePNormDistance
         function use to update themselves each iteration.
-    show_progress:
-        Whether to show the progress of a sampler. Some samplers support this
-        e.g. via a status bar.
 
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
@@ -149,8 +147,7 @@ class ABCSMC:
             sampler: Sampler = None,
             acceptor: Acceptor = None,
             stop_if_only_single_model_alive: bool = False,
-            max_nr_recorded_particles: int = np.inf,
-            show_progress: bool = False):
+            max_nr_recorded_particles: int = np.inf):
         if not isinstance(models, list):
             models = [models]
         models = list(map(SimpleModel.assert_model, models))
@@ -206,7 +203,6 @@ class ABCSMC:
 
         self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
         self.max_nr_recorded_particles = max_nr_recorded_particles
-        self.show_progress = show_progress
 
         # will be set later
         self.x_0 = None
@@ -485,8 +481,7 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             self.population_size(-1), simulate_one,
-            max_eval=np.inf, all_accepted=True,
-            show_progress=self.show_progress)
+            max_eval=np.inf, all_accepted=True)
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -634,8 +629,7 @@ class ABCSMC:
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
-                pop_size, simulate_one, max_eval,
-                show_progress=self.show_progress)
+                pop_size, simulate_one, max_eval)
 
             # check sample health
             if not sample.ok:
