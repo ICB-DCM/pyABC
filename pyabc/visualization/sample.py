@@ -292,7 +292,7 @@ def plot_acceptance_rates_trajectory(
         The axis object to use.
     normalize_by_ess: bool, optional (default = False)
         Indicator to use effective sample size for the acceptance rate in
-        place of the sample size.
+        place of the population size.
 
     Returns
     -------
@@ -317,17 +317,16 @@ def plot_acceptance_rates_trajectory(
         # note: the first entry of time -1 is trivial and is thus ignored here
         h_info = history.get_all_populations()
         times.append(np.array(h_info['t'])[1:])
-        pop_sizes.append(np.array(
-            history.get_nr_particles_per_population().values[1:]))
-
         if normalize_by_ess:
             ess = np.zeros(len(h_info['t']) - 1)
-            for t in range(1, len(h_info['t'])):
+            for t in np.array(h_info['t'])[1:]:
                 w = history.get_weighted_distances(t=t)['w']
                 ess[t-1] = effective_sample_size(w)
-            samples.append(ess)
+            pop_sizes.append(ess)
         else:
-            samples.append(np.array(h_info['samples'])[1:])
+            pop_sizes.append(np.array(
+            history.get_nr_particles_per_population().values[1:]))
+        samples.append(np.array(h_info['samples'])[1:])
 
     # compute acceptance rates
     rates = []
