@@ -76,6 +76,9 @@ def test_acceptance_rates_trajectory():
     pyabc.visualization.plot_acceptance_rates_trajectory(
         histories, labels, yscale='log10', rotation=76, size=(10, 5), ax=ax
         normalize_by_ess=True)
+    pyabc.visualization.plot_acceptance_rates_trajectory(
+        histories, labels, yscale='log10', rotation=76, size=(10, 5), ax=ax
+        normalize_by_ess=False)
     plt.close()
 
 
