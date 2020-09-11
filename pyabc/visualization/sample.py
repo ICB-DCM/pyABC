@@ -325,7 +325,7 @@ def plot_acceptance_rates_trajectory(
             pop_sizes.append(ess)
         else:
             pop_sizes.append(np.array(
-            history.get_nr_particles_per_population().values[1:]))
+                history.get_nr_particles_per_population().values[1:]))
         samples.append(np.array(h_info['samples'])[1:])
 
     # compute acceptance rates
