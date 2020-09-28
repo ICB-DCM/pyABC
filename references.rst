@@ -22,7 +22,10 @@ If you applied pyABC in your work, please notify us through a new Github issue.
 - Raynal, Louis & Marin, Jean-Michel & Pudlo, Pierre & Ribatet, Mathieu & Robert, Christian & Estoup, Arnaud. (2019). Genetics and population analysis ABC random forests for Bayesian parameter inference. Bioinformatics. 35. 1720. `https://doi.org/0.1093/bioinformatics/bty867`
 - Vu, Hanh & Mansour, Sarah & Kücken, Michael & Blasse, Corinna & Basquin, Cyril & Azimzadeh, Juliette & Myers, Eugene & Brusch, Lutz & Rink, Jochen. (2019). Dynamic Polarization of the Multiciliated Planarian Epidermis between Body Plan Landmarks. Developmental Cell. 51. 526-542.e6. `https://doi.org/10.1016/j.devcel.2019.10.022`. 
 - Imle, Andrea & Kumberger, Peter & Schnellbächer, Nikolas & Fehr, Jana & Carrillo-Bustamante, Paola & Ales, Janez & Schmidt, Philip & Ritter, Christian & Godinez, William & Müller, Barbara & Rohr, Karl & Hamprecht, Fred & Schwarz, Ulrich & Graw, Frederik & Fackler, Oliver. (2019). Experimental and computational analyses reveal that environmental restrictions shape HIV-1 spread in 3D cultures. Nature Communications. 10. `https://doi.org/10.1038/s41467-019-09879-3`. 
+- Raynal, Louis. Bayesian statistical inference for intractable likelihood models. Diss. Université Montpellier, 2019.
+- Kumberger, Peter Johannes Manuel Eduard. Quantifying the Impact of Cell-to-Cell Transmission on Viral Spread. Diss. 2019.
 
 2018
 ----
 - Cantwell, Chris & Mohamied, Yumnah & Tzortzis, Konstantinos & Garasto, Stef & Houston, Charles & Chowdhury, Rasheda & Ng, Fu Siong & Bharath, Anil & Peters, Nicholas. (2019). Rethinking multiscale cardiac electrophysiology with machine learning and predictive modelling. Computers in Biology and Medicine. 104. 339-351. `https://doi.org/10.1016/j.compbiomed.2018.10.015`. 
+- Klinger, Emmanuel G. Approximate Bayesian Model Selection for Local Cortical Networks at Cellular Resolution. Diss. Technische Universität München, 2018.
