@@ -14,7 +14,6 @@ If you applied pyABC in your work, please notify us through a new Github issue.
 - Lupperger, Valerio & Marr, Carsten & Chapouton, Prisca. (2020). Aggregated spatio-temporal division patterns emerge from reoccurring divisions of neural stem cells. `https://doi.org/10.1101/2020.03.20.999748`. 
 - Bheda, Poonam & Aguilar-Gómez, Diana & Becker, Nils & Becker, Johannes & Stavrou, Emmanouil & Kukhtevich, Igor & Höfer, Thomas & Maerkl, Sebastian & Charvin, Gilles & Marr, Carsten & Kirmizis, Antonis & Schneider, Robert. (2020). Single-Cell Tracing Dissects Regulation of Maintenance and Inheritance of Transcriptional Reinduction Memory. Molecular Cell. 78. `https://doi.org/10.1016/j.molcel.2020.04.016`. 
 - Nadjahi, Kimia & Bortoli, Valentin & Durmus, Alain & Badeau, Roland & Simsekli, Umut. (2020). Approximate Bayesian Computation with the Sliced-Wasserstein Distance. 5470-5474. `https://doi.org/10.1109/ICASSP40776.2020.9054735`. 
-- Pak, Thomas & Baker, Ruth & Pitt-Francis, Joe. (2020). Pakman: a modular, efficient and portable tool for approximate Bayesian inference. Journal of Open Source Software. 5. 1716. `https://doi.org/10.21105/joss.01716`. 
 
 2019
 ----
