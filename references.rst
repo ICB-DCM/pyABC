@@ -1,7 +1,7 @@
 References
 ==========
 
-List of publications using pyABC, total amounting to 28 citations.
+List of publications using pyABC, total amounting to 16 citations.
 If you applied pyABC in your work, please consider notifying us.
 
 2020
