@@ -47,35 +47,11 @@ If you use it in your work, you can cite the paper:
    :caption: User's guide
 
    what
-
-.. toctree::
-   :maxdepth: 2
-   
    installation
-
-.. toctree::
-   :maxdepth: 2
-   
    examples
-
-.. toctree::
-   :maxdepth: 2
-
    sampler
-
-.. toctree::
-   :maxdepth: 2
-   
    sge
-
-.. toctree::
-   :maxdepth: 2
-   
-   export_db
-
-.. toctree::
-   :maxdepth: 2
-   
+   export_db 
    web_visualization
 
 
@@ -84,23 +60,15 @@ If you use it in your work, you can cite the paper:
    :caption: About
    
    releasenotes
-
-.. toctree::
-   :maxdepth: 2
-   
    about
+   references
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Developer's guide
    
-   contribute
-
-
-.. toctree::
-   :maxdepth: 2
-   
+   contrribute
    deploy
 
 

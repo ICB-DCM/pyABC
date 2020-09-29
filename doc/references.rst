@@ -1,11 +1,14 @@
+.. _references:
+
 References
 ==========
 
-List of publications using pyABC, total amounting to 16 citations.
-If you applied pyABC in your work, please consider notifying us.
+List of publications using pyABC, so far in total amounting to 16 citations.
+If you applied pyABC in your work, please consider notifying us, so we can include your work here.
 
 2020
 ----
+
 - Schälte, Yannik & Hasenauer, Jan. (2020). Efficient exact inference for dynamical systems with noisy measurements using sequential approximate Bayesian computation. Bioinformatics (Oxford, England). 36. i551-i559. `https://doi.org/10.1093/bioinformatics/btaa397`. 
 - Ruske, Liam & Kursawe, Jochen & Tsakiridis, Anestis & Wilson, Valerie & Fletcher, Alexander & Blythe, Richard & Schumacher, Linus. (2020). Coupled differentiation and division of embryonic stem cells inferred from clonal snapshots. Physical Biology. `https://doi.org/10.1088/1478-3975/aba041`. 
 - Houston, Charles & Marchand, B. & Engelbert, L. & Cantwell, Chris. (2020). Reducing complexity and unidentifiability when modelling human atrial cells. Philosophical Transactions of The Royal Society A Mathematical Physical and Engineering Sciences. 378. 20190339. `https://doi.org/10.1098/rsta.2019.0339`. 
@@ -17,6 +20,7 @@ If you applied pyABC in your work, please consider notifying us.
 
 2019
 ----
+
 - Bölts, Jan & Lueckmann, Jan-Matthis & Goncalves, Pedro & Sprekeler, Henning & Macke, Jakob. (2019). Comparing neural simulations by neural density estimation. `https://doi.org/10.32470/CCN.2019.1291-0`.
 - Raynal, Louis & Marin, Jean-Michel & Pudlo, Pierre & Ribatet, Mathieu & Robert, Christian & Estoup, Arnaud. (2019). Genetics and population analysis ABC random forests for Bayesian parameter inference. Bioinformatics. 35. 1720. `https://doi.org/0.1093/bioinformatics/bty867`
 - Vu, Hanh & Mansour, Sarah & Kücken, Michael & Blasse, Corinna & Basquin, Cyril & Azimzadeh, Juliette & Myers, Eugene & Brusch, Lutz & Rink, Jochen. (2019). Dynamic Polarization of the Multiciliated Planarian Epidermis between Body Plan Landmarks. Developmental Cell. 51. 526-542.e6. `https://doi.org/10.1016/j.devcel.2019.10.022`. 
@@ -26,5 +30,7 @@ If you applied pyABC in your work, please consider notifying us.
 
 2018
 ----
+
 - Cantwell, Chris & Mohamied, Yumnah & Tzortzis, Konstantinos & Garasto, Stef & Houston, Charles & Chowdhury, Rasheda & Ng, Fu Siong & Bharath, Anil & Peters, Nicholas. (2019). Rethinking multiscale cardiac electrophysiology with machine learning and predictive modelling. Computers in Biology and Medicine. 104. 339-351. `https://doi.org/10.1016/j.compbiomed.2018.10.015`. 
 - Klinger, Emmanuel G. Approximate Bayesian Model Selection for Local Cortical Networks at Cellular Resolution. Diss. Technische Universität München, 2018.
+
