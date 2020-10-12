@@ -393,15 +393,15 @@ def create_simulate_function(
 
 
 def prel_evaluate_no_distance(
-        m_ss: int, theta_ss: Parameter, t: int, models: List[Model],
+        m_ss: int, theta_ss: Parameter, t: int, nr_samples_per_parameter: int, models: List[Model],
         summary_statistics: Callable, prior_pdf: Callable, transition_pdf: Callable) -> Particle:
-    nr_samples_per_parameter = np.inf
+
     accepted = True
 
     accepted_sum_stats = []
     accepted_distances = []
 
-    for _ in range(nr_samples_per_parameter):  #TODO does this loop break correctly?
+    for _ in range(nr_samples_per_parameter):
         sum_stats_one = models[m_ss].summary_statistics(t, theta_ss, summary_statistics)
 
         accepted_sum_stats.append(sum_stats_one.sum_stats)
@@ -465,7 +465,7 @@ def create_prel_simulate_function(
             model_perturbation_kernel=model_perturbation_kernel,
             transitions=transitions)
         particle = prel_evaluate_no_distance(
-            *parameter, t=t,
+            *parameter, t=t, nr_samples_per_parameter=nr_samples_per_parameter,
             models=models, summary_statistics=summary_statistics,
             prior_pdf=prior_pdf, transition_pdf=transition_pdf)
         return particle

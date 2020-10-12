@@ -12,6 +12,7 @@ from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME, BATCH_SIZE, IS_PREL, GENERATION, idfy)
 from .redis_logging import logger
+from ...util import create_prel_simulate_function
 
 
 class RedisEvalParallelSampler(Sampler):
