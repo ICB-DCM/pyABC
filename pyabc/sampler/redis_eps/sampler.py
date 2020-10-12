@@ -109,54 +109,11 @@ class RedisEvalParallelSampler(Sampler):
                 # pop result from queue, block until one is available
                 dump = self.redis.blpop(idfy(QUEUE, t))[1]
                 # extract pickled object
-                sample_with_id = pickle.loads(dump)
+                particle_with_id = pickle.loads(dump)
                 # TODO check whether the acceptance criterion changed
-
-                any_particle_accepted = False
-                for result in sample_with_id[1]._particles:
-                    if result.is_prel:
-
-                        accepted_sum_stats = []
-                        accepted_distances = []
-                        accepted_weights = []
-                        rejected_sum_stats = []
-                        rejected_distances = []
-
-                        for i_sum_stat, sum_stat in enumerate(result.accepted_sum_stats):
-                            acc_res = kwargs['acceptor'](
-                                distance_function=kwargs['distance_function'],
-                                eps=kwargs['eps'],
-                                x=sum_stat,
-                                x_0=kwargs['x_0'],
-                                t=t,
-                                par=result.parameter)
-
-                            if acc_res.accepted:
-                                accepted_distances.append(acc_res.distance)
-                                accepted_sum_stats.append(sum_stat)
-                                accepted_weights.append(acc_res.weight)
-                            else:
-                                rejected_distances.append(acc_res.distance)
-                                rejected_sum_stats.append(sum_stat)
-
-                        result.accepted = len(accepted_distances) > 0
-
-                        result.accepted_distances = accepted_distances
-                        result.accepted_sum_stats = accepted_sum_stats
-                        result.accepted_weights = accepted_weights
-                        result.rejected_distances = rejected_distances
-                        result.rejected_sum_stats = rejected_sum_stats
-
-                        if result.accepted:
-                            self.redis.incr(idfy(N_ACC, t), 1)
-                            any_particle_accepted = True
-
-                            # TODO Update rejected sumstats & distances
-
-                if any_particle_accepted:
-                    # append to collected results
-                    id_results.append(sample_with_id)
-                    bar.inc()
+                # append to collected results
+                id_results.append(particle_with_id)
+                bar.inc()
 
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
@@ -310,7 +267,7 @@ class RedisEvalParallelSampler(Sampler):
             return
 
         # create a preliminary simulate_one function
-        simulate_one_prel = _create_preliminary_simulate_one(
+        simulate_one_prel = create_preliminary_simulate_one(
             t=t+1, sample=sample,
             eps=eps, **kwargs)
 
@@ -321,7 +278,7 @@ class RedisEvalParallelSampler(Sampler):
             all_accepted=False, is_prel=True)
 
 
-def _create_preliminary_simulate_one(
+def create_preliminary_simulate_one(
         t, sample,
         model_perturbation_kernel, transitions, model_prior, parameter_priors,
         nr_samples_per_parameter, models, summary_statistics, x_0,
@@ -383,7 +340,7 @@ def _create_preliminary_simulate_one(
 
     # TODO fit distance, eps, acceptor
 
-    return create_prel_simulate_function(
+    return create_simulate_function(
         t=t, model_probabilities=model_probabilities,
         model_perturbation_kernel=model_perturbation_kernel,
         transitions=transitions, model_prior=model_prior,

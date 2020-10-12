@@ -306,19 +306,13 @@ def create_weight_function(
 
 
 def create_simulate_function(
-        t: int,
-        model_probabilities: pd.DataFrame,
+        t: int, model_probabilities: pd.DataFrame,
         model_perturbation_kernel: ModelPerturbationKernel,
         transitions: List[Transition],
-        model_prior: RV,
-        parameter_priors: List[Distribution],
-        nr_samples_per_parameter: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        x_0: dict,
-        distance_function: Distance,
-        eps: Epsilon,
-        acceptor: Acceptor,
+        model_prior: RV, parameter_priors: List[Distribution],
+        nr_samples_per_parameter: int, models: List[Model],
+        summary_statistics: Callable, x_0: dict,
+        distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
 ) -> Callable:
     """
     Create a simulation function which performs the sampling of parameters,
@@ -390,88 +384,6 @@ def create_simulate_function(
         return particle
 
     return simulate_one
-
-
-def prel_evaluate_no_distance(
-        m_ss: int, theta_ss: Parameter, t: int, models: List[Model],
-        summary_statistics: Callable, prior_pdf: Callable, transition_pdf: Callable) -> Particle:
-    nr_samples_per_parameter = np.inf
-    accepted = True
-
-    accepted_sum_stats = []
-    accepted_distances = []
-
-    for _ in range(nr_samples_per_parameter):  #TODO does this loop break correctly?
-        sum_stats_one = models[m_ss].summary_statistics(t, theta_ss, summary_statistics)
-
-        accepted_sum_stats.append(sum_stats_one.sum_stats)
-        accepted_distances.append(np.inf)
-
-    weight = prior_pdf(m_ss, theta_ss) / transition_pdf(m_ss, theta_ss)
-
-    return Particle(
-        m=m_ss,
-        parameter=theta_ss,
-        weight=weight,
-        accepted_sum_stats=accepted_sum_stats,
-        accepted_distances=accepted_distances,
-        rejected_sum_stats=None,
-        rejected_distances=None,
-        accepted=accepted,
-        is_prel=True)
-
-
-def create_prel_simulate_function(
-        t: int,
-        model_probabilities: pd.DataFrame,
-        model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition],
-        model_prior: RV,
-        parameter_priors: List[Distribution],
-        nr_samples_per_parameter: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        x_0: dict,
-        distance_function: Distance,
-        eps: Epsilon,
-        acceptor: Acceptor,
-) -> Callable:
-
-    # cache model_probabilities to not query the database so often
-    m = np.array(model_probabilities.index)
-    p = np.array(model_probabilities.p)
-
-    # create prior and transition densities for weight function
-    prior_pdf = create_prior_pdf(
-        model_prior=model_prior, parameter_priors=parameter_priors)
-    if t == 0:
-        transition_pdf = prior_pdf
-    else:
-        transition_pdf = create_transition_pdf(
-            transitions=transitions,
-            model_probabilities=model_probabilities,
-            model_perturbation_kernel=model_perturbation_kernel)
-    """
-    # create weight function
-    weight_function = create_weight_function(
-        nr_samples_per_parameter=nr_samples_per_parameter,
-        prior_pdf=prior_pdf, transition_pdf=transition_pdf)
-    """
-    # simulation function
-    def simulate_one():
-        parameter = generate_valid_proposal(
-            t=t, m=m, p=p,
-            model_prior=model_prior, parameter_priors=parameter_priors,
-            model_perturbation_kernel=model_perturbation_kernel,
-            transitions=transitions)
-        particle = prel_evaluate_no_distance(
-            *parameter, t=t,
-            models=models, summary_statistics=summary_statistics,
-            prior_pdf=prior_pdf, transition_pdf=transition_pdf)
-        return particle
-
-    return simulate_one
-
 
 
 def termination_criteria_fulfilled(
