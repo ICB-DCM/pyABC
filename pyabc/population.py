@@ -80,7 +80,8 @@ class Particle:
                  accepted_distances: List[float],
                  rejected_sum_stats: List[dict] = None,
                  rejected_distances: List[float] = None,
-                 accepted: bool = True):
+                 accepted: bool = True,
+                 is_prel: bool = False):
 
         self.m = m
         self.parameter = parameter
@@ -94,6 +95,7 @@ class Particle:
             rejected_distances = []
         self.rejected_distances = rejected_distances
         self.accepted = accepted
+        self.is_prel = is_prel
 
 
 class Population:

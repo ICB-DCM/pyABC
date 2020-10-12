@@ -101,7 +101,7 @@ def work_on_population(redis: StrictRedis,
     sample = sample_factory()
 
     # loop until no more particles required
-    while int(redis.get(idfy(N_ACC, t)).decode()) < n_req \
+    while int(redis.get(idfy(N_ACC, t)).decode()) < int(redis.get(idfy(N_REQ, t)).decode()) \
             and (not all_accepted or
                  int(redis.get(idfy(N_EVAL, t)).decode()) < n_req):
         if kill_handler.killed:
@@ -174,8 +174,9 @@ def work_on_population(redis: StrictRedis,
         if len(accepted_samples) > 0:
             # new pipeline
             pipeline = redis.pipeline()
-            # update particles counter
-            pipeline.incr(idfy(N_ACC, t), len(accepted_samples))
+            # update particles counter if not preliminary
+            if not is_prel:
+                pipeline.incr(idfy(N_ACC, t), len(accepted_samples))
             # note: samples are appended 1-by-1
             pipeline.rpush(idfy(QUEUE, t), *accepted_samples)
             # execute all commands
