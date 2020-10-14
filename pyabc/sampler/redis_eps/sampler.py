@@ -12,7 +12,6 @@ from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME, BATCH_SIZE, IS_PREL, GENERATION, idfy)
 from .redis_logging import logger
-from ...util import create_prel_simulate_function
 
 
 class RedisEvalParallelSampler(Sampler):
@@ -364,7 +363,7 @@ def _create_preliminary_simulate_one(
     simulate_one: The preliminary sampling function.
     """
     # check whether to maybe stop
-    from pyabc.util import create_simulate_function
+    from pyabc.util import create_prel_simulate_function
 
     # extract accepted population
     population = sample.get_accepted_population()
