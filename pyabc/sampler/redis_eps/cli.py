@@ -101,6 +101,7 @@ def work_on_population(redis: StrictRedis,
     sample = sample_factory()
 
     # loop until no more particles required
+    n_prel = 0
     while int(redis.get(idfy(N_ACC, t)).decode()) < int(redis.get(idfy(N_REQ, t)).decode()) \
             and (not all_accepted or
                  int(redis.get(idfy(N_EVAL, t)).decode()) < n_req):
@@ -123,6 +124,9 @@ def work_on_population(redis: StrictRedis,
             # notify quit
             redis.decr(idfy(N_WORKER, t))
             return
+
+        if is_prel:
+            n_prel += 1
 
         # check if is preliminary
         if is_prel and not bool(int(redis.get(idfy(IS_PREL, t)).decode())):
@@ -189,7 +193,7 @@ def work_on_population(redis: StrictRedis,
     kill_handler.exit = True
     population_total_time = time() - population_start_time
     logger.info(
-        f"Finished generation {t}, did {internal_counter} samples. "
+        f"Finished generation {t}, did {internal_counter} samples. Preliminary {n_prel}. "
         f"Simulation time: {cumulative_simulation_time:.2f}s, "
         f"total time {population_total_time:.2f}.")
 

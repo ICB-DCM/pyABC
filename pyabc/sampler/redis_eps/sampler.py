@@ -102,6 +102,8 @@ class RedisEvalParallelSampler(Sampler):
                 is_prel=False)
 
         id_results = []
+        n_prel_accepted=0
+        print("Before While")
 
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
@@ -111,11 +113,9 @@ class RedisEvalParallelSampler(Sampler):
                 # extract pickled object
                 sample_with_id = pickle.loads(dump)
                 # TODO check whether the acceptance criterion changed
-
                 any_particle_accepted = False
                 for result in sample_with_id[1]._particles:
                     if result.is_prel:
-
                         accepted_sum_stats = []
                         accepted_distances = []
                         accepted_weights = []
@@ -131,7 +131,7 @@ class RedisEvalParallelSampler(Sampler):
                                 t=t,
                                 par=result.parameter)
 
-                            if acc_res.accepted:
+                            if acc_res.accept:
                                 accepted_distances.append(acc_res.distance)
                                 accepted_sum_stats.append(sum_stat)
                                 accepted_weights.append(acc_res.weight)
@@ -149,15 +149,19 @@ class RedisEvalParallelSampler(Sampler):
 
                         if result.accepted:
                             self.redis.incr(idfy(N_ACC, t), 1)
-                            any_particle_accepted = True
+                            n_prel_accepted += 1
+
+                    if result.accepted:
+                        any_particle_accepted = True
 
                             # TODO Update rejected sumstats & distances
 
                 if any_particle_accepted:
-                    # append to collected results
+                    #print("if any accepted true")
+                    # append to collected result
                     id_results.append(sample_with_id)
                     bar.inc()
-
+        print("Preliminary accepted:", n_prel_accepted)
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
             t=t, n=n, id_results=id_results, **kwargs)
