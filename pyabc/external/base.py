@@ -219,7 +219,7 @@ class ExternalModel(Model):
             as a value. The list contains the computation time when using
             lower and upper limits, e.g., [lower, upper].
         """
-        time_eval_dict = dict()
+        time_eval_dict = {}
         for key, val in limits.items():
             lower_bound = self.sample_timing({key: val[0]})
             upper_bound = self.sample_timing({key: val[1]})
@@ -270,6 +270,7 @@ class ExternalModel(Model):
                 time_eval_mat_df_upper.loc[[key_col], [key_row]] = upper_bound
 
         return time_eval_mat_df_lower, time_eval_mat_df_upper
+
 
 class ExternalSumStat:
     """
