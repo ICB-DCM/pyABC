@@ -1,13 +1,14 @@
 import numpy as np
+import pandas as pd
 import tempfile
 import subprocess  # noqa: S404
 import os
 from typing import List
 import logging
-
+import copy
 from ..model import Model
 from ..parameters import Parameter
-
+from .utils import timethis
 
 logger = logging.getLogger("External")
 
@@ -121,7 +122,7 @@ class ExternalHandler:
         # call
         if cmd is not None:
             status = subprocess.run(
-                    cmd, shell=True, **stdout, **stderr)  # noqa: S602
+                cmd, shell=True, **stdout, **stderr)  # noqa: S602
         else:
             executable = self.create_executable(loc)
             status = subprocess.run(  # noqa: S603
@@ -195,6 +196,80 @@ class ExternalModel(Model):
 
     def sample(self, pars):
         return self(pars)
+
+    @timethis
+    def sample_timing(self, pars):
+        return self(pars)
+
+    def eval_param_limits(self, limits):
+        """
+        evaluate single parameter's boundary value on computation time.
+
+        Parameters
+        ----------
+        limits: dict
+            the lower and upper boundary values of parameters. The key would
+            be the parameter name and the value would be a list of the lower
+            and upper limit of parameter value, e.g., [lower, upper].
+        
+	    Returns
+        -------
+        time_eval_dict: dict
+            a dictionary that contains the parameter names as key and a list
+            as a value. The list contains the computation time when using
+            lower and upper limits, e.g., [lower, upper].
+	    """
+        time_eval_dict = dict()
+        for key, val in limits.items():
+            lower_bound = self.sample_timing({key: val[0]})
+            upper_bound = self.sample_timing({key: val[1]})
+            time_eval_dict[key] = [lower_bound, upper_bound]
+        return time_eval_dict
+
+    def eval_param_limits_matrix(self, limits):
+        """
+        evaluate two paramters' boundary values on computation time.
+
+        Parameters
+        ----------
+        limits: dict
+            the lower and upper boundary values of parameters. The key would
+            be the parameter name and the value would be a list of the lower
+            and upper limit of parameter value, e.g., [lower, upper].
+        
+	    Returns
+        -------
+        time_eval_mat_df_lower: df
+            a dataframe for the computation time measured when using the lower
+             limit value of parameters.
+        time_eval_mat_df_upper: df
+            a dataframe for the computation time measured when using the upper
+             limit value of parameters.
+	    """
+        time_eval_mat = np.zeros(shape=(len(limits), len(limits)))
+        time_eval_mat_df_lower = pd.DataFrame(time_eval_mat,
+                                              columns=[list(limits.keys())],
+                                              index=[list(limits.keys())])
+        time_eval_mat_df_upper = copy.deepcopy(time_eval_mat_df_lower)
+        for i, (key_col, val_col) in enumerate(limits.items(), 0):
+            for j, (key_row, val_row) in enumerate(limits.items(), 0):
+                if i < j:
+                    time_eval_mat_df_lower.loc[[key_col], [key_row]] = 0
+                    time_eval_mat_df_upper.loc[[key_col], [key_row]] = 0
+
+                if key_col == key_row:
+                    lower_bound = self.sample_timing({key_col: val_col[0]})
+                    upper_bound = self.sample_timing({key_col: val_col[1]})
+
+                else:
+                    lower_bound = self.sample_timing(
+                        {key_col: val_col[0], key_row: val_row[0]})
+                    lower_bound = self.sample_timing(
+                        {key_col: val_col[1], key_row: val_row[1]})
+                time_eval_mat_df_lower.loc[[key_col], [key_row]] = lower_bound
+                time_eval_mat_df_upper.loc[[key_col], [key_row]] = upper_bound
+
+        return time_eval_mat_df_lower, time_eval_mat_df_upper
 
 
 class ExternalSumStat:
