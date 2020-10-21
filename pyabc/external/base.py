@@ -212,13 +212,13 @@ class ExternalModel(Model):
             be the parameter name and the value would be a list of the lower
             and upper limit of parameter value, e.g., [lower, upper].
 
-	    Returns
+        Returns
         -------
         time_eval_dict: dict
             a dictionary that contains the parameter names as key and a list
             as a value. The list contains the computation time when using
             lower and upper limits, e.g., [lower, upper].
-	    """
+        """
         time_eval_dict = dict()
         for key, val in limits.items():
             lower_bound = self.sample_timing({key: val[0]})
@@ -237,7 +237,7 @@ class ExternalModel(Model):
             be the parameter name and the value would be a list of the lower
             and upper limit of parameter value, e.g., [lower, upper].
 
-	    Returns
+        Returns
         -------
         time_eval_mat_df_lower: df
             a dataframe for the computation time measured when using the lower
@@ -245,7 +245,7 @@ class ExternalModel(Model):
         time_eval_mat_df_upper: df
             a dataframe for the computation time measured when using the upper
              limit value of parameters.
-	    """
+        """
         time_eval_mat = np.zeros(shape=(len(limits), len(limits)))
         time_eval_mat_df_lower = pd.DataFrame(time_eval_mat,
                                               columns=[list(limits.keys())],
