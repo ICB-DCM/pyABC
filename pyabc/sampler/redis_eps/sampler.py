@@ -1,6 +1,6 @@
 import numpy as np
 import pickle
-from time import sleep
+from time import sleep, time
 import cloudpickle
 import copy
 from redis import StrictRedis
@@ -89,6 +89,9 @@ class RedisEvalParallelSampler(Sampler):
     def sample_until_n_accepted(
             self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
             **kwargs):
+
+        start_time_start= time()
+
         if self.generation_t_was_started(t):
             # update the SSA function
             self.redis.set(
@@ -101,10 +104,11 @@ class RedisEvalParallelSampler(Sampler):
                 n=n, t=t, simulate_one=simulate_one, all_accepted=all_accepted,
                 is_prel=False)
 
+        print("Start Duration: ", time()-start_time_start)
+
         id_results = []
         n_prel_accepted=0
-        print("Before While")
-
+        start_time=time()
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while len(id_results) < n:
@@ -112,68 +116,62 @@ class RedisEvalParallelSampler(Sampler):
                 dump = self.redis.blpop(idfy(QUEUE, t))[1]
                 # extract pickled object
                 sample_with_id = pickle.loads(dump)
-                # TODO check whether the acceptance criterion changed
-                any_particle_accepted = False
-                for result in sample_with_id[1]._particles:
-                    if result.is_prel:
-                        accepted_sum_stats = []
-                        accepted_distances = []
-                        accepted_weights = []
-                        rejected_sum_stats = []
-                        rejected_distances = []
 
-                        for i_sum_stat, sum_stat in enumerate(result.accepted_sum_stats):
-                            acc_res = kwargs['acceptor'](
-                                distance_function=kwargs['distance_function'],
-                                eps=kwargs['eps'],
-                                x=sum_stat,
-                                x_0=kwargs['x_0'],
-                                t=t,
-                                par=result.parameter)
+                accepted_prel_counter, any_particle_accepted = \
+                    self.check_acceptance(t,
+                                          sample_with_id,
+                                          **kwargs)
 
-                            if acc_res.accept:
-                                accepted_distances.append(acc_res.distance)
-                                accepted_sum_stats.append(sum_stat)
-                                accepted_weights.append(acc_res.weight)
-                            else:
-                                rejected_distances.append(acc_res.distance)
-                                rejected_sum_stats.append(sum_stat)
-
-                        result.accepted = len(accepted_distances) > 0
-
-                        result.accepted_distances = accepted_distances
-                        result.accepted_sum_stats = accepted_sum_stats
-                        result.accepted_weights = accepted_weights
-                        result.rejected_distances = rejected_distances
-                        result.rejected_sum_stats = rejected_sum_stats
-
-                        if result.accepted:
-                            self.redis.incr(idfy(N_ACC, t), 1)
-                            n_prel_accepted += 1
-
-                    if result.accepted:
-                        any_particle_accepted = True
-
-                            # TODO Update rejected sumstats & distances
+                n_prel_accepted = n_prel_accepted + accepted_prel_counter
 
                 if any_particle_accepted:
-                    #print("if any accepted true")
                     # append to collected result
                     id_results.append(sample_with_id)
                     bar.inc()
+
         print("Preliminary accepted:", n_prel_accepted)
+        print("Acceptance Duration: ", time()-start_time)
+
+        start_time_next_gen=time()
+
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
             t=t, n=n, id_results=id_results, **kwargs)
+
+        print("Maybe Next Gen Duration: ", time()-start_time_next_gen)
+
+        start_wait_time=time()
 
         # wait until all workers done
         while int(self.redis.get(idfy(N_WORKER, t)).decode()) > 0:
             sleep(SLEEP_TIME)
 
+        print("Wait time: ", time()-start_wait_time)
+
+        start_time_pickle = time()
+
         # make sure all results are collected
+        n_prel_discarded = 0
+
         while self.redis.llen(idfy(QUEUE, t)) > 0:
-            id_results.append(
-                pickle.loads(self.redis.blpop(idfy(QUEUE, t))[1]))
+            dump = self.redis.blpop(idfy(QUEUE, t))[1]
+            sample_with_id=pickle.loads(dump)
+
+            accepted_prel_counter, any_particle_accepted = \
+                self.check_acceptance(t,
+                                      sample_with_id,
+                                      **kwargs)
+
+            n_prel_discarded = n_prel_discarded + accepted_prel_counter
+
+            if any_particle_accepted:
+                # append to collected result
+                id_results.append(sample_with_id)
+
+        print("Preliminary discarded: ", n_prel_discarded)
+        print("Collection Duration: ", time()-start_time_pickle)
+
+        start_rest_end = time()
 
         # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(idfy(N_EVAL, t)).decode())
@@ -184,7 +182,60 @@ class RedisEvalParallelSampler(Sampler):
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
 
+        print("Rest Duration: ", time()-start_rest_end)
+
         return sample
+
+    def check_acceptance(self, t, sample_with_id, **kwargs):
+        """
+        check acceptance of preliminary proposed sample
+        """
+
+        accepted_prel_counter=0
+        any_particle_accepted = False
+        for result in sample_with_id[1]._particles:
+            if result.is_prel:
+                accepted_sum_stats = []
+                accepted_distances = []
+                accepted_weights = []
+                rejected_sum_stats = []
+                rejected_distances = []
+
+                for i_sum_stat, sum_stat in enumerate(result.accepted_sum_stats):
+                    acc_res = kwargs['acceptor'](
+                        distance_function=kwargs['distance_function'],
+                        eps=kwargs['eps'],
+                        x=sum_stat,
+                        x_0=kwargs['x_0'],
+                        t=t,
+                        par=result.parameter)
+
+                    if acc_res.accept:
+                        accepted_distances.append(acc_res.distance)
+                        accepted_sum_stats.append(sum_stat)
+                        accepted_weights.append(acc_res.weight)
+                    else:
+                        rejected_distances.append(acc_res.distance)
+                        rejected_sum_stats.append(sum_stat)
+
+                result.accepted = len(accepted_distances) > 0
+
+                result.accepted_distances = accepted_distances
+                result.accepted_sum_stats = accepted_sum_stats
+                result.accepted_weights = accepted_weights
+                result.rejected_distances = rejected_distances
+                result.rejected_sum_stats = rejected_sum_stats
+
+                if result.accepted:
+                    self.redis.incr(idfy(N_ACC, t), 1)
+                    accepted_prel_counter += 1
+
+            if result.accepted:
+                any_particle_accepted = True
+
+            # TODO Update rejected sumstats & distances
+
+        return accepted_prel_counter, any_particle_accepted
 
     def start_generation_t(
             self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
@@ -192,7 +243,6 @@ class RedisEvalParallelSampler(Sampler):
         """Start generation `t`."""
         # write initial values to pipeline
         pipeline = self.redis.pipeline()
-
         # initialize variables for time t
         self.redis.set(idfy(SSA, t),
                        cloudpickle.dumps((simulate_one, self.sample_factory)))

@@ -4,6 +4,7 @@ import datetime
 import logging
 from typing import List, Callable, TypeVar, Union
 import numpy as np
+from time import time
 import copy
 
 from pyabc.acceptor import (
@@ -612,6 +613,9 @@ class ABCSMC:
         self.max_t = t0 + max_nr_populations - 1
         # run loop over time points
         t = t0
+
+        endtime = time()
+
         while True:
             # get epsilon for generation t
             current_eps = self.eps(t)
@@ -625,11 +629,17 @@ class ABCSMC:
             max_eval = np.inf if min_acceptance_rate == 0. \
                 else pop_size / min_acceptance_rate
 
+            starttime = time()
+            print("Time passed until sampling starts for generation", t, ": ", starttime-endtime)
+
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
                 max_eval=max_eval, **self._vars_dict())
+
+            endtime = time()
+            print("Duration of sampling for generation", t, ": ", endtime-starttime)
 
             # check sample health
             if not sample.ok:
