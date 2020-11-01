@@ -35,7 +35,7 @@ If the metadata of your file appears, that means your database file was uploaded
 
 you can then select the requested run's ID. 
 
-Once you slelct the run's ID, the left side of the page will be updated to show more details about the selected run. 
+Once you slelct the run's ID, the left side of the page will be updated to show more details about the selected run.
 
 You can then select one of the plots by selecting one of the tabs under ``Run's plots``. For some of the tabs, you will be asked to select one parameter, or more, from the dropdown list. 
 
