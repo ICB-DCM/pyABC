@@ -35,7 +35,18 @@ If the metadata of your file appears, that means your database file was uploaded
 
 you can then select the requested run's ID. 
 
+<<<<<<< HEAD
 Once you slelct the run's ID, the left side of the page will be updated to show more details about the selected run.
+=======
+Once you slelct the run's ID, the left side of the page will be updated to show more details about the selected run. 
+
+then, you can select one of the tabs under ``Run's plots``.
+
+To save any plot, right-click on the plot and then select ``save image as``.   
+
+
+You can get overviews over the models:
+>>>>>>> eef45c8 (fix typos)
 
 You can then select one of the plots by selecting one of the tabs under ``Run's plots``. For some of the tabs, you will be asked to select one parameter, or more, from the dropdown list. 
 
