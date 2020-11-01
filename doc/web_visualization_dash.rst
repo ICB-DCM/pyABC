@@ -19,29 +19,27 @@ You should see something similar to the following:
 .. image:: server_screenshots/dash_main.png
 
 
-A copy of the selected database will be saved on `/tmp/`
-
-if you want to change the path, you can enter the full path of the new folder in the text box.
+A copy of the selected database will be saved on ``/tmp/``, if you want to change the path, you can enter the full path of the new folder in the text box.
 
 .. image:: server_screenshots/dash_path.png
 
-to upload you database, you can click or drag and drop you file dashed rectangle. Please note that the database file should have the extintion `.db`
+To upload your database, you can click or drag and drop your file in the dashed rectangle. Please note that the database file should have the extension ``.db``
 
-The time taken to upload the database to the server will depend on the database size. once you select your database, you will notice that the title bar of you tab changed to `uploading`.
+The time taken to upload the database to the server will depend on the database size. Once you select your database, you will notice that the title bar of the tab changed to ``uploading``. Please wait until the uploading process finishes. 
 
 .. image:: server_screenshots/dash_update.png
 
-If the metadata of your file appreas, that means your database file was uploded succssesfully.
+If the metadata of your file appears, that means your database file was uploaded successfully.
 
 .. image:: server_screenshots/dash_meta.png
 
 you can then select the requested run's ID. 
 
-Once you slelct the run's ID, the left side of he page will be updated to show more details about the selected run. 
+Once you slelct the run's ID, the left side of the page will be updated to show more details about the selected run. 
 
-then, you can select one of the tabs under `Run's plots`.
+then, you can select one of the tabs under ``Run's plots``.
 
-To save any plot, right-click on the plot and then slelct `save image as`.   
+To save any plot, right-click on the plot and then select ``save image as``.   
 
 
 You can get overviews over the models:
