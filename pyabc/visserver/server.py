@@ -192,11 +192,11 @@ def page_not_found(e):
 @click.command()
 @click.option("--debug", default=False, type=bool,
               help="Whether to run the server in debug mode")
-@click.option("--port", default=5000, type=int,
+@click.option("--port", default=8050, type=int,
               help="The port on which the server runs")
 @click.argument("db")
 def run_app(db, debug, port):
     db = os.path.expanduser(db)
     history = History("sqlite:///" + db)
     app.config["HISTORY"] = history
-    app.run(debug=debug, port=port)
+    app.run(port=port,debug=debug)
