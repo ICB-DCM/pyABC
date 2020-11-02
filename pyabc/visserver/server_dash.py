@@ -54,7 +54,7 @@ app.layout = app.layout = html.Div(children=[
                                   id='upload-data',
                                   children=html.Div([
                                       'Drag and Drop or ',
-                                      html.A('Select Files')
+                                      html.A('Select Files'),
                                   ]),
                                   style={
                                       'width': '100%',
@@ -70,17 +70,17 @@ app.layout = app.layout = html.Div(children=[
                                   html.Div(id='output-data-upload'),
                                   html.Div([
                                       html.Div(["ABC runs: ",
-                                                dcc.Dropdown(id='ABC_runs', ),
+                                                dcc.Dropdown(id='ABC_runs'),
                                                 ])], style={'width': '100%',
                                                             'height': '100%'}),
                               ]),
-                          ]
+                          ],
                           ),  # Define the left element
                  html.Div(id='information_grid',
                           className='eight columns div-for-charts bg-grey',
-                          style={'height': '1200px'})
+                          style={'height': '1200px'}),
                  # Define the right element
-             ])
+             ]),
 ])
 
 
@@ -101,16 +101,15 @@ def parse_contents(contents, filename, date):
             for col in dist_df[0].columns:
                 para_list.append(col)
     except Exception as e:
-        print(e)
         return html.Div([
-            'There was an error processing this file.'
+            'There was an error processing this file.',
         ])
     return html.Div([
         html.Button("Name: " + name,
                     id='btn-nclicks-1',
                     ),
         html.Button(time,
-                    id='btn-nclicks-2', style={'margin-left': '10px'}
+                    id='btn-nclicks-2', style={'margin-left': '10px',
                     ),
         html.Br(),
         html.Button('# of Runs: ' + str(len(list_run_ids)),
@@ -120,7 +119,7 @@ def parse_contents(contents, filename, date):
                     id='btn-nclicks-4', style={'margin-left': '10px'},
                     ),
         html.Div(
-            id='container-button-timestamp')
+            id='container-button-timestamp'),
     ], style={
         'width': '100%',
         'height': '180px',
@@ -131,7 +130,7 @@ def parse_contents(contents, filename, date):
         'textAlign': 'center',
         'margin': '10px',
 
-    }, )
+    })
 
 
 def prepare_run_detailes(history):
@@ -169,9 +168,8 @@ def prepare_run_detailes(history):
         for col in dist_df[0].columns:
             para_list.append(col)
     except Exception as e:
-        print(e)
         return html.Div([
-            'There was an error processing this file.'
+            'There was an error processing this file.',
         ])
     return html.Div([
         html.Div([
@@ -190,7 +188,7 @@ def prepare_run_detailes(history):
                 html.H5("Distance function:"),
                 html.Label("Name: " + str(dist_name)),
             ], style={'display': 'inline-block', 'vertical-align': 'top',
-                      'margin-left': '40px', 'height': '200px', }),
+                      'margin-left': '40px', 'height': '200px'}),
             html.Div([
                 html.H2("Population strategy:"),
                 html.Label("Name: " + str(pop_str_name)),
@@ -202,7 +200,7 @@ def prepare_run_detailes(history):
                 html.Label(
                     "Number of particles: " + str(pop_str_nr_particles)),
             ], style={'display': 'inline-block', 'vertical-align': 'top',
-                      'margin-left': '40px', 'height': '200px', }),
+                      'margin-left': '40px', 'height': '200px'}),
             html.Div([
                 html.H1("Epsilon function:"),
                 html.Label("Name: " + str(eps_name)),
@@ -211,7 +209,7 @@ def prepare_run_detailes(history):
                 html.Label("Quantile multiplier: " + str(eps_quant)),
                 html.Label("Weighted: " + str(eps_weited)),
             ], style={'display': 'inline-block', 'vertical-align': 'top',
-                      'margin-left': '40px', 'height': '200px', })
+                      'margin-left': '40px', 'height': '200px'}),
         ]),
         html.Div([
             html.H1('Runs plots'),
@@ -231,48 +229,46 @@ def prepare_run_detailes(history):
                             label='Probability density functions',
                             value='tab-pdf',
                             className='custom-tab',
-                            selected_className='custom-tab--selected'
+                            selected_className='custom-tab--selected',
                         ),
                         dcc.Tab(
                             id="tab-2",
                             label='Samples',
                             value='tab-samples',
                             className='custom-tab',
-                            selected_className='custom-tab--selected'
+                            selected_className='custom-tab--selected',
                         ),
                         dcc.Tab(
                             id="tab-3",
                             label='Particles',
                             value='tab-particles',
                             className='custom-tab',
-                            selected_className='custom-tab--selected'
+                            selected_className='custom-tab--selected',
                         ),
                         dcc.Tab(
                             id="tab-4",
                             label='Epsilons',
                             value='tab-epsilons',
                             className='custom-tab',
-                            selected_className='custom-tab--selected'
+                            selected_className='custom-tab--selected',
                         ),
                         dcc.Tab(
                             id="tab-5",
                             label='Credible intervals',
                             value='tab-credible',
                             className='custom-tab',
-                            selected_className='custom-tab--selected'
+                            selected_className='custom-tab--selected',
                         ),
                         dcc.Tab(
                             id="tab-6",
                             label='Effective sample sizes',
                             value='tab-effective',
                             className='custom-tab',
-                            selected_className='custom-tab--selected'
-                        )
-
+                            selected_className='custom-tab--selected',
+                        ),
                     ]),
                 html.Div(id='tabs-content')
             ]),
-
     ], style={
         'width': '98%',
         'height': '120px',
@@ -315,11 +311,9 @@ def update_DB_details(list_of_contents, list_of_names, list_of_dates):
     save_file(file_name, list_of_contents[0])
     global db_path
     db_path = DOWNLOAD_DIRECTORY + file_name
-    print(db_path)
     history = h.History("sqlite:///" + db_path)
     all_runs = h.History.all_runs(history)
     list_run_ids = [x.id for x in all_runs]
-    print(list_run_ids)
     if list_of_contents is not None:
         children = [
             parse_contents(c, n, d) for c, n, d in
