@@ -495,6 +495,13 @@ def termination_criteria_fulfilled(
     -------
     True if any criterion is met, otherwise False.
     """
+    
+    """
+    if max_t == None:
+        max_t = np.inf
+        print("max_t was not specified; set to np.inf")
+    """
+
     if t >= max_t:
         return True
     if current_eps <= min_eps:

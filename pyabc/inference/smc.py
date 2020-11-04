@@ -484,7 +484,7 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             n=self.population_size(-1), simulate_one=simulate_one, t=t,
-            max_eval=np.inf, all_accepted=True, **self._vars_dict())
+            max_eval=np.inf, all_accepted=True, from_prior=True, **self._vars_dict())
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -614,7 +614,6 @@ class ABCSMC:
         # run loop over time points
         t = t0
 
-        endtime = time()
 
         while True:
             # get epsilon for generation t
@@ -629,17 +628,11 @@ class ABCSMC:
             max_eval = np.inf if min_acceptance_rate == 0. \
                 else pop_size / min_acceptance_rate
 
-            starttime = time()
-            print("Time passed until sampling starts for generation", t, ": ", starttime-endtime)
-
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
                 max_eval=max_eval, **self._vars_dict())
-
-            endtime = time()
-            print("Duration of sampling for generation", t, ": ", endtime-starttime)
 
             # check sample health
             if not sample.ok:

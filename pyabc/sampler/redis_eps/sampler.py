@@ -86,11 +86,14 @@ class RedisEvalParallelSampler(Sampler):
         """
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
-    def sample_until_n_accepted(
-            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
-            **kwargs):
-
-        start_time_start= time()
+    def sample_until_n_accepted(self,
+                                n,
+                                simulate_one,
+                                t,
+                                max_eval=np.inf,
+                                all_accepted=False,
+                                from_prior=False,
+                                **kwargs):
 
         if self.generation_t_was_started(t):
             # update the SSA function
@@ -104,11 +107,8 @@ class RedisEvalParallelSampler(Sampler):
                 n=n, t=t, simulate_one=simulate_one, all_accepted=all_accepted,
                 is_prel=False)
 
-        print("Start Duration: ", time()-start_time_start)
-
         id_results = []
         n_prel_accepted=0
-        start_time=time()
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while len(id_results) < n:
@@ -130,25 +130,15 @@ class RedisEvalParallelSampler(Sampler):
                     bar.inc()
 
         print("Preliminary accepted:", n_prel_accepted)
-        print("Acceptance Duration: ", time()-start_time)
-
-        start_time_next_gen=time()
 
         # maybe head-start the next generation already
-        self.maybe_start_next_generation(
-            t=t, n=n, id_results=id_results, **kwargs)
-
-        print("Maybe Next Gen Duration: ", time()-start_time_next_gen)
-
-        start_wait_time=time()
+        if not from_prior:
+            self.maybe_start_next_generation(
+                t=t, n=n, id_results=id_results, **kwargs)
 
         # wait until all workers done
         while int(self.redis.get(idfy(N_WORKER, t)).decode()) > 0:
             sleep(SLEEP_TIME)
-
-        print("Wait time: ", time()-start_wait_time)
-
-        start_time_pickle = time()
 
         # make sure all results are collected
         n_prel_discarded = 0
@@ -169,9 +159,6 @@ class RedisEvalParallelSampler(Sampler):
                 id_results.append(sample_with_id)
 
         print("Preliminary discarded: ", n_prel_discarded)
-        print("Collection Duration: ", time()-start_time_pickle)
-
-        start_rest_end = time()
 
         # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(idfy(N_EVAL, t)).decode())
@@ -182,15 +169,13 @@ class RedisEvalParallelSampler(Sampler):
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
 
-        print("Rest Duration: ", time()-start_rest_end)
-
         return sample
 
     def check_acceptance(self, t, sample_with_id, **kwargs):
         """
         check acceptance of preliminary proposed sample
         """
-
+        
         accepted_prel_counter=0
         any_particle_accepted = False
         for result in sample_with_id[1]._particles:
