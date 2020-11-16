@@ -1,5 +1,6 @@
 import numpy as np
 import pickle
+import logging
 from time import sleep, time
 import cloudpickle
 import copy
@@ -13,6 +14,7 @@ from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
                   SLEEP_TIME, BATCH_SIZE, IS_PREL, GENERATION, idfy)
 from .redis_logging import logger
 
+logger_main = logging.getLogger("ABC")
 
 class RedisEvalParallelSampler(Sampler):
     """
@@ -108,7 +110,8 @@ class RedisEvalParallelSampler(Sampler):
                 is_prel=False)
 
         id_results = []
-        n_prel_accepted=0
+        n_prel_accepted = 0
+        n_prel_rejected = 0
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while len(id_results) < n:
@@ -117,19 +120,26 @@ class RedisEvalParallelSampler(Sampler):
                 # extract pickled object
                 sample_with_id = pickle.loads(dump)
 
-                accepted_prel_counter, any_particle_accepted = \
+                accepted_prel_counter, rejected_prel_counter, any_particle_accepted = \
                     self.check_acceptance(t,
                                           sample_with_id,
                                           **kwargs)
 
                 n_prel_accepted = n_prel_accepted + accepted_prel_counter
+                n_prel_rejected = n_prel_rejected + rejected_prel_counter
 
                 if any_particle_accepted:
                     # append to collected result
                     id_results.append(sample_with_id)
                     bar.inc()
 
-        print("Preliminary accepted:", n_prel_accepted)
+        n_total_prel = n_prel_rejected+n_prel_accepted
+        if n_total_prel >= 1:
+            prel_acceptance_rate = n_prel_accepted/n_total_prel
+
+            logger_main.info(f"Preliminary accepted: {n_prel_accepted};  "
+                             f"Preliminary acceptance rate: {n_prel_accepted} / {n_total_prel} = "
+                             f"{prel_acceptance_rate:.4e}")
 
         # maybe head-start the next generation already
         if not from_prior:
@@ -147,7 +157,7 @@ class RedisEvalParallelSampler(Sampler):
             dump = self.redis.blpop(idfy(QUEUE, t))[1]
             sample_with_id=pickle.loads(dump)
 
-            accepted_prel_counter, any_particle_accepted = \
+            accepted_prel_counter, rejected_prel_counter, any_particle_accepted = \
                 self.check_acceptance(t,
                                       sample_with_id,
                                       **kwargs)
@@ -157,8 +167,8 @@ class RedisEvalParallelSampler(Sampler):
             if any_particle_accepted:
                 # append to collected result
                 id_results.append(sample_with_id)
-
-        print("Preliminary discarded: ", n_prel_discarded)
+        if n_prel_discarded >= 1:
+            logger_main.info(f"Preliminary discarded: {n_prel_discarded}")
 
         # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(idfy(N_EVAL, t)).decode())
@@ -176,7 +186,8 @@ class RedisEvalParallelSampler(Sampler):
         check acceptance of preliminary proposed sample
         """
         
-        accepted_prel_counter=0
+        accepted_prel_counter = 0
+        rejected_prel_counter = 0
         any_particle_accepted = False
         for result in sample_with_id[1]._particles:
             if result.is_prel:
@@ -214,13 +225,15 @@ class RedisEvalParallelSampler(Sampler):
                 if result.accepted:
                     self.redis.incr(idfy(N_ACC, t), 1)
                     accepted_prel_counter += 1
+                else:
+                    rejected_prel_counter += 1
 
             if result.accepted:
                 any_particle_accepted = True
 
             # TODO Update rejected sumstats & distances
 
-        return accepted_prel_counter, any_particle_accepted
+        return accepted_prel_counter, rejected_prel_counter, any_particle_accepted
 
     def start_generation_t(
             self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
