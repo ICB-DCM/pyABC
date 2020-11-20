@@ -542,7 +542,8 @@ class ABCSMC:
     def run(self,
             minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
-            min_acceptance_rate: float = 0.) -> History:
+            min_acceptance_rate: float = 0.,
+            log_file: str = None) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -614,6 +615,11 @@ class ABCSMC:
         # run loop over time points
         t = t0
 
+        # initialize file to write acceptance rates into
+        if log_file is not None:
+            import csv
+            column_names = ["Type", "Generation", "Accepted", "Total"]
+            csv.writer(open(log_file, 'w')).writerow(column_names)
 
         while True:
             # get epsilon for generation t
@@ -632,7 +638,7 @@ class ABCSMC:
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
-                max_eval=max_eval, **self._vars_dict())
+                max_eval=max_eval, log_file=log_file, **self._vars_dict())
 
             # check sample health
             if not sample.ok:
@@ -659,6 +665,11 @@ class ABCSMC:
                 population.get_weighted_distances()['w'])
             logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
                         f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
+
+            # write acceptance rate into file
+            if log_file is not None:
+                row = ["Total", t, pop_size, n_sim]
+                csv.writer(open(log_file, 'a')).writerow(row)
 
             # prepare next iteration
             self._prepare_next_iteration(

@@ -4,6 +4,7 @@ import logging
 from time import sleep, time
 import cloudpickle
 import copy
+import csv
 from redis import StrictRedis
 from typing import Callable, List, Tuple
 from jabbar import jabbar
@@ -95,6 +96,7 @@ class RedisEvalParallelSampler(Sampler):
                                 max_eval=np.inf,
                                 all_accepted=False,
                                 from_prior=False,
+                                log_file=None,
                                 **kwargs):
 
         if self.generation_t_was_started(t):
@@ -133,13 +135,17 @@ class RedisEvalParallelSampler(Sampler):
                     id_results.append(sample_with_id)
                     bar.inc()
 
+        # log preliminary acceptance rate
         n_total_prel = n_prel_rejected+n_prel_accepted
         if n_total_prel >= 1:
             prel_acceptance_rate = n_prel_accepted/n_total_prel
 
-            logger_main.info(f"Preliminary accepted: {n_prel_accepted};  "
-                             f"Preliminary acceptance rate: {n_prel_accepted} / {n_total_prel} = "
+            logger_main.info(f"Preliminary acceptance rate: {n_prel_accepted} / {n_total_prel} = "
                              f"{prel_acceptance_rate:.4e}")
+
+            if log_file is not None:
+                row = ["Preliminary", t, n_prel_accepted, n_total_prel]
+                csv.writer(open(log_file, 'a')).writerow(row)
 
         # maybe head-start the next generation already
         if not from_prior:
@@ -167,8 +173,13 @@ class RedisEvalParallelSampler(Sampler):
             if any_particle_accepted:
                 # append to collected result
                 id_results.append(sample_with_id)
+
+        # log discarded particles
         if n_prel_discarded >= 1:
             logger_main.info(f"Preliminary discarded: {n_prel_discarded}")
+            if log_file is not None:
+                row = ["Discarded preliminaries", t, n_prel_discarded, n_prel_discarded]
+                csv.writer(open(log_file, 'a')).writerow(row)
 
         # set total number of evaluations
         self.nr_evaluations_ = int(self.redis.get(idfy(N_EVAL, t)).decode())
