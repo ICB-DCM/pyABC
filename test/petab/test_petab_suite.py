@@ -3,7 +3,6 @@
 import petabtests
 import pyabc
 
-import sys
 import os
 import pytest
 from _pytest.outcomes import Skipped
