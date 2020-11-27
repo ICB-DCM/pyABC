@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         .github/workflows/ci_dependencies.sh base R
-        pip install -e .[R,test,code_quality]
+        pip install -e .[R,test]
 
     - name: Run tests
       timeout-minutes: 10
