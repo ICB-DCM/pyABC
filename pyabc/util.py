@@ -387,10 +387,13 @@ def create_simulate_function(
 
 
 def termination_criteria_fulfilled(
-        current_eps: float, min_eps: float, stop_if_single_model_alive: bool,
-        nr_of_models_alive: int, acceptance_rate: float,
-        min_acceptance_rate: float, t: int, max_t: int):
-    """Check termination conditions.
+        current_eps: float, min_eps: float,
+        stop_if_single_model_alive: bool,
+        nr_of_models_alive: int,
+        acceptance_rate: float,
+        min_acceptance_rate: float,
+        t: int, max_t: int) -> bool:
+    """Check termination criteria.
 
     Parameters
     ----------
@@ -408,6 +411,7 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
+        logger.info("Stopping: maximum time.")
         return True
     if current_eps <= min_eps:
         logger.info("Stopping: minimum epsilon.")

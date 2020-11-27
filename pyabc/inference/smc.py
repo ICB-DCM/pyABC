@@ -661,14 +661,16 @@ class ABCSMC:
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
 
+            # check termination criteria
             if termination_criteria_fulfilled(
-                    current_eps=current_eps, min_eps=minimum_epsilon,
-                    stop_if_single_model_alive=self
-                    .stop_if_only_single_model_alive,
-                    nr_of_models_alive=self.history.nr_of_models_alive(),
-                    acceptance_rate=acceptance_rate,
-                    min_acceptance_rate=min_acceptance_rate,
-                    t=t, max_t=self.max_t):
+                current_eps=current_eps, min_eps=minimum_epsilon,
+                stop_if_single_model_alive=
+                self.stop_if_only_single_model_alive,
+                nr_of_models_alive=self.history.nr_of_models_alive(),
+                acceptance_rate=acceptance_rate,
+                min_acceptance_rate=min_acceptance_rate,
+                t=t, max_t=self.max_t
+            ):
                 break
 
             # increment t
@@ -803,8 +805,12 @@ class ABCSMC:
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
 
-    def _vars_dict(self):
-        """Create a dictionary of analysis variables of interest."""
+    def _vars_dict(self) -> dict:
+        """Create a dictionary of analysis variables of interest.
+
+        These variables are passed to the sampler, as some need to create
+        simulation settings themselves.
+        """
         nr_samples_per_parameter = \
             self.population_size.nr_samples_per_parameter
         return dict(
