@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.7]
 
     steps:
     - name: Check out repository
@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         .github/workflows/ci_dependencies.sh base R
-        pip install -e .[R,test,code_quality]
+        pip install -e .[R,test]
 
     - name: Run tests
       timeout-minutes: 10
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.7]
 
     steps:
     - name: Check out repository
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.7]
 
     steps:
     - name: Check out repository
@@ -123,7 +123,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8, 3.7]
 
     steps:
       - name: Check out repository
@@ -147,7 +147,7 @@ jobs:
           pip install -e .[test]
 
       - name: Run tests
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
           python -m pytest --cov=pyabc --cov-report=xml test/base/test_macos.py
 
@@ -184,7 +184,7 @@ jobs:
         pip install -e .[quality]
 
     - name: Run flake8
-      timeout-minutes: 1
+      timeout-minutes: 2
       run: ./run_flake8.sh
 
     - name: Run pyroma
