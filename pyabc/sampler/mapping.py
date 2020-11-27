@@ -1,7 +1,7 @@
 import functools
 import random
 
-import dill as pickle
+import cloudpickle as pickle
 import numpy as np
 
 from .base import Sampler

@@ -392,6 +392,8 @@ def termination_criteria_fulfilled(
         nr_of_models_alive: int,
         acceptance_rate: float,
         min_acceptance_rate: float,
+        total_nr_simulations: int,
+        max_total_nr_simulations: int,
         t: int, max_t: int) -> bool:
     """Check termination criteria.
 
@@ -401,8 +403,10 @@ def termination_criteria_fulfilled(
     min_eps: The minimum allowed epsilon value.
     stop_if_single_model_alive: Whether to stop with a single model left.
     nr_of_models_alive: The number of models alive in the last generation.
-    acceptance_rate: The lat generation's acceptance rate.
+    acceptance_rate: The last generation's acceptance rate.
     min_acceptance_rate: The minimum acceptance rate.
+    total_nr_simulations: The total number of simulations so far.
+    max_total_nr_simulations: Bound on the total number of simulations.
     t: The last generation's time index.
     max_t: The maximum allowed time index.
 
@@ -421,5 +425,8 @@ def termination_criteria_fulfilled(
         return True
     elif acceptance_rate < min_acceptance_rate:
         logger.info("Stopping: minimum acceptance rate.")
+        return True
+    elif total_nr_simulations >= max_total_nr_simulations:
+        logger.info("Stopping: total simulations budget.")
         return True
     return False
