@@ -147,7 +147,7 @@ jobs:
           pip install -e .[test]
 
       - name: Run tests
-        timeout-minutes: 3
+        timeout-minutes: 4
         run: |
           python -m pytest --cov=pyabc --cov-report=xml test/base/test_macos.py
 
@@ -184,7 +184,7 @@ jobs:
         pip install -e .[quality]
 
     - name: Run flake8
-      timeout-minutes: 1
+      timeout-minutes: 2
       run: ./run_flake8.sh
 
     - name: Run pyroma
