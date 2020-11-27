@@ -539,25 +539,24 @@ class ABCSMC:
     def run(self,
             minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
-            min_acceptance_rate: float = 0.) -> History:
+            min_acceptance_rate: float = 0.,
+            max_total_nr_simulations: int = np.inf) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
 
         Parameters
         ----------
-
-        minimum_epsilon: float, optional
+        minimum_epsilon:
             Stop if epsilon is smaller than minimum epsilon specified here.
             Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
-
-        max_nr_populations: int, optional (default = np.inf)
+        max_nr_populations:
             The maximum number of populations. Stop if this number is reached.
-
-        min_acceptance_rate: float, optional (default = 0.0)
+        min_acceptance_rate:
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
-
+        max_total_nr_simulations:
+            Bound on the total number of evaluations.
 
         Population after population is sampled and particles which are close
         enough to the observed data are accepted and added to the next
@@ -671,6 +670,9 @@ class ABCSMC:
                 break
             elif acceptance_rate < min_acceptance_rate:
                 logger.info("Stopping: minimum acceptance rate.")
+                break
+            elif self.history.total_nr_simulations >= max_total_nr_simulations:
+                logger.info("Stopping: total simulations budget.")
                 break
 
             # increment t

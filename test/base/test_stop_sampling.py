@@ -44,3 +44,11 @@ def test_stop_early(db_path):
             df["particles"] / (df["samples"] - (n_procs-1))
 
         assert df["corrected_acceptance_rate"].iloc[-1] >= set_acc_rate
+
+
+def test_total_nr_simulations(db_path):
+    abc = ABCSMC(model, Distribution(par=st.uniform(0, 10)), dist, pop_size)
+    abc.new(db_path, {"par": .5})
+    max_total_nr_sim = 142
+    history = abc.run(-1, 100, max_total_nr_simulations=max_total_nr_sim)
+    assert history.total_nr_simulations >= max_total_nr_sim
