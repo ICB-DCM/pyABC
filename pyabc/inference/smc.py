@@ -1,10 +1,10 @@
 """ABC-SMC"""
 
-import datetime
 import logging
 from typing import List, Callable, TypeVar, Union
 import numpy as np
 import copy
+from datetime import datetime, timedelta
 
 from pyabc.acceptor import (
     Acceptor, UniformAcceptor, SimpleFunctionAcceptor, StochasticAcceptor)
@@ -540,7 +540,8 @@ class ABCSMC:
             minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
             min_acceptance_rate: float = 0.,
-            max_total_nr_simulations: int = np.inf) -> History:
+            max_total_nr_simulations: int = np.inf,
+            max_walltime: timedelta = None) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -551,12 +552,15 @@ class ABCSMC:
             Stop if epsilon is smaller than minimum epsilon specified here.
             Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
         max_nr_populations:
-            The maximum number of populations. Stop if this number is reached.
+            Maximum allowed number of populations.
+            Stop if this number is reached.
         min_acceptance_rate:
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
         max_total_nr_simulations:
-            Bound on the total number of evaluations.
+            Maximum allowed total number of evaluations.
+        max_walltime:
+            Maximum allowed walltime since start of the run() method.
 
         Population after population is sampled and particles which are close
         enough to the observed data are accepted and added to the next
@@ -592,10 +596,11 @@ class ABCSMC:
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
 
+        # for recording the overall time
+        init_walltime = datetime.now()
+
         # initial time
         t0 = self.history.max_t + 1
-        # log start time
-        self.history.start_time = datetime.datetime.now()
 
         # initialize transitions
         self._fit_transitions(t0)
@@ -673,6 +678,10 @@ class ABCSMC:
                 break
             elif self.history.total_nr_simulations >= max_total_nr_simulations:
                 logger.info("Stopping: total simulations budget.")
+                break
+            elif max_walltime is not None and \
+                    datetime.now() - init_walltime > max_walltime:
+                logger.info("Stopping: maximum walltime.")
                 break
 
             # increment t
