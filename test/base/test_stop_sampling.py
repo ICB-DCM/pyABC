@@ -2,6 +2,7 @@ from pyabc import ABCSMC, Distribution
 from pyabc.sampler import MulticoreEvalParallelSampler, SingleCoreSampler
 import scipy.stats as st
 import numpy as np
+from datetime import datetime, timedelta
 
 
 set_acc_rate = 0.2
@@ -63,3 +64,14 @@ def test_total_nr_simulations(db_path):
     assert sum(df['samples'][:-1]) < max_total_nr_sim
     # Just to make sure .total_nr_simulations does what it's supposed to
     assert sum(df['samples']) == history.total_nr_simulations
+
+
+def test_max_walltime(db_path):
+    """Test the maximum walltime condition."""
+    abc = ABCSMC(model, Distribution(par=st.uniform(0, 10)), dist, pop_size)
+    abc.new(db_path, {"par": .5})
+    init_walltime = datetime.now()
+    max_walltime = timedelta(milliseconds=500)
+    history = abc.run(-1, 100, max_walltime=max_walltime)
+    assert datetime.now() - init_walltime > max_walltime
+    assert history.n_populations < 100
