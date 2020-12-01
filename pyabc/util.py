@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import logging
+from datetime import timedelta
 from typing import List, Callable
 
 from pyabc.acceptor import Acceptor
@@ -394,6 +395,8 @@ def termination_criteria_fulfilled(
         min_acceptance_rate: float,
         total_nr_simulations: int,
         max_total_nr_simulations: int,
+        walltime: timedelta,
+        max_walltime: timedelta,
         t: int, max_t: int) -> bool:
     """Check termination criteria.
 
@@ -407,6 +410,8 @@ def termination_criteria_fulfilled(
     min_acceptance_rate: The minimum acceptance rate.
     total_nr_simulations: The total number of simulations so far.
     max_total_nr_simulations: Bound on the total number of simulations.
+    walltime: Walltime passed since start of the analysis.
+    max_walltime: Maximum allowed walltime.
     t: The last generation's time index.
     max_t: The maximum allowed time index.
 
@@ -428,5 +433,8 @@ def termination_criteria_fulfilled(
         return True
     elif total_nr_simulations >= max_total_nr_simulations:
         logger.info("Stopping: total simulations budget.")
+        return True
+    elif max_walltime is not None and walltime > max_walltime:
+        logger.info("Stopping: maximum walltime.")
         return True
     return False

@@ -678,12 +678,10 @@ class ABCSMC:
                 min_acceptance_rate=min_acceptance_rate,
                 total_nr_simulations=self.history.total_nr_simulations,
                 max_total_nr_simulations=max_total_nr_simulations,
+                walltime=datetime.now() - init_walltime,
+                max_walltime=max_walltime,
                 t=t, max_t=self.max_t
             ):
-                break
-            elif max_walltime is not None and \
-                    datetime.now() - init_walltime > max_walltime:
-                logger.info("Stopping: maximum walltime.")
                 break
 
             # increment t
