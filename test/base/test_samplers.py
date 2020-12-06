@@ -295,7 +295,6 @@ def test_redis_catch_error():
         db_file = "sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db")
         data = {'s0': 2.8}
         abc.new(db_file, data)
-
         abc.run(minimum_epsilon=.1, max_nr_populations=3)
     finally:
         sampler.shutdown()

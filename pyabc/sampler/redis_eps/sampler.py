@@ -10,7 +10,7 @@ from jabbar import jabbar
 
 from ...util import AnalysisVars, create_simulate_function
 from ...sampler import Sampler, Sample
-from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
+from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
                   SLEEP_TIME, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION,
                   idfy)
@@ -170,6 +170,7 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.set(idfy(N_EVAL, ana_id, t), 0)
         pipeline.set(idfy(N_ACC, ana_id, t), 0)
         pipeline.set(idfy(N_REQ, ana_id, t), n)
+        pipeline.set(idfy(N_FAIL, ana_id, t), 0)
         # encode as int
         pipeline.set(idfy(ALL_ACCEPTED, ana_id, t), int(all_accepted))
         pipeline.set(idfy(N_WORKER, ana_id, t), 0)
@@ -209,6 +210,7 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.delete(idfy(N_EVAL, ana_id, t))
         pipeline.delete(idfy(N_ACC, ana_id, t))
         pipeline.delete(idfy(N_REQ, ana_id, t))
+        pipeline.delete(idfy(N_FAIL, ana_id, t))
         pipeline.delete(idfy(ALL_ACCEPTED, ana_id, t))
         pipeline.delete(idfy(N_WORKER, ana_id, t))
         pipeline.delete(idfy(BATCH_SIZE, ana_id, t))

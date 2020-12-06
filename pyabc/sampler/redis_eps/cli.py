@@ -8,7 +8,7 @@ import cloudpickle
 from time import time
 import click
 from .redis_logging import logger
-from .cmd import (N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
+from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, SSA, QUEUE, START, STOP,
                   MSG, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION, idfy)
 from multiprocessing import Pool
@@ -50,6 +50,10 @@ def work_on_population(analysis_id: str,
     """
     Here the actual sampling happens.
     """
+    def get_int(var: str):
+        """Convenience function to read an int variable."""
+        return int(redis.get(idfy(var, ana_id, t)).decode())
+
     # set timers
     population_start_time = time()
     cumulative_simulation_time = 0
@@ -96,9 +100,8 @@ def work_on_population(analysis_id: str,
     sample = sample_factory()
 
     # loop until no more particles required
-    while int(redis.get(idfy(N_ACC, ana_id, t)).decode()) < n_req \
-            and (not all_accepted or
-                 int(redis.get(idfy(N_EVAL, ana_id, t)).decode()) < n_req):
+    while get_int(N_ACC) < n_req and (
+            not all_accepted or get_int(N_EVAL) - get_int(N_FAIL) < n_req):
         # check whether the process was externally asked to stop
         if kill_handler.killed:
             logger.info(
@@ -140,7 +143,7 @@ def work_on_population(analysis_id: str,
             # cache
             is_prel = False
 
-        # increase global number of evaluations counter
+        # increase global evaluation counter (before simulation!)
         particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
@@ -155,24 +158,26 @@ def work_on_population(analysis_id: str,
             try:
                 # simulate
                 new_sim = simulate_one()
-                # append to current sample
-                sample.append(new_sim)
-                # check for acceptance
-                if new_sim.accepted:
-                    # the order of the IDs is reversed, but this does not
-                    # matter. Important is only that the IDs are specified
-                    # before the simulation starts
-
-                    # append to accepted list
-                    accepted_samples.append(
-                        cloudpickle.dumps(
-                            (particle_max_id - n_batched, sample)))
-                    # initialize new sample
-                    sample = sample_factory()
             except Exception as e:
                 logger.warning(f"Redis worker number {n_worker} failed. "
                                f"Error message is: {e}")
-                # initialize new sample to be sure
+                # increment the failure counter
+                redis.incr(idfy(N_FAIL, ana_id, t), 1)
+                continue
+
+            # append to current sample
+            sample.append(new_sim)
+            # check for acceptance
+            if new_sim.accepted:
+                # the order of the IDs is reversed, but this does not
+                # matter. Important is only that the IDs are specified
+                # before the simulation starts
+
+                # append to accepted list
+                accepted_samples.append(
+                    cloudpickle.dumps(
+                        (particle_max_id - n_batched, sample)))
+                # initialize new sample
                 sample = sample_factory()
 
         # update total simulation-specific time
