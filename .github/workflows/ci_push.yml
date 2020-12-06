@@ -32,7 +32,7 @@ jobs:
         pip install -e .[R,test]
 
     - name: Run tests
-      timeout-minutes: 10
+      timeout-minutes: 6
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
           test/base test/visualization -s
