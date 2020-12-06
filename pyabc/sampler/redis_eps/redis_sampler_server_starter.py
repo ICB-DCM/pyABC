@@ -41,6 +41,8 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
 
         # give redis-server time to start
+        # TODO this can be improved (also below) by checking whether the
+        #  respective processes are in their expected states
         sleep(1)
 
         super().__init__(
