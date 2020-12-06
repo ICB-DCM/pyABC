@@ -1,9 +1,11 @@
-"""Inference util functions."""
+"""Inference utilities."""
 
 import numpy as np
 import pandas as pd
 import logging
+from datetime import datetime, timedelta
 from typing import List, Callable
+import uuid
 
 from pyabc.acceptor import Acceptor
 from pyabc.distance import Distance
@@ -11,7 +13,6 @@ from pyabc.epsilon import Epsilon
 from pyabc.model import Model
 from pyabc.random_variables import RV, Distribution
 from pyabc.transition import Transition, ModelPerturbationKernel
-
 from pyabc.random_choice import fast_random_choice
 from pyabc.parameters import Parameter
 from pyabc.population import Particle
@@ -473,12 +474,14 @@ def create_prel_simulate_function(
     return simulate_one
 
 
-
 def termination_criteria_fulfilled(
-        current_eps: float, min_eps: float, stop_if_single_model_alive: bool,
-        nr_of_models_alive: int, acceptance_rate: float,
-        min_acceptance_rate: float, t: int, max_t: int):
-    """Check termination conditions.
+        current_eps: float, min_eps: float,
+        stop_if_single_model_alive: bool, nr_of_models_alive: int,
+        acceptance_rate: float, min_acceptance_rate: float,
+        total_nr_simulations: int, max_total_nr_simulations: int,
+        walltime: timedelta, max_walltime: timedelta,
+        t: int, max_t: int) -> bool:
+    """Check termination criteria.
 
     Parameters
     ----------
@@ -486,8 +489,12 @@ def termination_criteria_fulfilled(
     min_eps: The minimum allowed epsilon value.
     stop_if_single_model_alive: Whether to stop with a single model left.
     nr_of_models_alive: The number of models alive in the last generation.
-    acceptance_rate: The lat generation's acceptance rate.
+    acceptance_rate: The last generation's acceptance rate.
     min_acceptance_rate: The minimum acceptance rate.
+    total_nr_simulations: The total number of simulations so far.
+    max_total_nr_simulations: Bound on the total number of simulations.
+    walltime: Walltime passed since start of the analysis.
+    max_walltime: Maximum allowed walltime.
     t: The last generation's time index.
     max_t: The maximum allowed time index.
 
@@ -495,14 +502,8 @@ def termination_criteria_fulfilled(
     -------
     True if any criterion is met, otherwise False.
     """
-    
-    """
-    if max_t == None:
-        max_t = np.inf
-        print("max_t was not specified; set to np.inf")
-    """
-
     if t >= max_t:
+        logger.info("Stopping: maximum time.")
         return True
     if current_eps <= min_eps:
         logger.info("Stopping: minimum epsilon.")
@@ -513,4 +514,76 @@ def termination_criteria_fulfilled(
     elif acceptance_rate < min_acceptance_rate:
         logger.info("Stopping: minimum acceptance rate.")
         return True
+    elif total_nr_simulations >= max_total_nr_simulations:
+        logger.info("Stopping: total simulations budget.")
+        return True
+    elif max_walltime is not None and walltime > max_walltime:
+        logger.info("Stopping: maximum walltime.")
+        return True
     return False
+
+
+def create_analysis_id():
+    """Create a universally unique id for a given analysis.
+    Used by the inference routine to uniquely associated results with analyses.
+    """
+    return str(uuid.uuid4())
+
+
+class AnalysisVars(dict):
+    """Contract object class for passing analysis variables.
+
+    Used e.g. to create new sampling tasks or check early stopping.
+    """
+
+    def __init__(
+        self,
+        model_prior: RV,
+        parameter_priors: List[Distribution],
+        model_perturbation_kernel: ModelPerturbationKernel,
+        transitions: List[Transition],
+        nr_samples_per_parameter: int,
+        models: List[Model],
+        summary_statistics: Callable,
+        x_0: dict,
+        distance_function: Distance,
+        eps: Epsilon,
+        acceptor: Acceptor,
+        min_acceptance_rate: float,
+        min_eps: float,
+        stop_if_single_model_alive: bool,
+        max_t: int,
+        max_total_nr_simulations: int,
+        prev_total_nr_simulations: int,
+        max_walltime: timedelta,
+        init_walltime: datetime,
+    ):
+        super().__init__()
+        self.model_prior = model_prior
+        self.parameter_priors = parameter_priors
+        self.model_perturbation_kernel = model_perturbation_kernel
+        self.transitions = transitions
+        self.nr_samples_per_parameter = nr_samples_per_parameter
+        self.models = models
+        self.summary_statistics = summary_statistics
+        self.x_0 = x_0
+        self.distance_function = distance_function
+        self.eps = eps
+        self.acceptor = acceptor
+        self.min_acceptance_rate = min_acceptance_rate
+        self.min_eps = min_eps
+        self.stop_if_single_model_alive = stop_if_single_model_alive
+        self.max_t = max_t
+        self.max_total_nr_simulations = max_total_nr_simulations
+        self.prev_total_nr_simulations = prev_total_nr_simulations
+        self.max_walltime = max_walltime
+        self.init_walltime = init_walltime
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__

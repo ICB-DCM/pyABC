@@ -1,11 +1,11 @@
 """ABC-SMC"""
 
-import datetime
 import logging
 from typing import List, Callable, TypeVar, Union
 import numpy as np
 from time import time
 import copy
+from datetime import datetime, timedelta
 
 from pyabc.acceptor import (
     Acceptor, UniformAcceptor, SimpleFunctionAcceptor, StochasticAcceptor)
@@ -25,7 +25,7 @@ from pyabc.weighted_statistics import effective_sample_size
 from pyabc.util import (
     create_simulate_from_prior_function, create_prior_pdf,
     create_transition_pdf, create_simulate_function,
-    termination_criteria_fulfilled)
+    termination_criteria_fulfilled, create_analysis_id, AnalysisVars)
 
 
 logger = logging.getLogger("ABC")
@@ -214,6 +214,10 @@ class ABCSMC:
         self.max_nr_populations = None
         self.min_acceptance_rate = None
         self.max_t = None
+        self.max_total_nr_simulations = None
+        self.max_walltime = None
+        self.init_walltime = None
+        self.analysis_id = None
 
         self._sanity_check()
 
@@ -484,7 +488,7 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             n=self.population_size(-1), simulate_one=simulate_one, t=t,
-            max_eval=np.inf, all_accepted=True, from_prior=True, **self._vars_dict())
+            max_eval=np.inf, all_accepted=True, ana_vars=self._vars())
 
         # extract accepted population
         population = sample.get_accepted_population()
@@ -543,22 +547,27 @@ class ABCSMC:
             minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
             min_acceptance_rate: float = 0.,
-            log_file: str = None) -> History:
+            max_total_nr_simulations: int = np.inf,
+            max_walltime: timedelta = None) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
 
         Parameters
         ----------
-        minimum_epsilon: float, optional
+        minimum_epsilon:
             Stop if epsilon is smaller than minimum epsilon specified here.
             Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
-        max_nr_populations: int, optional (default = np.inf)
-            The maximum number of populations. Stop if this number is reached.
-        min_acceptance_rate: float, optional (default = 0.0)
+        max_nr_populations:
+            Maximum allowed number of populations.
+            Stop if this number is reached.
+        min_acceptance_rate:
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
-
+        max_total_nr_simulations:
+            Maximum allowed total number of evaluations.
+        max_walltime:
+            Maximum allowed walltime since start of the run() method.
 
         Population after population is sampled and particles which are close
         enough to the observed data are accepted and added to the next
@@ -593,11 +602,21 @@ class ABCSMC:
 
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
+        self.max_total_nr_simulations = max_total_nr_simulations
+        self.max_walltime = max_walltime
 
-        # initial time
+        # for recording the overall time
+        self.init_walltime = datetime.now()
+
+        # initial time index
         t0 = self.history.max_t + 1
-        # log start time
-        self.history.start_time = datetime.datetime.now()
+        # last time point index
+        self.max_t = t0 + max_nr_populations - 1
+
+        # assign an analysis id
+        self.analysis_id = create_analysis_id()
+        # let the sampler know
+        self.sampler.set_analysis_id(self.analysis_id)
 
         # initialize transitions
         self._fit_transitions(t0)
@@ -610,17 +629,8 @@ class ABCSMC:
         self.distance_function.configure_sampler(self.sampler)
         self.eps.configure_sampler(self.sampler)
 
-        # last time point
-        self.max_t = t0 + max_nr_populations - 1
         # run loop over time points
         t = t0
-
-        # initialize file to write acceptance rates into
-        if log_file is not None:
-            import csv
-            column_names = ["Type", "Generation", "Accepted", "Total"]
-            csv.writer(open(log_file, 'w')).writerow(column_names)
-
         while True:
             # get epsilon for generation t
             current_eps = self.eps(t)
@@ -638,7 +648,8 @@ class ABCSMC:
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
-                max_eval=max_eval, log_file=log_file, **self._vars_dict())
+                max_eval=max_eval, ana_vars=self._vars(),
+            )
 
             # check sample health
             if not sample.ok:
@@ -666,23 +677,24 @@ class ABCSMC:
             logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
                         f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
 
-            # write acceptance rate into file
-            if log_file is not None:
-                row = ["Total", t, pop_size, n_sim]
-                csv.writer(open(log_file, 'a')).writerow(row)
-
             # prepare next iteration
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
 
+            # check termination criteria
             if termination_criteria_fulfilled(
-                    current_eps=current_eps, min_eps=minimum_epsilon,
-                    stop_if_single_model_alive=self
-                    .stop_if_only_single_model_alive,
-                    nr_of_models_alive=self.history.nr_of_models_alive(),
-                    acceptance_rate=acceptance_rate,
-                    min_acceptance_rate=min_acceptance_rate,
-                    t=t, max_t=self.max_t):
+                current_eps=current_eps, min_eps=minimum_epsilon,
+                stop_if_single_model_alive=  # noqa: E251
+                self.stop_if_only_single_model_alive,
+                nr_of_models_alive=self.history.nr_of_models_alive(),
+                acceptance_rate=acceptance_rate,
+                min_acceptance_rate=min_acceptance_rate,
+                total_nr_simulations=self.history.total_nr_simulations,
+                max_total_nr_simulations=self.max_total_nr_simulations,
+                walltime=datetime.now() - self.init_walltime,
+                max_walltime=self.max_walltime,
+                t=t, max_t=self.max_t,
+            ):
                 break
 
             # increment t
@@ -690,6 +702,9 @@ class ABCSMC:
 
         # close session and store end time
         self.history.done()
+
+        # tell samplers to stop any ongoing processes
+        self.sampler.stop()
 
         # return used history object
         return self.history
@@ -817,15 +832,19 @@ class ABCSMC:
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
 
-    def _vars_dict(self):
-        """Create a dictionary of analysis variables of interest."""
+    def _vars(self) -> AnalysisVars:
+        """Create a dictionary of analysis variables of interest.
+
+        These variables are passed to the sampler, as some need to create
+        simulation settings themselves.
+        """
         nr_samples_per_parameter = \
             self.population_size.nr_samples_per_parameter
-        return dict(
-            model_perturbation_kernel=self.model_perturbation_kernel,
-            transitions=self.transitions,
+        return AnalysisVars(
             model_prior=self.model_prior,
             parameter_priors=self.parameter_priors,
+            model_perturbation_kernel=self.model_perturbation_kernel,
+            transitions=self.transitions,
             nr_samples_per_parameter=nr_samples_per_parameter,
             models=self.models,
             summary_statistics=self.summary_statistics,
@@ -837,4 +856,8 @@ class ABCSMC:
             min_eps=self.minimum_epsilon,
             stop_if_single_model_alive=self.stop_if_only_single_model_alive,
             max_t=self.max_t,
+            max_total_nr_simulations=self.max_total_nr_simulations,
+            prev_total_nr_simulations=self.history.total_nr_simulations,
+            max_walltime=self.max_walltime,
+            init_walltime=self.init_walltime,
         )

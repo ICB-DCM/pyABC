@@ -8,6 +8,23 @@ Release Notes
 ...........
 
 
+0.10.9 (2020-11-28)
+-------------------
+
+* Add stopping criterion for total walltime (#370).
+
+
+0.10.8 (2020-11-27)
+-------------------
+
+* Allow to normalize acceptance rate plots by ESS (#346).
+* Add a list of pyABC references (#348).
+* Update to petabtests 0.0.0a5 (#362).
+* Add stopping criterion for total number of samples (#364).
+* Remove dill dependency, thus fixing a cloudpickle error, and
+  run selected tests also with python 3.7 (#367).
+
+
 0.10.7 (2020-08-20)
 -------------------
 

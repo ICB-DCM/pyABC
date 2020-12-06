@@ -1,31 +1,31 @@
 import numpy as np
 import pickle
-import logging
-from time import sleep, time
+from time import sleep
+from datetime import datetime
 import cloudpickle
 import copy
-import csv
 from redis import StrictRedis
 from typing import Callable, List, Tuple
 from jabbar import jabbar
 
+from ...util import (
+    AnalysisVars, create_simulate_function, termination_criteria_fulfilled)
 from ...sampler import Sampler, Sample
-from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
+from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
-                  SLEEP_TIME, BATCH_SIZE, IS_PREL, GENERATION, idfy)
+                  SLEEP_TIME, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION,
+                  idfy)
 from .redis_logging import logger
 
-logger_main = logging.getLogger("ABC")
 
 class RedisEvalParallelSampler(Sampler):
-    """
-    Redis based low latency sampler.
-    This sampler is well performing in distributed environments.
+    """Redis based low latency sampler.
+
+    This sampler is well-performing in distributed environments.
     It is usually faster than the
-    :class:`pyabc.sampler.DaskDistributedSampler` for
-    short model evaluation runtimes. The longer the model evaluation times,
-    the less the advantage becomes. It requires a running Redis server as
-    broker.
+    :class:`pyabc.sampler.DaskDistributedSampler` for short model evaluation
+    runtimes. The longer the model evaluation times, the less the advantage
+    becomes. It requires a running Redis server as broker.
 
     This sampler requires workers to be started via the command
     ``abc-redis-worker``.
@@ -36,11 +36,14 @@ class RedisEvalParallelSampler(Sampler):
     since worker start. So the actual runtime might be longer than 2h.
     See ``abc-redis-worker --help`` for its options.
 
-    Use the command ``abc-redis-manager`` to retrieve info and stop the running
-    workers.
+    Use the command ``abc-redis-manager`` to retrieve info on and stop the
+    running workers.
 
     Start as many workers as you wish. Workers can be dynamically added
     during the ABC run.
+
+    Currently, a server (specified via host and port) can only meaningfully
+    handle one ABCSMC analysis at a time.
 
     Parameters
     ----------
@@ -89,22 +92,27 @@ class RedisEvalParallelSampler(Sampler):
         """
         return self.redis.pubsub_numsub(MSG)[0][-1]
 
-    def sample_until_n_accepted(self,
-                                n,
-                                simulate_one,
-                                t,
-                                max_eval=np.inf,
-                                all_accepted=False,
-                                from_prior=False,
-                                log_file=None,
-                                **kwargs):
+    def set_analysis_id(self, analysis_id: str):
+        """Set the analysis id and make sure the server is available."""
+        super().set_analysis_id(analysis_id)
+        if self.redis.get(ANALYSIS_ID):
+            raise AssertionError(
+                "The server seems busy with an analysis already")
+        self.redis.set(ANALYSIS_ID, analysis_id)
+
+    def sample_until_n_accepted(
+            self, n, simulate_one, t, *,
+            max_eval=np.inf, all_accepted=False, ana_vars=None):
+        # get the analysis id
+        ana_id = self.analysis_id
 
         if self.generation_t_was_started(t):
             # update the SSA function
             self.redis.set(
-                idfy(SSA, t),
+                idfy(SSA, ana_id, t),
                 cloudpickle.dumps((simulate_one, self.sample_factory)))
-            self.redis.set(idfy(IS_PREL, t), int(False))
+            # let the workers know they should update their ssa
+            self.redis.set(idfy(IS_PREL, ana_id, t), int(False))
         else:
             # set up all variables for the new generation
             self.start_generation_t(
@@ -112,77 +120,35 @@ class RedisEvalParallelSampler(Sampler):
                 is_prel=False)
 
         id_results = []
-        n_prel_accepted = 0
-        n_prel_rejected = 0
+
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while len(id_results) < n:
                 # pop result from queue, block until one is available
-                dump = self.redis.blpop(idfy(QUEUE, t))[1]
+                dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
                 # extract pickled object
-                sample_with_id = pickle.loads(dump)
-
-                accepted_prel_counter, rejected_prel_counter, any_particle_accepted = \
-                    self.check_acceptance(t,
-                                          sample_with_id,
-                                          **kwargs)
-
-                n_prel_accepted = n_prel_accepted + accepted_prel_counter
-                n_prel_rejected = n_prel_rejected + rejected_prel_counter
-
-                if any_particle_accepted:
-                    # append to collected result
-                    id_results.append(sample_with_id)
-                    bar.inc()
-
-        # log preliminary acceptance rate
-        n_total_prel = n_prel_rejected+n_prel_accepted
-        if n_total_prel >= 1:
-            prel_acceptance_rate = n_prel_accepted/n_total_prel
-
-            logger_main.info(f"Preliminary acceptance rate: {n_prel_accepted} / {n_total_prel} = "
-                             f"{prel_acceptance_rate:.4e}")
-
-            if log_file is not None:
-                row = ["Preliminary", t, n_prel_accepted, n_total_prel]
-                csv.writer(open(log_file, 'a')).writerow(row)
+                particle_with_id = pickle.loads(dump)
+                # TODO check whether the acceptance criterion changed
+                # append to collected results
+                id_results.append(particle_with_id)
+                bar.update(len(id_results))
 
         # maybe head-start the next generation already
-        if not from_prior:
-            self.maybe_start_next_generation(
-                t=t, n=n, id_results=id_results, **kwargs)
+        self.maybe_start_next_generation(
+            t=t, n=n, id_results=id_results, ana_vars=ana_vars)
 
         # wait until all workers done
-        while int(self.redis.get(idfy(N_WORKER, t)).decode()) > 0:
+        while int(self.redis.get(idfy(N_WORKER, ana_id, t)).decode()) > 0:
             sleep(SLEEP_TIME)
 
         # make sure all results are collected
-        n_prel_discarded = 0
-
-        while self.redis.llen(idfy(QUEUE, t)) > 0:
-            dump = self.redis.blpop(idfy(QUEUE, t))[1]
-            sample_with_id=pickle.loads(dump)
-
-            accepted_prel_counter, rejected_prel_counter, any_particle_accepted = \
-                self.check_acceptance(t,
-                                      sample_with_id,
-                                      **kwargs)
-
-            n_prel_discarded = n_prel_discarded + accepted_prel_counter
-
-            if any_particle_accepted:
-                # append to collected result
-                id_results.append(sample_with_id)
-
-        # log discarded particles
-        if n_prel_discarded >= 1:
-            logger_main.info(f"Preliminary discarded: {n_prel_discarded}")
-            if log_file is not None:
-                row = ["Discarded preliminaries", t, n_prel_discarded, n_prel_discarded]
-                csv.writer(open(log_file, 'a')).writerow(row)
+        while self.redis.llen(idfy(QUEUE, ana_id, t)) > 0:
+            id_results.append(
+                pickle.loads(self.redis.blpop(idfy(QUEUE, ana_id, t))[1]))
 
         # set total number of evaluations
-        self.nr_evaluations_ = int(self.redis.get(idfy(N_EVAL, t)).decode())
+        self.nr_evaluations_ = int(
+            self.redis.get(idfy(N_EVAL, ana_id, t)).decode())
 
         # remove all time-specific variables
         self.clear_generation_t(t)
@@ -250,21 +216,25 @@ class RedisEvalParallelSampler(Sampler):
             self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
             is_prel: bool) -> None:
         """Start generation `t`."""
+        ana_id = self.analysis_id
+
         # write initial values to pipeline
         pipeline = self.redis.pipeline()
         # initialize variables for time t
-        self.redis.set(idfy(SSA, t),
+        self.redis.set(idfy(SSA, ana_id, t),
                        cloudpickle.dumps((simulate_one, self.sample_factory)))
-        pipeline.set(idfy(N_EVAL, t), 0)
-        pipeline.set(idfy(N_ACC, t), 0)
-        pipeline.set(idfy(N_REQ, t), n)
-        pipeline.set(idfy(ALL_ACCEPTED, t), int(all_accepted))  # encode as int
-        pipeline.set(idfy(N_WORKER, t), 0)
-        pipeline.set(idfy(BATCH_SIZE, t), self.batch_size)
-        pipeline.set(idfy(IS_PREL, t), int(is_prel))  # encode as int
+        pipeline.set(idfy(N_EVAL, ana_id, t), 0)
+        pipeline.set(idfy(N_ACC, ana_id, t), 0)
+        pipeline.set(idfy(N_REQ, ana_id, t), n)
+        pipeline.set(idfy(N_FAIL, ana_id, t), 0)
+        # encode as int
+        pipeline.set(idfy(ALL_ACCEPTED, ana_id, t), int(all_accepted))
+        pipeline.set(idfy(N_WORKER, ana_id, t), 0)
+        pipeline.set(idfy(BATCH_SIZE, ana_id, t), self.batch_size)
+        pipeline.set(idfy(IS_PREL, ana_id, t), int(is_prel))  # encode as int
 
-        # update the current generation variable
-        pipeline.set(GENERATION, t)
+        # update the current-generation variable
+        pipeline.set(idfy(GENERATION, ana_id), t)
 
         # execute all commands
         pipeline.execute()
@@ -280,7 +250,7 @@ class RedisEvalParallelSampler(Sampler):
         t: The time for which to check.
         """
         # just check any of the variables for time t
-        return self.redis.exists(idfy(N_REQ, t))
+        return self.redis.exists(idfy(N_REQ, self.analysis_id, t))
 
     def clear_generation_t(self, t: int) -> None:
         """Clean up after generation `t` has finished.
@@ -289,16 +259,18 @@ class RedisEvalParallelSampler(Sampler):
         ----------
         t: The time for which to clear.
         """
+        ana_id = self.analysis_id
         # delete keys from pipeline
         pipeline = self.redis.pipeline()
-        pipeline.delete(idfy(SSA, t))
-        pipeline.delete(idfy(N_EVAL, t))
-        pipeline.delete(idfy(N_ACC, t))
-        pipeline.delete(idfy(N_REQ, t))
-        pipeline.delete(idfy(ALL_ACCEPTED, t))
-        pipeline.delete(idfy(N_WORKER, t))
-        pipeline.delete(idfy(BATCH_SIZE, t))
-        pipeline.delete(idfy(QUEUE, t))
+        pipeline.delete(idfy(SSA, ana_id, t))
+        pipeline.delete(idfy(N_EVAL, ana_id, t))
+        pipeline.delete(idfy(N_ACC, ana_id, t))
+        pipeline.delete(idfy(N_REQ, ana_id, t))
+        pipeline.delete(idfy(N_FAIL, ana_id, t))
+        pipeline.delete(idfy(ALL_ACCEPTED, ana_id, t))
+        pipeline.delete(idfy(N_WORKER, ana_id, t))
+        pipeline.delete(idfy(BATCH_SIZE, ana_id, t))
+        pipeline.delete(idfy(QUEUE, ana_id, t))
         pipeline.execute()
 
     def create_sample(self, id_results: List[Tuple], n: int) -> Sample:
@@ -322,9 +294,8 @@ class RedisEvalParallelSampler(Sampler):
         return sample
 
     def maybe_start_next_generation(
-            self, t, n, id_results,
-            eps, min_eps, stop_if_single_model_alive, min_acceptance_rate,
-            max_t, **kwargs) -> None:
+            self, t: int, n: int, id_results: List,
+            ana_vars: AnalysisVars) -> None:
         """Start the next generation already, if that looks reasonable.
 
         Parameters
@@ -332,11 +303,7 @@ class RedisEvalParallelSampler(Sampler):
         t: The current time.
         n: The current population size.
         id_results: The so-far returned samples.
-        eps: The epsilon threshold scheme.
-        min_eps: The minimum epsilon value.
-        stop_if_single_model_alive: Whether to stop with only one model left.
-        min_acceptance_rate: The minimum acceptance rate.
-        max_t: The maximum generation time index.
+        ana_vars: Analysis variables.
 
         Note
         ----
@@ -348,8 +315,6 @@ class RedisEvalParallelSampler(Sampler):
         if not self.look_ahead:
             return
 
-        from pyabc.util import termination_criteria_fulfilled
-
         # create a result sample
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
@@ -359,23 +324,35 @@ class RedisEvalParallelSampler(Sampler):
         population = sample.get_accepted_population()
 
         # acceptance rate
-        nr_evaluations = int(self.redis.get(idfy(N_EVAL, t)).decode())
+        nr_evaluations = int(
+            self.redis.get(idfy(N_EVAL, self.analysis_id, t)).decode())
         acceptance_rate = len(population.get_list()) / nr_evaluations
 
         # check if any termination criterion (based on the current data)
         #  is likely to be fulfilled after the current generation
+        total_nr_simulations = \
+            ana_vars.prev_total_nr_simulations + nr_evaluations
+        walltime = datetime.now() - ana_vars.init_walltime
         if termination_criteria_fulfilled(
-                current_eps=eps(t), min_eps=min_eps,
-                stop_if_single_model_alive=stop_if_single_model_alive,
-                nr_of_models_alive=population.nr_of_models_alive(),
-                acceptance_rate=acceptance_rate,
-                min_acceptance_rate=min_acceptance_rate, t=t, max_t=max_t):
+            current_eps=ana_vars.eps(t),
+            min_eps=ana_vars.min_eps,
+            stop_if_single_model_alive=  # noqa: E251
+            ana_vars.stop_if_single_model_alive,
+            nr_of_models_alive=population.nr_of_models_alive(),
+            acceptance_rate=acceptance_rate,
+            min_acceptance_rate=ana_vars.min_acceptance_rate,
+            total_nr_simulations=total_nr_simulations,
+            max_total_nr_simulations=ana_vars.max_total_nr_simulations,
+            walltime=walltime,
+            max_walltime=ana_vars.max_walltime,
+            t=t, max_t=ana_vars.max_t,
+        ):
+            # do not head-start a new generation as this is likely not needed
             return
 
         # create a preliminary simulate_one function
-        simulate_one_prel = _create_preliminary_simulate_one(
-            t=t+1, sample=sample,
-            eps=eps, **kwargs)
+        simulate_one_prel = create_preliminary_simulate_one(
+            t=t+1, population=population, ana_vars=ana_vars)
 
         # head-start the next generation
         #  all_accepted is most certainly False for t>0
@@ -383,12 +360,17 @@ class RedisEvalParallelSampler(Sampler):
             n=n, t=t+1, simulate_one=simulate_one_prel,
             all_accepted=False, is_prel=True)
 
+    def stop(self):
+        """Stop potentially still ongoing sampling."""
+        # delete ids specifying the current analysis
+        self.redis.delete(ANALYSIS_ID)
+        self.redis.delete(idfy(GENERATION, self.analysis_id))
+        # note: the other ana_id-t-specific variables are not deleted, as these
+        #  do not hurt anyway and could potentially make the workers fail
 
-def _create_preliminary_simulate_one(
-        t, sample,
-        model_perturbation_kernel, transitions, model_prior, parameter_priors,
-        nr_samples_per_parameter, models, summary_statistics, x_0,
-        distance_function, eps, acceptor) -> Callable:
+
+def create_preliminary_simulate_one(
+        t, population, ana_vars: AnalysisVars) -> Callable:
     """Create a preliminary simulate_one function for generation `t+1`.
 
     Based on preliminary results, update transitions, distance function,
@@ -400,59 +382,33 @@ def _create_preliminary_simulate_one(
     Parameters
     ----------
     t: The time index for which to create the function (i.e. call with t+1).
-    sample: The preliminary sample object.
-    model_perturbation_kernel: The used model perturbation kernel.
-    transitions:
-        The parameter transition kernels. A deep copy of them is created here,
-        as we need to fit them to the preliminary data.
-    model_prior: The model prior.
-    parameter_priors: The parameter priors.
-    nr_samples_per_parameter: Number of samples per parameter.
-    models: The models.
-    summary_statistics: The summary statistics function.
-    x_0: The observed summary statistics.
-    distance_function:
-        The distance function. A deep copy of it is created here, as we need
-        to fit it to the preliminary data.
-    eps:
-        The epsilon threshold. A deep copy of it is created here, as we need
-        to fit it to the preliminary data.
-    acceptor:
-        The acceptor. A deep copy of it is created here, as we need
-        to fit it to the preliminary data.
+    population: The preliminary population.
+    ana_vars: The analysis variables.
 
     Returns
     -------
     simulate_one: The preliminary sampling function.
     """
-    # check whether to maybe stop
-    from pyabc.util import create_prel_simulate_function
-
-    # extract accepted population
-    population = sample.get_accepted_population()
-
     model_probabilities = population.get_model_probabilities()
 
     # create deep copies of potentially modified objects
-    transitions = copy.deepcopy(transitions)
-    distance_function = copy.deepcopy(distance_function)
-    eps = copy.deepcopy(eps)
-    acceptor = copy.deepcopy(acceptor)
+    transitions = copy.deepcopy(ana_vars.transitions)
+    distance_function = copy.deepcopy(ana_vars.distance_function)
+    eps = copy.deepcopy(ana_vars.eps)
+    acceptor = copy.deepcopy(ana_vars.acceptor)
 
     # fit transitions
     for m in population.get_alive_models():
         parameters, w = population.get_distribution(m)
         transitions[m].fit(parameters, w)
 
-    # TODO fit distance, eps, acceptor
-
-    return create_prel_simulate_function(
+    return create_simulate_function(
         t=t, model_probabilities=model_probabilities,
-        model_perturbation_kernel=model_perturbation_kernel,
-        transitions=transitions, model_prior=model_prior,
-        parameter_priors=parameter_priors,
-        nr_samples_per_parameter=nr_samples_per_parameter,
-        models=models, summary_statistics=summary_statistics,
-        x_0=x_0, distance_function=distance_function,
+        model_perturbation_kernel=ana_vars.model_perturbation_kernel,
+        transitions=transitions, model_prior=ana_vars.model_prior,
+        parameter_priors=ana_vars.parameter_priors,
+        nr_samples_per_parameter=ana_vars.nr_samples_per_parameter,
+        models=ana_vars.models, summary_statistics=ana_vars.summary_statistics,
+        x_0=ana_vars.x_0, distance_function=distance_function,
         eps=eps, acceptor=acceptor,
     )

@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 import json
 
-from ..sampler import Sampler
-
 
 class Distance(ABC):
     """
@@ -40,7 +38,7 @@ class Distance(ABC):
 
     def configure_sampler(
             self,
-            sampler: Sampler):
+            sampler):
         """
         This is called by the ABCSMC class and gives the distance
         the opportunity to configure the sampler.

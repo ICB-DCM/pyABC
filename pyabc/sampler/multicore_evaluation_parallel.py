@@ -80,18 +80,16 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
     However, if your summary statistics are large numpy arrays
     or similar, this could cause overhead
 
-
     Parameters
     ----------
-
     n_procs: int, optional
         If set to None, the Number of cores is determined according to
         :func:`pyabc.sge.nr_cores_available`.
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
-            **kwargs):
+            self, n, simulate_one, t, *,
+            max_eval=np.inf, all_accepted=False, ana_vars=None):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
