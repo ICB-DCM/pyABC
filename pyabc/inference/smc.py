@@ -647,7 +647,8 @@ class ABCSMC:
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
-                max_eval=max_eval, ana_vars=self._vars())
+                max_eval=max_eval, ana_vars=self._vars(),
+            )
 
             # check sample health
             if not sample.ok:
@@ -691,7 +692,7 @@ class ABCSMC:
                 max_total_nr_simulations=self.max_total_nr_simulations,
                 walltime=datetime.now() - self.init_walltime,
                 max_walltime=self.max_walltime,
-                t=t, max_t=self.max_t
+                t=t, max_t=self.max_t,
             ):
                 break
 
