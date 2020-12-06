@@ -4,8 +4,6 @@ import json
 from abc import ABC, abstractmethod
 from typing import Callable, List
 
-from ..sampler import Sampler
-
 
 class Epsilon(ABC):
     """
@@ -51,7 +49,7 @@ class Epsilon(ABC):
         """
         pass
 
-    def configure_sampler(self, sampler: Sampler):
+    def configure_sampler(self, sampler):
         """
         This is called by the ABCSMC class and gives the epsilon
         the opportunity to configure the sampler.

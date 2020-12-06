@@ -3,6 +3,8 @@ from subprocess import Popen  # noqa: S404
 from multiprocessing import Process
 import tempfile
 import psutil
+import time
+
 from .cli import work, _manage
 from .sampler import RedisEvalParallelSampler
 
@@ -15,9 +17,9 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
 
     def __init__(self,
                  host: str = "localhost",
-                 port: int = 6379,
                  password: str = None,
                  batch_size: int = 1,
+                 look_ahead: bool = False,
                  workers: int = 2,
                  processes_per_worker: int = 1):
         # start server
@@ -39,9 +41,10 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
 
         # give redis-server time to start
-        sleep(1)
+        sleep(0.1)
 
-        super().__init__(host, port, password, batch_size=batch_size)
+        super().__init__(
+            host, port, password, batch_size=batch_size, look_ahead=look_ahead)
 
         # initiate worker processes
         maybe_password = [] if password is None else ["--password", password]
@@ -59,18 +62,27 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         for p in self.__worker:
             p.start()
 
-    def cleanup(self):
-        """
-        Cleanup workers and server.
-        """
+        # sleep a short amount of time to make sure everything is set up
+        time.sleep(0.1)
+
+    def shutdown(self):
+        """Cleanup workers and server."""
+        # call stop command
+        self.stop()
+        if not self.__redis_server:
+            # no server: stop() was likely called already, skip
+            return
+
         # send stop signal to workers
         _manage("stop", port=self.__port, password=self.__password)
         for p in self.__worker:
             # wait for workers to join
             p.join()
+
         # terminate server
         self.__redis_server.terminate()
         # make sure it's gone
         self.__redis_server.kill()
         # delete python reference
         del self.__redis_server
+        self.__redis_server = None

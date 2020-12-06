@@ -89,8 +89,8 @@ latest/task.html#quick-and-easy-parallelism)
         return sample, nr_simulations
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
-            **kwargs):
+            self, n, simulate_one, t, *,
+            max_eval=np.inf, all_accepted=False, ana_vars=None):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.

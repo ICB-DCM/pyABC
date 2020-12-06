@@ -21,11 +21,14 @@ def RedisEvalParallelSamplerServerStarterWrapper():
                         ])
 def sampler(request):
     s = request.param()
-    yield s
     try:
-        s.cleanup()
-    except AttributeError:
-        pass
+        yield s
+    finally:
+        # release all resources
+        try:
+            s.shutdown()
+        except AttributeError:
+            pass
 
 
 def test_rpy2(sampler):

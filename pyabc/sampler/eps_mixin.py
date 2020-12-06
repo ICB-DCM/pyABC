@@ -14,8 +14,8 @@ class EPSMixin:
         return result_batch
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
-            **kwargs):
+            self, n, simulate_one, t, *,
+            max_eval=np.inf, all_accepted=False, ana_vars=None):
         # For default pickling
         if self.default_pickle:
             self.simulate_accept_one = pickle.dumps(simulate_one)

@@ -7,6 +7,7 @@ ALL_ACCEPTED = "all_accepted"
 SSA = "sample_simulate_accept"
 N_WORKER = "n_workers"
 IS_PREL = "is_prel"
+ANALYSIS_ID = "analysis_id"
 GENERATION = "generation"
 
 MSG = "msg_pubsub"
