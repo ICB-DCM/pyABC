@@ -65,12 +65,11 @@ def work_on_population(analysis_id: str,
     ana_id = analysis_id
 
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b, is_prel_b \
+    ssa_b, batch_size_b, all_accepted_b, n_req_b, is_prel_b \
         = (pipeline.get(idfy(SSA, ana_id, t))
            .get(idfy(BATCH_SIZE, ana_id, t))
            .get(idfy(ALL_ACCEPTED, ana_id, t))
            .get(idfy(N_REQ, ana_id, t))
-           .get(idfy(N_ACC, ana_id, t))
            .get(idfy(IS_PREL, ana_id, t)).execute())
 
     # if the ssa object does not exist, something went wrong, return
@@ -124,12 +123,13 @@ def work_on_population(analysis_id: str,
             # return to task queue
             return
 
-        # check whether the analysis terminated
-        if redis.get(ANALYSIS_ID) is None:
+        # check whether the analysis was terminated or replaced by a new one
+        ana_id_new_b = redis.get(ANALYSIS_ID)
+        if ana_id_new_b is None or str(ana_id_new_b.decode()) != ana_id:
             logger.info(
                 f"Worker {n_worker} stops during population because "
                 "the analysis seems to have been stopped.")
-            # notify quite
+            # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
             # return to task queue
             return
@@ -274,6 +274,7 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
             analysis_id = str(redis.get(ANALYSIS_ID).decode())
             #  current time index
             t = int(redis.get(idfy(GENERATION, analysis_id)).decode())
+            # work on the specified population
             work_on_population(
                 analysis_id=analysis_id, t=t,
                 redis=redis, start_time=start_time,

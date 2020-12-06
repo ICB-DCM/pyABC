@@ -202,7 +202,11 @@ class Sampler(ABC, metaclass=SamplerMeta):
         return self.sample_factory()
 
     def set_analysis_id(self, analysis_id: str):
-        """Set the analysis id. Called by the inference routine."""
+        """Set the analysis id.
+        Called by the inference routine.
+        The default is to just obediently set it. Specific samplers may want to
+        check whether there are conflicting analyses.
+        """
         self.analysis_id = analysis_id
 
     @abstractmethod
@@ -241,11 +245,8 @@ class Sampler(ABC, metaclass=SamplerMeta):
             is usually in particular the case in the initial calibration
             iteration.
         ana_vars:
-            Various analysis variables. Some samples can use these e.g. for
+            Various analysis variables. Some samplers can use these e.g. for
             proactive sampling.
-
-        Further arguments are specified by the inference class as keyword
-        arguments.
 
         Returns
         -------

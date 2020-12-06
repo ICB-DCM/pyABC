@@ -102,5 +102,3 @@ def get_if_worker_healthy(workers: List[Process], queue: Queue):
         except Empty:
             if not healthy(workers):
                 raise ProcessError("At least one worker is dead.")
-            continue
-    raise Exception("The code should never reach here")

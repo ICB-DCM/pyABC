@@ -8,7 +8,8 @@ from redis import StrictRedis
 from typing import Callable, List, Tuple
 from jabbar import jabbar
 
-from ...util import AnalysisVars, create_simulate_function
+from ...util import (
+    AnalysisVars, create_simulate_function, termination_criteria_fulfilled)
 from ...sampler import Sampler, Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
@@ -110,6 +111,7 @@ class RedisEvalParallelSampler(Sampler):
             self.redis.set(
                 idfy(SSA, ana_id, t),
                 cloudpickle.dumps((simulate_one, self.sample_factory)))
+            # let the workers know they should update their ssa
             self.redis.set(idfy(IS_PREL, ana_id, t), int(False))
         else:
             # set up all variables for the new generation
@@ -129,7 +131,7 @@ class RedisEvalParallelSampler(Sampler):
                 # TODO check whether the acceptance criterion changed
                 # append to collected results
                 id_results.append(particle_with_id)
-                bar.inc()
+                bar.update(len(id_results))
 
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
@@ -259,8 +261,6 @@ class RedisEvalParallelSampler(Sampler):
         if not self.look_ahead:
             return
 
-        from pyabc.util import termination_criteria_fulfilled
-
         # create a result sample
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
@@ -298,7 +298,7 @@ class RedisEvalParallelSampler(Sampler):
 
         # create a preliminary simulate_one function
         simulate_one_prel = create_preliminary_simulate_one(
-            t=t+1, sample=sample, ana_vars=ana_vars)
+            t=t+1, population=population, ana_vars=ana_vars)
 
         # head-start the next generation
         #  all_accepted is most certainly False for t>0
@@ -311,10 +311,12 @@ class RedisEvalParallelSampler(Sampler):
         # delete ids specifying the current analysis
         self.redis.delete(ANALYSIS_ID)
         self.redis.delete(idfy(GENERATION, self.analysis_id))
+        # note: the other ana_id-t-specific variables are not deleted, as these
+        #  do not hurt anyway and could potentially make the workers fail
 
 
 def create_preliminary_simulate_one(
-        t, sample, ana_vars: AnalysisVars) -> Callable:
+        t, population, ana_vars: AnalysisVars) -> Callable:
     """Create a preliminary simulate_one function for generation `t+1`.
 
     Based on preliminary results, update transitions, distance function,
@@ -326,18 +328,13 @@ def create_preliminary_simulate_one(
     Parameters
     ----------
     t: The time index for which to create the function (i.e. call with t+1).
-    sample: The preliminary sample object.
+    population: The preliminary population.
     ana_vars: The analysis variables.
 
     Returns
     -------
     simulate_one: The preliminary sampling function.
     """
-    # check whether to maybe stop
-
-    # extract accepted population
-    population = sample.get_accepted_population()
-
     model_probabilities = population.get_model_probabilities()
 
     # create deep copies of potentially modified objects
