@@ -5,7 +5,6 @@ from scipy import linalg as la
 from typing import List, Callable, Union
 import logging
 
-from ..sampler import Sampler
 from .scale import standard_deviation, span
 from .base import Distance, to_distance
 from ..storage import save_dict_to_json
@@ -208,7 +207,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.x_0 = None
 
     def configure_sampler(self,
-                          sampler: Sampler):
+                          sampler):
         """
         Make the sampler return also rejected particles,
         because these are needed to get a better estimate of the summary
@@ -420,7 +419,7 @@ class AggregatedDistance(Distance):
 
     def configure_sampler(
             self,
-            sampler: Sampler):
+            sampler):
         """
         Note: `configure_sampler` is applied by all distances sequentially,
         so care must be taken that they perform no contradictory operations

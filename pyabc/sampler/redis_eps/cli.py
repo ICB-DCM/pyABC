@@ -8,9 +8,9 @@ import cloudpickle
 from time import time
 import click
 from .redis_logging import logger
-from .cmd import (N_EVAL, N_ACC, N_REQ, ALL_ACCEPTED,
+from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, SSA, QUEUE, START, STOP,
-                  MSG, BATCH_SIZE)
+                  MSG, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION, idfy)
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -41,13 +41,18 @@ class KillHandler:
             sys.exit(0)
 
 
-def work_on_population(redis: StrictRedis,
+def work_on_population(analysis_id: str,
+                       t: int,
+                       redis: StrictRedis,
                        start_time: float,
                        max_runtime_s: float,
                        kill_handler: KillHandler):
     """
     Here the actual sampling happens.
     """
+    def get_int(var: str):
+        """Convenience function to read an int variable."""
+        return int(redis.get(idfy(var, ana_id, t)).decode())
 
     # set timers
     population_start_time = time()
@@ -55,29 +60,36 @@ def work_on_population(redis: StrictRedis,
 
     # read from pipeline
     pipeline = redis.pipeline()
-    # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, n_req_b, n_acc_b \
-        = (pipeline.get(SSA).get(BATCH_SIZE)
-           .get(ALL_ACCEPTED).get(N_REQ).get(N_ACC).execute())
 
+    # short-form
+    ana_id = analysis_id
+
+    # extract bytes
+    ssa_b, batch_size_b, all_accepted_b, n_req_b, is_prel_b \
+        = (pipeline.get(idfy(SSA, ana_id, t))
+           .get(idfy(BATCH_SIZE, ana_id, t))
+           .get(idfy(ALL_ACCEPTED, ana_id, t))
+           .get(idfy(N_REQ, ana_id, t))
+           .get(idfy(IS_PREL, ana_id, t)).execute())
+
+    # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
         return
 
+    # only allow stopping the worker at particular points
     kill_handler.exit = False
-
-    if n_acc_b is None:
-        return
 
     # convert from bytes
     simulate_one, sample_factory = pickle.loads(ssa_b)
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
     n_req = int(n_req_b.decode())
+    is_prel = bool(int(is_prel_b.decode()))
 
     # notify sign up as worker
-    n_worker = redis.incr(N_WORKER)
+    n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
     logger.info(
-        f"Begin population, batch size {batch_size}. "
+        f"Begin generation {t}, batch size {batch_size}. "
         f"I am worker {n_worker}")
 
     # counter for number of simulations
@@ -87,15 +99,16 @@ def work_on_population(redis: StrictRedis,
     sample = sample_factory()
 
     # loop until no more particles required
-    while int(redis.get(N_ACC).decode()) < n_req \
-            and (not all_accepted or int(redis.get(N_EVAL).decode()) < n_req):
+    while get_int(N_ACC) < n_req and (
+            not all_accepted or get_int(N_EVAL) - get_int(N_FAIL) < n_req):
+        # check whether the process was externally asked to stop
         if kill_handler.killed:
             logger.info(
                 f"Worker {n_worker} received stop signal. "
-                f"Terminating in the middle of a population "
+                "Terminating in the middle of a population "
                 f"after {internal_counter} samples.")
             # notify quit
-            redis.decr(N_WORKER)
+            redis.decr(idfy(N_WORKER, ana_id, t))
             sys.exit(0)
 
         # check whether time's up
@@ -106,11 +119,32 @@ def work_on_population(redis: StrictRedis,
                 f"runtime {current_runtime} exceeds "
                 f"max runtime {max_runtime_s}")
             # notify quit
-            redis.decr(N_WORKER)
+            redis.decr(idfy(N_WORKER, ana_id, t))
+            # return to task queue
             return
 
-        # increase global number of evaluations counter
-        particle_max_id = redis.incr(N_EVAL, batch_size)
+        # check whether the analysis was terminated or replaced by a new one
+        ana_id_new_b = redis.get(ANALYSIS_ID)
+        if ana_id_new_b is None or str(ana_id_new_b.decode()) != ana_id:
+            logger.info(
+                f"Worker {n_worker} stops during population because "
+                "the analysis seems to have been stopped.")
+            # notify quit
+            redis.decr(idfy(N_WORKER, ana_id, t))
+            # return to task queue
+            return
+
+        # check if the analysis left the preliminary mode
+        if is_prel and not bool(int(
+                redis.get(idfy(IS_PREL, ana_id, t)).decode())):
+            # reload SSA object
+            ssa_b = redis.get(idfy(SSA, ana_id, t))
+            simulate_one, sample_factory = pickle.loads(ssa_b)
+            # cache
+            is_prel = False
+
+        # increase global evaluation counter (before simulation!)
+        particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
@@ -124,24 +158,26 @@ def work_on_population(redis: StrictRedis,
             try:
                 # simulate
                 new_sim = simulate_one()
-                # append to current sample
-                sample.append(new_sim)
-                # check for acceptance
-                if new_sim.accepted:
-                    # the order of the IDs is reversed, but this does not
-                    # matter. Important is only that the IDs are specified
-                    # before the simulation starts
-
-                    # append to accepted list
-                    accepted_samples.append(
-                        cloudpickle.dumps(
-                            (particle_max_id - n_batched, sample)))
-                    # initialize new sample
-                    sample = sample_factory()
             except Exception as e:
                 logger.warning(f"Redis worker number {n_worker} failed. "
                                f"Error message is: {e}")
-                # initialize new sample to be sure
+                # increment the failure counter
+                redis.incr(idfy(N_FAIL, ana_id, t), 1)
+                continue
+
+            # append to current sample
+            sample.append(new_sim)
+            # check for acceptance
+            if new_sim.accepted:
+                # the order of the IDs is reversed, but this does not
+                # matter. Important is only that the IDs are specified
+                # before the simulation starts
+
+                # append to accepted list
+                accepted_samples.append(
+                    cloudpickle.dumps(
+                        (particle_max_id - n_batched, sample)))
+                # initialize new sample
                 sample = sample_factory()
 
         # update total simulation-specific time
@@ -152,20 +188,20 @@ def work_on_population(redis: StrictRedis,
             # new pipeline
             pipeline = redis.pipeline()
             # update particles counter
-            pipeline.incr(N_ACC, len(accepted_samples))
+            pipeline.incr(idfy(N_ACC, ana_id, t), len(accepted_samples))
             # note: samples are appended 1-by-1
-            pipeline.rpush(QUEUE, *accepted_samples)
+            pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)
             # execute all commands
             pipeline.execute()
 
     # end of sampling loop
 
     # notify quit
-    redis.decr(N_WORKER)
+    redis.decr(idfy(N_WORKER, ana_id, t))
     kill_handler.exit = True
     population_total_time = time() - population_start_time
     logger.info(
-        f"Finished population, did {internal_counter} samples. "
+        f"Finished generation {t}, did {internal_counter} samples. "
         f"Simulation time: {cumulative_simulation_time:.2f}s, "
         f"total time {population_total_time:.2f}.")
 
@@ -232,14 +268,25 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
         except AttributeError:
             data = msg["data"]
 
-        # check if it is int to (first iteration) run at least once
-        if data == START or isinstance(data, int):
-            work_on_population(redis, start_time, max_runtime_s, kill_handler)
+        if data == START:
+            # extract population definition
+            #  analysis id
+            analysis_id = str(redis.get(ANALYSIS_ID).decode())
+            #  current time index
+            t = int(redis.get(idfy(GENERATION, analysis_id)).decode())
+            # work on the specified population
+            work_on_population(
+                analysis_id=analysis_id, t=t,
+                redis=redis, start_time=start_time,
+                max_runtime_s=max_runtime_s, kill_handler=kill_handler)
 
-        if data == STOP:
+        elif data == STOP:
             logger.info("Received stop signal. Shutdown redis worker.")
             return
 
+        # TODO other messages (some integers?) are ignored
+
+        # check total time condition
         elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
             logger.info(
@@ -258,32 +305,57 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
                     "For 'reset-workers', the worker count will be resetted to"
                     "zero. This does not cancel the sampling. This is useful "
                     "if workers were unexpectedly killed.")
-@click.option('--host', default="localhost", help='Redis host.')
-@click.option('--port', default=6379, type=int, help='Redis port.')
-@click.option('--password', default=None, type=str, help='Redis password.')
+@click.option('--host', default="localhost", help="Redis host.")
+@click.option('--port', default=6379, type=int, help="Redis port.")
+@click.option('--password', default=None, type=str, help="Redis password.")
+@click.option('--time', '-t', 't', default=None, type=int,
+              help="Generation t.")
 @click.argument('command', type=str)
-def manage(command, host="localhost", port=6379, password=None):
+def manage(command, host="localhost", port=6379, password=None, t=None):
     """
     Corresponds to the entry point abc-redis-manager.
     """
-    return _manage(command, host=host, port=port, password=password)
+    return _manage(command, host=host, port=port, password=password, t=t)
 
 
-def _manage(command, host="localhost", port=6379, password=None):
+def _manage(command, host="localhost", port=6379, password=None, t=None):
+    if command not in ["info", "stop", "reset-workers"]:
+        print("Unknown command: ", command)
+        return
+
     redis = StrictRedis(host=host, port=port, password=password)
-    if command == "info":
-        pipe = redis.pipeline()
-        pipe.get(N_WORKER)
-        pipe.get(N_EVAL)
-        pipe.get(N_ACC)
-        pipe.get(N_REQ)
-        res = pipe.execute()
-        res = [r.decode() if r is not None else r for r in res]
-        print("Workers={} Evaluations={} Acceptances={}/{}"  # noqa: T001
-              .format(*res))
-    elif command == "stop":
+    if command == "stop":
         redis.publish(MSG, STOP)
+        return
+
+    # check whether an analysis is running
+    if not is_server_used(redis):
+        print("No active generation")
+        return
+
+    # id of the current analysis
+    ana_id = str(redis.get(ANALYSIS_ID).decode())
+
+    # default time is latest
+    if t is None:
+        t = int(redis.get(idfy(GENERATION, ana_id)).decode())
+
+    if command == "info":
+        pipeline = redis.pipeline()
+        res = (pipeline.get(idfy(N_WORKER, ana_id, t))
+               .get(idfy(N_EVAL, ana_id, t))
+               .get(idfy(N_ACC, ana_id, t))
+               .get(idfy(N_REQ, ana_id, t)).execute())
+        res = [r.decode() if r is not None else r for r in res]
+        print("Workers={} Evaluations={} Acceptances={}/{} (generation {})"
+              .format(*res, t))
     elif command == "reset-workers":
-        redis.set(N_WORKER, 0)
-    else:
-        print("Unknown command:", command)  # noqa: T001
+        redis.set(idfy(N_WORKER, ana_id, t), 0)
+
+
+def is_server_used(redis: StrictRedis):
+    """Check whether the server is currently in use."""
+    analysis_id = redis.get(ANALYSIS_ID)
+    if analysis_id is None:
+        return False
+    return True
