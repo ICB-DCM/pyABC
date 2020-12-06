@@ -35,7 +35,7 @@ jobs:
       timeout-minutes: 10
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
-          test/base test/visualization
+          test/base test/visualization -s
 
     - name: Coverage
       uses: codecov/codecov-action@v1
