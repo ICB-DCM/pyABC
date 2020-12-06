@@ -110,16 +110,13 @@ def sampler(request):
 
 
 @pytest.fixture
-def redis_starter_sampler():
+def redis_starter_sampler(request):
     s = RedisEvalParallelSamplerServerStarter(batch_size=5)
     try:
         yield s
     finally:
         # release all resources
-        try:
-            s.shutdown()
-        except AttributeError:
-            pass
+        s.shutdown()
 
 
 def basic_testcase():
@@ -265,7 +262,7 @@ def test_redis_multiprocess():
         return pyabc.Particle(0, {}, 0.1, [], [], accepted)
 
     sampler = RedisEvalParallelSamplerServerStarter(
-        batch_size=3, workers=1, processes_per_worker=1)
+        batch_size=3, workers=1, processes_per_worker=2)
     try:
         # id needs to be set
         sampler.set_analysis_id("ana_id")

@@ -41,7 +41,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
 
         # give redis-server time to start
-        sleep(0.1)
+        sleep(1)
 
         super().__init__(
             host, port, password, batch_size=batch_size, look_ahead=look_ahead)
@@ -63,7 +63,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
             p.start()
 
         # sleep a short amount of time to make sure everything is set up
-        time.sleep(0.1)
+        time.sleep(0.5)
 
     def shutdown(self):
         """Cleanup workers and server."""
