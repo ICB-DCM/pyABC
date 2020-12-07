@@ -7,15 +7,18 @@ import os
 import cloudpickle
 from time import time
 import click
-from .redis_logging import logger
-from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, SSA, QUEUE, START, STOP,
-                  MSG, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION, idfy)
-from ..util import any_particle_preliminary
 from multiprocessing import Pool
 import numpy as np
 import random
+import logging
 
+from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
+                  N_WORKER, SSA, QUEUE, START, STOP,
+                  MSG, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION,
+                  idfy)
+from ..util import any_particle_preliminary
+
+logger = logging.getLogger("Redis-Worker")
 
 TIMES = {"s": 1,
          "m": 60,
@@ -67,11 +70,11 @@ def work_on_population(analysis_id: str,
     ana_id = analysis_id
 
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, is_prel_b \
+    ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b \
         = (pipeline.get(idfy(SSA, ana_id, t))
            .get(idfy(BATCH_SIZE, ana_id, t))
            .get(idfy(ALL_ACCEPTED, ana_id, t))
-           .get(idfy(IS_PREL, ana_id, t)).execute())
+           .get(idfy(IS_LOOK_AHEAD, ana_id, t)).execute())
 
     # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
@@ -84,7 +87,7 @@ def work_on_population(analysis_id: str,
     simulate_one, sample_factory = pickle.loads(ssa_b)
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
-    is_prel = bool(int(is_prel_b.decode()))
+    is_look_ahead = bool(int(is_look_ahead_b.decode()))
 
     # notify sign up as worker
     n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
@@ -94,9 +97,6 @@ def work_on_population(analysis_id: str,
 
     # counter for number of simulations
     internal_counter = 0
-
-    # create empty sample
-    sample = sample_factory()
 
     # loop until no more particles required
     # all numbers are re-loaded in each iteration as they can dynamically
@@ -137,14 +137,14 @@ def work_on_population(analysis_id: str,
             # return to task queue
             return
 
-        # check if the analysis left the preliminary mode
-        if is_prel and not bool(int(
-                redis.get(idfy(IS_PREL, ana_id, t)).decode())):
+        # check if the analysis left the look-ahead mode
+        if is_look_ahead and not bool(int(
+                redis.get(idfy(IS_LOOK_AHEAD, ana_id, t)).decode())):
             # reload SSA object
             ssa_b = redis.get(idfy(SSA, ana_id, t))
             simulate_one, sample_factory = pickle.loads(ssa_b)
             # cache
-            is_prel = False
+            is_look_ahead = False
 
         # increase global evaluation counter (before simulation!)
         particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
@@ -155,6 +155,9 @@ def work_on_population(analysis_id: str,
         accepted_samples = []
         # whether any particle in this iteration is preliminary
         any_prel = False
+
+        # create empty sample
+        sample = sample_factory(is_look_ahead=is_look_ahead)
 
         # make batch_size attempts
         for n_batched in range(batch_size):
@@ -186,7 +189,7 @@ def work_on_population(analysis_id: str,
                         (particle_max_id - n_batched, sample)))
                 any_prel = any_prel or any_particle_preliminary(sample)
                 # initialize new sample
-                sample = sample_factory()
+                sample = sample_factory(is_look_ahead=is_look_ahead)
 
         # update total simulation-specific time
         cumulative_simulation_time += time() - this_sim_start

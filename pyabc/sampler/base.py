@@ -21,9 +21,12 @@ class Sample:
         requested number of particles).
     """
 
-    def __init__(self, record_rejected: bool = False, ok: bool = True):
+    def __init__(self, record_rejected: bool = False,
+                 is_look_ahead: bool = False,
+                 ok: bool = True):
         self.particles: List[Particle] = []
         self.record_rejected: bool = record_rejected
+        self.is_look_ahead: bool = is_look_ahead
         self.ok: bool = ok
 
     @property
@@ -93,6 +96,7 @@ class Sample:
         # sample's list of particles is the concatenation of both samples'
         # lists
         sample.particles = self.particles + other.particles
+        # the other attributes may keep their defaults
         return sample
 
     @property
@@ -135,11 +139,12 @@ class SampleFactory:
     def __init__(self, record_rejected: bool = False):
         self.record_rejected = record_rejected
 
-    def __call__(self):
+    def __call__(self, is_look_ahead: bool = False):
         """
         Create a new empty sample.
         """
-        return Sample(self.record_rejected)
+        return Sample(
+            record_rejected=self.record_rejected, is_look_ahead=is_look_ahead)
 
 
 def wrap_sample(f):

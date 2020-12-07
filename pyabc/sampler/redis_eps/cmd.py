@@ -7,7 +7,7 @@ N_FAIL = "n_fail"
 ALL_ACCEPTED = "all_accepted"
 SSA = "sample_simulate_accept"
 N_WORKER = "n_workers"
-IS_PREL = "is_prel"
+IS_LOOK_AHEAD = "is_look_ahead"
 ANALYSIS_ID = "analysis_id"
 GENERATION = "generation"
 
