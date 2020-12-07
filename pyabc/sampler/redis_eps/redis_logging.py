@@ -36,6 +36,7 @@ class RedisSamplerLogger:
     def add_row(self, t: int, n_evaluated: int, n_accepted: int,
                 n_lookahead: int = None, n_lookahead_accepted: int = None,
                 n_preliminary: int = None):
+        """Add row for time `t`."""
         # apply defaults
         if n_lookahead is None:
             n_lookahead = self.n_lookahead

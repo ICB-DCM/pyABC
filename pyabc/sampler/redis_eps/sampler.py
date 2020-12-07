@@ -73,7 +73,10 @@ class RedisEvalParallelSampler(Sampler):
         In look-ahead mode, acceptance can be delayed until the final
         acceptance criteria for generation t have been decided. This is
         mandatory if the routine has adaptive components (distance, epsilon,
-        ...) besides the transition kernel.
+        ...) besides the transition kernel. If not needed, enabling it may
+        lead to a worse performance, especially if evaluation is costly
+        compared to simulation, because evaluation happens sequentially on the
+        main thread.
         Only effective if `look_ahead=True`.
     log_file:
         A file for a dedicated sampler history. Updated in each iteration.
@@ -446,10 +449,10 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
     # check whether there are preliminary particles
     if not any(particle.preliminary for particle in sample.particles):
         n_accepted = sum(particle.accepted for particle in sample.particles)
-        if n_accepted == 0:
+        if n_accepted != 1:
             # this should never happen
             raise AssertionError(
-                "Expected at least one accepted particle in sample.")
+                "Expected exactly one accepted particle in sample.")
         # increase accepted counter if in look-ahead mode
         if sample.is_look_ahead:
             logger.n_lookahead_accepted += n_accepted

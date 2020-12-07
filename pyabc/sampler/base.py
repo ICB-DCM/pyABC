@@ -12,11 +12,12 @@ class Sample:
 
     Parameters
     ----------
-
-    record_rejected: bool
+    record_rejected:
         Whether to record rejected particles as well, along with accepted
         ones.
-    ok: bool
+    is_look_ahead:
+        Whether this sample consists of particles generated in look-ahead mode.
+    ok:
         Whether the sampling process succeeded (usually in generating the
         requested number of particles).
     """
@@ -131,7 +132,6 @@ class SampleFactory:
 
     Parameters
     ----------
-
     record_rejected: bool
         Corresponds to Sample.record_rejected.
     """
@@ -157,6 +157,9 @@ def wrap_sample(f):
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
+        if any(particle.preliminary for particle in sample.particles):
+            raise AssertionError(
+                "There cannot be non-evaluated particles.")
         return sample
     return sample_until_n_accepted
 

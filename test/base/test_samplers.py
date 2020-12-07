@@ -336,6 +336,9 @@ def test_redis_look_ahead():
     """Test the redis sampler in look-ahead mode."""
     model, prior, distance, obs = basic_testcase()
     eps = pyabc.ListEpsilon([20, 10, 5])
+    # spice things up with an adaptive population size
+    pop_size = pyabc.AdaptivePopulationSize(
+        start_nr_particles=50, mean_cv=0.5, max_population_size=50)
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerServerStarter(
             look_ahead=True, look_ahead_delay_evaluation=False,
@@ -343,7 +346,7 @@ def test_redis_look_ahead():
         try:
             abc = pyabc.ABCSMC(
                 model, prior, distance, sampler=sampler,
-                population_size=10, eps=eps)
+                population_size=pop_size, eps=eps)
             abc.new(pyabc.create_sqlite_db_id(), obs)
             h = abc.run(max_nr_populations=3)
         finally:
@@ -386,12 +389,16 @@ def test_redis_look_ahead_delayed():
     """Test the look-ahead sampler with delayed evaluation in an adaptive
     setup."""
     model, prior, distance, obs = basic_testcase()
+    # spice things up with an adaptive population size
+    pop_size = pyabc.AdaptivePopulationSize(
+        start_nr_particles=50, mean_cv=0.5, max_population_size=50)
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerLookAheadDelayWrapper(
             log_file=fh.name)
         try:
             abc = pyabc.ABCSMC(
-                model, prior, distance, sampler=sampler, population_size=10)
+                model, prior, distance, sampler=sampler,
+                population_size=pop_size)
             abc.new(pyabc.create_sqlite_db_id(), obs)
             abc.run(max_nr_populations=3)
         finally:
@@ -400,5 +407,5 @@ def test_redis_look_ahead_delayed():
         df = pd.read_csv(fh.name, sep=',')
         assert (df.n_lookahead > 0).any()
         assert (df.n_lookahead_accepted > 0).any()
-        # in delayed mode, all lookaheads must have been preliminary
+        # in delayed mode, all look-aheads must have been preliminary
         assert (df.n_lookahead == df.n_preliminary).all()
