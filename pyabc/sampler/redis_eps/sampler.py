@@ -125,6 +125,10 @@ class RedisEvalParallelSampler(Sampler):
         # get the analysis id
         ana_id = self.analysis_id
 
+        def get_int(var: str):
+            """Convenience function to read an int variable."""
+            return int(self.redis.get(idfy(var, ana_id, t)).decode())
+
         if self.generation_t_was_started(t):
             # update the SSA function
             self.redis.set(
@@ -134,6 +138,11 @@ class RedisEvalParallelSampler(Sampler):
             self.redis.set(idfy(N_REQ, ana_id, t), n)
             # let the workers know they should update their ssa
             self.redis.set(idfy(IS_LOOK_AHEAD, ana_id, t), int(False))
+            # it can happen that the population size increased, but the workers
+            #  believe they are done already
+            if get_int(N_WORKER) == 0 and get_int(N_ACC) < get_int(N_REQ):
+                # send the start signal again
+                self.redis.publish(MSG, START)
         else:
             # set up all variables for the new generation
             self.start_generation_t(
