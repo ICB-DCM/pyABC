@@ -45,6 +45,7 @@ class KillHandler:
 def work_on_population(analysis_id: str,
                        t: int,
                        redis: StrictRedis,
+                       catch: bool,
                        start_time: float,
                        max_runtime_s: float,
                        kill_handler: KillHandler):
@@ -152,6 +153,8 @@ def work_on_population(analysis_id: str,
         this_sim_start = time()
         # collect accepted particles
         accepted_samples = []
+        # whether any particle in this iteration is preliminary
+        any_prel = False
 
         # make batch_size attempts
         for n_batched in range(batch_size):
@@ -165,6 +168,8 @@ def work_on_population(analysis_id: str,
                                f"Error message is: {e}")
                 # increment the failure counter
                 redis.incr(idfy(N_FAIL, ana_id, t), 1)
+                if not catch:
+                    raise e
                 continue
 
             # append to current sample
@@ -179,6 +184,7 @@ def work_on_population(analysis_id: str,
                 accepted_samples.append(
                     cloudpickle.dumps(
                         (particle_max_id - n_batched, sample)))
+                any_prel = any_prel or any_particle_preliminary(sample)
                 # initialize new sample
                 sample = sample_factory()
 
@@ -191,8 +197,7 @@ def work_on_population(analysis_id: str,
             pipeline = redis.pipeline()
             # update particles counter if nothing is preliminary,
             #  otherwise final acceptance is done by the sampler
-            if not any(any_particle_preliminary(sample)
-                       for sample in accepted_samples):
+            if not any_prel:
                 pipeline.incr(idfy(N_ACC, ana_id, t), len(accepted_samples))
             # note: samples are appended 1-by-1
             pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)
@@ -214,21 +219,23 @@ def work_on_population(analysis_id: str,
 @click.command(help="Evaluation parallel redis sampler for pyABC.")
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
-@click.option('--runtime', type=str, default="2h",
+@click.option('--runtime', default="2h", type=str,
               help='Max worker runtime if the form <NR><UNIT>, '
                    'where <NR> is any number and <UNIT> can be s, '
                    '(S,) m, (M,) '
                    'h, (H,) d, (D) for seconds, minutes, hours and days. '
                    'E.g. for 12 hours you would pass --runtime=12h, for half '
                    'a day you could do 0.5d.')
-@click.option('--password', default=None, help='Password for a secure '
-                                               'connection.')
-@click.option('--processes', type=int, default=1, help="The number of worker "
-                                                       "processes to start")
+@click.option('--password', default=None, type=str,
+              help='Password for a secure connection.')
+@click.option('--processes', default=1, type=int,
+              help="The number of worker processes to start")
+@click.option('--catch', default=True, type=bool, help="Catch errors.")
 def work(host="localhost",
          port=6379, runtime="2h",
          password=None,
-         processes=1):
+         processes=1,
+         catch=True):
     """
     Corresponds to the entry point abc-redis-worker.
     """
@@ -236,15 +243,16 @@ def work(host="localhost",
         # start a single process right here, not within pool
         # this handles the problem of starting a daemon process within a
         # daemon process
-        return _work(host, port, runtime, password)
+        return _work(host, port, runtime, password, catch)
 
     with Pool(processes) as pool:
-        res = pool.starmap(_work, [(host, port, runtime, password)]
+        res = pool.starmap(_work, [(host, port, runtime, password, catch)]
                            * processes)
     return res
 
 
-def _work(host="localhost", port=6379, runtime="2h", password=None):
+def _work(host="localhost", port=6379, runtime="2h", password=None,
+          catch=True):
     np.random.seed()
     random.seed()
 
@@ -282,7 +290,7 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
             # work on the specified population
             work_on_population(
                 analysis_id=analysis_id, t=t,
-                redis=redis, start_time=start_time,
+                redis=redis, catch=catch, start_time=start_time,
                 max_runtime_s=max_runtime_s, kill_handler=kill_handler)
 
         elif data == STOP:

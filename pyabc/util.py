@@ -20,6 +20,65 @@ from pyabc.population import Particle
 logger = logging.getLogger(__name__)
 
 
+class AnalysisVars(dict):
+    """Contract object class for passing analysis variables.
+
+    Used e.g. to create new sampling tasks or check early stopping.
+    """
+
+    def __init__(
+        self,
+        model_prior: RV,
+        parameter_priors: List[Distribution],
+        model_perturbation_kernel: ModelPerturbationKernel,
+        transitions: List[Transition],
+        nr_samples_per_parameter: int,
+        models: List[Model],
+        summary_statistics: Callable,
+        x_0: dict,
+        distance_function: Distance,
+        eps: Epsilon,
+        acceptor: Acceptor,
+        min_acceptance_rate: float,
+        min_eps: float,
+        stop_if_single_model_alive: bool,
+        max_t: int,
+        max_total_nr_simulations: int,
+        prev_total_nr_simulations: int,
+        max_walltime: timedelta,
+        init_walltime: datetime,
+    ):
+        super().__init__()
+        self.model_prior = model_prior
+        self.parameter_priors = parameter_priors
+        self.model_perturbation_kernel = model_perturbation_kernel
+        self.transitions = transitions
+        self.nr_samples_per_parameter = nr_samples_per_parameter
+        self.models = models
+        self.summary_statistics = summary_statistics
+        self.x_0 = x_0
+        self.distance_function = distance_function
+        self.eps = eps
+        self.acceptor = acceptor
+        self.min_acceptance_rate = min_acceptance_rate
+        self.min_eps = min_eps
+        self.stop_if_single_model_alive = stop_if_single_model_alive
+        self.max_t = max_t
+        self.max_total_nr_simulations = max_total_nr_simulations
+        self.prev_total_nr_simulations = prev_total_nr_simulations
+        self.max_walltime = max_walltime
+        self.init_walltime = init_walltime
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def create_simulate_from_prior_function(
         t: int, model_prior: RV, parameter_priors: List[Distribution],
         models: List[Model], summary_statistics: Callable,
@@ -451,6 +510,64 @@ def only_simulate_data_for_proposal(
         preliminary=True)
 
 
+def evaluate_preliminary_particle(
+        particle: Particle, t, ana_vars: AnalysisVars) -> Particle:
+    """Evaluate a preliminary particle.
+    I.e. compute distance and check acceptance.
+
+    Returns
+    -------
+    evaluated_particle: The evaluated particle
+    """
+    if not particle.preliminary:
+        raise AssertionError("Particle is not preliminary")
+
+    # for results
+    accepted_sum_stats = []
+    accepted_distances = []
+    accepted_weights = []
+    rejected_sum_stats = []
+    rejected_distances = []
+
+    for sum_stat in particle.accepted_sum_stats:
+        acc_res = ana_vars.acceptor(
+            distance_function=ana_vars.distance_function,
+            eps=ana_vars.eps,
+            x=sum_stat,
+            x_0=ana_vars.x_0,
+            t=t,
+            par=particle.parameter)
+
+        if acc_res.accept:
+            accepted_sum_stats.append(sum_stat)
+            accepted_distances.append(acc_res.distance)
+            # the acceptance weight
+            accepted_weights.append(acc_res.weight)
+        else:
+            rejected_sum_stats.append(sum_stat)
+            rejected_distances.append(acc_res.distance)
+
+    # reconstruct weighting function from `weight_function`
+    sampling_weight = particle.weight
+    fr_accepted_for_par = \
+        len(accepted_sum_stats) / ana_vars.nr_samples_per_parameter
+    # the weight is the sampling weight times the acceptance weight(s)
+    weight = sampling_weight * np.prod(accepted_weights) * \
+        fr_accepted_for_par
+
+    # return the evaluated particle
+    return Particle(
+        m=particle.m,
+        parameter=particle.parameter,
+        weight=weight,
+        accepted_sum_stats=accepted_sum_stats,
+        accepted_distances=accepted_distances,
+        rejected_sum_stats=rejected_sum_stats,
+        rejected_distances=rejected_distances,
+        accepted=len(accepted_distances) > 0
+    )
+
+
 def termination_criteria_fulfilled(
         current_eps: float, min_eps: float,
         stop_if_single_model_alive: bool, nr_of_models_alive: int,
@@ -505,62 +622,3 @@ def create_analysis_id():
     Used by the inference routine to uniquely associated results with analyses.
     """
     return str(uuid.uuid4())
-
-
-class AnalysisVars(dict):
-    """Contract object class for passing analysis variables.
-
-    Used e.g. to create new sampling tasks or check early stopping.
-    """
-
-    def __init__(
-        self,
-        model_prior: RV,
-        parameter_priors: List[Distribution],
-        model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition],
-        nr_samples_per_parameter: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        x_0: dict,
-        distance_function: Distance,
-        eps: Epsilon,
-        acceptor: Acceptor,
-        min_acceptance_rate: float,
-        min_eps: float,
-        stop_if_single_model_alive: bool,
-        max_t: int,
-        max_total_nr_simulations: int,
-        prev_total_nr_simulations: int,
-        max_walltime: timedelta,
-        init_walltime: datetime,
-    ):
-        super().__init__()
-        self.model_prior = model_prior
-        self.parameter_priors = parameter_priors
-        self.model_perturbation_kernel = model_perturbation_kernel
-        self.transitions = transitions
-        self.nr_samples_per_parameter = nr_samples_per_parameter
-        self.models = models
-        self.summary_statistics = summary_statistics
-        self.x_0 = x_0
-        self.distance_function = distance_function
-        self.eps = eps
-        self.acceptor = acceptor
-        self.min_acceptance_rate = min_acceptance_rate
-        self.min_eps = min_eps
-        self.stop_if_single_model_alive = stop_if_single_model_alive
-        self.max_t = max_t
-        self.max_total_nr_simulations = max_total_nr_simulations
-        self.prev_total_nr_simulations = prev_total_nr_simulations
-        self.max_walltime = max_walltime
-        self.init_walltime = init_walltime
-
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(key)
-
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__

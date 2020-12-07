@@ -63,7 +63,7 @@ class Sample:
         return self.particles[:m]
 
     @property
-    def _accepted_particles(self) -> List[Particle]:
+    def accepted_particles(self) -> List[Particle]:
         """
         Returns
         -------
@@ -92,7 +92,7 @@ class Sample:
         sample = Sample(self.record_rejected)
         # sample's list of particles is the concatenation of both samples'
         # lists
-        sample._particles = self.particles + other.particles
+        sample.particles = self.particles + other.particles
         return sample
 
     @property
@@ -104,7 +104,7 @@ class Sample:
         n_accepted: int
             Number of accepted particles.
         """
-        return len(self._accepted_particles)
+        return len(self.accepted_particles)
 
     def get_accepted_population(self) -> Population:
         """
@@ -114,7 +114,7 @@ class Sample:
         population: Population
             A population of only the accepted particles.
         """
-        return Population(self._accepted_particles)
+        return Population(self.accepted_particles)
 
 
 class SampleFactory:

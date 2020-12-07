@@ -71,8 +71,9 @@ def RedisEvalParallelSamplerWrapper():
     return RedisEvalParallelSamplerServerStarter(batch_size=5)
 
 
-def RedisEvalParallelSamplerLookAheadWrapper():
-    return RedisEvalParallelSamplerServerStarter(batch_size=5, look_ahead=True)
+def RedisEvalParallelSamplerLookAheadDelayWrapper():
+    return RedisEvalParallelSamplerServerStarter(
+        look_ahead=True, look_ahead_delay_evaluation=True)
 
 
 def PicklingMulticoreParticleParallelSampler():
@@ -85,6 +86,7 @@ def PicklingMulticoreEvalParallelSampler():
 
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerWrapper,
+                        RedisEvalParallelSamplerLookAheadDelayWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
@@ -333,7 +335,8 @@ def test_redis_look_ahead():
     """Test the redis sampler in look-ahead mode."""
     model, prior, distance, obs = basic_testcase()
     eps = pyabc.ListEpsilon([20, 10, 5])
-    sampler = RedisEvalParallelSamplerLookAheadWrapper()
+    sampler = RedisEvalParallelSamplerServerStarter(
+        look_ahead=True, look_ahead_delay_evaluation=False)
     try:
         abc = pyabc.ABCSMC(
             model, prior, distance, sampler=sampler,
@@ -346,16 +349,32 @@ def test_redis_look_ahead():
     assert h.n_populations == 3
 
 
-def test_redis_look_ahead_error():
+def _test_redis_look_ahead_error():
     """Test whether the look-ahead mode fails as expected."""
+    raise NotImplementedError()
     model, prior, distance, obs = basic_testcase()
-    sampler = RedisEvalParallelSamplerLookAheadWrapper()
+    sampler = RedisEvalParallelSamplerServerStarter(
+        look_ahead=True, look_ahead_delay_evaluation=False)
     # adaptive epsilon
     try:
         abc = pyabc.ABCSMC(
             model, prior, distance, sampler=sampler, population_size=10)
         abc.new(pyabc.create_sqlite_db_id(), obs)
-        with pytest.raises(Exception):
+        with pytest.raises(AssertionError):
             abc.run(max_nr_populations=3)
+    finally:
+        sampler.shutdown()
+
+
+def test_redis_look_ahead_delayed():
+    """Test the look-ahead sampler with delayed evaluation in an adaptive
+    setup."""
+    model, prior, distance, obs = basic_testcase()
+    sampler = RedisEvalParallelSamplerLookAheadDelayWrapper()
+    try:
+        abc = pyabc.ABCSMC(
+            model, prior, distance, sampler=sampler, population_size=10)
+        abc.new(pyabc.create_sqlite_db_id(), obs)
+        abc.run(max_nr_populations=3)
     finally:
         sampler.shutdown()
