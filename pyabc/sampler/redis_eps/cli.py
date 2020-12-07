@@ -11,6 +11,7 @@ from .redis_logging import logger
 from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, SSA, QUEUE, START, STOP,
                   MSG, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION, idfy)
+from ..util import any_particle_preliminary
 from multiprocessing import Pool
 import numpy as np
 import random
@@ -97,8 +98,11 @@ def work_on_population(analysis_id: str,
     sample = sample_factory()
 
     # loop until no more particles required
+    # all numbers are re-loaded in each iteration as they can dynamically
+    #  update
     while get_int(N_ACC) < get_int(N_REQ) and (
-            not all_accepted or get_int(N_EVAL) - get_int(N_FAIL) < get_int(N_REQ)):
+            not all_accepted or
+            get_int(N_EVAL) - get_int(N_FAIL) < get_int(N_REQ)):
         # check whether the process was externally asked to stop
         if kill_handler.killed:
             logger.info(
@@ -185,8 +189,10 @@ def work_on_population(analysis_id: str,
         if len(accepted_samples) > 0:
             # new pipeline
             pipeline = redis.pipeline()
-            # update particles counter if not preliminary
-            if not is_prel:
+            # update particles counter if nothing is preliminary,
+            #  otherwise final acceptance is done by the sampler
+            if not any(any_particle_preliminary(sample)
+                       for sample in accepted_samples):
                 pipeline.incr(idfy(N_ACC, ana_id, t), len(accepted_samples))
             # note: samples are appended 1-by-1
             pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)

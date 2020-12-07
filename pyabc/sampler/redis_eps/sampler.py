@@ -9,7 +9,9 @@ from typing import Callable, List, Tuple
 from jabbar import jabbar
 
 from ...util import (
-    AnalysisVars, create_simulate_function, termination_criteria_fulfilled)
+    AnalysisVars, create_simulate_function,
+    create_simulate_without_evaluation_function,
+    termination_criteria_fulfilled)
 from ...sampler import Sampler, Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
@@ -65,13 +67,20 @@ class RedisEvalParallelSampler(Sampler):
         preliminary results although the current generation has not completely
         finished yet. This increases parallel efficiency, but can lead to
         a higher Monte-Carlo error.
+    look_ahead_delay_acceptance:
+        In look-ahead mode, acceptance can be delayed until the final
+        acceptance criteria for generation t have been decided. This is
+        mandatory if the routine has adaptive components (distance, epsilon,
+        ...) besides the transition kernel.
+        Only effective if `look_ahead=True`.
     """
     def __init__(self,
                  host: str = "localhost",
                  port: int = 6379,
                  password: str = None,
                  batch_size: int = 1,
-                 look_ahead: bool = False):
+                 look_ahead: bool = False,
+                 look_ahead_delay_acceptance: bool = True):
         super().__init__()
         logger.debug(
             f"Redis sampler: host={host} port={port}")
@@ -80,6 +89,7 @@ class RedisEvalParallelSampler(Sampler):
             host=host, port=port, password=password)
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
+        self.look_ahead_delay_acceptance = look_ahead_delay_acceptance
 
     def n_worker(self) -> int:
         """
@@ -127,11 +137,17 @@ class RedisEvalParallelSampler(Sampler):
                 # pop result from queue, block until one is available
                 dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
                 # extract pickled object
-                particle_with_id = pickle.loads(dump)
-                # TODO check whether the acceptance criterion changed
-                # append to collected results
-                id_results.append(particle_with_id)
-                bar.update(len(id_results))
+                sample_with_id = pickle.loads(dump)
+
+                # check whether the sample is really acceptable
+                sample_with_id, any_particle_accepted = post_check_acceptance(
+                    sample_with_id, ana_id=ana_id, t=t, redis=self.redis,
+                    ana_vars=ana_vars)
+
+                if any_particle_accepted:
+                    # append to collected results
+                    id_results.append(sample_with_id)
+                    bar.update(len(id_results))
 
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
@@ -157,60 +173,6 @@ class RedisEvalParallelSampler(Sampler):
         sample = self.create_sample(id_results, n)
 
         return sample
-
-    def check_acceptance(self, t, sample_with_id, **kwargs):
-        """
-        check acceptance of preliminary proposed sample
-        """
-        
-        accepted_prel_counter = 0
-        rejected_prel_counter = 0
-        any_particle_accepted = False
-        for result in sample_with_id[1]._particles:
-            if result.is_prel:
-                accepted_sum_stats = []
-                accepted_distances = []
-                accepted_weights = []
-                rejected_sum_stats = []
-                rejected_distances = []
-
-                for i_sum_stat, sum_stat in enumerate(result.accepted_sum_stats):
-                    acc_res = kwargs['acceptor'](
-                        distance_function=kwargs['distance_function'],
-                        eps=kwargs['eps'],
-                        x=sum_stat,
-                        x_0=kwargs['x_0'],
-                        t=t,
-                        par=result.parameter)
-
-                    if acc_res.accept:
-                        accepted_distances.append(acc_res.distance)
-                        accepted_sum_stats.append(sum_stat)
-                        accepted_weights.append(acc_res.weight)
-                    else:
-                        rejected_distances.append(acc_res.distance)
-                        rejected_sum_stats.append(sum_stat)
-
-                result.accepted = len(accepted_distances) > 0
-
-                result.accepted_distances = accepted_distances
-                result.accepted_sum_stats = accepted_sum_stats
-                result.accepted_weights = accepted_weights
-                result.rejected_distances = rejected_distances
-                result.rejected_sum_stats = rejected_sum_stats
-
-                if result.accepted:
-                    self.redis.incr(idfy(N_ACC, t), 1)
-                    accepted_prel_counter += 1
-                else:
-                    rejected_prel_counter += 1
-
-            if result.accepted:
-                any_particle_accepted = True
-
-            # TODO Update rejected sumstats & distances
-
-        return accepted_prel_counter, rejected_prel_counter, any_particle_accepted
 
     def start_generation_t(
             self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
@@ -352,7 +314,9 @@ class RedisEvalParallelSampler(Sampler):
 
         # create a preliminary simulate_one function
         simulate_one_prel = create_preliminary_simulate_one(
-            t=t+1, population=population, ana_vars=ana_vars)
+            t=t+1, population=population,
+            delay_acceptance=self.look_ahead_delay_acceptance,
+            ana_vars=ana_vars)
 
         # head-start the next generation
         #  all_accepted is most certainly False for t>0
@@ -370,7 +334,8 @@ class RedisEvalParallelSampler(Sampler):
 
 
 def create_preliminary_simulate_one(
-        t, population, ana_vars: AnalysisVars) -> Callable:
+        t, population, delay_acceptance: bool, ana_vars: AnalysisVars
+) -> Callable:
     """Create a preliminary simulate_one function for generation `t+1`.
 
     Based on preliminary results, update transitions, distance function,
@@ -383,6 +348,7 @@ def create_preliminary_simulate_one(
     ----------
     t: The time index for which to create the function (i.e. call with t+1).
     population: The preliminary population.
+    delay_acceptance: Whether to delay acceptance.
     ana_vars: The analysis variables.
 
     Returns
@@ -391,13 +357,10 @@ def create_preliminary_simulate_one(
     """
     model_probabilities = population.get_model_probabilities()
 
-    # create deep copies of potentially modified objects
+    # create deep copy of the transition function
     transitions = copy.deepcopy(ana_vars.transitions)
-    distance_function = copy.deepcopy(ana_vars.distance_function)
-    eps = copy.deepcopy(ana_vars.eps)
-    acceptor = copy.deepcopy(ana_vars.acceptor)
 
-    # fit transitions
+    # fit transition
     for m in population.get_alive_models():
         parameters, w = population.get_distribution(m)
         transitions[m].fit(parameters, w)
@@ -409,6 +372,85 @@ def create_preliminary_simulate_one(
         parameter_priors=ana_vars.parameter_priors,
         nr_samples_per_parameter=ana_vars.nr_samples_per_parameter,
         models=ana_vars.models, summary_statistics=ana_vars.summary_statistics,
-        x_0=ana_vars.x_0, distance_function=distance_function,
-        eps=eps, acceptor=acceptor,
+        x_0=ana_vars.x_0, distance_function=ana_vars.distance_function,
+        eps=ana_vars.eps, acceptor=ana_vars.acceptor,
+        evaluate=not delay_acceptance,
     )
+
+
+def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars) -> Tuple:
+    """Check whether the sample is really acceptable.
+
+    This is where evaluation of preliminary samples happens, using the analysis
+    variables from the actual generation `t` and the previously simulated data.
+    The sample is modified in-place.
+
+    Returns
+    -------
+    sample_with_id, any_accepted
+    """
+    # 0 is relative start time, 1 is the actual sample
+    sample = sample_with_id[1]
+
+    # check whether there are preliminary particles
+    if not any(particle.preliminary for particle in sample):
+        if not any(particle.accepted for particle in sample):
+            # this should never happen
+            raise AssertionError(
+                "Expected at least one accepted particle in sample.")
+        # nothing to be done
+        return sample_with_id, True
+
+    # in preliminary mode, there should only be one particle per sample
+    if len(sample.particles) != 1:
+        # this should never happen
+        raise AssertionError(
+            "Expected number of particles in sample: 1. "
+            f"Got: {len(sample.particles)}")
+
+    # from here on, we may assume that all particles (#=1) are yet to be judged
+
+    accepted_prel_counter = 0
+    rejected_prel_counter = 0
+    any_particle_accepted = False
+    # iterate over the 1 particle
+    for particle in sample.particles:
+        # for results
+        accepted_sum_stats = []
+        accepted_distances = []
+        accepted_weights = []
+        rejected_sum_stats = []
+        rejected_distances = []
+
+        for sum_stat, weight in zip(
+                particle.accepted_sum_stats, particle.accepted_weights):
+            acc_res = ana_vars.acceptor(
+                distance_function=ana_vars.distance_function,
+                eps=ana_vars.eps,
+                x=sum_stat,
+                x_0=ana_vars.x_0,
+                t=t,
+                par=particle.parameter)
+
+            if acc_res.accept:
+                accepted_sum_stats.append(sum_stat)
+                accepted_distances.append(acc_res.distance)
+                # the weight is acceptance weight times sampling weight
+                accepted_weights.append(acc_res.weight * weight)
+            else:
+                rejected_sum_stats.append(sum_stat)
+                rejected_distances.append(acc_res.distance)
+
+        # update particle
+        particle.accepted = len(accepted_distances) > 0
+        particle.accepted_sum_stats = accepted_sum_stats
+        particle.accepted_distances = accepted_distances
+        particle.accepted_weights = accepted_weights
+        particle.rejected_sum_stats = rejected_sum_stats
+        particle.rejected_distances = rejected_distances
+
+        # update the redis shared counter
+        if particle.accepted:
+            redis.incr(idfy(N_ACC, ana_id, t), 1)
+
+    return sample_with_id, any(particle.accepted for particle in sample)

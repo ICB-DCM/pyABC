@@ -22,9 +22,9 @@ class Sample:
     """
 
     def __init__(self, record_rejected: bool = False, ok: bool = True):
-        self._particles = []
-        self.record_rejected = record_rejected
-        self.ok = ok
+        self.particles: List[Particle] = []
+        self.record_rejected: bool = record_rejected
+        self.ok: bool = ok
 
     @property
     def all_sum_stats(self):
@@ -39,7 +39,7 @@ class Sample:
             particles added and accepted to this sample via append().
         """
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles), [])
+                    for particle in self.particles), [])
 
     def first_m_sum_stats(self, m):
         """
@@ -52,15 +52,15 @@ class Sample:
             Concatenation of all the all_sum_stats lists of the first <= m
             particles added and accepted to this sample via append().
         """
-        m = min(len(self._particles), m)
+        m = min(len(self.particles), m)
 
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles[:m]), [])
+                    for particle in self.particles[:m]), [])
 
     def first_m_particles(self, m) -> List:
-        m = min(len(self._particles), m)
+        m = min(len(self.particles), m)
 
-        return self._particles[:m]
+        return self.particles[:m]
 
     @property
     def _accepted_particles(self) -> List[Particle]:
@@ -70,7 +70,7 @@ class Sample:
 
         List of only the accepted particles.
         """
-        return [particle for particle in self._particles if particle.accepted]
+        return [particle for particle in self.particles if particle.accepted]
 
     def append(self, particle: Particle):
         """
@@ -86,13 +86,13 @@ class Sample:
 
         # add to population if accepted
         if particle.accepted or self.record_rejected:
-            self._particles.append(particle)
+            self.particles.append(particle)
 
     def __add__(self, other: "Sample"):
         sample = Sample(self.record_rejected)
         # sample's list of particles is the concatenation of both samples'
         # lists
-        sample._particles = self._particles + other._particles
+        sample._particles = self.particles + other.particles
         return sample
 
     @property

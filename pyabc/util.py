@@ -320,6 +320,7 @@ def create_simulate_function(
         distance_function: Distance,
         eps: Epsilon,
         acceptor: Acceptor,
+        evaluate: bool = True,
 ) -> Callable:
     """
     Create a simulation function which performs the sampling of parameters,
@@ -342,6 +343,9 @@ def create_simulate_function(
     distance_function: The distance function.
     eps: The epsilon threshold.
     acceptor: The acceptor.
+    evaluate:
+        Whether to actually evaluate the sample. Should be True except for
+        certain preliminary settings.
 
     Returns
     -------
@@ -382,33 +386,60 @@ def create_simulate_function(
             model_prior=model_prior, parameter_priors=parameter_priors,
             model_perturbation_kernel=model_perturbation_kernel,
             transitions=transitions)
-        particle = evaluate_proposal(
-            *parameter, t=t,
-            nr_samples_per_parameter=nr_samples_per_parameter,
-            models=models, summary_statistics=summary_statistics,
-            distance_function=distance_function, eps=eps, acceptor=acceptor,
-            x_0=x_0, weight_function=weight_function)
+        if evaluate:
+            particle = evaluate_proposal(
+                *parameter, t=t,
+                nr_samples_per_parameter=nr_samples_per_parameter,
+                models=models, summary_statistics=summary_statistics,
+                distance_function=distance_function, eps=eps,
+                acceptor=acceptor,
+                x_0=x_0, weight_function=weight_function)
+        else:
+            particle = only_simulate_data_for_proposal(
+                *parameter, t=t,
+                nr_samples_per_parameter=nr_samples_per_parameter,
+                models=models, summary_statistics=summary_statistics,
+                weight_function=weight_function)
         return particle
 
     return simulate_one
 
 
-def prel_evaluate_no_distance(
-        m_ss: int, theta_ss: Parameter, t: int, nr_samples_per_parameter: int, models: List[Model],
-        summary_statistics: Callable, prior_pdf: Callable, transition_pdf: Callable) -> Particle:
+def only_simulate_data_for_proposal(
+        m_ss: int, theta_ss: Parameter, t: int,
+        nr_samples_per_parameter: int, models: List[Model],
+        summary_statistics: Callable,
+        weight_function: Callable) -> Particle:
+    """Simulate data for parameters.
 
+    Similar to `evaluate_proposal`, however here for the passed parameters
+    only data are simulated, but no distances calculated or acceptance
+    checked. That needs to be done post-hoc then, not checked here."""
+    # for the results
+    accepted_sum_stats = []
+    # distance and weight are just dummies here, they need to be recomputed
+    #  later again
+    accepted_distances = []
+    accepted_weights = []
+
+    # perform nr_samples_per_parameter simulations
+    for _ in range(nr_samples_per_parameter):
+        # simulate
+        model_result = models[m_ss].summary_statistics(
+            t, theta_ss, summary_statistics)
+        accepted_sum_stats.append(model_result.sum_stats)
+        # fill in dummies for distance and weight
+        accepted_distances.append(np.inf)
+        accepted_weights.append(1.)
+
+    # needs to be accepted in order to be forwarded by the sampler, and so
+    #  as a single particle
     accepted = True
 
-    accepted_sum_stats = []
-    accepted_distances = []
-
-    for _ in range(nr_samples_per_parameter):
-        sum_stats_one = models[m_ss].summary_statistics(t, theta_ss, summary_statistics)
-
-        accepted_sum_stats.append(sum_stats_one.sum_stats)
-        accepted_distances.append(np.inf)
-
-    weight = prior_pdf(m_ss, theta_ss) / transition_pdf(m_ss, theta_ss)
+    # compute acceptance weight
+    # TODO later replacement only works with nr_samples_per_parameter == 1
+    weight = weight_function(
+        accepted_distances, m_ss, theta_ss, accepted_weights)
 
     return Particle(
         m=m_ss,
@@ -416,62 +447,8 @@ def prel_evaluate_no_distance(
         weight=weight,
         accepted_sum_stats=accepted_sum_stats,
         accepted_distances=accepted_distances,
-        rejected_sum_stats=None,
-        rejected_distances=None,
         accepted=accepted,
-        is_prel=True)
-
-
-def create_prel_simulate_function(
-        t: int,
-        model_probabilities: pd.DataFrame,
-        model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition],
-        model_prior: RV,
-        parameter_priors: List[Distribution],
-        nr_samples_per_parameter: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        x_0: dict,
-        distance_function: Distance,
-        eps: Epsilon,
-        acceptor: Acceptor,
-) -> Callable:
-
-    # cache model_probabilities to not query the database so often
-    m = np.array(model_probabilities.index)
-    p = np.array(model_probabilities.p)
-
-    # create prior and transition densities for weight function
-    prior_pdf = create_prior_pdf(
-        model_prior=model_prior, parameter_priors=parameter_priors)
-    if t == 0:
-        transition_pdf = prior_pdf
-    else:
-        transition_pdf = create_transition_pdf(
-            transitions=transitions,
-            model_probabilities=model_probabilities,
-            model_perturbation_kernel=model_perturbation_kernel)
-    """
-    # create weight function
-    weight_function = create_weight_function(
-        nr_samples_per_parameter=nr_samples_per_parameter,
-        prior_pdf=prior_pdf, transition_pdf=transition_pdf)
-    """
-    # simulation function
-    def simulate_one():
-        parameter = generate_valid_proposal(
-            t=t, m=m, p=p,
-            model_prior=model_prior, parameter_priors=parameter_priors,
-            model_perturbation_kernel=model_perturbation_kernel,
-            transitions=transitions)
-        particle = prel_evaluate_no_distance(
-            *parameter, t=t, nr_samples_per_parameter=nr_samples_per_parameter,
-            models=models, summary_statistics=summary_statistics,
-            prior_pdf=prior_pdf, transition_pdf=transition_pdf)
-        return particle
-
-    return simulate_one
+        preliminary=True)
 
 
 def termination_criteria_fulfilled(
