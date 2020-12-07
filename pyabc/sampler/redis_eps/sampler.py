@@ -130,6 +130,8 @@ class RedisEvalParallelSampler(Sampler):
             self.redis.set(
                 idfy(SSA, ana_id, t),
                 cloudpickle.dumps((simulate_one, self.sample_factory)))
+            # update the required population size
+            self.redis.set(idfy(N_REQ, ana_id, t), n)
             # let the workers know they should update their ssa
             self.redis.set(idfy(IS_LOOK_AHEAD, ana_id, t), int(False))
         else:
