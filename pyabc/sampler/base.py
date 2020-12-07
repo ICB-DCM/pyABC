@@ -93,7 +93,7 @@ class Sample:
             self.particles.append(particle)
 
     def __add__(self, other: "Sample"):
-        sample = Sample(self.record_rejected)
+        sample = Sample(record_rejected=self.record_rejected)
         # sample's list of particles is the concatenation of both samples'
         # lists
         sample.particles = self.particles + other.particles

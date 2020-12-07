@@ -98,6 +98,9 @@ def work_on_population(analysis_id: str,
     # counter for number of simulations
     internal_counter = 0
 
+    # create empty sample
+    sample = sample_factory(is_look_ahead=is_look_ahead)
+
     # loop until no more particles required
     # all numbers are re-loaded in each iteration as they can dynamically
     #  update
@@ -145,6 +148,8 @@ def work_on_population(analysis_id: str,
             simulate_one, sample_factory = pickle.loads(ssa_b)
             # cache
             is_look_ahead = False
+            # create new empty sample for clean split
+            sample = sample_factory(is_look_ahead=is_look_ahead)
 
         # increase global evaluation counter (before simulation!)
         particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
@@ -155,9 +160,6 @@ def work_on_population(analysis_id: str,
         accepted_samples = []
         # whether any particle in this iteration is preliminary
         any_prel = False
-
-        # create empty sample
-        sample = sample_factory(is_look_ahead=is_look_ahead)
 
         # make batch_size attempts
         for n_batched in range(batch_size):
