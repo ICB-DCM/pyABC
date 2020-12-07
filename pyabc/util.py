@@ -597,7 +597,7 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
-        logger.info("Stopping: maximum time.")
+        logger.info("Stopping: maximum number of generations.")
         return True
     if current_eps <= min_eps:
         logger.info("Stopping: minimum epsilon.")

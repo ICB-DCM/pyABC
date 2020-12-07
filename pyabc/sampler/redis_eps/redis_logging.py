@@ -55,7 +55,7 @@ class RedisSamplerLogger:
     def write(self):
         """Write data to output."""
         # write to screen
-        logger.info(f"Sampling for time t: {self.data[-1]}")
+        logger.debug(f"Sampling for time t: {self.data[-1]}")
         # write to file
         if self.log_file:
             df = pd.DataFrame(self.data)
