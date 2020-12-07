@@ -72,6 +72,8 @@ class RedisEvalParallelSampler(Sampler):
         mandatory if the routine has adaptive components (distance, epsilon,
         ...) besides the transition kernel.
         Only effective if `look_ahead=True`.
+    log_file:
+        A file all
     """
     def __init__(self,
                  host: str = "localhost",
@@ -79,7 +81,8 @@ class RedisEvalParallelSampler(Sampler):
                  password: str = None,
                  batch_size: int = 1,
                  look_ahead: bool = False,
-                 look_ahead_delay_evaluation: bool = True):
+                 look_ahead_delay_evaluation: bool = True,
+                 log_file: str = None):
         super().__init__()
         logger.debug(
             f"Redis sampler: host={host} port={port}")
@@ -89,6 +92,7 @@ class RedisEvalParallelSampler(Sampler):
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
         self.look_ahead_delay_evaluation = look_ahead_delay_evaluation
+        self.log_file = log_file
 
     def n_worker(self) -> int:
         """
@@ -352,7 +356,7 @@ class RedisEvalParallelSampler(Sampler):
 
 
 def create_preliminary_simulate_one(
-        t, population, delay_evaluation: bool, ana_vars: AnalysisVars
+        t, population, delay_evaluation: bool, ana_vars: AnalysisVars,
 ) -> Callable:
     """Create a preliminary simulate_one function for generation `t+1`.
 

@@ -564,7 +564,7 @@ def evaluate_preliminary_particle(
         accepted_distances=accepted_distances,
         rejected_sum_stats=rejected_sum_stats,
         rejected_distances=rejected_distances,
-        accepted=len(accepted_distances) > 0
+        accepted=len(accepted_distances) > 0,
     )
 
 
