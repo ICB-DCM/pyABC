@@ -20,8 +20,12 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                  password: str = None,
                  batch_size: int = 1,
                  look_ahead: bool = False,
+                 look_ahead_delay_evaluation=True,
                  workers: int = 2,
-                 processes_per_worker: int = 1):
+                 processes_per_worker: int = 1,
+                 catch: bool = True,
+                 log_file: str = None,
+                 ):
         # start server
         conn = psutil.net_connections()
         ports = [c.laddr[1] for c in conn]
@@ -46,7 +50,9 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         sleep(1)
 
         super().__init__(
-            host, port, password, batch_size=batch_size, look_ahead=look_ahead)
+            host, port, password, batch_size=batch_size, look_ahead=look_ahead,
+            look_ahead_delay_evaluation=look_ahead_delay_evaluation,
+            log_file=log_file)
 
         # initiate worker processes
         maybe_password = [] if password is None else ["--password", password]
@@ -55,7 +61,8 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                     args=(["--host", "localhost",
                            "--port", str(port),
                            *maybe_password,
-                           "--processes", str(processes_per_worker)],),
+                           "--processes", str(processes_per_worker),
+                           "--catch", str(catch)],),
                     daemon=False)
             for _ in range(workers)
         ]

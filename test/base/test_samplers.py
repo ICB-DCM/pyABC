@@ -2,6 +2,7 @@ import multiprocessing
 import pytest
 import numpy as np
 import scipy.stats as st
+import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 from pyabc.sampler import (SingleCoreSampler,
                            MappingSampler,
@@ -60,19 +61,20 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
 
 class WrongOutputSampler(SingleCoreSampler):
     def sample_until_n_accepted(
-            self, n, simulate_one, t, max_eval=np.inf, all_accepted=False,
-            **kwargs):
+            self, n, simulate_one, t, *,
+            max_eval=np.inf, all_accepted=False, ana_vars=None):
         return super().sample_until_n_accepted(
             n+1, simulate_one, t, max_eval=max_eval,
-            all_accepted=False, **kwargs)
+            all_accepted=all_accepted, ana_vars=ana_vars)
 
 
-def RedisEvalParallelSamplerWrapper():
-    return RedisEvalParallelSamplerServerStarter(batch_size=5)
+def RedisEvalParallelSamplerWrapper(**kwargs):
+    return RedisEvalParallelSamplerServerStarter(batch_size=5, **kwargs)
 
 
-def RedisEvalParallelSamplerLookAheadWrapper():
-    return RedisEvalParallelSamplerServerStarter(batch_size=5, look_ahead=True)
+def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
+    return RedisEvalParallelSamplerServerStarter(
+        look_ahead=True, look_ahead_delay_evaluation=True, **kwargs)
 
 
 def PicklingMulticoreParticleParallelSampler():
@@ -85,6 +87,7 @@ def PicklingMulticoreEvalParallelSampler():
 
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerWrapper,
+                        RedisEvalParallelSamplerLookAheadDelayWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
@@ -333,29 +336,76 @@ def test_redis_look_ahead():
     """Test the redis sampler in look-ahead mode."""
     model, prior, distance, obs = basic_testcase()
     eps = pyabc.ListEpsilon([20, 10, 5])
-    sampler = RedisEvalParallelSamplerLookAheadWrapper()
-    try:
-        abc = pyabc.ABCSMC(
-            model, prior, distance, sampler=sampler,
-            population_size=10, eps=eps)
-        abc.new(pyabc.create_sqlite_db_id(), obs)
-        h = abc.run(max_nr_populations=3)
-    finally:
-        sampler.shutdown()
+    # spice things up with an adaptive population size
+    pop_size = pyabc.AdaptivePopulationSize(
+        start_nr_particles=50, mean_cv=0.5, max_population_size=50)
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
+        sampler = RedisEvalParallelSamplerServerStarter(
+            look_ahead=True, look_ahead_delay_evaluation=False,
+            log_file=fh.name)
+        try:
+            abc = pyabc.ABCSMC(
+                model, prior, distance, sampler=sampler,
+                population_size=pop_size, eps=eps)
+            abc.new(pyabc.create_sqlite_db_id(), obs)
+            h = abc.run(max_nr_populations=3)
+        finally:
+            sampler.shutdown()
 
-    assert h.n_populations == 3
+        assert h.n_populations == 3
+
+        # read log file
+        df = pd.read_csv(fh.name, sep=',')
+        assert (df.n_lookahead > 0).any()
+        assert (df.n_lookahead_accepted > 0).any()
+        assert (df.n_preliminary == 0).all()
 
 
 def test_redis_look_ahead_error():
     """Test whether the look-ahead mode fails as expected."""
     model, prior, distance, obs = basic_testcase()
-    sampler = RedisEvalParallelSamplerLookAheadWrapper()
-    # adaptive epsilon
-    try:
-        abc = pyabc.ABCSMC(
-            model, prior, distance, sampler=sampler, population_size=10)
-        abc.new(pyabc.create_sqlite_db_id(), obs)
-        with pytest.raises(Exception):
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
+        sampler = RedisEvalParallelSamplerServerStarter(
+            look_ahead=True, look_ahead_delay_evaluation=False,
+            log_file=fh.name)
+        # adaptive epsilon
+        try:
+            abc = pyabc.ABCSMC(
+                model, prior, distance, sampler=sampler, population_size=10)
+            abc.new(pyabc.create_sqlite_db_id(), obs)
+            # TODO should raise at some point
             abc.run(max_nr_populations=3)
-    finally:
-        sampler.shutdown()
+        finally:
+            sampler.shutdown()
+        # read log file
+        df = pd.read_csv(fh.name, sep=',')
+        # currently at least nothing preliminary can get accepted
+        assert (df.n_lookahead == 0).all()
+        assert (df.n_lookahead_accepted == 0).all()
+        assert (df.n_preliminary == 0).all()
+
+
+def test_redis_look_ahead_delayed():
+    """Test the look-ahead sampler with delayed evaluation in an adaptive
+    setup."""
+    model, prior, distance, obs = basic_testcase()
+    # spice things up with an adaptive population size
+    pop_size = pyabc.AdaptivePopulationSize(
+        start_nr_particles=50, mean_cv=0.5, max_population_size=50)
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
+        sampler = RedisEvalParallelSamplerLookAheadDelayWrapper(
+            log_file=fh.name)
+        try:
+            abc = pyabc.ABCSMC(
+                model, prior, distance, sampler=sampler,
+                population_size=pop_size)
+            abc.new(pyabc.create_sqlite_db_id(), obs)
+            abc.run(max_nr_populations=3)
+        finally:
+            sampler.shutdown()
+        # read log file
+        df = pd.read_csv(fh.name, sep=',')
+        assert (df.n_lookahead > 0).any()
+        assert (df.n_lookahead_accepted > 0).any()
+        # in delayed mode, all look-aheads must have been preliminary
+        assert (df.n_lookahead == df.n_preliminary).all()

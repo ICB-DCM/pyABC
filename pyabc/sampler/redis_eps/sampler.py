@@ -4,18 +4,22 @@ from time import sleep
 from datetime import datetime
 import cloudpickle
 import copy
+import logging
 from redis import StrictRedis
 from typing import Callable, List, Tuple
 from jabbar import jabbar
 
 from ...util import (
-    AnalysisVars, create_simulate_function, termination_criteria_fulfilled)
+    AnalysisVars, create_simulate_function, evaluate_preliminary_particle,
+    termination_criteria_fulfilled)
 from ...sampler import Sampler, Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START,
-                  SLEEP_TIME, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION,
-                  idfy)
-from .redis_logging import logger
+                  SLEEP_TIME, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
+                  GENERATION, idfy)
+from .redis_logging import RedisSamplerLogger
+
+logger = logging.getLogger("Redis-Sampler")
 
 
 class RedisEvalParallelSampler(Sampler):
@@ -65,13 +69,29 @@ class RedisEvalParallelSampler(Sampler):
         preliminary results although the current generation has not completely
         finished yet. This increases parallel efficiency, but can lead to
         a higher Monte-Carlo error.
+    look_ahead_delay_evaluation:
+        In look-ahead mode, acceptance can be delayed until the final
+        acceptance criteria for generation t have been decided. This is
+        mandatory if the routine has adaptive components (distance, epsilon,
+        ...) besides the transition kernel. If not needed, enabling it may
+        lead to a worse performance, especially if evaluation is costly
+        compared to simulation, because evaluation happens sequentially on the
+        main thread.
+        Only effective if `look_ahead=True`.
+    log_file:
+        A file for a dedicated sampler history. Updated in each iteration.
+        This log file is complementary to the logging realized via the
+        logging module.
     """
+
     def __init__(self,
                  host: str = "localhost",
                  port: int = 6379,
                  password: str = None,
                  batch_size: int = 1,
-                 look_ahead: bool = False):
+                 look_ahead: bool = False,
+                 look_ahead_delay_evaluation: bool = True,
+                 log_file: str = None):
         super().__init__()
         logger.debug(
             f"Redis sampler: host={host} port={port}")
@@ -80,6 +100,8 @@ class RedisEvalParallelSampler(Sampler):
             host=host, port=port, password=password)
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
+        self.look_ahead_delay_evaluation = look_ahead_delay_evaluation
+        self.logger = RedisSamplerLogger(log_file)
 
     def n_worker(self) -> int:
         """
@@ -106,20 +128,34 @@ class RedisEvalParallelSampler(Sampler):
         # get the analysis id
         ana_id = self.analysis_id
 
+        def get_int(var: str):
+            """Convenience function to read an int variable."""
+            return int(self.redis.get(idfy(var, ana_id, t)).decode())
+
         if self.generation_t_was_started(t):
             # update the SSA function
             self.redis.set(
                 idfy(SSA, ana_id, t),
                 cloudpickle.dumps((simulate_one, self.sample_factory)))
+            # update the required population size
+            self.redis.set(idfy(N_REQ, ana_id, t), n)
             # let the workers know they should update their ssa
-            self.redis.set(idfy(IS_PREL, ana_id, t), int(False))
+            self.redis.set(idfy(IS_LOOK_AHEAD, ana_id, t), int(False))
+            # it can happen that the population size increased, but the workers
+            #  believe they are done already
+            if get_int(N_WORKER) == 0 and get_int(N_ACC) < get_int(N_REQ):
+                # send the start signal again
+                self.redis.publish(MSG, START)
         else:
             # set up all variables for the new generation
             self.start_generation_t(
                 n=n, t=t, simulate_one=simulate_one, all_accepted=all_accepted,
-                is_prel=False)
+                is_look_ahead=False)
 
+        # for the results
         id_results = []
+        # reset logging counters
+        self.logger.reset_counters()
 
         # wait until n acceptances
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
@@ -127,15 +163,23 @@ class RedisEvalParallelSampler(Sampler):
                 # pop result from queue, block until one is available
                 dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
                 # extract pickled object
-                particle_with_id = pickle.loads(dump)
-                # TODO check whether the acceptance criterion changed
-                # append to collected results
-                id_results.append(particle_with_id)
-                bar.update(len(id_results))
+                sample_with_id = pickle.loads(dump)
+
+                # check whether the sample is really acceptable
+                sample_with_id, any_particle_accepted = \
+                    post_check_acceptance(
+                        sample_with_id, ana_id=ana_id, t=t, redis=self.redis,
+                        ana_vars=ana_vars, logger=self.logger)
+
+                if any_particle_accepted:
+                    # append to collected results
+                    id_results.append(sample_with_id)
+                    bar.update(len(id_results))
 
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
-            t=t, n=n, id_results=id_results, ana_vars=ana_vars)
+            t=t, n=n, id_results=id_results, all_accepted=all_accepted,
+            ana_vars=ana_vars)
 
         # wait until all workers done
         while int(self.redis.get(idfy(N_WORKER, ana_id, t)).decode()) > 0:
@@ -143,8 +187,20 @@ class RedisEvalParallelSampler(Sampler):
 
         # make sure all results are collected
         while self.redis.llen(idfy(QUEUE, ana_id, t)) > 0:
-            id_results.append(
-                pickle.loads(self.redis.blpop(idfy(QUEUE, ana_id, t))[1]))
+            # pop result from queue, block until one is available
+            dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
+            # extract pickled object
+            sample_with_id = pickle.loads(dump)
+
+            # check whether the sample is really acceptable
+            sample_with_id, any_particle_accepted = \
+                post_check_acceptance(
+                    sample_with_id, ana_id=ana_id, t=t, redis=self.redis,
+                    ana_vars=ana_vars, logger=self.logger)
+
+            if any_particle_accepted:
+                # append to collected results
+                id_results.append(sample_with_id)
 
         # set total number of evaluations
         self.nr_evaluations_ = int(
@@ -156,11 +212,17 @@ class RedisEvalParallelSampler(Sampler):
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
 
+        # logging
+        self.logger.add_row(
+            t=t, n_evaluated=self.nr_evaluations_,
+            n_accepted=sample.n_accepted)
+        self.logger.write()
+
         return sample
 
     def start_generation_t(
             self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
-            is_prel: bool) -> None:
+            is_look_ahead: bool) -> None:
         """Start generation `t`."""
         ana_id = self.analysis_id
 
@@ -177,7 +239,8 @@ class RedisEvalParallelSampler(Sampler):
         pipeline.set(idfy(ALL_ACCEPTED, ana_id, t), int(all_accepted))
         pipeline.set(idfy(N_WORKER, ana_id, t), 0)
         pipeline.set(idfy(BATCH_SIZE, ana_id, t), self.batch_size)
-        pipeline.set(idfy(IS_PREL, ana_id, t), int(is_prel))  # encode as int
+        # encode as int
+        pipeline.set(idfy(IS_LOOK_AHEAD, ana_id, t), int(is_look_ahead))
 
         # update the current-generation variable
         pipeline.set(idfy(GENERATION, ana_id), t)
@@ -240,7 +303,7 @@ class RedisEvalParallelSampler(Sampler):
         return sample
 
     def maybe_start_next_generation(
-            self, t: int, n: int, id_results: List,
+            self, t: int, n: int, id_results: List, all_accepted: bool,
             ana_vars: AnalysisVars) -> None:
         """Start the next generation already, if that looks reasonable.
 
@@ -249,16 +312,16 @@ class RedisEvalParallelSampler(Sampler):
         t: The current time.
         n: The current population size.
         id_results: The so-far returned samples.
+        all_accepted: Whether all particles are accepted.
         ana_vars: Analysis variables.
-
-        Note
-        ----
-        Currently we assume that
-        * `n` is fixed,
-        * distance and epsilon scheme are non-adaptive.
         """
         # not in a look-ahead mood
         if not self.look_ahead:
+            return
+
+        # all accepted indicates the preliminary iteration, where we don't
+        #  want to look ahead yet
+        if all_accepted:
             return
 
         # create a result sample
@@ -276,9 +339,11 @@ class RedisEvalParallelSampler(Sampler):
 
         # check if any termination criterion (based on the current data)
         #  is likely to be fulfilled after the current generation
+
         total_nr_simulations = \
             ana_vars.prev_total_nr_simulations + nr_evaluations
         walltime = datetime.now() - ana_vars.init_walltime
+
         if termination_criteria_fulfilled(
             current_eps=ana_vars.eps(t),
             min_eps=ana_vars.min_eps,
@@ -298,13 +363,15 @@ class RedisEvalParallelSampler(Sampler):
 
         # create a preliminary simulate_one function
         simulate_one_prel = create_preliminary_simulate_one(
-            t=t+1, population=population, ana_vars=ana_vars)
+            t=t+1, population=population,
+            delay_evaluation=self.look_ahead_delay_evaluation,
+            ana_vars=ana_vars)
 
         # head-start the next generation
         #  all_accepted is most certainly False for t>0
         self.start_generation_t(
             n=n, t=t+1, simulate_one=simulate_one_prel,
-            all_accepted=False, is_prel=True)
+            all_accepted=False, is_look_ahead=True)
 
     def stop(self):
         """Stop potentially still ongoing sampling."""
@@ -316,7 +383,8 @@ class RedisEvalParallelSampler(Sampler):
 
 
 def create_preliminary_simulate_one(
-        t, population, ana_vars: AnalysisVars) -> Callable:
+        t, population, delay_evaluation: bool, ana_vars: AnalysisVars,
+) -> Callable:
     """Create a preliminary simulate_one function for generation `t+1`.
 
     Based on preliminary results, update transitions, distance function,
@@ -329,6 +397,7 @@ def create_preliminary_simulate_one(
     ----------
     t: The time index for which to create the function (i.e. call with t+1).
     population: The preliminary population.
+    delay_evaluation: Whether to delay evaluation.
     ana_vars: The analysis variables.
 
     Returns
@@ -337,18 +406,13 @@ def create_preliminary_simulate_one(
     """
     model_probabilities = population.get_model_probabilities()
 
-    # create deep copies of potentially modified objects
+    # create deep copy of the transition function
     transitions = copy.deepcopy(ana_vars.transitions)
-    distance_function = copy.deepcopy(ana_vars.distance_function)
-    eps = copy.deepcopy(ana_vars.eps)
-    acceptor = copy.deepcopy(ana_vars.acceptor)
 
-    # fit transitions
+    # fit transition
     for m in population.get_alive_models():
         parameters, w = population.get_distribution(m)
         transitions[m].fit(parameters, w)
-
-    # TODO fit distance, eps, acceptor
 
     return create_simulate_function(
         t=t, model_probabilities=model_probabilities,
@@ -357,6 +421,63 @@ def create_preliminary_simulate_one(
         parameter_priors=ana_vars.parameter_priors,
         nr_samples_per_parameter=ana_vars.nr_samples_per_parameter,
         models=ana_vars.models, summary_statistics=ana_vars.summary_statistics,
-        x_0=ana_vars.x_0, distance_function=distance_function,
-        eps=eps, acceptor=acceptor,
+        x_0=ana_vars.x_0, distance_function=ana_vars.distance_function,
+        eps=ana_vars.eps, acceptor=ana_vars.acceptor,
+        evaluate=not delay_evaluation,
     )
+
+
+def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
+                          logger: RedisSamplerLogger) -> Tuple:
+    """Check whether the sample is really acceptable.
+
+    This is where evaluation of preliminary samples happens, using the analysis
+    variables from the actual generation `t` and the previously simulated data.
+    The sample is modified in-place.
+
+    Returns
+    -------
+    sample_with_id, any_accepted, n_prel, n_prel_acc
+    """
+    # 0 is relative start time, 1 is the actual sample
+    sample = sample_with_id[1]
+
+    # check whether the sample was generated in look-ahead mode
+    if sample.is_look_ahead:
+        logger.n_lookahead += 1
+
+    # check whether there are preliminary particles
+    if not any(particle.preliminary for particle in sample.particles):
+        n_accepted = sum(particle.accepted for particle in sample.particles)
+        if n_accepted != 1:
+            # this should never happen
+            raise AssertionError(
+                "Expected exactly one accepted particle in sample.")
+        # increase accepted counter if in look-ahead mode
+        if sample.is_look_ahead:
+            logger.n_lookahead_accepted += n_accepted
+        # nothing else to be done
+        return sample_with_id, True
+
+    # in preliminary mode, there should only be one particle per sample
+    if len(sample.particles) != 1:
+        # this should never happen
+        raise AssertionError(
+            "Expected number of particles in sample: 1. "
+            f"Got: {len(sample.particles)}")
+
+    # from here on, we may assume that all particles (#=1) are yet to be judged
+    logger.n_preliminary += 1
+
+    # iterate over the 1 particle
+    for i_particle, particle in enumerate(sample.particles):
+        sample.particles[i_particle] = \
+            evaluate_preliminary_particle(particle, t, ana_vars)
+
+        # update the redis shared counter
+        if sample.particles[i_particle].accepted:
+            redis.incr(idfy(N_ACC, ana_id, t), 1)
+            logger.n_lookahead_accepted += 1
+
+    return (sample_with_id,
+            any(particle.accepted for particle in sample.particles))

@@ -12,19 +12,23 @@ class Sample:
 
     Parameters
     ----------
-
-    record_rejected: bool
+    record_rejected:
         Whether to record rejected particles as well, along with accepted
         ones.
-    ok: bool
+    is_look_ahead:
+        Whether this sample consists of particles generated in look-ahead mode.
+    ok:
         Whether the sampling process succeeded (usually in generating the
         requested number of particles).
     """
 
-    def __init__(self, record_rejected: bool = False, ok: bool = True):
-        self._particles = []
-        self.record_rejected = record_rejected
-        self.ok = ok
+    def __init__(self, record_rejected: bool = False,
+                 is_look_ahead: bool = False,
+                 ok: bool = True):
+        self.particles: List[Particle] = []
+        self.record_rejected: bool = record_rejected
+        self.is_look_ahead: bool = is_look_ahead
+        self.ok: bool = ok
 
     @property
     def all_sum_stats(self):
@@ -39,7 +43,7 @@ class Sample:
             particles added and accepted to this sample via append().
         """
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles), [])
+                    for particle in self.particles), [])
 
     def first_m_sum_stats(self, m):
         """
@@ -52,25 +56,25 @@ class Sample:
             Concatenation of all the all_sum_stats lists of the first <= m
             particles added and accepted to this sample via append().
         """
-        m = min(len(self._particles), m)
+        m = min(len(self.particles), m)
 
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles[:m]), [])
+                    for particle in self.particles[:m]), [])
 
     def first_m_particles(self, m) -> List:
-        m = min(len(self._particles), m)
+        m = min(len(self.particles), m)
 
-        return self._particles[:m]
+        return self.particles[:m]
 
     @property
-    def _accepted_particles(self) -> List[Particle]:
+    def accepted_particles(self) -> List[Particle]:
         """
         Returns
         -------
 
         List of only the accepted particles.
         """
-        return [particle for particle in self._particles if particle.accepted]
+        return [particle for particle in self.particles if particle.accepted]
 
     def append(self, particle: Particle):
         """
@@ -86,13 +90,14 @@ class Sample:
 
         # add to population if accepted
         if particle.accepted or self.record_rejected:
-            self._particles.append(particle)
+            self.particles.append(particle)
 
     def __add__(self, other: "Sample"):
-        sample = Sample(self.record_rejected)
+        sample = Sample(record_rejected=self.record_rejected)
         # sample's list of particles is the concatenation of both samples'
         # lists
-        sample._particles = self._particles + other._particles
+        sample.particles = self.particles + other.particles
+        # the other attributes may keep their defaults
         return sample
 
     @property
@@ -104,7 +109,7 @@ class Sample:
         n_accepted: int
             Number of accepted particles.
         """
-        return len(self._accepted_particles)
+        return len(self.accepted_particles)
 
     def get_accepted_population(self) -> Population:
         """
@@ -114,7 +119,7 @@ class Sample:
         population: Population
             A population of only the accepted particles.
         """
-        return Population(self._accepted_particles)
+        return Population(self.accepted_particles)
 
 
 class SampleFactory:
@@ -127,7 +132,6 @@ class SampleFactory:
 
     Parameters
     ----------
-
     record_rejected: bool
         Corresponds to Sample.record_rejected.
     """
@@ -135,11 +139,12 @@ class SampleFactory:
     def __init__(self, record_rejected: bool = False):
         self.record_rejected = record_rejected
 
-    def __call__(self):
+    def __call__(self, is_look_ahead: bool = False):
         """
         Create a new empty sample.
         """
-        return Sample(self.record_rejected)
+        return Sample(
+            record_rejected=self.record_rejected, is_look_ahead=is_look_ahead)
 
 
 def wrap_sample(f):
@@ -152,6 +157,9 @@ def wrap_sample(f):
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
+        if any(particle.preliminary for particle in sample.particles):
+            raise AssertionError(
+                "There cannot be non-evaluated particles.")
         return sample
     return sample_until_n_accepted
 

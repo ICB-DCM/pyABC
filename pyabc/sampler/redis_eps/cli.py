@@ -7,14 +7,18 @@ import os
 import cloudpickle
 from time import time
 import click
-from .redis_logging import logger
-from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, SSA, QUEUE, START, STOP,
-                  MSG, BATCH_SIZE, IS_PREL, ANALYSIS_ID, GENERATION, idfy)
 from multiprocessing import Pool
 import numpy as np
 import random
+import logging
 
+from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
+                  N_WORKER, SSA, QUEUE, START, STOP,
+                  MSG, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION,
+                  idfy)
+from ..util import any_particle_preliminary
+
+logger = logging.getLogger("Redis-Worker")
 
 TIMES = {"s": 1,
          "m": 60,
@@ -44,6 +48,7 @@ class KillHandler:
 def work_on_population(analysis_id: str,
                        t: int,
                        redis: StrictRedis,
+                       catch: bool,
                        start_time: float,
                        max_runtime_s: float,
                        kill_handler: KillHandler):
@@ -65,12 +70,11 @@ def work_on_population(analysis_id: str,
     ana_id = analysis_id
 
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, n_req_b, is_prel_b \
+    ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b \
         = (pipeline.get(idfy(SSA, ana_id, t))
            .get(idfy(BATCH_SIZE, ana_id, t))
            .get(idfy(ALL_ACCEPTED, ana_id, t))
-           .get(idfy(N_REQ, ana_id, t))
-           .get(idfy(IS_PREL, ana_id, t)).execute())
+           .get(idfy(IS_LOOK_AHEAD, ana_id, t)).execute())
 
     # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
@@ -83,8 +87,7 @@ def work_on_population(analysis_id: str,
     simulate_one, sample_factory = pickle.loads(ssa_b)
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
-    n_req = int(n_req_b.decode())
-    is_prel = bool(int(is_prel_b.decode()))
+    is_look_ahead = bool(int(is_look_ahead_b.decode()))
 
     # notify sign up as worker
     n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
@@ -96,11 +99,14 @@ def work_on_population(analysis_id: str,
     internal_counter = 0
 
     # create empty sample
-    sample = sample_factory()
+    sample = sample_factory(is_look_ahead=is_look_ahead)
 
     # loop until no more particles required
-    while get_int(N_ACC) < n_req and (
-            not all_accepted or get_int(N_EVAL) - get_int(N_FAIL) < n_req):
+    # all numbers are re-loaded in each iteration as they can dynamically
+    #  update
+    while get_int(N_ACC) < get_int(N_REQ) and (
+            not all_accepted or
+            get_int(N_EVAL) - get_int(N_FAIL) < get_int(N_REQ)):
         # check whether the process was externally asked to stop
         if kill_handler.killed:
             logger.info(
@@ -134,14 +140,16 @@ def work_on_population(analysis_id: str,
             # return to task queue
             return
 
-        # check if the analysis left the preliminary mode
-        if is_prel and not bool(int(
-                redis.get(idfy(IS_PREL, ana_id, t)).decode())):
+        # check if the analysis left the look-ahead mode
+        if is_look_ahead and not bool(int(
+                redis.get(idfy(IS_LOOK_AHEAD, ana_id, t)).decode())):
             # reload SSA object
             ssa_b = redis.get(idfy(SSA, ana_id, t))
             simulate_one, sample_factory = pickle.loads(ssa_b)
             # cache
-            is_prel = False
+            is_look_ahead = False
+            # create new empty sample for clean split
+            sample = sample_factory(is_look_ahead=is_look_ahead)
 
         # increase global evaluation counter (before simulation!)
         particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
@@ -150,6 +158,8 @@ def work_on_population(analysis_id: str,
         this_sim_start = time()
         # collect accepted particles
         accepted_samples = []
+        # whether any particle in this iteration is preliminary
+        any_prel = False
 
         # make batch_size attempts
         for n_batched in range(batch_size):
@@ -163,6 +173,8 @@ def work_on_population(analysis_id: str,
                                f"Error message is: {e}")
                 # increment the failure counter
                 redis.incr(idfy(N_FAIL, ana_id, t), 1)
+                if not catch:
+                    raise e
                 continue
 
             # append to current sample
@@ -177,8 +189,9 @@ def work_on_population(analysis_id: str,
                 accepted_samples.append(
                     cloudpickle.dumps(
                         (particle_max_id - n_batched, sample)))
+                any_prel = any_prel or any_particle_preliminary(sample)
                 # initialize new sample
-                sample = sample_factory()
+                sample = sample_factory(is_look_ahead=is_look_ahead)
 
         # update total simulation-specific time
         cumulative_simulation_time += time() - this_sim_start
@@ -187,8 +200,10 @@ def work_on_population(analysis_id: str,
         if len(accepted_samples) > 0:
             # new pipeline
             pipeline = redis.pipeline()
-            # update particles counter
-            pipeline.incr(idfy(N_ACC, ana_id, t), len(accepted_samples))
+            # update particles counter if nothing is preliminary,
+            #  otherwise final acceptance is done by the sampler
+            if not any_prel:
+                pipeline.incr(idfy(N_ACC, ana_id, t), len(accepted_samples))
             # note: samples are appended 1-by-1
             pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)
             # execute all commands
@@ -209,21 +224,23 @@ def work_on_population(analysis_id: str,
 @click.command(help="Evaluation parallel redis sampler for pyABC.")
 @click.option('--host', default="localhost", help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
-@click.option('--runtime', type=str, default="2h",
+@click.option('--runtime', default="2h", type=str,
               help='Max worker runtime if the form <NR><UNIT>, '
                    'where <NR> is any number and <UNIT> can be s, '
                    '(S,) m, (M,) '
                    'h, (H,) d, (D) for seconds, minutes, hours and days. '
                    'E.g. for 12 hours you would pass --runtime=12h, for half '
                    'a day you could do 0.5d.')
-@click.option('--password', default=None, help='Password for a secure '
-                                               'connection.')
-@click.option('--processes', type=int, default=1, help="The number of worker "
-                                                       "processes to start")
+@click.option('--password', default=None, type=str,
+              help='Password for a secure connection.')
+@click.option('--processes', default=1, type=int,
+              help="The number of worker processes to start")
+@click.option('--catch', default=True, type=bool, help="Catch errors.")
 def work(host="localhost",
          port=6379, runtime="2h",
          password=None,
-         processes=1):
+         processes=1,
+         catch=True):
     """
     Corresponds to the entry point abc-redis-worker.
     """
@@ -231,15 +248,16 @@ def work(host="localhost",
         # start a single process right here, not within pool
         # this handles the problem of starting a daemon process within a
         # daemon process
-        return _work(host, port, runtime, password)
+        return _work(host, port, runtime, password, catch)
 
     with Pool(processes) as pool:
-        res = pool.starmap(_work, [(host, port, runtime, password)]
+        res = pool.starmap(_work, [(host, port, runtime, password, catch)]
                            * processes)
     return res
 
 
-def _work(host="localhost", port=6379, runtime="2h", password=None):
+def _work(host="localhost", port=6379, runtime="2h", password=None,
+          catch=True):
     np.random.seed()
     random.seed()
 
@@ -277,7 +295,7 @@ def _work(host="localhost", port=6379, runtime="2h", password=None):
             # work on the specified population
             work_on_population(
                 analysis_id=analysis_id, t=t,
-                redis=redis, start_time=start_time,
+                redis=redis, catch=catch, start_time=start_time,
                 max_runtime_s=max_runtime_s, kill_handler=kill_handler)
 
         elif data == STOP:

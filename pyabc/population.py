@@ -27,37 +27,31 @@ class Particle:
 
     Parameters
     ----------
-
-    m: int
+    m:
         The model index.
-
-    parameter: Parameter
+    parameter:
         The model specific parameter.
-
-    weight: float, 0 <= weight <= 1
-        The weight of the particle.
-
-    accepted_sum_stats: List[dict]
+    weight:
+        The weight of the particle. 0 <= weight <= 1.
+    accepted_sum_stats:
         List of accepted summary statistics.
         This list is usually of length 1. This list is longer only if more
         than one sample is taken for a particle.
         This list has length 0 if the particle is rejected.
-
-    accepted_distances: List[float]
+    accepted_distances:
         A particle can contain more than one sample.
         If so, the distances of the individual samples
         are stored in this list. In the most common case of a single
         sample, this list has length 1.
-
-    rejected_sum_stats: List[dict]
+    rejected_sum_stats:
         List of rejected summary statistics.
-
-    rejected_distances: List[float]
+    rejected_distances:
         List of rejected distances.
-
-    accepted: bool
+    accepted:
         True if particle was accepted, False if not.
-
+    preliminary:
+        Whether this particle is only preliminarily accepted. Must be False
+        eventually for all particles.
 
     .. note::
         There are two different ways of weighting particles: First, the weights
@@ -80,7 +74,8 @@ class Particle:
                  accepted_distances: List[float],
                  rejected_sum_stats: List[dict] = None,
                  rejected_distances: List[float] = None,
-                 accepted: bool = True):
+                 accepted: bool = True,
+                 preliminary: bool = False):
 
         self.m = m
         self.parameter = parameter
@@ -94,6 +89,7 @@ class Particle:
             rejected_distances = []
         self.rejected_distances = rejected_distances
         self.accepted = accepted
+        self.preliminary = preliminary
 
 
 class Population:

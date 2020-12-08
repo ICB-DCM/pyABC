@@ -20,6 +20,65 @@ from pyabc.population import Particle
 logger = logging.getLogger(__name__)
 
 
+class AnalysisVars(dict):
+    """Contract object class for passing analysis variables.
+
+    Used e.g. to create new sampling tasks or check early stopping.
+    """
+
+    def __init__(
+        self,
+        model_prior: RV,
+        parameter_priors: List[Distribution],
+        model_perturbation_kernel: ModelPerturbationKernel,
+        transitions: List[Transition],
+        nr_samples_per_parameter: int,
+        models: List[Model],
+        summary_statistics: Callable,
+        x_0: dict,
+        distance_function: Distance,
+        eps: Epsilon,
+        acceptor: Acceptor,
+        min_acceptance_rate: float,
+        min_eps: float,
+        stop_if_single_model_alive: bool,
+        max_t: int,
+        max_total_nr_simulations: int,
+        prev_total_nr_simulations: int,
+        max_walltime: timedelta,
+        init_walltime: datetime,
+    ):
+        super().__init__()
+        self.model_prior = model_prior
+        self.parameter_priors = parameter_priors
+        self.model_perturbation_kernel = model_perturbation_kernel
+        self.transitions = transitions
+        self.nr_samples_per_parameter = nr_samples_per_parameter
+        self.models = models
+        self.summary_statistics = summary_statistics
+        self.x_0 = x_0
+        self.distance_function = distance_function
+        self.eps = eps
+        self.acceptor = acceptor
+        self.min_acceptance_rate = min_acceptance_rate
+        self.min_eps = min_eps
+        self.stop_if_single_model_alive = stop_if_single_model_alive
+        self.max_t = max_t
+        self.max_total_nr_simulations = max_total_nr_simulations
+        self.prev_total_nr_simulations = prev_total_nr_simulations
+        self.max_walltime = max_walltime
+        self.init_walltime = init_walltime
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def create_simulate_from_prior_function(
         t: int, model_prior: RV, parameter_priors: List[Distribution],
         models: List[Model], summary_statistics: Callable,
@@ -307,13 +366,20 @@ def create_weight_function(
 
 
 def create_simulate_function(
-        t: int, model_probabilities: pd.DataFrame,
+        t: int,
+        model_probabilities: pd.DataFrame,
         model_perturbation_kernel: ModelPerturbationKernel,
         transitions: List[Transition],
-        model_prior: RV, parameter_priors: List[Distribution],
-        nr_samples_per_parameter: int, models: List[Model],
-        summary_statistics: Callable, x_0: dict,
-        distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
+        model_prior: RV,
+        parameter_priors: List[Distribution],
+        nr_samples_per_parameter: int,
+        models: List[Model],
+        summary_statistics: Callable,
+        x_0: dict,
+        distance_function: Distance,
+        eps: Epsilon,
+        acceptor: Acceptor,
+        evaluate: bool = True,
 ) -> Callable:
     """
     Create a simulation function which performs the sampling of parameters,
@@ -336,6 +402,9 @@ def create_simulate_function(
     distance_function: The distance function.
     eps: The epsilon threshold.
     acceptor: The acceptor.
+    evaluate:
+        Whether to actually evaluate the sample. Should be True except for
+        certain preliminary settings.
 
     Returns
     -------
@@ -376,15 +445,127 @@ def create_simulate_function(
             model_prior=model_prior, parameter_priors=parameter_priors,
             model_perturbation_kernel=model_perturbation_kernel,
             transitions=transitions)
-        particle = evaluate_proposal(
-            *parameter, t=t,
-            nr_samples_per_parameter=nr_samples_per_parameter,
-            models=models, summary_statistics=summary_statistics,
-            distance_function=distance_function, eps=eps, acceptor=acceptor,
-            x_0=x_0, weight_function=weight_function)
+        if evaluate:
+            particle = evaluate_proposal(
+                *parameter, t=t,
+                nr_samples_per_parameter=nr_samples_per_parameter,
+                models=models, summary_statistics=summary_statistics,
+                distance_function=distance_function, eps=eps,
+                acceptor=acceptor,
+                x_0=x_0, weight_function=weight_function)
+        else:
+            particle = only_simulate_data_for_proposal(
+                *parameter, t=t,
+                nr_samples_per_parameter=nr_samples_per_parameter,
+                models=models, summary_statistics=summary_statistics,
+                weight_function=weight_function)
         return particle
 
     return simulate_one
+
+
+def only_simulate_data_for_proposal(
+        m_ss: int, theta_ss: Parameter, t: int,
+        nr_samples_per_parameter: int, models: List[Model],
+        summary_statistics: Callable,
+        weight_function: Callable) -> Particle:
+    """Simulate data for parameters.
+
+    Similar to `evaluate_proposal`, however here for the passed parameters
+    only data are simulated, but no distances calculated or acceptance
+    checked. That needs to be done post-hoc then, not checked here."""
+    # for the results
+    accepted_sum_stats = []
+    # distance and weight are just dummies here, they need to be recomputed
+    #  later again
+    accepted_distances = []
+    accepted_weights = []
+
+    # perform nr_samples_per_parameter simulations
+    for _ in range(nr_samples_per_parameter):
+        # simulate
+        model_result = models[m_ss].summary_statistics(
+            t, theta_ss, summary_statistics)
+        accepted_sum_stats.append(model_result.sum_stats)
+        # fill in dummies for distance and weight
+        accepted_distances.append(np.inf)
+        accepted_weights.append(1.)
+
+    # needs to be accepted in order to be forwarded by the sampler, and so
+    #  as a single particle
+    accepted = True
+
+    # compute acceptance weight
+    # TODO later replacement only works with nr_samples_per_parameter == 1
+    weight = weight_function(
+        accepted_distances, m_ss, theta_ss, accepted_weights)
+
+    return Particle(
+        m=m_ss,
+        parameter=theta_ss,
+        weight=weight,
+        accepted_sum_stats=accepted_sum_stats,
+        accepted_distances=accepted_distances,
+        accepted=accepted,
+        preliminary=True)
+
+
+def evaluate_preliminary_particle(
+        particle: Particle, t, ana_vars: AnalysisVars) -> Particle:
+    """Evaluate a preliminary particle.
+    I.e. compute distance and check acceptance.
+
+    Returns
+    -------
+    evaluated_particle: The evaluated particle
+    """
+    if not particle.preliminary:
+        raise AssertionError("Particle is not preliminary")
+
+    # for results
+    accepted_sum_stats = []
+    accepted_distances = []
+    accepted_weights = []
+    rejected_sum_stats = []
+    rejected_distances = []
+
+    for sum_stat in particle.accepted_sum_stats:
+        acc_res = ana_vars.acceptor(
+            distance_function=ana_vars.distance_function,
+            eps=ana_vars.eps,
+            x=sum_stat,
+            x_0=ana_vars.x_0,
+            t=t,
+            par=particle.parameter)
+
+        if acc_res.accept:
+            accepted_sum_stats.append(sum_stat)
+            accepted_distances.append(acc_res.distance)
+            # the acceptance weight
+            accepted_weights.append(acc_res.weight)
+        else:
+            rejected_sum_stats.append(sum_stat)
+            rejected_distances.append(acc_res.distance)
+
+    # reconstruct weighting function from `weight_function`
+    sampling_weight = particle.weight
+    fr_accepted_for_par = \
+        len(accepted_sum_stats) / ana_vars.nr_samples_per_parameter
+    # the weight is the sampling weight times the acceptance weight(s)
+    weight = sampling_weight * np.prod(accepted_weights) * \
+        fr_accepted_for_par
+
+    # return the evaluated particle
+    return Particle(
+        m=particle.m,
+        parameter=particle.parameter,
+        weight=weight,
+        accepted_sum_stats=accepted_sum_stats,
+        accepted_distances=accepted_distances,
+        rejected_sum_stats=rejected_sum_stats,
+        rejected_distances=rejected_distances,
+        accepted=len(accepted_distances) > 0,
+    )
 
 
 def termination_criteria_fulfilled(
@@ -416,7 +597,7 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
-        logger.info("Stopping: maximum time.")
+        logger.info("Stopping: maximum number of generations.")
         return True
     if current_eps <= min_eps:
         logger.info("Stopping: minimum epsilon.")
@@ -441,62 +622,3 @@ def create_analysis_id():
     Used by the inference routine to uniquely associated results with analyses.
     """
     return str(uuid.uuid4())
-
-
-class AnalysisVars(dict):
-    """Contract object class for passing analysis variables.
-
-    Used e.g. to create new sampling tasks or check early stopping.
-    """
-
-    def __init__(
-        self,
-        model_prior: RV,
-        parameter_priors: List[Distribution],
-        model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition],
-        nr_samples_per_parameter: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        x_0: dict,
-        distance_function: Distance,
-        eps: Epsilon,
-        acceptor: Acceptor,
-        min_acceptance_rate: float,
-        min_eps: float,
-        stop_if_single_model_alive: bool,
-        max_t: int,
-        max_total_nr_simulations: int,
-        prev_total_nr_simulations: int,
-        max_walltime: timedelta,
-        init_walltime: datetime,
-    ):
-        super().__init__()
-        self.model_prior = model_prior
-        self.parameter_priors = parameter_priors
-        self.model_perturbation_kernel = model_perturbation_kernel
-        self.transitions = transitions
-        self.nr_samples_per_parameter = nr_samples_per_parameter
-        self.models = models
-        self.summary_statistics = summary_statistics
-        self.x_0 = x_0
-        self.distance_function = distance_function
-        self.eps = eps
-        self.acceptor = acceptor
-        self.min_acceptance_rate = min_acceptance_rate
-        self.min_eps = min_eps
-        self.stop_if_single_model_alive = stop_if_single_model_alive
-        self.max_t = max_t
-        self.max_total_nr_simulations = max_total_nr_simulations
-        self.prev_total_nr_simulations = prev_total_nr_simulations
-        self.max_walltime = max_walltime
-        self.init_walltime = init_walltime
-
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(key)
-
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
