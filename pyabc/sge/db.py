@@ -48,7 +48,7 @@ class SQLiteJobDB:
         #  pre-calculated expressions
         with self.connection:
             results = self.connection.execute(
-                "SELECT status, time from status WHERE ID="  # noqa: S608
+                "SELECT status, time from status WHERE ID="  # noqa: S608, B608
                 + str(ID)).fetchall()
             nr_rows = len(results)
 
