@@ -249,7 +249,7 @@ def work(host="localhost",
     """
     if processes == 1:
         # for a single process, no need to use any pooling
-        return _work(host, port, runtime, password, daemon, catch)
+        return _work(host, port, runtime, password, catch)
 
     # define parallel processes
     procs = [
