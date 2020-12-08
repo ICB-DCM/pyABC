@@ -235,14 +235,14 @@ def work_on_population(analysis_id: str,
               help='Password for a secure connection.')
 @click.option('--processes', default=1, type=int,
               help="The number of worker processes to start")
-@click.option('--daemon', default=None, type=bool,
+@click.option('--daemon', default=True, type=bool,
               help="Create subprocesses in daemon mode.")
 @click.option('--catch', default=True, type=bool, help="Catch errors.")
 def work(host="localhost",
          port=6379, runtime="2h",
          password=None,
          processes=1,
-         daemon=None,
+         daemon=True,
          catch=True):
     """Start workers.
     Corresponds to the entry point abc-redis-worker.

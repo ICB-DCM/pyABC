@@ -357,7 +357,7 @@ def test_redis_subprocess():
         return np.abs(y1['y'] - y2['y']).sum()
 
     obs = {'y': 1}
-    # False and None as daemon arguments are ok, True is not allowed
+    # False as daemon argument is ok, True and None are not allowed
     sampler = RedisEvalParallelSamplerServerStarter(
         workers=1, processes_per_worker=2, daemon=False)
     try:
@@ -365,7 +365,7 @@ def test_redis_subprocess():
             model, prior, distance, sampler=sampler,
             population_size=10)
         abc.new(pyabc.create_sqlite_db_id(), obs)
-        # will just never return if model evaluation fails
+        # would just never return if model evaluation fails
         abc.run(max_nr_populations=3)
     finally:
         sampler.shutdown()
