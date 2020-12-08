@@ -7,7 +7,7 @@ import os
 import cloudpickle
 from time import time
 import click
-from multiprocessing import Pool
+from multiprocessing import Process
 import numpy as np
 import random
 import logging
@@ -235,25 +235,40 @@ def work_on_population(analysis_id: str,
               help='Password for a secure connection.')
 @click.option('--processes', default=1, type=int,
               help="The number of worker processes to start")
+@click.option('--daemon', default=True, type=bool,
+              help="Create subprocesses in daemon mode.")
 @click.option('--catch', default=True, type=bool, help="Catch errors.")
 def work(host="localhost",
          port=6379, runtime="2h",
          password=None,
          processes=1,
+         daemon=True,
          catch=True):
-    """
+    """Start workers.
     Corresponds to the entry point abc-redis-worker.
     """
     if processes == 1:
-        # start a single process right here, not within pool
-        # this handles the problem of starting a daemon process within a
-        # daemon process
+        # for a single process, no need to use any pooling
         return _work(host, port, runtime, password, catch)
 
-    with Pool(processes) as pool:
-        res = pool.starmap(_work, [(host, port, runtime, password, catch)]
-                           * processes)
-    return res
+    # define parallel processes
+    procs = [
+        Process(target=_work,
+                args=(host, port, runtime, password, catch),
+                daemon=daemon)
+        for _ in range(processes)]
+
+    # start them
+    for proc in procs:
+        proc.start()
+
+    # log
+    for proc in procs:
+        logger.info(f"Started subprocess with pid {proc.pid}")
+
+    # wait for them to return
+    for proc in procs:
+        proc.join()
 
 
 def _work(host="localhost", port=6379, runtime="2h", password=None,
@@ -330,7 +345,7 @@ def _work(host="localhost", port=6379, runtime="2h", password=None,
               help="Generation t.")
 @click.argument('command', type=str)
 def manage(command, host="localhost", port=6379, password=None, t=None):
-    """
+    """Manage workers.
     Corresponds to the entry point abc-redis-manager.
     """
     return _manage(command, host=host, port=port, password=password, t=t)

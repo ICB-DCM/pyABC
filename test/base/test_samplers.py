@@ -332,6 +332,45 @@ def test_redis_continuous_analyses():
         sampler.shutdown()
 
 
+def test_redis_subprocess():
+    """Test whether the instructed redis sampler allows worker subprocesses."""
+    # print worker output
+    logging.getLogger("Redis-Worker").addHandler(logging.StreamHandler())
+
+    def model_process(p, pipe):
+        """The actual model."""
+        pipe.send({"y": p['p0'] + 0.1 * np.random.randn(10)})
+
+    def model(p):
+        """Model calling a subprocess."""
+        parent, child = multiprocessing.Pipe()
+        proc = multiprocessing.Process(target=model_process, args=(p, child))
+        proc.start()
+        res = parent.recv()
+        proc.join()
+        return res
+
+    prior = pyabc.Distribution(
+        p0=pyabc.RV('uniform', -5, 10), p1=pyabc.RV('uniform', -2, 2))
+
+    def distance(y1, y2):
+        return np.abs(y1['y'] - y2['y']).sum()
+
+    obs = {'y': 1}
+    # False as daemon argument is ok, True and None are not allowed
+    sampler = RedisEvalParallelSamplerServerStarter(
+        workers=1, processes_per_worker=2, daemon=False)
+    try:
+        abc = pyabc.ABCSMC(
+            model, prior, distance, sampler=sampler,
+            population_size=10)
+        abc.new(pyabc.create_sqlite_db_id(), obs)
+        # would just never return if model evaluation fails
+        abc.run(max_nr_populations=3)
+    finally:
+        sampler.shutdown()
+
+
 def test_redis_look_ahead():
     """Test the redis sampler in look-ahead mode."""
     model, prior, distance, obs = basic_testcase()

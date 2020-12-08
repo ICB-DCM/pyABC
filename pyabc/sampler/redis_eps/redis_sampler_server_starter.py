@@ -23,6 +23,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                  look_ahead_delay_evaluation=True,
                  workers: int = 2,
                  processes_per_worker: int = 1,
+                 daemon: bool = True,
                  catch: bool = True,
                  log_file: str = None,
                  ):
@@ -56,12 +57,14 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
 
         # initiate worker processes
         maybe_password = [] if password is None else ["--password", password]
+        maybe_daemon = [] if daemon is None else ["--daemon", str(daemon)]
         self.__worker = [
             Process(target=work,
                     args=(["--host", "localhost",
                            "--port", str(port),
                            *maybe_password,
                            "--processes", str(processes_per_worker),
+                           *maybe_daemon,
                            "--catch", str(catch)],),
                     daemon=False)
             for _ in range(workers)
