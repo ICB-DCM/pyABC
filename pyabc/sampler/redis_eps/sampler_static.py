@@ -44,6 +44,7 @@ class RedisStaticSampler(RedisSamplerBase):
                 bar.inc()
 
         # wait for all workers to join
+        #  this is necessary for clear intermediate states
         while int(self.redis.get(idfy(N_WORKER, ana_id, t)).decode()) > 0:
             sleep(SLEEP_TIME)
 

@@ -115,6 +115,7 @@ def _work(host="localhost", port=6379, runtime="2h", password=None,
             #  current time index
             t = int(redis.get(idfy(GENERATION, analysis_id)).decode())
             mode = str(redis.get(idfy(MODE, analysis_id, t)).decode())
+            # work on the specified population in dynamic or static mode
             if mode == DYNAMIC:
                 work_on_population_dynamic(
                     analysis_id=analysis_id, t=t,
