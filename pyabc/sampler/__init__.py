@@ -16,5 +16,7 @@ from .dask_sampler import DaskDistributedSampler
 from .multicore_evaluation_parallel import MulticoreEvalParallelSampler
 from .redis_eps import (
     RedisEvalParallelSampler,
-    RedisEvalParallelSamplerServerStarter)
+    RedisStaticSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter)
 from .concurrent_future import ConcurrentFutureSampler

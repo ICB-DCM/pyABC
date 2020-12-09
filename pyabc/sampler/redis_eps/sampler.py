@@ -1,3 +1,5 @@
+"""Redis based sampler base class and dynamic scheduling samplers."""
+
 import numpy as np
 import pickle
 from time import sleep
@@ -14,7 +16,7 @@ from ...util import (
     termination_criteria_fulfilled)
 from ...sampler import Sampler, Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, QUEUE, MSG, START,
+                  N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC,
                   SLEEP_TIME, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
                   GENERATION, idfy)
 from .redis_logging import RedisSamplerLogger
@@ -22,8 +24,80 @@ from .redis_logging import RedisSamplerLogger
 logger = logging.getLogger("Redis-Sampler")
 
 
-class RedisEvalParallelSampler(Sampler):
-    """Redis based low latency sampler.
+class RedisSamplerBase(Sampler):
+    """Abstract base class for redis based samplers.
+
+    Parameters
+    ----------
+    host:
+        IP address or name of the Redis server.
+        Default is "localhost".
+    port:
+        Port of the Redis server.
+        Default is 6379.
+    password:
+        Password for a protected server. Default is None (no protection).
+    log_file:
+        A file for a dedicated sampler history. Updated in each iteration.
+        This log file is complementary to the logging realized via the
+        logging module.
+    """
+
+    def __init__(self,
+                 host: str = "localhost",
+                 port: int = 6379,
+                 password: str = None,
+                 log_file: str = None):
+        super().__init__()
+        logger.debug(
+            f"Redis sampler: host={host} port={port}")
+        # handles the connection to the redis-server
+        self.redis: StrictRedis = StrictRedis(
+            host=host, port=port, password=password)
+        self.logger = RedisSamplerLogger(log_file)
+
+    def n_worker(self) -> int:
+        """
+        Get the number of connected workers.
+
+        Returns
+        -------
+
+        Number of workers connected.
+        """
+        return self.redis.pubsub_numsub(MSG)[0][-1]
+
+    def set_analysis_id(self, analysis_id: str):
+        """Set the analysis id and make sure the server is available."""
+        super().set_analysis_id(analysis_id)
+        if self.redis.get(ANALYSIS_ID):
+            raise AssertionError(
+                "The server seems busy with an analysis already")
+        self.redis.set(ANALYSIS_ID, analysis_id)
+
+    def sample_until_n_accepted(
+        self,
+        n: int,
+        simulate_one: Callable,
+        t: int,
+        *,
+        max_eval: int = np.inf,
+        all_accepted: bool = False,
+        ana_vars: AnalysisVars = None,
+    ) -> Sample:
+        raise NotImplementedError()
+
+    def stop(self):
+        """Stop potentially still ongoing sampling."""
+        # delete ids specifying the current analysis
+        self.redis.delete(ANALYSIS_ID)
+        self.redis.delete(idfy(GENERATION, self.analysis_id))
+        # note: the other ana_id-t-specific variables are not deleted, as these
+        #  do not hurt anyway and could potentially make the workers fail
+
+
+class RedisEvalParallelSampler(RedisSamplerBase):
+    """Redis based dynamic scheduling low latency sampler.
 
     This sampler is well-performing in distributed environments.
     It is usually faster than the
@@ -92,35 +166,11 @@ class RedisEvalParallelSampler(Sampler):
                  look_ahead: bool = False,
                  look_ahead_delay_evaluation: bool = True,
                  log_file: str = None):
-        super().__init__()
-        logger.debug(
-            f"Redis sampler: host={host} port={port}")
-        # handles the connection to the redis-server
-        self.redis: StrictRedis = StrictRedis(
-            host=host, port=port, password=password)
+        super().__init__(
+            host=host, port=port, password=password, log_file=log_file)
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
         self.look_ahead_delay_evaluation = look_ahead_delay_evaluation
-        self.logger = RedisSamplerLogger(log_file)
-
-    def n_worker(self) -> int:
-        """
-        Get the number of connected workers.
-
-        Returns
-        -------
-
-        Number of workers connected.
-        """
-        return self.redis.pubsub_numsub(MSG)[0][-1]
-
-    def set_analysis_id(self, analysis_id: str):
-        """Set the analysis id and make sure the server is available."""
-        super().set_analysis_id(analysis_id)
-        if self.redis.get(ANALYSIS_ID):
-            raise AssertionError(
-                "The server seems busy with an analysis already")
-        self.redis.set(ANALYSIS_ID, analysis_id)
 
     def sample_until_n_accepted(
             self, n, simulate_one, t, *,
@@ -227,26 +277,25 @@ class RedisEvalParallelSampler(Sampler):
         ana_id = self.analysis_id
 
         # write initial values to pipeline
-        pipeline = self.redis.pipeline()
-        # initialize variables for time t
-        self.redis.set(idfy(SSA, ana_id, t),
-                       cloudpickle.dumps((simulate_one, self.sample_factory)))
-        pipeline.set(idfy(N_EVAL, ana_id, t), 0)
-        pipeline.set(idfy(N_ACC, ana_id, t), 0)
-        pipeline.set(idfy(N_REQ, ana_id, t), n)
-        pipeline.set(idfy(N_FAIL, ana_id, t), 0)
-        # encode as int
-        pipeline.set(idfy(ALL_ACCEPTED, ana_id, t), int(all_accepted))
-        pipeline.set(idfy(N_WORKER, ana_id, t), 0)
-        pipeline.set(idfy(BATCH_SIZE, ana_id, t), self.batch_size)
-        # encode as int
-        pipeline.set(idfy(IS_LOOK_AHEAD, ana_id, t), int(is_look_ahead))
-
-        # update the current-generation variable
-        pipeline.set(idfy(GENERATION, ana_id), t)
-
-        # execute all commands
-        pipeline.execute()
+        (self.redis.pipeline()
+         # initialize variables for time t
+         .set(idfy(SSA, ana_id, t),
+              cloudpickle.dumps((simulate_one, self.sample_factory)))
+         .set(idfy(N_EVAL, ana_id, t), 0)
+         .set(idfy(N_ACC, ana_id, t), 0)
+         .set(idfy(N_REQ, ana_id, t), n)
+         .set(idfy(N_FAIL, ana_id, t), 0)
+         # encode as int
+         .set(idfy(ALL_ACCEPTED, ana_id, t), int(all_accepted))
+         .set(idfy(N_WORKER, ana_id, t), 0)
+         .set(idfy(BATCH_SIZE, ana_id, t), self.batch_size)
+         # encode as int
+         .set(idfy(IS_LOOK_AHEAD, ana_id, t), int(is_look_ahead))
+         .set(idfy(MODE, ana_id, t), DYNAMIC)
+         # update the current-generation variable
+         .set(idfy(GENERATION, ana_id), t)
+         # execute all commands
+         .execute())
 
         # publish start message
         self.redis.publish(MSG, START)
@@ -270,37 +319,19 @@ class RedisEvalParallelSampler(Sampler):
         """
         ana_id = self.analysis_id
         # delete keys from pipeline
-        pipeline = self.redis.pipeline()
-        pipeline.delete(idfy(SSA, ana_id, t))
-        pipeline.delete(idfy(N_EVAL, ana_id, t))
-        pipeline.delete(idfy(N_ACC, ana_id, t))
-        pipeline.delete(idfy(N_REQ, ana_id, t))
-        pipeline.delete(idfy(N_FAIL, ana_id, t))
-        pipeline.delete(idfy(ALL_ACCEPTED, ana_id, t))
-        pipeline.delete(idfy(N_WORKER, ana_id, t))
-        pipeline.delete(idfy(BATCH_SIZE, ana_id, t))
-        pipeline.delete(idfy(QUEUE, ana_id, t))
-        pipeline.execute()
-
-    def create_sample(self, id_results: List[Tuple], n: int) -> Sample:
-        """Create a single sample result.
-        Order the results by starting point to avoid a bias towards
-        short-running simulations (dynamic scheduling).
-        """
-        # sort
-        id_results.sort(key=lambda x: x[0])
-        # cut off
-        id_results = id_results[:n]
-
-        # extract simulations
-        results = [res[1] for res in id_results]
-
-        # create 1 to-be-returned sample from results
-        sample = self._create_empty_sample()
-        for j in range(n):
-            sample += results[j]
-
-        return sample
+        (self.redis.pipeline()
+         .delete(idfy(SSA, ana_id, t))
+         .delete(idfy(N_EVAL, ana_id, t))
+         .delete(idfy(N_ACC, ana_id, t))
+         .delete(idfy(N_REQ, ana_id, t))
+         .delete(idfy(N_FAIL, ana_id, t))
+         .delete(idfy(ALL_ACCEPTED, ana_id, t))
+         .delete(idfy(N_WORKER, ana_id, t))
+         .delete(idfy(BATCH_SIZE, ana_id, t))
+         .delete(idfy(IS_LOOK_AHEAD, ana_id, t))
+         .delete(idfy(MODE, ana_id, t))
+         .delete(idfy(QUEUE, ana_id, t))
+         .execute())
 
     def maybe_start_next_generation(
             self, t: int, n: int, id_results: List, all_accepted: bool,
@@ -373,13 +404,25 @@ class RedisEvalParallelSampler(Sampler):
             n=n, t=t+1, simulate_one=simulate_one_prel,
             all_accepted=False, is_look_ahead=True)
 
-    def stop(self):
-        """Stop potentially still ongoing sampling."""
-        # delete ids specifying the current analysis
-        self.redis.delete(ANALYSIS_ID)
-        self.redis.delete(idfy(GENERATION, self.analysis_id))
-        # note: the other ana_id-t-specific variables are not deleted, as these
-        #  do not hurt anyway and could potentially make the workers fail
+    def create_sample(self, id_results: List[Tuple], n: int) -> Sample:
+        """Create a single sample result.
+        Order the results by starting point to avoid a bias towards
+        short-running simulations (dynamic scheduling).
+        """
+        # sort
+        id_results.sort(key=lambda x: x[0])
+        # cut off
+        id_results = id_results[:n]
+
+        # extract simulations
+        results = [res[1] for res in id_results]
+
+        # create 1 to-be-returned sample from results
+        sample = self._create_empty_sample()
+        for j in range(n):
+            sample += results[j]
+
+        return sample
 
 
 def create_preliminary_simulate_one(

@@ -1,2 +1,5 @@
 from .sampler import RedisEvalParallelSampler
-from .redis_sampler_server_starter import RedisEvalParallelSamplerServerStarter
+from .sampler_static import RedisStaticSampler
+from .redis_sampler_server_starter import (
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter)

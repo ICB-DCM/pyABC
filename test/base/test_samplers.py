@@ -10,7 +10,8 @@ from pyabc.sampler import (SingleCoreSampler,
                            DaskDistributedSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
-                           RedisEvalParallelSamplerServerStarter)
+                           RedisEvalParallelSamplerServerStarter,
+                           RedisStaticSamplerServerStarter)
 import pyabc
 import logging
 import os
@@ -77,6 +78,10 @@ def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
         look_ahead=True, look_ahead_delay_evaluation=True, **kwargs)
 
 
+def RedisStaticSamplerWrapper(**kwargs):
+    return RedisStaticSamplerServerStarter(**kwargs)
+
+
 def PicklingMulticoreParticleParallelSampler():
     return MulticoreParticleParallelSampler(pickle=True)
 
@@ -88,6 +93,7 @@ def PicklingMulticoreEvalParallelSampler():
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerWrapper,
                         RedisEvalParallelSamplerLookAheadDelayWrapper,
+                        RedisStaticSamplerWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
