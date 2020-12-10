@@ -107,6 +107,7 @@ def work_on_population_static(
                     f"after {internal_counter} samples.")
                 # notify quit (manually here as we call exit)
                 redis.decr(idfy(N_WORKER, ana_id, t))
+                redis.incr(idfy(N_JOB, ana_id, t))
                 sys.exit(0)
 
             # check whether time's up
@@ -117,6 +118,7 @@ def work_on_population_static(
                     f"runtime {current_runtime} exceeds "
                     f"max runtime {max_runtime_s}")
                 # return to task queue
+                redis.incr(idfy(N_JOB, ana_id, t))
                 return
 
             # check whether the analysis was terminated or replaced by a new
@@ -127,6 +129,7 @@ def work_on_population_static(
                     f"Worker {n_worker} stops during population because "
                     "the analysis seems to have been stopped.")
                 # return to task queue
+                redis.incr(idfy(N_JOB, ana_id, t))
                 return
 
             # increase global evaluation counter
