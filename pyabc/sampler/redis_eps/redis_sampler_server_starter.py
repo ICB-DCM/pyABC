@@ -7,32 +7,23 @@ import time
 
 from .cli import work, _manage
 from .sampler import RedisEvalParallelSampler
+from .sampler_static import RedisStaticSampler
 
 
-class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
-    """
-    Simple routine to start a redis-server with 2 workers for test purposes.
-    For the arguments see the base class.
-    """
+class RedisServerStarter:
 
     def __init__(self,
-                 host: str = "localhost",
                  password: str = None,
-                 batch_size: int = 1,
-                 look_ahead: bool = False,
-                 look_ahead_delay_evaluation=True,
                  workers: int = 2,
                  processes_per_worker: int = 1,
                  daemon: bool = True,
-                 catch: bool = True,
-                 log_file: str = None,
-                 ):
+                 catch: bool = True):
         # start server
         conn = psutil.net_connections()
         ports = [c.laddr[1] for c in conn]
         port = max(ports) + 1
-        self.__port = port
-        self.__password = password
+        self.port = port
+        self.password = password
 
         # create config file
         maybe_redis_conf = []
@@ -42,7 +33,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                 f.write(f"requirepass {password}\n")
             maybe_redis_conf = [fname]
 
-        self.__redis_server = Popen(  # noqa: S607,S603
+        self.redis_server = Popen(  # noqa: S607,S603
             ["redis-server", *maybe_redis_conf, "--port", str(port)])
 
         # give redis-server time to start
@@ -50,15 +41,10 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         #  respective processes are in their expected states
         sleep(1)
 
-        super().__init__(
-            host, port, password, batch_size=batch_size, look_ahead=look_ahead,
-            look_ahead_delay_evaluation=look_ahead_delay_evaluation,
-            log_file=log_file)
-
         # initiate worker processes
         maybe_password = [] if password is None else ["--password", password]
         maybe_daemon = [] if daemon is None else ["--daemon", str(daemon)]
-        self.__worker = [
+        self.workers = [
             Process(target=work,
                     args=(["--host", "localhost",
                            "--port", str(port),
@@ -71,7 +57,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         ]
 
         # start workers
-        for p in self.__worker:
+        for p in self.workers:
             p.start()
 
         # sleep a short amount of time to make sure everything is set up
@@ -79,22 +65,80 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
 
     def shutdown(self):
         """Cleanup workers and server."""
-        # call stop command
-        self.stop()
-        if not self.__redis_server:
+        if not self.redis_server:
             # no server: stop() was likely called already, skip
             return
 
         # send stop signal to workers
-        _manage("stop", port=self.__port, password=self.__password)
-        for p in self.__worker:
+        _manage("stop", port=self.port, password=self.password)
+        for p in self.workers:
             # wait for workers to join
             p.join()
 
         # terminate server
-        self.__redis_server.terminate()
+        self.redis_server.terminate()
         # make sure it's gone
-        self.__redis_server.kill()
+        self.redis_server.kill()
         # delete python reference
-        del self.__redis_server
-        self.__redis_server = None
+        del self.redis_server
+        self.redis_server = None
+
+
+class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
+    """
+    Simple routine to start a dynamic redis-server.
+    For the arguments see the base class.
+    """
+
+    def __init__(self,
+                 password: str = None,
+                 batch_size: int = 1,
+                 look_ahead: bool = False,
+                 look_ahead_delay_evaluation=True,
+                 workers: int = 2,
+                 processes_per_worker: int = 1,
+                 daemon: bool = True,
+                 catch: bool = True,
+                 log_file: str = None,
+                 ):
+        self.server_starter = RedisServerStarter(
+            password=password, workers=workers,
+            processes_per_worker=processes_per_worker,
+            daemon=daemon, catch=catch)
+
+        super().__init__(
+            host="localhost", port=self.server_starter.port,
+            password=self.server_starter.password,
+            batch_size=batch_size, look_ahead=look_ahead,
+            look_ahead_delay_evaluation=look_ahead_delay_evaluation,
+            log_file=log_file)
+
+    def shutdown(self):
+        self.server_starter.shutdown()
+
+
+class RedisStaticSamplerServerStarter(RedisStaticSampler):
+    """
+    Simple routine to start a static redis-server.
+    For the arguments see the base class.
+    """
+
+    def __init__(self,
+                 password: str = None,
+                 workers: int = 2,
+                 processes_per_worker: int = 1,
+                 daemon: bool = True,
+                 catch: bool = True,
+                 log_file: str = None,
+                 ):
+        self.server_starter = RedisServerStarter(
+            password=password, workers=workers,
+            processes_per_worker=processes_per_worker,
+            daemon=daemon, catch=catch)
+
+        super().__init__(
+            host="localhost", port=self.server_starter.port,
+            password=self.server_starter.password, log_file=log_file)
+
+    def shutdown(self):
+        self.server_starter.shutdown()

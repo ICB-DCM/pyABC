@@ -10,7 +10,8 @@ from pyabc.sampler import (SingleCoreSampler,
                            DaskDistributedSampler,
                            ConcurrentFutureSampler,
                            MulticoreEvalParallelSampler,
-                           RedisEvalParallelSamplerServerStarter)
+                           RedisEvalParallelSamplerServerStarter,
+                           RedisStaticSamplerServerStarter)
 import pyabc
 import logging
 import os
@@ -77,6 +78,10 @@ def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
         look_ahead=True, look_ahead_delay_evaluation=True, **kwargs)
 
 
+def RedisStaticSamplerWrapper(**kwargs):
+    return RedisStaticSamplerServerStarter(**kwargs)
+
+
 def PicklingMulticoreParticleParallelSampler():
     return MulticoreParticleParallelSampler(pickle=True)
 
@@ -88,6 +93,7 @@ def PicklingMulticoreEvalParallelSampler():
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerWrapper,
                         RedisEvalParallelSamplerLookAheadDelayWrapper,
+                        RedisStaticSamplerWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
@@ -143,9 +149,8 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
 
 def test_two_competing_gaussians_multiple_population_2_evaluations(
-        db_path, redis_starter_sampler):
-    two_competing_gaussians_multiple_population(db_path,
-                                                redis_starter_sampler, 2)
+        db_path, sampler):
+    two_competing_gaussians_multiple_population(db_path, sampler, 2)
 
 
 def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
@@ -166,7 +171,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
         pyabc.Distribution(x=pyabc.RV("norm", mu_x_2, sigma)),
     ]
 
-    # We plug all the ABC setup together
+    # We plug all the ABC setups together
     nr_populations = 2
     pop_size = pyabc.ConstantPopulationSize(23, nr_samples_per_parameter=n_sim)
     abc = pyabc.ABCSMC(models, parameter_given_model_prior_distribution,
