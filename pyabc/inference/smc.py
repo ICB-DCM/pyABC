@@ -541,7 +541,8 @@ class ABCSMC:
             max_nr_populations: int = np.inf,
             min_acceptance_rate: float = 0.,
             max_total_nr_simulations: int = np.inf,
-            max_walltime: timedelta = None) -> History:
+            max_walltime: timedelta = None,
+            break_on_nan_eps: bool = False) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
@@ -561,6 +562,8 @@ class ABCSMC:
             Maximum allowed total number of evaluations.
         max_walltime:
             Maximum allowed walltime since start of the run() method.
+        break_on_nan_eps:
+            Raise an exception if nan-valued epsilon is encountered
 
         Population after population is sampled and particles which are close
         enough to the observed data are accepted and added to the next
@@ -620,6 +623,8 @@ class ABCSMC:
         while t <= t_max:
             # get epsilon for generation t
             current_eps = self.eps(t)
+            if np.isnan(current_eps):
+                raise ValueError('eps is nan')
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # create simulate function
