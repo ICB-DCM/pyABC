@@ -623,8 +623,8 @@ class ABCSMC:
         while t <= t_max:
             # get epsilon for generation t
             current_eps = self.eps(t)
-            if np.isnan(current_eps):
-                raise ValueError('eps is nan')
+            if break_on_nan_eps and np.isnan(current_eps):
+                raise ValueError('eps is nan and break_on_nan_eps is set')
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # create simulate function
