@@ -14,6 +14,9 @@ from .multicore import MulticoreParticleParallelSampler
 from .base import Sample, Sampler
 from .dask_sampler import DaskDistributedSampler
 from .multicore_evaluation_parallel import MulticoreEvalParallelSampler
-from .redis_eps import (RedisEvalParallelSampler,
-                        RedisEvalParallelSamplerServerStarter)
+from .redis_eps import (
+    RedisEvalParallelSampler,
+    RedisStaticSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter)
 from .concurrent_future import ConcurrentFutureSampler
