@@ -634,7 +634,8 @@ class ABCSMC:
             # get epsilon for generation t
             current_eps = self.eps(t)
             if current_eps is None or np.isnan(current_eps):
-                raise ValueError(f"The epsilon threshold {current_eps} is invalid.")
+                raise ValueError(
+                    f"The epsilon threshold {current_eps} is invalid.")
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # create simulate function
