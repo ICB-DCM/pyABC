@@ -88,7 +88,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         return pd.DataFrame([self.rvs_single() for _ in range(size)])
 
     @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[pd.Series, pd.DataFrame, np.ndarray]) \
             -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at `x`.

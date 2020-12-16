@@ -1,4 +1,5 @@
 from typing import Callable, Union
+from functools import cached_property
 
 import numpy as np
 import pandas as pd
@@ -69,6 +70,10 @@ class MultivariateNormalTransition(Transition):
         # normal perturbation distribution
         self.normal = None
 
+    @cached_property
+    def _column_indices(self):
+        return [self.X.columns.get_loc(c) for c in self.X.columns]
+
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         if len(X) == 0:
             raise NotEnoughParticles("Fitting not possible.")
@@ -96,10 +101,13 @@ class MultivariateNormalTransition(Transition):
             np.zeros(self.cov.shape[0]), self.cov))
         return perturbed
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame],
+    def pdf(self, x: Union[pd.Series, pd.DataFrame, np.ndarray],
             ) -> Union[float, np.ndarray]:
-        x = x[self.X.columns]
-        x = np.array(x)
+        if isinstance(x, np.ndarray):
+            x = x[self._column_indices]
+        else:
+            x = x[self.X.columns]
+            x = np.array(x)
         if len(x.shape) == 1:
             x = x[None, :]
         dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()

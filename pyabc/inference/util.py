@@ -252,8 +252,8 @@ def create_transition_pdf(
         model_factor = sum(
             row.p * model_perturbation_kernel.pmf(m_ss, m)
             for m, row in model_probabilities.iterrows())
-        particle_factor = transitions[m_ss].pdf(
-            pd.Series(dict(theta_ss)))
+        x = np.array(list(dict(theta_ss).values()))
+        particle_factor = transitions[m_ss].pdf(x)
 
         transition_pd = model_factor * particle_factor
 
