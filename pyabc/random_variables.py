@@ -155,7 +155,7 @@ class RV(RVBase):
         return cls(
             dictionary["type"],
             *dictionary.get("args", []),
-            **dictionary.get("kwargs", {})
+            **dictionary.get("kwargs", {}),
         )
 
     def __init__(self, name: str, *args, **kwargs):
@@ -261,10 +261,7 @@ class RVDecorator(RVBase):
         return "Decorator"
 
     def __repr__(self):
-        return (
-            f"[{self.decorator_repr()}]"
-            + self.component.__repr__()
-        )
+        return f"[{self.decorator_repr()}]" + self.component.__repr__()
 
 
 class LowerBoundDecorator(RVDecorator):

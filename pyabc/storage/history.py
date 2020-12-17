@@ -326,9 +326,7 @@ class History:
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
         if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
-            raise AssertionError(
-                f"Weight not close to 1, w.sum()={w_arr.sum()}"
-            )
+            raise AssertionError(f"Weight not close to 1, w.sum()={w_arr.sum()}")
         return pars, w_arr
 
     @with_session

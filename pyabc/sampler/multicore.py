@@ -76,9 +76,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
-        logger.debug(
-            f"Start sampling on {n_procs} cores ({self.n_procs} requested)"
-        )
+        logger.debug(f"Start sampling on {n_procs} cores ({self.n_procs} requested)")
         feed_q = Queue()
         result_q = Queue()
 

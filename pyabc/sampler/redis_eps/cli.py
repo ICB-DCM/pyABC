@@ -171,9 +171,7 @@ def _work(host="localhost", port=6379, runtime="2h", password=None, catch=True):
         # check total time condition
         elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
-            logger.info(
-                f"Shutdown redis worker. Max runtime {max_runtime_s}s reached"
-            )
+            logger.info(f"Shutdown redis worker. Max runtime {max_runtime_s}s reached")
             return
 
 

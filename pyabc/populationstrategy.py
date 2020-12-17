@@ -240,9 +240,7 @@ class AdaptivePopulationSize(PopulationStrategy):
                 self.min_population_size,
             )
 
-        logger.info(
-            f"Change nr particles {reference_nr_part} -> {self.nr_particles}"
-        )
+        logger.info(f"Change nr particles {reference_nr_part} -> {self.nr_particles}")
 
     def __call__(self, t: int = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
