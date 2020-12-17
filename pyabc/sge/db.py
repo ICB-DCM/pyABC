@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import time
+
 import redis
 
 from .config import get_config
@@ -14,8 +15,9 @@ class SQLiteJobDB:
     SQLITE_DB_TIMEOUT = 2000
 
     def __init__(self, tmp_dir):
-        self.connection = sqlite3.connect(os.path.join(tmp_dir, 'status.db'),
-                                          timeout=self.SQLITE_DB_TIMEOUT)
+        self.connection = sqlite3.connect(
+            os.path.join(tmp_dir, "status.db"), timeout=self.SQLITE_DB_TIMEOUT
+        )
 
     def clean_up(self):
         pass
@@ -25,19 +27,20 @@ class SQLiteJobDB:
         with self.connection:
             self.connection.execute(
                 "CREATE TABLE IF NOT EXISTS "
-                "status(ID INTEGER, status TEXT, time REAL)")
+                "status(ID INTEGER, status TEXT, time REAL)"
+            )
 
     def start(self, ID):
         with self.connection:
             self.connection.execute(
-                "INSERT INTO status VALUES(?,?,?)",
-                (ID, 'started', time.time()))
+                "INSERT INTO status VALUES(?,?,?)", (ID, "started", time.time())
+            )
 
     def finish(self, ID):
         with self.connection:
             self.connection.execute(
-                "INSERT INTO status VALUES(?,?,?)",
-                (ID, 'finished', time.time()))
+                "INSERT INTO status VALUES(?,?,?)", (ID, "finished", time.time())
+            )
 
     def wait_for_job(self, ID, max_run_time_h):
         """
@@ -49,7 +52,8 @@ class SQLiteJobDB:
         with self.connection:
             results = self.connection.execute(
                 "SELECT status, time from status WHERE ID="  # noqa: S608, B608
-                + str(ID)).fetchall()
+                + str(ID)
+            ).fetchall()
             nr_rows = len(results)
 
         if nr_rows == 0:  # job not jet started
@@ -58,14 +62,14 @@ class SQLiteJobDB:
             job_start_time = results[0][1]
             # job took to long
             if not within_time(job_start_time, max_run_time_h):
-                print('Job ' + str(ID) + ' timed out.')  # noqa: T001
+                print("Job " + str(ID) + " timed out.")  # noqa: T001
                 return False  # job took too long
             else:  # still time left
                 return True
         if nr_rows == 2:  # job finished
             return False
         # something not catched here
-        raise Exception('Something went wrong. nr_rows={}'.format(nr_rows))
+        raise Exception(f"Something went wrong. nr_rows={nr_rows}")
 
 
 class RedisJobDB:
@@ -100,17 +104,19 @@ class RedisJobDB:
 
     def create(self, nr_jobs):
         pipeline = self.connection.pipeline()
-        for ID in range(1, nr_jobs+1):
+        for ID in range(1, nr_jobs + 1):
             pipeline.rpush(self.job_name, ID)
         pipeline.execute()
 
     def start(self, ID):
-        self.connection.hmset(self.key(ID), {"status": self.STARTED_STATE,
-                                             "time": time.time()})
+        self.connection.hmset(
+            self.key(ID), {"status": self.STARTED_STATE, "time": time.time()}
+        )
 
     def finish(self, ID):
-        self.connection.hmset(self.key(ID), {"status": self.FINISHED_STATE,
-                                             "time": time.time()})
+        self.connection.hmset(
+            self.key(ID), {"status": self.FINISHED_STATE, "time": time.time()}
+        )
 
     def wait_for_job(self, ID, max_run_time_h):
         values = self.connection.hgetall(self.key(ID))
@@ -128,7 +134,7 @@ class RedisJobDB:
                 return True
             return False
 
-        raise Exception('Something went wrong.')
+        raise Exception("Something went wrong.")
 
 
 def job_db_factory(tmp_path):

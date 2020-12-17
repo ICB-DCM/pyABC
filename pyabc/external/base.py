@@ -1,13 +1,13 @@
-import numpy as np
-import tempfile
-import subprocess  # noqa: S404
-import os
-from typing import List
 import logging
+import os
+import subprocess  # noqa: S404
+import tempfile
+from typing import List
+
+import numpy as np
 
 from ..model import Model
 from ..parameters import Parameter
-
 
 logger = logging.getLogger("External")
 
@@ -19,14 +19,19 @@ class ExternalHandler:
     This is a convenience class for bundling repeated functionality.
     """
 
-    def __init__(self,
-                 executable: str, file: str = None,
-                 fixed_args: List = None,
-                 create_folder: bool = False,
-                 suffix: str = None, prefix: str = None, dir: str = None,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False):
+    def __init__(
+        self,
+        executable: str,
+        file: str = None,
+        fixed_args: List = None,
+        create_folder: bool = False,
+        suffix: str = None,
+        prefix: str = None,
+        dir: str = None,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+    ):
         """
         Parameters
         ----------
@@ -77,10 +82,12 @@ class ExternalHandler:
         """
         if self.create_folder:
             return tempfile.mkdtemp(
-                suffix=self.suffix, prefix=self.prefix, dir=self.dir)
+                suffix=self.suffix, prefix=self.prefix, dir=self.dir
+            )
         else:
             return tempfile.mkstemp(
-                suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+                suffix=self.suffix, prefix=self.prefix, dir=self.dir
+            )[1]
 
     def create_executable(self, loc):
         """
@@ -111,32 +118,35 @@ class ExternalHandler:
             loc = self.create_loc()
 
         # redirect output
-        devnull = open(os.devnull, 'w')
+        devnull = open(os.devnull, "w")
         stdout = stderr = {}
         if not self.show_stdout:
-            stdout = {'stdout': devnull}
+            stdout = {"stdout": devnull}
         if not self.show_stderr:
-            stderr = {'stderr': devnull}
+            stderr = {"stderr": devnull}
 
         # call
         if cmd is not None:
-            status = subprocess.run(
-                    cmd, shell=True, **stdout, **stderr)  # noqa: S602
+            status = subprocess.run(cmd, shell=True, **stdout, **stderr)  # noqa: S602
         else:
             executable = self.create_executable(loc)
             status = subprocess.run(  # noqa: S603
-                [executable, self.file, *self.fixed_args, *args,
-                 f'target={loc}'], **stdout, **stderr)
+                [executable, self.file, *self.fixed_args, *args, f"target={loc}"],
+                **stdout,
+                **stderr,
+            )
         if status.returncode:
-            msg = (f"Simulation error for arguments {args}: "
-                   f"returncode {status.returncode}.")
+            msg = (
+                f"Simulation error for arguments {args}: "
+                f"returncode {status.returncode}."
+            )
             if self.raise_on_error:
                 raise ValueError(msg)
             else:
                 logger.warn(msg)
 
         # return location and call's return status
-        return {'loc': loc, 'returncode': status.returncode}
+        return {"loc": loc, "returncode": status.returncode}
 
 
 class ExternalModel(Model):
@@ -158,15 +168,20 @@ class ExternalModel(Model):
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, executable: str, file: str,
-                 fixed_args: List = None,
-                 create_folder: bool = False,
-                 suffix: str = None, prefix: str = "modelsim_",
-                 dir: str = None,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False,
-                 name: str = "ExternalModel"):
+    def __init__(
+        self,
+        executable: str,
+        file: str,
+        fixed_args: List = None,
+        create_folder: bool = False,
+        suffix: str = None,
+        prefix: str = "modelsim_",
+        dir: str = None,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+        name: str = "ExternalModel",
+    ):
         """
         Initialize the model.
 
@@ -179,13 +194,17 @@ class ExternalModel(Model):
         """
         super().__init__(name=name)
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable,
+            file=file,
             fixed_args=fixed_args,
             create_folder=create_folder,
-            suffix=suffix, prefix=prefix, dir=dir,
+            suffix=suffix,
+            prefix=prefix,
+            dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
-            raise_on_error=raise_on_error)
+            raise_on_error=raise_on_error,
+        )
 
     def __call__(self, pars: Parameter):
         args = []
@@ -210,22 +229,31 @@ class ExternalSumStat:
     {loc} is the destination to write te summary statistics to.
     """
 
-    def __init__(self, executable: str, file: str,
-                 fixed_args: List = None,
-                 create_folder: bool = False,
-                 suffix: str = None, prefix: str = "sumstat_",
-                 dir: str = None,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False):
+    def __init__(
+        self,
+        executable: str,
+        file: str,
+        fixed_args: List = None,
+        create_folder: bool = False,
+        suffix: str = None,
+        prefix: str = "sumstat_",
+        dir: str = None,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+    ):
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable,
+            file=file,
             fixed_args=fixed_args,
             create_folder=create_folder,
-            suffix=suffix, prefix=prefix, dir=dir,
+            suffix=suffix,
+            prefix=prefix,
+            dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
-            raise_on_error=raise_on_error)
+            raise_on_error=raise_on_error,
+        )
 
     def __call__(self, model_output):
         """
@@ -248,37 +276,45 @@ class ExternalDistance:
     contain a single float number).
     """
 
-    def __init__(self, executable: str, file: str,
-                 fixed_args: List = None,
-                 suffix: str = None, prefix: str = "dist_",
-                 dir: str = None,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False):
+    def __init__(
+        self,
+        executable: str,
+        file: str,
+        fixed_args: List = None,
+        suffix: str = None,
+        prefix: str = "dist_",
+        dir: str = None,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+    ):
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable,
+            file=file,
             fixed_args=fixed_args,
             create_folder=False,
-            suffix=suffix, prefix=prefix, dir=dir,
+            suffix=suffix,
+            prefix=prefix,
+            dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
-            raise_on_error=raise_on_error)
+            raise_on_error=raise_on_error,
+        )
 
     def __call__(self, sumstat_0, sumstat_1):
         # check if external script failed
-        if sumstat_0['returncode'] or sumstat_1['returncode']:
+        if sumstat_0["returncode"] or sumstat_1["returncode"]:
             return np.nan
-        args = [f"sumstat_0={sumstat_0['loc']}",
-                f"sumstat_1={sumstat_1['loc']}"]
+        args = [f"sumstat_0={sumstat_0['loc']}", f"sumstat_1={sumstat_1['loc']}"]
         ret = self.eh.run(args)
         # read in distance
-        with open(ret['loc'], 'rb') as f:
+        with open(ret["loc"], "rb") as f:
             distance = float(f.read())
-        os.remove(ret['loc'])
+        os.remove(ret["loc"])
         return distance
 
 
-def create_sum_stat(loc: str = '', returncode: int = 0):
+def create_sum_stat(loc: str = "", returncode: int = 0):
     """
     Create a summary statistics dictionary, as returned by the
     `ExternalModel`.
@@ -299,4 +335,4 @@ def create_sum_stat(loc: str = '', returncode: int = 0):
     A dictionary with keys 'loc' and 'returncode' of the given
     parameters.
     """
-    return {'loc': loc, 'returncode': returncode}
+    return {"loc": loc, "returncode": returncode}

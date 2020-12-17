@@ -78,6 +78,6 @@ This archive is uploaded using twine::
 replacing x.y.z by the appropriate version number.
 
 For a more in-depth discussion see also the
-`section on distributing packages 
+`section on distributing packages
 <https://packaging.python.org/tutorials/distributing-packages>`_
 of the Python packaging guide

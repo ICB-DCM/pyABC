@@ -1,22 +1,24 @@
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 from typing import List, Union
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from ..weighted_statistics import effective_sample_size
 from ..storage import History
+from ..weighted_statistics import effective_sample_size
 from .util import to_lists_or_default
 
 
 def plot_effective_sample_sizes(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Effective sample size",
-        relative: bool = False,
-        colors: List = None,
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Effective sample size",
+    relative: bool = False,
+    colors: List = None,
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Plot effective sample sizes over all iterations.
 
@@ -66,7 +68,7 @@ def plot_effective_sample_sizes(
         esss = []
         for t in range(0, history.max_t + 1):
             # we need the weights not normalized to 1 for each model
-            w = history.get_weighted_distances(t=t)['w']
+            w = history.get_weighted_distances(t=t)["w"]
             ess = effective_sample_size(w)
             if relative:
                 ess /= len(w)
@@ -75,7 +77,7 @@ def plot_effective_sample_sizes(
 
     # plot
     for esss, label, color in zip(essss, labels, colors):
-        ax.plot(range(0, len(esss)), esss, 'x-', label=label, color=color)
+        ax.plot(range(0, len(esss)), esss, "x-", label=label, color=color)
 
     # format
     ax.set_xlabel("Population index")

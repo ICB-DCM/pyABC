@@ -1,19 +1,29 @@
 import datetime
-import os
-from typing import List, Union
 import json
+import logging
+import os
+import tempfile
+from functools import wraps
+from typing import List, Union
+
 import numpy as np
 import pandas as pd
 from sqlalchemy import func
 from sqlalchemy.orm import subqueryload
-from functools import wraps
-import tempfile
-import logging
 
-from .db_model import (ABCSMC, Population, Model, Particle,
-                       Parameter, Sample, SummaryStatistic, Base)
-from ..population import Particle as PyParticle, Population as PyPopulation
 from ..parameters import Parameter as PyParameter
+from ..population import Particle as PyParticle
+from ..population import Population as PyPopulation
+from .db_model import (
+    ABCSMC,
+    Base,
+    Model,
+    Parameter,
+    Particle,
+    Population,
+    Sample,
+    SummaryStatistic,
+)
 
 logger = logging.getLogger("History")
 
@@ -38,11 +48,13 @@ def internal_docstring_warning(f):
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
     warning = (
-        "\n" + indent +
-        "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
+        "\n"
+        + indent
+        + "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
         "class internally. "
         "You should most likely not find it necessary to call "
-        "this method under normal circumstances.")
+        "this method under normal circumstances."
+    )
 
     f.__doc__ += warning
     return f
@@ -55,15 +67,17 @@ def git_hash():
         return "Install pyABC's optional git dependency for git support"
     try:
         git_hash = git.Repo(os.getcwd()).head.commit.hexsha
-    except (git.exc.NoSuchPathError, KeyError, ValueError,
-            git.exc.InvalidGitRepositoryError) as e:
+    except (
+        git.exc.NoSuchPathError,
+        KeyError,
+        ValueError,
+        git.exc.InvalidGitRepositoryError,
+    ) as e:
         git_hash = str(e)
     return git_hash
 
 
-def create_sqlite_db_id(
-        dir_: str = None,
-        file_: str = "pyabc_test.db"):
+def create_sqlite_db_id(dir_: str = None, file_: str = "pyabc_test.db"):
     """
     Convenience function to create an sqlite database identifier which
     can be understood by sqlalchemy.
@@ -129,16 +143,19 @@ class History:
         If there are analyses in the database already, this defaults
         to the latest id. Manually set if another run is wanted.
     """
+
     # session timeout
     DB_TIMEOUT = 120
     # time before first population time
     PRE_TIME = -1
 
-    def __init__(self,
-                 db: str,
-                 stores_sum_stats: bool = True,
-                 _id: int = None,
-                 create: bool = True):
+    def __init__(
+        self,
+        db: str,
+        stores_sum_stats: bool = True,
+        _id: int = None,
+        create: bool = True,
+    ):
         """
         Initialize history object.
 
@@ -168,8 +185,7 @@ class History:
 
     @property
     def in_memory(self):
-        return (self._engine is not None
-                and str(self._engine.url) == "sqlite://")
+        return self._engine is not None and str(self._engine.url) == "sqlite://"
 
     @property
     def db_size(self) -> Union[int, str]:
@@ -229,8 +245,7 @@ class History:
         if val is None:
             val = self._find_latest_id()
         elif val not in [obj.id for obj in self._session.query(ABCSMC).all()]:
-            raise ValueError(
-                f"Specified id {val} does not exist in database.")
+            raise ValueError(f"Specified id {val} does not exist in database.")
         self._id = val
 
     @with_session
@@ -255,17 +270,18 @@ class History:
         else:
             t = int(t)
 
-        alive = (self._session.query(Model.m)
-                 .join(Population)
-                 .join(ABCSMC)
-                 .filter(ABCSMC.id == self.id)
-                 .filter(Population.t == t)).all()
+        alive = (
+            self._session.query(Model.m)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+        ).all()
 
         return sorted(a[0] for a in alive)
 
     @with_session
-    def get_distribution(self, m: int = 0, t: int = None) \
-            -> (pd.DataFrame, np.ndarray):
+    def get_distribution(self, m: int = 0, t: int = None) -> (pd.DataFrame, np.ndarray):
         """
         Returns the weighted population sample for model m and timepoint t
         as a tuple.
@@ -293,21 +309,26 @@ class History:
         else:
             t = int(t)
 
-        query = (self._session.query(Particle.id, Parameter.name,
-                                     Parameter.value, Particle.w)
-                 .filter(Particle.id == Parameter.particle_id)
-                 .join(Model).join(Population)
-                 .filter(Model.m == m)
-                 .filter(Population.t == t)
-                 .join(ABCSMC)
-                 .filter(ABCSMC.id == self.id))
+        query = (
+            self._session.query(
+                Particle.id, Parameter.name, Parameter.value, Particle.w
+            )
+            .filter(Particle.id == Parameter.particle_id)
+            .join(Model)
+            .join(Population)
+            .filter(Model.m == m)
+            .filter(Population.t == t)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+        )
         df = pd.read_sql_query(query.statement, self._engine)
         pars = df.pivot("id", "name", "value").sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
         if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
             raise AssertionError(
-                "Weight not close to 1, w.sum()={}".format(w_arr.sum()))
+                f"Weight not close to 1, w.sum()={w_arr.sum()}"
+            )
         return pars, w_arr
 
     @with_session
@@ -325,14 +346,17 @@ class History:
         model_names: List[str]
             List of model names.
         """
-        res = (self._session.query(Model.name)
-               .join(Population)
-               .join(ABCSMC)
-               .filter(ABCSMC.id == self.id)
-               .filter(Population.t == t)
-               .filter(Model.name.isnot(None))
-               .order_by(Model.m)
-               .distinct().all())
+        res = (
+            self._session.query(Model.name)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .filter(Model.name.isnot(None))
+            .order_by(Model.m)
+            .distinct()
+            .all()
+        )
         return [r[0] for r in res]
 
     @with_session
@@ -356,10 +380,12 @@ class History:
         all_populations: pd.DataFrame
             DataFrame with population info
         """
-        query = (self._session.query(Population.t,
-                                     Population.population_end_time,
-                                     Population.nr_samples, Population.epsilon)
-                 .filter(Population.abc_smc_id == self.id))
+        query = self._session.query(
+            Population.t,
+            Population.population_end_time,
+            Population.nr_samples,
+            Population.epsilon,
+        ).filter(Population.abc_smc_id == self.id)
         df = pd.read_sql_query(query.statement, self._engine)
         particles = self.get_nr_particles_per_population()
         particles.index += 1
@@ -369,13 +395,17 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def store_initial_data(self, ground_truth_model: int, options: dict,
-                           observed_summary_statistics: dict,
-                           ground_truth_parameter: dict,
-                           model_names: List[str],
-                           distance_function_json_str: str,
-                           eps_function_json_str: str,
-                           population_strategy_json_str: str):
+    def store_initial_data(
+        self,
+        ground_truth_model: int,
+        options: dict,
+        observed_summary_statistics: dict,
+        ground_truth_parameter: dict,
+        model_names: List[str],
+        distance_function_json_str: str,
+        eps_function_json_str: str,
+        population_strategy_json_str: str,
+    ):
         """
         Store the initial configuration data.
 
@@ -414,7 +444,8 @@ class History:
             git_hash=git_hash(),
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
-            population_strategy=population_strategy_json_str)
+            population_strategy=population_strategy_json_str,
+        )
 
         # add to session
         self._session.add(abcsmc)
@@ -425,19 +456,24 @@ class History:
 
         # store pre population
         self.store_pre_population(
-            ground_truth_model, observed_summary_statistics,
-            ground_truth_parameter, model_names)
+            ground_truth_model,
+            observed_summary_statistics,
+            ground_truth_parameter,
+            model_names,
+        )
 
         # log
-        logger.info("Start {}".format(abcsmc))
+        logger.info(f"Start {abcsmc}")
 
     @with_session
     @internal_docstring_warning
-    def store_pre_population(self,
-                             ground_truth_model: int,
-                             observed_summary_statistics: dict,
-                             ground_truth_parameter: dict,
-                             model_names: List[str]):
+    def store_pre_population(
+        self,
+        ground_truth_model: int,
+        observed_summary_statistics: dict,
+        ground_truth_parameter: dict,
+        model_names: List[str],
+    ):
         """
         Store a dummy pre-population containing some configuration data
         and in particular some ground truth values.
@@ -445,26 +481,21 @@ class History:
         For the parameters, see store_initial_data.
         """
         # extract analysis object
-        abcsmc = (self._session.query(ABCSMC)
-                  .filter(ABCSMC.id == self.id)
-                  .one())
+        abcsmc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
 
         # store  ground truth to db
 
         # create and append dummy population
-        population = Population(
-            t=History.PRE_TIME, nr_samples=0, epsilon=np.inf)
+        population = Population(t=History.PRE_TIME, nr_samples=0, epsilon=np.inf)
         abcsmc.populations.append(population)
 
         # add (ground truth or dummy) model
         if ground_truth_model is not None:  # GT model given
-            gt_model = Model(m=ground_truth_model,
-                             p_model=1,
-                             name=model_names[ground_truth_model])
+            gt_model = Model(
+                m=ground_truth_model, p_model=1, name=model_names[ground_truth_model]
+            )
         else:
-            gt_model = Model(m=None,
-                             p_model=1,
-                             name=None)
+            gt_model = Model(m=None, p_model=1, name=None)
         population.models.append(gt_model)
 
         # add a particle
@@ -511,11 +542,13 @@ class History:
 
         """
         # extract population
-        population = (self._session.query(Population)
-                      .join(ABCSMC)
-                      .filter(ABCSMC.id == self.id)
-                      .filter(Population.t == t)
-                      .one())
+        population = (
+            self._session.query(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .one()
+        )
 
         # update samples number
         population.nr_samples = nr_samples
@@ -534,18 +567,18 @@ class History:
         sum_stats_dct: dict
             The observed summary statistics.
         """
-        sum_stats = (self._session
-                     .query(SummaryStatistic)
-                     .join(Sample)
-                     .join(Particle)
-                     .join(Model)
-                     .join(Population)
-                     .join(ABCSMC)
-                     .filter(ABCSMC.id == self.id)
-                     .filter(Population.t == History.PRE_TIME)
-                     .filter(Model.p_model == 1)
-                     .all()
-                     )
+        sum_stats = (
+            self._session.query(SummaryStatistic)
+            .join(Sample)
+            .join(Particle)
+            .join(Model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == History.PRE_TIME)
+            .filter(Model.p_model == 1)
+            .all()
+        )
         sum_stats_dct = {ss.name: ss.value for ss in sum_stats}
         return sum_stats_dct
 
@@ -561,8 +594,12 @@ class History:
         nr_sim: int
             Total nr of sample attempts for the ABC run.
         """
-        nr_sim = (self._session.query(func.sum(Population.nr_samples))
-                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
+        nr_sim = (
+            self._session.query(func.sum(Population.nr_samples))
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .one()[0]
+        )
         return nr_sim
 
     def _make_session(self):
@@ -571,8 +608,8 @@ class History:
         # but I'm not quite sure anymore
         from sqlalchemy import create_engine
         from sqlalchemy.orm import sessionmaker
-        engine = create_engine(self.db,
-                               connect_args={'timeout': self.DB_TIMEOUT})
+
+        engine = create_engine(self.db, connect_args={"timeout": self.DB_TIMEOUT})
         Base.metadata.create_all(engine)
         Session = sessionmaker(bind=engine)
         session = Session()
@@ -604,41 +641,42 @@ class History:
         Close database sessions and store end time of population.
         """
 
-        abc_smc_simulation = (self._session.query(ABCSMC)
-                              .filter(ABCSMC.id == self.id)
-                              .one())
+        abc_smc_simulation = (
+            self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
+        )
         abc_smc_simulation.end_time = datetime.datetime.now()
         self._session.commit()
-        logger.info("Done {}".format(abc_smc_simulation))
+        logger.info(f"Done {abc_smc_simulation}")
 
     @with_session
-    def _save_to_population_db(self,
-                               t: int,
-                               current_epsilon: float,
-                               nr_simulations: int,
-                               store: dict,
-                               model_probabilities: pd.DataFrame,
-                               model_names):
+    def _save_to_population_db(
+        self,
+        t: int,
+        current_epsilon: float,
+        nr_simulations: int,
+        store: dict,
+        model_probabilities: pd.DataFrame,
+        model_names,
+    ):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
 
         # extract analysis object
-        abcsmc = (self._session.query(ABCSMC)
-                  .filter(ABCSMC.id == self.id)
-                  .one())
+        abcsmc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
 
         # store the population
-        population = Population(t=t, nr_samples=nr_simulations,
-                                epsilon=current_epsilon)
+        population = Population(t=t, nr_samples=nr_simulations, epsilon=current_epsilon)
 
         abcsmc.populations.append(population)
 
         # iterate over models
         for m, model_population in store.items():
             # create new model
-            model = Model(m=int(m),
-                          p_model=float(model_probabilities.loc[m, 'p']),
-                          name=str(model_names[m]))
+            model = Model(
+                m=int(m),
+                p_model=float(model_probabilities.loc[m, "p"]),
+                name=str(model_names[m]),
+            )
             # append model
             population.models.append(model)
 
@@ -662,16 +700,14 @@ class History:
                         for key_dict, value_dict in value.items():
                             # append nested dimension to parameter
                             particle.parameters.append(
-                                Parameter(name=key + "_" + key_dict,
-                                          value=value_dict))
+                                Parameter(name=key + "_" + key_dict, value=value_dict)
+                            )
                     else:
                         # append dimension to parameter
-                        particle.parameters.append(
-                            Parameter(name=key, value=value))
+                        particle.parameters.append(Parameter(name=key, value=value))
 
                 # append samples to particle
-                for distance, sum_stat in zip(distance_list,
-                                              summary_statistics_list):
+                for distance, sum_stat in zip(distance_list, summary_statistics_list):
                     # create new sample from distance
                     sample = Sample(distance=distance)
                     # append to particle
@@ -680,10 +716,10 @@ class History:
                     if self.stores_sum_stats:
                         for name, value in sum_stat.items():
                             if name is None:
-                                raise Exception(
-                                    "Summary statistics need names.")
+                                raise Exception("Summary statistics need names.")
                             sample.summary_statistics.append(
-                                SummaryStatistic(name=name, value=value))
+                                SummaryStatistic(name=name, value=value)
+                            )
 
         # commit changes
         self._session.commit()
@@ -692,12 +728,14 @@ class History:
         logger.debug("Appended population")
 
     @internal_docstring_warning
-    def append_population(self,
-                          t: int,
-                          current_epsilon: float,
-                          population: Population,
-                          nr_simulations: int,
-                          model_names):
+    def append_population(
+        self,
+        t: int,
+        current_epsilon: float,
+        population: Population,
+        nr_simulations: int,
+        model_names,
+    ):
         """
         Append population to database.
 
@@ -723,13 +761,12 @@ class History:
         store = population.to_dict()
         model_probabilities = population.get_model_probabilities()
 
-        self._save_to_population_db(t, current_epsilon,
-                                    nr_simulations, store, model_probabilities,
-                                    model_names)
+        self._save_to_population_db(
+            t, current_epsilon, nr_simulations, store, model_probabilities, model_names
+        )
 
     @with_session
-    def get_model_probabilities(self, t: Union[int, None] = None) \
-            -> pd.DataFrame:
+    def get_model_probabilities(self, t: Union[int, None] = None) -> pd.DataFrame:
         """
         Model probabilities.
 
@@ -749,26 +786,29 @@ class History:
             t = int(t)
 
         p_models = (
-            self._session
-            .query(Model.p_model, Model.m, Population.t)
+            self._session.query(Model.p_model, Model.m, Population.t)
             .join(Population)
             .join(ABCSMC)
             .filter(ABCSMC.id == self.id)
             .filter(Population.t == t if t is not None else Population.t >= 0)
             .order_by(Model.m)
-            .all())
+            .all()
+        )
         # TODO this is a mess
         if t is not None:
-            p_models_df = pd.DataFrame([p[:2] for p in p_models],
-                                       columns=["p", "m"]).set_index("m")
+            p_models_df = pd.DataFrame(
+                [p[:2] for p in p_models], columns=["p", "m"]
+            ).set_index("m")
             # TODO the following line is redundant
             # only models with no-zero weight are stored for each population
             p_models_df = p_models_df[p_models_df.p >= 0]
             return p_models_df
         else:
-            p_models_df = (pd.DataFrame(p_models, columns=["p", "m", "t"])
-                           .pivot("t", "m", "p")
-                           .fillna(0))
+            p_models_df = (
+                pd.DataFrame(p_models, columns=["p", "m", "t"])
+                .pivot("t", "m", "p")
+                .fillna(0)
+            )
             return p_models_df
 
     def nr_of_models_alive(self, t: int = None) -> int:
@@ -825,14 +865,15 @@ class History:
         else:
             t = int(t)
 
-        models = (self._session.query(Model)
-                  .join(Population).join(ABCSMC)
-                  .filter(ABCSMC.id == self.id)
-                  .filter(Population.t == t)
-                  .options(
-                      subqueryload(Model.particles)
-                      .subqueryload(Particle.samples))
-                  .all())
+        models = (
+            self._session.query(Model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .options(subqueryload(Model.particles).subqueryload(Particle.samples))
+            .all()
+        )
 
         weights = []
         distances = []
@@ -853,7 +894,7 @@ class History:
         # df_weighted = df.merge(model_probabilities)
         # df_weighted["w"] *= df_weighted["p"]
 
-        return pd.DataFrame({'distance': distances, 'w': weights})
+        return pd.DataFrame({"distance": distances, "w": weights})
 
     @with_session
     def get_nr_particles_per_population(self) -> pd.Series:
@@ -868,11 +909,13 @@ class History:
             of particles for each population.
 
         """
-        query = (self._session.query(Population.t)
-                 .join(ABCSMC)
-                 .join(Model)
-                 .join(Particle)
-                 .filter(ABCSMC.id == self.id))
+        query = (
+            self._session.query(Population.t)
+            .join(ABCSMC)
+            .join(Model)
+            .join(Particle)
+            .filter(ABCSMC.id == self.id)
+        )
         df = pd.read_sql_query(query.statement, self._engine)
         nr_particles_per_population = df.t.value_counts().sort_index()
         return nr_particles_per_population
@@ -884,8 +927,12 @@ class History:
         The population number of the last populations.
         This is equivalent to ``n_populations - 1``.
         """
-        max_t = (self._session.query(func.max(Population.t))
-                 .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
+        max_t = (
+            self._session.query(func.max(Population.t))
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .one()[0]
+        )
         return max_t
 
     @property
@@ -897,8 +944,9 @@ class History:
         return self.max_t + 1
 
     @with_session
-    def get_weighted_sum_stats_for_model(self, m: int = 0, t: int = None) \
-            -> (np.ndarray, List):
+    def get_weighted_sum_stats_for_model(
+        self, m: int = 0, t: int = None
+    ) -> (np.ndarray, List):
         """
         Summary statistics for model `m`. The weights sum to 1, unless
         there were multiple acceptances per particle.
@@ -925,12 +973,16 @@ class History:
         else:
             t = int(t)
 
-        particles = (self._session.query(Particle)
-                     .join(Model).join(Population).join(ABCSMC)
-                     .filter(ABCSMC.id == self.id)
-                     .filter(Population.t == t)
-                     .filter(Model.m == m)
-                     .all())
+        particles = (
+            self._session.query(Particle)
+            .join(Model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .filter(Model.m == m)
+            .all()
+        )
 
         results = []
         weights = []
@@ -944,8 +996,7 @@ class History:
         return np.array(weights), results
 
     @with_session
-    def get_weighted_sum_stats(self, t: int = None) \
-            -> (List[float], List[dict]):
+    def get_weighted_sum_stats(self, t: int = None) -> (List[float], List[dict]):
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
@@ -973,15 +1024,19 @@ class History:
         else:
             t = int(t)
 
-        models = (self._session.query(Model)
-                  .join(Population).join(ABCSMC)
-                  .filter(ABCSMC.id == self.id)
-                  .filter(Population.t == t)
-                  .options(
-                      subqueryload(Model.particles)
-                      .subqueryload(Particle.samples)
-                      .subqueryload(Sample.summary_statistics))
-                  .all())
+        models = (
+            self._session.query(Model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .options(
+                subqueryload(Model.particles)
+                .subqueryload(Particle.samples)
+                .subqueryload(Sample.summary_statistics)
+            )
+            .all()
+        )
 
         all_weights = []
         all_sum_stats = []
@@ -1017,17 +1072,20 @@ class History:
         else:
             t = int(t)
 
-        models = (self._session.query(Model)
-                  .join(Population).join(ABCSMC)
-                  .options(
-                      subqueryload(Model.particles)
-                      .subqueryload(Particle.samples)
-                      .subqueryload(Sample.summary_statistics),
-                      subqueryload(Model.particles)
-                      .subqueryload(Particle.parameters))
-                  .filter(ABCSMC.id == self.id)
-                  .filter(Population.t == t)
-                  .all())
+        models = (
+            self._session.query(Model)
+            .join(Population)
+            .join(ABCSMC)
+            .options(
+                subqueryload(Model.particles)
+                .subqueryload(Particle.samples)
+                .subqueryload(Sample.summary_statistics),
+                subqueryload(Model.particles).subqueryload(Particle.parameters),
+            )
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .all()
+        )
 
         py_particles = []
 
@@ -1068,7 +1126,8 @@ class History:
                     accepted_distances=py_accepted_distances,
                     rejected_sum_stats=[],
                     rejected_distances=[],
-                    accepted=True)
+                    accepted=True,
+                )
                 py_particles.append(py_particle)
 
         # create population
@@ -1089,10 +1148,13 @@ class History:
         return json.loads(abc.population_strategy)
 
     @with_session
-    def get_population_extended(self, *, m: Union[int, None] = None,
-                                t: Union[int, str] = "last",
-                                tidy: bool = True) \
-            -> pd.DataFrame:
+    def get_population_extended(
+        self,
+        *,
+        m: Union[int, None] = None,
+        t: Union[int, str] = "last",
+        tidy: bool = True,
+    ) -> pd.DataFrame:
         """
         Get extended population information, including parameters, distances,
         summary statistics, weights and more.
@@ -1120,30 +1182,30 @@ class History:
 
         full_population: DataFrame
         """
-        query = (self._session.query(Population.t,
-                                     Population.epsilon,
-                                     Population.nr_samples.label("samples"),
-                                     Model.m,
-                                     Model.name.label("model_name"),
-                                     Model.p_model,
-                                     Particle.w,
-                                     Particle.id.label("particle_id"),
-                                     Sample.distance,
-                                     Parameter.name.label("par_name"),
-                                     Parameter.value.label("par_val"),
-                                     SummaryStatistic.name
-                                     .label("sumstat_name"),
-                                     SummaryStatistic.value
-                                     .label("sumstat_val"),
-                                     )
-                 .join(ABCSMC)
-                 .join(Model)
-                 .join(Particle)
-                 .join(Sample)
-                 .join(SummaryStatistic)
-                 .join(Parameter)
-                 .filter(ABCSMC.id == self.id)
-                 )
+        query = (
+            self._session.query(
+                Population.t,
+                Population.epsilon,
+                Population.nr_samples.label("samples"),
+                Model.m,
+                Model.name.label("model_name"),
+                Model.p_model,
+                Particle.w,
+                Particle.id.label("particle_id"),
+                Sample.distance,
+                Parameter.name.label("par_name"),
+                Parameter.value.label("par_val"),
+                SummaryStatistic.name.label("sumstat_name"),
+                SummaryStatistic.value.label("sumstat_val"),
+            )
+            .join(ABCSMC)
+            .join(Model)
+            .join(Particle)
+            .join(Sample)
+            .join(SummaryStatistic)
+            .join(Parameter)
+            .filter(ABCSMC.id == self.id)
+        )
 
         if m is not None:
             query = query.filter(Model.m == m)
@@ -1168,36 +1230,31 @@ class History:
         if tidy:
             if isinstance(t, int) and "m" not in df:
                 df = df.set_index("particle_id")
-                df_unique = (df[["distance", "w"]]
-                             .drop_duplicates())
+                df_unique = df[["distance", "w"]].drop_duplicates()
 
-                df_par = (df[["par_name", "par_val"]]
-                          .reset_index()
-                          .drop_duplicates(subset=["particle_id",
-                                                   "par_name"])
-                          .pivot(index="particle_id",
-                                 columns="par_name",
-                                 values="par_val"))
-                df_par.columns = ["par_" + c
-                                  for c in df_par.columns]
+                df_par = (
+                    df[["par_name", "par_val"]]
+                    .reset_index()
+                    .drop_duplicates(subset=["particle_id", "par_name"])
+                    .pivot(index="particle_id", columns="par_name", values="par_val")
+                )
+                df_par.columns = ["par_" + c for c in df_par.columns]
 
-                df_sumstat = (df[["sumstat_name", "sumstat_val"]]
-                              .reset_index()
-                              .drop_duplicates(subset=["particle_id",
-                                                       "sumstat_name"])
-                              .pivot(index="particle_id",
-                                     columns="sumstat_name",
-                                     values="sumstat_val"))
-                df_sumstat.columns = ["sumstat_" + c
-                                      for c in df_sumstat.columns]
+                df_sumstat = (
+                    df[["sumstat_name", "sumstat_val"]]
+                    .reset_index()
+                    .drop_duplicates(subset=["particle_id", "sumstat_name"])
+                    .pivot(
+                        index="particle_id",
+                        columns="sumstat_name",
+                        values="sumstat_val",
+                    )
+                )
+                df_sumstat.columns = ["sumstat_" + c for c in df_sumstat.columns]
 
-                df_tidy = (df_unique
-                           .merge(df_par,
-                                  left_index=True,
-                                  right_index=True)
-                           .merge(df_sumstat,
-                                  left_index=True,
-                                  right_index=True))
+                df_tidy = df_unique.merge(
+                    df_par, left_index=True, right_index=True
+                ).merge(df_sumstat, left_index=True, right_index=True)
                 df = df_tidy
 
         return df
@@ -1213,15 +1270,17 @@ class History:
             A PyParameter dictionary.
         """
         # extract gt par from PRE_TIME iteration
-        pars = (self._session.query(Parameter)
-                .join(Particle)
-                .join(Model)
-                .join(Population)
-                .join(ABCSMC)
-                .filter(ABCSMC.id == self.id)
-                .filter(Population.t == self.PRE_TIME)
-                .filter(Model.p_model == 1)
-                .all())
+        pars = (
+            self._session.query(Parameter)
+            .join(Particle)
+            .join(Model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == self.PRE_TIME)
+            .filter(Model.p_model == 1)
+            .all()
+        )
         # create dict
         dct = {par.name: par.value for par in pars}
         # return as pyabc.Parameter

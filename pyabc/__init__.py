@@ -15,108 +15,98 @@ ABCSMC algorithms for Bayesian parameter inference and model selection.
 """
 
 
-import os
 import logging
+import os
 
-from .parameters import Parameter
-from .random_variables import (
-    Distribution,
-    RV,
-    RVBase,
-    RVDecorator,
-    LowerBoundDecorator)
-from .distance import (
-    Distance,
-    NoDistance,
-    IdentityFakeDistance,
-    AcceptAllDistance,
-    SimpleFunctionDistance,
-    PNormDistance,
-    AdaptivePNormDistance,
-    AggregatedDistance,
-    AdaptiveAggregatedDistance,
-    ZScoreDistance,
-    PCADistance,
-    MinMaxDistance,
-    PercentileDistance,
-    RangeEstimatorDistance,
-    DistanceWithMeasureList,
-    StochasticKernel,
-    NormalKernel,
-    IndependentNormalKernel,
-    IndependentLaplaceKernel,
-    BinomialKernel,
-    PoissonKernel,
-    NegativeBinomialKernel)
-from .epsilon import (
-    Epsilon,
-    NoEpsilon,
-    ConstantEpsilon,
-    QuantileEpsilon,
-    MedianEpsilon,
-    ListEpsilon,
-    TemperatureBase,
-    ListTemperature,
-    Temperature,
-    TemperatureScheme,
-    AcceptanceRateScheme,
-    ExpDecayFixedIterScheme,
-    ExpDecayFixedRatioScheme,
-    PolynomialDecayFixedIterScheme,
-    DalyScheme,
-    FrielPettittScheme,
-    EssScheme)
-from .sampler import (
-    SingleCoreSampler,
-    MulticoreParticleParallelSampler,
-    MappingSampler,
-    DaskDistributedSampler,
-    RedisEvalParallelSampler,
-    RedisStaticSampler,
-    RedisEvalParallelSamplerServerStarter,
-    RedisStaticSamplerServerStarter,
-    MulticoreEvalParallelSampler,
-    ConcurrentFutureSampler)
-from .inference import ABCSMC
-from .storage import (
-    History,
-    create_sqlite_db_id)
+from . import visualization
 from .acceptor import (
     Acceptor,
+    ScaledPDFNorm,
     SimpleFunctionAcceptor,
-    UniformAcceptor,
     StochasticAcceptor,
+    UniformAcceptor,
     pdf_norm_from_kernel,
     pdf_norm_max_found,
-    ScaledPDFNorm)
-from .model import (
-    Model,
-    SimpleModel,
-    ModelResult,
-    IntegratedModel)
+)
+from .distance import (
+    AcceptAllDistance,
+    AdaptiveAggregatedDistance,
+    AdaptivePNormDistance,
+    AggregatedDistance,
+    BinomialKernel,
+    Distance,
+    DistanceWithMeasureList,
+    IdentityFakeDistance,
+    IndependentLaplaceKernel,
+    IndependentNormalKernel,
+    MinMaxDistance,
+    NegativeBinomialKernel,
+    NoDistance,
+    NormalKernel,
+    PCADistance,
+    PercentileDistance,
+    PNormDistance,
+    PoissonKernel,
+    RangeEstimatorDistance,
+    SimpleFunctionDistance,
+    StochasticKernel,
+    ZScoreDistance,
+)
+from .epsilon import (
+    AcceptanceRateScheme,
+    ConstantEpsilon,
+    DalyScheme,
+    Epsilon,
+    EssScheme,
+    ExpDecayFixedIterScheme,
+    ExpDecayFixedRatioScheme,
+    FrielPettittScheme,
+    ListEpsilon,
+    ListTemperature,
+    MedianEpsilon,
+    NoEpsilon,
+    PolynomialDecayFixedIterScheme,
+    QuantileEpsilon,
+    Temperature,
+    TemperatureBase,
+    TemperatureScheme,
+)
+from .inference import ABCSMC
+from .model import IntegratedModel, Model, ModelResult, SimpleModel
+from .parameters import Parameter
+from .population import Particle, Population
+from .populationstrategy import AdaptivePopulationSize, ConstantPopulationSize
+from .random_variables import RV, Distribution, LowerBoundDecorator, RVBase, RVDecorator
+from .sampler import (
+    ConcurrentFutureSampler,
+    DaskDistributedSampler,
+    MappingSampler,
+    MulticoreEvalParallelSampler,
+    MulticoreParticleParallelSampler,
+    RedisEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSampler,
+    RedisStaticSamplerServerStarter,
+    SingleCoreSampler,
+)
+from .storage import History, create_sqlite_db_id
 from .transition import (
-    MultivariateNormalTransition,
-    LocalTransition,
-    DiscreteRandomWalkTransition,
-    GridSearchCV,
     AggregatedTransition,
     DiscreteJumpTransition,
-    ModelPerturbationKernel)
-from .population import (
-    Particle,
-    Population)
-from .populationstrategy import (
-    AdaptivePopulationSize,
-    ConstantPopulationSize)
-from . import visualization
+    DiscreteRandomWalkTransition,
+    GridSearchCV,
+    LocalTransition,
+    ModelPerturbationKernel,
+    MultivariateNormalTransition,
+)
 from .version import __version__  # noqa: F401
 
 try:
-    loglevel = os.environ['ABC_LOG_LEVEL'].upper()
+    loglevel = os.environ["ABC_LOG_LEVEL"].upper()
 except KeyError:
-    loglevel = 'INFO'
+    loglevel = "INFO"
 
 logging.basicConfig(level=loglevel)
 
-if 'OMP_NUM_THREADS' not in os.environ:
-    os.environ['OMP_NUM_THREADS'] = '1'
+if "OMP_NUM_THREADS" not in os.environ:
+    os.environ["OMP_NUM_THREADS"] = "1"

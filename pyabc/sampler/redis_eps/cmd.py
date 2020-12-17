@@ -14,7 +14,7 @@ DYNAMIC = "dynamic"
 QUEUE = "queue"
 
 # default sleep time
-SLEEP_TIME = .1
+SLEEP_TIME = 0.1
 
 # message channel
 MSG = "msg_pubsub"
@@ -49,5 +49,5 @@ N_JOB = "n_job"
 def idfy(var: str, *args):
     """Append ids to the variable."""
     for arg in args:
-        var += '_' + str(arg)
+        var += "_" + str(arg)
     return var

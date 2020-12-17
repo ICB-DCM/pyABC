@@ -1,7 +1,8 @@
-import pandas as pd
-from io import StringIO, BytesIO
 import csv
+from io import BytesIO, StringIO
+
 import numpy as np
+import pandas as pd
 import pyarrow
 import pyarrow.parquet as parquet
 
@@ -18,9 +19,9 @@ def df_from_bytes_csv_(bytes_: bytes) -> pd.DataFrame:
     try:
         s = StringIO(bytes_.decode())
         s.seek(0)
-        return pd.read_csv(s, index_col=0, header=0,
-                           float_precision="round_trip",
-                           quotechar='"')
+        return pd.read_csv(
+            s, index_col=0, header=0, float_precision="round_trip", quotechar='"'
+        )
     except UnicodeDecodeError:
         raise DataFrameLoadException("Not a DataFram")
 

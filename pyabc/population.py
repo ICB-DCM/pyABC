@@ -8,11 +8,13 @@ iteration.
 """
 
 
+import logging
 from typing import Callable, List, Tuple
+
 import numpy as np
 import pandas as pd
+
 from pyabc.parameters import Parameter
-import logging
 
 logger = logging.getLogger("Population")
 
@@ -66,16 +68,18 @@ class Particle:
         multiplying the weights with the model probabilities.
     """
 
-    def __init__(self,
-                 m: int,
-                 parameter: Parameter,
-                 weight: float,
-                 accepted_sum_stats: List[dict],
-                 accepted_distances: List[float],
-                 rejected_sum_stats: List[dict] = None,
-                 rejected_distances: List[float] = None,
-                 accepted: bool = True,
-                 preliminary: bool = False):
+    def __init__(
+        self,
+        m: int,
+        parameter: Parameter,
+        weight: float,
+        accepted_sum_stats: List[dict],
+        accepted_distances: List[float],
+        rejected_sum_stats: List[dict] = None,
+        rejected_distances: List[float] = None,
+        accepted: bool = True,
+        preliminary: bool = False,
+    ):
 
         self.m = m
         self.parameter = parameter
@@ -125,11 +129,13 @@ class Population:
 
         store = self.to_dict()
 
-        model_total_weights = {m: sum(particle.weight for particle in plist)
-                               for m, plist in store.items()}
+        model_total_weights = {
+            m: sum(particle.weight for particle in plist) for m, plist in store.items()
+        }
         population_total_weight = sum(model_total_weights.values())
-        model_probabilities = {m: w / population_total_weight
-                               for m, w in model_total_weights.items()}
+        model_probabilities = {
+            m: w / population_total_weight for m, w in model_total_weights.items()
+        }
 
         # update model_probabilities attribute
         self._model_probabilities = model_probabilities
@@ -141,8 +147,7 @@ class Population:
             for particle in plist:
                 particle.weight /= model_total_weight
 
-    def update_distances(self,
-                         distance_to_ground_truth: Callable[[dict], float]):
+    def update_distances(self, distance_to_ground_truth: Callable[[dict], float]):
         """
         Update the distances of all summary statistics of all particles
         according to the passed distance function (which is typically
@@ -156,7 +161,8 @@ class Population:
         for particle in self._list:
             for i in range(len(particle.accepted_distances)):
                 particle.accepted_distances[i] = distance_to_ground_truth(
-                    particle.accepted_sum_stats[i], particle.parameter)
+                    particle.accepted_sum_stats[i], particle.parameter
+                )
 
     def get_model_probabilities(self) -> pd.DataFrame:
         """
@@ -173,7 +179,7 @@ class Population:
         vars = [(key, val) for key, val in self._model_probabilities.items()]
         ms = [var[0] for var in vars]
         ps = [var[1] for var in vars]
-        return pd.DataFrame({'m': ms, 'p': ps}).set_index('m')
+        return pd.DataFrame({"m": ms, "p": ps}).set_index("m")
 
     def get_alive_models(self) -> List:
         return self._model_probabilities.keys()
@@ -206,8 +212,9 @@ class Population:
         for particle in self._list:
             model_probability = self._model_probabilities[particle.m]
             for distance in particle.accepted_distances:
-                rows.append({'distance': distance,
-                             'w': particle.weight * model_probability})
+                rows.append(
+                    {"distance": distance, "w": particle.weight * model_probability}
+                )
         weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
@@ -252,7 +259,7 @@ class Population:
         of the corresponding values.
         """
         # check input
-        allowed_keys = ['weight', 'distance', 'parameter', 'sum_stat']
+        allowed_keys = ["weight", "distance", "parameter", "sum_stat"]
         for key in keys:
             if key not in allowed_keys:
                 raise ValueError(f"Key {key} not in {allowed_keys}.")
@@ -260,18 +267,18 @@ class Population:
         ret = {key: [] for key in keys}
         for particle in self._list:
             n_accepted = len(particle.accepted_distances)
-            if 'weight' in keys:
+            if "weight" in keys:
                 model_probability = self._model_probabilities[particle.m]
                 weight = particle.weight * model_probability
-                ret['weight'].extend([weight] * n_accepted)
-            if 'parameter' in keys:
-                ret['parameter'].extend([particle.parameter] * n_accepted)
-            if 'distance' in keys:
+                ret["weight"].extend([weight] * n_accepted)
+            if "parameter" in keys:
+                ret["parameter"].extend([particle.parameter] * n_accepted)
+            if "distance" in keys:
                 for distance in particle.accepted_distances:
-                    ret['distance'].append(distance)
-            if 'sum_stat' in keys:
+                    ret["distance"].append(distance)
+            if "sum_stat" in keys:
                 for sum_stat in particle.accepted_sum_stats:
-                    ret['sum_stat'].append(sum_stat)
+                    ret["sum_stat"].append(sum_stat)
 
         return ret
 

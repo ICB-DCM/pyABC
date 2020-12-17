@@ -45,15 +45,15 @@ def nr_cores_available() -> int:
         The number of cores available.
     """
     try:
-        return int(os.environ['NSLOTS'])
+        return int(os.environ["NSLOTS"])
     except KeyError:
         pass
     try:
-        return int(os.environ['OMP_NUM_THREADS'])
+        return int(os.environ["OMP_NUM_THREADS"])
     except KeyError:
         pass
     try:
-        return int(os.environ['MKL_NUM_THREADS'])
+        return int(os.environ["MKL_NUM_THREADS"])
     except KeyError:
         pass
     return os.cpu_count()

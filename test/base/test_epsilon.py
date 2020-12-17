@@ -1,9 +1,11 @@
-import pyabc
+import copy
+import tempfile
+
 import numpy as np
 import pandas as pd
 import pytest
-import copy
-import tempfile
+
+import pyabc
 
 
 def test_noepsilon():
@@ -24,14 +26,16 @@ def test_listepsilon():
 
 def test_quantileepsilon():
     mpl = 1.1
-    df = pd.DataFrame({
-        'distance': [1, 2, 3, 4],
-        'w': [2, 1, 1, 1],
-    })
+    df = pd.DataFrame(
+        {
+            "distance": [1, 2, 3, 4],
+            "w": [2, 1, 1, 1],
+        }
+    )
 
     eps = pyabc.QuantileEpsilon(
-        initial_epsilon=5.1, alpha=0.5,
-        quantile_multiplier=mpl, weighted=False)
+        initial_epsilon=5.1, alpha=0.5, quantile_multiplier=mpl, weighted=False
+    )
 
     # check if initial value is respected
     eps.initialize(0, lambda: df, lambda: None, None, None)
@@ -63,25 +67,20 @@ def test_listtemperature():
 
 
 def test_temperature():
-    acceptor_config = {
-        'pdf_norm': 5,
-        'kernel_scale': pyabc.distance.SCALE_LOG}
+    acceptor_config = {"pdf_norm": 5, "kernel_scale": pyabc.distance.SCALE_LOG}
     nr_pop = 3
-    log_file = tempfile.mkstemp(suffix='.json')[1]
+    log_file = tempfile.mkstemp(suffix=".json")[1]
     eps = pyabc.Temperature(initial_temperature=42, log_file=log_file)
-    eps.initialize(0, get_weighted_distances, get_all_records,
-                   nr_pop, acceptor_config)
+    eps.initialize(0, get_weighted_distances, get_all_records, nr_pop, acceptor_config)
 
     # check if initial value is respected
     assert eps(0) == 42
 
-    eps.update(1, get_weighted_distances, get_all_records,
-               0.4, acceptor_config)
+    eps.update(1, get_weighted_distances, get_all_records, 0.4, acceptor_config)
     assert eps(1) < 42
 
     # last time
-    eps.update(2, get_weighted_distances, get_all_records,
-               0.2, acceptor_config)
+    eps.update(2, get_weighted_distances, get_all_records, 0.2, acceptor_config)
     assert eps(2) == 1
 
     # check log file
@@ -92,18 +91,19 @@ def test_temperature():
 
 
 def get_weighted_distances():
-    return pd.DataFrame({
-        'distance': [1, 2, 3, 4],
-        'w': [2, 1, 1, 0]})
+    return pd.DataFrame({"distance": [1, 2, 3, 4], "w": [2, 1, 1, 0]})
 
 
 def get_all_records():
     return [
-        dict(distance=np.random.randn(),
-             transition_pd_prev=np.random.randn(),
-             transition_pd=np.random.randn(),
-             accepted=True if np.random.random() > 0.5 else False)
-        for _ in range(20)]
+        dict(
+            distance=np.random.randn(),
+            transition_pd_prev=np.random.randn(),
+            transition_pd=np.random.randn(),
+            accepted=True if np.random.random() > 0.5 else False,
+        )
+        for _ in range(20)
+    ]
 
 
 scheme_args = dict(
@@ -113,7 +113,8 @@ scheme_args = dict(
     pdf_norm=10,
     kernel_scale=pyabc.distance.SCALE_LOG,
     prev_temperature=7.53,
-    acceptance_rate=0.4)
+    acceptance_rate=0.4,
+)
 
 
 def test_scheme_basic():
@@ -140,9 +141,9 @@ def test_scheme_acceptancerate():
     # high acceptance probabilities
     _scheme_args = copy.deepcopy(scheme_args)
     # change normalization s.t. most have 1.0 acceptance rate
-    records = _scheme_args['get_all_records']()
-    _scheme_args['pdf_norm'] = min(pd.DataFrame(records)['distance'])
-    _scheme_args['get_all_records'] = lambda: records
+    records = _scheme_args["get_all_records"]()
+    _scheme_args["pdf_norm"] = min(pd.DataFrame(records)["distance"])
+    _scheme_args["get_all_records"] = lambda: records
     temp = scheme(t=0, **_scheme_args)
     assert temp == 1.0
 
@@ -152,7 +153,7 @@ def test_scheme_exponentialdecay():
 
     # check no base temperature
     _scheme_args = copy.deepcopy(scheme_args)
-    _scheme_args['prev_temperature'] = None
+    _scheme_args["prev_temperature"] = None
     temp = scheme(t=0, **_scheme_args)
     assert temp == np.inf
 
@@ -165,12 +166,11 @@ def test_scheme_exponentialdecay():
 
 def test_default_eps():
     def model(par):
-        return {'s0': par['p0'] + np.random.random(),
-                's1': np.random.random()}
+        return {"s0": par["p0"] + np.random.random(), "s1": np.random.random()}
 
-    x_0 = {'s0': 0.4, 's1': 0.6}
+    x_0 = {"s0": 0.4, "s1": 0.6}
 
-    prior = pyabc.Distribution(p0=pyabc.RV('uniform', -1, 2))
+    prior = pyabc.Distribution(p0=pyabc.RV("uniform", -1, 2))
 
     # usual setting
     abc = pyabc.ABCSMC(model, prior, population_size=10)
@@ -185,8 +185,9 @@ def test_default_eps():
 
     distance = pyabc.IndependentNormalKernel(var=np.array([1, 1]))
 
-    abc = pyabc.ABCSMC(model, prior, distance, eps=eps,
-                       acceptor=acceptor, population_size=10)
+    abc = pyabc.ABCSMC(
+        model, prior, distance, eps=eps, acceptor=acceptor, population_size=10
+    )
     abc.new(pyabc.create_sqlite_db_id(), x_0)
     abc.run(max_nr_populations=3)
 

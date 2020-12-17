@@ -15,26 +15,29 @@ class NamedPrinter(ExecutionContextMixin):
     Context with appends the job name and number to anything
     printed by that job.
     """
+
     def __init__(self, tmp_path, job_nr):
         super().__init__(tmp_path, job_nr)
         import sys
+
         self.original_stdout_write = sys.stdout.write
         self.original_stderr_write = sys.stderr.write
-        self.name_tag = "[{}:{}]".format(os.path.basename(self.tmp_path),
-                                         self.job_nr)
+        self.name_tag = "[{}:{}]".format(os.path.basename(self.tmp_path), self.job_nr)
 
     def __enter__(self):
         import sys
+
         sys.stdout.write = self.named_write_stdout
         sys.stderr.write = self.named_write_stderr
 
     def __exit__(self, exc_type, exc_value, traceback):
         import sys
+
         sys.stdout.write = self.original_stdout_write
         sys.stderr.write = self.original_stderr_write
 
     def process_text(self, text):
-        return text.replace("\n",  self.name_tag + "\n")
+        return text.replace("\n", self.name_tag + "\n")
 
     def named_write_stdout(self, text):
         self.original_stdout_write(self.process_text(text))
@@ -47,6 +50,7 @@ class DefaultContext(ExecutionContextMixin):
     """
     Does nothing special.
     """
+
     def __enter__(self):
         pass
 
@@ -62,6 +66,7 @@ class ProfilingContext(ExecutionContextMixin):
 
     Useful for debugging. Do not use in production.
     """
+
     RELATIVE_OUTPUT_FOLDER = "profiling"
     keep_output_directory = True
 
@@ -77,11 +82,9 @@ class ProfilingContext(ExecutionContextMixin):
         self._dump_profile()
 
     def _dump_profile(self):
-        output_directory = os.path.join(self.tmp_path,
-                                        self.RELATIVE_OUTPUT_FOLDER)
+        output_directory = os.path.join(self.tmp_path, self.RELATIVE_OUTPUT_FOLDER)
         self._make_output_directory(output_directory)
-        output_file = os.path.join(output_directory,
-                                   str(self.job_nr) + ".pstats")
+        output_file = os.path.join(output_directory, str(self.job_nr) + ".pstats")
         self._profile.dump_stats(output_file)
 
     @staticmethod

@@ -45,8 +45,8 @@ def format_plot_matrix(arr_ax, par_names):
             arr_ax[i, j].legend = None
 
             # remove spines
-            arr_ax[i, j].spines['right'].set_visible(False)
-            arr_ax[i, j].spines['top'].set_visible(False)
+            arr_ax[i, j].spines["right"].set_visible(False)
+            arr_ax[i, j].spines["top"].set_visible(False)
 
     # set left-most and bottom-most labels to parameter names
     for ax, label in zip(arr_ax[-1, :], par_names):

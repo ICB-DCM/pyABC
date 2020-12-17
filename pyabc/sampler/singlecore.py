@@ -1,6 +1,7 @@
-from .base import Sampler
 import numpy as np
 from jabbar import jabbar
+
+from .base import Sampler
 
 
 class SingleCoreSampler(Sampler):
@@ -13,14 +14,13 @@ class SingleCoreSampler(Sampler):
         Whether to check the maximum number of evaluations on the fly.
     """
 
-    def __init__(
-            self, check_max_eval: bool = False):
+    def __init__(self, check_max_eval: bool = False):
         super().__init__()
         self.check_max_eval = check_max_eval
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+        self, n, simulate_one, t, *, max_eval=np.inf, all_accepted=False, ana_vars=None
+    ):
         nr_simulations = 0
         sample = self._create_empty_sample()
 

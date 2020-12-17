@@ -269,7 +269,7 @@ Release Notes
 * Allow to plot MAP value approximations in credible interval plots.
 * Add a general interface to external scripts that allow using pyabc in a
   simple way in particular with other programing languages.
- 
+
 
 0.9.12 (2019-05-02)
 -------------------

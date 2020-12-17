@@ -1,30 +1,42 @@
 """Function to work on a population in dynamic mode."""
 
-import sys
-from redis import StrictRedis
-import pickle
-import cloudpickle
-from time import time
 import logging
+import pickle
+import sys
+from time import time
 
-from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, SSA, QUEUE,
-                  BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
-                  idfy)
+import cloudpickle
+from redis import StrictRedis
+
 from ..util import any_particle_preliminary
 from .cli import KillHandler
+from .cmd import (
+    ALL_ACCEPTED,
+    ANALYSIS_ID,
+    BATCH_SIZE,
+    IS_LOOK_AHEAD,
+    N_ACC,
+    N_EVAL,
+    N_FAIL,
+    N_REQ,
+    N_WORKER,
+    QUEUE,
+    SSA,
+    idfy,
+)
 
 logger = logging.getLogger("Redis-Worker")
 
 
 def work_on_population_dynamic(
-        analysis_id: str,
-        t: int,
-        redis: StrictRedis,
-        catch: bool,
-        start_time: float,
-        max_runtime_s: float,
-        kill_handler: KillHandler):
+    analysis_id: str,
+    t: int,
+    redis: StrictRedis,
+    catch: bool,
+    start_time: float,
+    max_runtime_s: float,
+    kill_handler: KillHandler,
+):
     """Work on population in dynamic mode.
     Here the actual sampling happens.
     """
@@ -43,11 +55,13 @@ def work_on_population_dynamic(
     pipeline = redis.pipeline()
 
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b \
-        = (pipeline.get(idfy(SSA, ana_id, t))
-           .get(idfy(BATCH_SIZE, ana_id, t))
-           .get(idfy(ALL_ACCEPTED, ana_id, t))
-           .get(idfy(IS_LOOK_AHEAD, ana_id, t)).execute())
+    ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b = (
+        pipeline.get(idfy(SSA, ana_id, t))
+        .get(idfy(BATCH_SIZE, ana_id, t))
+        .get(idfy(ALL_ACCEPTED, ana_id, t))
+        .get(idfy(IS_LOOK_AHEAD, ana_id, t))
+        .execute()
+    )
 
     # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
@@ -65,8 +79,8 @@ def work_on_population_dynamic(
     # notify sign up as worker
     n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
     logger.info(
-        f"Begin generation {t}, batch size {batch_size}. "
-        f"I am worker {n_worker}")
+        f"Begin generation {t}, batch size {batch_size}. " f"I am worker {n_worker}"
+    )
 
     # counter for number of simulations
     internal_counter = 0
@@ -78,14 +92,15 @@ def work_on_population_dynamic(
     # all numbers are re-loaded in each iteration as they can dynamically
     #  update
     while get_int(N_ACC) < get_int(N_REQ) and (
-            not all_accepted or
-            get_int(N_EVAL) - get_int(N_FAIL) < get_int(N_REQ)):
+        not all_accepted or get_int(N_EVAL) - get_int(N_FAIL) < get_int(N_REQ)
+    ):
         # check whether the process was externally asked to stop
         if kill_handler.killed:
             logger.info(
                 f"Worker {n_worker} received stop signal. "
                 "Terminating in the middle of a population "
-                f"after {internal_counter} samples.")
+                f"after {internal_counter} samples."
+            )
             # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
             sys.exit(0)
@@ -96,7 +111,8 @@ def work_on_population_dynamic(
             logger.info(
                 f"Worker {n_worker} stops during population because "
                 f"runtime {current_runtime} exceeds "
-                f"max runtime {max_runtime_s}")
+                f"max runtime {max_runtime_s}"
+            )
             # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
             # return to task queue
@@ -107,15 +123,17 @@ def work_on_population_dynamic(
         if ana_id_new_b is None or str(ana_id_new_b.decode()) != ana_id:
             logger.info(
                 f"Worker {n_worker} stops during population because "
-                "the analysis seems to have been stopped.")
+                "the analysis seems to have been stopped."
+            )
             # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
             # return to task queue
             return
 
         # check if the analysis left the look-ahead mode
-        if is_look_ahead and not bool(int(
-                redis.get(idfy(IS_LOOK_AHEAD, ana_id, t)).decode())):
+        if is_look_ahead and not bool(
+            int(redis.get(idfy(IS_LOOK_AHEAD, ana_id, t)).decode())
+        ):
             # reload SSA object
             ssa_b = redis.get(idfy(SSA, ana_id, t))
             simulate_one, sample_factory = pickle.loads(ssa_b)
@@ -142,8 +160,9 @@ def work_on_population_dynamic(
                 # simulate
                 new_sim = simulate_one()
             except Exception as e:
-                logger.warning(f"Redis worker number {n_worker} failed. "
-                               f"Error message is: {e}")
+                logger.warning(
+                    f"Redis worker number {n_worker} failed. " f"Error message is: {e}"
+                )
                 # increment the failure counter
                 redis.incr(idfy(N_FAIL, ana_id, t), 1)
                 if not catch:
@@ -160,8 +179,8 @@ def work_on_population_dynamic(
 
                 # append to accepted list
                 accepted_samples.append(
-                    cloudpickle.dumps(
-                        (particle_max_id - n_batched, sample)))
+                    cloudpickle.dumps((particle_max_id - n_batched, sample))
+                )
                 any_prel = any_prel or any_particle_preliminary(sample)
                 # initialize new sample
                 sample = sample_factory(is_look_ahead=is_look_ahead)
@@ -191,4 +210,5 @@ def work_on_population_dynamic(
     logger.info(
         f"Finished generation {t}, did {internal_counter} samples. "
         f"Simulation time: {cumulative_simulation_time:.2f}s, "
-        f"total time {population_total_time:.2f}.")
+        f"total time {population_total_time:.2f}."
+    )

@@ -14,17 +14,17 @@ when the distance measure and epsilon criteria develop over
 time.
 """
 
+import logging
+from typing import Callable
+
 import numpy as np
 import pandas as pd
-from typing import Callable
-import logging
 
-from ..distance import Distance, SCALE_LIN, StochasticKernel
+from ..distance import SCALE_LIN, Distance, StochasticKernel
 from ..epsilon import Epsilon
 from ..parameters import Parameter
-from .pdf_norm import pdf_norm_max_found
 from ..storage import save_dict_to_json
-
+from .pdf_norm import pdf_norm_max_found
 
 logger = logging.getLogger("Acceptor")
 
@@ -78,11 +78,12 @@ class Acceptor:
         pass
 
     def initialize(
-            self,
-            t: int,
-            get_weighted_distances: Callable[[], pd.DataFrame],
-            distance_function: Distance,
-            x_0: dict):
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        distance_function: Distance,
+        x_0: dict,
+    ):
         """
         Initialize. This method is called by the ABCSMC framework initially,
         and can be used to calibrate the acceptor to initial statistics.
@@ -103,11 +104,13 @@ class Acceptor:
         """
         pass
 
-    def update(self,
-               t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame],
-               prev_temp: float,
-               acceptance_rate: float):
+    def update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        prev_temp: float,
+        acceptance_rate: float,
+    ):
         """
         Update the acceptance criterion.
 
@@ -125,12 +128,15 @@ class Acceptor:
         """
         pass
 
-    def __call__(self,
-                 distance_function: Distance,
-                 eps: Epsilon,
-                 x: dict, x_0: dict,
-                 t: int,
-                 par: Parameter):
+    def __call__(
+        self,
+        distance_function: Distance,
+        eps: Epsilon,
+        x: dict,
+        x_0: dict,
+        t: int,
+        par: Parameter,
+    ):
         """
         Compute distance between summary statistics and evaluate whether to
         accept or reject.
@@ -232,8 +238,7 @@ class SimpleFunctionAcceptor(Acceptor):
             return SimpleFunctionAcceptor(maybe_acceptor)
 
 
-def accept_use_current_time(
-        distance_function, eps, x, x_0, t, par):
+def accept_use_current_time(distance_function, eps, x, x_0, t, par):
     """
     Use only the distance function and epsilon criterion at the current time
     point to evaluate whether to accept or reject.
@@ -244,8 +249,7 @@ def accept_use_current_time(
     return AcceptorResult(distance=d, accept=accept)
 
 
-def accept_use_complete_history(
-        distance_function, eps, x, x_0, t, par):
+def accept_use_complete_history(distance_function, eps, x, x_0, t, par):
     """
     Use the acceptance criteria from the complete history to evaluate whether
     to accept or reject.
@@ -299,11 +303,9 @@ class UniformAcceptor(Acceptor):
 
     def __call__(self, distance_function, eps, x, x_0, t, par):
         if self.use_complete_history:
-            return accept_use_complete_history(
-                distance_function, eps, x, x_0, t, par)
+            return accept_use_complete_history(distance_function, eps, x, x_0, t, par)
         else:  # use only current time
-            return accept_use_current_time(
-                distance_function, eps, x, x_0, t, par)
+            return accept_use_current_time(distance_function, eps, x, x_0, t, par)
 
 
 class StochasticAcceptor(Acceptor):
@@ -331,10 +333,11 @@ class StochasticAcceptor(Acceptor):
     """
 
     def __init__(
-            self,
-            pdf_norm_method: Callable = None,
-            apply_importance_weighting: bool = True,
-            log_file: str = None):
+        self,
+        pdf_norm_method: Callable = None,
+        apply_importance_weighting: bool = True,
+        log_file: str = None,
+    ):
         """
         Parameters
         ----------
@@ -374,11 +377,12 @@ class StochasticAcceptor(Acceptor):
         self.kernel_pdf_max = None
 
     def initialize(
-            self,
-            t: int,
-            get_weighted_distances: Callable[[], pd.DataFrame],
-            distance_function: StochasticKernel,
-            x_0: dict):
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        distance_function: StochasticKernel,
+        x_0: dict,
+    ):
         """
         Initialize temperature and maximum pdf.
         """
@@ -389,18 +393,22 @@ class StochasticAcceptor(Acceptor):
         # update
         self._update(t, get_weighted_distances)
 
-    def update(self,
-               t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame],
-               prev_temp: float,
-               acceptance_rate: float):
+    def update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        prev_temp: float,
+        acceptance_rate: float,
+    ):
         self._update(t, get_weighted_distances, prev_temp, acceptance_rate)
 
-    def _update(self,
-                t: int,
-                get_weighted_distances: Callable[[], pd.DataFrame],
-                prev_temp: float = None,
-                acceptance_rate: float = 1.0):
+    def _update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        prev_temp: float = None,
+        acceptance_rate: float = 1.0,
+    ):
         """
         Update schemes for the upcoming time point t.
         """
@@ -408,10 +416,10 @@ class StochasticAcceptor(Acceptor):
         pdf_norm = self.pdf_norm_method(
             kernel_val=self.kernel_pdf_max,
             get_weighted_distances=get_weighted_distances,
-            prev_pdf_norm=None if not self.pdf_norms
-            else max(self.pdf_norms.values()),
+            prev_pdf_norm=None if not self.pdf_norms else max(self.pdf_norms.values()),
             acceptance_rate=acceptance_rate,
-            prev_temp=prev_temp)
+            prev_temp=prev_temp,
+        )
         self.pdf_norms[t] = pdf_norm
 
         self.log(t)
@@ -431,9 +439,7 @@ class StochasticAcceptor(Acceptor):
             kernel_scale=self.kernel_scale,  # TODO Refactor
         )
 
-    def __call__(self,
-                 distance_function: StochasticKernel,
-                 eps, x, x_0, t, par):
+    def __call__(self, distance_function: StochasticKernel, eps, x, x_0, t, par):
         # rename
         kernel = distance_function
 
@@ -470,7 +476,8 @@ class StochasticAcceptor(Acceptor):
         if pdf_norm < density:
             logger.debug(
                 f"Encountered density={density:.4e} > c={pdf_norm:.4e}, "
-                f"thus weight={weight:.4e}.")
+                f"thus weight={weight:.4e}."
+            )
 
         # return unscaled density value and the acceptance flag
         return AcceptorResult(density, accept, weight)

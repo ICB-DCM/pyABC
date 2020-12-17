@@ -1,7 +1,8 @@
-import numpy as np
-import scipy.stats as stats
-import pandas as pd
 from typing import Union
+
+import numpy as np
+import pandas as pd
+import scipy.stats as stats
 
 from .base import DiscreteTransition
 
@@ -25,11 +26,13 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
         Number of random walk steps to take.
     """
 
-    def __init__(self,
-                 n_steps: int = 1,
-                 p_l: float = 1. / 3,
-                 p_r: float = 1. / 3,
-                 p_c: float = 1. / 3):
+    def __init__(
+        self,
+        n_steps: int = 1,
+        p_l: float = 1.0 / 3,
+        p_r: float = 1.0 / 3,
+        p_c: float = 1.0 / 3,
+    ):
         self.n_steps = n_steps
         self.p_l = p_l
         self.p_r = p_r
@@ -41,8 +44,7 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
     def rvs_single(self) -> pd.Series:
         # take a step
         dim = len(self.X.columns)
-        step = perform_random_walk(
-            dim, self.n_steps, self.p_l, self.p_r, self.p_c)
+        step = perform_random_walk(dim, self.n_steps, self.p_l, self.p_r, self.p_c)
 
         # select a start point
         start_point = self.X.sample(weights=self.w).iloc[0]
@@ -52,15 +54,15 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
 
         return perturbed_point
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
-            -> Union[float, np.ndarray]:
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
         """
         Evaluate the probability mass function (PMF) at `x`.
         """
         if not np.all(np.isclose(x, x.astype(int))):
             raise ValueError(
                 f"Transition can only handle integer values, not fulfilled "
-                f"by x={x}.")
+                f"by x={x}."
+            )
         x = x[self.X.columns]
         x = np.array(x)
         if len(x.shape) == 1:
@@ -73,7 +75,8 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
         for start, weight in zip(self.X.values, self.w):
             # probability if started from start
             p_start = calculate_single_random_walk_probability(
-                start, x, self.n_steps, self.p_l, self.p_r, self.p_c)
+                start, x, self.n_steps, self.p_l, self.p_r, self.p_c
+            )
             # add p_start times the weight associated to p_start
             p += p_start * weight
 
@@ -94,8 +97,13 @@ def perform_random_walk(dim, n_steps, p_l, p_r, p_c):
 
 
 def calculate_single_random_walk_probability(
-        start, end, n_steps,
-        p_l: float = 1. / 3, p_r: float = 1. / 3, p_c: float = 1. / 3):
+    start,
+    end,
+    n_steps,
+    p_l: float = 1.0 / 3,
+    p_r: float = 1.0 / 3,
+    p_c: float = 1.0 / 3,
+):
     """
     Calculate the probability of getting from state `start` to state `end`
     in `n_steps` steps, where the probabilities for a left, right, and
@@ -109,7 +117,8 @@ def calculate_single_random_walk_probability(
             n_l = n_r - step_j
             n_c = n_steps - n_r - n_l
             p_j += stats.multinomial.pmf(
-                x=[n_l, n_r, n_c], n=n_steps, p=[p_l, p_r, p_c])
+                x=[n_l, n_r, n_c], n=n_steps, p=[p_l, p_r, p_c]
+            )
         p *= p_j
     return p
 

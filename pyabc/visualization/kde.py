@@ -7,12 +7,12 @@ MultivariateNormalTransition(), or to replace it by a GridSearchCV() to
 automatically find a visually good level of smoothness.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
-from ..transition import MultivariateNormalTransition
 from ..storage import History
+from ..transition import MultivariateNormalTransition
 from .util import format_plot_matrix
 
 
@@ -75,10 +75,21 @@ def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
 
 
 def plot_kde_1d_highlevel(
-        history: History, x: str, m: int = 0, t: int = None,
-        xmin=None, xmax=None, numx=50, ax=None,
-        size=None, title: str = None, refval=None, refval_color='C1',
-        kde=None, **kwargs):
+    history: History,
+    x: str,
+    m: int = 0,
+    t: int = None,
+    xmin=None,
+    xmax=None,
+    numx=50,
+    ax=None,
+    size=None,
+    title: str = None,
+    refval=None,
+    refval_color="C1",
+    kde=None,
+    **kwargs
+):
     """
     Plot 1d kernel density estimate of parameter samples.
 
@@ -127,13 +138,26 @@ def plot_kde_1d_highlevel(
     """
     df, w = history.get_distribution(m=m, t=t)
 
-    return plot_kde_1d(df, w, x, xmin, xmax, numx, ax, size, title, refval,
-                       refval_color, kde, **kwargs)
+    return plot_kde_1d(
+        df, w, x, xmin, xmax, numx, ax, size, title, refval, refval_color, kde, **kwargs
+    )
 
 
-def plot_kde_1d(df, w, x, xmin=None, xmax=None,
-                numx=50, ax=None, size=None, title: str = None,
-                refval=None, refval_color='C1', kde=None, **kwargs):
+def plot_kde_1d(
+    df,
+    w,
+    x,
+    xmin=None,
+    xmax=None,
+    numx=50,
+    ax=None,
+    size=None,
+    title: str = None,
+    refval=None,
+    refval_color="C1",
+    kde=None,
+    **kwargs
+):
     """
     Lowlevel interface for plot_kde_1d_highlevel (see there for the remaining
     parameters).
@@ -150,7 +174,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     ax: matplotlib axis
         Axis of the plot.
     """
-    x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax,  numx=numx, kde=kde)
+    x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax, numx=numx, kde=kde)
     if ax is None:
         _, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
@@ -162,7 +186,7 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     if title is not None:
         ax.set_title(title)
     if refval is not None:
-        ax.axvline(refval[x], color=refval_color, linestyle='dotted')
+        ax.axvline(refval[x], color=refval_color, linestyle="dotted")
 
     # set size
     if size is not None:
@@ -171,8 +195,9 @@ def plot_kde_1d(df, w, x, xmin=None, xmax=None,
     return ax
 
 
-def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-           numx=50, numy=50, kde=None):
+def kde_2d(
+    df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None, numx=50, numy=50, kde=None
+):
     """
     Calculates a 2 dimensional histogram from a Dataframe and weights.
 
@@ -240,8 +265,9 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         ymin = df[y].min()
     if ymax is None:
         ymax = df[y].max()
-    X, Y = np.meshgrid(np.linspace(xmin, xmax, num=numx),
-                       np.linspace(ymin, ymax, num=numy))
+    X, Y = np.meshgrid(
+        np.linspace(xmin, xmax, num=numx), np.linspace(ymin, ymax, num=numy)
+    )
     test = pd.DataFrame({x: X.flatten(), y: Y.flatten()})
     pdf = kde.pdf(test)
     PDF = pdf.reshape(X.shape)
@@ -249,11 +275,26 @@ def kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 
 def plot_kde_2d_highlevel(
-        history: History, x: str, y: str, m: int = 0, t: int = None,
-        xmin: float = None, xmax: float = None, ymin: float = None,
-        ymax: float = None, numx: int = 50, numy: int = 50, ax=None,
-        size=None, colorbar=True, title: str = None, refval=None,
-        refval_color='C1', kde=None, **kwargs):
+    history: History,
+    x: str,
+    y: str,
+    m: int = 0,
+    t: int = None,
+    xmin: float = None,
+    xmax: float = None,
+    ymin: float = None,
+    ymax: float = None,
+    numx: int = 50,
+    numy: int = 50,
+    ax=None,
+    size=None,
+    colorbar=True,
+    title: str = None,
+    refval=None,
+    refval_color="C1",
+    kde=None,
+    **kwargs
+):
     """
     Plot 2d kernel density estimate of parameter samples.
 
@@ -316,14 +357,47 @@ def plot_kde_2d_highlevel(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_kde_2d(
-        df, w, x, y, xmin, xmax, ymin, ymax, numx, numy, ax, size, colorbar,
-        title, refval, refval_color, kde, **kwargs)
+        df,
+        w,
+        x,
+        y,
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        numx,
+        numy,
+        ax,
+        size,
+        colorbar,
+        title,
+        refval,
+        refval_color,
+        kde,
+        **kwargs
+    )
 
 
-def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
-                numx=50, numy=50, ax=None, size=None, colorbar=True,
-                title: str = None, refval=None, refval_color='C1', kde=None,
-                **kwargs):
+def plot_kde_2d(
+    df,
+    w,
+    x,
+    y,
+    xmin=None,
+    xmax=None,
+    ymin=None,
+    ymax=None,
+    numx=50,
+    numy=50,
+    ax=None,
+    size=None,
+    colorbar=True,
+    title: str = None,
+    refval=None,
+    refval_color="C1",
+    kde=None,
+    **kwargs
+):
     """
     Plot a 2d kernel density estimate of parameter samples.
 
@@ -341,10 +415,19 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
         Axis of the plot.
 
     """
-    X, Y, PDF = kde_2d(df, w, x, y,
-                       xmin=xmin, xmax=xmax,
-                       ymin=ymin, ymax=ymax, numx=numx, numy=numy,
-                       kde=kde)
+    X, Y, PDF = kde_2d(
+        df,
+        w,
+        x,
+        y,
+        xmin=xmin,
+        xmax=xmax,
+        ymin=ymin,
+        ymax=ymax,
+        numx=numx,
+        numy=numy,
+        kde=kde,
+    )
     if ax is None:
         _, ax = plt.subplots()
     mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
@@ -366,10 +449,19 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
 
 
 def plot_kde_matrix_highlevel(
-        history, m: int = 0, t: int = None, limits=None,
-        colorbar: bool = True, height: float = 2.5,
-        numx: int = 50, numy: int = 50, refval=None, refval_color='C1',
-        kde=None, arr_ax=None):
+    history,
+    m: int = 0,
+    t: int = None,
+    limits=None,
+    colorbar: bool = True,
+    height: float = 2.5,
+    numx: int = 50,
+    numy: int = 50,
+    refval=None,
+    refval_color="C1",
+    kde=None,
+    arr_ax=None,
+):
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
@@ -414,13 +506,23 @@ def plot_kde_matrix_highlevel(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_kde_matrix(
-        df, w, limits, colorbar, height, numx, numy, refval, refval_color,
-        kde, arr_ax)
+        df, w, limits, colorbar, height, numx, numy, refval, refval_color, kde, arr_ax
+    )
 
 
-def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
-                    numx=50, numy=50, refval=None, refval_color='C1',
-                    kde=None, arr_ax=None):
+def plot_kde_matrix(
+    df,
+    w,
+    limits=None,
+    colorbar=True,
+    height=2.5,
+    numx=50,
+    numy=50,
+    refval=None,
+    refval_color="C1",
+    kde=None,
+    arr_ax=None,
+):
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples.
 
@@ -443,9 +545,13 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
     par_names = list(df.columns.values)
 
     if arr_ax is None:
-        fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par,
-                                   sharex=False, sharey=False,
-                                   figsize=(height * n_par, height * n_par))
+        fig, arr_ax = plt.subplots(
+            nrows=n_par,
+            ncols=n_par,
+            sharex=False,
+            sharey=False,
+            figsize=(height * n_par, height * n_par),
+        )
     else:
         fig = arr_ax[0, 0].get_figure()
 
@@ -455,16 +561,24 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
 
     def hist_2d(x, y, ax):
         df = pd.concat((x, y), axis=1)
-        plot_kde_2d(df, w,
-                    x.name, y.name,
-                    xmin=limits.get(x.name, default)[0],
-                    xmax=limits.get(x.name, default)[1],
-                    ymin=limits.get(y.name, default)[0],
-                    ymax=limits.get(y.name, default)[1],
-                    numx=numx, numy=numy,
-                    ax=ax, title=None, colorbar=colorbar,
-                    refval=refval, refval_color=refval_color,
-                    kde=kde)
+        plot_kde_2d(
+            df,
+            w,
+            x.name,
+            y.name,
+            xmin=limits.get(x.name, default)[0],
+            xmax=limits.get(x.name, default)[1],
+            ymin=limits.get(y.name, default)[0],
+            ymax=limits.get(y.name, default)[1],
+            numx=numx,
+            numy=numy,
+            ax=ax,
+            title=None,
+            colorbar=colorbar,
+            refval=refval,
+            refval_color=refval_color,
+            kde=kde,
+        )
 
     def scatter(x, y, ax):
         alpha = w / w.max()
@@ -478,12 +592,18 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
 
     def hist_1d(x, ax):
         df = pd.concat((x,), axis=1)
-        plot_kde_1d(df, w, x.name,
-                    xmin=limits.get(x.name, default)[0],
-                    xmax=limits.get(x.name, default)[1],
-                    numx=numx,
-                    ax=ax, refval=refval, refval_color=refval_color,
-                    kde=kde)
+        plot_kde_1d(
+            df,
+            w,
+            x.name,
+            xmin=limits.get(x.name, default)[0],
+            xmax=limits.get(x.name, default)[1],
+            numx=numx,
+            ax=ax,
+            refval=refval,
+            refval_color=refval_color,
+            kde=kde,
+        )
 
     # fill all subplots
     for i in range(0, n_par):

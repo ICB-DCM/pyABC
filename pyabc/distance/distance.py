@@ -1,14 +1,14 @@
 """Distance functions."""
 
+import logging
+from typing import Callable, List, Union
+
 import numpy as np
 from scipy import linalg as la
-from typing import List, Callable, Union
-import logging
 
-from .scale import standard_deviation, span
-from .base import Distance, to_distance
 from ..storage import save_dict_to_json
-
+from .base import Distance, to_distance
+from .scale import span, standard_deviation
 
 logger = logging.getLogger("Distance")
 
@@ -49,10 +49,7 @@ class PNormDistance(Distance):
         greater flexibility.
     """
 
-    def __init__(self,
-                 p: float = 2,
-                 weights: dict = None,
-                 factors: dict = None):
+    def __init__(self, p: float = 2, weights: dict = None, factors: dict = None):
         super().__init__()
 
         if p < 1:
@@ -62,24 +59,17 @@ class PNormDistance(Distance):
         self.weights = weights
         self.factors = factors
 
-    def initialize(self,
-                   t: int,
-                   get_all_sum_stats: Callable[[], List[dict]],
-                   x_0: dict = None):
+    def initialize(
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         super().initialize(t, get_all_sum_stats, x_0)
         self.format_weights_and_factors(t, x_0.keys())
 
     def format_weights_and_factors(self, t, sum_stat_keys):
-        self.weights = PNormDistance.format_dict(
-            self.weights, t, sum_stat_keys)
-        self.factors = PNormDistance.format_dict(
-            self.factors, t, sum_stat_keys)
+        self.weights = PNormDistance.format_dict(self.weights, t, sum_stat_keys)
+        self.factors = PNormDistance.format_dict(self.factors, t, sum_stat_keys)
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         # make sure everything is formatted correctly
         self.format_weights_and_factors(t, x_0.keys())
 
@@ -90,27 +80,36 @@ class PNormDistance(Distance):
         # compute distance
         if self.p == np.inf:
             # maximum absolute distance
-            d = max(abs((f[key] * w[key]) * (x[key] - x_0[key]))
-                    if key in x and key in x_0 else 0
-                    for key in w)
+            d = max(
+                abs((f[key] * w[key]) * (x[key] - x_0[key]))
+                if key in x and key in x_0
+                else 0
+                for key in w
+            )
         else:
             # weighted p-norm distance
             d = pow(
-                sum(pow(abs((f[key] * w[key]) * (x[key] - x_0[key])), self.p)
-                    if key in x and key in x_0 else 0
-                    for key in w),
-                1 / self.p)
+                sum(
+                    pow(abs((f[key] * w[key]) * (x[key] - x_0[key])), self.p)
+                    if key in x and key in x_0
+                    else 0
+                    for key in w
+                ),
+                1 / self.p,
+            )
 
         return d
 
     def get_config(self) -> dict:
-        return {"name": self.__class__.__name__,
-                "p": self.p,
-                "weights": self.weights,
-                "factors": self.factors}
+        return {
+            "name": self.__class__.__name__,
+            "p": self.p,
+            "weights": self.weights,
+            "factors": self.factors,
+        }
 
     @staticmethod
-    def format_dict(w, t, sum_stat_keys, default_val=1.):
+    def format_dict(w, t, sum_stat_keys, default_val=1.0):
         """
         Normalize weight or factor dictionary to the employed format.
         """
@@ -180,15 +179,17 @@ class AdaptivePNormDistance(PNormDistance):
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
     """
 
-    def __init__(self,
-                 p: float = 2,
-                 initial_weights: dict = None,
-                 factors: dict = None,
-                 adaptive: bool = True,
-                 scale_function: Callable = None,
-                 normalize_weights: bool = True,
-                 max_weight_ratio: float = None,
-                 log_file: str = None):
+    def __init__(
+        self,
+        p: float = 2,
+        initial_weights: dict = None,
+        factors: dict = None,
+        adaptive: bool = True,
+        scale_function: Callable = None,
+        normalize_weights: bool = True,
+        max_weight_ratio: float = None,
+        log_file: str = None,
+    ):
         # call p-norm constructor
         super().__init__(p=p, weights=None, factors=factors)
 
@@ -206,8 +207,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         self.x_0 = None
 
-    def configure_sampler(self,
-                          sampler):
+    def configure_sampler(self, sampler):
         """
         Make the sampler return also rejected particles,
         because these are needed to get a better estimate of the summary
@@ -222,10 +222,9 @@ class AdaptivePNormDistance(PNormDistance):
         if self.adaptive:
             sampler.sample_factory.record_rejected = True
 
-    def initialize(self,
-                   t: int,
-                   get_all_sum_stats: Callable[[], List[dict]],
-                   x_0: dict = None):
+    def initialize(
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         """
         Initialize weights.
         """
@@ -243,9 +242,7 @@ class AdaptivePNormDistance(PNormDistance):
         # update weights from samples
         self._update(t, all_sum_stats)
 
-    def update(self,
-               t: int,
-               get_all_sum_stats: Callable[[], List[dict]]):
+    def update(self, t: int, get_all_sum_stats: Callable[[], List[dict]]):
         """
         Update weights.
         """
@@ -259,9 +256,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         return True
 
-    def _update(self,
-                t: int,
-                all_sum_stats: List[dict]):
+    def _update(self, t: int, all_sum_stats: List[dict]):
         """
         Here the real update of weights happens.
         """
@@ -341,19 +336,20 @@ class AdaptivePNormDistance(PNormDistance):
         for key, value in w.items():
             # bound too large weights
             if abs(value) / min_abs_weight > self.max_weight_ratio:
-                w[key] = np.sign(value) * self.max_weight_ratio \
-                    * min_abs_weight
+                w[key] = np.sign(value) * self.max_weight_ratio * min_abs_weight
 
         return w
 
     def get_config(self) -> dict:
-        return {"name": self.__class__.__name__,
-                "p": self.p,
-                "factors": self.factors,
-                "adaptive": self.adaptive,
-                "scale_function": self.scale_function.__name__,
-                "normalize_weights": self.normalize_weights,
-                "max_weight_ratio": self.max_weight_ratio}
+        return {
+            "name": self.__class__.__name__,
+            "p": self.p,
+            "factors": self.factors,
+            "adaptive": self.adaptive,
+            "scale_function": self.scale_function.__name__,
+            "normalize_weights": self.normalize_weights,
+            "max_weight_ratio": self.max_weight_ratio,
+        }
 
     def log(self, t: int) -> None:
         logger.debug(f"updated weights[{t}] = {self.weights[t]}")
@@ -373,10 +369,11 @@ class AggregatedDistance(Distance):
     """
 
     def __init__(
-            self,
-            distances: List[Distance],
-            weights: Union[List, dict] = None,
-            factors: Union[List, dict] = None):
+        self,
+        distances: List[Distance],
+        weights: Union[List, dict] = None,
+        factors: Union[List, dict] = None,
+    ):
         """
         Parameters
         ----------
@@ -408,18 +405,14 @@ class AggregatedDistance(Distance):
         self.factors = factors
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         super().initialize(t, get_all_sum_stats, x_0)
         for distance in self.distances:
             distance.initialize(t, get_all_sum_stats, x_0)
         self.format_weights_and_factors(t)
 
-    def configure_sampler(
-            self,
-            sampler):
+    def configure_sampler(self, sampler):
         """
         Note: `configure_sampler` is applied by all distances sequentially,
         so care must be taken that they perform no contradictory operations
@@ -428,32 +421,21 @@ class AggregatedDistance(Distance):
         for distance in self.distances:
             distance.configure_sampler(sampler)
 
-    def update(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]]) -> bool:
+    def update(self, t: int, get_all_sum_stats: Callable[[], List[dict]]) -> bool:
         """
         The `sum_stats` are passed on to all distance functions, each of
         which may then update using these. If any update occurred, a value
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.
         """
-        return any(distance.update(t, get_all_sum_stats)
-                   for distance in self.distances)
+        return any(distance.update(t, get_all_sum_stats) for distance in self.distances)
 
-    def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         """
         Applies all distance functions and computes the weighted sum of all
         obtained values.
         """
-        values = np.array([
-            distance(x, x_0, t, par) for distance in self.distances
-        ])
+        values = np.array([distance(x, x_0, t, par) for distance in self.distances])
         self.format_weights_and_factors(t)
         weights = AggregatedDistance.get_for_t_or_latest(self.weights, t)
         factors = AggregatedDistance.get_for_t_or_latest(self.factors, t)
@@ -471,17 +453,19 @@ class AggregatedDistance(Distance):
         """
         config = {}
         for j, distance in enumerate(self.distances):
-            config[f'Distance_{j}'] = distance.get_config()
+            config[f"Distance_{j}"] = distance.get_config()
         return config
 
     def format_weights_and_factors(self, t):
         self.weights = AggregatedDistance.format_dict(
-            self.weights, t, len(self.distances))
+            self.weights, t, len(self.distances)
+        )
         self.factors = AggregatedDistance.format_dict(
-            self.factors, t, len(self.distances))
+            self.factors, t, len(self.distances)
+        )
 
     @staticmethod
-    def format_dict(w, t, n_distances, default_val=1.):
+    def format_dict(w, t, n_distances, default_val=1.0):
         """
         Normalize weight or factor dictionary to the employed format.
         """
@@ -535,13 +519,14 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
     """
 
     def __init__(
-            self,
-            distances: List[Distance],
-            initial_weights: List = None,
-            factors: Union[List, dict] = None,
-            adaptive: bool = True,
-            scale_function: Callable = None,
-            log_file: str = None):
+        self,
+        distances: List[Distance],
+        initial_weights: List = None,
+        factors: Union[List, dict] = None,
+        adaptive: bool = True,
+        scale_function: Callable = None,
+        log_file: str = None,
+    ):
         super().__init__(distances=distances)
         self.initial_weights = initial_weights
         self.factors = factors
@@ -552,10 +537,9 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         self.scale_function = scale_function
         self.log_file = log_file
 
-    def initialize(self,
-                   t: int,
-                   get_all_sum_stats: Callable[[], List[dict]],
-                   x_0: dict = None):
+    def initialize(
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         """
         Initialize weights.
         """
@@ -572,9 +556,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         # update weights from samples
         self._update(t, all_sum_stats)
 
-    def update(self,
-               t: int,
-               get_all_sum_stats: Callable[[], List[dict]]):
+    def update(self, t: int, get_all_sum_stats: Callable[[], List[dict]]):
         """
         Update weights based on all simulations.
         """
@@ -590,9 +572,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         return True
 
-    def _update(self,
-                t: int,
-                sum_stats: List[dict]):
+    def _update(self, t: int, sum_stats: List[dict]):
         """
         Here the real update of weights happens.
         """
@@ -601,10 +581,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         for distance in self.distances:
             # apply distance to all samples
-            current_list = [
-                distance(sum_stat, self.x_0)
-                for sum_stat in sum_stats
-            ]
+            current_list = [distance(sum_stat, self.x_0) for sum_stat in sum_stats]
             # compute scaling
             scale = self.scale_function(current_list)
 
@@ -644,17 +621,15 @@ class DistanceWithMeasureList(Distance):
         * measures refers to the summary statistics.
     """
 
-    def __init__(self,
-                 measures_to_use='all'):
+    def __init__(self, measures_to_use="all"):
         super().__init__()
         # the measures (summary statistics) to use for distance calculation
         self.measures_to_use = measures_to_use
 
-    def initialize(self,
-                   t: int,
-                   get_all_sum_stats: Callable[[], List[dict]],
-                   x_0: dict = None):
-        if self.measures_to_use == 'all':
+    def initialize(
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
+        if self.measures_to_use == "all":
             self.measures_to_use = x_0.keys()
 
     def get_config(self):
@@ -675,14 +650,13 @@ class ZScoreDistance(DistanceWithMeasureList):
         \\sum_{i \\in \\text{measures}} \\left| \\frac{x_i-y_i}{y_i} \\right|
     """
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        return sum(abs((x[key] - x_0[key]) / x_0[key]) if x_0[key] != 0 else
-                   (0 if x[key] == 0 else np.inf)
-                   for key in self.measures_to_use) / len(self.measures_to_use)
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
+        return sum(
+            abs((x[key] - x_0[key]) / x_0[key])
+            if x_0[key] != 0
+            else (0 if x[key] == 0 else np.inf)
+            for key in self.measures_to_use
+        ) / len(self.measures_to_use)
 
 
 class PCADistance(DistanceWithMeasureList):
@@ -698,7 +672,7 @@ class PCADistance(DistanceWithMeasureList):
         d(x,y) = \\| Wx - Wy \\|
     """
 
-    def __init__(self, measures_to_use='all'):
+    def __init__(self, measures_to_use="all"):
         super().__init__(measures_to_use)
         self._whitening_transformation_matrix = None
 
@@ -706,20 +680,19 @@ class PCADistance(DistanceWithMeasureList):
         return np.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
-        samples_vec = np.asarray([self._dict_to_vect(x)
-                                  for x in sum_stats])
+        samples_vec = np.asarray([self._dict_to_vect(x) for x in sum_stats])
         # samples_vec is an array of shape nr_samples x nr_features
         means = samples_vec.mean(axis=0)
         centered = samples_vec - means
         covariance = centered.T.dot(centered)
         w, v = la.eigh(covariance)
-        self._whitening_transformation_matrix = (
-            v.dot(np.diag(1. / np.sqrt(w))).dot(v.T))
+        self._whitening_transformation_matrix = v.dot(np.diag(1.0 / np.sqrt(w))).dot(
+            v.T
+        )
 
-    def initialize(self,
-                   t: int,
-                   get_all_sum_stats: Callable[[], List[dict]],
-                   x_0: dict = None):
+    def initialize(
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         super().initialize(t, get_all_sum_stats, x_0)
 
         # execute function
@@ -727,14 +700,11 @@ class PCADistance(DistanceWithMeasureList):
 
         self._calculate_whitening_transformation_matrix(all_sum_stats)
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
-            self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
+            self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2
+        )
         return distance
 
 
@@ -793,7 +763,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
             The upper margin of the range calculated from these parameters
         """
 
-    def __init__(self, measures_to_use='all'):
+    def __init__(self, measures_to_use="all"):
         super().__init__(measures_to_use)
         self.normalization = None
 
@@ -807,15 +777,14 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         for sample in sum_stats:
             for measure in self.measures_to_use:
                 measures[measure].append(sample[measure])
-        self.normalization = {measure:
-                              self.upper(measures[measure])
-                              - self.lower(measures[measure])
-                              for measure in self.measures_to_use}
+        self.normalization = {
+            measure: self.upper(measures[measure]) - self.lower(measures[measure])
+            for measure in self.measures_to_use
+        }
 
-    def initialize(self,
-                   t: int,
-                   get_all_sum_stats: Callable[[], List[dict]],
-                   x_0: dict = None):
+    def initialize(
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         super().initialize(t, get_all_sum_stats, x_0)
 
         # execute function
@@ -823,13 +792,11 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
         self._calculate_normalization(all_sum_stats)
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        distance = sum(abs((x[key] - x_0[key]) / self.normalization[key])
-                       for key in self.measures_to_use)
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
+        distance = sum(
+            abs((x[key] - x_0[key]) / self.normalization[key])
+            for key in self.measures_to_use
+        )
         return distance
 
 
@@ -858,13 +825,11 @@ class PercentileDistance(RangeEstimatorDistance):
 
     @staticmethod
     def upper(parameter_list):
-        return np.percentile(parameter_list,
-                             100 - PercentileDistance.PERCENTILE)
+        return np.percentile(parameter_list, 100 - PercentileDistance.PERCENTILE)
 
     @staticmethod
     def lower(parameter_list):
-        return np.percentile(parameter_list,
-                             PercentileDistance.PERCENTILE)
+        return np.percentile(parameter_list, PercentileDistance.PERCENTILE)
 
     def get_config(self):
         config = super().get_config()

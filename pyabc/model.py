@@ -5,11 +5,12 @@ Models
 A model defines how input parameters relate to output simulated data.
 """
 
-from .parameters import Parameter
-from typing import Callable, Any
-from .epsilon import Epsilon
-from .distance import Distance
+from typing import Any, Callable
+
 from .acceptor import Acceptor
+from .distance import Distance
+from .epsilon import Epsilon
+from .parameters import Parameter
 
 
 class ModelResult:
@@ -19,11 +20,13 @@ class ModelResult:
     distances and accepted/rejected.
     """
 
-    def __init__(self,
-                 sum_stats: dict = None,
-                 distance: float = None,
-                 accepted: bool = None,
-                 weight: float = 1.0):
+    def __init__(
+        self,
+        sum_stats: dict = None,
+        distance: float = None,
+        accepted: bool = None,
+        weight: float = 1.0,
+    ):
         self.sum_stats = sum_stats if sum_stats is not None else {}
         self.distance = distance
         self.accepted = accepted
@@ -65,7 +68,7 @@ class Model:
         self.name = name
 
     def __repr__(self):
-        return "<{} {}>".format(self.__class__.__name__, self.name)
+        return f"<{self.__class__.__name__} {self.name}>"
 
     def sample(self, pars: Parameter):
         """
@@ -86,10 +89,9 @@ class Model:
         """
         raise NotImplementedError()
 
-    def summary_statistics(self,
-                           t: int,
-                           pars: Parameter,
-                           sum_stats_calculator: Callable) -> ModelResult:
+    def summary_statistics(
+        self, t: int, pars: Parameter, sum_stats_calculator: Callable
+    ) -> ModelResult:
         """
         Sample, and then calculate the summary statistics.
 
@@ -115,12 +117,14 @@ class Model:
         sum_stats = sum_stats_calculator(raw_data)
         return ModelResult(sum_stats=sum_stats)
 
-    def distance(self,
-                 t: int,
-                 pars: Parameter,
-                 sum_stats_calculator: Callable,
-                 distance_calculator: Distance,
-                 x_0: dict) -> ModelResult:
+    def distance(
+        self,
+        t: int,
+        pars: Parameter,
+        sum_stats_calculator: Callable,
+        distance_calculator: Distance,
+        x_0: dict,
+    ) -> ModelResult:
         """
         Sample, calculate summary statistics, and then calculate the distance.
 
@@ -149,25 +153,22 @@ class Model:
             The result with filled distance.
         """
 
-        sum_stats_result = self.summary_statistics(t,
-                                                   pars,
-                                                   sum_stats_calculator)
-        distance = distance_calculator(sum_stats_result.sum_stats,
-                                       x_0,
-                                       t,
-                                       pars)
+        sum_stats_result = self.summary_statistics(t, pars, sum_stats_calculator)
+        distance = distance_calculator(sum_stats_result.sum_stats, x_0, t, pars)
         sum_stats_result.distance = distance
 
         return sum_stats_result
 
-    def accept(self,
-               t: int,
-               pars: Parameter,
-               sum_stats_calculator: Callable,
-               distance_calculator: Distance,
-               eps_calculator: Epsilon,
-               acceptor: Acceptor,
-               x_0: dict):
+    def accept(
+        self,
+        t: int,
+        pars: Parameter,
+        sum_stats_calculator: Callable,
+        distance_calculator: Distance,
+        eps_calculator: Epsilon,
+        acceptor: Acceptor,
+        x_0: dict,
+    ):
         """
         Sample, calculate summary statistics, calculate distance, and then
         accept or not accept a parameter.
@@ -201,16 +202,15 @@ class Model:
             The result with filled accepted field.
 
         """
-        result = self.summary_statistics(t,
-                                         pars,
-                                         sum_stats_calculator)
+        result = self.summary_statistics(t, pars, sum_stats_calculator)
         acc_res = acceptor(
             distance_function=distance_calculator,
             eps=eps_calculator,
             x=result.sum_stats,
             x_0=x_0,
             t=t,
-            par=pars)
+            par=pars,
+        )
         result.distance = acc_res.distance
         result.accepted = acc_res.accept
         result.weight = acc_res.weight
@@ -235,9 +235,7 @@ class SimpleModel(Model):
         the function name of `sample_function`.
     """
 
-    def __init__(self,
-                 sample_function: Callable[[Parameter], Any],
-                 name: str = None):
+    def __init__(self, sample_function: Callable[[Parameter], Any], name: str = None):
         if name is None:
             name = sample_function.__name__
         super().__init__(name)
@@ -284,9 +282,7 @@ class IntegratedModel(Model):
     your own integrated model..
     """
 
-    def integrated_simulate(self,
-                            pars: Parameter,
-                            eps: float) -> ModelResult:
+    def integrated_simulate(self, pars: Parameter, eps: float) -> ModelResult:
         """
         Method which integrates simulation and acceptance/rejection
         in a single method.
@@ -317,12 +313,14 @@ class IntegratedModel(Model):
         """
         raise NotImplementedError()
 
-    def accept(self,
-               t: int,
-               pars: Parameter,
-               sum_stats_calculator: Callable,
-               distance_calculator: Distance,
-               eps_calculator: Epsilon,
-               acceptor: Acceptor,
-               x_0: dict):
+    def accept(
+        self,
+        t: int,
+        pars: Parameter,
+        sum_stats_calculator: Callable,
+        distance_calculator: Distance,
+        eps_calculator: Epsilon,
+        acceptor: Acceptor,
+        x_0: dict,
+    ):
         return self.integrated_simulate(pars, eps_calculator(t))

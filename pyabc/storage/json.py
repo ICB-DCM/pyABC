@@ -1,6 +1,7 @@
-import json
-import numpy as np
 import copy
+import json
+
+import numpy as np
 
 
 def save_dict_to_json(dct: dict, file_: str):
@@ -19,7 +20,7 @@ def save_dict_to_json(dct: dict, file_: str):
         # cannot handle ndarrays
         if isinstance(val, np.ndarray):
             dct[key] = list(val)
-    with open(file_, 'w') as f:
+    with open(file_, "w") as f:
         json.dump(dct, f)
 
 
@@ -39,7 +40,7 @@ def load_dict_from_json(file_: str, key_type: type = int):
     -------
     dct: The json file contents.
     """
-    with open(file_, 'r') as f:
+    with open(file_) as f:
         _dct = json.load(f)
     dct = {}
     for key, val in _dct.items():

@@ -1,12 +1,14 @@
+import logging
 from abc import abstractmethod
 from typing import Dict, Tuple, Union
-import logging
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
+
+from ..cv.bootstrap import calc_cv
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
-from ..cv.bootstrap import calc_cv
 from .transitionmeta import TransitionMeta
 
 logger = logging.getLogger("Transitions")
@@ -26,6 +28,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             parameter. All the defined transitions will then automatically
             generalize to the case of no parameter.
     """
+
     NR_BOOTSTRAP = 5
     X = None
     w = None
@@ -88,8 +91,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         return pd.DataFrame([self.rvs_single() for _ in range(size)])
 
     @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
-            -> Union[float, np.ndarray]:
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at `x`.
 
@@ -115,8 +117,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
     def no_meaningful_particles(self) -> bool:
         return len(self.X) == 0 or self.no_parameters
 
-    def mean_cv(self, n_samples: Union[None, int] = None) \
-            -> float:
+    def mean_cv(self, n_samples: Union[None, int] = None) -> float:
         """
         Estimate the uncertainty on the KDE.
 
@@ -154,9 +155,14 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         self.test_weights_ = test_weights
 
         # calculate bootstrapped coefficients of variation
-        cv, variation_at_test = calc_cv(n_samples, np.array([1]),
-                                        self.NR_BOOTSTRAP, test_weights,
-                                        [self], [test_points])
+        cv, variation_at_test = calc_cv(
+            n_samples,
+            np.array([1]),
+            self.NR_BOOTSTRAP,
+            test_weights,
+            [self],
+            [test_points],
+        )
 
         self.variation_at_test_points_ = variation_at_test[0]
 
@@ -168,8 +174,9 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         if self.no_meaningful_particles():
             raise NotEnoughParticles
 
-        res = predict_population_size(len(self.X), coefficient_of_variation,
-                                      self.mean_cv)
+        res = predict_population_size(
+            len(self.X), coefficient_of_variation, self.mean_cv
+        )
         self.cv_estimate_ = res
         return res.n_estimated
 
@@ -218,10 +225,9 @@ class AggregatedTransition(Transition):
             sample.update(sample_for_keys)
         return sample
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
-            -> Union[float, np.ndarray]:
+    def pdf(self, x: Union[pd.Series, pd.DataFrame]) -> Union[float, np.ndarray]:
         # density
-        pd = 1.
+        pd = 1.0
         for keys, transition in self.mapping.items():
             # extract values for parameters
             x_for_keys = x[list(keys)]

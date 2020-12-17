@@ -1,7 +1,8 @@
+import numpy as np
 from distributed import Client
+
 from .base import Sampler
 from .eps_mixin import EPSMixin
-import numpy as np
 
 
 class DaskDistributedSampler(EPSMixin, Sampler):
@@ -41,8 +42,13 @@ class DaskDistributedSampler(EPSMixin, Sampler):
 
     """
 
-    def __init__(self, dask_client=None, client_max_jobs=np.inf,
-                 default_pickle=False, batch_size=1):
+    def __init__(
+        self,
+        dask_client=None,
+        client_max_jobs=np.inf,
+        default_pickle=False,
+        batch_size=1,
+    ):
         super().__init__()
 
         # Assign Client
@@ -64,7 +70,7 @@ class DaskDistributedSampler(EPSMixin, Sampler):
 
     def __getstate__(self):
         d = dict(self.__dict__)
-        del d['my_client']
+        del d["my_client"]
         return d
 
     def client_cores(self):

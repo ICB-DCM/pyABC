@@ -1,21 +1,23 @@
-import matplotlib.pyplot as plt
+from typing import List, Union
+
 import matplotlib as mpl
-from matplotlib.ticker import MaxNLocator
-from typing import Union, List
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 
 from ..storage import History
 from .util import to_lists_or_default
 
 
 def plot_epsilons(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        colors: List = None,
-        scale: str = None,
-        title: str = "Epsilon values",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    colors: List = None,
+    scale: str = None,
+    title: str = "Epsilon values",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Plot epsilon trajectory.
 
@@ -50,7 +52,7 @@ def plot_epsilons(
     if colors is None:
         colors = [None for _ in range(len(histories))]
     if scale is None:
-        scale = 'lin'
+        scale = "lin"
 
     # create figure
     if ax is None:
@@ -63,14 +65,14 @@ def plot_epsilons(
     for history in histories:
         # note: first entry is from calibration and thus translates to inf,
         # thus must be discarded
-        eps.append(np.array(history.get_all_populations()['epsilon'][1:]))
+        eps.append(np.array(history.get_all_populations()["epsilon"][1:]))
 
     # scale
     eps = _apply_scale(eps, scale)
 
     # plot
     for ep, label, color in zip(eps, labels, colors):
-        ax.plot(ep, 'x-', label=label, color=color)
+        ax.plot(ep, "x-", label=label, color=color)
 
     # format
     ax.set_xlabel("Population index")
@@ -91,11 +93,11 @@ def _apply_scale(eps, scale):
     """
     Apply the `scale` transformation to `eps`.
     """
-    if scale == 'log':
+    if scale == "log":
         eps = [np.log(ep) for ep in eps]
-    elif scale == 'log10':
+    elif scale == "log10":
         eps = [np.log10(ep) for ep in eps]
-    elif scale != 'lin':
+    elif scale != "lin":
         raise ValueError(f"Scale {scale} must be one of lin, log, log10.")
     return eps
 
@@ -104,9 +106,9 @@ def _get_ylabel(scale):
     """
     Get corect y axis label.
     """
-    if scale == 'log':
+    if scale == "log":
         ylabel = "Log(Epsilon)"
-    elif scale == 'log10':
+    elif scale == "log10":
         ylabel = "Log10(Epsilon)"
     else:
         ylabel = "Epsilon"

@@ -1,8 +1,9 @@
-import numpy as np
-import pandas as pd
 import json
 from abc import ABC, abstractmethod
 from typing import Callable, List
+
+import numpy as np
+import pandas as pd
 
 
 class Epsilon(ABC):
@@ -19,12 +20,14 @@ class Epsilon(ABC):
         """
         pass
 
-    def initialize(self,
-                   t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_all_records: Callable[[], List[dict]],
-                   max_nr_populations: int,
-                   acceptor_config: dict):
+    def initialize(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        acceptor_config: dict,
+    ):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon and can be used to calibrate it to the statistics of the
@@ -69,12 +72,14 @@ class Epsilon(ABC):
             The sampler used in ABCSMC.
         """
 
-    def update(self,
-               t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame],
-               get_all_records: Callable[[], List[dict]],
-               acceptance_rate: float,
-               acceptor_config: dict):
+    def update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        acceptance_rate: float,
+        acceptor_config: dict,
+    ):
         """
         Update epsilon value to be used as acceptance criterion for
         generation t.
@@ -104,8 +109,7 @@ class Epsilon(ABC):
         pass
 
     @abstractmethod
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         """
         Get epsilon value for generation t.
 
@@ -160,6 +164,5 @@ class NoEpsilon(Epsilon):
     def __init__(self):
         super().__init__()
 
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         return np.nan

@@ -6,20 +6,22 @@ Functions performing statistical operations on weighted points
 generated via importance sampling.
 """
 
-import numpy as np
 from functools import wraps
+
+import numpy as np
 
 
 def weight_checked(function):
     """
     Function decorator to check normalization of weights.
     """
+
     @wraps(function)
     def function_with_checking(points, weights=None, **kwargs):
         if weights is not None and not np.isclose(weights.sum(), 1):
-            raise AssertionError(
-                f"Weights not normalized: {weights.sum()}.")
+            raise AssertionError(f"Weights not normalized: {weights.sum()}.")
         return function(points, weights, **kwargs)
+
     return function_with_checking
 
 
@@ -39,7 +41,7 @@ def weighted_quantile(points, weights=None, alpha=0.5):
         weights = weights[sorted_indices]
 
     cs = np.cumsum(weights)
-    quantile = np.interp(alpha, cs - 0.5*weights, points)
+    quantile = np.interp(alpha, cs - 0.5 * weights, points)
     return quantile
 
 
@@ -66,7 +68,7 @@ def weighted_std(points, weights):
     weighted mean.
     """
     mean = weighted_mean(points, weights)
-    std = np.sqrt(((points - mean)**2 * weights).sum())
+    std = np.sqrt(((points - mean) ** 2 * weights).sum())
     return std
 
 
@@ -79,7 +81,7 @@ def effective_sample_size(weights):
         n_\\text{eff} = \\frac{(\\sum_{i=1}^nw_i)^2}{\\sum_{i=1}^nw_i^2}
     """
     weights = np.array(weights)
-    n_eff = np.sum(weights)**2 / np.sum(weights**2)
+    n_eff = np.sum(weights) ** 2 / np.sum(weights ** 2)
     return n_eff
 
 

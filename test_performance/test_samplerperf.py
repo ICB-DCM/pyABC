@@ -2,17 +2,28 @@ import multiprocessing
 import os
 import tempfile
 import time
-import pytest
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
 import numpy as np
+import pytest
 import scipy.stats as st
 
-from pyabc import (ABCSMC, RV, Distribution,
-                   MedianEpsilon,
-                   PercentileDistance, SimpleModel,
-                   ConstantPopulationSize)
-from pyabc.sampler import SingleCoreSampler, MappingSampler, MulticoreEvalParallelSampler, DaskDistributedSampler, \
-                           ConcurrentFutureSampler
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+from pyabc import (
+    ABCSMC,
+    RV,
+    ConstantPopulationSize,
+    Distribution,
+    MedianEpsilon,
+    PercentileDistance,
+    SimpleModel,
+)
+from pyabc.sampler import (
+    ConcurrentFutureSampler,
+    DaskDistributedSampler,
+    MappingSampler,
+    MulticoreEvalParallelSampler,
+    SingleCoreSampler,
+)
 
 REMOVE_DB = False
 
@@ -29,8 +40,9 @@ class GenericFutureWithProcessPool(ConcurrentFutureSampler):
         client_core_load_factor = 1.0
         client_max_jobs = 8
         throttle_delay = 0.0
-        super().__init__(cfuture_executor, client_core_load_factor,
-                         client_max_jobs, throttle_delay)
+        super().__init__(
+            cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay
+        )
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
@@ -39,8 +51,9 @@ class GenericFutureWithThreadPool(ConcurrentFutureSampler):
         client_core_load_factor = 1.0
         client_max_jobs = 8
         throttle_delay = 0.0
-        super().__init__(cfuture_executor, client_core_load_factor,
-                         client_max_jobs, throttle_delay)
+        super().__init__(
+            cfuture_executor, client_core_load_factor, client_max_jobs, throttle_delay
+        )
 
 
 class MultiProcessingMappingSampler(MappingSampler):
@@ -59,15 +72,22 @@ class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
         batch_size = 10
-        super().__init__(cfuture_executor=cfuture_executor,
-                         client_max_jobs=client_max_jobs,
-                         batch_size=batch_size)
+        super().__init__(
+            cfuture_executor=cfuture_executor,
+            client_max_jobs=client_max_jobs,
+            batch_size=batch_size,
+        )
 
 
-@pytest.fixture(params=[GenericFutureWithProcessPoolBatch,
-                        DaskDistributedSamplerBatch,
-                        MulticoreEvalParallelSampler, SingleCoreSampler,
-                        MultiProcessingMappingSampler])
+@pytest.fixture(
+    params=[
+        GenericFutureWithProcessPoolBatch,
+        DaskDistributedSamplerBatch,
+        MulticoreEvalParallelSampler,
+        SingleCoreSampler,
+        MultiProcessingMappingSampler,
+    ]
+)
 def sampler(request):
     return request.param()
 
@@ -87,10 +107,10 @@ def db_path():
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
     # Define a gaussian model
-    sigma = .5
+    sigma = 0.5
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma).rvs()}
+        return {"y": st.norm(args["x"], sigma).rvs()}
 
     # We define two models, but they are identical so far
     models = [model, model]
@@ -100,17 +120,20 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(mu_x_1, sigma)),
-        Distribution(x=st.norm(mu_x_2, sigma))
+        Distribution(x=st.norm(mu_x_2, sigma)),
     ]
 
     # We plug all the ABC setup together
     nr_populations = 1
     population_size = ConstantPopulationSize(20)
-    abc = ABCSMC(models, parameter_given_model_prior_distribution,
-                 PercentileDistance(measures_to_use=["y"]),
-                 population_size,
-                 eps=MedianEpsilon(.2),
-                 sampler=sampler)
+    abc = ABCSMC(
+        models,
+        parameter_given_model_prior_distribution,
+        PercentileDistance(measures_to_use=["y"]),
+        population_size,
+        eps=MedianEpsilon(0.2),
+        sampler=sampler,
+    )
 
     # Finally we add meta data such as model names and
     # define where to store the results
@@ -119,21 +142,23 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     abc.new(db_path, {"y": y_observed})
 
     # We run the ABC with 3 populations max
-    minimum_epsilon = .05
+    minimum_epsilon = 0.05
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
 
     # Evaluate the model probabililties
     history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
+        res = st.norm(mu_x_model, np.sqrt(sigma ** 2 + sigma ** 2)).pdf(y_observed)
         return res
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
-    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized
-                                              + p2_expected_unnormalized)
-    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized
-                                              + p2_expected_unnormalized)
-    assert history.max_t == nr_populations-1
+    p1_expected = p1_expected_unnormalized / (
+        p1_expected_unnormalized + p2_expected_unnormalized
+    )
+    p2_expected = p2_expected_unnormalized / (
+        p1_expected_unnormalized + p2_expected_unnormalized
+    )
+    assert history.max_t == nr_populations - 1
     # the next line only tests if we obtain correct numerical types

@@ -193,4 +193,3 @@ jobs:
 
     - name: Run rst-lint
       run: rst-lint README.rst
-

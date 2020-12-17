@@ -16,6 +16,6 @@ if __name__ == "__main__":
 
     print("Got results", flush=True)  # noqa: T001
     if res != [2, 4, 6, 8]:
-        raise AssertionError("Wrong result, got {}".format(res))
+        raise AssertionError(f"Wrong result, got {res}")
 
     print("Finished", flush=True)  # noqa: T001

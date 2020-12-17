@@ -1,8 +1,8 @@
 """Distance base classes."""
 
-from abc import ABC, abstractmethod
-from typing import List, Callable
 import json
+from abc import ABC, abstractmethod
+from typing import Callable, List
 
 
 class Distance(ABC):
@@ -14,10 +14,8 @@ class Distance(ABC):
     """
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self, t: int, get_all_sum_stats: Callable[[], List[dict]], x_0: dict = None
+    ):
         """
         This method is called by the ABCSMC framework before the first
         use of the distance (at the beginning of ABCSMC.run()),
@@ -36,9 +34,7 @@ class Distance(ABC):
             The observed summary statistics.
         """
 
-    def configure_sampler(
-            self,
-            sampler):
+    def configure_sampler(self, sampler):
         """
         This is called by the ABCSMC class and gives the distance
         the opportunity to configure the sampler.
@@ -59,10 +55,7 @@ class Distance(ABC):
         """
 
     # pylint: disable=R0201
-    def update(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]]) -> bool:
+    def update(self, t: int, get_all_sum_stats: Callable[[], List[dict]]) -> bool:
         """
         Update the distance for the upcoming generation t.
 
@@ -87,12 +80,7 @@ class Distance(ABC):
         return False
 
     @abstractmethod
-    def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         """
         Evaluate at time point t the distance of the summary statistics of
         the data simulated for the tentatively sampled particle to those of
@@ -170,13 +158,8 @@ class NoDistance(Distance):
     def __init__(self):
         super().__init__()
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        raise Exception(
-            f"{self.__class__.__name__} is not intended to be called.")
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
+        raise Exception(f"{self.__class__.__name__} is not intended to be called.")
 
 
 class IdentityFakeDistance(Distance):
@@ -188,11 +171,7 @@ class IdentityFakeDistance(Distance):
     the particle.
     """
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         return x
 
 
@@ -204,11 +183,7 @@ class AcceptAllDistance(Distance):
     Can be used for testing.
     """
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         return -1
 
 
@@ -231,11 +206,7 @@ class SimpleFunctionDistance(Distance):
         super().__init__()
         self.fun = fun
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(self, x: dict, x_0: dict, t: int = None, par: dict = None) -> float:
         return self.fun(x, x_0)
 
     def get_config(self):

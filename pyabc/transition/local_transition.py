@@ -1,11 +1,13 @@
-import numpy.linalg as la
-import numpy as np
-import pandas as pd
-from .base import Transition
-from scipy.spatial import cKDTree
-from .util import smart_cov
-from .exceptions import NotEnoughParticles
 import logging
+
+import numpy as np
+import numpy.linalg as la
+import pandas as pd
+from scipy.spatial import cKDTree
+
+from .base import Transition
+from .exceptions import NotEnoughParticles
+from .util import smart_cov
 
 logger = logging.getLogger("LocalTransition")
 
@@ -44,10 +46,11 @@ class LocalTransition(Transition):
                  Molecular Biology 12, no. 1 (2013):
                  87–107. doi:10.1515/sagmb-2012-0069.
     """
+
     EPS = 1e-3
     MIN_K = 10
 
-    def __init__(self, k=None, k_fraction=1/4, scaling=1):
+    def __init__(self, k=None, k_fraction=1 / 4, scaling=1):
         if k_fraction is not None:
             self.k_fraction = k_fraction
             self._k = None
@@ -82,14 +85,16 @@ class LocalTransition(Transition):
         ctree = cKDTree(X)
         _, indices = ctree.query(X, k=min(self.k + 1, X.shape[0]))
 
-        covs, inv_covs, dets = list(zip(*[self._cov_and_inv(n, indices)
-                                    for n in range(X.shape[0])]))
+        covs, inv_covs, dets = list(
+            zip(*[self._cov_and_inv(n, indices) for n in range(X.shape[0])])
+        )
         self.covs = np.array(covs)
         self.inv_covs = np.array(inv_covs)
         self.determinants = np.array(dets)
 
         self.normalization = np.sqrt(
-            (2 * np.pi) ** self.X_arr.shape[1] * self.determinants)
+            (2 * np.pi) ** self.X_arr.shape[1] * self.determinants
+        )
 
         if not np.isreal(self.normalization).all():
             raise Exception("Normalization not real")
@@ -104,10 +109,10 @@ class LocalTransition(Transition):
 
     def _pdf_single(self, x):
         distance = self.X_arr - x
-        cov_distance = np.einsum("ij,ijk,ik->i",
-                                 distance, self.inv_covs, distance)
-        return np.average(np.exp(-.5 * cov_distance) / self.normalization,
-                          weights=self.w)
+        cov_distance = np.einsum("ij,ijk,ik->i", distance, self.inv_covs, distance)
+        return np.average(
+            np.exp(-0.5 * cov_distance) / self.normalization, weights=self.w
+        )
 
     def _cov_and_inv(self, n, indices):
         """
@@ -125,14 +130,12 @@ class LocalTransition(Transition):
     def _cov(self, indices, n):
         if len(indices) > 1:
             surrounding_indices = indices[n, 1:]
-            nearest_vector_deltas = (self.X_arr[surrounding_indices]
-                                     - self.X_arr[n])
+            nearest_vector_deltas = self.X_arr[surrounding_indices] - self.X_arr[n]
             local_weights = self.w[surrounding_indices]
         else:
             nearest_vector_deltas = np.absolute(self.X_arr)
             local_weights = np.array([1])
-        cov = smart_cov(nearest_vector_deltas,
-                        local_weights / local_weights.sum())
+        cov = smart_cov(nearest_vector_deltas, local_weights / local_weights.sum())
         if np.absolute(cov.sum()) == 0:
             for k in range(cov.shape[0]):
                 cov[k, k] = np.absolute(self.X_arr[0, k])
@@ -140,6 +143,7 @@ class LocalTransition(Transition):
 
     def rvs_single(self):
         support_index = np.random.choice(self.w.shape[0], p=self.w)
-        sample = np.random.multivariate_normal(self.X_arr[support_index],
-                                               self.covs[support_index])
+        sample = np.random.multivariate_normal(
+            self.X_arr[support_index], self.covs[support_index]
+        )
         return pd.Series(sample, index=self.X.columns)

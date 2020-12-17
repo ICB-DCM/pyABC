@@ -1,21 +1,23 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import logging
 from typing import Callable, List, Union
 
-from ..storage import History
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
+from ..storage import History
 
 logger = logging.getLogger("Data_plot")
 
 
 def plot_data_callback(
-        history: History,
-        f_plot: Callable = None,
-        f_plot_aggregated: Callable = None,
-        t: int = None,
-        ax=None, **kwargs):
+    history: History,
+    f_plot: Callable = None,
+    f_plot_aggregated: Callable = None,
+    t: int = None,
+    ax=None,
+    **kwargs,
+):
     """
     Plot the summary statistics from the history using callback functions
     to plot single statistics or aggregated values.
@@ -44,15 +46,18 @@ def plot_data_callback(
     """
     weights, sum_stats = history.get_weighted_sum_stats(t=t)
     return plot_data_callback_lowlevel(
-        sum_stats, weights, f_plot, f_plot_aggregated, ax, **kwargs)
+        sum_stats, weights, f_plot, f_plot_aggregated, ax, **kwargs
+    )
 
 
 def plot_data_callback_lowlevel(
-        sum_stats: List,
-        weights: List,
-        f_plot: Callable,
-        f_plot_aggregated: Callable = None,
-        ax=None, **kwargs):
+    sum_stats: List,
+    weights: List,
+    f_plot: Callable,
+    f_plot_aggregated: Callable = None,
+    ax=None,
+    **kwargs,
+):
     """
     Lowlevel interface for plot_data_callback (see there for the remaining
     parameters).
@@ -78,9 +83,9 @@ def plot_data_callback_lowlevel(
     return ax
 
 
-def plot_data_default(obs_data: dict,
-                      sim_data: dict,
-                      keys: Union[List[str], str] = None):
+def plot_data_default(
+    obs_data: dict, sim_data: dict, keys: Union[List[str], str] = None
+):
     """
     Plot summary statistic data.
 
@@ -125,8 +130,9 @@ def plot_data_default(obs_data: dict,
     fig, arr_ax = plt.subplots(nrows, ncols)
 
     # iterate over keys
-    for plot_index, ((obs_key, obs), (_, sim)) \
-            in enumerate(zip(obs_data.items(), sim_data.items())):
+    for plot_index, ((obs_key, obs), (_, sim)) in enumerate(
+        zip(obs_data.items(), sim_data.items())
+    ):
         if nrows == ncols == 1:
             ax = arr_ax
         else:
@@ -136,8 +142,8 @@ def plot_data_default(obs_data: dict,
         if isinstance(obs, pd.DataFrame):
             if len(obs.columns) == 1:
                 # 1d: plot
-                ax.plot(sim.values.flatten(), '-x', label="Simulation")
-                ax.plot(obs.values.flatten(), '-x', label="Data")
+                ax.plot(sim.values.flatten(), "-x", label="Simulation")
+                ax.plot(obs.values.flatten(), "-x", label="Data")
                 ax.set_xlabel("Index")
                 ax.set_ylabel(obs.columns[0])
             else:
@@ -150,8 +156,8 @@ def plot_data_default(obs_data: dict,
             # 1d: plot
             obs_value = obs
             sim_value = sim
-            ax.plot(sim_value, '-x', color="C0", label='Simulation')
-            ax.plot(obs_value, '-x', color="C1", label='Data')
+            ax.plot(sim_value, "-x", color="C0", label="Simulation")
+            ax.plot(obs_value, "-x", color="C1", label="Data")
             ax.set_xlabel("Index")
             ax.set_ylabel(str(obs_key))
         elif isinstance(obs, np.ndarray):
@@ -161,10 +167,11 @@ def plot_data_default(obs_data: dict,
             ax.set_xlabel("Data")
             ax.set_ylabel("Simulation")
         else:
-            logger.info(f"Data type {type(obs)} for key {obs_key} is "
-                        f"not supported.")
+            logger.info(
+                f"Data type {type(obs)} for key {obs_key} is " f"not supported."
+            )
             # remove not needed axis
-            ax.axis('off')
+            ax.axis("off")
 
         # finalize axes
         ax.set_title(str(obs_key))
@@ -173,7 +180,7 @@ def plot_data_default(obs_data: dict,
     # remove not needed axes
     for plot_index in range(ndata, ncols * nrows):
         ax = arr_ax.flatten()[plot_index]
-        ax.axis('off')
+        ax.axis("off")
 
     # finalize plot
     fig.tight_layout()

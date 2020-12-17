@@ -80,7 +80,7 @@ def root_mean_square_deviation(data, x_0, **kwargs):
     """
     bs = bias(data, x_0)
     std = standard_deviation(data)
-    mse = bs**2 + std**2
+    mse = bs ** 2 + std ** 2
     rmse = np.sqrt(mse)
     return rmse
 

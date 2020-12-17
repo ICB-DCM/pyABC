@@ -1,20 +1,22 @@
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import numpy as np
 from typing import List, Union
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
 from ..storage import History
-from .util import to_lists_or_default
 from ..weighted_statistics import effective_sample_size
+from .util import to_lists_or_default
 
 
 def plot_sample_numbers(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Required samples",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Required samples",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Stacked bar plot of required numbers of samples over all iterations.
 
@@ -58,19 +60,21 @@ def plot_sample_numbers(
         # note: the first entry corresponds to the calibration and should
         # be included here to be fair against methods not requiring
         # calibration
-        samples.append(np.array(history.get_all_populations()['samples']))
+        samples.append(np.array(history.get_all_populations()["samples"]))
 
     # create matrix
     n_pop = max(len(sample) for sample in samples)
     matrix = np.zeros((n_pop, n_run))
     for i_sample, sample in enumerate(samples):
-        matrix[:len(sample), i_sample] = sample
+        matrix[: len(sample), i_sample] = sample
 
     # plot bars
     for i_pop in range(n_pop):
-        ax.bar(x=np.arange(n_run),
-               height=matrix[i_pop, :],
-               bottom=np.sum(matrix[:i_pop, :], axis=0))
+        ax.bar(
+            x=np.arange(n_run),
+            height=matrix[i_pop, :],
+            bottom=np.sum(matrix[:i_pop, :], axis=0),
+        )
 
     # add labels
     ax.set_xticks(np.arange(n_run))
@@ -87,13 +91,14 @@ def plot_sample_numbers(
 
 
 def plot_total_sample_numbers(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Total required samples",
-        yscale: str = 'lin',
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Total required samples",
+    yscale: str = "lin",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Bar plot of total required sample number over all iterations, i.e.
     a single-colored bar per history, in contrast to `plot_sample_numbers`,
@@ -142,21 +147,20 @@ def plot_total_sample_numbers(
         # note: the first entry corresponds to the calibration and should
         # be included here to be fair against methods not requiring
         # calibration
-        samples.append(np.sum(history.get_all_populations()['samples']))
+        samples.append(np.sum(history.get_all_populations()["samples"]))
     samples = np.array(samples)
 
     # apply scale
     ylabel = "Total samples"
-    if yscale == 'log':
+    if yscale == "log":
         samples = np.log(samples)
         ylabel = "log(" + ylabel + ")"
-    elif yscale == 'log10':
+    elif yscale == "log10":
         samples = np.log10(samples)
         ylabel = "log10(" + ylabel + ")"
 
     # plot bars
-    ax.bar(x=np.arange(n_run),
-           height=samples)
+    ax.bar(x=np.arange(n_run), height=samples)
 
     # add labels
     ax.set_xticks(np.arange(n_run))
@@ -173,13 +177,14 @@ def plot_total_sample_numbers(
 
 
 def plot_sample_numbers_trajectory(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Required samples",
-        yscale: str = 'lin',
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Required samples",
+    yscale: str = "lin",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Plot of required sample number over all iterations, i.e. one trajectory
     per history.
@@ -227,21 +232,21 @@ def plot_sample_numbers_trajectory(
         # be included here to be fair against methods not requiring
         # calibration
         h_info = history.get_all_populations()
-        times.append(np.array(h_info['t']))
-        samples.append(np.array(h_info['samples']))
+        times.append(np.array(h_info["t"]))
+        samples.append(np.array(h_info["samples"]))
 
     # apply scale
     ylabel = "Samples"
-    if yscale == 'log':
+    if yscale == "log":
         samples = [np.log(sample) for sample in samples]
         ylabel = "log(" + ylabel + ")"
-    elif yscale == 'log10':
+    elif yscale == "log10":
         samples = [np.log10(sample) for sample in samples]
         ylabel = "log10(" + ylabel + ")"
 
     # plot
     for t, sample, label in zip(times, samples, labels):
-        ax.plot(t, sample, 'x-', label=label)
+        ax.plot(t, sample, "x-", label=label)
 
     # add labels
     ax.legend()
@@ -257,15 +262,16 @@ def plot_sample_numbers_trajectory(
 
 
 def plot_acceptance_rates_trajectory(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Acceptance rates",
-        yscale: str = 'lin',
-        size: tuple = None,
-        ax: mpl.axes.Axes = None,
-        colors: List[str] = None,
-        normalize_by_ess: bool = False):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Acceptance rates",
+    yscale: str = "lin",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+    colors: List[str] = None,
+    normalize_by_ess: bool = False,
+):
     """
     Plot of acceptance rates over all iterations, i.e. one trajectory
     per history.
@@ -316,17 +322,18 @@ def plot_acceptance_rates_trajectory(
     for history in histories:
         # note: the first entry of time -1 is trivial and is thus ignored here
         h_info = history.get_all_populations()
-        times.append(np.array(h_info['t'])[1:])
+        times.append(np.array(h_info["t"])[1:])
         if normalize_by_ess:
-            ess = np.zeros(len(h_info['t']) - 1)
-            for t in np.array(h_info['t'])[1:]:
-                w = history.get_weighted_distances(t=t)['w']
-                ess[t-1] = effective_sample_size(w)
+            ess = np.zeros(len(h_info["t"]) - 1)
+            for t in np.array(h_info["t"])[1:]:
+                w = history.get_weighted_distances(t=t)["w"]
+                ess[t - 1] = effective_sample_size(w)
             pop_sizes.append(ess)
         else:
-            pop_sizes.append(np.array(
-                history.get_nr_particles_per_population().values[1:]))
-        samples.append(np.array(h_info['samples'])[1:])
+            pop_sizes.append(
+                np.array(history.get_nr_particles_per_population().values[1:])
+            )
+        samples.append(np.array(h_info["samples"])[1:])
 
     # compute acceptance rates
     rates = []
@@ -335,16 +342,16 @@ def plot_acceptance_rates_trajectory(
 
     # apply scale
     ylabel = "Acceptance rate"
-    if yscale == 'log':
+    if yscale == "log":
         rates = [np.log(rate) for rate in rates]
         ylabel = "log(" + ylabel + ")"
-    elif yscale == 'log10':
+    elif yscale == "log10":
         rates = [np.log10(rate) for rate in rates]
         ylabel = "log10(" + ylabel + ")"
 
     # plot
     for t, rate, label, color in zip(times, rates, labels, colors):
-        ax.plot(t, rate, 'x-', label=label, color=color)
+        ax.plot(t, rate, "x-", label=label, color=color)
 
     # add labels
     ax.legend()

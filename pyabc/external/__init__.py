@@ -8,10 +8,11 @@ programing languages, only requiring a specified command line interface
 and file input and output.
 """
 
-from .r_rpy2 import R
 from .base import (
+    ExternalDistance,
     ExternalHandler,
     ExternalModel,
     ExternalSumStat,
-    ExternalDistance,
-    create_sum_stat)
+    create_sum_stat,
+)
+from .r_rpy2 import R

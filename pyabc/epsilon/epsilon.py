@@ -1,10 +1,11 @@
-import numpy as np
-import pandas as pd
 import logging
 from typing import Callable, List, Union
-from .base import Epsilon
-from ..weighted_statistics import weighted_quantile
 
+import numpy as np
+import pandas as pd
+
+from ..weighted_statistics import weighted_quantile
+from .base import Epsilon
 
 logger = logging.getLogger("Epsilon")
 
@@ -22,8 +23,7 @@ class ConstantEpsilon(Epsilon):
         The epsilon value for all populations
     """
 
-    def __init__(self,
-                 constant_epsilon_value: float):
+    def __init__(self, constant_epsilon_value: float):
         super().__init__()
         self.constant_epsilon_value = constant_epsilon_value
 
@@ -32,8 +32,7 @@ class ConstantEpsilon(Epsilon):
         config["constant_epsilon_value"] = self.constant_epsilon_value
         return config
 
-    def __call__(self,
-                 t: int):
+    def __call__(self, t: int):
         return self.constant_epsilon_value
 
 
@@ -50,8 +49,7 @@ class ListEpsilon(Epsilon):
         ``values[t]`` is the value for population t.
     """
 
-    def __init__(self,
-                 values: List[float]):
+    def __init__(self, values: List[float]):
         super().__init__()
         self.epsilon_values = list(values)
 
@@ -60,8 +58,7 @@ class ListEpsilon(Epsilon):
         config["epsilon_values"] = self.epsilon_values
         return config
 
-    def __call__(self,
-                 t: int):
+    def __call__(self, t: int):
         return self.epsilon_values[t]
 
 
@@ -106,15 +103,19 @@ class QuantileEpsilon(Epsilon):
         weighted (True, default) or non-weighted (False) distances.
     """
 
-    def __init__(self,
-                 initial_epsilon: Union[str, int, float] = 'from_sample',
-                 alpha: float = 0.5,
-                 quantile_multiplier: float = 1,
-                 weighted: bool = True):
+    def __init__(
+        self,
+        initial_epsilon: Union[str, int, float] = "from_sample",
+        alpha: float = 0.5,
+        quantile_multiplier: float = 1,
+        weighted: bool = True,
+    ):
 
         logger.debug(
-            "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}"
-            .format(initial_epsilon, quantile_multiplier))
+            "init quantile_epsilon initial_epsilon={}, quantile_multiplier={}".format(
+                initial_epsilon, quantile_multiplier
+            )
+        )
 
         super().__init__()
         self._initial_epsilon = initial_epsilon
@@ -128,20 +129,26 @@ class QuantileEpsilon(Epsilon):
 
     def get_config(self):
         config = super().get_config()
-        config.update({"initial_epsilon": self._initial_epsilon,
-                       "alpha": self.alpha,
-                       "quantile_multiplier": self.quantile_multiplier,
-                       "weighted": self.weighted})
+        config.update(
+            {
+                "initial_epsilon": self._initial_epsilon,
+                "alpha": self.alpha,
+                "quantile_multiplier": self.quantile_multiplier,
+                "weighted": self.weighted,
+            }
+        )
 
         return config
 
-    def initialize(self,
-                   t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_all_records: Callable[[], List[dict]],
-                   max_nr_populations: int,
-                   acceptor_config: dict):
-        if self._initial_epsilon != 'from_sample':
+    def initialize(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        acceptor_config: dict,
+    ):
+        if self._initial_epsilon != "from_sample":
             # safety check in __call__
             return
 
@@ -154,8 +161,7 @@ class QuantileEpsilon(Epsilon):
         # logging
         logger.info("initial epsilon is {}".format(self._look_up[t]))
 
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         """
         Epsilon value for time t, set before via update() method.
 
@@ -172,20 +178,23 @@ class QuantileEpsilon(Epsilon):
         try:
             eps = self._look_up[t]
         except KeyError as e:
-            raise KeyError("The epsilon value for time {} does not exist: {} "
-                           .format(t, repr(e)))
+            raise KeyError(
+                "The epsilon value for time {} does not exist: {} ".format(t, repr(e))
+            )
 
         return eps
 
     def _set_initial_value(self, t: int):
         self._look_up = {t: self._initial_epsilon}
 
-    def update(self,
-               t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame],
-               get_all_records: Callable[[], List[dict]],
-               acceptance_rate: float,
-               acceptor_config: dict):
+    def update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        acceptance_rate: float,
+        acceptor_config: dict,
+    ):
         """
         Compute quantile of the (weighted) distances given in population,
         and use this to update epsilon.
@@ -199,9 +208,7 @@ class QuantileEpsilon(Epsilon):
         # logger
         logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
 
-    def _update(self,
-                t: int,
-                weighted_distances: pd.DataFrame):
+    def _update(self, t: int, weighted_distances: pd.DataFrame):
         """
         Here the real update happens, based on the weighted distances.
         """
@@ -222,7 +229,8 @@ class QuantileEpsilon(Epsilon):
 
         # compute weighted quantile
         quantile = weighted_quantile(
-            points=distances, weights=weights, alpha=self.alpha)
+            points=distances, weights=weights, alpha=self.alpha
+        )
 
         # append to look_up property
         self._look_up[t] = quantile * self.quantile_multiplier
@@ -233,11 +241,15 @@ class MedianEpsilon(QuantileEpsilon):
     Calculate epsilon as median of the distances from the last population.
     """
 
-    def __init__(self,
-                 initial_epsilon: Union[str, int, float] = 'from_sample',
-                 median_multiplier: float = 1,
-                 weighted: bool = True):
-        super().__init__(initial_epsilon=initial_epsilon,
-                         alpha=0.5,
-                         quantile_multiplier=median_multiplier,
-                         weighted=weighted)
+    def __init__(
+        self,
+        initial_epsilon: Union[str, int, float] = "from_sample",
+        median_multiplier: float = 1,
+        weighted: bool = True,
+    ):
+        super().__init__(
+            initial_epsilon=initial_epsilon,
+            alpha=0.5,
+            quantile_multiplier=median_multiplier,
+            weighted=weighted,
+        )

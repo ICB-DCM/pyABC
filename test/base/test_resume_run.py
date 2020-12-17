@@ -1,6 +1,7 @@
-from pyabc import (ABCSMC, Distribution, RV)
-import pytest
 import numpy as np
+import pytest
+
+from pyabc import ABCSMC, RV, Distribution
 
 
 @pytest.fixture(params=[0, None])
