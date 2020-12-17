@@ -184,10 +184,6 @@ jobs:
       run: |
         pip install -e .[quality]
 
-    - name: Run flake8
-      timeout-minutes: 2
-      run: ./run_flake8.sh
-
     - name: Run pyroma
       run: pyroma --min=10 .
 
