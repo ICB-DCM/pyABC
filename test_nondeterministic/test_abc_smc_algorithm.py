@@ -9,6 +9,7 @@ import os
 import random
 import tempfile
 
+import numpy as np
 import pytest
 import scipy as sp
 import scipy.stats as st
@@ -737,7 +738,9 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(
     ]
 
     # Particles are perturbed in a Gaussian fashion
-    parameter_perturbation_kernels = [MultivariateNormalTransition() for _ in range(2)]
+    parameter_perturbation_kernels = [  # noqa: F841
+        MultivariateNormalTransition() for _ in range(2)
+    ]
 
     # We plug all the ABC setup together
     nr_populations = 3

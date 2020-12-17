@@ -39,7 +39,7 @@ from pyabc.storage.numpy_bytes_storage import _primitive_types
         "r-df-iris",
     ]
 )
-def object_(request):
+def object_(request):  # noqa: C901
     par = request.param
     if par == "empty":
         return pd.DataFrame()

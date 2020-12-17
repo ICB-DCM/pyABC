@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# flake8: noqa
 #
 # Network Analysis documentation build configuration file, created by
 # sphinx-quickstart on Wed Mar 23 08:55:36 2016.

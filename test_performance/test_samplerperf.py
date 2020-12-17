@@ -1,7 +1,6 @@
 import multiprocessing
 import os
 import tempfile
-import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 import numpy as np
@@ -10,7 +9,6 @@ import scipy.stats as st
 
 from pyabc import (
     ABCSMC,
-    RV,
     ConstantPopulationSize,
     Distribution,
     MedianEpsilon,
@@ -154,10 +152,10 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
-    p1_expected = p1_expected_unnormalized / (
+    p1_expected = p1_expected_unnormalized / (  # noqa: F841
         p1_expected_unnormalized + p2_expected_unnormalized
     )
-    p2_expected = p2_expected_unnormalized / (
+    p2_expected = p2_expected_unnormalized / (  # noqa: F841
         p1_expected_unnormalized + p2_expected_unnormalized
     )
     assert history.max_t == nr_populations - 1

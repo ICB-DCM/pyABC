@@ -10,7 +10,7 @@ from ..weighted_statistics import weighted_quantile
 from .util import to_lists_or_default
 
 
-def plot_credible_intervals(
+def plot_credible_intervals(  # noqa: C901
     history: History,
     m: int = 0,
     ts: Union[List[int], int] = None,
@@ -183,7 +183,7 @@ def plot_credible_intervals(
     return arr_ax
 
 
-def plot_credible_intervals_for_time(
+def plot_credible_intervals_for_time(  # noqa: C901
     histories: Union[List[History], History],
     labels: Union[List[str], str] = None,
     ms: Union[List[int], int] = None,
