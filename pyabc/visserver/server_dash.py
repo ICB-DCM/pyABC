@@ -109,7 +109,7 @@ def parse_contents(contents, filename, date):
                     id='btn-nclicks-1',
                     ),
         html.Button(time,
-                    id='btn-nclicks-2', style={'margin-left': '10px',
+                    id='btn-nclicks-2', style={'margin-left': '10px'},
                     ),
         html.Br(),
         html.Button('# of Runs: ' + str(len(list_run_ids)),
