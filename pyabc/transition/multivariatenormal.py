@@ -68,6 +68,8 @@ class MultivariateNormalTransition(Transition):
         self.cov: Union[np.ndarray, None] = None
         # normal perturbation distribution
         self.normal = None
+        # remember the column indices
+        self._ixs = None
 
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         if len(X) == 0:
@@ -81,6 +83,10 @@ class MultivariateNormalTransition(Transition):
 
         self.cov = sample_cov * bw_factor**2 * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
+
+        # cache column order
+        if self._ixs is None:
+            self._ixs = [self.X.columns.get_loc(c) for c in self.X.columns]
 
     def rvs(self, size: int = None) -> Union[pd.Series, pd.DataFrame]:
         arr = np.arange(len(self.X))
@@ -98,8 +104,7 @@ class MultivariateNormalTransition(Transition):
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame],
             ) -> Union[float, np.ndarray]:
-        x = x[self.X.columns]
-        x = np.array(x)
+        x = np.array(x)[self._ixs]
         if len(x.shape) == 1:
             x = x[None, :]
         dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
