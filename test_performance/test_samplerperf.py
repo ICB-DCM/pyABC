@@ -1,17 +1,21 @@
+"""Test sampler performance.
+
+TODO: This test could be improved.
+"""
+
 import multiprocessing
 import os
 import tempfile
-import time
 import pytest
 import numpy as np
 import scipy.stats as st
 
-from pyabc import (ABCSMC, RV, Distribution,
-                   MedianEpsilon,
-                   PercentileDistance, SimpleModel,
-                   ConstantPopulationSize)
-from pyabc.sampler import SingleCoreSampler, MappingSampler, MulticoreEvalParallelSampler, DaskDistributedSampler, \
-                           ConcurrentFutureSampler
+from pyabc import (
+    ABCSMC, Distribution, MedianEpsilon, PercentileDistance, SimpleModel,
+    ConstantPopulationSize)
+from pyabc.sampler import (
+    SingleCoreSampler, MappingSampler, MulticoreEvalParallelSampler,
+    DaskDistributedSampler, ConcurrentFutureSampler)
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 REMOVE_DB = False
@@ -122,6 +126,8 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     minimum_epsilon = .05
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
 
+    assert history.max_t == nr_populations-1
+
     # Evaluate the model probabililties
     history.get_model_probabilities(history.max_t)
 
@@ -131,9 +137,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
-    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized
-                                              + p2_expected_unnormalized)
-    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized
-                                              + p2_expected_unnormalized)
-    assert history.max_t == nr_populations-1
-    # the next line only tests if we obtain correct numerical types
+    p1_expected_unnormalized / (p1_expected_unnormalized
+                                + p2_expected_unnormalized)
+    p2_expected_unnormalized / (p1_expected_unnormalized
+                                + p2_expected_unnormalized)
