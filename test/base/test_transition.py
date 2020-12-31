@@ -179,15 +179,13 @@ def test_many_particles(transition: Transition):
 def test_argument_order(transition: Transition):
     """
     Dataframes passed to the transition kernels are generated from dicts.
-    Order of parameter names is no guaranteed.
+    Order of parameter names is not guaranteed.
     The Transition kernel has to take care of the correct sorting.
     """
     df, w = data(20)
     transition.fit(df, w)
-    test = df.iloc[0]
-    reversed_ = test[::-1]
-    # works b/c of even nr of parameters
-    assert (np.array(test) != np.array(reversed_)).all()
+    test = Parameter({'a': 1, 'b': 0.5})
+    reversed_ = Parameter({'b': 0.5, 'a': 1})
     assert transition.pdf(test) == transition.pdf(reversed_)
 
 

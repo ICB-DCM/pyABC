@@ -150,8 +150,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         test_points = self.X
         test_weights = self.w
 
-        self.test_points_= test_points
-        self.test_weights_= test_weights
+        self.test_points_ = test_points
+        self.test_weights_ = test_weights
 
         # calculate bootstrapped coefficients of variation
         cv, variation_at_test = calc_cv(n_samples, np.array([1]),
@@ -224,7 +224,10 @@ class AggregatedTransition(Transition):
         pd = 1.
         for keys, transition in self.mapping.items():
             # extract values for parameters
-            x_for_keys = Parameter({key: x[key] for key in keys})
+            if isinstance(x, Parameter):
+                x_for_keys = Parameter({key: x[key] for key in keys})
+            else:
+                x_for_keys = x[list(keys)]
             # compute transition density (numpy will automatically broadcast)
             pd *= transition.pdf(x_for_keys)
         return pd
