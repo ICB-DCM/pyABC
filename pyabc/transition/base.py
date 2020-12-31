@@ -6,7 +6,6 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 
 from ..cv.bootstrap import calc_cv
-from ..parameters import Parameter
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
 from .transitionmeta import TransitionMeta

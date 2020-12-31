@@ -104,7 +104,7 @@ class MultivariateNormalTransition(Transition):
 
     def pdf(self, x: Union[pd.Series, pd.DataFrame],
             ) -> Union[float, np.ndarray]:
-        x = np.array(x)[self._ixs]
+        x = x.to_numpy()[self._ixs]
         if len(x.shape) == 1:
             x = x[None, :]
         dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
