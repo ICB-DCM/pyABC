@@ -72,6 +72,8 @@ class MultivariateNormalTransition(Transition):
         self.normal = None
         # remember the column indices
         self._ixs = None
+        # cache a range array
+        self._range = None
 
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         if len(X) == 0:
@@ -87,21 +89,23 @@ class MultivariateNormalTransition(Transition):
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
         # cache column order
-        if self._ixs is None:
-            self._ixs = [self.X.columns.get_loc(c) for c in self.X.columns]
+        self._ixs = [self.X.columns.get_loc(c) for c in self.X.columns]
+        # cache range array
+        self._range = np.arange(len(self.X))
 
     def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
         if size is None:
             return self.rvs_single()
-        arr = np.arange(len(self.X))
-        sample_ind = np.random.choice(arr, size=size, p=self.w, replace=True)
+        sample_ind = np.random.choice(
+            self._range, size=size, p=self.w, replace=True)
         sample = self.X.iloc[sample_ind]
         perturbed = (sample + np.random.multivariate_normal(
             np.zeros(self.cov.shape[0]), self.cov, size=size))
         return perturbed
 
     def rvs_single(self) -> Parameter:
-        sample = self.X.sample(weights=self.w).iloc[0]
+        sample_ind = np.random.choice(self._range, p=self.w, replace=True)
+        sample = self.X.iloc[sample_ind]
         perturbed = (sample + np.random.multivariate_normal(
             np.zeros(self.cov.shape[0]), self.cov))
         return Parameter(perturbed)

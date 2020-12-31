@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from typing import Union
 
+from ..parameters import Parameter
 from ..random_choice import fast_random_choice
 from ..random_variables import RV
 from .base import DiscreteTransition
@@ -107,7 +108,7 @@ class DiscreteJumpTransition(DiscreteTransition):
         self.weights = np.array(self.weights)
         self.weights /= self.weights.sum()
 
-    def rvs_single(self) -> pd.Series:
+    def rvs_single(self) -> Parameter:
         """Generate a single random variable."""
         # sample a starting index
         index = fast_random_choice(self.weights)
@@ -115,11 +116,22 @@ class DiscreteJumpTransition(DiscreteTransition):
         value = self.values[index]
         # maybe jump to another value
         value = self.perturbation_kernel.rvs(value)
-        return pd.Series({self.X.columns[0]: value})
+        return Parameter({self.X.columns[0]: value})
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """Compute the probability mass function at `x`."""
-        x = float(np.array(x))
-        return sum(w * self.perturbation_kernel.pdf(x, start)
-                   for w, start in zip(self.weights, self.values))
+        # extract values
+        key = self.X.columns[0]
+        if isinstance(x, Parameter):
+            x = np.array([[x[key]]])
+        else:
+            x = x.to_numpy()
+
+        # compute densities
+        pds = np.array([
+            sum(w * self.perturbation_kernel.pdf(par, start)
+                for w, start in zip(self.weights, self.values))
+            for par in x])
+
+        return pds if pds.size != 1 else float(pds)

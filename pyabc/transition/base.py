@@ -95,8 +95,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Parameters
         ----------
-        x: pd.Series, pd.DataFrame
-            Parameter. If x is a series, then x should have the the columns
+        x:
+            Parameter. If x is a Parameter, then x should have the the columns
             from X passed to the fit method as indices.
             If x is a DataFrame, then x should have the same columns as X
             passed before to the fit method. The order of the columns is not
@@ -211,20 +211,20 @@ class AggregatedTransition(Transition):
             # fit it
             transition.fit(X_for_keys, w)
 
-    def rvs_single(self) -> pd.Series:
-        sample = pd.Series({key: np.nan for key in self.X.columns})
+    def rvs_single(self) -> Parameter:
+        sample = Parameter({key: np.nan for key in self.X.columns})
         for transition in self.mapping.values():
             sample_for_keys = transition.rvs_single()
             sample.update(sample_for_keys)
         return sample
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         # density
         pd = 1.
         for keys, transition in self.mapping.items():
             # extract values for parameters
-            x_for_keys = x[list(keys)]
+            x_for_keys = Parameter({key: x[key] for key in keys})
             # compute transition density (numpy will automatically broadcast)
             pd *= transition.pdf(x_for_keys)
         return pd

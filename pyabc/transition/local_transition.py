@@ -1,11 +1,13 @@
 import numpy.linalg as la
 import numpy as np
-import pandas as pd
-from .base import Transition
 from scipy.spatial import cKDTree
+import pandas as pd
+import logging
+
+from ..parameters import Parameter
+from .base import Transition
 from .util import smart_cov
 from .exceptions import NotEnoughParticles
-import logging
 
 logger = logging.getLogger("LocalTransition")
 
@@ -96,6 +98,10 @@ class LocalTransition(Transition):
         self.normalization = np.real(self.normalization)
 
     def pdf(self, x):
+        if isinstance(x, Parameter):
+            # TODO This is not really efficient
+            x = pd.Series(x)
+
         x = x[self.X.columns].values
         if len(x.shape) == 1:
             return self._pdf_single(x)
@@ -138,8 +144,8 @@ class LocalTransition(Transition):
                 cov[k, k] = np.absolute(self.X_arr[0, k])
         return cov * self.scaling
 
-    def rvs_single(self):
+    def rvs_single(self) -> Parameter:
         support_index = np.random.choice(self.w.shape[0], p=self.w)
         sample = np.random.multivariate_normal(self.X_arr[support_index],
                                                self.covs[support_index])
-        return pd.Series(sample, index=self.X.columns)
+        return Parameter(dict(zip(self.X.columns, sample)))

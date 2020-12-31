@@ -5,10 +5,10 @@ import pandas as pd
 from time import time
 
 
-def test_multivariate_normal_conversion():
+def test_parameter_dict_numpy_conversion():
     """Check that the way parameter values are extracted in
-    `pyabc.transition.MultivariateNormalTransition` is efficient."""
-
+    `pyabc.transition.MultivariateNormalTransition.pdf()` is efficient.
+    """
     # number of samples
     n = 10000
     # number of parameter keys
@@ -75,3 +75,60 @@ def test_multivariate_normal_conversion():
         assert (par1 == par2).all()
         assert (par1 == par3).all()
         assert (par1 == par4).all()
+
+
+def test_sample_selection():
+    """Check that the selection of parameters from the population according
+    to the weights as in `pyabc.transition.MultivariateNormalTransition.rvs()`
+    and `.rvs_single()` is efficient.
+
+    We select a single parameter according to the weights.
+    """
+    # number of samples
+    n = 1000
+    # number of parameter keys
+    nkey = 50
+    # the parameter keys
+    keys = ['key_' + str(i) for i in range(int(nkey / 2))]
+    # number of repetitions
+    nsample = 1000
+
+    np.random.seed(0)
+
+    # create parameters
+    pars = [dict(zip(keys, np.random.randn(nkey))) for _ in range(n)]
+
+    # convert population to dataframe
+    df = pd.DataFrame(pars)
+
+    # weights
+    w = np.random.uniform(size=n)
+    w /= w.sum()
+
+    # using pandas
+    start = time()
+    for _ in range(nsample):
+        _ = df.sample(weights=w).iloc[0]
+    time_pandas = time() - start
+    print(f"Time using pandas sample: {time_pandas}")
+
+    # using numpy
+    start = time()
+    for _ in range(nsample):
+        arr = np.arange(n)
+        sample_ind = np.random.choice(arr, p=w, replace=True)
+        _ = df.iloc[sample_ind]
+    time_numpy = time() - start
+    print(f"Time using numpy choice: {time_numpy}")
+
+    # using numpy with caching
+    start = time()
+    arr = np.arange(n)
+    for _ in range(nsample):
+        sample_ind = np.random.choice(arr, p=w, replace=True)
+        _ = df.iloc[sample_ind]
+    time_numpy_cached = time() - start
+    print(f"Time using numpy choice cache: {time_numpy_cached}")
+
+    assert time_numpy < time_pandas
+    assert time_numpy_cached < time_numpy
