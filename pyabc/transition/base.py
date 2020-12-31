@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 
+from ..parameters import Parameter
 from ..cv.bootstrap import calc_cv
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
@@ -42,14 +43,14 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Parameters
         ----------
-        X: pd.DataFrame
+        X:
             The parameters.
-        w: array
+        w:
             The corresponding weights
         """
 
     @abstractmethod
-    def rvs_single(self) -> pd.Series:
+    def rvs_single(self) -> Parameter:
         """
         Random variable sample (rvs).
 
@@ -57,29 +58,27 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-        sample: pd.Series
+        sample:
             A sample from the fitted model.
         """
 
-    def rvs(self, size: int = None) -> Union[pd.Series, pd.DataFrame]:
+    def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
         """
         Sample from the density.
 
         Parameters
         ----------
-        size: int, optional
+        size:
             Number of independent samples to draw.
             Defaults to 1 and is in this case equivalent to calling
             "rvs_single".
 
         Returns
         -------
-        samples: The samples as pandas DataFrame
-
+        samples: The parameter sample(s).
 
         Note
         ----
-
         This method can be overridden for efficient implementations.
         The default is to call rvs_single repeatedly (which might
         not be the most efficient way).
@@ -89,7 +88,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         return pd.DataFrame([self.rvs_single() for _ in range(size)])
 
     @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at `x`.
@@ -151,8 +150,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         test_points = self.X
         test_weights = self.w
 
-        self.test_points_ = test_points
-        self.test_weights_ = test_weights
+        self.test_points_= test_points
+        self.test_weights_= test_weights
 
         # calculate bootstrapped coefficients of variation
         cv, variation_at_test = calc_cv(n_samples, np.array([1]),

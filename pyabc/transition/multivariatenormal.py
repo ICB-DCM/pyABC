@@ -3,6 +3,8 @@ from typing import Callable, Union
 import numpy as np
 import pandas as pd
 import scipy.stats as st
+
+from ..parameters import Parameter
 from .exceptions import NotEnoughParticles
 from .base import Transition
 from .util import smart_cov
@@ -88,7 +90,9 @@ class MultivariateNormalTransition(Transition):
         if self._ixs is None:
             self._ixs = [self.X.columns.get_loc(c) for c in self.X.columns]
 
-    def rvs(self, size: int = None) -> Union[pd.Series, pd.DataFrame]:
+    def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
+        if size is None:
+            return self.rvs_single()
         arr = np.arange(len(self.X))
         sample_ind = np.random.choice(arr, size=size, p=self.w, replace=True)
         sample = self.X.iloc[sample_ind]
@@ -96,17 +100,19 @@ class MultivariateNormalTransition(Transition):
             np.zeros(self.cov.shape[0]), self.cov, size=size))
         return perturbed
 
-    def rvs_single(self):
+    def rvs_single(self) -> Parameter:
         sample = self.X.sample(weights=self.w).iloc[0]
         perturbed = (sample + np.random.multivariate_normal(
             np.zeros(self.cov.shape[0]), self.cov))
-        return perturbed
+        return Parameter(perturbed)
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame],
+    def pdf(self, x: Union[Parameter, pd.DataFrame],
             ) -> Union[float, np.ndarray]:
-        x = x.to_numpy()[self._ixs]
-        if len(x.shape) == 1:
-            x = x[None, :]
+        if isinstance(x, Parameter):
+            x = np.array([[x[key] for key in self.X.columns]])
+        else:
+            x = x.to_numpy()[:, self._ixs]
+
         dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
                          for xs in x])
 

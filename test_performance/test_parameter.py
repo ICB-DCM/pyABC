@@ -10,7 +10,7 @@ def test_multivariate_normal_conversion():
     `pyabc.transition.MultivariateNormalTransition` is efficient."""
 
     # number of samples
-    n = 1000
+    n = 10000
     # number of parameter keys
     nkey = 500
     # the parameter keys
@@ -57,7 +57,7 @@ def test_multivariate_normal_conversion():
 
     # mode 4: directly from dict
     start = time()
-    pars_np_4 = [np.array(list(par[key] for key in keys))[ixs] for par in pars]
+    pars_np_4 = [np.array(list(par[key] for key in keys)) for par in pars]
     time_np_4 = time() - start
     print(f"Time to extract directly from dict: {time_np_4}")
     # Taking into account the time to convert to pd, this is faster, however
