@@ -58,22 +58,23 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
         """
         Evaluate the probability mass function (PMF) at `x`.
         """
-        if isinstance(x, Parameter):
-            # TODO this is not really efficient
-            x = pd.Series(x)
+        # convert to numpy array in correct order
+        if isinstance(x, (Parameter, pd.Series)):
+            x = np.array([x[key] for key in self.X.columns])
+        else:
+            x = x[self.X.columns].to_numpy()
 
         if not np.all(np.isclose(x, x.astype(int))):
             raise ValueError(
                 f"Transition can only handle integer values, not fulfilled "
                 f"by x={x}.")
-        x = x[self.X.columns]
-        x = np.array(x)
-        if len(x.shape) == 1:
-            return self.pdf_single(x)
-        else:
-            return np.array([self.pdf_single(x_) for x_ in x])
 
-    def pdf_single(self, x):
+        if len(x.shape) == 1:
+            return self._pdf_single(x)
+        else:
+            return np.array([self._pdf_single(xi) for xi in x])
+
+    def _pdf_single(self, x: np.ndarray):
         p = 0.0
         for start, weight in zip(self.X.values, self.w):
             # probability if started from start

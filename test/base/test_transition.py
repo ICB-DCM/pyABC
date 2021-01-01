@@ -72,7 +72,7 @@ def test_rvs_return_type(transition: Transition):
 def test_pdf_return_types(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
-    single = transition.pdf(Parameter(df.iloc[0]))
+    single = transition.pdf(df.iloc[0])
     multiple = transition.pdf(df)
     assert isinstance(single, float)
     assert multiple.shape == (20,)
@@ -184,8 +184,10 @@ def test_argument_order(transition: Transition):
     """
     df, w = data(20)
     transition.fit(df, w)
-    test = Parameter({'a': 1, 'b': 0.5})
-    reversed_ = Parameter({'b': 0.5, 'a': 1})
+    test = df.iloc[0]
+    reversed_ = test[::-1]
+    # works b/c of even nr of parameters
+    assert (np.array(test) != np.array(reversed_)).all()
     assert transition.pdf(test) == transition.pdf(reversed_)
 
 

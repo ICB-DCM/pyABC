@@ -70,8 +70,9 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         ----------
         size:
             Number of independent samples to draw.
-            Defaults to 1 and is in this case equivalent to calling
-            "rvs_single".
+            If None, a single Parameter from rvs_single() is returned, if it is
+            an integer >= 1, a pandas.DataFrame with the corresponding number
+            of rows is returned.
 
         Returns
         -------
@@ -216,6 +217,7 @@ class AggregatedTransition(Transition):
         sample = Parameter({key: np.nan for key in self.X.columns})
         for transition in self.mapping.values():
             sample_for_keys = transition.rvs_single()
+            # in-place update
             sample.update(sample_for_keys)
         return sample
 
@@ -228,6 +230,7 @@ class AggregatedTransition(Transition):
             if isinstance(x, Parameter):
                 x_for_keys = Parameter({key: x[key] for key in keys})
             else:
+                # series or dataframe
                 x_for_keys = x[list(keys)]
             # compute transition density (numpy will automatically broadcast)
             pd *= transition.pdf(x_for_keys)

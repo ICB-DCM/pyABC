@@ -70,8 +70,6 @@ class MultivariateNormalTransition(Transition):
         self.cov: Union[np.ndarray, None] = None
         # normal perturbation distribution
         self.normal = None
-        # remember the column indices
-        self._ixs = None
         # cache a range array
         self._range = None
 
@@ -88,8 +86,6 @@ class MultivariateNormalTransition(Transition):
         self.cov = sample_cov * bw_factor**2 * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
-        # cache column order
-        self._ixs = [self.X.columns.get_loc(c) for c in self.X.columns]
         # cache range array
         self._range = np.arange(len(self.X))
 
@@ -112,17 +108,22 @@ class MultivariateNormalTransition(Transition):
 
     def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame],
             ) -> Union[float, np.ndarray]:
+        # convert to numpy array in correct order
         if isinstance(x, (Parameter, pd.Series)):
-            x = np.array([[x[key] for key in self.X.columns]])
+            x = np.array([x[key] for key in self.X.columns])
         else:
-            x = x.to_numpy()[:, self._ixs]
+            x = x[self.X.columns].to_numpy()
 
-        dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
-                         for xs in x])
+        # compute density
+        if len(x.shape) == 1:
+            return self._pdf_single(x)
+        else:
+            return np.array([self._pdf_single(xi) for xi in x])
 
         # alternative (higher memory consumption but broadcast)
         # x = np.atleast_3d(x)  # n_sample x n_par x 1
         # dens = self.normal.pdf(np.swapaxes(x - self._X_arr.T, 1, 2)) * self.w
         # dens = np.atleast_2d(dens).sum(axis=1).squeeze()
 
-        return dens if dens.size != 1 else float(dens)
+    def _pdf_single(self, x: np.ndarray):
+        return float((self.normal.pdf(x - self._X_arr) * self.w).sum())

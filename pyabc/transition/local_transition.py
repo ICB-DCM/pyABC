@@ -99,22 +99,24 @@ class LocalTransition(Transition):
         self.normalization = np.real(self.normalization)
 
     def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]):
-        if isinstance(x, Parameter):
-            # TODO This is not really efficient
-            x = pd.Series(x)
-
-        x = x[self.X.columns].values
+        # convert to numpy array in correct order
+        if isinstance(x, (Parameter, pd.Series)):
+            x = np.array([x[key] for key in self.X.columns])
+        else:
+            x = x[self.X.columns].to_numpy()
+        # compute density
         if len(x.shape) == 1:
             return self._pdf_single(x)
         else:
-            return np.array([self._pdf_single(x) for x in x])
+            return np.array([self._pdf_single(xi) for xi in x])
 
-    def _pdf_single(self, x):
+    def _pdf_single(self, x: np.ndarray):
         distance = self.X_arr - x
         cov_distance = np.einsum("ij,ijk,ik->i",
                                  distance, self.inv_covs, distance)
-        return np.average(np.exp(-.5 * cov_distance) / self.normalization,
-                          weights=self.w)
+        return float(
+            np.average(np.exp(-.5 * cov_distance) / self.normalization,
+                       weights=self.w))
 
     def _cov_and_inv(self, n, indices):
         """
