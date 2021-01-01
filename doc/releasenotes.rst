@@ -8,6 +8,18 @@ Release Notes
 ...........
 
 
+0.10.10 (2021-01-01)
+--------------------
+
+* Uniquely identify redis runs via a uuid..
+* Secure proper termination of processes for redis and dask (all #338).
+* Rework redis sampler, implement a look-ahead mode for pre-defined (#338)
+  and adaptive algorithms (#374) for near-perfect parallel efficiency.
+* Allow subprocessing in multiprocessed redis workers (#377).
+* Add a static-scheduling redis sampler (#379).
+* Check whether epsilon is nan before sampling (#382).
+
+
 0.10.9 (2020-11-28)
 -------------------
 
