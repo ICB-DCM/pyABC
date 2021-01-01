@@ -13,7 +13,6 @@ subclass the pyabc.Distance class.
 from .base import (
     Distance,
     NoDistance,
-    IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
     to_distance,
