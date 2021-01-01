@@ -28,7 +28,6 @@ from .random_variables import (
 from .distance import (
     Distance,
     NoDistance,
-    IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
     PNormDistance,
