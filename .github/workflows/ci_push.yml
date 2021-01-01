@@ -32,10 +32,10 @@ jobs:
         pip install -e .[R,test]
 
     - name: Run tests
-      timeout-minutes: 10
+      timeout-minutes: 7
       run: |
         python -m pytest --cov=pyabc --cov-report=xml \
-          test/base test/visualization
+          test/base test/visualization -s
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -73,7 +73,7 @@ jobs:
     - name: Run tests
       timeout-minutes: 10
       run: |
-        python -m pytest --cov=pyabc --cov-report=xml test/external
+        python -m pytest --cov=pyabc --cov-report=xml test/external -s
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -111,7 +111,7 @@ jobs:
     - name: Run tests
       timeout-minutes: 10
       run: |
-        python -m pytest --cov=pyabc --cov-report=xml test/petab
+        python -m pytest --cov=pyabc --cov-report=xml test/petab -s
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -149,7 +149,8 @@ jobs:
       - name: Run tests
         timeout-minutes: 4
         run: |
-          python -m pytest --cov=pyabc --cov-report=xml test/base/test_macos.py
+          python -m pytest --cov=pyabc --cov-report=xml \
+            test/base/test_macos.py -s
 
       - name: Coverage
         uses: codecov/codecov-action@v1

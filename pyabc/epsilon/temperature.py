@@ -7,7 +7,6 @@ import logging
 
 from .base import Epsilon
 from ..distance import SCALE_LIN
-from ..sampler import Sampler
 from ..storage import save_dict_to_json
 
 logger = logging.getLogger("Epsilon")
@@ -125,7 +124,7 @@ class Temperature(TemperatureBase):
         self._update(t, get_weighted_distances, get_all_records,
                      1.0, acceptor_config)
 
-    def configure_sampler(self, sampler: Sampler):
+    def configure_sampler(self, sampler):
         if callable(self.initial_temperature):
             self.initial_temperature.configure_sampler(sampler)
         for scheme in self.schemes:
@@ -237,7 +236,7 @@ class TemperatureScheme:
     def __init__(self):
         pass
 
-    def configure_sampler(self, sampler: Sampler):
+    def configure_sampler(self, sampler):
         """
         Modify the sampler. As in, and redirected from,
         :func:`pyabc.epsilon.Temperature.configure_sampler`.
@@ -280,7 +279,7 @@ class AcceptanceRateScheme(TemperatureScheme):
         self.target_rate = target_rate
         self.min_rate = min_rate
 
-    def configure_sampler(self, sampler: Sampler):
+    def configure_sampler(self, sampler):
         sampler.sample_factory.record_rejected = True
 
     def __call__(self,

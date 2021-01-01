@@ -8,7 +8,8 @@ iteration.
 """
 
 
-from typing import List, Callable
+from typing import Callable, List, Tuple
+import numpy as np
 import pandas as pd
 from pyabc.parameters import Parameter
 import logging
@@ -26,37 +27,31 @@ class Particle:
 
     Parameters
     ----------
-
-    m: int
+    m:
         The model index.
-
-    parameter: Parameter
+    parameter:
         The model specific parameter.
-
-    weight: float, 0 <= weight <= 1
-        The weight of the particle.
-
-    accepted_sum_stats: List[dict]
+    weight:
+        The weight of the particle. 0 <= weight <= 1.
+    accepted_sum_stats:
         List of accepted summary statistics.
         This list is usually of length 1. This list is longer only if more
         than one sample is taken for a particle.
         This list has length 0 if the particle is rejected.
-
-    accepted_distances: List[float]
+    accepted_distances:
         A particle can contain more than one sample.
         If so, the distances of the individual samples
         are stored in this list. In the most common case of a single
         sample, this list has length 1.
-
-    rejected_sum_stats: List[dict]
+    rejected_sum_stats:
         List of rejected summary statistics.
-
-    rejected_distances: List[float]
+    rejected_distances:
         List of rejected distances.
-
-    accepted: bool
+    accepted:
         True if particle was accepted, False if not.
-
+    preliminary:
+        Whether this particle is only preliminarily accepted. Must be False
+        eventually for all particles.
 
     .. note::
         There are two different ways of weighting particles: First, the weights
@@ -79,7 +74,8 @@ class Particle:
                  accepted_distances: List[float],
                  rejected_sum_stats: List[dict] = None,
                  rejected_distances: List[float] = None,
-                 accepted: bool = True):
+                 accepted: bool = True,
+                 preliminary: bool = False):
 
         self.m = m
         self.parameter = parameter
@@ -93,6 +89,7 @@ class Particle:
             rejected_distances = []
         self.rejected_distances = rejected_distances
         self.accepted = accepted
+        self.preliminary = preliminary
 
 
 class Population:
@@ -161,7 +158,7 @@ class Population:
                 particle.accepted_distances[i] = distance_to_ground_truth(
                     particle.accepted_sum_stats[i], particle.parameter)
 
-    def get_model_probabilities(self) -> dict:
+    def get_model_probabilities(self) -> pd.DataFrame:
         """
         Get probabilities of the individual models.
 
@@ -173,7 +170,22 @@ class Population:
         """
 
         # _model_probabilities are assigned during normalization
-        return self._model_probabilities
+        vars = [(key, val) for key, val in self._model_probabilities.items()]
+        ms = [var[0] for var in vars]
+        ps = [var[1] for var in vars]
+        return pd.DataFrame({'m': ms, 'p': ps}).set_index('m')
+
+    def get_alive_models(self) -> List:
+        return self._model_probabilities.keys()
+
+    def nr_of_models_alive(self) -> int:
+        return len(self.get_alive_models())
+
+    def get_distribution(self, m: int) -> Tuple[pd.DataFrame, np.ndarray]:
+        particles = self.to_dict()[m]
+        parameters = pd.DataFrame([p.parameter for p in particles])
+        weights = np.array([p.weight for p in particles])
+        return parameters, weights
 
     def get_weighted_distances(self) -> pd.DataFrame:
         """
