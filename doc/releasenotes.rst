@@ -11,7 +11,7 @@ Release Notes
 0.10.10 (2021-01-01)
 --------------------
 
-* Uniquely identify redis runs via a uuid..
+* Uniquely identify redis runs via a uuid.
 * Secure proper termination of processes for redis and dask (all #338).
 * Rework redis sampler, implement a look-ahead mode for pre-defined (#338)
   and adaptive algorithms (#374) for near-perfect parallel efficiency.
