@@ -20,7 +20,7 @@ from pyabc.population import Particle
 logger = logging.getLogger(__name__)
 
 
-class AnalysisVars(dict):
+class AnalysisVars:
     """Contract object class for passing analysis variables.
 
     Used e.g. to create new sampling tasks or check early stopping.
@@ -48,7 +48,6 @@ class AnalysisVars(dict):
         max_walltime: timedelta,
         init_walltime: datetime,
     ):
-        super().__init__()
         self.model_prior = model_prior
         self.parameter_priors = parameter_priors
         self.model_perturbation_kernel = model_perturbation_kernel
@@ -68,15 +67,6 @@ class AnalysisVars(dict):
         self.prev_total_nr_simulations = prev_total_nr_simulations
         self.max_walltime = max_walltime
         self.init_walltime = init_walltime
-
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(key)
-
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
 
 
 def create_simulate_from_prior_function(

@@ -366,7 +366,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # acceptance rate
         nr_evaluations = int(
             self.redis.get(idfy(N_EVAL, self.analysis_id, t)).decode())
-        acceptance_rate = len(population.get_list()) / nr_evaluations
+        acceptance_rate = len(population) / nr_evaluations
 
         # check if any termination criterion (based on the current data)
         #  is likely to be fulfilled after the current generation
@@ -480,7 +480,10 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
 
     Returns
     -------
-    sample_with_id, any_accepted, n_prel, n_prel_acc
+    sample_with_id, any_accepted:
+        The (maybe post-evaluated) id-sample tuple, and an indicator whether
+        any particle in the sample was accepted, s.t. the sample should be
+        kept.
     """
     # 0 is relative start time, 1 is the actual sample
     sample = sample_with_id[1]

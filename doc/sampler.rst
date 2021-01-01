@@ -11,12 +11,15 @@ Strategies
 The pyABC package offers a variety of different parallel and distributed
 sampling strategies. Single-core, multi-core and distributed execution is
 supported in a couple different ways.
-The `ParticleParallel` samplers and the `MappingSampler` implement the
-"Static Scheduling (STAT)" strategy.
+
+The `ParticleParallel` samplers, the `MappingSampler` and the
+`RedisStaticSampler` implement the "Static Scheduling (STAT)" strategy.
+
 The `EvalParallel` samplers, the `DaskDistributedSampler` and the
 `ConcurrentFutureSampler` implement the "Dynamic Scheduling (DYN)"
-strategy, except the `RedisStaticSampler`, which implements STAT.
-The batchsize argument of the `DaskDistributedSampler`, the
+strategy.
+
+The batchsize arguments of the `DaskDistributedSampler`, the
 `ConcurrentFutureSampler` and the `RedisEvalParallelSampler`
 allow to interpolate between dynamic and static scheduling and to reduce
 communication overhead.
