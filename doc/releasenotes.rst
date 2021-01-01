@@ -18,6 +18,7 @@ Release Notes
 * Allow subprocessing in multiprocessed redis workers (#377).
 * Add a static-scheduling redis sampler (#379).
 * Check whether epsilon is nan before sampling (#382).
+* Remove useless IdentityFakeDistance (#390).
 
 
 0.10.9 (2020-11-28)
