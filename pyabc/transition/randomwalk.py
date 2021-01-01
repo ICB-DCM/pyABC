@@ -53,7 +53,7 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
 
         return Parameter(perturbed_point)
 
-    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """
         Evaluate the probability mass function (PMF) at `x`.

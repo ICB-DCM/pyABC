@@ -57,7 +57,7 @@ def test_parameter_dict_numpy_conversion():
 
     # mode 4: directly from dict
     start = time()
-    pars_np_4 = [np.array(list(par[key] for key in keys)) for par in pars]
+    pars_np_4 = [np.array([par[key] for key in keys]) for par in pars]
     time_np_4 = time() - start
     print(f"Time to extract directly from dict: {time_np_4}")
     # Taking into account the time to convert to pd, this is faster, however

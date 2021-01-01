@@ -110,9 +110,9 @@ class MultivariateNormalTransition(Transition):
             np.zeros(self.cov.shape[0]), self.cov))
         return Parameter(perturbed)
 
-    def pdf(self, x: Union[Parameter, pd.DataFrame],
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame],
             ) -> Union[float, np.ndarray]:
-        if isinstance(x, Parameter):
+        if isinstance(x, (Parameter, pd.Series)):
             x = np.array([[x[key] for key in self.X.columns]])
         else:
             x = x.to_numpy()[:, self._ixs]

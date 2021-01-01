@@ -104,7 +104,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(mu_x_1, sigma)),
-        Distribution(x=st.norm(mu_x_2, sigma))
+        Distribution(x=st.norm(mu_x_2, sigma)),
     ]
 
     # We plug all the ABC setup together
@@ -137,7 +137,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
-    p1_expected_unnormalized / (p1_expected_unnormalized
-                                + p2_expected_unnormalized)
-    p2_expected_unnormalized / (p1_expected_unnormalized
-                                + p2_expected_unnormalized)
+    _ = p1_expected_unnormalized / (p1_expected_unnormalized
+                                    + p2_expected_unnormalized)
+    _ = p2_expected_unnormalized / (p1_expected_unnormalized
+                                    + p2_expected_unnormalized)

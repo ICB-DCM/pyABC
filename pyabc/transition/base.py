@@ -88,7 +88,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         return pd.DataFrame([self.rvs_single() for _ in range(size)])
 
     @abstractmethod
-    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at `x`.
@@ -96,8 +96,9 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         Parameters
         ----------
         x:
-            Parameter. If x is a Parameter, then x should have the the columns
-            from X passed to the fit method as indices.
+            Parameter. If x is a Parameter or Series,
+            then x should have the the columns from X passed to the fit method
+            as indices.
             If x is a DataFrame, then x should have the same columns as X
             passed before to the fit method. The order of the columns is not
             important
@@ -218,7 +219,7 @@ class AggregatedTransition(Transition):
             sample.update(sample_for_keys)
         return sample
 
-    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         # density
         pd = 1.

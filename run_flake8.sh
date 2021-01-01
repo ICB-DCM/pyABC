@@ -2,8 +2,7 @@
 
 PER_FILE_IGNORES='
 */__init__.py:F401
-test/*.py:T001,S101
-test_performance/*.py:T001
+test*/*.py:T001,S101
 */cli.py:T001'
 
 python3 -m flake8 pyabc test test_performance \

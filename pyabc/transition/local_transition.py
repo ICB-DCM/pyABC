@@ -3,6 +3,7 @@ import numpy as np
 from scipy.spatial import cKDTree
 import pandas as pd
 import logging
+from typing import Union
 
 from ..parameters import Parameter
 from .base import Transition
@@ -97,7 +98,7 @@ class LocalTransition(Transition):
             raise Exception("Normalization not real")
         self.normalization = np.real(self.normalization)
 
-    def pdf(self, x):
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]):
         if isinstance(x, Parameter):
             # TODO This is not really efficient
             x = pd.Series(x)

@@ -118,12 +118,12 @@ class DiscreteJumpTransition(DiscreteTransition):
         value = self.perturbation_kernel.rvs(value)
         return Parameter({self.X.columns[0]: value})
 
-    def pdf(self, x: Union[Parameter, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """Compute the probability mass function at `x`."""
         # extract values
         key = self.X.columns[0]
-        if isinstance(x, Parameter):
+        if isinstance(x, (Parameter, pd.Series)):
             x = np.array([[x[key]]])
         else:
             x = x.to_numpy()
