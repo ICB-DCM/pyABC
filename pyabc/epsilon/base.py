@@ -122,6 +122,20 @@ class Epsilon(ABC):
             The epsilon for population t.
         """
 
+    def requires_calibration(self) -> bool:
+        """
+        Whether the class requires an initial calibration, based on
+        samples from the prior. Default: False.
+        """
+        return False
+
+    def is_adaptive(self) -> bool:
+        """
+        Whether the class is dynamically updated after each generation,
+        based on the last generation's available data. Default: False.
+        """
+        return False
+
     def get_config(self):
         """
         Return configuration of the distance function.

@@ -232,6 +232,11 @@ class ABCSMC:
                 "epsilon.TemperatureBase and distance.StochasticKernel "
                 "together.")
 
+        # check sampler
+        self.sampler.check_analysis_variables(
+            distance_function=self.distance_function, eps=self.eps,
+            acceptor=self.acceptor)
+
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
         del state_red_dict['sampler']
