@@ -135,13 +135,19 @@ class QuantileEpsilon(Epsilon):
 
         return config
 
+    def requires_calibration(self) -> bool:
+        return self._initial_epsilon == 'from_sample'
+
+    def is_adaptive(self) -> bool:
+        return True
+
     def initialize(self,
                    t: int,
                    get_weighted_distances: Callable[[], pd.DataFrame],
                    get_all_records: Callable[[], List[dict]],
                    max_nr_populations: int,
                    acceptor_config: dict):
-        if self._initial_epsilon != 'from_sample':
+        if not self.requires_calibration():
             # safety check in __call__
             return
 
