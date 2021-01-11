@@ -414,19 +414,15 @@ def test_redis_look_ahead_error():
             log_file=fh.name)
         # adaptive epsilon
         try:
-            abc = pyabc.ABCSMC(
-                model, prior, distance, sampler=sampler, population_size=10)
-            abc.new(pyabc.create_sqlite_db_id(), obs)
-            # TODO should raise at some point
-            abc.run(max_nr_populations=3)
+            with pytest.raises(AssertionError) as e:
+                abc = pyabc.ABCSMC(
+                    model, prior, distance, sampler=sampler,
+                    population_size=10)
+                abc.new(pyabc.create_sqlite_db_id(), obs)
+                abc.run(max_nr_populations=3)
+            assert "cannot be used in look-ahead mode" in str(e.value)
         finally:
             sampler.shutdown()
-        # read log file
-        df = pd.read_csv(fh.name, sep=',')
-        # currently at least nothing preliminary can get accepted
-        assert (df.n_lookahead == 0).all()
-        assert (df.n_lookahead_accepted == 0).all()
-        assert (df.n_preliminary == 0).all()
 
 
 def test_redis_look_ahead_delayed():

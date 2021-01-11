@@ -4,6 +4,9 @@ from typing import Callable, List, Union
 
 from ..population import Particle, Population
 from ..util import AnalysisVars
+from ..distance import Distance
+from ..epsilon import Epsilon
+from ..acceptor import Acceptor
 
 
 class Sample:
@@ -262,9 +265,19 @@ class Sampler(ABC, metaclass=SamplerMeta):
             The generated sample, which contains the new population.
         """
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the sampler.
         Called by the inference routine when an analysis is finished.
         Some samplers may need to e.g. finish ongoing processes or close
         servers.
+        """
+
+    def check_analysis_variables(
+            self,
+            distance_function: Distance,
+            eps: Epsilon,
+            acceptor: Acceptor) -> None:
+        """Raise if any analysis variable is not conform with the sampler.
+        This check serves in particular to ensure that all components are fit
+        for look-ahead sampling. Default: Do nothing.
         """

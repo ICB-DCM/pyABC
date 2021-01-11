@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+from scipy import optimize
 import pandas as pd
 import numbers
 from typing import Callable, List, Union
@@ -33,6 +34,7 @@ class ListTemperature(TemperatureBase):
     """
 
     def __init__(self, values: List[float]):
+        super().__init__()
         self.values = values
 
     def __call__(self,
@@ -50,30 +52,30 @@ class Temperature(TemperatureBase):
 
     Parameters
     ----------
-    schemes: Union[Callable, List[Callable]], optional
+    schemes:
         Temperature schemes returning proposed
         temperatures for the next time point, e.g.
         instances of :class:`pyabc.epsilon.TemperatureScheme`.
-    aggregate_fun: Callable[List[float], float], optional
+    aggregate_fun:
         The function to aggregate the schemes by, of the form
         ``Callable[List[float], float]``.
         Defaults to taking the minimum.
-    initial_temperature: float, optional
+    initial_temperature:
         The initial temperature. If None provided, an AcceptanceRateScheme
         is used.
-    enforce_exact_final_temperature: bool, optional
+    enforce_exact_final_temperature:
         Whether to force the final temperature (if max_nr_populations < inf)
         to be 1.0, giving exact inference.
-    log_file: str, optional
+    log_file:
         A log file for storing data of the temperature that are currently not
         saved in the database. The data are saved in json format.
 
     Properties
     ----------
-    max_nr_populations: int
+    max_nr_populations:
         The maximum number of iterations as passed to ABCSMC.
         May be inf, but not all schemes can handle that (and will complain).
-    temperatures: Dict[int, float]
+    temperatures:
         Times as keys and temperatures as values.
     """
 
@@ -84,6 +86,7 @@ class Temperature(TemperatureBase):
             initial_temperature: float = None,
             enforce_exact_final_temperature: bool = True,
             log_file: str = None):
+        super().__init__()
         self.schemes = schemes
 
         if aggregate_fun is None:
@@ -102,6 +105,16 @@ class Temperature(TemperatureBase):
         self.max_nr_populations = None
         self.temperatures = {}
         self.temperature_proposals = {}
+
+    def requires_calibration(self) -> bool:
+        return self.initial_temperature.requires_distances()
+
+    def is_adaptive(self) -> bool:
+        # this is a bit unstable as the schemes are initialized only later,
+        #  however is fine as long as compatible functions are used in
+        #  `initialize()`
+        return (self.schemes is not None
+                and any(s.requires_distances() for s in self.schemes))
 
     def initialize(self,
                    t: int,
@@ -125,7 +138,7 @@ class Temperature(TemperatureBase):
                      1.0, acceptor_config)
 
     def configure_sampler(self, sampler):
-        if callable(self.initial_temperature):
+        if isinstance(self.initial_temperature, TemperatureScheme):
             self.initial_temperature.configure_sampler(sampler)
         for scheme in self.schemes:
             scheme.configure_sampler(sampler)
@@ -167,7 +180,7 @@ class Temperature(TemperatureBase):
             # t is last time
             temps = [1.0]
         elif not self.temperatures:  # need an initial value
-            if callable(self.initial_temperature):
+            if isinstance(self.initial_temperature, TemperatureScheme):
                 # execute scheme
                 temps = [self.initial_temperature(**kwargs)]
             elif isinstance(self.initial_temperature, numbers.Number):
@@ -211,30 +224,7 @@ class TemperatureScheme:
     A TemperatureScheme suggests the next temperature value. It is used as
     one of potentially multiple schemes employed in the Temperature class.
     This class is abstract.
-
-    Parameters
-    ----------
-    t:
-        The time to compute for.
-    get_weighted_distances:
-        Callable to obtain the weights and kernel values to be used for
-        the scheme.
-    get_all_records:
-        Callable returning a List[dict] of all recorded particles.
-    max_nr_populations:
-        The maximum number of populations that are supposed to be taken.
-    pdf_norm:
-        The normalization constant c that will be used in the acceptance step.
-    kernel_scale:
-        Scale on which the pdf values are (linear or logarithmic).
-    prev_temperature:
-        The temperature that was used last time (or None if not applicable).
-    acceptance_rate:
-        The recently obtained rate.
     """
-
-    def __init__(self):
-        pass
 
     def configure_sampler(self, sampler):
         """
@@ -251,7 +241,39 @@ class TemperatureScheme:
                  kernel_scale: str,
                  prev_temperature: float,
                  acceptance_rate: float):
+        """
+        Suggest a temperature.
+
+        Parameters
+        ----------
+        t:
+            The time to compute for.
+        get_weighted_distances:
+            Callable to obtain the weights and kernel values to be used for
+            the scheme.
+        get_all_records:
+            Callable returning a List[dict] of all recorded particles.
+        max_nr_populations:
+            The maximum number of populations that are supposed to be taken.
+        pdf_norm:
+            The normalization constant c that will be used in the acceptance
+            step.
+        kernel_scale:
+            Scale on which the pdf values are (linear or logarithmic).
+        prev_temperature:
+            The temperature that was used last time (or None if not
+            applicable).
+        acceptance_rate:
+            The recently obtained rate.
+        """
         pass
+
+    def requires_distances(self) -> bool:
+        """
+        Whether the scheme requires the last generation's accepted distances.
+        Default: False
+        """
+        return False
 
 
 class AcceptanceRateScheme(TemperatureScheme):
@@ -355,7 +377,7 @@ def match_acceptance_rate(
         b_opt = min_b
     else:
         # perform binary search
-        b_opt = sp.optimize.bisect(obj, min_b, 0, maxiter=100000)
+        b_opt = optimize.bisect(obj, min_b, 0, maxiter=100000)
 
     beta_opt = np.exp(b_opt)
 
@@ -730,6 +752,9 @@ class EssScheme(TemperatureScheme):
 
         temperature = 1. / beta
         return temperature
+
+    def requires_distances(self) -> bool:
+        return True
 
 
 def _ess(pdfs, weights, beta):

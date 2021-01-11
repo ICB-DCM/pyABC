@@ -14,6 +14,9 @@ from jabbar import jabbar
 from ...util import (
     AnalysisVars, create_simulate_function, evaluate_preliminary_particle,
     termination_criteria_fulfilled)
+from ...distance import Distance
+from ...epsilon import Epsilon
+from ...acceptor import Acceptor
 from ...sampler import Sampler, Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
                   N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC,
@@ -423,6 +426,29 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             sample += results[j]
 
         return sample
+
+    def check_analysis_variables(
+            self,
+            distance_function: Distance,
+            eps: Epsilon,
+            acceptor: Acceptor) -> None:
+        if self.look_ahead_delay_evaluation:
+            # nothing to be done
+            return
+
+        def check_bad(var):
+            """Check whether a component is incompatible."""
+            # do not check for `requires_calibration()`, because in the first
+            #  iteration we do not look ahead
+            if var.is_adaptive():
+                raise AssertionError(
+                    f"{var.__class__.__name__} cannot be used in look-ahead "
+                    "mode without delayed acceptance. Consider setting the "
+                    "sampler's `look_ahead_delay_evaluation` flag.")
+
+        check_bad(acceptor)
+        check_bad(distance_function)
+        check_bad(eps)
 
 
 def create_preliminary_simulate_one(
