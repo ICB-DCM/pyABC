@@ -390,12 +390,12 @@ class StochasticAcceptor(Acceptor):
     def requires_calibration(self) -> bool:
         # this check is rather superficial and may be improved by a re-design
         #  of `pdf_norm_method`
-        return self.pdf_norm_method == pdf_norm_from_kernel
+        return self.pdf_norm_method != pdf_norm_from_kernel
 
     def is_adaptive(self) -> bool:
         # this check is rather superficial and may be improved by a re-design
         #  of `pdf_norm_method`
-        return self.pdf_norm_method == pdf_norm_from_kernel
+        return self.pdf_norm_method != pdf_norm_from_kernel
 
     def initialize(
             self,

@@ -412,17 +412,22 @@ def test_redis_look_ahead_error():
         sampler = RedisEvalParallelSamplerServerStarter(
             look_ahead=True, look_ahead_delay_evaluation=False,
             log_file=fh.name)
-        # adaptive epsilon
-        try:
-            with pytest.raises(AssertionError) as e:
-                abc = pyabc.ABCSMC(
-                    model, prior, distance, sampler=sampler,
-                    population_size=10)
-                abc.new(pyabc.create_sqlite_db_id(), obs)
-                abc.run(max_nr_populations=3)
-            assert "cannot be used in look-ahead mode" in str(e.value)
-        finally:
-            sampler.shutdown()
+        args_list = [
+            {'eps': pyabc.MedianEpsilon()},
+            {'distance_function': pyabc.AdaptivePNormDistance()}]
+        for args in args_list:
+            if 'distance_function' not in args:
+                args['distance_function'] = distance
+            try:
+                with pytest.raises(AssertionError) as e:
+                    abc = pyabc.ABCSMC(
+                        model, prior, sampler=sampler,
+                        population_size=10, **args)
+                    abc.new(pyabc.create_sqlite_db_id(), obs)
+                    abc.run(max_nr_populations=3)
+                assert "cannot be used in look-ahead mode" in str(e.value)
+            finally:
+                sampler.shutdown()
 
 
 def test_redis_look_ahead_delayed():
