@@ -22,7 +22,7 @@ import logging
 from ..distance import Distance, SCALE_LIN, StochasticKernel
 from ..epsilon import Epsilon
 from ..parameters import Parameter
-from .pdf_norm import pdf_norm_max_found
+from .pdf_norm import pdf_norm_from_kernel, pdf_norm_max_found
 from ..storage import save_dict_to_json
 
 
@@ -171,6 +171,20 @@ class Acceptor:
         """
         raise NotImplementedError()
 
+    def requires_calibration(self) -> bool:
+        """
+        Whether the class requires an initial calibration, based on
+        samples from the prior. Default: False.
+        """
+        return False
+
+    def is_adaptive(self) -> bool:
+        """
+        Whether the class is dynamically updated after each generation,
+        based on the last generation's available data. Default: False.
+        """
+        return False
+
     # pylint: disable=R0201
     def get_epsilon_config(self, t: int) -> dict:
         """
@@ -187,7 +201,7 @@ class Acceptor:
         config: dict
             The relevant information.
         """
-        return None
+        return {}
 
 
 class SimpleFunctionAcceptor(Acceptor):
@@ -372,6 +386,16 @@ class StochasticAcceptor(Acceptor):
         self.x_0 = None
         self.kernel_scale = None
         self.kernel_pdf_max = None
+
+    def requires_calibration(self) -> bool:
+        # this check is rather superficial and may be improved by a re-design
+        #  of `pdf_norm_method`
+        return self.pdf_norm_method != pdf_norm_from_kernel
+
+    def is_adaptive(self) -> bool:
+        # this check is rather superficial and may be improved by a re-design
+        #  of `pdf_norm_method`
+        return self.pdf_norm_method != pdf_norm_from_kernel
 
     def initialize(
             self,
