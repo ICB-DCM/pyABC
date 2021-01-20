@@ -102,7 +102,7 @@ def parse_contents(contents, filename, date):
                 para_list.append(col)
     except Exception as e:
         return html.Div([
-            'There was an error processing this file.',
+            'There was an error processing this file. ' + e,
         ])
     return html.Div([
         html.Button("Name: " + name,
@@ -169,7 +169,7 @@ def prepare_run_detailes(history):
             para_list.append(col)
     except Exception as e:
         return html.Div([
-            'There was an error processing this file.',
+            'There was an error processing this file. ' + e,
         ])
     return html.Div([
         html.Div([
