@@ -57,7 +57,7 @@ run_notebook () {
 }
 
 # Run all notebooks in list
-echo "\nRun notebooks"
+echo "Run notebooks:"
 for notebook in "${nbs[@]}"; do
     run_notebook $dir/$notebook
 done
