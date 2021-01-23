@@ -5,7 +5,10 @@
 
 
 declare -a notebooks
-notebooks=("adaptive_distances" "conversion_reaction" "early_stopping" "external_simulators" "parameter_inference" "quickstart" "resuming" "using_R")
+notebooks=(
+  "adaptive_distances" "conversion_reaction" "early_stopping"
+  "external_simulators" "model_selection" "noise"
+  "parameter_inference" "resuming" "using_R")
 
 
 dir="doc/examples"
@@ -14,7 +17,8 @@ dir="doc/examples"
 run_notebook () {
     tempfile=$(tempfile)
     echo $@
-    jupyter nbconvert --ExecutePreprocessor.timeout=-1 --debug --stdout --execute --to markdown $@ &> $tempfile
+    jupyter nbconvert --ExecutePreprocessor.timeout=-1 --debug \
+      --stdout --execute --to markdown $@ &> $tempfile
     ret=$?
     if [[ $ret != 0 ]]; then
         cat $tempfile
