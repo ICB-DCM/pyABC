@@ -59,5 +59,5 @@ run_notebook () {
 # Run all notebooks in list
 echo "Run notebooks:"
 for notebook in "${nbs[@]}"; do
-    run_notebook $dir/$notebook
+    time run_notebook $dir/$notebook
 done
