@@ -9,7 +9,7 @@ nbs_1=(
   "model_selection" "noise"
   "parameter_inference" "resuming")
 nbs_2=(
-  "external_simulators" "petab" "using_R")
+  "external_simulators" "using_R")
 
 # All notebooks
 nbs_all=("${nbs_1[@]}" "${nbs_2[@]}")
