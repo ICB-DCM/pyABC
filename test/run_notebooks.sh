@@ -4,12 +4,10 @@
 
 
 # Notebooks to run
-declare -a notebooks
 nbs_1=(
   "adaptive_distances" "conversion_reaction" "early_stopping"
   "model_selection" "noise"
   "parameter_inference" "resuming")
-
 nbs_2=(
   "external_simulators" "petab" "using_R")
 
@@ -59,6 +57,7 @@ run_notebook () {
 }
 
 # Run all notebooks in list
+echo "\nRun notebooks"
 for notebook in "${nbs[@]}"; do
     run_notebook $dir/$notebook
 done
