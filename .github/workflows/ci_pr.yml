@@ -59,9 +59,9 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh R petab
+        .github/workflows/ci_dependencies.sh R
         pip install jupyter
-        pip install -e .[petab,R]
+        pip install -e .[R]
 
     - name: Run notebooks
       timeout-minutes: 10
