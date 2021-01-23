@@ -5,10 +5,27 @@
 
 # Notebooks to run
 declare -a notebooks
-notebooks=(
+nbs_1=(
   "adaptive_distances" "conversion_reaction" "early_stopping"
-  "external_simulators" "model_selection" "noise"
-  "parameter_inference" "resuming" "using_R")
+  "model_selection" "noise"
+  "parameter_inference" "resuming")
+
+nbs_2=(
+  "external_simulators" "petab" "using_R")
+
+# All notebooks
+nbs_all=("${nbs_1[@]}" "${nbs_2[@]}")
+
+# Select which notebooks to run
+if [ $# -eq 0 ]; then
+  nbs=("${nbs_all[@]}")
+elif [ $1 -eq 1 ]; then
+  nbs=("${nbs_1[@]}")
+elif [ $1 -eq 2 ]; then
+  nbs=("${nbs_2[@]}")
+else
+  echo "Unexpected input: $1"
+fi
 
 # Notebooks repository
 dir="doc/examples"
@@ -16,8 +33,8 @@ dir="doc/examples"
 # Find uncovered notebooks
 for nb in `ls $dir | grep -E "ipynb"`; do
   missing=true
-  for nb_cand in "${notebooks[@]}"; do
-    if [[ $nb == $nb_cand ]]; then
+  for nb_cand in "${nbs_all[@]}"; do
+    if [[ $nb == "${nb_cand}.ipynb" ]]; then
       missing=false
       continue
     fi
@@ -42,7 +59,6 @@ run_notebook () {
 }
 
 # Run all notebooks in list
-
-for notebook in "${notebooks[@]}"; do
+for notebook in "${nbs[@]}"; do
     run_notebook $dir/$notebook
 done

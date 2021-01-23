@@ -4,7 +4,39 @@ name: CI
 on: [pull_request]
 
 jobs:
-  notebooks:
+  notebooks1:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ${{ runner.os }}-ci-notebooks
+
+    - name: Install dependencies
+      run: |
+        .github/workflows/ci_dependencies.sh
+        pip install jupyter
+        pip install -e .
+
+    - name: Run notebooks
+      timeout-minutes: 10
+      run: |
+        test/run_notebooks.sh 1
+
+  notebooks2:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,7 +66,7 @@ jobs:
     - name: Run notebooks
       timeout-minutes: 10
       run: |
-        test/run_notebooks.sh
+        test/run_notebooks.sh 2
 
   docs:
     runs-on: ubuntu-latest
