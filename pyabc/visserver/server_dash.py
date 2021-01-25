@@ -293,7 +293,7 @@ def display_info(smc_id):
 
 @app.callback(
     dash.dependencies.Output("hidden-div", "children"),
-    [dash.dependencies.Input('download_path', 'value'),]
+    [dash.dependencies.Input('download_path', 'value')],
 )
 def update_download_path(new_download_path):
     global DOWNLOAD_DIRECTORY
