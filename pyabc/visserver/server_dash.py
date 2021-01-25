@@ -362,13 +362,13 @@ def prepare_fig_tab(smc_id):
         'height': '120px',
         'borderRadius': '5px',
         'margin': '30px',
-    }, ),
+    }, )
 
 
 @app.callback(
     dash.dependencies.Output('tabs-content', 'children'),  # src attribute
     [dash.dependencies.Input('ABC_runs', 'value'),
-     dash.dependencies.Input("tabs", "value"),]
+     dash.dependencies.Input("tabs", "value")],
 )
 def update_figure_ABC_run(smc_id, f_type):
     # create some matplotlib graph
@@ -435,7 +435,7 @@ def update_figure_ABC_run(smc_id, f_type):
     dash.dependencies.Output('abc_run_plot', 'src'),  # src attribute
     [dash.dependencies.Input('ABC_runs', 'value'),
      dash.dependencies.Input('parameters', 'value'),
-     dash.dependencies.Input("tabs", "value"),]
+     dash.dependencies.Input("tabs", "value")],
 )
 def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
     # create some matplotlib graph
@@ -454,7 +454,7 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
                     label="PDF t={}".format(t))
             ax.legend()
         elif len(parameters) == 2:
-            df, w = history.get_distribution(m=0, ),
+            df, w = history.get_distribution(m=0, )
             pyabc.visualization.plot_kde_2d(df, w, parameters[0],
                                             parameters[1])
         else:
