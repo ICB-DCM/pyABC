@@ -293,7 +293,7 @@ def display_info(smc_id):
 
 @app.callback(
     dash.dependencies.Output("hidden-div", "children"),
-    [dash.dependencies.Input('download_path', 'value')]
+    [dash.dependencies.Input('download_path', 'value'),]
 )
 def update_download_path(new_download_path):
     global DOWNLOAD_DIRECTORY
@@ -335,7 +335,7 @@ def prepare_fig_tab(smc_id):
             dcc.Dropdown(
                 id="parameters",
                 options=[{'label': name, 'value': name} for name in para_list],
-                multi=True
+                multi=True,
             )]), html.Br(),
         html.Div([
             html.Label('Select parameter: '),
@@ -349,7 +349,7 @@ def prepare_fig_tab(smc_id):
                      'value': 'credible_intervals'},
                     {'label': 'effective_sample_sizes',
                      'value': 'effective_sample_sizes'},
-                ]
+                ],
             )]), html.Br(),
 
         html.Div(["ABC run plots: ", html.Br(), html.Br(),
@@ -362,13 +362,13 @@ def prepare_fig_tab(smc_id):
         'height': '120px',
         'borderRadius': '5px',
         'margin': '30px',
-    }, )
+    }, ),
 
 
 @app.callback(
     dash.dependencies.Output('tabs-content', 'children'),  # src attribute
     [dash.dependencies.Input('ABC_runs', 'value'),
-     dash.dependencies.Input("tabs", "value")]
+     dash.dependencies.Input("tabs", "value"),]
 )
 def update_figure_ABC_run(smc_id, f_type):
     # create some matplotlib graph
@@ -379,7 +379,7 @@ def update_figure_ABC_run(smc_id, f_type):
                 dcc.Dropdown(
                     id="parameters",
                     options=[{'label': name, 'value': name} for name in
-                             para_list], multi=True
+                             para_list], multi=True,
                 ), html.Div(["ABC run plots: ", html.Br(), html.Br(),
                              html.Img(id='abc_run_plot',
                                       src='data:image/png;base64,{}'.format(
@@ -403,7 +403,7 @@ def update_figure_ABC_run(smc_id, f_type):
                 dcc.Dropdown(
                     id="parameters",
                     options=[{'label': name, 'value': name} for name in
-                             para_list], multi=True
+                             para_list], multi=True,
                 ), html.Div(["ABC run plots: ", html.Br(), html.Br(),
                              html.Img(id='abc_run_plot',
                                       src='data:image/png;base64,{}'.format(
@@ -435,7 +435,7 @@ def update_figure_ABC_run(smc_id, f_type):
     dash.dependencies.Output('abc_run_plot', 'src'),  # src attribute
     [dash.dependencies.Input('ABC_runs', 'value'),
      dash.dependencies.Input('parameters', 'value'),
-     dash.dependencies.Input("tabs", "value")]
+     dash.dependencies.Input("tabs", "value"),]
 )
 def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
     # create some matplotlib graph
@@ -454,11 +454,11 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
                     label="PDF t={}".format(t))
             ax.legend()
         elif len(parameters) == 2:
-            df, w = history.get_distribution(m=0, )
+            df, w = history.get_distribution(m=0, ),
             pyabc.visualization.plot_kde_2d(df, w, parameters[0],
                                             parameters[1])
         else:
-            df, w = history.get_distribution(m=0, )
+            df, w = history.get_distribution(m=0, ),
             pyabc.visualization.plot_kde_matrix(df, w)
 
     elif f_type == "tab-credible":
