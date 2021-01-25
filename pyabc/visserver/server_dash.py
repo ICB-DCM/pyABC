@@ -458,7 +458,7 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
             pyabc.visualization.plot_kde_2d(df, w, parameters[0],
                                             parameters[1])
         else:
-            df, w = history.get_distribution(m=0),
+            df, w = history.get_distribution(m=0)
             pyabc.visualization.plot_kde_matrix(df, w)
 
     elif f_type == "tab-credible":
