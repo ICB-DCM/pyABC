@@ -267,7 +267,7 @@ def prepare_run_detailes(history):
                             selected_className='custom-tab--selected',
                         ),
                     ]),
-                html.Div(id='tabs-content')
+                html.Div(id='tabs-content'),
             ]),
     ], style={
         'width': '98%',
@@ -278,7 +278,7 @@ def prepare_run_detailes(history):
 
 @app.callback(
     dash.dependencies.Output("information_grid", "children"),
-    [dash.dependencies.Input('ABC_runs', 'value')]
+    [dash.dependencies.Input('ABC_runs', 'value')],
 )
 def display_info(smc_id):
     global db_path
