@@ -106,46 +106,14 @@ class AmiciPetabImporter(PetabImporter):
             scaled=True,
             free=not self.free_parameters, fixed=not self.fixed_parameters)
 
-        # extract variables for improved pickling
-        petab_problem = self.petab_problem
-        amici_model = self.amici_model
-        amici_solver = self.amici_solver
-
         # no gradients for pyabc
-        amici_solver.setSensitivityOrder(0)
+        self.amici_solver.setSensitivityOrder(0)
 
-        def model(par: Union[Sequence, Mapping]) -> Mapping:
-            """The model function."""
-            # copy since we add fixed parameters
-            par = copy.deepcopy(par)
-
-            # convenience to allow calling model not only with dicts
-            if not isinstance(par, Mapping):
-                par = {key: val for key, val in zip(x_ids, par)}
-
-            # add fixed parameters
-            for key, val in zip(x_fixed_ids, x_fixed_vals):
-                par[key] = val
-
-            # simulate model
-            sim = simulate_petab(
-                petab_problem=petab_problem,
-                amici_model=amici_model,
-                solver=amici_solver,
-                problem_parameters=par,
-                scaled_parameters=True)
-
-            # return values of interest
-            ret = {'llh': sim[LLH]}
-            if return_simulations:
-                for i_rdata, rdata in enumerate(sim[RDATAS]):
-                    ret[f'y_{i_rdata}'] = rdata['y']
-            if return_rdatas:
-                ret[RDATAS] = sim[RDATAS]
-
-            return ret
-
-        return model
+        return AmiciPyABCModel(
+            self.petab_problem, self.amici_model, self.amici_solver,
+            x_ids, x_fixed_ids, x_fixed_vals,
+            return_simulations, return_rdatas
+        )
 
     def create_kernel(
         self,
@@ -168,3 +136,101 @@ class AmiciPetabImporter(PetabImporter):
             kernel_fun, ret_scale=pyabc.distance.SCALE_LOG)
 
         return kernel
+
+
+class AmiciPyABCModel:
+    def __init__(
+        self, petab_problem, amici_model, amici_solver,
+        x_ids, x_fixed_ids, x_fixed_vals,
+        return_simulations, return_rdatas):
+        self.petab_problem = petab_problem
+        self.amici_model = amici_model
+        self.amici_solver = amici_solver
+        self.x_ids = x_ids
+        self.x_fixed_ids = x_fixed_ids
+        self.x_fixed_vals = x_fixed_vals
+        self.return_simulations = return_simulations
+        self.return_rdatas = return_rdatas
+
+    def __call__(self, par: Union[Sequence, Mapping]) -> Mapping:
+        # copy since we add fixed parameters
+        par = copy.deepcopy(par)
+
+        # convenience to allow calling model not only with dicts
+        if not isinstance(par, Mapping):
+            par = {key: val for key, val in zip(self.x_ids, par)}
+
+        # add fixed parameters
+        for key, val in zip(self.x_fixed_ids, self.x_fixed_vals):
+            par[key] = val
+
+        # simulate model
+        sim = simulate_petab(
+            petab_problem=self.petab_problem,
+            amici_model=self.amici_model,
+            solver=self.amici_solver,
+            problem_parameters=par,
+            scaled_parameters=True)
+
+        # return values of interest
+        ret = {'llh': sim[LLH]}
+        if self.return_simulations:
+            for i_rdata, rdata in enumerate(sim[RDATAS]):
+                ret[f'y_{i_rdata}'] = rdata['y']
+        if self.return_rdatas:
+            ret[RDATAS] = sim[RDATAS]
+
+        return ret
+
+    def __getstate__(self) -> Dict:
+        state = {}
+        for key in set(self.__dict__.keys()) - {'amici_model', 'amici_solver'}:
+            state[key] = self.__dict__[key]
+
+        _fd, _file = tempfile.mkstemp()
+        try:
+            # write amici solver settings to file
+            try:
+                amici.writeSolverSettingsToHDF5(
+                    self.amici_solver, _file)
+            except AttributeError as e:
+                e.args += ("Pickling the AmiciObjective requires an AMICI "
+                           "installation with HDF5 support.",)
+                raise
+            # read in byte stream
+            with open(_fd, 'rb', closefd=False) as f:
+                state['amici_solver_settings'] = f.read()
+        finally:
+            # close file descriptor and remove temporary file
+            os.close(_fd)
+            os.remove(_file)
+
+        return state
+
+    def __setstate__(self, state: Dict):
+        self.__dict__.update(state)
+
+        model = amici.petab_import.import_petab_problem(self.petab_problem)
+        solver = model.getSolver()
+
+        _fd, _file = tempfile.mkstemp()
+        try:
+            # write solver settings to temporary file
+            with open(_fd, 'wb', closefd=False) as f:
+                f.write(state['amici_solver_settings'])
+            # read in solver settings
+            try:
+                amici.readSolverSettingsFromHDF5(_file, solver)
+            except AttributeError as err:
+                if not err.args:
+                    err.args = ('',)
+                err.args += ("Unpickling an AmiciObjective requires an AMICI "
+                             "installation with HDF5 support.",)
+                raise
+        finally:
+            # close file descriptor and remove temporary file
+            os.close(_fd)
+            os.remove(_file)
+
+        self.amici_model = model
+        self.amici_solver = solver
