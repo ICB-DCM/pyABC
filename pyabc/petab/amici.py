@@ -2,6 +2,7 @@ import logging
 from collections.abc import Sequence, Mapping
 from typing import Callable, Union, Dict
 import copy
+import tempfile
 
 import pyabc
 from .base import PetabImporter
