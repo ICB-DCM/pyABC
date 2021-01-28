@@ -239,7 +239,11 @@ class SimpleModel(Model):
                  sample_function: Callable[[Parameter], Any],
                  name: str = None):
         if name is None:
-            name = sample_function.__name__
+            if hasattr(sample_function, '__name__'):
+                name = sample_function.__name__
+            else:
+                # sample_function is a callable object
+                name = sample_function.__class__.__name__
         super().__init__(name)
         self.sample_function = sample_function
 
