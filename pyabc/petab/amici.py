@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Sequence, Mapping
-from typing import Callable, Union
+from typing import Callable, Union, Dict
 import copy
 
 import pyabc
