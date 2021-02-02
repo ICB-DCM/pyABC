@@ -55,8 +55,7 @@ def test_sample_numbers():
         histories, rotation=43, size=(5, 5))
     _, ax = plt.subplots()
     pyabc.visualization.plot_sample_numbers(histories, labels, ax=ax)
-    with pytest.raises(ValueError):
-        pyabc.visualization.plot_sample_numbers(histories, [labels[0]])
+    pyabc.visualization.plot_sample_numbers(histories, labels[0])
     plt.close()
 
 
@@ -177,4 +176,28 @@ def test_data_default():
         obs_dict[i] = i + 1
         sim_dict[i] = i + 2
     pyabc.visualization.plot_data_default(obs_dict, sim_dict)
+    plt.close()
+
+
+def test_total_walltime():
+    pyabc.visualization.plot_total_walltime(
+        histories, labels, rotation=45, unit='m', size=(5, 5))
+    with pytest.raises(AssertionError):
+        pyabc.visualization.plot_total_walltime(histories, unit='min')
+    plt.close()
+
+
+def test_walltime():
+    pyabc.visualization.plot_walltime(
+        histories, labels, rotation=45, unit='m', size=(5, 5))
+    with pytest.raises(AssertionError):
+        pyabc.visualization.plot_total_walltime(histories, unit='min')
+    plt.close()
+
+
+def test_eps_walltime():
+    pyabc.visualization.plot_eps_walltime(
+        histories, labels, unit='m', size=(5, 5), yscale='log')
+    with pytest.raises(AssertionError):
+        pyabc.visualization.plot_total_walltime(histories, unit='min')
     plt.close()
