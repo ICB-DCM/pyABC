@@ -100,7 +100,7 @@ def plot_walltime(
         show_calibration: bool = None,
         unit: str = 's',
         rotation: int = 0,
-        title: str = "Total walltimes",
+        title: str = "Walltime by generation",
         size: tuple = None,
         ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
     """Plot walltimes, with different colors indicating different iterations.
@@ -161,7 +161,7 @@ def plot_walltime_lowlevel(
         show_calibration: bool = None,
         unit: str = 's',
         rotation: int = 0,
-        title: str = "Total walltimes",
+        title: str = "Walltime by generation",
         size: tuple = None,
         ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
     """Low-level access to `plot_walltime`.
@@ -248,10 +248,11 @@ def plot_eps_walltime(
         unit: str = 's',
         xscale: str = 'linear',
         yscale: str = 'log',
-        title: str = "Total walltimes",
+        title: str = "Epsilon over walltime",
         size: tuple = None,
         ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
-    """Plot epsilon values (y-axis) over the walltime (x-axis).
+    """Plot epsilon values (y-axis) over the walltime (x-axis), iterating over
+    the generations.
 
     Parameters
     ----------
@@ -300,7 +301,7 @@ def plot_eps_walltime_lowlevel(
         unit: str = 's',
         xscale: str = 'linear',
         yscale: str = 'log',
-        title: str = "Total walltimes",
+        title: str = "Epsilon over walltime",
         size: tuple = None,
         ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
     """Low-level access to `plot_eps_walltime`.
