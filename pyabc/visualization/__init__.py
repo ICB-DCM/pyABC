@@ -37,3 +37,9 @@ from .effective_sample_size import (
 from .data import (
     plot_data_callback,
     plot_data_default)
+from .walltime import (
+    plot_total_walltime,
+    plot_walltime,
+    plot_walltime_lowlevel,
+    plot_eps_walltime,
+    plot_eps_walltime_lowlevel)

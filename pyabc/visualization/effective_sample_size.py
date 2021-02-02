@@ -5,7 +5,7 @@ from matplotlib.ticker import MaxNLocator
 
 from ..weighted_statistics import effective_sample_size
 from ..storage import History
-from .util import to_lists_or_default
+from .util import to_lists, get_labels
 
 
 def plot_effective_sample_sizes(
@@ -50,7 +50,8 @@ def plot_effective_sample_sizes(
     ax: Axis of the generated plot.
     """
     # preprocess input
-    histories, labels = to_lists_or_default(histories, labels)
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
     if colors is None:
         colors = [None for _ in range(len(histories))]
 
@@ -80,7 +81,8 @@ def plot_effective_sample_sizes(
     # format
     ax.set_xlabel("Population index")
     ax.set_ylabel("ESS")
-    ax.legend()
+    if any(lab is not None for lab in labels):
+        ax.legend()
     ax.set_title(title)
     # enforce integer ticks
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
