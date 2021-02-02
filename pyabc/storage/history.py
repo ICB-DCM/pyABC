@@ -38,7 +38,7 @@ def internal_docstring_warning(f):
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
     warning = (
-        "\n" + indent +
+        "\n\n" + indent +
         "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
         "class internally. "
         "You should most likely not find it necessary to call "
@@ -110,20 +110,17 @@ class History:
 
     Attributes
     ----------
-
     db: str
         SQLalchemy database identifier. For a relative path use the
         template "sqlite:///file.db", for an absolute path
         "sqlite:////path/to/file.db", and for an in-memory database
         "sqlite://".
-
     stores_sum_stats: bool, optional (default = True)
         Whether to store summary statistics to the database. Note: this
         is True by default, and should be set to False only for testing
         purposes (i.e. to speed up the writing to the file system),
         as it can not be guaranteed that all methods of pyabc work
         correctly if the summary statistics are not stored.
-
     id: int
         The id of the ABCSMC analysis that is currently in use.
         If there are analyses in the database already, this defaults
@@ -178,13 +175,11 @@ class History:
 
         Returns
         -------
-
         db_size: int, str
             Size of the SQLite database in MB.
             Currently this only works for SQLite databases.
 
             Returns an error string if the DB size cannot be calculated.
-
         """
         try:
             return os.path.getsize(self.db_file()) / 10 ** 6
@@ -272,17 +267,14 @@ class History:
 
         Parameters
         ----------
-
         m: int, optional (default = 0)
             Model index.
-
         t: int, optional (default = self.max_t)
             Population index.
             If t is not specified, then the last population is returned.
 
         Returns
         -------
-
         df, w: pandas.DataFrame, np.ndarray
             * df: a DataFrame of parameters
             * w: are the weights associated with each parameter
@@ -352,7 +344,6 @@ class History:
 
         Returns
         -------
-
         all_populations: pd.DataFrame
             DataFrame with population info
         """
@@ -379,7 +370,8 @@ class History:
                            eps_function_json_str: str,
                            population_strategy_json_str: str,
                            start_time: datetime.datetime = None) -> None:
-        """Store the initial configuration data.
+        """
+        Store the initial configuration data.
 
         Parameters
         ----------
@@ -441,6 +433,7 @@ class History:
         and in particular some ground truth values.
 
         For the parameters, see store_initial_data.
+
         """
         # extract analysis object
         abcsmc = (self._session.query(ABCSMC)
@@ -527,7 +520,6 @@ class History:
 
         Returns
         -------
-
         sum_stats_dct: dict
             The observed summary statistics.
         """
@@ -554,7 +546,6 @@ class History:
 
         Returns
         -------
-
         nr_sim: int
             Total nr of sample attempts for the ABC run.
         """
@@ -597,7 +588,8 @@ class History:
     @with_session
     @internal_docstring_warning
     def done(self, end_time: datetime.datetime = None):
-        """Close database sessions and store end time of the analysis.
+        """
+        Close database sessions and store end time of the analysis.
 
         Parameters
         ----------
@@ -705,22 +697,16 @@ class History:
 
         Parameters
         ----------
-
         t: int
             Population number.
-
         current_epsilon: float
             Current epsilon value.
-
         population: Population
             List of sampled particles.
-
         nr_simulations: int
             The number of model evaluations for this population.
-
         model_names: list
             The model names.
-
         """
         store = population.to_dict()
         model_probabilities = population.get_model_probabilities()
@@ -779,13 +765,11 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
-
         nr_alive: int >= 0 or None
             Number of models still alive.
             None is for the last population
@@ -809,14 +793,12 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
             If t is None, the last population is selected.
 
         Returns
         -------
-
         df_weighted: pd.DataFrame
             Weighted distances.
             The dataframe has column "w" for the weights
@@ -864,7 +846,6 @@ class History:
 
         Returns
         -------
-
         nr_particles_per_population: pd.DataFrame
             A pandas DataFrame containing the number
             of particles for each population.
@@ -907,16 +888,13 @@ class History:
 
         Parameters
         ----------
-
         m: int, optional (default = 0)
             Model index.
-
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
-
         w, sum_stats: np.ndarray, list
             * w: the weights associated with the summary statistics
             * sum_stats: list of summary statistics
@@ -956,15 +934,13 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
             If t is None, the latest population is selected.
 
         Returns
         -------
-
-        (weights, sum_stats): (List[float], List[dict])
+        weights, sum_stats:
             In the same order in the first array the weights (multiplied by
             the model probabilities), and tin the second array the summary
             statistics.
@@ -1010,7 +986,6 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             The population index.
         """
@@ -1080,7 +1055,7 @@ class History:
 
     @with_session
     def get_population_strategy(self):
-        """
+        """Get information on the population size strategy.
 
         Returns
         -------
@@ -1101,16 +1076,13 @@ class History:
 
         Parameters
         ----------
-
         m: int or None, optional (default = None)
             The model to query. If omitted, all models are returned.
-
         t: int or str, optional (default = "last")
             Can be "last" or "all", or a population index (i.e. an int).
             In case of "all", all populations are returned.
             If "last", only the last population is returned, for an int value
             only the corresponding population at that time index.
-
         tidy: bool, optional
             If True, try to return a tidy DataFrame, where the individual
             parameters and summary statistics are pivoted.
@@ -1119,7 +1091,6 @@ class History:
 
         Returns
         -------
-
         full_population: DataFrame
         """
         query = (self._session.query(Population.t,

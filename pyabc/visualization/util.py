@@ -5,7 +5,7 @@ import numpy as np
 def to_lists(*args):
     """Convert to lists of the same length."""
     # tuple to array
-    args = [arg for arg in args]
+    args = list(args)
 
     # entries to arrays
     for ix, arg in enumerate(args):
