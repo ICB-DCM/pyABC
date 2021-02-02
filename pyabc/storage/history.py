@@ -369,48 +369,46 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def store_initial_data(self, ground_truth_model: int, options: dict,
+    def store_initial_data(self,
+                           ground_truth_model: int,
+                           options: dict,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            model_names: List[str],
                            distance_function_json_str: str,
                            eps_function_json_str: str,
-                           population_strategy_json_str: str):
-        """
-        Store the initial configuration data.
+                           population_strategy_json_str: str,
+                           start_time: datetime.datetime = None) -> None:
+        """Store the initial configuration data.
 
         Parameters
         ----------
-
-        ground_truth_model: int
+        ground_truth_model:
             Index of the ground truth model.
-
-        options: dict
+        options:
             Of ABC metadata.
-
-        observed_summary_statistics: dict
+        observed_summary_statistics:
             The measured summary statistics.
-
-        ground_truth_parameter: dict
+        ground_truth_parameter:
             The ground truth parameters.
-
-        model_names: List
+        model_names:
             A list of model names.
-
-        distance_function_json_str: str
+        distance_function_json_str:
             The distance function represented as json string.
-
-        eps_function_json_str: str
+        eps_function_json_str:
             The epsilon represented as json string.
-
-        population_strategy_json_str: str
+        population_strategy_json_str:
             The population strategy represented as json string.
-
+        start_time:
+            Start time of the analysis.
         """
+        if start_time is None:
+            start_time = datetime.datetime.now()
+
         # create a new ABCSMC analysis object
         abcsmc = ABCSMC(
             json_parameters=str(options),
-            start_time=datetime.datetime.now(),
+            start_time=start_time,
             git_hash=git_hash(),
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
@@ -429,7 +427,7 @@ class History:
             ground_truth_parameter, model_names)
 
         # log
-        logger.info("Start {}".format(abcsmc))
+        logger.info(f"Start {abcsmc.start_info()}")
 
     @with_session
     @internal_docstring_warning
@@ -495,30 +493,29 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def update_nr_samples(self, t: int = PRE_TIME, nr_samples: int = 0):
-        """
-        Update the number of samples used in iteration `t`. The default
-        time of `PRE_TIME` implies an update of the number of samples
-        used in calibration.
+    def update_after_calibration(
+            self,  nr_samples: int, end_time: datetime.datetime):
+        """Update after the calibration iteration.
+        In particular set time and number of samples.
+        Update the number of samples used in iteration `t`.
 
         Parameters
         ----------
-
-        t: int, optional (default = -1)
-            Time to update for.
-        nr_samples: int, optional (default = 0)
+        nr_samples:
             Number of samples reported.
-
+        end_time:
+            End time of the calibration iteration.
         """
         # extract population
         population = (self._session.query(Population)
                       .join(ABCSMC)
                       .filter(ABCSMC.id == self.id)
-                      .filter(Population.t == t)
+                      .filter(Population.t == History.PRE_TIME)
                       .one())
 
         # update samples number
         population.nr_samples = nr_samples
+        population.population_end_time = end_time
 
         # commit changes
         self._session.commit()
@@ -599,17 +596,22 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def done(self):
-        """
-        Close database sessions and store end time of population.
-        """
+    def done(self, end_time: datetime.datetime = None):
+        """Close database sessions and store end time of the analysis.
 
-        abc_smc_simulation = (self._session.query(ABCSMC)
-                              .filter(ABCSMC.id == self.id)
-                              .one())
-        abc_smc_simulation.end_time = datetime.datetime.now()
+        Parameters
+        ----------
+        end_time:
+            End time of the analysis.
+        """
+        if end_time is None:
+            end_time = datetime.datetime.now()
+
+        abcsmc = (self._session.query(ABCSMC)
+                  .filter(ABCSMC.id == self.id).one())
+        abcsmc.end_time = end_time
         self._session.commit()
-        logger.info("Done {}".format(abc_smc_simulation))
+        logger.info(f"Done {abcsmc.end_info()}")
 
     @with_session
     def _save_to_population_db(self,
