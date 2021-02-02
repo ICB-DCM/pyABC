@@ -50,6 +50,14 @@ class ABCSMC(Base):
                 .format(id=self.id, start_time=self.start_time,
                         end_time=self.end_time))
 
+    def start_info(self):
+        return f"<ABCSMC(id={self.id}, start_time={self.start_time})>"
+
+    def end_info(self):
+        duration = self.end_time - self.start_time
+        return f"<ABCSMC(id={self.id}, duration={duration}, " \
+               f"end_time={self.end_time}>"
+
 
 class Population(Base):
     __tablename__ = 'populations'

@@ -1,5 +1,6 @@
 from ..storage import History
 import matplotlib as mpl
+import matplotlib.axes
 import matplotlib.pyplot as plt
 
 

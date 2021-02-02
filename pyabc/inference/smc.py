@@ -36,6 +36,23 @@ def identity(x):
     return x
 
 
+def run_cleanup(run):
+    """Wrapper: Run and in any case clean up afterwards."""
+
+    def wrapped_run(self: "ABCSMC", *args, **kwargs):
+        try:
+            # the actual run
+            ret = run(self, *args, **kwargs)
+        finally:
+            # close session and store end time
+            self.history.done(end_time=datetime.now())
+            # tell samplers to stop any ongoing processes
+            self.sampler.stop()
+        return ret
+
+    return wrapped_run
+
+
 class ABCSMC:
     """
     Approximate Bayesian Computation - Sequential Monte Carlo (ABCSMC).
@@ -329,14 +346,16 @@ class ABCSMC:
 
         # save configuration data to database
         model_names = [model.name for model in self.models]
-        self.history.store_initial_data(gt_model,
-                                        meta_info,
-                                        observed_sum_stat,
-                                        gt_par,
-                                        model_names,
-                                        self.distance_function.to_json(),
-                                        self.eps.to_json(),
-                                        self.population_size.to_json())
+        self.history.store_initial_data(
+            ground_truth_model=gt_model,
+            options=meta_info,
+            observed_summary_statistics=observed_sum_stat,
+            ground_truth_parameter=gt_par,
+            model_names=model_names,
+            distance_function_json_str=self.distance_function.to_json(),
+            eps_function_json_str=self.eps.to_json(),
+            population_strategy_json_str=self.population_size.to_json(),
+            start_time=datetime.now())
 
         # return history
         # contains id generated in store_initial_data
@@ -461,9 +480,6 @@ class ABCSMC:
             else:
                 # sample
                 population = self._sample_from_prior(t)
-                # update number of samples in calibration
-                self.history.update_nr_samples(
-                    History.PRE_TIME, self.sampler.nr_evaluations_)
             self._initial_population = population
 
         return self._initial_population
@@ -496,6 +512,10 @@ class ABCSMC:
 
         # extract accepted population
         population = sample.get_accepted_population()
+
+        # update information saved in history about calibration
+        self.history.update_after_calibration(
+            nr_samples=self.sampler.nr_evaluations_, end_time=datetime.now())
 
         return population
 
@@ -547,6 +567,7 @@ class ABCSMC:
             model_probabilities=self.history.get_model_probabilities(t-1),
             model_perturbation_kernel=self.model_perturbation_kernel)
 
+    @run_cleanup
     def run(self,
             minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
@@ -706,12 +727,6 @@ class ABCSMC:
 
             # increment t
             t += 1
-
-        # close session and store end time
-        self.history.done()
-
-        # tell samplers to stop any ongoing processes
-        self.sampler.stop()
 
         # return used history object
         return self.history

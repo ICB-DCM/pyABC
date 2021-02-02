@@ -64,6 +64,9 @@ class ListEpsilon(Epsilon):
                  t: int):
         return self.epsilon_values[t]
 
+    def __len__(self):
+        return len(self.epsilon_values)
+
 
 class QuantileEpsilon(Epsilon):
     """

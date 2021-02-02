@@ -8,8 +8,8 @@ The following examples should help to get a better idea of how to use pyABC.
 .. toctree::
    :maxdepth: 1
 
-   examples/quickstart.ipynb
    examples/parameter_inference.ipynb
+   examples/model_selection.ipynb
    examples/early_stopping.ipynb
    examples/resuming.ipynb
    examples/using_R.ipynb
@@ -29,9 +29,8 @@ The following examples should help to get a better idea of how to use pyABC.
 Download the examples as notebooks
 ----------------------------------
 
-* :download:`Quickstart <examples/quickstart.ipynb>`
 * :download:`Parameter inference <examples/parameter_inference.ipynb>`
-* :download:`Model selection (Quickstart) <examples/quickstart.ipynb>`
+* :download:`Model selection <examples/model_selection.ipynb>`
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`

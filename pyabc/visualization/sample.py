@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.axes
 import numpy as np
 from typing import List, Union
 
 from ..storage import History
-from .util import to_lists_or_default
+from .util import to_lists, get_labels
 from ..weighted_statistics import effective_sample_size
 
 
@@ -42,7 +43,8 @@ def plot_sample_numbers(
     ax: Axis of the generated plot.
     """
     # preprocess input
-    histories, labels = to_lists_or_default(histories, labels)
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
 
     # create figure
     if ax is None:
@@ -67,10 +69,11 @@ def plot_sample_numbers(
         matrix[:len(sample), i_sample] = sample
 
     # plot bars
-    for i_pop in range(n_pop):
+    for i_pop in reversed(range(n_pop)):
         ax.bar(x=np.arange(n_run),
                height=matrix[i_pop, :],
-               bottom=np.sum(matrix[:i_pop, :], axis=0))
+               bottom=np.sum(matrix[:i_pop, :], axis=0),
+               label=f"Generation {i_pop-1}")
 
     # add labels
     ax.set_xticks(np.arange(n_run))
@@ -78,6 +81,7 @@ def plot_sample_numbers(
     ax.set_title(title)
     ax.set_ylabel("Samples")
     ax.set_xlabel("Run")
+    ax.legend()
     # set size
     if size is not None:
         fig.set_size_inches(size)
@@ -101,7 +105,6 @@ def plot_total_sample_numbers(
 
     Parameters
     ----------
-
     histories: Union[List, History]
         The histories to plot from. History ids must be set correctly.
     labels: Union[List ,str], optional
@@ -122,11 +125,11 @@ def plot_total_sample_numbers(
 
     Returns
     -------
-
     ax: Axis of the generated plot.
     """
     # preprocess input
-    histories, labels = to_lists_or_default(histories, labels)
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
 
     # create figure
     if ax is None:
@@ -186,7 +189,6 @@ def plot_sample_numbers_trajectory(
 
     Parameters
     ----------
-
     histories: Union[List, History]
         The histories to plot from. History ids must be set correctly.
     labels: Union[List ,str], optional
@@ -207,11 +209,11 @@ def plot_sample_numbers_trajectory(
 
     Returns
     -------
-
     ax: Axis of the generated plot.
     """
     # preprocess input
-    histories, labels = to_lists_or_default(histories, labels)
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
 
     # create figure
     if ax is None:
@@ -244,7 +246,8 @@ def plot_sample_numbers_trajectory(
         ax.plot(t, sample, 'x-', label=label)
 
     # add labels
-    ax.legend()
+    if any(lab is not None for lab in labels):
+        ax.legend()
     ax.set_title(title)
     ax.set_ylabel(ylabel)
     ax.set_xlabel("Population index $t$")
@@ -300,7 +303,8 @@ def plot_acceptance_rates_trajectory(
     ax: Axis of the generated plot.
     """
     # preprocess input
-    histories, labels = to_lists_or_default(histories, labels)
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
     if colors is None:
         colors = [None] * len(histories)
     # create figure
