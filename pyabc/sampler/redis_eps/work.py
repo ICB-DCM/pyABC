@@ -8,7 +8,7 @@ from time import time
 import logging
 
 from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, SSA, QUEUE,
+                  N_WORKER, N_LOOKAHEAD_EVAL, SSA, QUEUE,
                   BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
                   idfy)
 from ..util import any_particle_preliminary
@@ -126,6 +126,8 @@ def work_on_population_dynamic(
 
         # increase global evaluation counter (before simulation!)
         particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
+        if is_look_ahead:
+            redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
