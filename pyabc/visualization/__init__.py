@@ -19,8 +19,8 @@ from .sample import (
     plot_sample_numbers_trajectory,
     plot_acceptance_rates_trajectory,
     plot_lookahead_evaluations,
-    plot_lookahead_final_acceptances,
-    plot_lookahead_all_acceptances)
+    plot_lookahead_final_acceptance_fractions,
+    plot_lookahead_acceptance_rates)
 from .epsilon import (
     plot_epsilons)
 from .histogram import (

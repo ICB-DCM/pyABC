@@ -449,7 +449,7 @@ def plot_lookahead_evaluations(
     return ax
 
 
-def plot_lookahead_final_acceptances(
+def plot_lookahead_final_acceptance_fractions(
         sampler_df: Union[pd.DataFrame, str],
         population_sizes: Union[np.ndarray, History],
         relative: bool = False,
@@ -556,14 +556,15 @@ def plot_lookahead_final_acceptances(
     return ax
 
 
-def plot_lookahead_all_acceptances(
+def plot_lookahead_acceptance_rates(
         sampler_df: Union[pd.DataFrame, str],
         t_min: int = 0,
         title: str = "Acceptance rates",
         size: tuple = None,
         ax: mpl.axes.Axes = None):
-    """Plot fraction of look-ahead samples in final acceptances,
-    over generations.
+    """Plot acceptance rates for look-ahead vs ordinary samples.
+    The ratios are relative to all accepted particles, including eventually
+    discarded ones.
 
     Parameters
     ----------
