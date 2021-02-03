@@ -531,7 +531,7 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
 
         # increase accepted counter if in look-ahead mode
         if sample.is_look_ahead:
-            logger.n_lookahead_accepted += n_accepted
+            logger.n_lookahead_accepted += 1
 
         # nothing else to be done
         return sample_with_id, True
