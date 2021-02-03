@@ -53,6 +53,20 @@ def teardown_module():
     os.remove(db_path[len("sqlite:///"):])
 
 
+def test_set_figure_params():
+    """Test setting figure parameters globally."""
+    pyabc.settings.set_figure_params('pyabc')
+    # plot something
+    pyabc.visualization.plot_kde_matrix_highlevel(
+        histories[0], refval=p_true)
+    pyabc.settings.set_figure_params('default')
+    # plot something else
+    pyabc.visualization.plot_walltime(histories, labels)
+    with pytest.raises(ValueError):
+        pyabc.settings.set_figure_params('pypesto')
+    plt.close()
+
+
 def test_epsilons():
     """Test `pypesto.visualization.plot_epsilons`"""
     pyabc.visualization.plot_epsilons(histories, labels)
@@ -141,13 +155,12 @@ def test_kdes():
     pyabc.visualization.plot_kde_matrix(df, w)
 
     # also use the highlevel interfaces
-    pyabc.visualization.plot_kde_1d_highlevel(history, x='p0', size=(4, 5),
-                                              refval=p_true)
-    pyabc.visualization.plot_kde_2d_highlevel(history, x='p0', y='p1',
-                                              size=(7, 5),
-                                              refval=p_true)
-    pyabc.visualization.plot_kde_matrix_highlevel(history, height=27.43,
-                                                  refval=p_true)
+    pyabc.visualization.plot_kde_1d_highlevel(
+        history, x='p0', size=(4, 5), refval=p_true)
+    pyabc.visualization.plot_kde_2d_highlevel(
+        history, x='p0', y='p1', size=(7, 5), refval=p_true)
+    pyabc.visualization.plot_kde_matrix_highlevel(
+        history, height=27.43, refval=p_true)
     plt.close()
 
 
