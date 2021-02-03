@@ -1,4 +1,5 @@
-"""
+"""Kernel density estimate plots
+
 To plot densities from the weighted importance samples, the visualization
 routines employ a kernel density estimate. Note that this can "over-smoothen"
 so that local structure is lost. If this could be the case, it makes sense
@@ -347,7 +348,7 @@ def plot_kde_2d(df, w, x, y, xmin=None, xmax=None, ymin=None, ymax=None,
                        kde=kde)
     if ax is None:
         _, ax = plt.subplots()
-    mesh = ax.pcolormesh(X, Y, PDF, **kwargs)
+    mesh = ax.pcolormesh(X, Y, PDF, shading='auto', **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
     if title is not None:
