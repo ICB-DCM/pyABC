@@ -1,7 +1,10 @@
+"""Walltime plots"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.axes
+from matplotlib.ticker import MaxNLocator
 import datetime
 from typing import List, Union
 
@@ -359,6 +362,8 @@ def plot_eps_walltime_lowlevel(
     ax.set_ylabel("Epsilon")
     ax.set_xscale(xscale)
     ax.set_yscale(yscale)
+    # enforce integer ticks
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     if size is not None:
         fig.set_size_inches(size)
