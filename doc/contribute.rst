@@ -22,11 +22,11 @@ Contribute tests
 
 We're committed to testing our code. Tests that are required to pass are located in the
 ``test`` folder. All files starting with ``test_`` contain tests and are automatically run
-on Travis CI. To run them manually, type::
+on GitHub Actions. They can be run manually via::
 
     python3 -m pytest test
 
-You can also run specific tests only.
+You can also run only specific tests.
 
 We encourage to test whatever possible. However, it might not always be easy to
 test code which is based on random sampling. We still encourage to provide general sanity
@@ -59,7 +59,7 @@ Create an own branch or fork, on which you can implement your changes. To
 get your work merged, please:
 
 1. create a pull request to the develop branch,
-2. check that all tests on travis pass,
+2. check that all tests pass,
 3. check that the documentation is up-to-date,
 4. request a code review from the main developers.
 
