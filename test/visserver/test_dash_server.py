@@ -1,8 +1,13 @@
-import dash
-import dash_html_components as html
+import subprocess
+import os
+import signal
+import time
 
 
-def test_one(dash_duo):
-    app = import_app("dash_test.app")
-    dash_duo.start_server(app)
-    dash_duo.wait_for_text_to_equal("h1", "Hello Dash", timeout=4)
+def test_server_dash():
+    cmd = "abc-server-dash"
+    proc = subprocess.Popen([cmd], stdout=subprocess.PIPE,
+                           shell=True, preexec_fn=os.setsid)
+    time.sleep(5)
+    os.killpg(os.getpgid(proc.pid),
+               signal.SIGTERM)  # Send the signal to all the process groups
