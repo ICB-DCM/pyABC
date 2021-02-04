@@ -1,6 +1,9 @@
+"""Data and summary statistics plots"""
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.axes
 import logging
 from typing import Callable, List, Union
 
@@ -15,7 +18,8 @@ def plot_data_callback(
         f_plot: Callable = None,
         f_plot_aggregated: Callable = None,
         t: int = None,
-        ax=None, **kwargs):
+        ax: matplotlib.axes.Axes = None,
+        **kwargs):
     """
     Plot the summary statistics from the history using callback functions
     to plot single statistics or aggregated values.

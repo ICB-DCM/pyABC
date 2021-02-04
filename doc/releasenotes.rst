@@ -8,6 +8,28 @@ Release Notes
 ...........
 
 
+0.10.13 (2021-02-04)
+--------------------
+
+* Update branch name master -> main in agreement with
+  https://github.com/github/renaming (#406).
+* Notebook improvements:
+  * Add ground truth to noise notebook.
+  * Rename notebook "quickstart" -> "model_selection".
+  * Split notebook tests in 2, extend, reduce test matrix (python 3.7).
+* Improve output at the beginning and end (e.g. no `end_time` at beginning;
+  show duration).
+* Add walltime plots (`plot_total_walltime`, `plot_walltime`,
+  `plot_eps_walltime`).
+* Make sure `ABCSMC.run()` is always properly finished (sampler, history)
+  by a wrapper (all #401).
+* Redis sampler with look-ahead mode:
+  * Fix insufficient logging of look-ahead samples.
+  * Log all accepted particles.
+* Add `plot_lookahead_...` plots for look-ahead mode diagnostics.
+* Add global figure parameter settings for pyABC (all #405).
+
+
 0.10.12 (2021-01-20)
 --------------------
 

@@ -1,17 +1,19 @@
-from pyabc import History
 import pytest
 import os
-import pyabc
-from pyabc.parameters import Parameter
-from pyabc.population import Particle, Population
 import numpy as np
 import pandas as pd
+import datetime
 import tempfile
+import pickle
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
+
+import pyabc
+from pyabc.parameters import Parameter
+from pyabc.population import Particle, Population
+from pyabc import History
 from pyabc.storage.df_to_file import sumstat_to_json
-import pickle
 
 
 def example_df():
@@ -423,13 +425,15 @@ def test_population_to_df(history: History):
     assert len(df) == len(df_js)
 
 
-def test_update_nr_samples(history: History):
+def test_update_after_calibration(history: History):
     history.store_initial_data(None, {}, {}, {}, ["m0"], "", "", "")
     pops = history.get_all_populations()
     assert 0 == pops[pops['t'] == History.PRE_TIME]['samples'].values
-    history.update_nr_samples(History.PRE_TIME, 43)
+    time = datetime.datetime.now()
+    history.update_after_calibration(43, end_time=time)
     pops = history.get_all_populations()
     assert 43 == pops[pops['t'] == History.PRE_TIME]['samples'].values
+    assert pops.population_end_time[0] == time
 
 
 def test_pickle(history: History):
