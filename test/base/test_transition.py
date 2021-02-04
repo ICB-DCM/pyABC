@@ -265,16 +265,16 @@ def test_discrete_jump_transition():
     def freq(weight):
         return p_stay * weight + p_move * (1 - weight)
 
-    assert 0 < sum(res.a == 5) / n_sample <= p_move + 0.05
-    assert freq(0.45) < sum(res.a == 4) / n_sample < freq(0.55)
-    assert freq(0.15) < sum(res.a == 2.5) / n_sample < freq(0.25)
-    assert freq(0.25) < sum(res.a == 0.5) / n_sample < freq(0.35)
+    assert 0 < sum(res.a == 5) / n_sample <= p_move + 0.1
+    assert freq(0.4) < sum(res.a == 4) / n_sample < freq(0.6)
+    assert freq(0.1) < sum(res.a == 2.5) / n_sample < freq(0.3)
+    assert freq(0.2) < sum(res.a == 0.5) / n_sample < freq(0.4)
 
     # test density calculation
-    assert np.isclose(trans.pdf(pd.Series({'a': 5})), freq(0.))
-    assert np.isclose(trans.pdf(pd.Series({'a': 4})), freq(0.5))
-    assert np.isclose(trans.pdf(pd.Series({'a': 2.5})), freq(0.2))
-    assert np.isclose(trans.pdf(pd.Series({'a': 0.5})), freq(0.3))
+    assert abs(trans.pdf(pd.Series({'a': 5})) - freq(0.)) < 1e-3
+    assert abs(trans.pdf(pd.Series({'a': 4})) - freq(0.5)) < 1e-3
+    assert abs(trans.pdf(pd.Series({'a': 2.5})) - freq(0.2)) < 1e-3
+    assert abs(trans.pdf(pd.Series({'a': 0.5})) - freq(0.3)) < 1e-3
 
 
 def test_discrete_jump_transition_errors():

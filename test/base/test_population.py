@@ -35,7 +35,7 @@ def test_basic():
     dct = pop.to_dict()
     assert m in dct.keys() and len(dct) == 1
 
-    assert np.isclose(pop.get_model_probabilities()[m], 1)
+    assert np.isclose(pop.get_model_probabilities().loc[m, 'p'], 1)
 
     dst_val = -3
 

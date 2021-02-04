@@ -8,6 +8,49 @@ Release Notes
 ...........
 
 
+0.10.12 (2021-01-20)
+--------------------
+
+* Check components for their adaptivity for correct application of look-ahead
+  mode (#397).
+
+
+0.10.11 (2021-01-02)
+--------------------
+
+* Require pandas >= 1.2.0 for PEtab.
+
+
+0.10.10 (2021-01-01)
+--------------------
+
+* Uniquely identify redis runs via a uuid.
+* Secure proper termination of processes for redis and dask (all #338).
+* Rework redis sampler, implement a look-ahead mode for pre-defined (#338)
+  and adaptive algorithms (#374) for near-perfect parallel efficiency.
+* Allow subprocessing in multiprocessed redis workers (#377).
+* Add a static-scheduling redis sampler (#379).
+* Check whether epsilon is nan before sampling (#382).
+* Remove useless IdentityFakeDistance (#390).
+
+
+0.10.9 (2020-11-28)
+-------------------
+
+* Add stopping criterion for total walltime (#370).
+
+
+0.10.8 (2020-11-27)
+-------------------
+
+* Allow to normalize acceptance rate plots by ESS (#346).
+* Add a list of pyABC references (#348).
+* Update to petabtests 0.0.0a5 (#362).
+* Add stopping criterion for total number of samples (#364).
+* Remove dill dependency, thus fixing a cloudpickle error, and
+  run selected tests also with python 3.7 (#367).
+
+
 0.10.7 (2020-08-20)
 -------------------
 

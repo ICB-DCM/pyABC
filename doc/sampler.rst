@@ -4,20 +4,44 @@
 Parallel and Distributed Sampling
 =================================
 
+pyABC offers a variety of multi-core parallel and distributed samplers,
+which handle the usually most time-expensive part of an ABC analysis:
+the simulation of data from the model for sampled parameters, the
+generation of summary statistics, and the calculation of the distance
+of simulated and observed data.
+
+The most-used and best-supported samplers are the
+:class:`pyabc.sampler.MulticoreEvalParallelSampler` for multi-processed
+sampling, the
+:class:`pyabc.sampler.RedisEvalParallelSampler` for distributed sampling,
+and for deterministic sampling purposes the non-parallelized
+:class:`pyabc.sampler.SingleCoreSampler`. These should be preferably used,
+however also the other parallelization engines mentioned below should work.
+
 
 Strategies
 ----------
 
-The pyABC package offers a variety of different parallel and distributed
-sampling strategies. Single-core, multi-core and distributed execution is
-supported in a couple different ways.
-The ParticleParallel samplers and the MappingSampler implement the
-"Static Scheduling (STAT)" strategy. The EvalParallel samplers,
-the DaskDistributedSampler and the ConcurrentFutureSampler implement the
-"DynamicScheduling (DYN)" strategy.
-The batchsize argument of the DaskDistributedSampler and the
-ConcurrentFutureSampler allow to interpolate between dynamic and static
-scheduling.
+The various samplers implement two different sampling strategies:
+"Static Scheduling (STAT)" and "Dynamic Scheduling (DYN)". STAT minimizes
+the total execution time, whereas DYN minimizes the wall-time and is
+generally preferable as it finishes faster. For details see [Klinger2018]_.
+
+The `ParticleParallel` samplers, the `MappingSampler` and the
+`RedisStaticSampler` implement the "Static Scheduling (STAT)" strategy.
+
+The `EvalParallel` samplers, the `DaskDistributedSampler` and the
+`ConcurrentFutureSampler` implement the "Dynamic Scheduling (DYN)"
+strategy.
+
+The batchsize arguments of the `DaskDistributedSampler`, the
+`ConcurrentFutureSampler` and the `RedisEvalParallelSampler`
+allow to interpolate between dynamic and static scheduling and to reduce
+communication overhead.
+
+.. [Klinger2018] Emmanuel Klinger, Dennis Rickert, Jan Hasenauer.
+   pyABC: distributed, likelihood-free inference.
+   Bioinformatics 2018; https://doi.org/10.1093/bioinformatics/bty361
 
 
 Single-core execution
@@ -60,18 +84,21 @@ the multi-core samplers are recommended as they are easier to set up.
 
 The :class:`pyabc.sampler.RedisEvalParallelSampler` has very low communication
 overhead, and when running workers and redis-server locally is actually
-competitive with the mutli-core only samplers.
+competitive with the multi-core only samplers.
 The :class:`pyabc.sampler.RedisEvalParallelSampler`
 performs parameter sampling on a per worker basis, and can handle fast
-function evaluations efficiently.
+function evaluations efficiently. Further, it is the only sampler that
+allows proactive sampling to minimize the overall wall-time
+("look-ahead mode").
+The :class:`pyabc.sampler.RedisStaticSampler`
+implements static scheduling and may be of interest if the simulation time
+needs to be minimized.
 
 The :class:`pyabc.sampler.DaskDistributedSampler` has slightly higher
 communication overhead, however this can be compensated with the batch
-submission mode. As the :class:`pyabc.sampler.DaskDistributedSampler`
-performs parameter sampling locally on the master,
+submission mode. As it performs parameter sampling locally on the master,
 it is unsuitable for simulation functions with a runtime below 100ms,
 as network communication becomes prohibitive at this point.
-
 
 The Redis based sampler can require slightly more effort in
 setting up than the Dask based sampler, but has fewer constraints regarding
@@ -161,7 +188,8 @@ Step 2 or 3: Start pyABC
 
 It does not matter what you do first: starting pyABC or starting the
 workers. In your main program, assuming the models, priors and the distance
-function are defined, configure pyABC to use the redis sampler
+function are defined, configure pyABC to use the redis sampler. For the
+:class:`pyabc.sampler.RedisEvalParallelSampler`, use
 
 .. code:: python
 
@@ -173,6 +201,9 @@ function are defined, configure pyABC to use the redis sampler
 
 If password protection is used, in addition pass the argument
 ``password=PASSWORD`` to the RedisEvalParallelSampler.
+
+For the :class:`pyabc.sampler.RedisStaticSampler`, the same applies, no
+modifications of the workers are necessary.
    
 Then start the ABC-SMC run as usual with
 

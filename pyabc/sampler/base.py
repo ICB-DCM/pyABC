@@ -1,8 +1,12 @@
 from abc import ABC, ABCMeta, abstractmethod
 import numpy as np
-from typing import List, Callable
+from typing import Callable, List, Union
 
-from pyabc.population import Particle, Population
+from ..population import Particle, Population
+from ..util import AnalysisVars
+from ..distance import Distance
+from ..epsilon import Epsilon
+from ..acceptor import Acceptor
 
 
 class Sample:
@@ -11,19 +15,23 @@ class Sample:
 
     Parameters
     ----------
-
-    record_rejected: bool
+    record_rejected:
         Whether to record rejected particles as well, along with accepted
         ones.
-    ok: bool
+    is_look_ahead:
+        Whether this sample consists of particles generated in look-ahead mode.
+    ok:
         Whether the sampling process succeeded (usually in generating the
         requested number of particles).
     """
 
-    def __init__(self, record_rejected: bool = False, ok: bool = True):
-        self._particles = []
-        self.record_rejected = record_rejected
-        self.ok = ok
+    def __init__(self, record_rejected: bool = False,
+                 is_look_ahead: bool = False,
+                 ok: bool = True):
+        self.particles: List[Particle] = []
+        self.record_rejected: bool = record_rejected
+        self.is_look_ahead: bool = is_look_ahead
+        self.ok: bool = ok
 
     @property
     def all_sum_stats(self):
@@ -38,7 +46,7 @@ class Sample:
             particles added and accepted to this sample via append().
         """
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles), [])
+                    for particle in self.particles), [])
 
     def first_m_sum_stats(self, m):
         """
@@ -51,25 +59,25 @@ class Sample:
             Concatenation of all the all_sum_stats lists of the first <= m
             particles added and accepted to this sample via append().
         """
-        m = min(len(self._particles), m)
+        m = min(len(self.particles), m)
 
         return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self._particles[:m]), [])
+                    for particle in self.particles[:m]), [])
 
     def first_m_particles(self, m) -> List:
-        m = min(len(self._particles), m)
+        m = min(len(self.particles), m)
 
-        return self._particles[:m]
+        return self.particles[:m]
 
     @property
-    def _accepted_particles(self) -> List[Particle]:
+    def accepted_particles(self) -> List[Particle]:
         """
         Returns
         -------
 
         List of only the accepted particles.
         """
-        return [particle for particle in self._particles if particle.accepted]
+        return [particle for particle in self.particles if particle.accepted]
 
     def append(self, particle: Particle):
         """
@@ -85,13 +93,14 @@ class Sample:
 
         # add to population if accepted
         if particle.accepted or self.record_rejected:
-            self._particles.append(particle)
+            self.particles.append(particle)
 
     def __add__(self, other: "Sample"):
-        sample = Sample(self.record_rejected)
+        sample = Sample(record_rejected=self.record_rejected)
         # sample's list of particles is the concatenation of both samples'
         # lists
-        sample._particles = self._particles + other._particles
+        sample.particles = self.particles + other.particles
+        # the other attributes may keep their defaults
         return sample
 
     @property
@@ -103,7 +112,7 @@ class Sample:
         n_accepted: int
             Number of accepted particles.
         """
-        return len(self._accepted_particles)
+        return len(self.accepted_particles)
 
     def get_accepted_population(self) -> Population:
         """
@@ -113,7 +122,7 @@ class Sample:
         population: Population
             A population of only the accepted particles.
         """
-        return Population(self._accepted_particles)
+        return Population(self.accepted_particles)
 
 
 class SampleFactory:
@@ -126,7 +135,6 @@ class SampleFactory:
 
     Parameters
     ----------
-
     record_rejected: bool
         Corresponds to Sample.record_rejected.
     """
@@ -134,25 +142,27 @@ class SampleFactory:
     def __init__(self, record_rejected: bool = False):
         self.record_rejected = record_rejected
 
-    def __call__(self):
+    def __call__(self, is_look_ahead: bool = False):
         """
         Create a new empty sample.
         """
-        return Sample(self.record_rejected)
+        return Sample(
+            record_rejected=self.record_rejected, is_look_ahead=is_look_ahead)
 
 
 def wrap_sample(f):
-    """
-    Wrapper for Sampler.sample_until_n_accepted.
+    """Wrapper for Sampler.sample_until_n_accepted.
     Checks whether the sampling output is valid.
     """
-    def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
-        sample = f(self, n, simulate_one, max_eval, all_accepted)
+    def sample_until_n_accepted(self, n, simulate_one, t, **kwargs):
+        sample = f(self, n, simulate_one, t, **kwargs)
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
+        if any(particle.preliminary for particle in sample.particles):
+            raise AssertionError(
+                "There cannot be non-evaluated particles.")
         return sample
     return sample_until_n_accepted
 
@@ -187,6 +197,9 @@ class Sampler(ABC, metaclass=SamplerMeta):
         Set via
         >>> sampler = Sampler()
         >>> sampler.show_progress = True
+    analysis_id: str
+        A universal unique id of the analysis, automatically generated by the
+        inference routine.
     """
 
     def __init__(self):
@@ -194,17 +207,30 @@ class Sampler(ABC, metaclass=SamplerMeta):
         self.sample_factory: SampleFactory = \
             SampleFactory(record_rejected=False)
         self.show_progress: bool = False
+        self.analysis_id: Union[str, None] = None
 
     def _create_empty_sample(self) -> Sample:
         return self.sample_factory()
 
+    def set_analysis_id(self, analysis_id: str):
+        """Set the analysis id.
+        Called by the inference routine.
+        The default is to just obediently set it. Specific samplers may want to
+        check whether there are conflicting analyses.
+        """
+        self.analysis_id = analysis_id
+
     @abstractmethod
     def sample_until_n_accepted(
-            self,
-            n: int,
-            simulate_one: Callable,
-            max_eval: int = np.inf,
-            all_accepted: bool = False) -> Sample:
+        self,
+        n: int,
+        simulate_one: Callable,
+        t: int,
+        *,
+        max_eval: int = np.inf,
+        all_accepted: bool = False,
+        ana_vars: AnalysisVars = None,
+    ) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.
         population) of particles.
@@ -218,6 +244,8 @@ class Sampler(ABC, metaclass=SamplerMeta):
             sampling parameters, simulating data, and comparing to observed
             data to check for acceptance, as indicated via the
             particle.accepted flag.
+        t:
+            Generation index for which to sample.
         max_eval:
             Maximum number of evaluations to perform. Some samplers can check
             this condition directly and can thus terminate proactively.
@@ -227,9 +255,29 @@ class Sampler(ABC, metaclass=SamplerMeta):
             reduce the computational overhead for dynamic schedulers. This
             is usually in particular the case in the initial calibration
             iteration.
+        ana_vars:
+            Various analysis variables. Some samplers can use these e.g. for
+            proactive sampling.
 
         Returns
         -------
         sample: :class:`pyabc.sampler.Sample`
             The generated sample, which contains the new population.
+        """
+
+    def stop(self) -> None:
+        """Stop the sampler.
+        Called by the inference routine when an analysis is finished.
+        Some samplers may need to e.g. finish ongoing processes or close
+        servers.
+        """
+
+    def check_analysis_variables(
+            self,
+            distance_function: Distance,
+            eps: Epsilon,
+            acceptor: Acceptor) -> None:
+        """Raise if any analysis variable is not conform with the sampler.
+        This check serves in particular to ensure that all components are fit
+        for look-ahead sampling. Default: Do nothing.
         """

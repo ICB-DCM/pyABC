@@ -69,3 +69,10 @@ class DaskDistributedSampler(EPSMixin, Sampler):
 
     def client_cores(self):
         return sum(self.my_client.ncores().values())
+
+    def stop(self):
+        """Close the dask client.
+        If it was started without arguments, the
+        local cluster that was started at the same time is also closed.
+        """
+        self.my_client.close()

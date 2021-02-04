@@ -28,7 +28,6 @@ from .random_variables import (
 from .distance import (
     Distance,
     NoDistance,
-    IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
     PNormDistance,
@@ -72,6 +71,9 @@ from .sampler import (
     MappingSampler,
     DaskDistributedSampler,
     RedisEvalParallelSampler,
+    RedisStaticSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter,
     MulticoreEvalParallelSampler,
     ConcurrentFutureSampler)
 from .inference import ABCSMC
@@ -106,14 +108,18 @@ from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
 from . import visualization
+from . import settings
 from .version import __version__  # noqa: F401
 
+
+# Set log level
 try:
     loglevel = os.environ['ABC_LOG_LEVEL'].upper()
 except KeyError:
     loglevel = 'INFO'
-
 logging.basicConfig(level=loglevel)
 
+# Set number of threads e.g. for numpy. as pyabc uses parallelization on its
+#  own, this is a safer default.
 if 'OMP_NUM_THREADS' not in os.environ:
     os.environ['OMP_NUM_THREADS'] = '1'

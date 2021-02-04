@@ -26,7 +26,7 @@ def sampler(request):
 
 
 def test_no_pickle(sampler):
-    sampler.sample_until_n_accepted(10, unpickleable)
+    sampler.sample_until_n_accepted(10, unpickleable, 0)
 
 
 def raise_exception(*args):
@@ -36,4 +36,4 @@ def raise_exception(*args):
 
 def test_exception_from_worker_propagated(sampler):
     with pytest.raises(ProcessError):
-        sampler.sample_until_n_accepted(10, raise_exception)
+        sampler.sample_until_n_accepted(10, raise_exception, 0)

@@ -5,7 +5,6 @@ from scipy import linalg as la
 from typing import List, Callable, Union
 import logging
 
-from ..sampler import Sampler
 from .scale import standard_deviation, span
 from .base import Distance, to_distance
 from ..storage import save_dict_to_json
@@ -208,7 +207,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.x_0 = None
 
     def configure_sampler(self,
-                          sampler: Sampler):
+                          sampler):
         """
         Make the sampler return also rejected particles,
         because these are needed to get a better estimate of the summary
@@ -223,6 +222,12 @@ class AdaptivePNormDistance(PNormDistance):
         if self.adaptive:
             sampler.sample_factory.record_rejected = True
 
+    def requires_calibration(self) -> bool:
+        return self.initial_weights is None
+
+    def is_adaptive(self) -> bool:
+        return self.adaptive
+
     def initialize(self,
                    t: int,
                    get_all_sum_stats: Callable[[], List[dict]],
@@ -234,7 +239,7 @@ class AdaptivePNormDistance(PNormDistance):
         self.x_0 = x_0
 
         # initial weights pre-defined
-        if self.initial_weights is not None:
+        if not self.requires_calibration():
             self.weights[t] = self.initial_weights
             return
 
@@ -250,7 +255,7 @@ class AdaptivePNormDistance(PNormDistance):
         """
         Update weights.
         """
-        if not self.adaptive:
+        if not self.is_adaptive():
             return False
 
         # execute function
@@ -408,6 +413,12 @@ class AggregatedDistance(Distance):
         self.weights = weights
         self.factors = factors
 
+    def requires_calibration(self) -> bool:
+        return any(d.requires_calibration() for d in self.distances)
+
+    def is_adaptive(self) -> bool:
+        return any(d.is_adaptive() for d in self.distances)
+
     def initialize(
             self,
             t: int,
@@ -420,7 +431,7 @@ class AggregatedDistance(Distance):
 
     def configure_sampler(
             self,
-            sampler: Sampler):
+            sampler):
         """
         Note: `configure_sampler` is applied by all distances sequentially,
         so care must be taken that they perform no contradictory operations
@@ -552,6 +563,14 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
             scale_function = span
         self.scale_function = scale_function
         self.log_file = log_file
+
+    def requires_calibration(self) -> bool:
+        return (self.initial_weights is None
+                or any(d.requires_calibration() for d in self.distances))
+
+    def is_adaptive(self) -> bool:
+        return (self.adaptive
+                or any(d.is_adaptive() for d in self.distances))
 
     def initialize(self,
                    t: int,
@@ -717,6 +736,9 @@ class PCADistance(DistanceWithMeasureList):
         self._whitening_transformation_matrix = (
             v.dot(np.diag(1. / np.sqrt(w))).dot(v.T))
 
+    def requires_calibration(self) -> bool:
+        return True
+
     def initialize(self,
                    t: int,
                    get_all_sum_stats: Callable[[], List[dict]],
@@ -812,6 +834,9 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
                               self.upper(measures[measure])
                               - self.lower(measures[measure])
                               for measure in self.measures_to_use}
+
+    def requires_calibration(self) -> bool:
+        return True
 
     def initialize(self,
                    t: int,

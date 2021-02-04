@@ -1,2 +1,7 @@
+"""Samplers using a redis server as communication platform."""
+
 from .sampler import RedisEvalParallelSampler
-from .redis_sampler_server_starter import RedisEvalParallelSamplerServerStarter
+from .sampler_static import RedisStaticSampler
+from .server_starter import (
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter)
