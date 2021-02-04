@@ -42,6 +42,8 @@ N_REQ = "n_req"
 N_FAIL = "n_fail"
 #  active workers
 N_WORKER = "n_worker"
+#  lookahead evaluations
+N_LOOKAHEAD_EVAL = "n_lookahead_eval"
 #  jobs (static only)
 N_JOB = "n_job"
 

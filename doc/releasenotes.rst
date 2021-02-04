@@ -8,6 +8,13 @@ Release Notes
 ...........
 
 
+0.10.12 (2021-01-20)
+--------------------
+
+* Check components for their adaptivity for correct application of look-ahead
+  mode (#397).
+
+
 0.10.11 (2021-01-02)
 --------------------
 

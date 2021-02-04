@@ -1,4 +1,7 @@
+"""Bayesian credible interval plots"""
+
 import matplotlib.pyplot as plt
+import matplotlib.axes
 from matplotlib.lines import Line2D
 from typing import List, Union
 import numpy as np
@@ -6,7 +9,7 @@ import numpy as np
 from ..storage import History
 from ..weighted_statistics import weighted_quantile
 from ..transition import Transition, MultivariateNormalTransition
-from .util import to_lists_or_default
+from .util import to_lists, get_labels
 
 
 def plot_credible_intervals(
@@ -23,13 +26,11 @@ def plot_credible_intervals(
         refval_color: str = 'C1',
         kde: Transition = None,
         kde_1d: Transition = None,
-        arr_ax: List = None):
-    """
-    Plot credible intervals over time.
+        arr_ax: List[matplotlib.axes.Axes] = None):
+    """Plot credible intervals over time.
 
     Parameters
     ----------
-
     history: History
         The history to extract data from.
     m: int, optional (default = 0)
@@ -66,7 +67,6 @@ def plot_credible_intervals(
 
     Returns
     -------
-
     arr_ax: Array of generated axes.
     """
     if levels is None:
@@ -222,7 +222,8 @@ def plot_credible_intervals_for_time(
     kde_1d: Transition, optional (default = MultivariateNormalTransition)
         The KDE to use for `show_kde_max_1d`.
     """
-    histories, labels = to_lists_or_default(histories, labels)
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
     n_run = len(histories)
     if ms is None:
         ms = [0] * n_run

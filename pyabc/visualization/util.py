@@ -1,36 +1,67 @@
-from ..storage import History
+"""Visualization util functions"""
+
+from collections.abc import Sequence
+import numpy as np
 
 
-def to_lists_or_default(histories, labels=None):
-    """
-    Interpret input using default values, and convert to lists of the same
-    length.
-    """
-    if isinstance(histories, History):
-        histories = [histories]
+def to_lists(*args):
+    """Convert to lists of the same length."""
+    # tuple to array
+    args = list(args)
 
-    if isinstance(labels, str):
+    # entries to arrays
+    for ix, arg in enumerate(args):
+        if not isinstance(arg, list):
+            args[ix] = [arg]
+
+    # get length
+    length = max(len(arg) for arg in args)
+
+    # broadcast singulars
+    for ix, arg in enumerate(args):
+        if len(arg) == 1 and len(arg) != length:
+            args[ix] = [arg[0]] * length
+
+    # check length consistency
+    if any(len(arg) != length for arg in args):
+        raise AssertionError(f"The argument lengths are inconsistent: {args}")
+
+    if len(args) == 1:
+        return args[0]
+    return args
+
+
+def get_labels(labels, n: int, default_label: str = "Run"):
+    """Create list of length `n` labels, using `default_label` if the only
+    `label is None`."""
+    # entry to array
+    if not isinstance(labels, list):
         labels = [labels]
-    elif labels is None:
-        labels = ["History " + str(j) for j in range(len(histories))]
 
-    if len(histories) != len(labels):
-        raise ValueError("The lengths of histories and labels do not match.")
+    # if the length is 1, add identifiers
+    if n != len(labels) == 1:
+        label = labels[0]
+        if label is None:
+            label = default_label
+        labels = [f"{label} {ix}" for ix in range(n)]
 
-    return histories, labels
+    # check length consistency
+    if len(labels) != n:
+        raise AssertionError("The number of labels does not fit")
+
+    return labels
 
 
-def format_plot_matrix(arr_ax, par_names):
-    """
-    Clear all labels and legends, and set the left-most and bottom-most
+def format_plot_matrix(arr_ax: np.ndarray, par_names: Sequence):
+    """Clear all labels and legends, and set the left-most and bottom-most
     labels to the parameter names.
 
     Parameters
     ----------
-
-    arr_ax: array of matplotlib.axes.Axes
+    arr_ax:
+        Array of mpl.axes.Axes.
         Shape (n_par, n_par) where len(par_names) == n_par.
-    par_names: list of str
+    par_names:
         Parameter names to be used as labels.
     """
     n_par = len(par_names)

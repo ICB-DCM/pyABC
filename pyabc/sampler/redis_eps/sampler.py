@@ -18,10 +18,10 @@ from ...distance import Distance
 from ...epsilon import Epsilon
 from ...acceptor import Acceptor
 from ...sampler import Sampler, Sample
-from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC,
-                  SLEEP_TIME, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
-                  GENERATION, idfy)
+from .cmd import (
+    SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
+    N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
+    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, idfy)
 from .redis_logging import RedisSamplerLogger
 
 logger = logging.getLogger("Redis-Sampler")
@@ -258,6 +258,8 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # set total number of evaluations
         self.nr_evaluations_ = int(
             self.redis.get(idfy(N_EVAL, ana_id, t)).decode())
+        n_lookahead_eval = \
+            int(self.redis.get(idfy(N_LOOKAHEAD_EVAL, ana_id, t)).decode())
 
         # remove all time-specific variables
         self.clear_generation_t(t)
@@ -268,7 +270,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # logging
         self.logger.add_row(
             t=t, n_evaluated=self.nr_evaluations_,
-            n_accepted=sample.n_accepted)
+            n_lookahead=n_lookahead_eval)
         self.logger.write()
 
         return sample
@@ -288,6 +290,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .set(idfy(N_ACC, ana_id, t), 0)
          .set(idfy(N_REQ, ana_id, t), n)
          .set(idfy(N_FAIL, ana_id, t), 0)
+         .set(idfy(N_LOOKAHEAD_EVAL, ana_id, t), 0)
          # encode as int
          .set(idfy(ALL_ACCEPTED, ana_id, t), int(all_accepted))
          .set(idfy(N_WORKER, ana_id, t), 0)
@@ -328,6 +331,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .delete(idfy(N_ACC, ana_id, t))
          .delete(idfy(N_REQ, ana_id, t))
          .delete(idfy(N_FAIL, ana_id, t))
+         .delete(idfy(N_LOOKAHEAD_EVAL, ana_id, t))
          .delete(idfy(ALL_ACCEPTED, ana_id, t))
          .delete(idfy(N_WORKER, ana_id, t))
          .delete(idfy(BATCH_SIZE, ana_id, t))
@@ -514,10 +518,6 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
     # 0 is relative start time, 1 is the actual sample
     sample = sample_with_id[1]
 
-    # check whether the sample was generated in look-ahead mode
-    if sample.is_look_ahead:
-        logger.n_lookahead += 1
-
     # check whether there are preliminary particles
     if not any(particle.preliminary for particle in sample.particles):
         n_accepted = sum(particle.accepted for particle in sample.particles)
@@ -525,9 +525,14 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
             # this should never happen
             raise AssertionError(
                 "Expected exactly one accepted particle in sample.")
+
+        # increase general acceptance counter
+        logger.n_accepted += 1
+
         # increase accepted counter if in look-ahead mode
         if sample.is_look_ahead:
-            logger.n_lookahead_accepted += n_accepted
+            logger.n_lookahead_accepted += 1
+
         # nothing else to be done
         return sample_with_id, True
 
@@ -546,9 +551,12 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
         sample.particles[i_particle] = \
             evaluate_preliminary_particle(particle, t, ana_vars)
 
-        # update the redis shared counter
+        # react to acceptance
         if sample.particles[i_particle].accepted:
+            # increase redis shared counter
             redis.incr(idfy(N_ACC, ana_id, t), 1)
+            # increase general and lookahead counter
+            logger.n_accepted += 1
             logger.n_lookahead_accepted += 1
 
     return (sample_with_id,

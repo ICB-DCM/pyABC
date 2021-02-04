@@ -4,13 +4,28 @@
 Parallel and Distributed Sampling
 =================================
 
+pyABC offers a variety of multi-core parallel and distributed samplers,
+which handle the usually most time-expensive part of an ABC analysis:
+the simulation of data from the model for sampled parameters, the
+generation of summary statistics, and the calculation of the distance
+of simulated and observed data.
+
+The most-used and best-supported samplers are the
+:class:`pyabc.sampler.MulticoreEvalParallelSampler` for multi-processed
+sampling, the
+:class:`pyabc.sampler.RedisEvalParallelSampler` for distributed sampling,
+and for deterministic sampling purposes the non-parallelized
+:class:`pyabc.sampler.SingleCoreSampler`. These should be preferably used,
+however also the other parallelization engines mentioned below should work.
+
 
 Strategies
 ----------
 
-The pyABC package offers a variety of different parallel and distributed
-sampling strategies. Single-core, multi-core and distributed execution is
-supported in a couple different ways.
+The various samplers implement two different sampling strategies:
+"Static Scheduling (STAT)" and "Dynamic Scheduling (DYN)". STAT minimizes
+the total execution time, whereas DYN minimizes the wall-time and is
+generally preferable as it finishes faster. For details see [Klinger2018]_.
 
 The `ParticleParallel` samplers, the `MappingSampler` and the
 `RedisStaticSampler` implement the "Static Scheduling (STAT)" strategy.
@@ -23,6 +38,10 @@ The batchsize arguments of the `DaskDistributedSampler`, the
 `ConcurrentFutureSampler` and the `RedisEvalParallelSampler`
 allow to interpolate between dynamic and static scheduling and to reduce
 communication overhead.
+
+.. [Klinger2018] Emmanuel Klinger, Dennis Rickert, Jan Hasenauer.
+   pyABC: distributed, likelihood-free inference.
+   Bioinformatics 2018; https://doi.org/10.1093/bioinformatics/bty361
 
 
 Single-core execution
