@@ -50,7 +50,7 @@ do
       pip install petabtests
     ;;
 
-    docs)
+    doc)
       # documentation
       sudo apt-get install pandoc
     ;;

@@ -184,7 +184,7 @@ jobs:
       run: |
         .github/workflows/ci_dependencies.sh
         pip install jupyter
-        pip install -e .
+        pip install -e .[examples]
 
     - name: Run notebooks
       timeout-minutes: 10
@@ -216,7 +216,7 @@ jobs:
       run: |
         .github/workflows/ci_dependencies.sh R
         pip install jupyter
-        pip install -e .[R]
+        pip install -e .[examples,R]
 
     - name: Run notebooks
       timeout-minutes: 10
@@ -244,9 +244,10 @@ jobs:
         path: ~/.cache
         key: ${{ runner.os }}-ci-docs
 
-    - name: Install apt dependencies
+    - name: Install dependencies
       run: |
         .github/workflows/ci_dependencies.sh doc
+        pip install tox
 
     - name: Run tox
       timeout-minutes: 10
