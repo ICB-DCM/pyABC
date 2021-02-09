@@ -6,6 +6,9 @@ python -m pip install --upgrade pip
 # wheel
 pip install wheel
 
+# tox
+pip install tox
+
 # optional dependencies
 for par in "$@"
 do

@@ -25,18 +25,13 @@ jobs:
       with:
         path: ~/.cache
         key: ${{ runner.os }}-ci-base
-        restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: |
-        .github/workflows/install_deps.sh base R
-        pip install -e .[R,test]
+      run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
       timeout-minutes: 7
-      run: |
-        python -m pytest --cov=pyabc --cov-report=xml \
-          test/base test/visualization test_performance -s
+      run: tox -e base
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -64,17 +59,13 @@ jobs:
       with:
         path: ~/.cache
         key: ${{ runner.os }}-ci-external
-        restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: |
-        .github/workflows/install_deps.sh base R
-        pip install -e .[R,test]
+      run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
       timeout-minutes: 10
-      run: |
-        python -m pytest --cov=pyabc --cov-report=xml test/external -s
+      run: tox -e external
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -102,17 +93,13 @@ jobs:
       with:
         path: ~/.cache
         key: ${{ runner.os }}-ci-petab
-        restore-keys: ${{ runner.os }}-
 
     - name: Install dependencies
-      run: |
-        .github/workflows/install_deps.sh petab
-        pip install -e .[petab,test]
+      run: .github/workflows/install_deps.sh petab
 
     - name: Run tests
       timeout-minutes: 10
-      run: |
-        python -m pytest --cov=pyabc --cov-report=xml test/petab -s
+      run: tox -e petab
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -139,19 +126,14 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/Library/Caches/pip
-          key: ${{ runner.os }}-ci-base
-          restore-keys: ${{ runner.os }}-
+          key: ${{ runner.os }}-ci-mac
 
       - name: Install dependencies
-        run: |
-          .github/workflows/install_deps.sh
-          pip install -e .[test]
+        run: .github/workflows/install_deps.sh
 
       - name: Run tests
         timeout-minutes: 4
-        run: |
-          python -m pytest --cov=pyabc --cov-report=xml \
-            test/base/test_macos.py -s
+        run: tox -e mac
 
       - name: Coverage
         uses: codecov/codecov-action@v1

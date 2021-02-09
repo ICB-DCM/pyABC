@@ -17,10 +17,6 @@
 #eclipse
 .settings/
 
-# Cython created C files
-*.c
-*.cpp
-
 # redis
 dump.rdb
 
@@ -49,43 +45,21 @@ __pycache__
 # Installer logs
 pip-log.txt
 
-# Unit test / coverage reports
-.coverage
-.tox
+# Coverage reports
+.coverage*
 nosetests.xml
+/htmlcov
+coverage.xml
 
-# Translations
-*.mo
+# tox
+.tox
 
-# Mr Developer
-.mr.developer.cfg
-.project
-.pydevproject
-
-#images
-#*.png
-Thumbs.db
-
+# vim
 *.swp
-
 
 #documentation
 doc/_build
 
-
-# data
-data/raw
-data/figures
-
-
-data/.snakemake
-data/.spyderproject
-data/.spyproject
-data/processed
-examples/*.err
-examples/*.out
-doc/*.log
-*.kdev*
 .pytest_cache
 dask-worker-space
 *.lock
