@@ -65,6 +65,7 @@ def test_rvs_return_type(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
     sample = transition.rvs()
+    sample = pd.Series(sample)
     assert (sample.index == pd.Index(["a", "b"])).all()
 
 
@@ -178,7 +179,7 @@ def test_many_particles(transition: Transition):
 def test_argument_order(transition: Transition):
     """
     Dataframes passed to the transition kernels are generated from dicts.
-    Order of parameter names is no guaranteed.
+    Order of parameter names is not guaranteed.
     The Transition kernel has to take care of the correct sorting.
     """
     df, w = data(20)
@@ -271,10 +272,10 @@ def test_discrete_jump_transition():
     assert freq(0.2) < sum(res.a == 0.5) / n_sample < freq(0.4)
 
     # test density calculation
-    assert abs(trans.pdf(pd.Series({'a': 5})) - freq(0.)) < 1e-3
-    assert abs(trans.pdf(pd.Series({'a': 4})) - freq(0.5)) < 1e-3
-    assert abs(trans.pdf(pd.Series({'a': 2.5})) - freq(0.2)) < 1e-3
-    assert abs(trans.pdf(pd.Series({'a': 0.5})) - freq(0.3)) < 1e-3
+    assert abs(trans.pdf(Parameter({'a': 5})) - freq(0.)) < 1e-3
+    assert abs(trans.pdf(Parameter({'a': 4})) - freq(0.5)) < 1e-3
+    assert abs(trans.pdf(Parameter({'a': 2.5})) - freq(0.2)) < 1e-3
+    assert abs(trans.pdf(Parameter({'a': 0.5})) - freq(0.3)) < 1e-3
 
 
 def test_discrete_jump_transition_errors():
@@ -294,7 +295,7 @@ def test_discrete_jump_transition_errors():
     # density calculation
     trans.fit(pd.DataFrame({'a': [42, 42, 43]}), np.ones(3))
     with pytest.raises(ValueError):
-        trans.pdf(pd.Series({'a': 44}))
+        trans.pdf(Parameter({'a': 44}))
 
 
 def test_model_gets_parameter(transition_single: Transition):
