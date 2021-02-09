@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
     - name: Check out repository
@@ -29,7 +29,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh base R
+        .github/workflows/install_deps.sh base R
         pip install -e .[R,test]
 
     - name: Run tests
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
     - name: Check out repository
@@ -68,7 +68,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh base R
+        .github/workflows/install_deps.sh base R
         pip install -e .[R,test]
 
     - name: Run tests
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -106,7 +106,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh petab
+        .github/workflows/install_deps.sh petab
         pip install -e .[petab,test]
 
     - name: Run tests
@@ -124,7 +124,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9]
 
     steps:
       - name: Check out repository
@@ -144,7 +144,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          .github/workflows/ci_dependencies.sh
+          .github/workflows/install_deps.sh
           pip install -e .[test]
 
       - name: Run tests
@@ -163,7 +163,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -182,7 +182,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh
+        .github/workflows/install_deps.sh
         pip install jupyter
         pip install -e .[examples]
 
@@ -195,7 +195,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -214,7 +214,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh R
+        .github/workflows/install_deps.sh R
         pip install jupyter
         pip install -e .[examples,R]
 
@@ -242,11 +242,11 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-docs
+        key: ${{ runner.os }}-ci-quality
 
     - name: Install dependencies
       run: |
-        .github/workflows/ci_dependencies.sh doc
+        .github/workflows/install_deps.sh doc
         pip install tox
 
     - name: Run tox
