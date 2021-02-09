@@ -98,7 +98,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         ----------
         x:
             Parameter. If x is a Parameter or Series,
-            then x should have the the columns from X passed to the fit method
+            then x should have the columns from X passed to the fit method
             as indices.
             If x is a DataFrame, then x should have the same columns as X
             passed before to the fit method. The order of the columns is not
