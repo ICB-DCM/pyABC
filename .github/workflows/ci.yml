@@ -231,6 +231,6 @@ jobs:
         .github/workflows/install_deps.sh doc
         pip install tox
 
-    - name: Run tox
+    - name: Run quality checks
       timeout-minutes: 10
-      run: tox
+      run: tox -e project,flake8,doc
