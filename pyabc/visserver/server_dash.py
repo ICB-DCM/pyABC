@@ -628,4 +628,4 @@ def displayClick(btn_click, tab_type):
 @click.option("--port", default=8050, type=int,
               help="The port on which the server runs")
 def run_app(debug, port):
-    app.run_server(debug=debug, port=port)
+    app.run_server(debuwwwg=debug, port=port)
