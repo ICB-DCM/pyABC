@@ -91,20 +91,20 @@ def PicklingMulticoreEvalParallelSampler():
 
 
 @pytest.fixture(params=[SingleCoreSampler,
-                        RedisEvalParallelSamplerWrapper,
-                        RedisEvalParallelSamplerLookAheadDelayWrapper,
-                        RedisStaticSamplerWrapper,
-                        MulticoreEvalParallelSampler,
-                        MultiProcessingMappingSampler,
-                        MulticoreParticleParallelSampler,
-                        PicklingMulticoreParticleParallelSampler,
-                        PicklingMulticoreEvalParallelSampler,
+                        # RedisEvalParallelSamplerWrapper,
+                        # RedisEvalParallelSamplerLookAheadDelayWrapper,
+                        # RedisStaticSamplerWrapper,
+                        # MulticoreEvalParallelSampler,
+                        # MultiProcessingMappingSampler,
+                        # MulticoreParticleParallelSampler,
+                        # PicklingMulticoreParticleParallelSampler,
+                        # PicklingMulticoreEvalParallelSampler,
                         MappingSampler,
-                        DaskDistributedSampler,
-                        DaskDistributedSamplerBatch,
-                        GenericFutureWithThreadPool,
-                        GenericFutureWithProcessPool,
-                        GenericFutureWithProcessPoolBatch,
+                        # DaskDistributedSampler,
+                        # DaskDistributedSamplerBatch,
+                        # GenericFutureWithThreadPool,
+                        # GenericFutureWithProcessPool,
+                        # GenericFutureWithProcessPoolBatch,
                         ])
 def sampler(request):
     s = request.param()
