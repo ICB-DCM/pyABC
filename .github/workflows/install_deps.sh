@@ -46,11 +46,6 @@ do
       # AMICI dependencies
       sudo apt-get install swig3.0 libatlas-base-dev libhdf5-serial-dev
       sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
-      # install dev AMICI for latest changes
-      pip install \
-        git+https://github.com/amici-dev/amici.git@develop#egg=amici\&subdirectory=python/sdist
-      # install test suite
-      pip install petabtests
     ;;
 
     doc)
