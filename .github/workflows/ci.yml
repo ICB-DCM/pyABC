@@ -30,7 +30,7 @@ jobs:
       run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
-      timeout-minutes: 8
+      timeout-minutes: 10
       run: tox -e base
 
     - name: Coverage
@@ -132,7 +132,7 @@ jobs:
         run: .github/workflows/install_deps.sh
 
       - name: Run tests
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: tox -e mac
 
       - name: Coverage
