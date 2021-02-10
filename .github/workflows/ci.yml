@@ -24,7 +24,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-base
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-dummy
 
     - name: Install dependencies
       run: .github/workflows/install_deps.sh base R
@@ -33,7 +33,7 @@ jobs:
       timeout-minutes: 10
       run: |
           pip install -e .[test,R]
-          pytest test test/base/test_samplers.py::test_two_competing_gaussians_multiple_population
+          pytest test/base/test_samplers.py::test_two_competing_gaussians_multiple_population
 
     - name: Coverage
       uses: codecov/codecov-action@v1

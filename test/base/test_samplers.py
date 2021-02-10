@@ -236,6 +236,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
             f"Had {pre_evals} simulations in the calibration iteration, "
             f"but a maximum of {max_expected} would have been sufficient for "
             f"the population size of {pop_size.nr_particles}.")
+    print("all done")
 
 
 def test_progressbar(sampler):
