@@ -163,15 +163,11 @@ jobs:
         key: ${{ runner.os }}-ci-notebooks1
 
     - name: Install dependencies
-      run: |
-        .github/workflows/install_deps.sh
-        pip install jupyter
-        pip install -e .[examples]
+      run: .github/workflows/install_deps.sh
 
     - name: Run notebooks
       timeout-minutes: 10
-      run: |
-        test/run_notebooks.sh 1
+      run: tox -e notebooks1
 
   notebooks2:
     runs-on: ubuntu-latest
@@ -195,15 +191,11 @@ jobs:
         key: ${{ runner.os }}-ci-notebooks2
 
     - name: Install dependencies
-      run: |
-        .github/workflows/install_deps.sh R
-        pip install jupyter
-        pip install -e .[examples,R]
+      run: .github/workflows/install_deps.sh R
 
     - name: Run notebooks
       timeout-minutes: 10
-      run: |
-        test/run_notebooks.sh 2
+      run: tox -e notebooks2
 
   quality:
     runs-on: ubuntu-latest
