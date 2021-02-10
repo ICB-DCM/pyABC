@@ -3,6 +3,63 @@
 Contribute
 ==========
 
+Workflow
+--------
+
+If you start working on a new feature or a fix, please create an issue on
+GitHub shortly describing the issue and assign yourself.
+Your startpoint should always be the ``develop`` branch, which contains the
+lastest updates.
+
+Create an own branch or fork, on which you can implement your changes. To
+get your work merged, please:
+
+1. create a pull request to the ``develop`` branch with a meaningful summary,
+2. check that code changes are covered by tests, and all tests pass,
+3. check that the documentation is up-to-date,
+4. request a code review from the main developers.
+
+Environment
+-----------
+
+If you contribute to the development of pyABC, install developer requirements
+via::
+
+    pip install -r requirements-dev.txt
+
+Pre-commit hooks
+~~~~~~~~~~~~~~~~
+
+Firstly, this installs a `pre-commit <https://pre-commit.com/>`_ tool.
+To add those hooks to the `.git` folder of your local clone such that they are
+run on every commit, run::
+
+    pre-commit install
+
+When adding new hooks, consider manually running ``pre-commit run --all-files``
+once as usually only the diff is checked. The configuration is specified in
+``.pre-commit-config.yaml``.
+
+Tox
+~~~
+
+Secondly, this installs the virtual testing tool
+`tox <https://tox.readthedocs.io/en/latest/>`_, which we use for all tests,
+format and quality checks. Its configuration is specified in ``tox.ini``.
+To run it locally, simply execute::
+
+    tox [-e flake8,doc]
+
+with optional ``-e`` options specifying the environments to run, see
+``tox.ini`` for details.
+
+GitHub Actions
+~~~~~~~~~~~~~~
+
+For automatic continuous integration testing, we use GitHub Actions. All tests
+are run there on pull requests and required to pass. The configuration is
+specified in ``.github/workflows/ci.yml``.
+
 Documentation
 -------------
 
@@ -20,60 +77,52 @@ and then compile the documentation via::
     cd doc
     make html
 
-The documentation is then under doc/_build.
+The documentation is then under ``doc/_build``.
 
-Docstrings
-~~~~~~~~~~
+Alternatively, the documentation can be compiled and tested via a single line::
 
-We follow the numpy docstring standard.
-Check `here <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ for a
-detailed explanation.
+    tox -e doc
 
-Tests
-=====
+When adding code, all modules, classes, functions, parameters, code blocks
+should be properly documented.
 
-We're committed to testing our code. Tests that are required to pass are located in the
-``test`` folder. All files starting with ``test_`` contain tests and are automatically run
-on GitHub Actions. They can be run manually via::
+For docstrings, we follow the numpy docstring standard.
+Check
+`here <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
+for a detailed explanation.
 
-    python3 -m pytest test
+Unit tests
+----------
+
+Unit tests are located in the ``test`` folder. All files starting with
+``test_`` contain tests and are automatically run on GitHub Actions.
+Run them locally via e.g.::
+
+    tox -e base
+
+with ``base`` covering basic tests, but some parts (``external,petab,...``)
+being in separate subfolders. This boils mostly down to e.g.::
+
+    pytest test/base
 
 You can also run only specific tests.
 
-We encourage to test whatever possible. However, it might not always be easy to
-test code which is based on random sampling. We still encourage to provide general sanity
-and integration tests. We highly encourage a
-`test-driven development (TDD) <http://en.wikipedia.org/wiki/Test-driven_development>`_ style.
+Unit tests can be written with `pytest <https://docs.pytest.org/en/latest/>`_
+or `unittest <https://docs.python.org/3/library/unittest.html>`_.
 
-Writing tests
--------------
+Code changes should always be covered by unit tests.
+It might not always be easy to test code which is based on random sampling,
+but we still encourage general sanity and integration tests.
+We highly encourage a
+`test-driven development <http://en.wikipedia.org/wiki/Test-driven_development>`_
+style.
 
-Tests can be written with `pytest <http://docs.pytest.org/en/latest/>`_
-or the `unittest <https://docs.python.org/3/library/unittest.html>`_ module.
+PEP8
+----
 
-PEP8 Style Guide
-----------------
+We try to respect the `PEP8 <https://www.python.org/dev/peps/pep-0008>`_
+coding standards. We run `flake8 <https://flake8.pycqa.org>`_ as part of the
+tests. The flake8 plugins used are specified in ``tox.ini`` and the flake8
+configuration is given in ``.flake8``. You can run the checks locally via::
 
-We try to respect the `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ standard.
-We run `flake8 <http://flake8.pycqa.org/en/latest/>`_ as part of the test
-suite. The tests won't pass if flake8 complains.
-
-
-Contribute code
-===============
-
-If you start working on a new feature or a fix, if not already done, please
-create an issue on github, shortly describing your plans, and assign it to
-yourself. Your starting point should not be the master branch, but the
-develop branch, which contains the latest updates.
-
-Create an own branch or fork, on which you can implement your changes. To
-get your work merged, please:
-
-1. create a pull request to the develop branch,
-2. check that all tests pass,
-3. check that the documentation is up-to-date,
-4. request a code review from the main developers.
-
-Document all your changes in the pull request, and make sure to appropriately
-resolve issues, and delete stale branches after a successful merge.
+    tox -e flake8
