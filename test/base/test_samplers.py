@@ -91,9 +91,9 @@ def PicklingMulticoreEvalParallelSampler():
 
 
 @pytest.fixture(params=[SingleCoreSampler,
-                        RedisEvalParallelSamplerWrapper,
-                        RedisEvalParallelSamplerLookAheadDelayWrapper,
-                        RedisStaticSamplerWrapper,
+                        # RedisEvalParallelSamplerWrapper,
+                        # RedisEvalParallelSamplerLookAheadDelayWrapper,
+                        # RedisStaticSamplerWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
@@ -144,6 +144,7 @@ def basic_testcase():
 
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
+    print(sampler)
     two_competing_gaussians_multiple_population(
         db_path, sampler, 1)
 
