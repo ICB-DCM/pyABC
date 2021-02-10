@@ -33,7 +33,7 @@ jobs:
       timeout-minutes: 10
       run: |
           pip install -e .[test,R]
-          pytest test/base/test_samplers.py::test_two_competing_gaussians_multiple_population
+          pytest test/base/test_samplers.py::test_two_competing_gaussians_multiple_population -s
 
     - name: Coverage
       uses: codecov/codecov-action@v1
