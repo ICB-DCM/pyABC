@@ -91,9 +91,9 @@ def PicklingMulticoreEvalParallelSampler():
 
 
 @pytest.fixture(params=[SingleCoreSampler,
-                        # RedisEvalParallelSamplerWrapper,
-                        # RedisEvalParallelSamplerLookAheadDelayWrapper,
-                        # RedisStaticSamplerWrapper,
+                        RedisEvalParallelSamplerWrapper,
+                        RedisEvalParallelSamplerLookAheadDelayWrapper,
+                        RedisStaticSamplerWrapper,
                         MulticoreEvalParallelSampler,
                         MultiProcessingMappingSampler,
                         MulticoreParticleParallelSampler,
