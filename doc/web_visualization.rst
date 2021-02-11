@@ -19,7 +19,7 @@ You should see something similar to the following:
 .. image:: server_screenshots/main.png
 
 
-Via "Go to ABC Run List", you can see all running and finished ABC runs, which you can then inspect in more detail. 
+Via "Go to ABC Run List", you can see all running and finished ABC runs, which you can then inspect in more detail.
 
 You can get overviews over the models:
 

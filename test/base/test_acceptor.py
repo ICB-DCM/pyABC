@@ -137,13 +137,13 @@ def test_pdf_norm_methods():
             'distance': [1, 2, 3, 4],
             'w': [2, 1, 1, 0]})
 
-    pdf_norm_args = dict(
-        kernel_val=42,
-        prev_pdf_norm=3.5,
-        get_weighted_distances=_get_weighted_distances,
-        prev_temp=10.3,
-        acceptance_rate=0.3,
-    )
+    pdf_norm_args = {
+        'kernel_val': 42,
+        'prev_pdf_norm': 3.5,
+        'get_weighted_distances': _get_weighted_distances,
+        'prev_temp': 10.3,
+        'acceptance_rate': 0.3,
+    }
 
     # run functions
     max_found = max(pdf_norm_args['get_weighted_distances']()['distance'])
