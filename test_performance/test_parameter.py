@@ -91,7 +91,7 @@ def test_sample_selection():
     # the parameter keys
     keys = ['key_' + str(i) for i in range(int(nkey / 2))]
     # number of repetitions
-    nsample = 1000
+    nsample = 5000
 
     np.random.seed(0)
 
