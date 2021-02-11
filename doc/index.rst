@@ -51,14 +51,14 @@ If you use it in your work, you can cite the paper:
    examples
    sampler
    sge
-   export_db 
+   export_db
    web_visualization
 
 
 .. toctree::
    :maxdepth: 2
    :caption: About
-   
+
    releasenotes
    about
    references
@@ -67,7 +67,7 @@ If you use it in your work, you can cite the paper:
 .. toctree::
    :maxdepth: 2
    :caption: Developer's guide
-   
+
    contribute
    deploy
 
@@ -75,7 +75,7 @@ If you use it in your work, you can cite the paper:
 .. toctree::
    :maxdepth: 2
    :caption: API reference
-   
+
    api
 
 

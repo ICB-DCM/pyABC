@@ -1,12 +1,12 @@
 """
-Transitions (Perturbation kernels)
-==================================
+Transitions kernels
+===================
 
-Perturbation strategies. The classes defined here transition the current
-population to the next one. pyABC implements global and local transitions.
-Proposals for the subsequent generation are generated from the current
-generation density estimates of the current generations.
-This is equivalent to perturbing randomly chosen particles.
+Transition or perturbation strategies to propose new parameters based on
+the current population.
+Usually this translates to randomly selecting a parameter in the current
+generation and then perturbing it, but in general arbitrary transition
+kernels are possible.
 
 These can be passed to :class:`pyabc.smc.ABCSMC` via the ``transitions``
 keyword argument.
