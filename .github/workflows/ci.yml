@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
     - name: Check out repository
@@ -24,7 +24,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-base
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-base
 
     - name: Install dependencies
       run: .github/workflows/install_deps.sh base R
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
     - name: Check out repository
@@ -58,7 +58,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-external
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-external
 
     - name: Install dependencies
       run: .github/workflows/install_deps.sh base R
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -92,7 +92,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-petab
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-petab
 
     - name: Install dependencies
       run: .github/workflows/install_deps.sh petab
@@ -111,7 +111,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9, 3.7]
 
     steps:
       - name: Check out repository
@@ -126,13 +126,13 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/Library/Caches/pip
-          key: ${{ runner.os }}-ci-mac
+          key: ci-${{ runner.os }}-${{ matrix.python-version }}-mac
 
       - name: Install dependencies
         run: .github/workflows/install_deps.sh
 
       - name: Run tests
-        timeout-minutes: 5
+        timeout-minutes: 6
         run: tox -e mac
 
       - name: Coverage
@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -160,7 +160,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-notebooks1
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks1
 
     - name: Install dependencies
       run: .github/workflows/install_deps.sh
@@ -173,7 +173,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -188,7 +188,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-notebooks2
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks2
 
     - name: Install dependencies
       run: .github/workflows/install_deps.sh R
@@ -201,7 +201,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -216,7 +216,7 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-quality
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-quality
 
     - name: Install dependencies
       run: |
