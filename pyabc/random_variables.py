@@ -14,8 +14,7 @@ rv_logger = logging.getLogger("RV")
 
 
 class RVBase(ABC):
-    """
-    Random variable abstract base class.
+    """Random variable abstract base class.
 
     .. note::
 
@@ -34,8 +33,7 @@ class RVBase(ABC):
 
     @abstractmethod
     def copy(self) -> "RVBase":
-        """
-        Copy the random variable.
+        """Copy the random variable.
 
         Returns
         -------
@@ -45,38 +43,32 @@ class RVBase(ABC):
 
     @abstractmethod
     def rvs(self, *args, **kwargs) -> float:
-        """
-        Sample from the RV.
+        """Sample from the RV.
 
         Returns
         -------
-
         sample: float
             A sample from the random variable.
         """
 
     @abstractmethod
     def pmf(self, x, *args, **kwargs) -> float:
-        """
-        Probability mass function
+        """Probability mass function.
 
         Parameters
         ----------
-
         x: int
             Probability mass at ``x``.
 
         Returns
         -------
-
         mass: float
             The mass at ``x``.
         """
 
     @abstractmethod
     def pdf(self, x: float, *args, **kwargs) -> float:
-        """
-        Probability density function
+        """Probability density function.
 
         Parameters
         ----------
@@ -85,15 +77,13 @@ class RVBase(ABC):
 
         Returns
         -------
-
         density: float
             Probability density at x.
         """
 
     @abstractmethod
     def cdf(self, x: float, *args, **kwargs) -> float:
-        """
-        Cumulative distribution function.
+        """Cumulative distribution function.
 
         Parameters
         ----------
@@ -102,26 +92,21 @@ class RVBase(ABC):
 
         Returns
         -------
-
         density: float
             Cumulative distribution function at x.
         """
 
 
 class RV(RVBase):
-    """
-    Concrete random variable.
+    """Concrete random variable.
 
     Parameters
     ----------
-
     name: str
         Name of the distribution as in ``scipy.stats``
-
     args:
         Arguments as in ``scipy.stats`` matching the distribution
         with name "name".
-
     kwargs:
         Keyword arguments as in ``scipy.stats``
         matching the distribution with name "name".
@@ -129,12 +114,10 @@ class RV(RVBase):
 
     @classmethod
     def from_dictionary(cls, dictionary: dict) -> "RV":
-        """
-        Construct random variable from dictionary.
+        """Construct random variable from dictionary.
 
         Parameters
         ----------
-
         dictionary: dict
             A dictionary with the keys
 
@@ -143,8 +126,6 @@ class RV(RVBase):
                * "kwargs" (optional)
 
             as in scipy.stats.
-
-
 
         .. note::
 
@@ -197,8 +178,7 @@ class RV(RVBase):
 
 
 class RVDecorator(RVBase):
-    """
-    Random variable decorater base class.
+    """Random variable decorator base class.
 
     Implement a decorator pattern.
 
@@ -212,7 +192,6 @@ class RVDecorator(RVBase):
 
     Parameters
     ----------
-
     component: RVBase
         The random variable to be decorated.
     """
@@ -236,8 +215,7 @@ class RVDecorator(RVBase):
         return self.__class__(self.component.copy())
 
     def decorator_repr(self) -> str:  # pylint: disable=R0201
-        """
-        Represent the decorator itself.
+        """Represent the decorator itself.
 
         Template method.
 
@@ -247,7 +225,6 @@ class RVDecorator(RVBase):
 
         Returns
         -------
-
         decorator_repr: str
             A string representing the decorator only.
         """
@@ -275,10 +252,8 @@ class LowerBoundDecorator(RVDecorator):
 
     Parameters
     ----------
-
     component: RV
         The decorated random variable.
-
     lower_bound: float
         The lower bound.
     """
@@ -326,8 +301,7 @@ class LowerBoundDecorator(RVDecorator):
 
 
 class Distribution(ParameterStructure):
-    """
-    Distribution of parameters for a model.
+    """Distribution of parameters for a model.
 
     A distribution is a collection of RVs and/or distributions.
     Essentially something like a dictionary
@@ -345,8 +319,7 @@ class Distribution(ParameterStructure):
     @classmethod
     def from_dictionary_of_dictionaries(cls,
                                         dict_of_dicts: dict) -> "Distribution":
-        """
-        Create distribution from dictionary of dictionaries
+        """Create distribution from dictionary of dictionaries.
 
         Parameters
         ----------
@@ -358,7 +331,6 @@ class Distribution(ParameterStructure):
 
         Returns
         -------
-
         distribution: Distribution
             Created distribution.
         """
@@ -369,12 +341,10 @@ class Distribution(ParameterStructure):
         return cls(rv_dictionary)
 
     def copy(self) -> "Distribution":
-        """
-        Copy the distribution
+        """Copy the distribution.
 
         Returns
         -------
-
         copied_distribution: Distribution
             A copy of the distribution.
         """
@@ -383,35 +353,29 @@ class Distribution(ParameterStructure):
                                  for key, value in self.items()})
 
     def update_random_variables(self, **random_variables):
-        """
-        Update random variables within the distribution
+        """Update random variables within the distribution.
 
         Parameters
         ----------
-
         **random_variables:
             keywords are the parameters' names, the values are random variable.
-
         """
 
         self.update(random_variables)
 
     def get_parameter_names(self) -> list:
-        """
-        Sorted list of parameter names.
+        """Get a sorted list of parameter names.
 
         Returns
         -------
-
         sorted_names: list
             Sorted list of parameter names.
         """
 
         return sorted(self.keys())
 
-    def rvs(self) -> Parameter:
-        """
-        Sample from joint distribution
+    def rvs(self, *args, **kwargs) -> Parameter:
+        """Sample from joint distribution.
 
         Returns
         -------
@@ -420,13 +384,14 @@ class Distribution(ParameterStructure):
             A parameter which was sampled.
         """
 
-        return Parameter(**{key: val.rvs() for key, val in self.items()})
+        return Parameter(**{key: val.rvs(*args, **kwargs)
+                            for key, val in self.items()})
 
     def pdf(self, x: Union[Parameter, dict]):
-        """
-        Get combination of probability density function (for continuous
-        variables) and
-        probability mass function (for discrete variables) at point x
+        """Get probability density at point `x` (product of marginals).
+
+        Combination of probability density functions (for continuous
+        variables) and probability mass function (for discrete variables).
 
         Parameters
         ----------

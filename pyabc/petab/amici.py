@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 try:
     import petab
 except ImportError:
+    petab = None
     logger.error("Install petab (see https://github.com/icb-dcm/petab) to use "
                  "the petab functionality.")
 
@@ -19,6 +20,7 @@ try:
     import amici.petab_import
     from amici.petab_objective import simulate_petab, LLH, RDATAS
 except ImportError:
+    amici = amici.petab_import = simulate_petab = LLH = RDATAS = None
     logger.error("Install amici (see https://github.com/icb-dcm/amici) to use "
                  "the amici functionality.")
 
@@ -29,16 +31,9 @@ class AmiciPetabImporter(PetabImporter):
 
     Parameters
     ----------
-
     petab_problem:
         A PEtab problem containing all information on the parameter estimation
         problem.
-    free_parameters:
-        Whether to estimate free parameters (column ESTIMATE=1 in the
-        parameters table).
-    fixed_parameters:
-        Whether to estimate fixed parameters (column ESTIMATE=0 in the
-        parameters table).
     amici_model:
         A corresponding compiled AMICI model that allows simulating data for
         parameters. If not provided, one is created using
@@ -52,13 +47,8 @@ class AmiciPetabImporter(PetabImporter):
             self,
             petab_problem: petab.Problem,
             amici_model: amici.Model = None,
-            amici_solver: amici.Solver = None,
-            free_parameters: bool = True,
-            fixed_parameters: bool = False):
-        super().__init__(
-            petab_problem=petab_problem,
-            free_parameters=free_parameters,
-            fixed_parameters=fixed_parameters)
+            amici_solver: amici.Solver = None):
+        super().__init__(petab_problem=petab_problem)
 
         if amici_model is None:
             amici_model = amici.petab_import.import_petab_problem(
@@ -96,15 +86,13 @@ class AmiciPetabImporter(PetabImporter):
             The model returns already the likelihood value.
         """
         # parameter ids to consider
-        x_ids = self.petab_problem.get_x_ids(
-            free=self.free_parameters, fixed=self.fixed_parameters)
+        x_ids = self.petab_problem.get_x_ids(free=True, fixed=False)
 
-        # fixed paramters
+        # fixed parameters
         x_fixed_ids = self.petab_problem.get_x_ids(
-            free=not self.free_parameters, fixed=not self.fixed_parameters)
+            free=False, fixed=True)
         x_fixed_vals = self.petab_problem.get_x_nominal(
-            scaled=True,
-            free=not self.free_parameters, fixed=not self.fixed_parameters)
+            scaled=True, free=False, fixed=True)
 
         # extract variables for improved pickling
         petab_problem = self.petab_problem
