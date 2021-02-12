@@ -14,21 +14,43 @@ import pyabc.petab.base
 
 @pytest.fixture(params=itertools.product(
     [petab.C.LIN, petab.C.LOG, petab.C.LOG10],
-    petab.C.PRIOR_TYPES))
+    [*petab.C.PRIOR_TYPES, None]))
 def prior_specs(request):
     """A one-line parameter df for a given prior type."""
     scale, prior_type = request.param
     var1, var2 = 0.2, 0.9
-    df = pd.DataFrame({
-        C.PARAMETER_ID: ['p1'],
-        C.ESTIMATE: [1],
-        C.PARAMETER_SCALE: [scale],
-        C.LOWER_BOUND: [np.nan],
-        C.UPPER_BOUND: [np.nan],
-        C.OBJECTIVE_PRIOR_TYPE: [prior_type],
-        C.OBJECTIVE_PRIOR_PARAMETERS: [f"{var1};{var2}"],
-    })
-    return scale, prior_type, var1, var2, df
+    if prior_type:
+        # dataframe with objective prior
+        df = pd.DataFrame({
+            C.PARAMETER_ID: ['p1'],
+            C.ESTIMATE: [1],
+            C.PARAMETER_SCALE: [scale],
+            C.LOWER_BOUND: [np.nan],
+            C.UPPER_BOUND: [np.nan],
+            C.OBJECTIVE_PRIOR_TYPE: [prior_type],
+            C.OBJECTIVE_PRIOR_PARAMETERS: [f"{var1};{var2}"],
+        })
+    else:
+        # also consider the case that no prior is specified, resulting in a
+        #  parameter scale uniform prior within the rescaled bounds
+
+        # unscale variables
+        unscaled_var1, unscaled_var2 = var1, var2
+        if scale == C.LOG:
+            unscaled_var1, unscaled_var2 = np.exp([var1, var2])
+        elif scale == C.LOG10:
+            unscaled_var1, unscaled_var2 = 10.**var1, 10.**var2
+        # dataframe without objective prior
+        df = pd.DataFrame({
+            C.PARAMETER_ID: ['p1'],
+            C.ESTIMATE: [1],
+            C.PARAMETER_SCALE: [scale],
+            C.LOWER_BOUND: [unscaled_var1],
+            C.UPPER_BOUND: [unscaled_var2],
+        })
+        # expected default if objective type not set
+        prior_type = C.PARAMETER_SCALE_UNIFORM
+    yield scale, prior_type, var1, var2, df
 
 
 def test_petab_prior(prior_specs):
@@ -106,7 +128,7 @@ def test_parameter_fixing():
     assert set(sample.keys()) == {'p1', 'p3'}
 
 
-def test_pipeline():
+def _test_pipeline():
     """Test the petab pipeline on an application model."""
     # download archive
     benchmark_dir = "doc/examples/tmp/benchmark-models-petab"
