@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import scipy.stats
 import pandas as pd
 import pytest
 import git
@@ -55,6 +56,9 @@ def prior_specs(request):
 
 def test_petab_prior(prior_specs):
     """Test whether the prior is correctly defined by sampling from it."""
+    # need to fix random seed due to stochastics of multiple testing
+    np.random.seed(0)
+
     # extract settings
     scale, prior_type, var1, var2, parameter_df = prior_specs
 
@@ -65,11 +69,15 @@ def test_petab_prior(prior_specs):
     n_samples = 10000
     samples = pyabc_prior.rvs(size=n_samples)['p1']
 
+    # -- UNIFORM COVERAGE -- #
+
     # check that uniform parameters fill their domain
     if prior_type in [C.UNIFORM, C.PARAMETER_SCALE_UNIFORM]:
         assert (samples >= var1).all() and (samples <= var2).all()
         assert ((samples >= var2 - (var2-var1)*0.01).any() and
                 (samples <= var1 + (var2-var1)*0.01).any())
+
+    # -- MEAN AND VARIANCE -- #
 
     # sample mean and variance
     mean = np.mean(samples)
@@ -102,8 +110,37 @@ def test_petab_prior(prior_specs):
 
     # multiplicative tolerance of sample vs ground truth variables
     tol = 0.8
+
+    # compare means and variances
     assert mean_th * tol < mean < mean_th * 1 / tol
     assert var_th * tol < var < var_th * 1 / tol
+
+    # -- KOLMOGOROV-SMIRNOV CDF COMPARISON -- #
+
+    # create distribution object
+    if prior_type in [C.UNIFORM, C.PARAMETER_SCALE_UNIFORM]:
+        distr = scipy.stats.uniform(loc=var1, scale=var2-var1)
+    elif prior_type in [C.NORMAL, C.PARAMETER_SCALE_NORMAL]:
+        distr = scipy.stats.norm(loc=var1, scale=var2)
+    elif prior_type in [C.LAPLACE, C.PARAMETER_SCALE_LAPLACE]:
+        distr = scipy.stats.laplace(loc=var1, scale=var2)
+    elif prior_type == C.LOG_NORMAL:
+        distr = scipy.stats.lognorm(s=var2, loc=0, scale=np.exp(var1))
+    elif prior_type == C.LOG_LAPLACE:
+        distr = scipy.stats.loglaplace(c=1/var2, scale=np.exp(var1))
+    else:
+        raise ValueError(f"Unexpected prior type: {prior_type}")
+
+    # perform KS test
+    _, p_value = scipy.stats.kstest(samples, distr.cdf)
+    # at least check that there are no highly significant differences
+    assert p_value > 1e-2
+
+    # dummy check that the test recognizes use of the wrong distribution
+    if prior_type in [C.NORMAL, C.PARAMETER_SCALE_NORMAL]:
+        distr = scipy.stats.laplace(loc=var1, scale=var2)
+        _, p_value = scipy.stats.kstest(samples, distr.cdf)
+        assert p_value < 1e-5
 
 
 def test_parameter_fixing():
@@ -128,7 +165,7 @@ def test_parameter_fixing():
     assert set(sample.keys()) == {'p1', 'p3'}
 
 
-def _test_pipeline():
+def test_pipeline():
     """Test the petab pipeline on an application model."""
     # download archive
     benchmark_dir = "doc/examples/tmp/benchmark-models-petab"
