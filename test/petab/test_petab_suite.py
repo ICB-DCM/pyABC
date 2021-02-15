@@ -3,7 +3,9 @@
 import petabtests
 import pyabc
 
+
 import os
+import sys
 import pytest
 from _pytest.outcomes import Skipped
 import logging
@@ -80,6 +82,8 @@ def _execute_case(case):
     petab_problem = petab.Problem.from_yaml(yaml_file)
 
     # compile amici
+    if output_folder not in sys.path:
+        sys.path.insert(0, output_folder)
     amici_model = amici.petab_import.import_petab_problem(
         petab_problem=petab_problem,
         model_output_dir=output_folder)
@@ -91,7 +95,7 @@ def _execute_case(case):
     model = importer.create_model(return_rdatas=True)
 
     # simulate
-    problem_parameters = petab_problem.x_nominal_free_scaled
+    problem_parameters = importer.get_nominal_parameters()
     ret = model(problem_parameters)
 
     llh = ret['llh']
