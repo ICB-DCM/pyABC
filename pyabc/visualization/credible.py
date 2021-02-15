@@ -18,6 +18,7 @@ def plot_credible_intervals(
         ts: Union[List[int], int] = None,
         par_names: List = None,
         levels: List = None,
+        colors: List = None,
         show_mean: bool = False,
         show_kde_max: bool = False,
         show_kde_max_1d: bool = False,
@@ -41,6 +42,9 @@ def plot_credible_intervals(
         The parameter to plot for. If None, then all parameters are used.
     levels: List[float], optional (default = [0.95])
         Confidence intervals to compute.
+    colors: List, optional
+        Colors to use for the lines. If None, then the matplotlib
+        default values are used.
     show_mean: bool, optional (default = False)
         Whether to show the mean apart from the median as well.
     show_kde_max: bool, optional (default = False)
@@ -72,6 +76,10 @@ def plot_credible_intervals(
     if levels is None:
         levels = [0.95]
     levels = sorted(levels)
+    if colors is None:
+    	colors = []
+    while len(colors) < len(levels) + 4:
+    	colors.append(None)
     if par_names is None:
         # extract all parameter names
         df, _ = history.get_distribution(m=m)
@@ -144,18 +152,24 @@ def plot_credible_intervals(
                 y=median[i_par].flatten(),
                 yerr=[median[i_par] - cis[i_par, :, i_c],
                       cis[i_par, :, -1 - i_c] - median[i_par]],
+                color = colors[i_c],
+                ecolor = colors[i_c],
                 capsize=(5.0 / n_confidence) * (i_c + 1),
                 label="{:.2f}".format(confidence))
         ax.set_title(f"Parameter {par}")
         # mean
+        color_index = len(levels)
         if show_mean:
-            ax.plot(range(n_pop), mean[i_par], 'x-', label="Mean")
+            ax.plot(range(n_pop), mean[i_par], 'x-', label="Mean", color=colors[color_index])
+            color_index += 1
         # kde max
         if show_kde_max:
-            ax.plot(range(n_pop), kde_max[i_par], 'x-', label="Max KDE")
+            ax.plot(range(n_pop), kde_max[i_par], 'x-', label="Max KDE", color=colors[color_index])
+            color_index += 1
         if show_kde_max_1d:
             ax.plot(range(n_pop), kde_max_1d[i_par], 'x-',
-                    label="Max KDE 1d")
+                    label="Max KDE 1d", color=colors[color_index])
+            color_index += 1
         # reference value
         if refval is not None:
             ax.hlines(refval[par], xmin=0, xmax=n_pop - 1, color=refval_color,
