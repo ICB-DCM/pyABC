@@ -3,6 +3,7 @@ import scipy.stats as stats
 import pandas as pd
 from typing import Union
 
+from ..parameters import Parameter
 from .base import DiscreteTransition
 
 
@@ -38,7 +39,7 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         pass
 
-    def rvs_single(self) -> pd.Series:
+    def rvs_single(self) -> Parameter:
         # take a step
         dim = len(self.X.columns)
         step = perform_random_walk(
@@ -50,25 +51,30 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
         # create randomized point
         perturbed_point = start_point + step
 
-        return perturbed_point
+        return Parameter(perturbed_point)
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """
         Evaluate the probability mass function (PMF) at `x`.
         """
+        # convert to numpy array in correct order
+        if isinstance(x, (Parameter, pd.Series)):
+            x = np.array([x[key] for key in self.X.columns])
+        else:
+            x = x[self.X.columns].to_numpy()
+
         if not np.all(np.isclose(x, x.astype(int))):
             raise ValueError(
                 f"Transition can only handle integer values, not fulfilled "
                 f"by x={x}.")
-        x = x[self.X.columns]
-        x = np.array(x)
-        if len(x.shape) == 1:
-            return self.pdf_single(x)
-        else:
-            return np.array([self.pdf_single(x_) for x_ in x])
 
-    def pdf_single(self, x):
+        if len(x.shape) == 1:
+            return self._pdf_single(x)
+        else:
+            return np.array([self._pdf_single(xi) for xi in x])
+
+    def _pdf_single(self, x: np.ndarray):
         p = 0.0
         for start, weight in zip(self.X.values, self.w):
             # probability if started from start

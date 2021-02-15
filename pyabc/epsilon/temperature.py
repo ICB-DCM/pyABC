@@ -164,16 +164,16 @@ class Temperature(TemperatureBase):
         Compute the temperature for time `t`.
         """
         # scheme arguments
-        kwargs = dict(
-            t=t,
-            get_weighted_distances=get_weighted_distances,
-            get_all_records=get_all_records,
-            max_nr_populations=self.max_nr_populations,
-            pdf_norm=acceptor_config['pdf_norm'],
-            kernel_scale=acceptor_config['kernel_scale'],
-            prev_temperature=self.temperatures.get(t-1, None),
-            acceptance_rate=acceptance_rate,
-        )
+        kwargs = {
+            't': t,
+            'get_weighted_distances': get_weighted_distances,
+            'get_all_records': get_all_records,
+            'max_nr_populations': self.max_nr_populations,
+            'pdf_norm': acceptor_config['pdf_norm'],
+            'kernel_scale': acceptor_config['kernel_scale'],
+            'prev_temperature': self.temperatures.get(t-1, None),
+            'acceptance_rate': acceptance_rate,
+        }
 
         if t >= self.max_nr_populations - 1 \
                 and self.enforce_exact_final_temperature:

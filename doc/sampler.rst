@@ -152,7 +152,7 @@ exists under ``REDIS_INSTALL_DIR/etc/redis.conf``. You can however also set
 up your own file. It suffices to add or uncomment the line
 
 .. code:: bash
-   
+
     requirepass PASSWORD
 
 where `PASSWORD` should be replaced by a more secure password.
@@ -204,7 +204,7 @@ If password protection is used, in addition pass the argument
 
 For the :class:`pyabc.sampler.RedisStaticSampler`, the same applies, no
 modifications of the workers are necessary.
-   
+
 Then start the ABC-SMC run as usual with
 
 .. code:: python
@@ -342,7 +342,7 @@ Let us consider the widely used job scheduler
 .. code:: bash
 
    #!/bin/bash
-   
+
    # slurm settings
    #SBATCH -p {partition_id}
    #SBATCH -c {number_of_cpus}
@@ -434,7 +434,7 @@ serialized. For developers, the following example illustrates the problem:
 
          def fun(x):
             print(small_arr, x)
-         
+
          return fun
 
 
