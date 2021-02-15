@@ -4,14 +4,15 @@ from typing import Callable, Union
 import copy
 
 import pyabc
-from .base import PetabImporter
+from .base import PetabImporter, rescale
 
 logger = logging.getLogger(__name__)
 
 try:
     import petab
+    import petab.C as C
 except ImportError:
-    petab = None
+    petab = C = None
     logger.error("Install petab (see https://github.com/icb-dcm/petab) to use "
                  "the petab functionality.")
 
@@ -86,7 +87,7 @@ class AmiciPetabImporter(PetabImporter):
             The model returns already the likelihood value.
         """
         # parameter ids to consider
-        x_ids = self.petab_problem.get_x_ids(free=True, fixed=False)
+        x_free_ids = self.petab_problem.get_x_ids(free=True, fixed=False)
 
         # fixed parameters
         x_fixed_ids = self.petab_problem.get_x_ids(
@@ -98,22 +99,39 @@ class AmiciPetabImporter(PetabImporter):
         petab_problem = self.petab_problem
         amici_model = self.amici_model
         amici_solver = self.amici_solver
+        prior_scales = self.prior_scales
+        scaled_scales = self.scaled_scales
+
+        if set(prior_scales.keys()) != set(x_free_ids):
+            # this should not happen
+            raise AssertionError("Parameter id mismatch")
 
         # no gradients for pyabc
         amici_solver.setSensitivityOrder(0)
 
         def model(par: Union[Sequence, Mapping]) -> Mapping:
-            """The model function."""
+            """The model function.
+
+            Note: The parameters are assumed to be passed on prior scale.
+            """
             # copy since we add fixed parameters
             par = copy.deepcopy(par)
 
             # convenience to allow calling model not only with dicts
             if not isinstance(par, Mapping):
-                par = {key: val for key, val in zip(x_ids, par)}
+                par = {key: val for key, val in zip(x_free_ids, par)}
 
             # add fixed parameters
             for key, val in zip(x_fixed_ids, x_fixed_vals):
                 par[key] = val
+
+            # scale parameters whose priors are not on scale
+            for key in prior_scales.keys():
+                par[key] = rescale(
+                    val=par[key],
+                    origin_scale=prior_scales,
+                    target_scale=scaled_scales,
+                )
 
             # simulate model
             sim = simulate_petab(

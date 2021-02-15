@@ -86,7 +86,7 @@ def test_external():
         executable, folder + "distance.r")
 
     # call representation function
-    model.__repr__()
+    print(model.__repr__())
 
     # create a dummy observed sum stat
     dummy_sum_stat = pyabc.external.create_sum_stat()

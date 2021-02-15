@@ -1,3 +1,4 @@
+import sys
 import os
 import numpy as np
 import scipy.stats
@@ -183,12 +184,16 @@ def test_pipeline():
         pass
 
     # create problem
+    model_name = 'Boehm_JProteomeRes2014'
     petab_problem = petab.Problem.from_yaml(os.path.join(
-        benchmark_dir, "Benchmark-Models",
-        "Boehm_JProteomeRes2014", "Boehm_JProteomeRes2014.yaml"))
+        benchmark_dir, 'Benchmark-Models', model_name, model_name + '.yaml'))
 
     # compile amici
-    model = amici.petab_import.import_petab_problem(petab_problem)
+    output_folder = f'amici_models/{model_name}'
+    if output_folder not in sys.path:
+        sys.path.insert(0, output_folder)
+    model = amici.petab_import.import_petab_problem(
+        petab_problem, model_output_dir=output_folder)
     solver = model.getSolver()
 
     # import to pyabc
@@ -201,7 +206,7 @@ def test_pipeline():
 
     # call model
     assert np.isclose(
-        model(petab_problem.x_nominal_free_scaled)['llh'], -138.221996)
+        model(importer.get_nominal_parameters())['llh'], -138.221996)
 
     # mini analysis, just to run it
     temperature = pyabc.Temperature(

@@ -173,7 +173,7 @@ class RV(RVBase):
         return self.distribution.cdf(x, *args, **kwargs)
 
     def __repr__(self):
-        return ("<RV(name={name}, args={args} kwargs={kwargs})>"
+        return ("<RV name={name}, args={args}, kwargs={kwargs}>"
                 .format(name=self.name, args=self.args, kwargs=self.kwargs))
 
 
@@ -313,8 +313,8 @@ class Distribution(ParameterStructure):
     """
 
     def __repr__(self):
-        return "<Distribution {keys}>".format(
-            keys=str(list(self.get_parameter_names()))[1:-1])
+        return "<Distribution\n    " + \
+            ",\n    ".join(f"{id}={rv}" for id, rv in self.items()) + ">"
 
     @classmethod
     def from_dictionary_of_dictionaries(cls,
