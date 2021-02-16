@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 import git
 import itertools
+import matplotlib.pyplot as plt
 
 import amici.petab_import
 import petab
@@ -154,7 +155,7 @@ def test_parameter_fixing():
         C.LOWER_BOUND: [0] * 3,
         C.UPPER_BOUND: [1] * 3,
         C.OBJECTIVE_PRIOR_TYPE: [C.PARAMETER_SCALE_UNIFORM] * 3,
-    })
+    }).set_index(C.PARAMETER_ID)
 
     # create prior from petab data frame
     pyabc_prior = pyabc.petab.base.create_prior(parameter_df)
@@ -164,6 +165,90 @@ def test_parameter_fixing():
 
     # check the entries
     assert set(sample.keys()) == {'p1', 'p3'}
+
+
+def test_get_nominal_parameters():
+    """Test extraction of nominal parameters."""
+    parameter_df = pd.DataFrame({
+        C.PARAMETER_ID: ['p1', 'p2', 'p3'],
+        C.NOMINAL_VALUE: [2] * 3,
+        C.LOWER_BOUND: [1] * 3,
+        C.UPPER_BOUND: [3] * 3,
+        C.ESTIMATE: [1] * 3,
+        C.PARAMETER_SCALE: [C.LIN, C.LOG, C.LOG10],
+        C.OBJECTIVE_PRIOR_TYPE: [
+            C.PARAMETER_SCALE_UNIFORM, C.PARAMETER_SCALE_UNIFORM, C.UNIFORM],
+        C.OBJECTIVE_PRIOR_PARAMETERS: ["1;4", "1;3", "0;0.7"],
+    }).set_index(C.PARAMETER_ID)
+
+    # expected nominal parameters
+    expected = {
+        C.LIN: pyabc.Parameter({'p1': 2, 'p2': 2, 'p3': 2}),
+        'prior': pyabc.Parameter({'p1': 2, 'p2': np.log(2), 'p3': 2}),
+        'scaled': pyabc.Parameter({'p1': 2, 'p2': np.log(2),
+                                   'p3': np.log10(2)}),
+    }
+
+    # get scales
+    prior_scales, scaled_scales = pyabc.petab.base.get_scales(parameter_df)
+
+    # run for all target_scales
+    for scale in expected:
+        x_nominal = pyabc.petab.base.get_nominal_parameters(
+            parameter_df, scale, prior_scales, scaled_scales)
+        assert x_nominal == expected[scale]
+
+    # raise
+    with pytest.raises(ValueError):
+        pyabc.petab.base.get_nominal_parameters(
+            parameter_df, C.LOG, prior_scales, scaled_scales)
+
+
+def test_get_bounds():
+    """Test that bounds are extracted correctly."""
+    parameter_df = pd.DataFrame({
+        C.PARAMETER_ID: ['p1', 'p2', 'p3', 'p4'],
+        C.ESTIMATE: [1] * 4,
+        C.PARAMETER_SCALE: [C.LIN, C.LOG, C.LOG10, C.LOG10],
+        C.LOWER_BOUND: [1] * 4,
+        C.UPPER_BOUND: [3] * 4,
+        C.OBJECTIVE_PRIOR_TYPE: [
+            C.PARAMETER_SCALE_UNIFORM, C.UNIFORM, C.PARAMETER_SCALE_UNIFORM,
+            C.LAPLACE],
+        C.OBJECTIVE_PRIOR_PARAMETERS: ["1;4", "1;3", "0;0.7", "1;4"],
+    }).set_index(C.PARAMETER_ID)
+
+    # most common use case
+    prior_scales, scaled_scales = pyabc.petab.base.get_scales(parameter_df)
+    bounds = pyabc.petab.base.get_bounds(
+        parameter_df, 'prior', prior_scales, scaled_scales, use_prior=True)
+    assert bounds == {'p1': (1, 4), 'p2': (1, 3), 'p3': (0, 0.7), 'p4': (1, 3)}
+
+    # no prior parameter overrides
+    prior_scales, scaled_scales = pyabc.petab.base.get_scales(parameter_df)
+    bounds = pyabc.petab.base.get_bounds(
+        parameter_df, 'prior', prior_scales, scaled_scales, use_prior=False)
+    assert bounds == {'p1': (1, 3), 'p2': (1, 3),
+                      'p3': (np.log10(1), np.log10(3)), 'p4': (1, 3)}
+
+    # all on scale
+    prior_scales, scaled_scales = pyabc.petab.base.get_scales(parameter_df)
+    bounds = pyabc.petab.base.get_bounds(
+        parameter_df, 'scaled', prior_scales, scaled_scales, use_prior=False)
+    assert bounds == {'p1': (1, 3), 'p2': (np.log(1), np.log(3)),
+                      'p3': (np.log10(1), np.log10(3)),
+                      'p4': (np.log10(1), np.log10(3))}
+
+    # all off scale
+    prior_scales, scaled_scales = pyabc.petab.base.get_scales(parameter_df)
+    bounds = pyabc.petab.base.get_bounds(
+        parameter_df, C.LIN, prior_scales, scaled_scales, use_prior=False)
+    assert bounds == {'p1': (1, 3), 'p2': (1, 3), 'p3': (1, 3), 'p4': (1, 3)}
+
+    # raise
+    with pytest.raises(ValueError):
+        pyabc.petab.base.get_bounds(
+            parameter_df, C.LOG, prior_scales, scaled_scales, use_prior=True)
 
 
 def test_pipeline():
@@ -217,4 +302,12 @@ def test_pipeline():
     abc = pyabc.ABCSMC(model, prior, kernel, eps=temperature,
                        acceptor=acceptor, population_size=10)
     abc.new(pyabc.storage.create_sqlite_db_id(), None)
-    abc.run(max_nr_populations=1)
+    h = abc.run(max_nr_populations=1)
+
+    # visualize
+    pyabc.visualization.plot_kde_matrix_highlevel(
+        h, limits=importer.get_bounds(),
+        refval=importer.get_nominal_parameters(), refval_color='grey',
+        names=importer.get_parameter_names(),
+    )
+    plt.close()

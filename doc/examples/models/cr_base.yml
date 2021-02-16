@@ -1,0 +1,15 @@
+odes:
+  - stateId: x1
+    rightHandSide: (- theta1 * x1 + theta2 * x2)
+    initialValue: 1
+
+  - stateId: x2
+    rightHandSide: (theta1 * x1 - theta2 * x2)
+    initialValue: 0
+
+parameters:
+  - parameterId: theta1
+    nominalValue: 0.08
+
+  - parameterId: theta2
+    nominalValue: 0.12
