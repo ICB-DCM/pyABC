@@ -460,7 +460,7 @@ def plot_kde_matrix(df, w, limits=None, colorbar=True, height=2.5,
     par_ids = list(df.columns.values)
 
     if names is None:
-        names = {key: None for key in par_ids}
+        names = {key: key for key in par_ids}
     if arr_ax is None:
         fig, arr_ax = plt.subplots(nrows=n_par, ncols=n_par,
                                    sharex=False, sharey=False,

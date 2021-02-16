@@ -60,6 +60,9 @@ coverage.xml
 #documentation
 doc/_build
 
+# notebooks
+doc/examples/out
+
 .pytest_cache
 dask-worker-space
 *.lock
