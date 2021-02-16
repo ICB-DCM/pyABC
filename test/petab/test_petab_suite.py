@@ -1,14 +1,13 @@
 """Execute petab test suite."""
 
 import petabtests
-import pyabc
-
-
 import os
 import sys
 import pytest
 from _pytest.outcomes import Skipped
 import logging
+
+import pyabc
 
 try:
     import petab

@@ -95,7 +95,7 @@ jobs:
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-petab
 
     - name: Install dependencies
-      run: .github/workflows/install_deps.sh petab
+      run: .github/workflows/install_deps.sh amici
 
     - name: Run tests
       timeout-minutes: 10
@@ -191,7 +191,7 @@ jobs:
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks2
 
     - name: Install dependencies
-      run: .github/workflows/install_deps.sh R
+      run: .github/workflows/install_deps.sh R amici
 
     - name: Run notebooks
       timeout-minutes: 10

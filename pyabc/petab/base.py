@@ -118,7 +118,64 @@ class PetabImporter(abc.ABC):
             parameter_df=self.petab_problem.parameter_df,
             target_scale=target_scale,
             prior_scales=self.prior_scales,
-            scaled_scales=self.scaled_scales)
+            scaled_scales=self.scaled_scales,
+        )
+
+    def get_bounds(
+            self, target_scale: str = 'prior', use_prior: bool = True) -> dict:
+        """Get bounds.
+
+        Parameters
+        ----------
+        target_scale:
+            Scale to get the nominal parameters on.
+            Can be 'lin', 'scaled', or 'prior'.
+        use_prior: Whether to use prior overrides if of type uniform.
+
+        Returns
+        -------
+        bounds: Dictionary with a (lower, upper) tuple per parameter.
+        """
+        return get_bounds(
+            parameter_df=self.petab_problem.parameter_df,
+            target_scale=target_scale,
+            prior_scales=self.prior_scales,
+            scaled_scales=self.scaled_scales,
+            use_prior=use_prior,
+        )
+
+    def get_parameter_names(self, target_scale: str = 'prior'):
+        """Get meaningful parameter names, corrected for target scale."""
+        parameter_df = petab.normalize_parameter_df(
+            self.petab_problem.parameter_df)
+
+        # scale
+        if target_scale == C.LIN:
+            target_scales = {key: C.LIN for key in self.prior_scales}
+        elif target_scale == 'prior':
+            target_scales = self.prior_scales
+        elif target_scale == 'scaled':
+            target_scales = self.scaled_scales
+        else:
+            raise ValueError(f"Did not recognize target scale {target_scale}")
+
+        names = {}
+        for _, row in parameter_df.reset_index().iterrows():
+            if row[C.ESTIMATE] == 0:
+                continue
+            key = row[C.PARAMETER_ID]
+            name = str(key)
+            if C.PARAMETER_NAME in parameter_df:
+                if not petab.is_empty(row[C.PARAMETER_NAME]):
+                    name = str(row[C.PARAMETER_NAME])
+
+            target_scale = target_scales[key]
+            if target_scale != C.LIN:
+                # mini check whether the name might indicate the scale already
+                if not name.startswith("log"):
+                    name = target_scale + "(" + name + ")"
+            names[key] = name
+        return names
 
     def _sanity_check(self):
         """Some checks to identify potential problems."""
@@ -291,6 +348,70 @@ def get_nominal_parameters(
         raise ValueError(f"Did not recognize target scale {target_scale}")
     # map linear to target scales component-wise
     return map_rescale(par, origin_scales=C.LIN, target_scales=target_scales)
+
+
+def get_bounds(
+        parameter_df: pd.DataFrame,
+        target_scale: str,
+        prior_scales: dict,
+        scaled_scales: dict,
+        use_prior: bool) -> dict:
+    """Get bounds.
+
+    Parameters
+    ----------
+    parameter_df: The PEtab parameter data frame.
+    target_scale:
+        Scale to get the nominal parameters on.
+        Can be 'lin', 'scaled', or 'prior'.
+    prior_scales: Prior scales.
+    scaled_scales: On-scale scales.
+    use_prior: Whether to use prior overrides if of type uniform.
+
+    Returns
+    -------
+    bounds: Dictionary with a (lower, upper) tuple per parameter.
+    """
+    parameter_df = petab.normalize_parameter_df(parameter_df)
+
+    # scale
+    if target_scale == C.LIN:
+        target_scales = {key: C.LIN for key in prior_scales}
+    elif target_scale == 'prior':
+        target_scales = prior_scales
+    elif target_scale == 'scaled':
+        target_scales = scaled_scales
+    else:
+        raise ValueError(f"Did not recognize target scale {target_scale}")
+
+    # extract bounds
+    bounds = {}
+    for _, row in parameter_df.reset_index().iterrows():
+        if row[C.ESTIMATE] == 0:
+            # ignore fixed parameters
+            continue
+
+        key = row[C.PARAMETER_ID]
+
+        # from lower and upper bound
+        lower, upper = row[C.LOWER_BOUND], row[C.UPPER_BOUND]
+        origin_scale = C.LIN
+
+        # from prior
+        prior_type = row[C.OBJECTIVE_PRIOR_TYPE]
+        if use_prior and prior_type in [C.UNIFORM, C.PARAMETER_SCALE_UNIFORM]:
+            pars_str = row[C.OBJECTIVE_PRIOR_PARAMETERS]
+            lower, upper = tuple(float(val) for val in pars_str.split(';'))
+            if prior_type == C.PARAMETER_SCALE_UNIFORM:
+                origin_scale = row[C.PARAMETER_SCALE]
+
+        # convert to target scale
+        lower = rescale(
+            lower, origin_scale=origin_scale, target_scale=target_scales[key])
+        upper = rescale(
+            upper, origin_scale=origin_scale, target_scale=target_scales[key])
+        bounds[key] = (lower, upper)
+    return bounds
 
 
 def map_rescale(
