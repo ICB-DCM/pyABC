@@ -22,7 +22,8 @@ class SGESignatureMismatchException(Exception):
 
 
 class SGE:
-    """Map a function to be executed on an SGE cluster environment
+    """Map a function to be executed on an SGE cluster environment.
+
     Reads a config file (if it exists) in you home directory
     which should look as the default
     in sge.config.
@@ -30,7 +31,6 @@ class SGE:
     The mapper reads commonly used parameters from a configuration file
     stored in ``~/.parallel``
     An example configuration file could look as follows:
-
 
     .. code-block:: bash
 
@@ -50,56 +50,43 @@ class SGE:
         [REDIS]
         HOST=127.0.0.1
 
-
     Parameters
     ----------
-
     tmp_directory: str or None
         Directory where temporary job pickle files are stored
         If set to None a tmp directory is read from the ''~/.parallel''
         configuration file.
         It this file does not exist a tmp directory within the user home
         directory is created.
-
     memory: str, optional (default = '3G')
         Ram requested by each job, e.g. '10G'.
-
     time_h: int (default = 100)
         Job run time in hours.
-
     python_executable_path: str or None
         The python interpreter which executes the jobs.
         If set to None, the currently executing interpreter is used as
         returned by ``sys.executable``.
-
     sge_error_file: str or None
         File to which stderr messages from workers are stored.
         If set to None, a file within the tmp_directory is used.
-
     sge_output_file: str or None
         File to which stdout messages from workers are stored
         If set to None, a file within the tmp_directory is used.
-
     parallel_environment: str, optional (default = 'map')
         The SGE environment. (This is what is passed to the -pe option
         in the qsub script).
-
     name: str
         A name for the job.
-
     queue: str
         The SGE queue.
-
     priority: int, optional.
         SGE job priority. A value between -1000 and 0.
         Note that a priority of 0 automatically enables the reservation flag.
-
     num_threads: int, optional (default = 1)
         Number of threads for each worker.
         This also sets the environment variable MKL_NUM_THREADS,
         OMP_NUM_THREADS to the
         specified number to handle jobs which use OpenMP etc. correctly.
-
     execution_context: \
     :class:`DefaultContext \
         <pyabc.sge.execution_contexts.DefaultContext>`,\
@@ -112,7 +99,6 @@ class SGE:
         The ``__enter__`` method is called before evaluating the function on
         the cluster.
         The ``__exit__`` method directly after the function run finished.
-
     chunk_size: int, optional (default = 1)
         nr of tasks executed within one job.
 
@@ -122,7 +108,6 @@ class SGE:
                 side effects
                 as all the jobs within one chunk are executed within the python
                 process.
-
 
     Returns
     -------
@@ -198,12 +183,12 @@ class SGE:
                 self.config["DIRECTORIES"]["TMP"], "sge_output.txt")
 
     def __repr__(self):
-        return ("<SGE memory={} time={} priority={} num_threads={} "
-                "chunk_size={} tmp_dir={} python_executable={}>"
-                .format(self.memory, self.time, self.config["SGE"]["PRIORITY"],
-                        self.num_threads, self.chunk_size,
-                        self.config["DIRECTORIES"]["TMP"],
-                        self.python_executable_path))
+        return (f"<SGE memory={self.memory}, time={self.time}, "
+                f"priority={self.config['SGE']['PRIORITY']}, "
+                f"num_threads={self.num_threads}, "
+                f"chunk_size={self.chunk_size}, "
+                f"tmp_dir={self.config['DIRECTORIES']['TMP']}, "
+                f"python_executable={self.python_executable_path}>")
 
     @staticmethod
     def _validate_function_arguments(function, array):
