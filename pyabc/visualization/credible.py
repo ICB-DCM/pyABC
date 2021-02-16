@@ -19,6 +19,7 @@ def plot_credible_intervals(
         par_names: List = None,
         levels: List = None,
         colors: List = None,
+        color_middle: List = None,
         show_mean: bool = False,
         color_mean: str = None,
         show_kde_max: bool = False,
@@ -48,6 +49,8 @@ def plot_credible_intervals(
     colors: List, optional
         Colors to use for the errorbars. If None, then the matplotlib
         default values are used.
+    color_middle: str, optional
+    	Color to use for the observation.
     show_mean: bool, optional (default = False)
         Whether to show the mean apart from the median as well.
     color_mean: color to use for the mean.
@@ -57,7 +60,7 @@ def plot_credible_intervals(
         Note: It is not attemtped to find the overall hightest KDE value, but
         rather the sampled point with the highest value is taken as an
         approximation (of the MAP-value).
-    color_kde: color to use
+    color_kde: color to use.
     show_kde_max_1d: bool, optional (default = False)
         Same as `show_kde_max`, but here the KDE is applied componentwise.
     color_kde_1d: color to use
@@ -84,6 +87,8 @@ def plot_credible_intervals(
     levels = sorted(levels)
     if colors is None:
     	colors = [None for _ in range(len(levels))]
+    if color_middle is None:
+    	color_middle = colors[0]
     if par_names is None:
         # extract all parameter names
         df, _ = history.get_distribution(m=m)
@@ -156,7 +161,7 @@ def plot_credible_intervals(
                 y=median[i_par].flatten(),
                 yerr=[median[i_par] - cis[i_par, :, i_c],
                       cis[i_par, :, -1 - i_c] - median[i_par]],
-                color = colors[i_c],
+                color = color_middle,
                 ecolor = colors[i_c],
                 capsize=(5.0 / n_confidence) * (i_c + 1),
                 label="{:.2f}".format(confidence))
