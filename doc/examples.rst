@@ -44,7 +44,7 @@ Download the examples as notebooks
 * :download:`External Simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise assessment <examples/noise.ipynb>`
-* :download:`PEtab import <examples/petab_yaml2sbml.ipynb>`
+* :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
 * :download:`PEtab application example <examples/petab_application.ipynb>`
 * :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
 
