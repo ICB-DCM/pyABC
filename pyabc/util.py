@@ -170,7 +170,7 @@ def generate_valid_proposal(
         else:
             # only one model
             m_ss = m[0]
-        theta_ss = Parameter(**transitions[m_ss].rvs().to_dict())
+        theta_ss = transitions[m_ss].rvs()
 
         # check if positive under prior
         if (model_prior.pmf(m_ss)
@@ -302,8 +302,7 @@ def create_transition_pdf(
         model_factor = sum(
             row.p * model_perturbation_kernel.pmf(m_ss, m)
             for m, row in model_probabilities.iterrows())
-        particle_factor = transitions[m_ss].pdf(
-            pd.Series(dict(theta_ss)))
+        particle_factor = transitions[m_ss].pdf(theta_ss)
 
         transition_pd = model_factor * particle_factor
 

@@ -1,11 +1,14 @@
 import numpy.linalg as la
 import numpy as np
-import pandas as pd
-from .base import Transition
 from scipy.spatial import cKDTree
+import pandas as pd
+import logging
+from typing import Union
+
+from ..parameters import Parameter
+from .base import Transition
 from .util import smart_cov
 from .exceptions import NotEnoughParticles
-import logging
 
 logger = logging.getLogger("LocalTransition")
 
@@ -95,19 +98,25 @@ class LocalTransition(Transition):
             raise Exception("Normalization not real")
         self.normalization = np.real(self.normalization)
 
-    def pdf(self, x):
-        x = x[self.X.columns].values
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]):
+        # convert to numpy array in correct order
+        if isinstance(x, (Parameter, pd.Series)):
+            x = np.array([x[key] for key in self.X.columns])
+        else:
+            x = x[self.X.columns].to_numpy()
+        # compute density
         if len(x.shape) == 1:
             return self._pdf_single(x)
         else:
-            return np.array([self._pdf_single(x) for x in x])
+            return np.array([self._pdf_single(xi) for xi in x])
 
-    def _pdf_single(self, x):
+    def _pdf_single(self, x: np.ndarray):
         distance = self.X_arr - x
         cov_distance = np.einsum("ij,ijk,ik->i",
                                  distance, self.inv_covs, distance)
-        return np.average(np.exp(-.5 * cov_distance) / self.normalization,
-                          weights=self.w)
+        return float(
+            np.average(np.exp(-.5 * cov_distance) / self.normalization,
+                       weights=self.w))
 
     def _cov_and_inv(self, n, indices):
         """
@@ -138,8 +147,8 @@ class LocalTransition(Transition):
                 cov[k, k] = np.absolute(self.X_arr[0, k])
         return cov * self.scaling
 
-    def rvs_single(self):
+    def rvs_single(self) -> Parameter:
         support_index = np.random.choice(self.w.shape[0], p=self.w)
         sample = np.random.multivariate_normal(self.X_arr[support_index],
                                                self.covs[support_index])
-        return pd.Series(sample, index=self.X.columns)
+        return Parameter(dict(zip(self.X.columns, sample)))
