@@ -22,7 +22,8 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/external_simulators.ipynb
    examples/data_plots.ipynb
    examples/noise.ipynb
-   examples/petab.ipynb
+   examples/petab_yaml2sbml.ipynb
+   examples/petab_application.ipynb
    examples/discrete_parameters.ipynb
 
 
@@ -43,7 +44,8 @@ Download the examples as notebooks
 * :download:`External Simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise assessment <examples/noise.ipynb>`
-* :download:`PEtab import <examples/petab.ipynb>`
+* :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
+* :download:`PEtab application example <examples/petab_application.ipynb>`
 * :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
 
 
