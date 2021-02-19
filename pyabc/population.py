@@ -49,6 +49,9 @@ class Particle:
         List of rejected distances.
     accepted:
         True if particle was accepted, False if not.
+    proposal_id:
+        An identifier for the proposal the particle was generated from.
+        This allows grouping particles accordingly.
     preliminary:
         Whether this particle is only preliminarily accepted. Must be False
         eventually for all particles.
@@ -75,6 +78,7 @@ class Particle:
                  rejected_sum_stats: List[dict] = None,
                  rejected_distances: List[float] = None,
                  accepted: bool = True,
+                 proposal_id: int = 0,
                  preliminary: bool = False):
 
         self.m = m
@@ -89,6 +93,7 @@ class Particle:
             rejected_distances = []
         self.rejected_distances = rejected_distances
         self.accepted = accepted
+        self.proposal_id = proposal_id
         self.preliminary = preliminary
 
 

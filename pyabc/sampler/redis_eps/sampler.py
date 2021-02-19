@@ -273,6 +273,9 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             n_lookahead=n_lookahead_eval)
         self.logger.write()
 
+        # weight samples correctly
+        sample = self_normalize_within_subpopulations(sample, n)
+
         return sample
 
     def start_generation_t(
@@ -496,7 +499,7 @@ def create_preliminary_simulate_one(
         models=ana_vars.models, summary_statistics=ana_vars.summary_statistics,
         x_0=ana_vars.x_0, distance_function=ana_vars.distance_function,
         eps=ana_vars.eps, acceptor=ana_vars.acceptor,
-        evaluate=not delay_evaluation,
+        evaluate=not delay_evaluation, proposal_id=-1,
     )
 
 
@@ -561,3 +564,49 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
 
     return (sample_with_id,
             any(particle.accepted for particle in sample.particles))
+
+
+def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
+    """Applies subpopulation-wise self-normalization of samples, in-place.
+
+    Parameters
+    ----------
+    sample: The population to be returned by the sampler.
+    n: Population size.
+
+    Returns
+    -------
+    sample: The same, weight-adjusted sample.
+    """
+    prop_ids = {particle.proposal_id for particle in sample.particles}
+
+    if len(prop_ids) == 1:
+        # Nothing to be done, as we only have one proposal, and normalization
+        #  is applied later when the population is created
+        return sample
+
+    accepted_particles = sample.accepted_particles
+    if len(accepted_particles) != n:
+        # this should not happen
+        raise AssertionError("Unexpected number of acceptances")
+
+    # get particles per proposal
+    particles_per_prop = {
+        prop_id: [particle for particle in accepted_particles
+                  if particle.proposal_id == prop_id]
+        for prop_id in prop_ids}
+
+    # normalize weights by N_l / N / sum_l[w_l] for proposal id l
+    normalizations = {}
+    for prop_id, particles_for_prop in particles_per_prop.items():
+        n_l = len(particles_for_prop)
+        # TODO this only works if n_sim per particle == 1
+        total_weight = sum(particle.weight for particle in particles_for_prop)
+        normalizations[prop_id] = n_l / n / total_weight
+
+    # normalize every particle (this includes rejected ones, which should not
+    #  be necessary, but does not hurt)
+    for particle in sample.particles:
+        particle.weight *= normalizations[particle.proposal_id]
+
+    return sample
