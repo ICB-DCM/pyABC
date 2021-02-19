@@ -493,6 +493,7 @@ def update_figure_ABC_run(smc_id, f_type):
 def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
     # create some matplotlib graph
     history = h.History("sqlite:///" + db_path, _id=smc_id)
+    bar_limit = []
     global para_list
     if f_type == "tab-pdf":
         fig, ax = plt.subplots()
@@ -517,8 +518,8 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
         if len(parameters) == 0:
             return
         pyabc.visualization.plot_credible_intervals(
-            history, levels=[0.95, 0.9, 0.5], ts=[0, 1, 2, 3, 4],
-            show_mean=True, show_kde_max_1d=True, par_names=parameters)
+        history, levels=[0.95, 0.9, 0.5], ts=[0, 1, 2, 3, 4],
+        show_mean=True, show_kde_max_1d=True,par_names=parameters)
     buf = io.BytesIO()  # in-memory files
     plt.savefig(buf, format="png")  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
@@ -564,6 +565,59 @@ def save_file(name, content):
         os.makedirs(DOWNLOAD_DIR)
     with open(os.path.join(DOWNLOAD_DIR, name), "wb") as fp:
         fp.write(base64.decodebytes(data))
+
+
+def save_code_snippet(code_pt2):
+    code_pt1 = 'import pyabc\n\
+import matplotlib.pyplot as plt\n\
+# Please please adapt this: db_path\n\
+history = pyabc.storage.History("sqlite:///" + db_path)\n'
+    code_pt3 = 'plt.show()'
+    code = code_pt1 + code_pt2 + code_pt3
+    if not os.path.exists(DOWNLOAD_DIR):
+        os.makedirs(DOWNLOAD_DIR)
+    with open(os.path.join(DOWNLOAD_DIR, "code_snippet.py"), "w") as fp:
+        fp.write(code)
+
+        
+@app.callback(Output('container-button-timestamp', 'children'),
+              Input('copy', 'n_clicks'),
+              Input("tabs", "value"),
+              )
+def displayClick(btn_click,tab_type):
+    if (btn_click >0):
+        code_pt2 = ""
+        if tab_type == 'tab-pdf':
+            code_pt2 = '# Please please adapt this: lower_lim, upper_lim, parameter\n'\
+                       'for t in range(history.max_t + 1):\n'\
+                       '    df, w = history.get_distribution(m=0, t=t)\n'\
+                       '    pyabc.visualization.plot_kde_1d(\n'\
+                       '    df, w, xmin=lower_lim[0], xmax=bar_val[1],\n'\
+                       '    x=parameter, ax=ax,\n'\
+                       '    label="PDF t={}".format(t))\n'
+        elif tab_type == 'tab-samples':
+            code_pt2 = 'pyabc.visualization.plot_sample_numbers(history)\n'
+        elif tab_type == 'tab-particles':
+            code_pt2 = 'fig2, ax2 = plt.subplots()\n'\
+            'particles = (history.get_nr_particles_per_population()' \
+                       '.reset_index().' \
+                       'rename(columns={"index": "t", "t": "particles"})' \
+                       '.query("t >= 0"))\n\
+                       ax2.set_xlabel("population index")\n\
+                       ax2.set_ylabel("Particles")\n\
+                       ax2.plot(particles["t"], particles["particles"])\n'
+        elif tab_type == 'tab-epsilons':
+            code_pt2 = 'pyabc.visualization.plot_epsilons(history)\n'
+        elif tab_type == 'tab-effective':
+            code_pt2 = 'pyabc.visualization.plot_effective_sample_sizes(history)\n'
+        elif tab_type == 'tab-credible':
+            code_pt2 = '# Please please adapt this: parameter\n'\
+                       'pyabc.visualization.plot_credible_intervals(\n'\
+                       'history, levels=[0.95, 0.9, 0.5], ' \
+                       'ts=[0, 1, 2, 3, 4],\n'\
+                       'how_mean=True, ' \
+                       'show_kde_max_1d=True,par_names=parameter)\n'
+        save_code_snippet(code_pt2)
 
 
 def save_code_snippet(code_pt2):
