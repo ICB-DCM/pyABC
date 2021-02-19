@@ -211,7 +211,7 @@ blockquote {
 }
 /* Links –––––––––––––––––––––––––––––––––––––––––––––––––– */
 a {
-  color: #1EAEDB;
+  color: #624c0d;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -247,7 +247,7 @@ a:hover {
   padding: 0 30px;
   color: #555;
   text-align: center;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 38px;
   letter-spacing: .1rem;
@@ -256,7 +256,7 @@ a:hover {
   white-space: nowrap;
   background-color: transparent;
   border-radius: 4px;
-  border: 1px solid #bbb;
+  border: 1px solid #1e1e1e;
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -419,8 +419,8 @@ html, body{
 }
 
 body {
-  background-color: #1E1E1E;
-  color: #d8d8d8;
+  background-color: #b1b1b1;
+  color: #1e1e1e;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -446,7 +446,7 @@ a {
   text-decoration: none;
 }
 .bg-grey{
-  background-color: #31302F;
+  background-color: white;
 }
 .text-padding{
   padding: 5px;
@@ -485,7 +485,7 @@ a {
   padding-bottom: 12px;
 }
 .Select-control, .Select-menu-outer, .Select-multi-value-wrapper, .select-up, .is-open .Select-control {
-  background-color: #1E1E1E;
+  background-color: #595959;
   color: white;
 
 }
@@ -498,13 +498,13 @@ a {
 }
 
 .Select-control{
-  border: 0.5px solid #dbdbdb44;
+  border: 0.5px solid #1e1e1e;
 }
 
 .has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label {
   color: white;
-  background: #1E1E1E;
-  background-color: #1E1E1E;
+  background: #b1b1b1;
+  background-color: #595959;
 }
 ._dash-app-content {
   overflow-x: hidden;
@@ -518,11 +518,11 @@ a {
 }
 
 .Input.DateInput_1 {
-  background-color: #1e1e1e;
+  background-color: #b1b1b1;
 }
 
 #date {
-  background-color: #1e1e1e;
+  background-color: #b1b1b1;
   font-family: "Open Sans Light";
   font-weight: 400;
   color: #dbdbdb;
@@ -552,8 +552,8 @@ a {
 .SingleDatePickerInput__withBorder {
   border-radius: 3px;
   color: #dbdbdb;
-  background: #1e1e1e;
-  background-color: #1e1e1e;
+  background: #b1b1b1;
+  background-color: #b1b1b1;
 }
 
 .SingleDatePickerInput.SingleDatePickerInput_1.SingleDatePickerInput__withBorder.SingleDatePickerInput__withBorder_2 {
@@ -618,7 +618,7 @@ a {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #1e1e1e !important;
+  background: #b1b1b1 !important;
   border-radius: 10px !important;
   display: block !important;
 }

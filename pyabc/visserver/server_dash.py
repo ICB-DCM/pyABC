@@ -6,6 +6,8 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 from pyabc.storage import history as h
 import pyabc
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -13,14 +15,19 @@ import re
 import os
 import click
 import pathlib
+from pathlib import Path
 
 static = str(pathlib.Path(__file__).parent.absolute())+'/assets/'
+os.chdir('../../')
+
+static_logo = Path(str(pathlib.Path(__file__).parent.absolute())).parent.parent
+print(static_logo)
 DOWNLOAD_DIRECTORY = "/tmp/"
 db_path = DOWNLOAD_DIRECTORY
 parameter = ""
 square_png = static+'square.png'
 square_base64 = base64.b64encode(open(square_png, 'rb').read()).decode('ascii')
-pyABC_png = static+'pyABC_logo.png'
+pyABC_png = str(static_logo) +'/doc/logo/logo.png'
 pyABC_base64 = base64.b64encode(open(pyABC_png, 'rb').read()).decode('ascii')
 para_list = []
 colors = {
@@ -38,7 +45,7 @@ app.layout = app.layout = html.Div(children=[
                           children=[
                               html.Img(id='pyABC_logo',
                                        src='data:image/png;base64,{}'.format(
-                                           pyABC_base64)), html.Br(),
+                                           pyABC_base64), width="300" ), html.Br(),
                               html.H1(
                                   'pyABC: Likelihood free inference'),
                               html.H3('(Web server)'),
@@ -78,7 +85,7 @@ app.layout = app.layout = html.Div(children=[
                           ),  # Define the left element
                  html.Div(id='information_grid',
                           className='eight columns div-for-charts bg-grey',
-                          style={'height': '1200px'}),
+                          style={'height': '1300px'}),
                  # Define the right element
              ]),
 ])
@@ -173,7 +180,7 @@ def prepare_run_detailes(history):
         ])
     return html.Div([
         html.Div([
-            html.H1('Runs details'),
+            html.H1("Run's details"),
             html.Hr(),  # horizontal line
         ]),
         html.Div([
@@ -212,7 +219,7 @@ def prepare_run_detailes(history):
                       'margin-left': '40px', 'height': '200px'}),
         ]),
         html.Div([
-            html.H1('Runs plots'),
+            html.H1("Run's plots"),
             html.Hr(), html.Br(),
             # horizontal line
         ]),
@@ -302,12 +309,18 @@ def update_download_path(new_download_path):
 
 
 @app.callback([Output('output-data-upload', 'children'),
-               Output('ABC_runs', 'options')],
+               Output('ABC_runs', 'options'),
+               Output('ABC_runs', 'value')],
               [Input('upload-data', 'contents')],
               [State('upload-data', 'filename'),
                State('upload-data', 'last_modified')])
 def update_DB_details(list_of_contents, list_of_names, list_of_dates):
-    file_name = "pyABC_server_" + list_of_names[0]
+    try:
+        file_name = "pyABC_server_" + list_of_names[0]
+    except:
+        print("database name is none")
+        print("list of names: ",list_of_names)
+
     save_file(file_name, list_of_contents[0])
     global db_path
     db_path = DOWNLOAD_DIRECTORY + file_name
@@ -319,7 +332,7 @@ def update_DB_details(list_of_contents, list_of_names, list_of_dates):
             parse_contents(c, n, d) for c, n, d in
             zip(list_of_contents, list_of_names, list_of_dates)]
         return children, [{'label': name, 'value': name}
-                          for name in list_run_ids]
+                          for name in list_run_ids], list_run_ids[-1]
 
 
 def prepare_fig_tab(smc_id):
@@ -379,12 +392,47 @@ def update_figure_ABC_run(smc_id, f_type):
                 dcc.Dropdown(
                     id="parameters",
                     options=[{'label': name, 'value': name} for name in
-                             para_list], multi=True,
+                             para_list], multi=True, value=[para_list[0]]
                 ), html.Div(["ABC run plots: ", html.Br(), html.Br(),
                              html.Img(id='abc_run_plot',
                                       src='data:image/png;base64,{}'.format(
                                           square_base64)),  # img element,
-                             ], style={'textAlign': 'center'})]
+                             ], style={'textAlign': 'center'}),
+                html.Div(["x limits: ", html.Br(), html.Br(),
+                          html.Div(children=["min: ",dcc.Input(id="bar_min",
+                                                  placeholder='min',
+                                                  type='number',
+                                                  value='0'),
+
+                                             "max: ", dcc.Input(id="bar_max",
+                                                       placeholder='max',
+                                                       type='number',
+                                                       value='20'),
+
+
+
+                                             "step: ", dcc.Input(id="bar_step",
+                                                       placeholder='step',
+                                                       type='text',
+                                                       value='1'),
+                                             "Generate code: ",
+                                             html.Button('Generate', id='copy',
+                                                         n_clicks=0),
+        html.Hr(),
+
+                              dcc.RangeSlider(
+                                  id='my-range-slider',
+                                  min=0,
+                                  max=20,
+                                  step=1,
+                                  value=[5, 15]
+                              ),
+
+
+                          ]),
+                    html.Div(id='output-container-range-slider')
+                ])
+                ]
     elif f_type == "tab-samples":
         pyabc.visualization.plot_sample_numbers(history)
     elif f_type == "tab-particles":
@@ -403,12 +451,21 @@ def update_figure_ABC_run(smc_id, f_type):
                 dcc.Dropdown(
                     id="parameters",
                     options=[{'label': name, 'value': name} for name in
-                             para_list], multi=True,
+                             para_list], multi=True, value=[para_list[0]]
                 ), html.Div(["ABC run plots: ", html.Br(), html.Br(),
                              html.Img(id='abc_run_plot',
                                       src='data:image/png;base64,{}'.format(
-                                          square_base64)),  # img element,
-                             ], style={'textAlign': 'center'})]
+                                          square_base64)),
+
+                             ], style={'textAlign': 'center'}), "Generate code: ",
+                             html.Button('Generate', id='copy', n_clicks=0),
+                             html.Div([dcc.RangeSlider(
+                                 id='my-range-slider',
+                                 min=0,
+                                 max=20,
+                                 step=1,
+                                 value=[5, 15]
+                             )],style={'display': 'none'})]
     elif f_type == "tab-effective":
         pyabc.visualization.plot_effective_sample_sizes(history)
     elif f_type == "tab-pdf":
@@ -428,28 +485,28 @@ def update_figure_ABC_run(smc_id, f_type):
          # img element,
          ],
      style={
-         'textAlign': 'center'})]
+         'textAlign': 'center'}), "Generate code: ",     html.Button('Generate', id='copy', n_clicks=0)]
 
 
 @app.callback(
-    dash.dependencies.Output('abc_run_plot', 'src'),  # src attribute
+    dash.dependencies.Output('abc_run_plot', 'src'),
     [dash.dependencies.Input('ABC_runs', 'value'),
      dash.dependencies.Input('parameters', 'value'),
-     dash.dependencies.Input("tabs", "value")],
+     dash.dependencies.Input("tabs", "value"),
+     dash.dependencies.Input('my-range-slider', 'value')]
 )
-def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
+def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
     # create some matplotlib graph
     history = h.History("sqlite:///" + db_path, _id=smc_id)
+    bar_limit = []
     global para_list
     if f_type == "tab-pdf":
-
         fig, ax = plt.subplots()
         if len(parameters) == 1:
             for t in range(history.max_t + 1):
                 df, w = history.get_distribution(m=0, t=t)
                 pyabc.visualization.plot_kde_1d(
-                    df, w,
-                    xmin=0, xmax=5,
+                    df, w, xmin=bar_val[0], xmax=bar_val[1],
                     x=parameters[0], ax=ax,
                     label="PDF t={}".format(t))
             ax.legend()
@@ -457,6 +514,7 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
             df, w = history.get_distribution(m=0)
             pyabc.visualization.plot_kde_2d(df, w, parameters[0],
                                             parameters[1])
+
         else:
             df, w = history.get_distribution(m=0)
             pyabc.visualization.plot_kde_matrix(df, w)
@@ -465,8 +523,8 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
         if len(parameters) == 0:
             return
         pyabc.visualization.plot_credible_intervals(
-            history, levels=[0.95, 0.9, 0.5], ts=[0, 1, 2, 3, 4],
-            show_mean=True, show_kde_max_1d=True, par_names=parameters)
+        history, levels=[0.95, 0.9, 0.5], ts=[0, 1, 2, 3, 4],
+        show_mean=True, show_kde_max_1d=True,par_names=parameters)
     buf = io.BytesIO()  # in-memory files
     plt.savefig(buf, format="png")  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
@@ -476,6 +534,34 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type):
     return "data:image/png;base64,{}".format(data)
 
 
+# @app.callback(
+#     dash.dependencies.Output('output-container-range-slider', 'children'),
+#     [dash.dependencies.Input('my-range-slider', 'value')])
+# def update_output(value):
+#     return 'You have selected "{}"'.format(value)
+
+
+# # update the bar when a new image in loaded
+# @app.callback(
+#     [dash.dependencies.Output('my-range-slider', 'value')],
+#     [dash.dependencies.Input('abc_run_plot', 'src')])
+# def update_output(value):
+#     history = h.History("sqlite:///" + db_path, _id=smc_id)
+#     df, w = history.get_distribution(m=0, t=t)
+#     values = [df[x].min(), df[x].max()]
+#     return [0,2]
+
+@app.callback(
+    [dash.dependencies.Output("my-range-slider", "min"),
+     dash.dependencies.Output("my-range-slider", "max"),
+     dash.dependencies.Output("my-range-slider", "step")],
+    [dash.dependencies.Input("bar_min", "value"),
+    dash.dependencies.Input("bar_max", "value"),
+     dash.dependencies.Input("bar_step", "value")]
+)
+def number_render(min, max, step):
+    return int(min), int(max), float(step)
+
 def save_file(name, content):
     """Decode and store a file uploaded with Dash."""
     data = content.encode("utf8").split(b";base64,")[1]
@@ -483,6 +569,57 @@ def save_file(name, content):
         os.makedirs(DOWNLOAD_DIRECTORY)
     with open(os.path.join(DOWNLOAD_DIRECTORY, name), "wb") as fp:
         fp.write(base64.decodebytes(data))
+
+def save_code_snippet(code_pt2):
+    code_pt1 = 'import pyabc\n\
+import matplotlib.pyplot as plt\n\
+# Please please adapt this: db_path\n\
+history = pyabc.storage.History("sqlite:///" + db_path)\n'
+    code_pt3 = 'plt.show()'
+    code = code_pt1 + code_pt2 + code_pt3
+    if not os.path.exists(DOWNLOAD_DIRECTORY):
+        os.makedirs(DOWNLOAD_DIRECTORY)
+    with open(os.path.join(DOWNLOAD_DIRECTORY, "code_snippet.py"), "w") as fp:
+        fp.write(code)
+
+@app.callback(Output('container-button-timestamp', 'children'),
+              Input('copy', 'n_clicks'),
+              Input("tabs", "value"),
+              )
+def displayClick(btn_click,tab_type):
+    if (btn_click >0):
+        code_pt2 = ""
+        if tab_type == 'tab-pdf':
+            code_pt2 = '# Please please adapt this: lower_lim, upper_lim, parameter\n'\
+                       'for t in range(history.max_t + 1):\n'\
+                       '    df, w = history.get_distribution(m=0, t=t)\n'\
+                       '    pyabc.visualization.plot_kde_1d(\n'\
+                       '    df, w, xmin=lower_lim[0], xmax=bar_val[1],\n'\
+                       '    x=parameter, ax=ax,\n'\
+                       '    label="PDF t={}".format(t))\n'
+        elif tab_type == 'tab-samples':
+            code_pt2 = 'pyabc.visualization.plot_sample_numbers(history)\n'
+        elif tab_type == 'tab-particles':
+            code_pt2 = 'fig2, ax2 = plt.subplots()\n'\
+            'particles = (history.get_nr_particles_per_population()' \
+                       '.reset_index().' \
+                       'rename(columns={"index": "t", "t": "particles"})' \
+                       '.query("t >= 0"))\n\
+                       ax2.set_xlabel("population index")\n\
+                       ax2.set_ylabel("Particles")\n\
+                       ax2.plot(particles["t"], particles["particles"])\n'
+        elif tab_type == 'tab-epsilons':
+            code_pt2 = 'pyabc.visualization.plot_epsilons(history)\n'
+        elif tab_type == 'tab-effective':
+            code_pt2 = 'pyabc.visualization.plot_effective_sample_sizes(history)\n'
+        elif tab_type == 'tab-credible':
+            code_pt2 = '# Please please adapt this: parameter\n'\
+                       'pyabc.visualization.plot_credible_intervals(\n'\
+                       'history, levels=[0.95, 0.9, 0.5], ' \
+                       'ts=[0, 1, 2, 3, 4],\n'\
+                       'how_mean=True, ' \
+                       'show_kde_max_1d=True,par_names=parameter)\n'
+        save_code_snippet(code_pt2)
 
 
 @click.command()
