@@ -213,11 +213,11 @@ class History:
 
         # compare to current version
         if version != __db_version__:
-            raise ValueError(
+            raise AssertionError(
                 f"Database has version {version}, latest format version is "
                 f"{__db_version__}. Thus, not all queries may work correctly. "
                 "Consider migrating the database to the latest version via "
-                "`abc-db-migrate`, as explained in the storage documentation.")
+                "`abc-migrate`, as explained in the storage documentation.")
 
     @with_session
     def _find_latest_id(self):

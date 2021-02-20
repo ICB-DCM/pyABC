@@ -161,6 +161,7 @@ necessary database changes. See the Alembic and SQLAlchemy documentation for
 details.
 
 Users will then migrate databases via ``abc-migrate``, pointing to
-``pyabc.storage.migrate.py:migrate``.
+``pyabc.storage.migrate.py:migrate``, which is a wrapper around
+``alembic upgrade head``.
 
 Adding tests for correct conversions is recommended.

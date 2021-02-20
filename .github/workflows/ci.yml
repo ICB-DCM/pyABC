@@ -33,6 +33,10 @@ jobs:
       timeout-minutes: 12
       run: tox -e base
 
+    - name: Test migration
+      timeout-minutes: 3
+      run: tox -e migrate
+
     - name: Coverage
       uses: codecov/codecov-action@v1
       with:
