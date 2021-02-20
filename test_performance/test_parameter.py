@@ -131,5 +131,7 @@ def test_sample_selection():
     time_numpy_cached = time() - start
     print(f"Time using numpy choice cache: {time_numpy_cached}")
 
+    # check times as expected
+    tol = 0.9
     assert time_numpy < time_pandas
-    assert time_numpy_cached < time_numpy
+    assert time_numpy_cached * tol < time_numpy
