@@ -217,7 +217,8 @@ class History:
                 f"Database has version {version}, latest format version is "
                 f"{__db_version__}. Thus, not all queries may work correctly. "
                 "Consider migrating the database to the latest version via "
-                "`abc-migrate`, as explained in the storage documentation.")
+                "`abc-migrate`. Check `abc-migrate --help` and the "
+                "documentation for further information.")
 
     @with_session
     def _find_latest_id(self):

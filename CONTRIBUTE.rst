@@ -136,7 +136,7 @@ For how the pyABC storage works, see the pages in the
 keep the storage format as consistent as possible.
 
 If changes are necessary, after all implementations the dataformat version in
-``pyabc.storage.version.py`` should be incremented.
+``pyabc/storage/version.py`` should be incremented.
 All newly created databases are annotated with this version.
 
 To update outdated databases to the new format, we want to provide migration
@@ -146,22 +146,22 @@ We use `Alembic <https://alembic.sqlalchemy.org/en/latest/>`_ to migrate our
 
     pip install pyabc[migrate]
 
-Its configuration is given in ``pyabc.storage.alembic.ini``.
+Its configuration is given in ``pyabc/storage/alembic.ini``.
 
 Then, prepare the migration scripts by running inside the ``pyabc.storage``
 folder::
 
     alembic revision --rev-id VERSION -m 'SHORT CHANGE DESCRIPTION'
 
-where ``VERSION`` is the new version in ``pyabc.storage.version.py``.
+where ``VERSION`` is the new version in ``pyabc/storage/version.py``.
 
-This creates a new subfolder under ``pyabc.storage.migrations.versions`` with
+This creates a new subfolder under ``pyabc/storage/migrations/versions`` with
 two functions ``upgrade()`` and ``downgrade()`` to be manually filled with the
 necessary database changes. See the Alembic and SQLAlchemy documentation for
 details.
 
 Users will then migrate databases via ``abc-migrate``, pointing to
-``pyabc.storage.migrate.py:migrate``, which is a wrapper around
+``pyabc/storage/migrate.py:migrate``, which is a wrapper around
 ``alembic upgrade head``.
 
 Adding tests for correct conversions is recommended.
