@@ -1,8 +1,13 @@
+"""Migrate database."""
+
 import click
 import os
 import shutil
-from alembic.config import Config
-from alembic import command
+try:
+    from alembic.config import Config
+    from alembic import command
+except ImportError:
+    Config = command = None
 
 SQLITE_STR = "sqlite:///"
 
@@ -31,6 +36,11 @@ def migrate(src: str, dst: str, version: str) -> None:
     dst: Destination
     version: Version to migrate to
     """
+    if Config is None or command is None:
+        print("Error: migration tools not installed. Please run "
+              "`pip install pyabc[migrate]`")
+        return
+
     # to file paths if URLs
     if src.startswith(SQLITE_STR):
         src = src[len(SQLITE_STR):]
@@ -45,10 +55,15 @@ def migrate(src: str, dst: str, version: str) -> None:
         # copy source to destination
         shutil.copyfile(src=src, dst=dst)
 
+    # config base path
     base_path = os.path.dirname(os.path.abspath(__file__))
+    # read configuration file
     cfg = Config(os.path.join(base_path, 'alembic.ini'))
+    # set absolute script location path
     cfg.set_main_option(
         'script_location', os.path.join(base_path, 'migrations'))
+    # set target database file
     cfg.set_main_option('sqlalchemy.url', SQLITE_STR + dst)
 
+    # run the actual upgrade
     command.upgrade(cfg, version)
