@@ -11,6 +11,7 @@ API reference
    api_distance
    api_acceptor
    api_model
+   api_sumstat
    api_epsilon
    api_datastore
    api_transition
