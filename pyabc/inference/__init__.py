@@ -2,7 +2,7 @@
 Inference
 =========
 
-This is the core module of pyABC.
+ABC inference routines. This is the analysis core module of pyABC.
 """
 
 from .smc import ABCSMC

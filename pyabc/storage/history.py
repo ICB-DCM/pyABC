@@ -4,18 +4,21 @@ from typing import List, Union
 import json
 import numpy as np
 import pandas as pd
-from sqlalchemy import func
+import sqlalchemy as sa
 from sqlalchemy.orm import subqueryload
 from functools import wraps
 import tempfile
 import logging
 
-from .db_model import (ABCSMC, Population, Model, Particle,
+from .db_model import (Version, ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
+from .version import __db_version__
 from ..population import Particle as PyParticle, Population as PyPopulation
 from ..parameters import Parameter as PyParameter
 
 logger = logging.getLogger("History")
+
+SQLITE_STR = "sqlite:///"
 
 
 def with_session(f):
@@ -83,22 +86,13 @@ def create_sqlite_db_id(
     return "sqlite:///" + os.path.join(dir_, file_)
 
 
-def assert_db_exists(db: str):
-    """
-    Check if db exists. If it is a file and does not exist, raise
-    an error. This is helpful to avoid misspelling a file name and
-    then working with an empty history.
-
-    Parameters
-    ----------
-    db:
-        As passed to History.
-    """
-    if not db.startswith("sqlite:///"):
-        return
-    file_ = db[10:]
-    if not os.path.exists(file_):
-        raise ValueError(f"Database file {db} does not exist.")
+def database_exists(db: str) -> bool:
+    """Does the database file exist already?"""
+    return (
+        db != "sqlite://" and
+        os.path.exists(db[len(SQLITE_STR):]) and
+        os.path.getsize(db[len(SQLITE_STR):]) > 0
+    )
 
 
 class History:
@@ -136,16 +130,16 @@ class History:
                  stores_sum_stats: bool = True,
                  _id: int = None,
                  create: bool = True):
-        """
-        Initialize history object.
+        """Initialize history object.
 
         Parameters
         ----------
         create:
             If False, an error is thrown if the database does not exist.
         """
-        if not create:
-            assert_db_exists(db)
+        db_exists = database_exists(db)
+        if not create and not db_exists:
+            raise ValueError(f"Database file {db} does not exist.")
 
         self.db = db
         self.stores_sum_stats = stores_sum_stats
@@ -153,6 +147,13 @@ class History:
         # to be filled using the session wrappers
         self._session = None
         self._engine = None
+
+        # set version if new file
+        if not db_exists:
+            self._set_version()
+
+        # check that the database version is up-to-date
+        self._check_version()
 
         # find id in database
         if _id is None:
@@ -193,6 +194,30 @@ class History:
         """
         runs = self._session.query(ABCSMC).all()
         return runs
+
+    @with_session
+    def _check_version(self):
+        """Check that the database version is up-to-date.
+
+        Raises
+        ------
+        ValueError if the version is not up-to-date.
+        """
+        # extract version table
+        version = self._session.query(Version)
+        if len(version.all()) == 0:
+            # the first version has no version table
+            version = '0'
+        else:
+            version = str(version.one().version_num)
+
+        # compare to current version
+        if version != __db_version__:
+            raise ValueError(
+                f"Database has version {version}, latest format version is "
+                f"{__db_version__}. Thus, not all queries may work correctly. "
+                "Consider migrating the database to the latest version via "
+                "`abc-db-migrate`, as explained in the storage documentation.")
 
     @with_session
     def _find_latest_id(self):
@@ -549,7 +574,7 @@ class History:
         nr_sim: int
             Total nr of sample attempts for the ABC run.
         """
-        nr_sim = (self._session.query(func.sum(Population.nr_samples))
+        nr_sim = (self._session.query(sa.func.sum(Population.nr_samples))
                   .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return nr_sim
 
@@ -567,6 +592,21 @@ class History:
         self._session = session
         self._engine = engine
         return session
+
+    @with_session
+    def _set_version(self):
+        """Set database version.
+
+        This should only be called if the database is new, in order not to
+        wrongly assign a version to an unversioned (outdated) database.
+        """
+        # check if version exists already
+        if len(self._session.query(Version).all()) > 0:
+            raise AssertionError("Cannot set version as already exists.")
+
+        # set version to latest
+        self._session.add(Version(version_num=__db_version__))
+        self._session.commit()
 
     def _close_session(self):
         # don't close in memory database
@@ -639,13 +679,13 @@ class History:
             # iterate over model population of particles
             for store_item in model_population:
                 # a store_item is a Particle
-                weight = store_item.weight
                 distance_list = store_item.accepted_distances
                 parameter = store_item.parameter
                 summary_statistics_list = store_item.accepted_sum_stats
 
                 # create new particle
-                particle = Particle(w=weight)
+                particle = Particle(
+                    w=store_item.weight, proposal_id=store_item.proposal_id)
                 # append particle to model
                 model.particles.append(particle)
 
@@ -867,7 +907,7 @@ class History:
         The population number of the last populations.
         This is equivalent to ``n_populations - 1``.
         """
-        max_t = (self._session.query(func.max(Population.t))
+        max_t = (self._session.query(sa.func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return max_t
 

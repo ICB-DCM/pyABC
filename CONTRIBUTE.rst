@@ -126,3 +126,41 @@ tests. The flake8 plugins used are specified in ``tox.ini`` and the flake8
 configuration is given in ``.flake8``. You can run the checks locally via::
 
     tox -e flake8
+
+Data store migration
+--------------------
+
+For how the pyABC storage works, see the pages in the
+:ref:`Data store User documentation <datastore>` and the
+:ref:`Data store API documentation <api_datastore>`. In general, we try to
+keep the storage format as consistent as possible.
+
+If changes are necessary, after all implementations the dataformat version in
+``pyabc.storage.version.py`` should be incremented.
+All newly created databases are annotated with this version.
+
+To update outdated databases to the new format, we want to provide migration
+routines.
+We use `Alembic <https://alembic.sqlalchemy.org/en/latest/>`_ to migrate our
+`SQLAlchemy <https://www.sqlalchemy.org/>`_ based databases. Install it via::
+
+    pip install pyabc[migrate]
+
+Its configuration is given in ``pyabc.storage.alembic.ini``.
+
+Then, prepare the migration scripts by running inside the ``pyabc.storage``
+folder::
+
+    alembic revision --rev-id VERSION -m 'SHORT CHANGE DESCRIPTION'
+
+where ``VERSION`` is the new version in ``pyabc.storage.version.py``.
+
+This creates a new subfolder under ``pyabc.storage.migrations.versions`` with
+two functions ``upgrade()`` and ``downgrade()`` to be manually filled with the
+necessary database changes. See the Alembic and SQLAlchemy documentation for
+details.
+
+Users will then migrate databases via ``abc-migrate``, pointing to
+``pyabc.storage.migrate.py:migrate``.
+
+Adding tests for correct conversions is recommended.
