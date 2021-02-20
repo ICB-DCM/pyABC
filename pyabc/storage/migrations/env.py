@@ -1,3 +1,9 @@
+"""Alembic migration environment file.
+
+
+This is somehow called in migrations.
+"""
+
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -64,7 +70,9 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata,
+            connection=connection,
+            target_metadata=target_metadata,
+            version_table='version',
         )
 
         with context.begin_transaction():

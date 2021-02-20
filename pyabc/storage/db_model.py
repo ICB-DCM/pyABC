@@ -34,7 +34,7 @@ class BytesStorage(types.TypeDecorator):
 
 
 class Version(Base):
-    __tablename__ = 'alembic_version'
+    __tablename__ = 'version'
     version_num = Column(VARCHAR(32), primary_key=True,
                          default=str(__db_version__))
 
