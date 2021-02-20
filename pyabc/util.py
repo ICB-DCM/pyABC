@@ -369,6 +369,7 @@ def create_simulate_function(
         eps: Epsilon,
         acceptor: Acceptor,
         evaluate: bool = True,
+        proposal_id: int = 0,
 ) -> Callable:
     """
     Create a simulation function which performs the sampling of parameters,
@@ -394,6 +395,8 @@ def create_simulate_function(
     evaluate:
         Whether to actually evaluate the sample. Should be True except for
         certain preliminary settings.
+    proposal_id:
+        Identifier for the proposal distribution.
 
     Returns
     -------
@@ -447,7 +450,7 @@ def create_simulate_function(
                 *parameter, t=t,
                 nr_samples_per_parameter=nr_samples_per_parameter,
                 models=models, summary_statistics=summary_statistics,
-                weight_function=weight_function)
+                weight_function=weight_function, proposal_id=proposal_id)
         return particle
 
     return simulate_one
@@ -457,7 +460,9 @@ def only_simulate_data_for_proposal(
         m_ss: int, theta_ss: Parameter, t: int,
         nr_samples_per_parameter: int, models: List[Model],
         summary_statistics: Callable,
-        weight_function: Callable) -> Particle:
+        weight_function: Callable,
+        proposal_id: int,
+) -> Particle:
     """Simulate data for parameters.
 
     Similar to `evaluate_proposal`, however here for the passed parameters
@@ -496,7 +501,9 @@ def only_simulate_data_for_proposal(
         accepted_sum_stats=accepted_sum_stats,
         accepted_distances=accepted_distances,
         accepted=accepted,
-        preliminary=True)
+        preliminary=True,
+        proposal_id=proposal_id,
+    )
 
 
 def evaluate_preliminary_particle(
@@ -554,6 +561,8 @@ def evaluate_preliminary_particle(
         rejected_sum_stats=rejected_sum_stats,
         rejected_distances=rejected_distances,
         accepted=len(accepted_distances) > 0,
+        preliminary=False,
+        proposal_id=particle.proposal_id,
     )
 
 
