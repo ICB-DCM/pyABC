@@ -15,13 +15,14 @@ ABCSMC algorithms for Bayesian parameter inference and model selection.
 """
 
 from .version import __version__  # noqa: F401
-from .parameters import Parameter
-from .random_variables import (
-    Distribution,
-    RV,
-    RVBase,
-    RVDecorator,
-    LowerBoundDecorator)
+from .acceptor import (
+    Acceptor,
+    SimpleFunctionAcceptor,
+    UniformAcceptor,
+    StochasticAcceptor,
+    pdf_norm_from_kernel,
+    pdf_norm_max_found,
+    ScaledPDFNorm)
 from .distance import (
     Distance,
     NoDistance,
@@ -62,6 +63,25 @@ from .epsilon import (
     DalyScheme,
     FrielPettittScheme,
     EssScheme)
+from .inference import ABCSMC
+from .model import (
+    Model,
+    SimpleModel,
+    ModelResult,
+    IntegratedModel)
+from .parameters import Parameter
+from .population import (
+    Particle,
+    Population)
+from .populationstrategy import (
+    AdaptivePopulationSize,
+    ConstantPopulationSize)
+from .random_variables import (
+    Distribution,
+    RV,
+    RVBase,
+    RVDecorator,
+    LowerBoundDecorator)
 from .sampler import (
     SingleCoreSampler,
     MulticoreParticleParallelSampler,
@@ -73,23 +93,12 @@ from .sampler import (
     RedisStaticSamplerServerStarter,
     MulticoreEvalParallelSampler,
     ConcurrentFutureSampler)
-from .inference import ABCSMC
 from .storage import (
     History,
     create_sqlite_db_id)
-from .acceptor import (
-    Acceptor,
-    SimpleFunctionAcceptor,
-    UniformAcceptor,
-    StochasticAcceptor,
-    pdf_norm_from_kernel,
-    pdf_norm_max_found,
-    ScaledPDFNorm)
-from .model import (
-    Model,
-    SimpleModel,
-    ModelResult,
-    IntegratedModel)
+from .sumstat import (
+    Sumstat,
+    IdentitySumstat)
 from .transition import (
     MultivariateNormalTransition,
     LocalTransition,
@@ -98,12 +107,7 @@ from .transition import (
     AggregatedTransition,
     DiscreteJumpTransition,
     ModelPerturbationKernel)
-from .population import (
-    Particle,
-    Population)
-from .populationstrategy import (
-    AdaptivePopulationSize,
-    ConstantPopulationSize)
+
 from . import visualization
 from . import settings
 

@@ -18,6 +18,7 @@ from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
 from pyabc.random_variables import RV, Distribution
 from pyabc.sampler import Sampler, Sample
 from pyabc.storage import History
+from pyabc.sumstat import Sumstat, IdentitySumstat, to_sumstat
 from pyabc.transition import (
     Transition, MultivariateNormalTransition, ModelPerturbationKernel)
 from pyabc.weighted_statistics import effective_sample_size
@@ -30,10 +31,6 @@ from pyabc.util import (
 logger = logging.getLogger("ABC")
 
 model_output = TypeVar("model_output")
-
-
-def identity(x):
-    return x
 
 
 def run_cleanup(run):
@@ -157,7 +154,8 @@ class ABCSMC:
                                     Distribution, Callable],
             distance_function: Union[Distance, Callable] = None,
             population_size: Union[PopulationStrategy, int] = 100,
-            summary_statistics: Callable[[model_output], dict] = identity,
+            summary_statistics: Union[Sumstat,
+                                      Callable[[model_output], dict]] = None,
             model_prior: RV = None,
             model_perturbation_kernel: ModelPerturbationKernel = None,
             transitions: Union[List[Transition], Transition] = None,
@@ -184,7 +182,9 @@ class ABCSMC:
             distance_function = PNormDistance()
         self.distance_function = to_distance(distance_function)
 
-        self.summary_statistics = summary_statistics
+        if summary_statistics is None:
+            summary_statistics = IdentitySumstat()
+        self.summary_statistics = to_sumstat(summary_statistics)
 
         if model_prior is None:
             model_prior = RV("randint", 0, len(self.models))

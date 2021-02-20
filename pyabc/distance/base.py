@@ -6,8 +6,7 @@ import json
 
 
 class Distance(ABC):
-    """
-    Abstract base class for distance objects.
+    """Abstract base class for distances.
 
     Any object that computes the similarity between observed and simulated data
     should inherit from this class.
