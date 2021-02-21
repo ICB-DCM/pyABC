@@ -34,7 +34,7 @@ class Particle:
     weight:
         The weight of the particle. 0 <= weight <= 1.
     sum_stat:
-        Model sum_stat.
+        Model simulation.
     distance:
         Distance of simulated and measured data.
     accepted:
@@ -178,10 +178,7 @@ class Population:
     def get_weighted_distances(self) -> pd.DataFrame:
         """
         Create DataFrame of (distance, weight)'s. The particle weights are
-        multiplied by the model probabilities. If one sum_stat per particle
-        was performed, the weights thus sum to 1. If more than one sum_stat
-        per particle was performed, this does not have to be the case,
-        and post-normalizing may be necessary.
+        multiplied by the model probabilities. The weights thus sum to 1.
 
         Returns
         -------
@@ -208,15 +205,15 @@ class Population:
         weights, simulations: 2-Tuple of lists
         """
         weights = []
-        simulations = []
+        sum_stats = []
         for particle in self._list:
             # normalize weight
             model_probability = self._model_probabilities[particle.m]
             normalized_weight = particle.weight * model_probability
 
             weights.append(normalized_weight)
-            simulations.append(particle.sum_stat)
-        return weights, simulations
+            sum_stats.append(particle.sum_stat)
+        return weights, sum_stats
 
     def get_accepted_sum_stats(self) -> List[dict]:
         """Return a list of all accepted summary statistics."""

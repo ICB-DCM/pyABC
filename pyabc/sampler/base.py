@@ -54,7 +54,7 @@ class Sample:
         Returns
         -------
 
-        sum_stat: List
+        sum_stats: List
             Concatenation of all the all_sum_stats lists of the first <= m
             particles added and accepted to this sample via append().
         """
