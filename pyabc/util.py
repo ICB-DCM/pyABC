@@ -89,7 +89,7 @@ def create_simulate_from_prior_function(
     simulate_one:
         A function that returns a sampled particle.
     """
-    # sum_stat function, simplifying some parts compared to later
+    # simulation function, simplifying some parts compared to later
 
     def simulate_one():
         # sample model
@@ -490,7 +490,10 @@ def evaluate_preliminary_particle(
     # reconstruct weighting function from `weight_function`
     sampling_weight = particle.weight
     # the weight is the sampling weight times the acceptance weight(s)
-    weight = sampling_weight * acc_res.weight
+    if acc_res.accept:
+        weight = sampling_weight * acc_res.weight
+    else:
+        weight = 0
 
     # return the evaluated particle
     return Particle(
