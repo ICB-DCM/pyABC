@@ -31,7 +31,7 @@ Merge into main
 2. check that all code changes are covered by tests and all tests pass,
 3. check that the documentation is up-to-date,
 4. adapt the version number in ``pyabc/version.py`` (see above),
-5. update the release notes in ``doc/releasenotes.rst``,
+5. update the release notes in ``CHANGELOG.rst``,
 6. request a code review,
 7. merge into the origin ``main`` branch.
 
@@ -48,7 +48,7 @@ in
 In the release form,
 
 * specify a tag with the new version as specified in ``pyabc/version.py``,
-* include the latest additions to ``doc/releasenotes.rst`` in the release
+* include the latest additions to ``CHANGELOG.rst`` in the release
   description.
 
 Upload to PyPI

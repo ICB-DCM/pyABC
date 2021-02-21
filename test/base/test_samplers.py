@@ -404,6 +404,16 @@ def test_redis_look_ahead():
         assert (df.n_lookahead_accepted > 0).any()
         assert (df.n_preliminary == 0).all()
 
+        # check history proposal ids
+        for t in range(0, h.max_t + 1):
+            pop = h.get_population(t=t)
+            pop_size = len(pop)
+            n_lookahead_pop = len(
+                [p for p in pop.get_list() if p.proposal_id == -1])
+            assert min(
+                pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
+                == n_lookahead_pop
+
 
 def test_redis_look_ahead_error():
     """Test whether the look-ahead mode fails as expected."""
@@ -445,7 +455,7 @@ def test_redis_look_ahead_delayed():
                 model, prior, distance, sampler=sampler,
                 population_size=pop_size)
             abc.new(pyabc.create_sqlite_db_id(), obs)
-            abc.run(max_nr_populations=3)
+            h = abc.run(max_nr_populations=3)
         finally:
             sampler.shutdown()
         # read log file
@@ -454,3 +464,14 @@ def test_redis_look_ahead_delayed():
         assert (df.n_lookahead_accepted > 0).any()
         # in delayed mode, all look-aheads must have been preliminary
         assert (df.n_lookahead == df.n_preliminary).all()
+        print(df)
+
+        # check history proposal ids
+        for t in range(0, h.max_t + 1):
+            pop = h.get_population(t=t)
+            pop_size = len(pop)
+            n_lookahead_pop = len(
+                [p for p in pop.get_list() if p.proposal_id == -1])
+            assert min(
+                pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
+                == n_lookahead_pop
