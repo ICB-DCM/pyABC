@@ -1056,6 +1056,8 @@ class History:
 
                 # simulation
                 # TODO this is legacy from when there were multiple
+                if len(particle.samples) != 1:
+                    raise AssertionError("The should be exactly one sample.")
                 sample = particle.samples[0]
 
                 # distance
