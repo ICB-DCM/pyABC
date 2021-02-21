@@ -68,13 +68,13 @@ def test_set_figure_params():
 
 
 def test_epsilons():
-    """Test `pypesto.visualization.plot_epsilons`"""
+    """Test `pyabc.visualization.plot_epsilons`"""
     pyabc.visualization.plot_epsilons(histories, labels)
     plt.close()
 
 
 def test_sample_numbers():
-    """Test `pypesto.visualization.plot_sample_numbers`"""
+    """Test `pyabc.visualization.plot_sample_numbers`"""
     pyabc.visualization.plot_sample_numbers(
         histories, rotation=43, size=(5, 5))
     _, ax = plt.subplots()
@@ -84,7 +84,7 @@ def test_sample_numbers():
 
 
 def test_sample_numbers_trajectory():
-    """Test `pypesto.visualization.plot_sample_numbers_trajectory`"""
+    """Test `pyabc.visualization.plot_sample_numbers_trajectory`"""
     pyabc.visualization.plot_sample_numbers_trajectory(
         histories, labels, yscale='log', rotation=90)
     _, ax = plt.subplots()
@@ -94,7 +94,7 @@ def test_sample_numbers_trajectory():
 
 
 def test_acceptance_rates_trajectory():
-    """Test `pypesto.visualization.plot_acceptance_rates_trajectory`"""
+    """Test `pyabc.visualization.plot_acceptance_rates_trajectory`"""
     pyabc.visualization.plot_acceptance_rates_trajectory(
         histories, labels, yscale='log')
     _, ax = plt.subplots()
@@ -108,7 +108,7 @@ def test_acceptance_rates_trajectory():
 
 
 def test_total_sample_numbers():
-    """Test `pypesto.visualization.plot_total_sample_numbers`"""
+    """Test `pyabc.visualization.plot_total_sample_numbers`"""
     pyabc.visualization.plot_total_sample_numbers(histories)
     pyabc.visualization.plot_total_sample_numbers(
         histories, labels, yscale='log', size=(10, 5))
@@ -119,14 +119,14 @@ def test_total_sample_numbers():
 
 
 def test_effective_sample_sizes():
-    """Test `pypesto.visualization.plot_effective_sample_numbers`"""
+    """Test `pyabc.visualization.plot_effective_sample_numbers`"""
     pyabc.visualization.plot_effective_sample_sizes(
         histories, labels, rotation=45, relative=True)
     plt.close()
 
 
 def test_histograms():
-    """Test `pypesto.visualization.plot_histogram_1d/2d/matrix`"""
+    """Test `pyabc.visualization.plot_histogram_1d/2d/matrix`"""
     # 1d
     pyabc.visualization.plot_histogram_1d(
         histories[0], 'p0', bins=20,
@@ -143,7 +143,7 @@ def test_histograms():
 
 
 def test_kdes():
-    """Test `pypesto.visualization.plot_kde_1d/2d/matrix` and highlevel
+    """Test `pyabc.visualization.plot_kde_1d/2d/matrix` and highlevel
     versions."""
     history = histories[0]
     df, w = history.get_distribution(m=0, t=None)
@@ -165,8 +165,8 @@ def test_kdes():
 
 
 def test_credible_intervals():
-    """Test `pypesto.visualization.plot_credible_intervals` and
-    `pypesto.visualization.plot_credible_intervals_for_time`"""
+    """Test `pyabc.visualization.plot_credible_intervals` and
+    `pyabc.visualization.plot_credible_intervals_for_time`"""
     pyabc.visualization.plot_credible_intervals(histories[0])
     pyabc.visualization.plot_credible_intervals(
         histories[0], levels=[0.2, 0.5, 0.9],
@@ -180,13 +180,13 @@ def test_credible_intervals():
 
 
 def test_model_probabilities():
-    """Test `pypesto.visualization.plot_model_probabilities`"""
+    """Test `pyabc.visualization.plot_model_probabilities`"""
     pyabc.visualization.plot_model_probabilities(histories[0])
     plt.close()
 
 
 def test_data_callback():
-    """Test `pypesto.visualization.plot_data_callback`"""
+    """Test `pyabc.visualization.plot_data_callback`"""
     def plot_data(sum_stat, weight, ax, **kwargs):
         ax.plot(sum_stat['ss0'], alpha=weight, **kwargs)
 
@@ -201,7 +201,7 @@ def test_data_callback():
 
 
 def test_data_default():
-    """Test `pypesto.visualization.plot_data_default`"""
+    """Test `pyabc.visualization.plot_data_default`"""
     obs_dict = {1: 0.7, 2: np.array([43, 423, 5.5]),
                 3: pd.DataFrame({'a': [1, 2], 'b': [4, 6]})}
     sim_dict = {1: 6.5, 2: np.array([32, 5, 6]),
@@ -215,7 +215,7 @@ def test_data_default():
 
 
 def test_total_walltime():
-    """Test `pypesto.visualization.plot_total_walltime`"""
+    """Test `pyabc.visualization.plot_total_walltime`"""
     pyabc.visualization.plot_total_walltime(
         histories, labels, rotation=45, unit='m', size=(5, 5))
     with pytest.raises(AssertionError):
@@ -224,7 +224,7 @@ def test_total_walltime():
 
 
 def test_walltime():
-    """Test `pypesto.visualization.plot_walltime`"""
+    """Test `pyabc.visualization.plot_walltime`"""
     pyabc.visualization.plot_walltime(
         histories, labels, rotation=45, unit='m', size=(5, 5))
     with pytest.raises(AssertionError):
@@ -233,7 +233,7 @@ def test_walltime():
 
 
 def test_eps_walltime():
-    """Test `pypesto.visualization.plot_eps_walltime`"""
+    """Test `pyabc.visualization.plot_eps_walltime`"""
     pyabc.visualization.plot_eps_walltime(
         histories, labels, unit='m', size=(5, 5), yscale='log')
     with pytest.raises(AssertionError):

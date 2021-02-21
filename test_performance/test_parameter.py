@@ -65,9 +65,10 @@ def test_parameter_dict_numpy_conversion():
     # times.
 
     # check times as expected
-    assert time_np_1 > time_np_2
-    assert time_np_2 > time_np_3
-    assert time_np_3 + time_convert_pd > time_np_4
+    tol = 0.9
+    assert time_np_1 > time_np_2 * tol
+    assert time_np_2 > time_np_3 * tol
+    assert time_np_3 + time_convert_pd > time_np_4 * tol
 
     # check that we always got the same results
     for par1, par2, par3, par4 in zip(
@@ -130,5 +131,7 @@ def test_sample_selection():
     time_numpy_cached = time() - start
     print(f"Time using numpy choice cache: {time_numpy_cached}")
 
+    # check times as expected
+    tol = 0.9
     assert time_numpy < time_pandas
-    assert time_numpy_cached < time_numpy
+    assert time_numpy_cached * tol < time_numpy

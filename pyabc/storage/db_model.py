@@ -13,11 +13,12 @@ For further information see also http://docs.sqlalchemy.org.
 
 import datetime
 import sqlalchemy.types as types
-from sqlalchemy import (Column, Integer, DateTime, String,
+from sqlalchemy import (Column, Integer, DateTime, String, VARCHAR,
                         ForeignKey, Float, LargeBinary)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from .bytes_storage import from_bytes, to_bytes
+from .version import __db_version__
 
 Base = declarative_base()
 
@@ -30,6 +31,12 @@ class BytesStorage(types.TypeDecorator):
 
     def process_result_value(self, value, dialect):  # pylint: disable=R0201
         return from_bytes(value)
+
+
+class Version(Base):
+    __tablename__ = 'version'
+    version_num = Column(VARCHAR(32), primary_key=True,
+                         default=str(__db_version__))
 
 
 class ABCSMC(Base):
@@ -99,6 +106,7 @@ class Particle(Base):
     w = Column(Float)
     parameters = relationship("Parameter")
     samples = relationship("Sample")
+    proposal_id = Column(Integer, default=0)
 
 
 class Parameter(Base):

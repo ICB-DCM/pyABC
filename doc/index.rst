@@ -50,9 +50,8 @@ If you use it in your work, you can cite the paper:
    installation
    examples
    sampler
-   sge
-   export_db
-   web_visualization
+   datastore
+   visualization
 
 
 .. toctree::
