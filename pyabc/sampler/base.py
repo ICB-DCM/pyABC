@@ -1,5 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
 import numpy as np
+from numbers import Real
 from typing import Callable, List, Union
 
 from ..population import Particle, Population
@@ -224,7 +225,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
         simulate_one: Callable,
         t: int,
         *,
-        max_eval: int = np.inf,
+        max_eval: Real = np.inf,
         all_accepted: bool = False,
         ana_vars: AnalysisVars = None,
     ) -> Sample:

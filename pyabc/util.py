@@ -68,7 +68,7 @@ class AnalysisVars:
 
 
 def create_simulate_from_prior_function(
-        t: int, model_prior: RV, parameter_priors: List[Distribution],
+        model_prior: RV, parameter_priors: List[Distribution],
         models: List[Model], summary_statistics: Callable,
 ) -> Callable:
     """Create a function that simulates from the prior.
@@ -78,7 +78,6 @@ def create_simulate_from_prior_function(
 
     Parameters
     ----------
-    t: The time to create the simulation function for.
     model_prior: The model prior.
     parameter_priors: The parameter priors.
     models: List of all models.
@@ -98,7 +97,7 @@ def create_simulate_from_prior_function(
         theta = parameter_priors[m].rvs()
         # simulate summary statistics
         model_result = models[m].summary_statistics(
-            t, theta, summary_statistics)
+            0, theta, summary_statistics)
         # sampled from prior, so all have uniform weight
         weight = 1.0
         # distance will be computed after initialization of the
