@@ -824,8 +824,6 @@ class History:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
-        In case more than one sum_stat per parameter is performed and
-        accepted the sum might be larger.
 
         Parameters
         ----------
@@ -931,9 +929,9 @@ class History:
 
         Returns
         -------
-        w, sum_stat: np.ndarray, list
+        w, sum_stats: np.ndarray, list
             * w: the weights associated with the summary statistics
-            * sum_stat: list of summary statistics
+            * sum_stats: list of summary statistics
         """
         m = int(m)
         if t is None:
@@ -965,8 +963,6 @@ class History:
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
-        In case more than one sum_stat per parameter is performed and
-        accepted, the sum might be larger.
 
         Parameters
         ----------

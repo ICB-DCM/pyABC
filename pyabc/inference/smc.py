@@ -446,7 +446,7 @@ class ABCSMC:
             records = []
             for particle in population.get_list():
                 # we use dummy densities here, since only the quotient
-                # is of interest
+                #  is of interest
                 records.append({
                     'distance': particle.distance,
                     'transition_pd_prev': 1.0,
@@ -520,8 +520,8 @@ class ABCSMC:
 
     def _create_simulate_function(self, t: int):
         """
-        Create a sum_stat function which performs the sampling of parameters,
-        sum_stat of data and acceptance checking, and which is then passed
+        Create a simulation function which performs the sampling of parameters,
+        simulation of data and acceptance checking, and which is then passed
         to the sampler.
 
         Parameters
@@ -850,7 +850,7 @@ class ABCSMC:
         """Create a dictionary of analysis variables of interest.
 
         These variables are passed to the sampler, as some need to create
-        sum_stat settings themselves.
+        simulation settings themselves.
         """
         return AnalysisVars(
             model_prior=self.model_prior,

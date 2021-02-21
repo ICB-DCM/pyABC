@@ -33,7 +33,7 @@ def plot_data_callback(
         ``(sum_stat, weight, ax, **kwargs)``.
     f_plot_aggregated: Callable
         Function to plot aggregated values on summary statistics. Takes
-        the parameters ``(sum_stat, weights, ax, **kwargs)``.
+        the parameters ``(sum_stats, weights, ax, **kwargs)``.
     t: int, optional
         Time point to extract data from the history for.
     ax: maplotlib.axes.Axes

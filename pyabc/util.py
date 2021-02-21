@@ -78,12 +78,11 @@ def create_simulate_from_prior_function(
 
     Parameters
     ----------
-    t: The time to create the sum_stat function for.
+    t: The time to create the simulation function for.
     model_prior: The model prior.
     parameter_priors: The parameter priors.
     models: List of all models.
-    summary_statistics:
-        Function to compute summary statistics from model output.
+    summary_statistics: Computes summary statistics from model output.
 
     Returns
     -------
@@ -347,8 +346,8 @@ def create_simulate_function(
         proposal_id: int = 0,
 ) -> Callable:
     """
-    Create a sum_stat function which performs the sampling of parameters,
-    sum_stat of data and acceptance checking, and which is then passed
+    Create a simulation function which performs the sampling of parameters,
+    simulation of data and acceptance checking, and which is then passed
     to the sampler.
 
     Parameters
@@ -403,7 +402,7 @@ def create_simulate_function(
     weight_function = create_weight_function(
         prior_pdf=prior_pdf, transition_pdf=transition_pdf)
 
-    # sum_stat function
+    # simulation function
     def simulate_one():
         parameter = generate_valid_proposal(
             t=t, m=m, p=p,
