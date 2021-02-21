@@ -462,7 +462,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 def create_preliminary_simulate_one(
         t, population, delay_evaluation: bool, ana_vars: AnalysisVars,
 ) -> Callable:
-    """Create a preliminary simulate_one function for generation `t+1`.
+    """Create a preliminary simulate_one function for generation `t`.
 
     Based on preliminary results, update transitions, distance function,
     epsilon threshold etc., and return a function that samples parameters,

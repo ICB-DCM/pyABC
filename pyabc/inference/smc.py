@@ -415,13 +415,13 @@ class ABCSMC:
             to do the first population). Usually 0 or history.max_t + 1.
         """
         def get_initial_sum_stats():
-            population = self._get_initial_population(t)
+            population = self._get_initial_population(t-1)
             # only the accepted sum stats are available initially
             sum_stats = population.get_accepted_sum_stats()
             return sum_stats
 
         def _get_initial_population_with_distances():
-            population = self._get_initial_population(t)
+            population = self._get_initial_population(t-1)
 
             def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
@@ -472,11 +472,15 @@ class ABCSMC:
         .. warning::
             The sample is cached. Thus, the function can be called repeatedly
             without further computational overhead.
+
+        Parameters
+        ----------
+        t: The time for which to draw samples, i.e. one before the target time.
         """
         if self._initial_population is None:
             if self.history.n_populations > 0:
                 # extract latest population from database
-                population = self.history.get_population()
+                population = self.history.get_population(t=t)
             else:
                 # sample
                 population = self._sample_from_prior(t)
@@ -484,13 +488,13 @@ class ABCSMC:
 
         return self._initial_population
 
-    def _create_simulate_from_prior_function(self, t: int):
+    def _create_simulate_from_prior_function(self):
         """
         Similar to _create_simulate_function, apart here we sample from the
         prior and accept all.
         """
         return create_simulate_from_prior_function(
-            t=t, model_prior=self.model_prior,
+            model_prior=self.model_prior,
             parameter_priors=self.parameter_priors, models=self.models,
             summary_statistics=self.summary_statistics,
         )
@@ -501,9 +505,9 @@ class ABCSMC:
         the history of the distance function or the epsilon.
         """
         # create simulate function
-        simulate_one = self._create_simulate_from_prior_function(t)
+        simulate_one = self._create_simulate_from_prior_function()
 
-        logger.info(f"Calibration sample before t={t}.")
+        logger.info(f"Calibration sample t={t}.")
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(

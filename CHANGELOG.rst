@@ -8,12 +8,42 @@ Release Notes
 ...........
 
 
+0.10.14 (2021-02-21)
+--------------------
+
+General:
+
+* Speed up parameter handling (30% internal speed-up) (#387)
+* Streamline testing via tox and pre-commit hooks, add flake8 config file (#408)
+* Update to python 3.9 (#411)
+* Extract PEtab bounds and nominal parameters (#416)
+* Allow specifying parameter names in density plots (#416)
+* Normalize look-ahead sampling by subpopulation ESS (#418, #421)
+
+Documentation:
+
+* Update contribution and issue guidelines (#408)
+* Add example on yaml2sbml usage (#416)
+* Clean up user docs on parallelization and storage (#419)
+
+Fixes:
+
+* Fix redis for later started workers (#410)
+* Fix PEtab parameter scale import, support all PEtab prior distributions (#413)
+
+Database:
+
+* Add database migration scheme based on alembic (#419)
+* Store proposal ids, increment database version to 0 (#419)
+
+
 0.10.13 (2021-02-04)
 --------------------
 
 * Update branch name master -> main in agreement with
   https://github.com/github/renaming (#406).
 * Notebook improvements:
+
   * Add ground truth to noise notebook.
   * Rename notebook "quickstart" -> "model_selection".
   * Split notebook tests in 2, extend, reduce test matrix (python 3.7).

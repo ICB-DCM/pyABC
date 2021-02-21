@@ -1086,6 +1086,7 @@ class History:
                     accepted_distances=py_accepted_distances,
                     rejected_sum_stats=[],
                     rejected_distances=[],
+                    proposal_id=particle.proposal_id,
                     accepted=True)
                 py_particles.append(py_particle)
 
