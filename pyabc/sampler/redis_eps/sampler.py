@@ -600,7 +600,6 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
     # this is s.t. sum_i w_{l,i} \propto ESS_l
     normalizations = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
-        # TODO this only works if n_sim per particle == 1
         weights = np.array(
             [particle.weight for particle in particles_for_prop])
         ess = effective_sample_size(weights)
