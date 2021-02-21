@@ -199,7 +199,7 @@ class Population:
 
         return weighted_distances
 
-    def get_weighted_simulations(self) -> tuple:
+    def get_weighted_sum_stats(self) -> tuple:
         """
         Get weights and summary statistics.
 
