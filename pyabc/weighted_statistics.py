@@ -71,12 +71,17 @@ def weighted_std(points, weights):
 
 
 def effective_sample_size(weights):
-    """
+    """Effective sample size.
+
     Compute the effective sample size of weighted points
     sampled via importance sampling according to the formula
 
     .. math::
         n_\\text{eff} = \\frac{(\\sum_{i=1}^nw_i)^2}{\\sum_{i=1}^nw_i^2}
+
+    Parameters
+    ----------
+    weights: Importance sampling weights.
     """
     weights = np.array(weights)
     n_eff = np.sum(weights)**2 / np.sum(weights**2)

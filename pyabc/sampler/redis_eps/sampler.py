@@ -18,6 +18,7 @@ from ...distance import Distance
 from ...epsilon import Epsilon
 from ...acceptor import Acceptor
 from ...sampler import Sampler, Sample
+from ...weighted_statistics import effective_sample_size
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
@@ -596,13 +597,16 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
                   if particle.proposal_id == prop_id]
         for prop_id in prop_ids}
 
-    # normalize weights by N_l / N / sum_l[w_l] for proposal id l
+    # normalize weights by ESS_l / sum_l[w_l] for proposal id l
+    # this is s.t. sum_i w_{l,i} \propto ESS_l
     normalizations = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
-        n_l = len(particles_for_prop)
         # TODO this only works if n_sim per particle == 1
-        total_weight = sum(particle.weight for particle in particles_for_prop)
-        normalizations[prop_id] = n_l / n / total_weight
+        weights = np.array(
+            [particle.weight for particle in particles_for_prop])
+        ess = effective_sample_size(weights)
+        total_weight = weights.sum()
+        normalizations[prop_id] = ess / total_weight
 
     # normalize every particle (this includes rejected ones, which should not
     #  be necessary, but does not hurt)
