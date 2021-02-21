@@ -58,7 +58,7 @@ If you use it in your work, you can cite the paper:
    :maxdepth: 2
    :caption: About
 
-   releasenotes
+   changelog
    about
    references
 
