@@ -1,9 +1,8 @@
 """
-Visualizations
---------------
+Visualization
+=============
 
-Helper functions to visualize results of ABCSMC runs.
-
+Visualize results of ABCSMC runs.
 """
 
 from .kde import (

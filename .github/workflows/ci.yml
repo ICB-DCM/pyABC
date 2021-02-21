@@ -226,3 +226,13 @@ jobs:
     - name: Run quality checks
       timeout-minutes: 10
       run: tox -e project,flake8,doc
+
+    - name: Test migration
+      timeout-minutes: 3
+      run: tox -e migrate
+
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml

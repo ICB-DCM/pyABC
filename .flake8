@@ -13,5 +13,6 @@ per-file-ignores =
     */__init__.py:F401
     # Print
     */cli.py:T001
+    pyabc/storage/migrate.py:T001
     # Print and asserts
     test*/*.py:T001,S101
