@@ -117,7 +117,7 @@ class Parameter(Base):
     value = Column(Float)
 
     def __repr__(self):
-        return f"<Particle {self.name}={self.value}>"
+        return f"<Parameter {self.name}={self.value}>"
 
 
 class Sample(Base):
