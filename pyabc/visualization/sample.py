@@ -507,13 +507,14 @@ def plot_lookahead_final_acceptance_fractions(
     # get numbers of final acceptances
     if isinstance(population_sizes, History):
         pop = population_sizes.get_all_populations()
+
         population_sizes = np.array(
             [pop.loc[pop.t == t, 'particles'] for t in sampler_df.t],
             dtype=float).flatten()
 
     # restrict to t >= 0
-    sampler_df = sampler_df[sampler_df.t >= t_min]
     population_sizes = population_sizes[sampler_df.t >= t_min]
+    sampler_df = sampler_df[sampler_df.t >= t_min]
 
     # extract variables
     t = sampler_df.t
