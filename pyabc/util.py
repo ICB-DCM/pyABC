@@ -443,7 +443,7 @@ def only_simulate_data_for_proposal(
     model_result = models[m_ss].summary_statistics(
         t, theta_ss, summary_statistics)
 
-    # dummies for distance and weight
+    # dummies for distance and weight, need to be recomputed later
     distance = np.inf
     acceptance_weight = 1.
 
@@ -499,7 +499,7 @@ def evaluate_preliminary_particle(
         m=particle.m,
         parameter=particle.parameter,
         weight=weight,
-        sum_stat=particle   .sum_stat,
+        sum_stat=particle.sum_stat,
         distance=acc_res.distance,
         accepted=acc_res.accept,
         preliminary=False,
