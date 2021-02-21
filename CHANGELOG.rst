@@ -12,6 +12,7 @@ Release Notes
 --------------------
 
 General:
+
 * Speed up parameter handling (30% internal speed-up) (#387)
 * Streamline testing via tox and pre-commit hooks, add flake8 config file (#408)
 * Update to python 3.9 (#411)
@@ -20,15 +21,18 @@ General:
 * Normalize look-ahead sampling by subpopulation ESS (#418, #421)
 
 Documentation:
+
 * Update contribution and issue guidelines (#408)
 * Add example on yaml2sbml usage (#416)
 * Clean up user docs on parallelization and storage (#419)
 
 Fixes:
+
 * Fix redis for later started workers (#410)
 * Fix PEtab parameter scale import, support all PEtab prior distributions (#413)
 
 Database:
+
 * Add database migration scheme based on alembic (#419)
 * Store proposal ids, increment database version to 0 (#419)
 
