@@ -6,14 +6,13 @@ Distance functions measure closeness of observed and sampled data. This
 module implements various commonly used distance functions for ABC, featuring
 a few advanced concepts.
 
-For custom distance functions, either pass a plain function to ABCSMC or
+For custom distance functions, either pass a plain function to ABCSMC, or
 subclass the pyabc.Distance class.
 """
 
 from .base import (
     Distance,
     NoDistance,
-    IdentityFakeDistance,
     AcceptAllDistance,
     SimpleFunctionDistance,
     to_distance,

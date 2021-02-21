@@ -3,6 +3,8 @@ from typing import Callable, Union
 import numpy as np
 import pandas as pd
 import scipy.stats as st
+
+from ..parameters import Parameter
 from .exceptions import NotEnoughParticles
 from .base import Transition
 from .util import smart_cov
@@ -68,6 +70,8 @@ class MultivariateNormalTransition(Transition):
         self.cov: Union[np.ndarray, None] = None
         # normal perturbation distribution
         self.normal = None
+        # cache a range array
+        self._range = None
 
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         if len(X) == 0:
@@ -82,32 +86,44 @@ class MultivariateNormalTransition(Transition):
         self.cov = sample_cov * bw_factor**2 * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
-    def rvs(self, size: int = None) -> Union[pd.Series, pd.DataFrame]:
-        arr = np.arange(len(self.X))
-        sample_ind = np.random.choice(arr, size=size, p=self.w, replace=True)
+        # cache range array
+        self._range = np.arange(len(self.X))
+
+    def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
+        if size is None:
+            return self.rvs_single()
+        sample_ind = np.random.choice(
+            self._range, size=size, p=self.w, replace=True)
         sample = self.X.iloc[sample_ind]
         perturbed = (sample + np.random.multivariate_normal(
             np.zeros(self.cov.shape[0]), self.cov, size=size))
         return perturbed
 
-    def rvs_single(self):
-        sample = self.X.sample(weights=self.w).iloc[0]
+    def rvs_single(self) -> Parameter:
+        sample_ind = np.random.choice(self._range, p=self.w, replace=True)
+        sample = self.X.iloc[sample_ind]
         perturbed = (sample + np.random.multivariate_normal(
             np.zeros(self.cov.shape[0]), self.cov))
-        return perturbed
+        return Parameter(perturbed)
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame],
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame],
             ) -> Union[float, np.ndarray]:
-        x = x[self.X.columns]
-        x = np.array(x)
+        # convert to numpy array in correct order
+        if isinstance(x, (Parameter, pd.Series)):
+            x = np.array([x[key] for key in self.X.columns])
+        else:
+            x = x[self.X.columns].to_numpy()
+
+        # compute density
         if len(x.shape) == 1:
-            x = x[None, :]
-        dens = np.array([(self.normal.pdf(xs - self._X_arr) * self.w).sum()
-                         for xs in x])
+            return self._pdf_single(x)
+        else:
+            return np.array([self._pdf_single(xi) for xi in x])
 
         # alternative (higher memory consumption but broadcast)
         # x = np.atleast_3d(x)  # n_sample x n_par x 1
         # dens = self.normal.pdf(np.swapaxes(x - self._X_arr.T, 1, 2)) * self.w
         # dens = np.atleast_2d(dens).sum(axis=1).squeeze()
 
-        return dens if dens.size != 1 else float(dens)
+    def _pdf_single(self, x: np.ndarray):
+        return float((self.normal.pdf(x - self._X_arr) * self.w).sum())

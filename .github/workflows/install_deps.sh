@@ -6,6 +6,9 @@ python -m pip install --upgrade pip
 # wheel
 pip install wheel
 
+# tox
+pip install tox
+
 # optional dependencies
 for par in "$@"
 do
@@ -38,21 +41,15 @@ do
       fi
     ;;
 
-    petab)
-      # PEtab
+    amici)
       # AMICI dependencies
       sudo apt-get install swig3.0 libatlas-base-dev libhdf5-serial-dev
-      sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
-      # install dev AMICI for latest changes
-      pip install \
-        git+https://github.com/amici-dev/amici.git@develop#egg=amici\&subdirectory=python/sdist
-      # install test suite
-      git clone --depth 1 \
-        https://github.com/petab-dev/petab_test_suite .tmp/petab_test_suite
-      pip install -e .tmp/petab_test_suite
+      if [ ! -e /usr/bin/swig ]; then
+        sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
+      fi
     ;;
 
-    docs)
+    doc)
       # documentation
       sudo apt-get install pandoc
     ;;

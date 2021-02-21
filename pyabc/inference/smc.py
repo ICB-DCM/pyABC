@@ -1,10 +1,10 @@
 """ABC-SMC"""
 
-import datetime
 import logging
 from typing import List, Callable, TypeVar, Union
 import numpy as np
 import copy
+from datetime import datetime, timedelta
 
 from pyabc.acceptor import (
     Acceptor, UniformAcceptor, SimpleFunctionAcceptor, StochasticAcceptor)
@@ -21,9 +21,10 @@ from pyabc.storage import History
 from pyabc.transition import (
     Transition, MultivariateNormalTransition, ModelPerturbationKernel)
 from pyabc.weighted_statistics import effective_sample_size
-from .util import (
+from pyabc.util import (
     create_simulate_from_prior_function, create_prior_pdf,
-    create_transition_pdf, create_simulate_function)
+    create_transition_pdf, create_simulate_function,
+    termination_criteria_fulfilled, create_analysis_id, AnalysisVars)
 
 
 logger = logging.getLogger("ABC")
@@ -33,6 +34,23 @@ model_output = TypeVar("model_output")
 
 def identity(x):
     return x
+
+
+def run_cleanup(run):
+    """Wrapper: Run and in any case clean up afterwards."""
+
+    def wrapped_run(self: "ABCSMC", *args, **kwargs):
+        try:
+            # the actual run
+            ret = run(self, *args, **kwargs)
+        finally:
+            # close session and store end time
+            self.history.done(end_time=datetime.now())
+            # tell samplers to stop any ongoing processes
+            self.sampler.stop()
+        return ret
+
+    return wrapped_run
 
 
 class ABCSMC:
@@ -211,6 +229,11 @@ class ABCSMC:
         self.minimum_epsilon = None
         self.max_nr_populations = None
         self.min_acceptance_rate = None
+        self.max_t = None
+        self.max_total_nr_simulations = None
+        self.max_walltime = None
+        self.init_walltime = None
+        self.analysis_id = None
 
         self._sanity_check()
 
@@ -225,6 +248,11 @@ class ABCSMC:
                 "Please only use acceptor.StochasticAcceptor, "
                 "epsilon.TemperatureBase and distance.StochasticKernel "
                 "together.")
+
+        # check sampler
+        self.sampler.check_analysis_variables(
+            distance_function=self.distance_function, eps=self.eps,
+            acceptor=self.acceptor)
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -318,14 +346,16 @@ class ABCSMC:
 
         # save configuration data to database
         model_names = [model.name for model in self.models]
-        self.history.store_initial_data(gt_model,
-                                        meta_info,
-                                        observed_sum_stat,
-                                        gt_par,
-                                        model_names,
-                                        self.distance_function.to_json(),
-                                        self.eps.to_json(),
-                                        self.population_size.to_json())
+        self.history.store_initial_data(
+            ground_truth_model=gt_model,
+            options=meta_info,
+            observed_summary_statistics=observed_sum_stat,
+            ground_truth_parameter=gt_par,
+            model_names=model_names,
+            distance_function_json_str=self.distance_function.to_json(),
+            eps_function_json_str=self.eps.to_json(),
+            population_strategy_json_str=self.population_size.to_json(),
+            start_time=datetime.now())
 
         # return history
         # contains id generated in store_initial_data
@@ -450,9 +480,6 @@ class ABCSMC:
             else:
                 # sample
                 population = self._sample_from_prior(t)
-                # update number of samples in calibration
-                self.history.update_nr_samples(
-                    History.PRE_TIME, self.sampler.nr_evaluations_)
             self._initial_population = population
 
         return self._initial_population
@@ -480,11 +507,15 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            self.population_size(-1), simulate_one,
-            max_eval=np.inf, all_accepted=True)
+            n=self.population_size(-1), simulate_one=simulate_one, t=t,
+            max_eval=np.inf, all_accepted=True, ana_vars=self._vars())
 
         # extract accepted population
         population = sample.get_accepted_population()
+
+        # update information saved in history about calibration
+        self.history.update_after_calibration(
+            nr_samples=self.sampler.nr_evaluations_, end_time=datetime.now())
 
         return population
 
@@ -536,28 +567,32 @@ class ABCSMC:
             model_probabilities=self.history.get_model_probabilities(t-1),
             model_perturbation_kernel=self.model_perturbation_kernel)
 
+    @run_cleanup
     def run(self,
             minimum_epsilon: float = None,
             max_nr_populations: int = np.inf,
-            min_acceptance_rate: float = 0.) -> History:
+            min_acceptance_rate: float = 0.,
+            max_total_nr_simulations: int = np.inf,
+            max_walltime: timedelta = None) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.
 
         Parameters
         ----------
-
-        minimum_epsilon: float, optional
+        minimum_epsilon:
             Stop if epsilon is smaller than minimum epsilon specified here.
             Defaults in general to 0.0, and to 1.0 for a Temperature epsilon.
-
-        max_nr_populations: int, optional (default = np.inf)
-            The maximum number of populations. Stop if this number is reached.
-
-        min_acceptance_rate: float, optional (default = 0.0)
+        max_nr_populations:
+            Maximum allowed number of populations.
+            Stop if this number is reached.
+        min_acceptance_rate:
             Minimal allowed acceptance rate. Sampling stops if a population
             has a lower rate.
-
+        max_total_nr_simulations:
+            Maximum allowed total number of evaluations.
+        max_walltime:
+            Maximum allowed walltime since start of the run() method.
 
         Population after population is sampled and particles which are close
         enough to the observed data are accepted and added to the next
@@ -592,11 +627,21 @@ class ABCSMC:
 
         self.max_nr_populations = max_nr_populations
         self.min_acceptance_rate = min_acceptance_rate
+        self.max_total_nr_simulations = max_total_nr_simulations
+        self.max_walltime = max_walltime
 
-        # initial time
+        # for recording the overall time
+        self.init_walltime = datetime.now()
+
+        # initial time index
         t0 = self.history.max_t + 1
-        # log start time
-        self.history.start_time = datetime.datetime.now()
+        # last time point index
+        self.max_t = t0 + max_nr_populations - 1
+
+        # assign an analysis id
+        self.analysis_id = create_analysis_id()
+        # let the sampler know
+        self.sampler.set_analysis_id(self.analysis_id)
 
         # initialize transitions
         self._fit_transitions(t0)
@@ -609,13 +654,14 @@ class ABCSMC:
         self.distance_function.configure_sampler(self.sampler)
         self.eps.configure_sampler(self.sampler)
 
-        # last time point
-        t_max = t0 + max_nr_populations - 1
         # run loop over time points
         t = t0
-        while t <= t_max:
+        while True:
             # get epsilon for generation t
             current_eps = self.eps(t)
+            if current_eps is None or np.isnan(current_eps):
+                raise ValueError(
+                    f"The epsilon threshold {current_eps} is invalid.")
             logger.info(f"t: {t}, eps: {current_eps}.")
 
             # create simulate function
@@ -629,7 +675,9 @@ class ABCSMC:
             # perform the sampling
             logger.debug(f"Now submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
-                pop_size, simulate_one, max_eval)
+                n=pop_size, simulate_one=simulate_one, t=t,
+                max_eval=max_eval, ana_vars=self._vars(),
+            )
 
             # check sample health
             if not sample.ok:
@@ -661,23 +709,24 @@ class ABCSMC:
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
 
-            # check termination conditions
-            if current_eps <= minimum_epsilon:
-                logger.info("Stopping: minimum epsilon.")
-                break
-            elif self.stop_if_only_single_model_alive \
-                    and self.history.nr_of_models_alive() <= 1:
-                logger.info("Stopping: single model alive.")
-                break
-            elif acceptance_rate < min_acceptance_rate:
-                logger.info("Stopping: minimum acceptance rate.")
+            # check termination criteria
+            if termination_criteria_fulfilled(
+                current_eps=current_eps, min_eps=minimum_epsilon,
+                stop_if_single_model_alive=  # noqa: E251
+                self.stop_if_only_single_model_alive,
+                nr_of_models_alive=self.history.nr_of_models_alive(),
+                acceptance_rate=acceptance_rate,
+                min_acceptance_rate=min_acceptance_rate,
+                total_nr_simulations=self.history.total_nr_simulations,
+                max_total_nr_simulations=self.max_total_nr_simulations,
+                walltime=datetime.now() - self.init_walltime,
+                max_walltime=self.max_walltime,
+                t=t, max_t=self.max_t,
+            ):
                 break
 
             # increment t
             t += 1
-
-        # close session and store end time
-        self.history.done()
 
         # return used history object
         return self.history
@@ -804,3 +853,33 @@ class ABCSMC:
         for m in self.history.alive_models(t - 1):
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
+
+    def _vars(self) -> AnalysisVars:
+        """Create a dictionary of analysis variables of interest.
+
+        These variables are passed to the sampler, as some need to create
+        simulation settings themselves.
+        """
+        nr_samples_per_parameter = \
+            self.population_size.nr_samples_per_parameter
+        return AnalysisVars(
+            model_prior=self.model_prior,
+            parameter_priors=self.parameter_priors,
+            model_perturbation_kernel=self.model_perturbation_kernel,
+            transitions=self.transitions,
+            nr_samples_per_parameter=nr_samples_per_parameter,
+            models=self.models,
+            summary_statistics=self.summary_statistics,
+            x_0=self.x_0,
+            distance_function=self.distance_function,
+            eps=self.eps,
+            acceptor=self.acceptor,
+            min_acceptance_rate=self.min_acceptance_rate,
+            min_eps=self.minimum_epsilon,
+            stop_if_single_model_alive=self.stop_if_only_single_model_alive,
+            max_t=self.max_t,
+            max_total_nr_simulations=self.max_total_nr_simulations,
+            prev_total_nr_simulations=self.history.total_nr_simulations,
+            max_walltime=self.max_walltime,
+            init_walltime=self.init_walltime,
+        )

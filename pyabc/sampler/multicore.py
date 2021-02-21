@@ -63,7 +63,6 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         If set to None, the Number of cores is determined according to
         :func:`pyabc.sge.nr_cores_available`.
 
-
     .. warning::
 
         Windows support is *not* tested.
@@ -72,7 +71,8 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, max_eval=np.inf, all_accepted=False):
+            self, n, simulate_one, t, *,
+            max_eval=np.inf, all_accepted=False, ana_vars=None):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)

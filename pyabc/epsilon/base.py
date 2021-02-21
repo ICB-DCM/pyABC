@@ -4,8 +4,6 @@ import json
 from abc import ABC, abstractmethod
 from typing import Callable, List
 
-from ..sampler import Sampler
-
 
 class Epsilon(ABC):
     """
@@ -51,7 +49,7 @@ class Epsilon(ABC):
         """
         pass
 
-    def configure_sampler(self, sampler: Sampler):
+    def configure_sampler(self, sampler):
         """
         This is called by the ABCSMC class and gives the epsilon
         the opportunity to configure the sampler.
@@ -123,6 +121,20 @@ class Epsilon(ABC):
         eps: float
             The epsilon for population t.
         """
+
+    def requires_calibration(self) -> bool:
+        """
+        Whether the class requires an initial calibration, based on
+        samples from the prior. Default: False.
+        """
+        return False
+
+    def is_adaptive(self) -> bool:
+        """
+        Whether the class is dynamically updated after each generation,
+        based on the last generation's available data. Default: False.
+        """
+        return False
 
     def get_config(self):
         """

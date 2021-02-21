@@ -1,13 +1,13 @@
 """Execute petab test suite."""
 
 import petabtests
-import pyabc
-
-import sys
 import os
+import sys
 import pytest
 from _pytest.outcomes import Skipped
 import logging
+
+import pyabc
 
 try:
     import petab
@@ -21,24 +21,22 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def test_petab_suite():
-    """Execute all cases from the petab test suite, report performance."""
-    n_success = n_skipped = 0
-    for case in petabtests.CASES_LIST:
-        try:
-            execute_case(case)
-            n_success += 1
-        except Skipped:
-            n_skipped += 1
-        except Exception as e:
-            # run all despite failures
-            logger.error(f"Case {case} failed.")
-            logger.error(e)
+@pytest.fixture(params=petabtests.CASES_LIST)
+def case(request):
+    """A single test case."""
+    return request.param
 
-    logger.info(f"{n_success} / {len(petabtests.CASES_LIST)} successful, "
-                f"{n_skipped} skipped")
-    if n_success + n_skipped != len(petabtests.CASES_LIST):
-        sys.exit(1)
+
+def test_petab_suite(case):
+    """Execute a given case from the PEtab test suite."""
+    try:
+        execute_case(case)
+        logger.info(f"Case {case} passed")
+    except Skipped:
+        logger.info(f"Case {case} skipped")
+    except Exception as e:
+        logger.error(f"Case {case} failed")
+        raise e
 
 
 def execute_case(case):
@@ -65,7 +63,7 @@ def _execute_case(case):
     case_dir = os.path.join(petabtests.CASES_DIR, case)
 
     # load solution
-    solution = petabtests.load_solution(case)
+    solution = petabtests.load_solution(case, format='sbml')
     gt_chi2 = solution[petabtests.CHI2]
     gt_llh = solution[petabtests.LLH]
     gt_simulation_dfs = solution[petabtests.SIMULATION_DFS]
@@ -83,6 +81,8 @@ def _execute_case(case):
     petab_problem = petab.Problem.from_yaml(yaml_file)
 
     # compile amici
+    if output_folder not in sys.path:
+        sys.path.insert(0, output_folder)
     amici_model = amici.petab_import.import_petab_problem(
         petab_problem=petab_problem,
         model_output_dir=output_folder)
@@ -94,7 +94,7 @@ def _execute_case(case):
     model = importer.create_model(return_rdatas=True)
 
     # simulate
-    problem_parameters = petab_problem.x_nominal_free_scaled
+    problem_parameters = importer.get_nominal_parameters()
     ret = model(problem_parameters)
 
     llh = ret['llh']

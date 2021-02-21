@@ -33,4 +33,3 @@ This package is licensed under a permissive 3-clause BSD license.
 
 .. literalinclude::  ../LICENSE.txt
    :language: none
-

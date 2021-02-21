@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from typing import List, Callable
 import json
 
-from ..sampler import Sampler
-
 
 class Distance(ABC):
     """
@@ -40,7 +38,7 @@ class Distance(ABC):
 
     def configure_sampler(
             self,
-            sampler: Sampler):
+            sampler):
         """
         This is called by the ABCSMC class and gives the distance
         the opportunity to configure the sampler.
@@ -128,6 +126,20 @@ class Distance(ABC):
             observed data.
         """
 
+    def requires_calibration(self) -> bool:
+        """
+        Whether the class requires an initial calibration, based on
+        samples from the prior. Default: False.
+        """
+        return False
+
+    def is_adaptive(self) -> bool:
+        """
+        Whether the class is dynamically updated after each generation,
+        based on the last generation's available data. Default: False.
+        """
+        return False
+
     def get_config(self) -> dict:
         """
         Return configuration of the distance.
@@ -177,25 +189,8 @@ class NoDistance(Distance):
                  x_0: dict,
                  t: int = None,
                  par: dict = None) -> float:
-        raise Exception(
-            f"{self.__class__.__name__} is not intended to be called.")
-
-
-class IdentityFakeDistance(Distance):
-    """
-    A fake distance function, which just passes the summary statistics on.
-    This class assumes that the model already returns the distance. This can be
-    useful in cases where simulating can be stopped early, when during the
-    simulation some condition is reached which makes it impossible to accept
-    the particle.
-    """
-
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        return x
+        raise AssertionError(
+            f"Distance {self.__class__.__name__} should not be called.")
 
 
 class AcceptAllDistance(Distance):
