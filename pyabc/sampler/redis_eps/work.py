@@ -158,7 +158,7 @@ def work_on_population_dynamic(
             if new_sim.accepted:
                 # the order of the IDs is reversed, but this does not
                 # matter. Important is only that the IDs are specified
-                # before the simulation starts
+                # before the sum_stat starts
 
                 # append to accepted list
                 accepted_samples.append(
@@ -168,7 +168,7 @@ def work_on_population_dynamic(
                 # initialize new sample
                 sample = sample_factory(is_look_ahead=is_look_ahead)
 
-        # update total simulation-specific time
+        # update total sum_stat-specific time
         cumulative_simulation_time += time() - this_sim_start
 
         # push to pipeline if at least one sample got accepted

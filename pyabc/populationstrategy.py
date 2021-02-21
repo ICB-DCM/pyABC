@@ -13,7 +13,6 @@ import json
 import logging
 import numpy as np
 from typing import Dict, List, Union
-import warnings
 
 from pyabc.cv.bootstrap import calc_cv
 from .transition import Transition
@@ -33,21 +32,11 @@ class PopulationStrategy(ABC):
     ----------
     nr_calibration_particles:
         Number of calibration particles.
-    nr_samples_per_parameter:
-        Number of samples to draw for a proposed parameter.
-        Default is 1.
     """
 
     def __init__(self,
-                 nr_calibration_particles: int = None,
-                 nr_samples_per_parameter: int = 1):
+                 nr_calibration_particles: int = None):
         self.nr_calibration_particles = nr_calibration_particles
-        if nr_samples_per_parameter != 1:
-            warnings.warn(
-                "A nr_samples_per_parameter != 1 is deprecated "
-                "since version 0.9.23, the parameter will be removed "
-                "in a future release.", DeprecationWarning)
-        self.nr_samples_per_parameter = nr_samples_per_parameter
 
     def update(self, transitions: List[Transition],
                model_weights: np.ndarray, t: int = None):
@@ -78,8 +67,7 @@ class PopulationStrategy(ABC):
             Configuration of the class as dictionary
         """
         return {"name": self.__class__.__name__,
-                "nr_calibration_particles": self.nr_calibration_particles,
-                "nr_samples_per_parameter": self.nr_samples_per_parameter}
+                "nr_calibration_particles": self.nr_calibration_particles}
 
     def to_json(self) -> str:
         """
@@ -105,17 +93,13 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of particles per population.
     nr_calibration_particles:
         Number of calibration particles.
-    nr_samples_per_parameter:
-        Number of samples to draw for a proposed parameter.
     """
 
     def __init__(self,
                  nr_particles: int,
-                 nr_calibration_particles: int = None,
-                 nr_samples_per_parameter: int = 1):
+                 nr_calibration_particles: int = None):
         super().__init__(
-            nr_calibration_particles=nr_calibration_particles,
-            nr_samples_per_parameter=nr_samples_per_parameter)
+            nr_calibration_particles=nr_calibration_particles)
         self.nr_particles = nr_particles
 
     def __call__(self, t: int = None) -> int:
@@ -152,9 +136,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         Defaults to infinity.
     min_population_size:
         Min number of particles allowed in a population.
-        Defaults to 10
-    nr_samples_per_parameter:
-        Defaults to 1.
+        Defaults to 10.
     n_bootstrap:
         Number of bootstrapped populations to use to estimate the CV.
         Defaults to 10.
@@ -176,12 +158,10 @@ class AdaptivePopulationSize(PopulationStrategy):
                  mean_cv: float = 0.05,
                  max_population_size: int = np.inf,
                  min_population_size: int = 10,
-                 nr_samples_per_parameter: int = 1,
                  n_bootstrap: int = 10,
                  nr_calibration_particles: int = None):
         super().__init__(
-            nr_calibration_particles=nr_calibration_particles,
-            nr_samples_per_parameter=nr_samples_per_parameter)
+            nr_calibration_particles=nr_calibration_particles)
         self.start_nr_particles = start_nr_particles
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
@@ -243,11 +223,9 @@ class ListPopulationSize(PopulationStrategy):
 
     def __init__(self,
                  values: Union[List[int], Dict[int, int]],
-                 nr_calibration_particles: int = None,
-                 nr_samples_per_parameter: int = 1):
+                 nr_calibration_particles: int = None):
         super().__init__(
-            nr_calibration_particles=nr_calibration_particles,
-            nr_samples_per_parameter=nr_samples_per_parameter)
+            nr_calibration_particles=nr_calibration_particles)
         self.values = values
 
     def get_config(self) -> dict:

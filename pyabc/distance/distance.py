@@ -445,7 +445,7 @@ class AggregatedDistance(Distance):
             t: int,
             get_all_sum_stats: Callable[[], List[dict]]) -> bool:
         """
-        The `sum_stats` are passed on to all distance functions, each of
+        The `sum_stat` are passed on to all distance functions, each of
         which may then update using these. If any update occurred, a value
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.

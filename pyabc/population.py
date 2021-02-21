@@ -33,20 +33,10 @@ class Particle:
         The model specific parameter.
     weight:
         The weight of the particle. 0 <= weight <= 1.
-    accepted_sum_stats:
-        List of accepted summary statistics.
-        This list is usually of length 1. This list is longer only if more
-        than one sample is taken for a particle.
-        This list has length 0 if the particle is rejected.
-    accepted_distances:
-        A particle can contain more than one sample.
-        If so, the distances of the individual samples
-        are stored in this list. In the most common case of a single
-        sample, this list has length 1.
-    rejected_sum_stats:
-        List of rejected summary statistics.
-    rejected_distances:
-        List of rejected distances.
+    sum_stat:
+        Model sum_stat.
+    distance:
+        Distance of simulated and measured data.
     accepted:
         True if particle was accepted, False if not.
     proposal_id:
@@ -73,10 +63,8 @@ class Particle:
                  m: int,
                  parameter: Parameter,
                  weight: float,
-                 accepted_sum_stats: List[dict],
-                 accepted_distances: List[float],
-                 rejected_sum_stats: List[dict] = None,
-                 rejected_distances: List[float] = None,
+                 sum_stat: dict,
+                 distance: float,
                  accepted: bool = True,
                  proposal_id: int = 0,
                  preliminary: bool = False):
@@ -84,14 +72,8 @@ class Particle:
         self.m = m
         self.parameter = parameter
         self.weight = weight
-        self.accepted_sum_stats = accepted_sum_stats
-        self.accepted_distances = accepted_distances
-        if rejected_sum_stats is None:
-            rejected_sum_stats = []
-        self.rejected_sum_stats = rejected_sum_stats
-        if rejected_distances is None:
-            rejected_distances = []
-        self.rejected_distances = rejected_distances
+        self.sum_stat = sum_stat
+        self.distance = distance
         self.accepted = accepted
         self.proposal_id = proposal_id
         self.preliminary = preliminary
@@ -146,8 +128,10 @@ class Population:
             for particle in plist:
                 particle.weight /= model_total_weight
 
-    def update_distances(self,
-                         distance_to_ground_truth: Callable[[dict], float]):
+    def update_distances(
+            self,
+            distance_to_ground_truth: Callable[[dict, Parameter], float],
+    ) -> None:
         """
         Update the distances of all summary statistics of all particles
         according to the passed distance function (which is typically
@@ -159,9 +143,8 @@ class Population:
         """
 
         for particle in self._list:
-            for i in range(len(particle.accepted_distances)):
-                particle.accepted_distances[i] = distance_to_ground_truth(
-                    particle.accepted_sum_stats[i], particle.parameter)
+            particle.distance = distance_to_ground_truth(
+                particle.sum_stat, particle.parameter)
 
     def get_model_probabilities(self) -> pd.DataFrame:
         """
@@ -195,8 +178,8 @@ class Population:
     def get_weighted_distances(self) -> pd.DataFrame:
         """
         Create DataFrame of (distance, weight)'s. The particle weights are
-        multiplied by the model probabilities. If one simulation per particle
-        was performed, the weights thus sum to 1. If more than one simulation
+        multiplied by the model probabilities. If one sum_stat per particle
+        was performed, the weights thus sum to 1. If more than one sum_stat
         per particle was performed, this does not have to be the case,
         and post-normalizing may be necessary.
 
@@ -210,40 +193,34 @@ class Population:
         rows = []
         for particle in self._list:
             model_probability = self._model_probabilities[particle.m]
-            for distance in particle.accepted_distances:
-                rows.append({'distance': distance,
-                             'w': particle.weight * model_probability})
+            rows.append({'distance': particle.distance,
+                         'w': particle.weight * model_probability})
         weighted_distances = pd.DataFrame(rows)
 
         return weighted_distances
 
-    def get_weighted_sum_stats(self) -> tuple:
+    def get_weighted_simulations(self) -> tuple:
         """
         Get weights and summary statistics.
 
         Returns
         -------
-        weights, sum_stats: 2-Tuple of lists
+        weights, simulations: 2-Tuple of lists
         """
         weights = []
-        sum_stats = []
+        simulations = []
         for particle in self._list:
+            # normalize weight
             model_probability = self._model_probabilities[particle.m]
             normalized_weight = particle.weight * model_probability
-            for sum_stat in particle.accepted_sum_stats:
-                weights.append(normalized_weight)
-                sum_stats.append(sum_stat)
-        return weights, sum_stats
+
+            weights.append(normalized_weight)
+            simulations.append(particle.sum_stat)
+        return weights, simulations
 
     def get_accepted_sum_stats(self) -> List[dict]:
-        """
-        Return a list of all accepted summary statistics.
-        """
-        sum_stats = []
-        for particle in self._list:
-            sum_stats.extend(particle.accepted_sum_stats)
-
-        return sum_stats
+        """Return a list of all accepted summary statistics."""
+        return [particle.sum_stat for particle in self._list]
 
     def get_for_keys(self, keys):
         """
@@ -264,19 +241,16 @@ class Population:
 
         ret = {key: [] for key in keys}
         for particle in self._list:
-            n_accepted = len(particle.accepted_distances)
             if 'weight' in keys:
                 model_probability = self._model_probabilities[particle.m]
                 weight = particle.weight * model_probability
-                ret['weight'].extend([weight] * n_accepted)
+                ret['weight'].append(weight)
             if 'parameter' in keys:
-                ret['parameter'].extend([particle.parameter] * n_accepted)
+                ret['parameter'].append(particle.parameter)
             if 'distance' in keys:
-                for distance in particle.accepted_distances:
-                    ret['distance'].append(distance)
+                ret['distance'].append(particle.distance)
             if 'sum_stat' in keys:
-                for sum_stat in particle.accepted_sum_stats:
-                    ret['sum_stat'].append(sum_stat)
+                ret['sum_stat'].append(particle.sum_stat)
 
         return ret
 
