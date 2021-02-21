@@ -598,7 +598,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         for prop_id in prop_ids}
 
     # normalize weights by ESS_l / sum_l[w_l] for proposal id l
-    # this is s.t. wum_i w_{l,i} \propto ESS_l
+    # this is s.t. sum_i w_{l,i} \propto ESS_l
     normalizations = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
         # TODO this only works if n_sim per particle == 1
