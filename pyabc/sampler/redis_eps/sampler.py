@@ -496,7 +496,6 @@ def create_preliminary_simulate_one(
         model_perturbation_kernel=ana_vars.model_perturbation_kernel,
         transitions=transitions, model_prior=ana_vars.model_prior,
         parameter_priors=ana_vars.parameter_priors,
-        nr_samples_per_parameter=ana_vars.nr_samples_per_parameter,
         models=ana_vars.models, summary_statistics=ana_vars.summary_statistics,
         x_0=ana_vars.x_0, distance_function=ana_vars.distance_function,
         eps=ana_vars.eps, acceptor=ana_vars.acceptor,

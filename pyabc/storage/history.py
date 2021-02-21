@@ -57,11 +57,11 @@ def git_hash():
     except ImportError:
         return "Install pyABC's optional git dependency for git support"
     try:
-        git_hash = git.Repo(os.getcwd()).head.commit.hexsha
+        hash_ = git.Repo(os.getcwd()).head.commit.hexsha
     except (git.exc.NoSuchPathError, KeyError, ValueError,
             git.exc.InvalidGitRepositoryError) as e:
-        git_hash = str(e)
-    return git_hash
+        hash_ = str(e)
+    return hash_
 
 
 def create_sqlite_db_id(
@@ -680,9 +680,7 @@ class History:
             # iterate over model population of particles
             for store_item in model_population:
                 # a store_item is a Particle
-                distance_list = store_item.accepted_distances
                 parameter = store_item.parameter
-                summary_statistics_list = store_item.accepted_sum_stats
 
                 # create new particle
                 particle = Particle(
@@ -704,21 +702,18 @@ class History:
                         particle.parameters.append(
                             Parameter(name=key, value=value))
 
-                # append samples to particle
-                for distance, sum_stat in zip(distance_list,
-                                              summary_statistics_list):
-                    # create new sample from distance
-                    sample = Sample(distance=distance)
-                    # append to particle
-                    particle.samples.append(sample)
-                    # append sum stat dimensions to sample
-                    if self.stores_sum_stats:
-                        for name, value in sum_stat.items():
-                            if name is None:
-                                raise Exception(
-                                    "Summary statistics need names.")
-                            sample.summary_statistics.append(
-                                SummaryStatistic(name=name, value=value))
+                # create new sample from distance
+                sample = Sample(distance=store_item.distance)
+                # append to particle
+                particle.samples.append(sample)
+                # append sum stat dimensions to sample
+                if self.stores_sum_stats:
+                    for name, value in store_item.sum_stat.items():
+                        if name is None:
+                            raise Exception(
+                                "Summary statistics need names.")
+                        sample.summary_statistics.append(
+                            SummaryStatistic(name=name, value=value))
 
         # commit changes
         self._session.commit()
@@ -829,7 +824,7 @@ class History:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
-        In case more than one simulation per parameter is performed and
+        In case more than one sum_stat per parameter is performed and
         accepted the sum might be larger.
 
         Parameters
@@ -936,9 +931,9 @@ class History:
 
         Returns
         -------
-        w, sum_stats: np.ndarray, list
+        w, sum_stat: np.ndarray, list
             * w: the weights associated with the summary statistics
-            * sum_stats: list of summary statistics
+            * sum_stat: list of summary statistics
         """
         m = int(m)
         if t is None:
@@ -970,7 +965,7 @@ class History:
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
-        In case more than one simulation per parameter is performed and
+        In case more than one sum_stat per parameter is performed and
         accepted, the sum might be larger.
 
         Parameters
@@ -981,7 +976,7 @@ class History:
 
         Returns
         -------
-        weights, sum_stats:
+        weights, sum_stat:
             In the same order in the first array the weights (multiplied by
             the model probabilities), and tin the second array the summary
             statistics.
@@ -1063,30 +1058,27 @@ class History:
                     py_parameter[parameter.name] = parameter.value
                 py_parameter = PyParameter(**py_parameter)
 
-                # samples
-                py_accepted_sum_stats = []
-                py_accepted_distances = []
-                for sample in particle.samples:
-                    # summary statistic
-                    py_sum_stat = {}
-                    for sum_stat in sample.summary_statistics:
-                        py_sum_stat[sum_stat.name] = sum_stat.value
-                    py_accepted_sum_stats.append(py_sum_stat)
+                # simulation
+                # TODO this is legacy from when there were multiple
+                sample = particle.samples[0]
 
-                    # distance
-                    py_distance = sample.distance
-                    py_accepted_distances.append(py_distance)
+                # distance
+                py_distance = sample.distance
+
+                # summary statistics
+                py_sum_stat = {}
+                for sum_stat in sample.summary_statistics:
+                    py_sum_stat[sum_stat.name] = sum_stat.value
 
                 # create particle
                 py_particle = PyParticle(
                     m=py_m,
                     parameter=py_parameter,
                     weight=py_weight,
-                    accepted_sum_stats=py_accepted_sum_stats,
-                    accepted_distances=py_accepted_distances,
-                    rejected_sum_stats=[],
-                    rejected_distances=[],
-                    accepted=True)
+                    sum_stat=py_sum_stat,
+                    distance=py_distance,
+                    accepted=True,
+                    proposal_id=particle.proposal_id)
                 py_particles.append(py_particle)
 
         # create population
