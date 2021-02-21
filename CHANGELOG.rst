@@ -43,6 +43,7 @@ Database:
 * Update branch name master -> main in agreement with
   https://github.com/github/renaming (#406).
 * Notebook improvements:
+
   * Add ground truth to noise notebook.
   * Rename notebook "quickstart" -> "model_selection".
   * Split notebook tests in 2, extend, reduce test matrix (python 3.7).
