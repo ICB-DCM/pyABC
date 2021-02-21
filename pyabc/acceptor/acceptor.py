@@ -450,10 +450,10 @@ class StochasticAcceptor(Acceptor):
         """
         Pack the pdf normalization and the kernel scale.
         """
-        return dict(
-            pdf_norm=self.pdf_norms[t],
-            kernel_scale=self.kernel_scale,  # TODO Refactor
-        )
+        return {
+            'pdf_norm': self.pdf_norms[t],
+            'kernel_scale': self.kernel_scale,  # TODO Refactor
+        }
 
     def __call__(self,
                  distance_function: StochasticKernel,

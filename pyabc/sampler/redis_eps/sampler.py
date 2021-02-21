@@ -18,6 +18,7 @@ from ...distance import Distance
 from ...epsilon import Epsilon
 from ...acceptor import Acceptor
 from ...sampler import Sampler, Sample
+from ...weighted_statistics import effective_sample_size
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
@@ -273,6 +274,9 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             n_lookahead=n_lookahead_eval)
         self.logger.write()
 
+        # weight samples correctly
+        sample = self_normalize_within_subpopulations(sample, n)
+
         return sample
 
     def start_generation_t(
@@ -458,7 +462,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 def create_preliminary_simulate_one(
         t, population, delay_evaluation: bool, ana_vars: AnalysisVars,
 ) -> Callable:
-    """Create a preliminary simulate_one function for generation `t+1`.
+    """Create a preliminary simulate_one function for generation `t`.
 
     Based on preliminary results, update transitions, distance function,
     epsilon threshold etc., and return a function that samples parameters,
@@ -496,7 +500,7 @@ def create_preliminary_simulate_one(
         models=ana_vars.models, summary_statistics=ana_vars.summary_statistics,
         x_0=ana_vars.x_0, distance_function=ana_vars.distance_function,
         eps=ana_vars.eps, acceptor=ana_vars.acceptor,
-        evaluate=not delay_evaluation,
+        evaluate=not delay_evaluation, proposal_id=-1,
     )
 
 
@@ -561,3 +565,52 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
 
     return (sample_with_id,
             any(particle.accepted for particle in sample.particles))
+
+
+def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
+    """Applies subpopulation-wise self-normalization of samples, in-place.
+
+    Parameters
+    ----------
+    sample: The population to be returned by the sampler.
+    n: Population size.
+
+    Returns
+    -------
+    sample: The same, weight-adjusted sample.
+    """
+    prop_ids = {particle.proposal_id for particle in sample.particles}
+
+    if len(prop_ids) == 1:
+        # Nothing to be done, as we only have one proposal, and normalization
+        #  is applied later when the population is created
+        return sample
+
+    accepted_particles = sample.accepted_particles
+    if len(accepted_particles) != n:
+        # this should not happen
+        raise AssertionError("Unexpected number of acceptances")
+
+    # get particles per proposal
+    particles_per_prop = {
+        prop_id: [particle for particle in accepted_particles
+                  if particle.proposal_id == prop_id]
+        for prop_id in prop_ids}
+
+    # normalize weights by ESS_l / sum_l[w_l] for proposal id l
+    # this is s.t. sum_i w_{l,i} \propto ESS_l
+    normalizations = {}
+    for prop_id, particles_for_prop in particles_per_prop.items():
+        # TODO this only works if n_sim per particle == 1
+        weights = np.array(
+            [particle.weight for particle in particles_for_prop])
+        ess = effective_sample_size(weights)
+        total_weight = weights.sum()
+        normalizations[prop_id] = ess / total_weight
+
+    # normalize every particle (this includes rejected ones, which should not
+    #  be necessary, but does not hurt)
+    for particle in sample.particles:
+        particle.weight *= normalizations[particle.proposal_id]
+
+    return sample

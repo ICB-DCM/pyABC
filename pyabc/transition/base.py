@@ -4,9 +4,11 @@ import logging
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
+
+from ..parameters import Parameter
+from ..cv.bootstrap import calc_cv
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
-from ..cv.bootstrap import calc_cv
 from .transitionmeta import TransitionMeta
 
 logger = logging.getLogger("Transitions")
@@ -41,14 +43,14 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Parameters
         ----------
-        X: pd.DataFrame
+        X:
             The parameters.
-        w: array
+        w:
             The corresponding weights
         """
 
     @abstractmethod
-    def rvs_single(self) -> pd.Series:
+    def rvs_single(self) -> Parameter:
         """
         Random variable sample (rvs).
 
@@ -56,29 +58,28 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
         Returns
         -------
-        sample: pd.Series
+        sample:
             A sample from the fitted model.
         """
 
-    def rvs(self, size: int = None) -> Union[pd.Series, pd.DataFrame]:
+    def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
         """
         Sample from the density.
 
         Parameters
         ----------
-        size: int, optional
+        size:
             Number of independent samples to draw.
-            Defaults to 1 and is in this case equivalent to calling
-            "rvs_single".
+            If None, a single Parameter from rvs_single() is returned, if it is
+            an integer >= 1, a pandas.DataFrame with the corresponding number
+            of rows is returned.
 
         Returns
         -------
-        samples: The samples as pandas DataFrame
-
+        samples: The parameter sample(s).
 
         Note
         ----
-
         This method can be overridden for efficient implementations.
         The default is to call rvs_single repeatedly (which might
         not be the most efficient way).
@@ -88,16 +89,17 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
         return pd.DataFrame([self.rvs_single() for _ in range(size)])
 
     @abstractmethod
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         """
         Evaluate the probability density function (PDF) at `x`.
 
         Parameters
         ----------
-        x: pd.Series, pd.DataFrame
-            Parameter. If x is a series, then x should have the the columns
-            from X passed to the fit method as indices.
+        x:
+            Parameter. If x is a Parameter or Series,
+            then x should have the columns from X passed to the fit method
+            as indices.
             If x is a DataFrame, then x should have the same columns as X
             passed before to the fit method. The order of the columns is not
             important
@@ -211,20 +213,25 @@ class AggregatedTransition(Transition):
             # fit it
             transition.fit(X_for_keys, w)
 
-    def rvs_single(self) -> pd.Series:
-        sample = pd.Series({key: np.nan for key in self.X.columns})
+    def rvs_single(self) -> Parameter:
+        sample = Parameter({key: np.nan for key in self.X.columns})
         for transition in self.mapping.values():
             sample_for_keys = transition.rvs_single()
+            # in-place update
             sample.update(sample_for_keys)
         return sample
 
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]) \
+    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
             -> Union[float, np.ndarray]:
         # density
         pd = 1.
         for keys, transition in self.mapping.items():
             # extract values for parameters
-            x_for_keys = x[list(keys)]
+            if isinstance(x, Parameter):
+                x_for_keys = Parameter({key: x[key] for key in keys})
+            else:
+                # series or dataframe
+                x_for_keys = x[list(keys)]
             # compute transition density (numpy will automatically broadcast)
             pd *= transition.pdf(x_for_keys)
         return pd

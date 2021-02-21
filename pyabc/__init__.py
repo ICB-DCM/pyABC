@@ -2,7 +2,8 @@
 pyABC
 =====
 
-ABCSMC algorithms for Bayesian parameter inference and model selection.
+ABC algorithms for likelihood-free Bayesian parameter inference and model
+selection.
 
 .. note::
     pyABC allows to parallelize the sampling process via various samplers.
@@ -14,10 +15,7 @@ ABCSMC algorithms for Bayesian parameter inference and model selection.
     determine on how many jobs to parallelize the sampling.
 """
 
-
-import os
-import logging
-
+from .version import __version__  # noqa: F401
 from .parameters import Parameter
 from .random_variables import (
     Distribution,
@@ -109,8 +107,9 @@ from .populationstrategy import (
     ConstantPopulationSize)
 from . import visualization
 from . import settings
-from .version import __version__  # noqa: F401
 
+import os
+import logging
 
 # Set log level
 try:

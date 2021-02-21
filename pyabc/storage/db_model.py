@@ -13,11 +13,12 @@ For further information see also http://docs.sqlalchemy.org.
 
 import datetime
 import sqlalchemy.types as types
-from sqlalchemy import (Column, Integer, DateTime, String,
+from sqlalchemy import (Column, Integer, DateTime, String, VARCHAR,
                         ForeignKey, Float, LargeBinary)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from .bytes_storage import from_bytes, to_bytes
+from .version import __db_version__
 
 Base = declarative_base()
 
@@ -30,6 +31,12 @@ class BytesStorage(types.TypeDecorator):
 
     def process_result_value(self, value, dialect):  # pylint: disable=R0201
         return from_bytes(value)
+
+
+class Version(Base):
+    __tablename__ = 'version'
+    version_num = Column(VARCHAR(32), primary_key=True,
+                         default=str(__db_version__))
 
 
 class ABCSMC(Base):
@@ -45,18 +52,16 @@ class ABCSMC(Base):
     populations = relationship("Population")
 
     def __repr__(self):
-        return ("<ABCSMC(id={id}, start_time={start_time}, "
-                "end_time={end_time})>"
-                .format(id=self.id, start_time=self.start_time,
-                        end_time=self.end_time))
+        return (f"<ABCSMC id={self.id}, start_time={self.start_time}, "
+                "end_time={self.end_time}>")
 
     def start_info(self):
-        return f"<ABCSMC(id={self.id}, start_time={self.start_time})>"
+        return f"<ABCSMC id={self.id}, start_time={self.start_time}>"
 
     def end_info(self):
         duration = self.end_time - self.start_time
-        return f"<ABCSMC(id={self.id}, duration={duration}, " \
-               f"end_time={self.end_time}>"
+        return (f"<ABCSMC id={self.id}, duration={duration}, "
+                f"end_time={self.end_time}>")
 
 
 class Population(Base):
@@ -74,13 +79,10 @@ class Population(Base):
         self.population_end_time = datetime.datetime.now()
 
     def __repr__(self):
-        return ("<Population(id={id}, abc_smc_id={abc_smc_id}, t={t}) "
-                "nr_samples={nr_samples} eps={eps} "
-                "population_end_time={population_end_time}>"
-                .format(id=self.id, abc_smc_id=self.abc_smc_id, t=self.t,
-                        nr_samples=self.nr_samples,
-                        eps=self.epsilon,
-                        population_end_time=self.population_end_time))
+        return (f"<Population id={self.id}, abc_smc_id={self.abc_smc_id}, "
+                f"t={self.t}, nr_samples={self.nr_samples}, "
+                f"eps={self.epsilon}, "
+                f"population_end_time={self.population_end_time}>")
 
 
 class Model(Base):
@@ -93,9 +95,8 @@ class Model(Base):
     particles = relationship("Particle")
 
     def __repr__(self):
-        return ("<Model id={} population_id={} m ={} name={} p_model={}>"
-                .format(self.id, self.population_id, self.m, self.name,
-                        self.p_model))
+        return (f"<Model id={self.id}, population_id={self.population_id}, "
+                f"m={self.m}, name={self.name}, p_model={self.p_model}>")
 
 
 class Particle(Base):
@@ -105,6 +106,7 @@ class Particle(Base):
     w = Column(Float)
     parameters = relationship("Parameter")
     samples = relationship("Sample")
+    proposal_id = Column(Integer, default=0)
 
 
 class Parameter(Base):
@@ -115,8 +117,7 @@ class Parameter(Base):
     value = Column(Float)
 
     def __repr__(self):
-        return "<{} {}={}>".format(self.__class__.__name__,
-                                   self.name, self.value)
+        return f"<Particle {self.name}={self.value}>"
 
 
 class Sample(Base):
