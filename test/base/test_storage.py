@@ -80,12 +80,12 @@ def rand_pop_list(m: int):
                  parameter=Parameter({"a": np.random.randint(10),
                                       "b": np.random.randn()}),
                  weight=np.random.rand() * 42,
-                 accepted_sum_stats=[{"ss_float": 0.1,
-                                      "ss_int": 42,
-                                      "ss_str": "foo bar string",
-                                      "ss_np": np.random.rand(13, 42),
-                                      "ss_df": example_df()}],
-                 accepted_distances=[np.random.rand()])
+                 sum_stat={"ss_float": 0.1,
+                           "ss_int": 42,
+                           "ss_str": "foo bar string",
+                           "ss_np": np.random.rand(13, 42),
+                           "ss_df": example_df()},
+                 distance=np.random.rand())
         for _ in range(np.random.randint(10) + 3)]
     return pop
 
@@ -95,8 +95,8 @@ def test_single_particle_save_load(history: History):
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
-                 accepted_sum_stats=[{"ss": .1}],
-                 accepted_distances=[.1]),
+                 sum_stat={"ss": .1},
+                 distance=.1),
     ]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
@@ -117,9 +117,8 @@ def test_save_no_sum_stats(history: History):
             m=0,
             parameter=Parameter({"th0": np.random.random()}),
             weight=.2,
-            accepted_sum_stats=[{"ss0": np.random.random(),
-                                 "ss1": np.random.random()}],
-            accepted_distances=[np.random.random()])
+            sum_stat={"ss0": np.random.random(), "ss1": np.random.random()},
+            distance=np.random.random())
         particle_list.append(particle)
 
     population = Population(particle_list)
@@ -166,10 +165,8 @@ def test_get_population(history: History):
     assert len(population) == len(population_h)
 
     # distances
-    distances = sum((p.accepted_distances
-                     for p in population.get_list()), [])
-    distances_h = sum((p.accepted_distances
-                       for p in population_h.get_list()), [])
+    distances = [p.distance for p in population.get_list()]
+    distances_h = [p.distance for p in population_h.get_list()]
     for d0, d1 in zip(distances, distances_h):
         assert np.isclose(d0, d1)
 
@@ -189,8 +186,8 @@ def test_single_particle_save_load_np_int64(history: History):
         m=0,
         parameter=Parameter({"a": 23, "b": 12}),
         weight=.2,
-        accepted_sum_stats=[{"ss": .1}],
-        accepted_distances=[.1])]
+        sum_stat={"ss": .1},
+        distance=.1)]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     for m in m_list:
@@ -208,17 +205,16 @@ def test_sum_stats_save_load(history: History):
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
-                 accepted_sum_stats=[{"ss1": .1, "ss2": arr2,
-                                      "ss3": example_df(),
-                                      "rdf0": r["iris"]}],
-                 accepted_distances=[.1]),
+                 sum_stat={"ss1": .1, "ss2": arr2,
+                           "ss3": example_df(),
+                           "rdf0": r["iris"]},
+                 distance=.1),
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
-                 accepted_sum_stats=[{"ss12": .11, "ss22": arr,
-                                      "ss33": example_df(),
-                                      "rdf": r["mtcars"]}],
-                 accepted_distances=[.1])]
+                 sum_stat={"ss12": .11, "ss22": arr, "ss33": example_df(),
+                           "rdf": r["mtcars"]},
+                 distance=.1)]
 
     history.append_population(0, 42,
                               Population(particle_list), 2, ["m1", "m2"])
@@ -241,8 +237,8 @@ def test_total_nr_samples(history: History):
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
-                 accepted_sum_stats=[{"ss": .1}],
-                 accepted_distances=[.1])]
+                 sum_stat={"ss": .1},
+                 distance=.1)]
     population = Population(particle_list)
     history.append_population(0, 42, population, 4234, ["m1"])
     history.append_population(0, 42, population, 3, ["m1"])
@@ -255,8 +251,8 @@ def test_t_count(history: History):
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
-                 accepted_sum_stats=[{"ss": .1}],
-                 accepted_distances=[.1])]
+                 sum_stat={"ss": .1},
+                 distance=.1)]
     for t in range(1, 10):
         history.append_population(t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
@@ -404,8 +400,8 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
                  weight=.2,
-                 accepted_sum_stats=[{"ss": .1}],
-                 accepted_distances=[.1])]
+                 sum_stat={"ss": .1},
+                 distance=.1)]
     h.append_population(0, 42, Population(particle_list), 2, model_names)
 
     h2 = History(h.db)

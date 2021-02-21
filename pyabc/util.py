@@ -307,8 +307,19 @@ def create_weight_function(
     -------
     weight_function: The importance sample weight function.
     """
-    def weight_function(m_ss, theta_ss, acceptance_weight):
-        """TODO"""
+    def weight_function(m_ss, theta_ss, acceptance_weight: float):
+        """Calculate total weight, from sampling and acceptance weight.
+
+        Parameters
+        ----------
+        m_ss: The model sample.
+        theta_ss: The parameter sample.
+        acceptance_weight: The acceptance weight sample. In most cases 1.
+
+        Returns
+        -------
+        weight: The total weight.
+        """
         # prior and transition density (can be equal)
         prior_pd = prior_pdf(m_ss, theta_ss)
         transition_pd = transition_pdf(m_ss, theta_ss)
