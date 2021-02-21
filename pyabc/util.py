@@ -107,7 +107,7 @@ def create_simulate_from_prior_function(
         # remember sum stat as accepted
         accepted_sum_stats = [model_result.sum_stats]
         # distance will be computed after initialization of the
-        # distance function
+        #  distance function
         accepted_distances = [np.inf]
         # all are happy and accepted
         accepted = True
@@ -120,7 +120,9 @@ def create_simulate_from_prior_function(
             accepted_distances=accepted_distances,
             rejected_sum_stats=[],
             rejected_distances=[],
-            accepted=accepted)
+            accepted=accepted,
+            proposal_id=0,
+            preliminary=False)
 
     return simulate_one
 
@@ -190,7 +192,7 @@ def evaluate_proposal(
         nr_samples_per_parameter: int, models: List[Model],
         summary_statistics: Callable,
         distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
-        x_0: dict, weight_function: Callable) -> Particle:
+        x_0: dict, weight_function: Callable, proposal_id: int) -> Particle:
     """Evaluate a proposed parameter.
 
     Parameters
@@ -206,6 +208,7 @@ def evaluate_proposal(
     acceptor: The acceptor.
     x_0: The observed summary statistics.
     weight_function: Function by which to reweight the sample.
+    proposal_id: Id of the transition kernel.
 
     Returns
     -------
@@ -258,7 +261,9 @@ def evaluate_proposal(
         accepted_distances=accepted_distances,
         rejected_sum_stats=rejected_sum_stats,
         rejected_distances=rejected_distances,
-        accepted=accepted)
+        accepted=accepted,
+        preliminary=False,
+        proposal_id=proposal_id)
 
 
 def create_prior_pdf(
@@ -444,7 +449,8 @@ def create_simulate_function(
                 models=models, summary_statistics=summary_statistics,
                 distance_function=distance_function, eps=eps,
                 acceptor=acceptor,
-                x_0=x_0, weight_function=weight_function)
+                x_0=x_0, weight_function=weight_function,
+                proposal_id=proposal_id)
         else:
             particle = only_simulate_data_for_proposal(
                 *parameter, t=t,
