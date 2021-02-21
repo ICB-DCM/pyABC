@@ -156,9 +156,9 @@ def work_on_population_dynamic(
             sample.append(new_sim)
             # check for acceptance
             if new_sim.accepted:
-                # the order of the IDs is reversed, but this does not
-                # matter. Important is only that the IDs are specified
-                # before the simulation starts
+                # The order of the IDs is reversed, but this does not
+                #  matter. Important is only that the IDs are specified
+                #  before the simulation starts
 
                 # append to accepted list
                 accepted_samples.append(
