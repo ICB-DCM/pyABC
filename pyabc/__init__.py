@@ -2,7 +2,8 @@
 pyABC
 =====
 
-ABCSMC algorithms for Bayesian parameter inference and model selection.
+ABC algorithms for likelihood-free Bayesian parameter inference and model
+selection.
 
 .. note::
     pyABC allows to parallelize the sampling process via various samplers.

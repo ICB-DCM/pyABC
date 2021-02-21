@@ -39,8 +39,7 @@ def test_stop_early(db_path):
         abc = ABCSMC(model, Distribution(par=st.uniform(0, 10)), dist,
                      pop_size, sampler=sampler)
         abc.new(db_path, {"par": .5})
-        history = abc.run(
-            max_nr_populations=8, min_acceptance_rate=set_acc_rate)
+        history = abc.run(min_acceptance_rate=set_acc_rate)
         df = history.get_all_populations()
 
         # offset with n_procs as more processes can have run at termination
