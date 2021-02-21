@@ -452,7 +452,10 @@ def test_create_db():
     # temporary file name
     file_ = tempfile.mkstemp(suffix=".db")[1]
 
-    # should work just fine though file empty
+    # set up history
+    pyabc.History("sqlite:///" + file_)
+
+    # should work just fine though file mostly empty
     pyabc.History("sqlite:///" + file_, create=False)
 
     # delete file and check we cannot create a History object

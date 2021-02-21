@@ -1,9 +1,24 @@
 .. _web_visualization:
 
-Web based visualizations
-========================
+Visualization and analysis
+==========================
 
-The pyABC package comes with a web server, which displays lots of useful
+Overview
+--------
+
+pyABC offers a variety of routines to visualize and analyze results.
+Usage examples are given in the :ref:`Examples section<examples>`.
+An overview of all plotting routines can be found in the
+:ref:`Visualization API documentation <api_visualization>`.
+Further, functions to correctly extract statistics, in particular
+on importance samples obtained via ABCSMC, can be found in the
+:ref:`Weighted statistics API documentation <api_weightedstatistics>`.
+
+
+Web-based visualizations
+------------------------
+
+Further, pyABC comes with a web server, which displays lots of useful
 information on the currently running and already completed ABC tasks.
 You can launch it from the command line with
 

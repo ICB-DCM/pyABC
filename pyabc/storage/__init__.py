@@ -11,6 +11,7 @@ is the interface to the database in which pyABC stores and logs information
 during the ABC-SMC run, but also the interface which allows you to query that
 information later on.
 
+
 Initializing the database interface from a file
 -----------------------------------------------
 
