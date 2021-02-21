@@ -202,7 +202,7 @@ class Population:
 
         Returns
         -------
-        weights, simulations: 2-Tuple of lists
+        weights, sum_stats: 2-Tuple of lists
         """
         weights = []
         sum_stats = []

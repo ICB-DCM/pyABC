@@ -972,7 +972,7 @@ class History:
 
         Returns
         -------
-        weights, sum_stat:
+        weights, sum_stats:
             In the same order in the first array the weights (multiplied by
             the model probabilities), and tin the second array the summary
             statistics.
@@ -1054,15 +1054,12 @@ class History:
                     py_parameter[parameter.name] = parameter.value
                 py_parameter = PyParameter(**py_parameter)
 
-                # simulation
+                # simulations
                 # TODO this is legacy from when there were multiple
                 if len(particle.samples) != 1:
-                    raise AssertionError("The should be exactly one sample.")
+                    raise AssertionError(
+                        "There should be exactly one sample.")
                 sample = particle.samples[0]
-
-                # distance
-                py_distance = sample.distance
-
                 # summary statistics
                 py_sum_stat = {}
                 for sum_stat in sample.summary_statistics:
@@ -1074,7 +1071,7 @@ class History:
                     parameter=py_parameter,
                     weight=py_weight,
                     sum_stat=py_sum_stat,
-                    distance=py_distance,
+                    distance=sample.distance,
                     accepted=True,
                     proposal_id=particle.proposal_id)
                 py_particles.append(py_particle)
