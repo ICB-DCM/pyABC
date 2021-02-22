@@ -30,7 +30,7 @@ jobs:
       run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
-      timeout-minutes: 10
+      timeout-minutes: 12
       run: tox -e base
 
     - name: Coverage
@@ -98,7 +98,7 @@ jobs:
       run: .github/workflows/install_deps.sh amici
 
     - name: Run tests
-      timeout-minutes: 10
+      timeout-minutes: 12
       run: tox -e petab
 
     - name: Coverage
@@ -132,7 +132,7 @@ jobs:
         run: .github/workflows/install_deps.sh
 
       - name: Run tests
-        timeout-minutes: 6
+        timeout-minutes: 7
         run: tox -e mac
 
       - name: Coverage
@@ -226,3 +226,13 @@ jobs:
     - name: Run quality checks
       timeout-minutes: 10
       run: tox -e project,flake8,doc
+
+    - name: Test migration
+      timeout-minutes: 3
+      run: tox -e migrate
+
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
