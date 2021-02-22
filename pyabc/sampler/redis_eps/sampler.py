@@ -429,6 +429,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             max_n_eval_look_ahead = \
                 nr_evaluations_ * self.max_n_eval_look_ahead_factor
         else:
+            # no maximum necessary as samples are directly evaluated
             max_n_eval_look_ahead = np.inf
 
         # head-start the next generation
