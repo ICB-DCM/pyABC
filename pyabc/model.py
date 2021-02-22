@@ -20,11 +20,11 @@ class ModelResult:
     """
 
     def __init__(self,
-                 sum_stats: dict = None,
+                 sum_stat: dict = None,
                  distance: float = None,
                  accepted: bool = None,
                  weight: float = 1.0):
-        self.sum_stats = sum_stats if sum_stats is not None else {}
+        self.sum_stat = sum_stat if sum_stat is not None else {}
         self.distance = distance
         self.accepted = accepted
         self.weight = weight
@@ -89,7 +89,7 @@ class Model:
     def summary_statistics(self,
                            t: int,
                            pars: Parameter,
-                           sum_stats_calculator: Callable) -> ModelResult:
+                           sum_stat_calculator: Callable) -> ModelResult:
         """
         Sample, and then calculate the summary statistics.
 
@@ -101,7 +101,7 @@ class Model:
             Current time point.
         pars: Parameter
             Model parameters.
-        sum_stats_calculator: Callable
+        sum_stat_calculator: Callable
             A function which calculates summary statistics, as passed to
             :class:`pyabc.smc.ABCSMC`.
             The user is free to use or ignore this function.
@@ -112,13 +112,13 @@ class Model:
             The result with filled summary statistics.
         """
         raw_data = self.sample(pars)
-        sum_stats = sum_stats_calculator(raw_data)
-        return ModelResult(sum_stats=sum_stats)
+        sum_stat = sum_stat_calculator(raw_data)
+        return ModelResult(sum_stat=sum_stat)
 
     def distance(self,
                  t: int,
                  pars: Parameter,
-                 sum_stats_calculator: Callable,
+                 sum_stat_calculator: Callable,
                  distance_calculator: Distance,
                  x_0: dict) -> ModelResult:
         """
@@ -132,7 +132,7 @@ class Model:
             Current time point.
         pars: Parameter
             Model parameters.
-        sum_stats_calculator: Callable
+        sum_stat_calculator: Callable
             A function which calculates summary statistics, as passed to
             :class:`pyabc.smc.ABCSMC`.
             The user is free to use or ignore this function.
@@ -149,21 +149,21 @@ class Model:
             The result with filled distance.
         """
 
-        sum_stats_result = self.summary_statistics(t,
-                                                   pars,
-                                                   sum_stats_calculator)
-        distance = distance_calculator(sum_stats_result.sum_stats,
+        sum_stat_result = self.summary_statistics(t,
+                                                  pars,
+                                                  sum_stat_calculator)
+        distance = distance_calculator(sum_stat_result.sum_stat,
                                        x_0,
                                        t,
                                        pars)
-        sum_stats_result.distance = distance
+        sum_stat_result.distance = distance
 
-        return sum_stats_result
+        return sum_stat_result
 
     def accept(self,
                t: int,
                pars: Parameter,
-               sum_stats_calculator: Callable,
+               sum_stat_calculator: Callable,
                distance_calculator: Distance,
                eps_calculator: Epsilon,
                acceptor: Acceptor,
@@ -181,7 +181,7 @@ class Model:
             Current time point.
         pars: Parameter
             The model parameters.
-        sum_stats_calculator: Callable
+        sum_stat_calculator: Callable
             A function which calculates summary statistics.
             The user is free to use or ignore this function.
         distance_calculator: pyabc.Distance
@@ -203,11 +203,11 @@ class Model:
         """
         result = self.summary_statistics(t,
                                          pars,
-                                         sum_stats_calculator)
+                                         sum_stat_calculator)
         acc_res = acceptor(
             distance_function=distance_calculator,
             eps=eps_calculator,
-            x=result.sum_stats,
+            x=result.sum_stat,
             x_0=x_0,
             t=t,
             par=pars)
@@ -308,9 +308,9 @@ class IntegratedModel(Model):
             If the parameter was accepted, this method should return either
             ``ModelResult(accepted=True, distance=distance)`` or
             ``ModelResult(accepted=True, distance=distance,
-            sum_stats=sum_stats)``
+            sum_stat=sum_stat)``
             in which ``distance`` denotes the achieved
-            distance and ``sum_stats`` the summary statistics (e.g. simulated
+            distance and ``sum_stat`` the summary statistics (e.g. simulated
             data) of the run. Note that providing the summary statistics
             is optional. If they are provided, then they are also logged in
             the database.
@@ -320,7 +320,7 @@ class IntegratedModel(Model):
     def accept(self,
                t: int,
                pars: Parameter,
-               sum_stats_calculator: Callable,
+               sum_stat_calculator: Callable,
                distance_calculator: Distance,
                eps_calculator: Epsilon,
                acceptor: Acceptor,

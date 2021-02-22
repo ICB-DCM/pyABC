@@ -33,7 +33,7 @@ class MyStochasticProcess(pyabc.IntegratedModel):
 
         return pyabc.ModelResult(accepted=True,
                                  distance=cumsum,
-                                 sum_stats={"trajectory": trajectory})
+                                 sum_stat={"trajectory": trajectory})
 
 
 def test_early_stopping():
