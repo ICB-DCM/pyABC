@@ -8,6 +8,15 @@ Release Notes
 ...........
 
 
+0.10.15 (2021-02-22)
+--------------------
+
+* Refactor: Remove deprecated `nr_samples_per_parameter`, internal
+  simplifications (#422)
+* Add option to limit number of delayed look-ahead samples to limit memory
+  usage (#428)
+
+
 0.10.14 (2021-02-21)
 --------------------
 
