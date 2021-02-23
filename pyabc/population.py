@@ -120,6 +120,9 @@ class Population:
         model_probabilities = {m: w / population_total_weight
                                for m, w in model_total_weights.items()}
 
+        if np.isclose(population_total_weight, 0):
+            raise AssertionError("The total population weight is zero")
+
         # update model_probabilities attribute
         self._model_probabilities = model_probabilities
 
@@ -391,6 +394,8 @@ class Sample:
         weights be the same factor ensures that weights stay comparable.
         """
         total_weight_accepted = sum(p.weight for p in self.accepted_particles)
+        if np.isclose(total_weight_accepted, 0):
+            raise AssertionError("The total population weight is zero")
         for p in self.all_particles:
             p.weight /= total_weight_accepted
 

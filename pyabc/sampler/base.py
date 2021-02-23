@@ -25,6 +25,7 @@ def wrap_sample(f):
         if any(particle.preliminary for particle in sample.all_particles):
             raise AssertionError(
                 "There cannot be non-evaluated particles.")
+
         # normalize sample weights
         sample.normalize_weights()
 

@@ -254,7 +254,20 @@ def test_in_memory(redis_starter_sampler):
 
 
 def test_wrong_output_sampler():
+    """Test when the sampler returns not the correct number of samples."""
     sampler = WrongOutputSampler()
+
+    def simulate_one():
+        return pyabc.Particle(m=0, parameter={}, weight=0.1,
+                              sum_stat={}, distance=42,
+                              accepted=True)
+    with pytest.raises(AssertionError):
+        sampler.sample_until_n_accepted(5, simulate_one, 0)
+
+
+def test_zero_weight():
+    """Check behavior when the total weight is zero."""
+    sampler = SingleCoreSampler()
 
     def simulate_one():
         return pyabc.Particle(m=0, parameter={}, weight=0,
