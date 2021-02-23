@@ -469,10 +469,10 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         """Check whether the analysis is ok with the sampler.
 
         In particular, in look-ahead mode:
-        * evaluation must be delayed if components are adaptive
-        * as multiple transitions are used, weight normalization is
-          necessary, s.t. weights of rejected particles may not match and
-          re-calculation of transition densities is not possible.
+          * evaluation must be delayed if components are adaptive
+          * as multiple transitions are used, weight normalization is
+            necessary, s.t. weights of rejected particles may not match and
+            re-calculation of transition densities is not possible.
         """
         if isinstance(eps, Temperature):
             logger.warning(
