@@ -383,7 +383,8 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
         sample = copy.deepcopy(sample)
-
+        # normalize weights
+        sample.normalize_weights()
         # extract population
         population = sample.get_accepted_population()
 

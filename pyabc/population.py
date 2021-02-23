@@ -126,8 +126,7 @@ class Population:
         if not np.isclose(population_total_weight, 1):
             if normalized:
                 # this should not happen
-                raise AssertionError(
-                    "Weights were not normalized, applied normalization")
+                raise AssertionError("Weights are not normalized")
             for p in self.particles:
                 p.weight /= population_total_weight
 
