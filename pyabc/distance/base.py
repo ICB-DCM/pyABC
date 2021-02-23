@@ -13,12 +13,6 @@ class Distance(ABC):
 
     Any object that computes the similarity between observed and simulated data
     should inherit from this class.
-
-    Attributes
-    ----------
-    keys:
-        Parameter keys. These may be useful in order to generate arrays from
-        data using the same order.
     """
 
     def initialize(
@@ -31,7 +25,7 @@ class Distance(ABC):
         use of the distance (at the beginning of ABCSMC.run()),
         and can be used to calibrate it to the statistics of the samples.
 
-        The default is to extract keys from the observed summary statistics.
+        The default is to do nothing.
 
         Parameters
         ----------
@@ -42,7 +36,6 @@ class Distance(ABC):
         x_0:
             The observed summary statistics.
         """
-        self.keys = list(x_0.keys())
 
     def configure_sampler(
             self,
