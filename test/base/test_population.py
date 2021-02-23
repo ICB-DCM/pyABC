@@ -6,7 +6,7 @@ from .test_storage import rand_pop_list
 
 
 def rand_pop(m: int):
-    return Population(rand_pop_list(m))
+    return Population(rand_pop_list(m), normalized=False)
 
 
 def test_basic():
@@ -15,7 +15,7 @@ def test_basic():
 
     # call methods
 
-    assert len(pop.get_list()) == len(pop)
+    assert len(pop.particles) == len(pop)
 
     weighted_distances = pop.get_weighted_distances()
     weights, sumstats = pop.get_weighted_sum_stats()
@@ -32,7 +32,7 @@ def test_basic():
     # 1 sum stat per particle in this case
     assert len(pop.get_accepted_sum_stats()) == len(pop)
 
-    dct = pop.to_dict()
+    dct = pop.get_particles_by_model()
     assert m in dct.keys() and len(dct) == 1
 
     assert np.isclose(pop.get_model_probabilities().loc[m, 'p'], 1)
