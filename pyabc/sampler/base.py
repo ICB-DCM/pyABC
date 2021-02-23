@@ -26,9 +26,6 @@ def wrap_sample(f):
             raise AssertionError(
                 "There cannot be non-evaluated particles.")
 
-        # normalize sample weights
-        sample.normalize_weights()
-
         return sample
     return sample_until_n_accepted
 

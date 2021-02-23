@@ -265,18 +265,6 @@ def test_wrong_output_sampler():
         sampler.sample_until_n_accepted(5, simulate_one, 0)
 
 
-def test_zero_weight():
-    """Check behavior when the total weight is zero."""
-    sampler = SingleCoreSampler()
-
-    def simulate_one():
-        return pyabc.Particle(m=0, parameter={}, weight=0,
-                              sum_stat={}, distance=42,
-                              accepted=True)
-    with pytest.raises(AssertionError):
-        sampler.sample_until_n_accepted(5, simulate_one, 0)
-
-
 def test_redis_multiprocess():
     def simulate_one():
         accepted = np.random.randint(2)
