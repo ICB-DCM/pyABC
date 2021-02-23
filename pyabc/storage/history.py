@@ -651,7 +651,7 @@ class History:
                                t: int,
                                current_epsilon: float,
                                nr_simulations: int,
-                               store: dict,
+                               particles_by_model: dict,
                                model_probabilities: pd.DataFrame,
                                model_names):
         # sqlalchemy experimental stuff and highly inefficient implementation
@@ -669,7 +669,7 @@ class History:
         abcsmc.populations.append(population)
 
         # iterate over models
-        for m, model_population in store.items():
+        for m, model_population in particles_by_model.items():
             # create new model
             model = Model(m=int(m),
                           p_model=float(model_probabilities.loc[m, 'p']),
@@ -677,19 +677,24 @@ class History:
             # append model
             population.models.append(model)
 
+            # TODO This normalization is different than in the in-memory
+            #  population. It would be cleaner to update the db too.
+            total_model_weight = sum(p.weight for p in model_population)
+
             # iterate over model population of particles
-            for store_item in model_population:
+            for py_particle in model_population:
                 # a store_item is a Particle
-                parameter = store_item.parameter
+                py_parameter = py_particle.parameter
 
                 # create new particle
                 particle = Particle(
-                    w=store_item.weight, proposal_id=store_item.proposal_id)
+                    w=py_particle.weight / total_model_weight,
+                    proposal_id=py_particle.proposal_id)
                 # append particle to model
                 model.particles.append(particle)
 
                 # append parameter dimensions to particle
-                for key, value in parameter.items():
+                for key, value in py_parameter.items():
                     if isinstance(value, dict):
                         # parameter entry is itself a dictionary
                         for key_dict, value_dict in value.items():
@@ -703,12 +708,12 @@ class History:
                             Parameter(name=key, value=value))
 
                 # create new sample from distance
-                sample = Sample(distance=store_item.distance)
+                sample = Sample(distance=py_particle.distance)
                 # append to particle
                 particle.samples.append(sample)
                 # append sum stat dimensions to sample
                 if self.stores_sum_stats:
-                    for name, value in store_item.sum_stat.items():
+                    for name, value in py_particle.sum_stat.items():
                         if name is None:
                             raise Exception(
                                 "Summary statistics need names.")
@@ -725,7 +730,7 @@ class History:
     def append_population(self,
                           t: int,
                           current_epsilon: float,
-                          population: Population,
+                          population: PyPopulation,
                           nr_simulations: int,
                           model_names):
         """
@@ -744,12 +749,12 @@ class History:
         model_names: list
             The model names.
         """
-        store = population.to_dict()
+        particles_by_model = population.get_particles_by_model()
         model_probabilities = population.get_model_probabilities()
 
-        self._save_to_population_db(t, current_epsilon,
-                                    nr_simulations, store, model_probabilities,
-                                    model_names)
+        self._save_to_population_db(
+            t, current_epsilon, nr_simulations, particles_by_model,
+            model_probabilities, model_names)
 
     @with_session
     def get_model_probabilities(self, t: Union[int, None] = None) \

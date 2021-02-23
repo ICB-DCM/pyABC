@@ -13,10 +13,10 @@ from pyabc.distance import (
 from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from pyabc.model import Model, SimpleModel
 from pyabc.platform_factory import DefaultSampler
-from pyabc.population import Population
+from pyabc.population import Population, Sample
 from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
 from pyabc.random_variables import RV, Distribution
-from pyabc.sampler import Sampler, Sample
+from pyabc.sampler import Sampler
 from pyabc.storage import History
 from pyabc.transition import (
     Transition, MultivariateNormalTransition, ModelPerturbationKernel)
@@ -282,7 +282,6 @@ class ABCSMC:
             able to access the database. This should not be a problem
             in most scenarios. The in-memory option is mainly useful for
             benchmarking (and maybe) for testing.
-
         observed_sum_stat : dict, optional
             This is the really important parameter here. It is of the
             form ``{'statistic_1': val_1, 'statistic_2': val_2, ... }``.
@@ -303,7 +302,6 @@ class ABCSMC:
             implement comparison to the observed data on its own.
             Not giving this parameter is equivalent to passing an empty
             dictionary ``{}``.
-
         gt_model: int, optional
             This is only meta data stored to the database, but not actually
             used for the ABCSMC algorithm. If you want to predict your ABCSMC
@@ -311,14 +309,12 @@ class ABCSMC:
             this parameter to indicate the ground truth model number.
             This helps with further analysis. If you use actually measured data
             (and don't know the ground truth) you don't have to set this.
-
         gt_par: dict, optional
             Similar to ``ground_truth_model``, this is only for recording
             purposes in the database, but not used in the ABCSMC algorithm.
             This stores the parameters of the ground truth model
             if it was synthetically obtained.
             Don't give this parameter if you don't know the ground truth.
-
         meta_info: dict, optional
             Can contain an arbitrary number of keys, only for recording
             purposes. Store arbitrary
@@ -328,7 +324,6 @@ class ABCSMC:
 
         Returns
         -------
-
         history: History
             The history, with set history.id, which is the id under which the
             generated ABCSMC run entry in the database can be identified.
@@ -369,16 +364,13 @@ class ABCSMC:
 
         Parameters
         ----------
-
         db: str
             A SQLAlchemy database identifier pointing to the database from
             which to continue a run.
-
         abc_id: int, optional
             The id of the ABC-SMC run in the database which is to be continued.
             The default is 1. If more than one ABC-SMC run is stored, use
             the ``abc_id`` parameter to indicate which one to continue.
-
         observed_sum_stat: dict, optional
             The observed summary statistics. This field should be used only if
             the summary statistics cannot be reproduced exactly from the
@@ -409,16 +401,14 @@ class ABCSMC:
 
         Parameters
         ----------
-
         t: int
             Time point for which to initialize (i.e. the time point at which
             to do the first population). Usually 0 or history.max_t + 1.
         """
-        def get_initial_sum_stats():
+        def get_initial_sample():
+            """Create sample from population, with only accepted particles."""
             population = self._get_initial_population(t-1)
-            # only the accepted sum stats are available initially
-            sum_stats = population.get_accepted_sum_stats()
-            return sum_stats
+            return Sample.from_population(population)
 
         def _get_initial_population_with_distances():
             population = self._get_initial_population(t-1)
@@ -436,7 +426,7 @@ class ABCSMC:
 
         # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
-            t, get_initial_sum_stats, self.x_0)
+            t, get_initial_sample, self.x_0)
         self.acceptor.initialize(
             t, get_initial_weighted_distances, self.distance_function,
             self.x_0)
@@ -444,7 +434,7 @@ class ABCSMC:
         def get_initial_records():
             population = _get_initial_population_with_distances()
             records = []
-            for particle in population.get_list():
+            for particle in population.particles:
                 # we use dummy densities here, since only the quotient
                 #  is of interest
                 records.append({
@@ -688,6 +678,11 @@ class ABCSMC:
             population = sample.get_accepted_population()
             logger.debug(f"Population {t} done.")
 
+            # normalize weights
+            total_weight = sum(p.weight for p in population.particles)
+            for p in sample.all_particles:
+                p.weight /= total_weight
+
             # save to database
             n_sim = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
@@ -698,7 +693,7 @@ class ABCSMC:
                 f"{self.history.total_nr_simulations}.")
 
             # acceptance rate and ess
-            pop_size = len(population.get_list())
+            pop_size = len(population)
             acceptance_rate = pop_size / n_sim
             ess = effective_sample_size(
                 population.get_weighted_distances()['w'])
@@ -734,8 +729,8 @@ class ABCSMC:
     def _prepare_next_iteration(
             self, t: int, sample: Sample, population: Population,
             acceptance_rate: float):
-        """
-        Update actors for the upcoming iteration.
+        """Update actors for the upcoming iteration.
+
         Be aware: The current (finished) iteration is t-1, the next t.
 
         Parameters
@@ -758,13 +753,11 @@ class ABCSMC:
         # update population size
         self._adapt_population_size(t)
 
-        def get_recorded_sum_stats():
-            partial_sum_stats = sample.first_m_sum_stats(
-                self.max_nr_recorded_particles)
-            return partial_sum_stats
+        def get_sample():
+            return sample
 
         # update distance
-        df_updated = self.distance_function.update(t, get_recorded_sum_stats)
+        df_updated = self.distance_function.update(t, get_sample)
 
         # compute distances with the new distance measure
         def get_weighted_distances():
@@ -780,8 +773,7 @@ class ABCSMC:
             t, get_weighted_distances, self.eps(t-1), acceptance_rate)
 
         def get_all_records():
-            recorded_particles = sample.first_m_particles(
-                self.max_nr_recorded_particles)
+            recorded_particles = sample.all_particles
 
             # create list of all records
             records = []

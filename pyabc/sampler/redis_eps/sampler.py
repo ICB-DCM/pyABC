@@ -15,10 +15,11 @@ from ...util import (
     AnalysisVars, create_simulate_function, evaluate_preliminary_particle,
     termination_criteria_fulfilled)
 from ...distance import Distance
-from ...epsilon import Epsilon
+from ...epsilon import Epsilon, Temperature
 from ...acceptor import Acceptor
-from ...sampler import Sampler, Sample
+from ...sampler import Sampler
 from ...weighted_statistics import effective_sample_size
+from ...population import Sample
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
@@ -187,7 +188,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
     def sample_until_n_accepted(
             self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+            max_eval=np.inf, all_accepted=False, ana_vars=None) -> Sample:
         # get the analysis id
         ana_id = self.analysis_id
 
@@ -464,6 +465,19 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             distance_function: Distance,
             eps: Epsilon,
             acceptor: Acceptor) -> None:
+        """Check whether the analysis is ok with the sampler.
+
+        In particular, in look-ahead mode:
+        * evaluation must be delayed if components are adaptive
+        * as multiple transitions are used, weight normalization is
+          necessary, s.t. weights of rejected particles may not match and
+          re-calculation of transition densities is not possible.
+        """
+        if isinstance(eps, Temperature):
+            logger.warning(
+                "Temperature selection based on acceptance rate prediction "
+                "may not work correctly in look-ahead mode.")
+
         if self.look_ahead_delay_evaluation:
             # nothing to be done
             return
@@ -543,11 +557,11 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
         kept.
     """
     # 0 is relative start time, 1 is the actual sample
-    sample = sample_with_id[1]
+    sample: Sample = sample_with_id[1]
 
     # check whether there are preliminary particles
-    if not any(particle.preliminary for particle in sample.particles):
-        n_accepted = sum(particle.accepted for particle in sample.particles)
+    if not any(particle.preliminary for particle in sample.all_particles):
+        n_accepted = len(sample.accepted_particles)
         if n_accepted != 1:
             # this should never happen
             raise AssertionError(
@@ -564,30 +578,37 @@ def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
         return sample_with_id, True
 
     # in preliminary mode, there should only be one particle per sample
-    if len(sample.particles) != 1:
+    if len(sample.all_particles) != 1:
         # this should never happen
         raise AssertionError(
             "Expected number of particles in sample: 1. "
-            f"Got: {len(sample.particles)}")
+            f"Got: {len(sample.all_particles)}")
 
     # from here on, we may assume that all particles (#=1) are yet to be judged
     logger.n_preliminary += 1
 
     # iterate over the 1 particle
-    for i_particle, particle in enumerate(sample.particles):
-        sample.particles[i_particle] = \
+    for particle in sample.all_particles:
+        particle = \
             evaluate_preliminary_particle(particle, t, ana_vars)
 
         # react to acceptance
-        if sample.particles[i_particle].accepted:
+        if particle.accepted:
+            sample.accepted_particles = [particle]
+            sample.rejected_particles = []
             # increase redis shared counter
             redis.incr(idfy(N_ACC, ana_id, t), 1)
             # increase general and lookahead counter
             logger.n_accepted += 1
             logger.n_lookahead_accepted += 1
+        else:
+            sample.accepted_particles = []
+            if sample.record_rejected:
+                sample.rejected_particles = [particle]
+            else:
+                sample.rejected_particles = []
 
-    return (sample_with_id,
-            any(particle.accepted for particle in sample.particles))
+    return sample_with_id, len(sample.accepted_particles) > 0
 
 
 def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
@@ -602,21 +623,20 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
     -------
     sample: The same, weight-adjusted sample.
     """
-    prop_ids = {particle.proposal_id for particle in sample.particles}
+    prop_ids = {particle.proposal_id for particle in sample.accepted_particles}
 
     if len(prop_ids) == 1:
         # Nothing to be done, as we only have one proposal, and normalization
         #  is applied later when the population is created
         return sample
 
-    accepted_particles = sample.accepted_particles
-    if len(accepted_particles) != n:
+    if len(sample.accepted_particles) != n:
         # this should not happen
         raise AssertionError("Unexpected number of acceptances")
 
     # get particles per proposal
     particles_per_prop = {
-        prop_id: [particle for particle in accepted_particles
+        prop_id: [particle for particle in sample.accepted_particles
                   if particle.proposal_id == prop_id]
         for prop_id in prop_ids}
 
@@ -630,9 +650,10 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         total_weight = weights.sum()
         normalizations[prop_id] = ess / total_weight
 
-    # normalize every particle (this includes rejected ones, which should not
-    #  be necessary, but does not hurt)
-    for particle in sample.particles:
+    # TODO It might cause problems if adaptive components use rejected weights
+
+    # normalize every accepted article
+    for particle in sample.accepted_particles:
         particle.weight *= normalizations[particle.proposal_id]
 
     return sample

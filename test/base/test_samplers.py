@@ -409,7 +409,7 @@ def test_redis_look_ahead():
             pop = h.get_population(t=t)
             pop_size = len(pop)
             n_lookahead_pop = len(
-                [p for p in pop.get_list() if p.proposal_id == -1])
+                [p for p in pop.particles if p.proposal_id == -1])
             assert min(
                 pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
                 == n_lookahead_pop
@@ -471,7 +471,7 @@ def test_redis_look_ahead_delayed():
             pop = h.get_population(t=t)
             pop_size = len(pop)
             n_lookahead_pop = len(
-                [p for p in pop.get_list() if p.proposal_id == -1])
+                [p for p in pop.particles if p.proposal_id == -1])
             assert min(
                 pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
                 == n_lookahead_pop

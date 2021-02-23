@@ -31,15 +31,26 @@ from pyabc.distance import (
     median,
     SCALE_LIN,
 )
+from pyabc.population import Particle, Sample
+from pyabc.parameters import Parameter
 from pyabc.storage import load_dict_from_json
 
 
 class MockABC:
-    def __init__(self, samples):
-        self.samples = samples
+    def __init__(self, sumstats):
+        self.sumstats = sumstats
 
-    def sample_from_prior(self):
-        return self.samples
+    def sample_from_prior(self) -> Sample:
+        sample = Sample()
+        for sumstat in self.sumstats:
+            sample.append(Particle(
+                m=0,
+                parameter=Parameter({'p1': np.random.randint(10),
+                                     'p2': np.random.randn()}),
+                weight=np.random.uniform(),
+                sum_stat=sumstat,
+                distance=np.random.uniform()))
+        return sample
 
 
 def test_single_parameter():
@@ -87,7 +98,7 @@ def test_pnormdistance():
     dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
 
     # call distance function, also to initialize w
-    d = dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+    d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
 
     expected = pow(1**2 + 2**2, 1/2)
     assert expected == d
@@ -121,7 +132,7 @@ def test_adaptivepnormdistance():
         dist_f = AdaptivePNormDistance(
             scale_function=scale_function)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
-        dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
         assert dist_f.weights[0] != {'s1': 1, 's2': 1, 's3': 1}
 
     # test max weight ratio
@@ -130,7 +141,7 @@ def test_adaptivepnormdistance():
             scale_function=scale_function,
             max_weight_ratio=20)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
-        dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
         assert dist_f.weights[0] != {'s1': 1, 's2': 1, 's3': 1}
 
 
@@ -146,7 +157,7 @@ def test_adaptivepnormdistance_initial_weights():
     assert dist_f.weights[0] == initial_weights
 
     # call distance function
-    d = dist_f(abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+    d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
     expected = pow(sum([(2*1)**2, (3*2)**2]), 1/2)
     assert expected == d
 
@@ -170,7 +181,7 @@ def test_aggregateddistance():
         [distance0, distance1])
     distance.initialize(0, abc.sample_from_prior, x_0=x_0)
     val = distance(
-        abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        abc.sumstats[0], abc.sumstats[1], t=0)
     assert isinstance(val, float)
 
 
@@ -190,8 +201,7 @@ def test_adaptiveaggregateddistance():
         distance = AdaptiveAggregatedDistance(
             [distance0, distance1], scale_function=scale_function)
         distance.initialize(0, abc.sample_from_prior, x_0=x_0)
-        val = distance(
-            abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
         assert isinstance(val, float)
         assert (distance.weights[0] != [1, 1]).any()
 
@@ -214,8 +224,7 @@ def test_adaptiveaggregateddistance_calibration():
             [distance0, distance1], scale_function=scale_function,
             initial_weights=initial_weights)
         distance.initialize(0, abc.sample_from_prior, x_0=x_0)
-        val = distance(
-            abc.sample_from_prior()[0], abc.sample_from_prior()[1], t=0)
+        val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
         assert isinstance(val, float)
         assert (distance.weights[0] == initial_weights).all()
         distance.update(1, abc.sample_from_prior)

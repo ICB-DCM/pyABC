@@ -1,8 +1,10 @@
 """Distance base classes."""
 
 from abc import ABC, abstractmethod
-from typing import List, Callable
+from typing import Callable
 import json
+
+from ..population import Sample
 
 
 class Distance(ABC):
@@ -19,13 +21,10 @@ class Distance(ABC):
         data using the same order.
     """
 
-    def __init__(self):
-        self.keys = None
-
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         """
         This method is called by the ABCSMC framework before the first
@@ -36,12 +35,11 @@ class Distance(ABC):
 
         Parameters
         ----------
-
-        t: int
+        t:
             Time point for which to initialize the distance.
-        get_all_sum_stats: Callable[[], List[dict]]
-            Returns on command the initial summary statistics.
-        x_0: dict, optional
+        get_sample:
+            Returns on command the initial sample.
+        x_0:
             The observed summary statistics.
         """
         self.keys = list(x_0.keys())
@@ -63,7 +61,6 @@ class Distance(ABC):
 
         Parameters
         ----------
-
         sampler: Sampler
             The sampler used in ABCSMC.
         """
@@ -72,19 +69,17 @@ class Distance(ABC):
     def update(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]]) -> bool:
-        """
-        Update the distance for the upcoming generation t.
+            get_sample: Callable[[], Sample]) -> bool:
+        """Update the distance for the upcoming generation t.
 
         The default is to do nothing.
 
         Parameters
         ----------
-        t: int
+        t:
             Time point for which to update the distance.
-        get_all_sum_stats: Callable[[], List[dict]]
-            Returns on demand a list of all summary statistics from the
-            finished generation that should be used to update the distance.
+        get_sample:
+            Returns on demand the last generation's complete sample.
 
         Returns
         -------

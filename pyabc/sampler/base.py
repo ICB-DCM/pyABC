@@ -1,151 +1,13 @@
 from abc import ABC, ABCMeta, abstractmethod
 import numpy as np
 from numbers import Real
-from typing import Callable, List, Union
+from typing import Callable, Union
 
-from ..population import Particle, Population
+from ..population import Sample, SampleFactory
 from ..util import AnalysisVars
 from ..distance import Distance
 from ..epsilon import Epsilon
 from ..acceptor import Acceptor
-
-
-class Sample:
-    """
-    A Sample is created and filled during the sampling process by the Sampler.
-
-    Parameters
-    ----------
-    record_rejected:
-        Whether to record rejected particles as well, along with accepted
-        ones.
-    is_look_ahead:
-        Whether this sample consists of particles generated in look-ahead mode.
-    ok:
-        Whether the sampling process succeeded (usually in generating the
-        requested number of particles).
-    """
-
-    def __init__(self, record_rejected: bool = False,
-                 is_look_ahead: bool = False,
-                 ok: bool = True):
-        self.particles: List[Particle] = []
-        self.record_rejected: bool = record_rejected
-        self.is_look_ahead: bool = is_look_ahead
-        self.ok: bool = ok
-
-    @property
-    def all_sum_stats(self):
-        """
-        Get all summary statistics.
-
-        Returns
-        -------
-
-        all_sum_stats: List
-            Concatenation of all the all_sum_stats lists of all
-            particles added and accepted to this sample via append().
-        """
-        return [particle.sum_stat for particle in self.particles]
-
-    def first_m_sum_stats(self, m):
-        """
-        Get (at most) the first `m` summary statistics.
-
-        Returns
-        -------
-
-        sum_stats: List
-            Concatenation of all the all_sum_stats lists of the first <= m
-            particles added and accepted to this sample via append().
-        """
-        m = min(len(self.particles), m)
-        return [particle.sum_stat for particle in self.particles[:m]]
-
-    def first_m_particles(self, m) -> List:
-        m = min(len(self.particles), m)
-
-        return self.particles[:m]
-
-    @property
-    def accepted_particles(self) -> List[Particle]:
-        """
-        Returns
-        -------
-
-        List of only the accepted particles.
-        """
-        return [particle for particle in self.particles if particle.accepted]
-
-    def append(self, particle: Particle):
-        """
-        Add new particle to the sample.
-
-
-        Parameters
-        ----------
-
-        particle: Particle
-            Sampled particle containing all information needed later.
-        """
-
-        # add to population if accepted
-        if particle.accepted or self.record_rejected:
-            self.particles.append(particle)
-
-    def __add__(self, other: "Sample"):
-        sample = Sample(record_rejected=self.record_rejected)
-        # sample's list of particles is the concatenation of both samples'
-        # lists
-        sample.particles = self.particles + other.particles
-        # the other attributes may keep their defaults
-        return sample
-
-    @property
-    def n_accepted(self) -> int:
-        """
-        Returns
-        -------
-
-        n_accepted: int
-            Number of accepted particles.
-        """
-        return len(self.accepted_particles)
-
-    def get_accepted_population(self) -> Population:
-        """
-        Returns
-        -------
-
-        population: Population
-            A population of only the accepted particles.
-        """
-        return Population(self.accepted_particles)
-
-
-class SampleFactory:
-    """
-    The SampleFactory class serves as a factory class to create empty samples
-    based on the parameters stored in the SampleFactory object.
-
-    This is the class that components (like the distance function and
-    epsilon) should refer to when they want to influence the sampling process.
-
-    Parameters
-    ----------
-    record_rejected: bool
-        Corresponds to Sample.record_rejected.
-    """
-
-    def __init__(self, record_rejected: bool = False):
-        self.record_rejected = record_rejected
-
-    def __call__(self, is_look_ahead: bool = False):
-        """
-        Create a new empty sample.
-        """
-        return Sample(
-            record_rejected=self.record_rejected, is_look_ahead=is_look_ahead)
 
 
 def wrap_sample(f):
@@ -154,13 +16,18 @@ def wrap_sample(f):
     """
     def sample_until_n_accepted(self, n, simulate_one, t, **kwargs):
         sample = f(self, n, simulate_one, t, **kwargs)
+
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
                 f"Expected {n} but got {sample.n_accepted} acceptances.")
-        if any(particle.preliminary for particle in sample.particles):
+
+        if any(particle.preliminary for particle in sample.all_particles):
             raise AssertionError(
                 "There cannot be non-evaluated particles.")
+        # normalize sample weights
+        sample.normalize_weights()
+
         return sample
     return sample_until_n_accepted
 

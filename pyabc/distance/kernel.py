@@ -2,8 +2,9 @@
 
 import numpy as np
 from scipy import stats
-from typing import Callable, List, Union
+from typing import Callable, List, Sequence, Union
 
+from ..population import Sample
 from .base import Distance
 
 
@@ -54,7 +55,7 @@ class StochasticKernel(Distance):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         """
         Remember the summary statistic keys in sorted order,
@@ -140,12 +141,12 @@ class NormalKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
+            get_sample=get_sample,
             x_0=x_0)
 
         # initialize distribution
@@ -219,7 +220,7 @@ class IndependentNormalKernel(StochasticKernel):
 
     def __init__(
             self,
-            var: Union[Callable, List[float], float] = None,
+            var: Union[Callable, Sequence[float], float] = None,
             keys: List[str] = None,
             pdf_max: float = None):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
@@ -228,12 +229,12 @@ class IndependentNormalKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
+            get_sample=get_sample,
             x_0=x_0)
 
         # dimension
@@ -307,7 +308,7 @@ class IndependentLaplaceKernel(StochasticKernel):
 
     def __init__(
             self,
-            scale: Union[Callable, List[float], float] = None,
+            scale: Union[Callable, Sequence[float], float] = None,
             keys: List[str] = None,
             pdf_max: float = None):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
@@ -317,12 +318,12 @@ class IndependentLaplaceKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
+            get_sample=get_sample,
             x_0=x_0)
 
         # dimension
@@ -398,12 +399,12 @@ class BinomialKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
+            get_sample=get_sample,
             x_0=x_0)
 
         # cache pdf_max
@@ -451,12 +452,12 @@ class PoissonKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
+            get_sample=get_sample,
             x_0=x_0)
 
         # cache pdf_max
@@ -511,12 +512,12 @@ class NegativeBinomialKernel(StochasticKernel):
     def initialize(
             self,
             t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
+            get_sample: Callable[[], Sample],
             x_0: dict = None):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
+            get_sample=get_sample,
             x_0=x_0)
 
         # pdf_max is not computed

@@ -14,9 +14,7 @@ class Epsilon(ABC):
     """
 
     def __init__(self):
-        """
-        Constructor.
-        """
+        """Constructor."""
         pass
 
     def initialize(self,

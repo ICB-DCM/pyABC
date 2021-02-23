@@ -17,7 +17,6 @@ class ConstantEpsilon(Epsilon):
 
     Parameters
     ----------
-
     constant_epsilon_value: float
         The epsilon value for all populations
     """
@@ -44,7 +43,6 @@ class ListEpsilon(Epsilon):
 
     Parameters
     ----------
-
     values: List[float]
         List of epsilon values.
         ``values[t]`` is the value for population t.
@@ -221,9 +219,7 @@ class QuantileEpsilon(Epsilon):
         # extract weights
         if self.weighted:
             weights = weighted_distances.w.values.astype(float)
-            # The sum of the weighted distances is larger than 1 if more than
-            # a single simulation per parameter is performed.
-            # Re-normalize in this case.
+            # Normalize weights to 1.
             weights /= weights.sum()
         else:
             len_distances = len(distances)
