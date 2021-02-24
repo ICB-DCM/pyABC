@@ -612,3 +612,88 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         particle.weight *= normalizations[particle.proposal_id]
 
     return sample
+
+
+def reweight_sample(alpha, sample: Sample) -> Sample:
+    """
+    reweights the sample with factor alpha for particles
+    from the first(preliminary) proposal
+
+    Parameters
+    ----------
+    alpha: weight adjustment for the preliminary proposal
+    sample: The population to be returned by the sampler.
+
+    Returns
+    -------
+    sample: The same, weight-adjusted sample.
+    """
+
+    prop_ids = {particle.proposal_id for particle in sample.particles}
+    if len(prop_ids) > 2:
+        # TODO for several proposals, pass alpha as list
+        # prop ids are numbered ...,-1,0 (cant use as index)
+        raise AssertionError("Currently only works for single prel proposal")
+
+    accepted_particles = sample.accepted_particles
+    normalizations = {}
+    # get particles per proposal
+    particles_per_prop = {
+        prop_id: [particle for particle in accepted_particles
+                  if particle.proposal_id == prop_id]
+        for prop_id in prop_ids}
+    for prop_id, particles_for_prop in particles_per_prop.items():
+        weights = np.array(
+            [particle.weight for particle in particles_for_prop])
+        total_weight_subpop = weights.sum()
+        if prop_id == -1:
+            normalizations[prop_id] = alpha / total_weight_subpop
+        else:
+            normalizations[prop_id] = (1 - alpha) / total_weight_subpop
+    for particle in sample.particles:
+        particle.weight *= normalizations[particle.proposal_id]
+
+    return sample
+
+
+def weighted_ess(alpha, sample: Sample):
+    """
+    returns ess of by alpha reweighted sample
+    """
+    reweighted_sample = reweight_sample(alpha, sample)
+    ess_weighted = effective_sample_size([particle.weight for particle
+                                          in reweighted_sample.particles])
+
+    return ess_weighted
+
+
+def determine_opt_subpop_ratio(sample: Sample):
+    """
+    determines and returns ess-maximizing alpha for the sample
+    """
+    import scipy.optimize
+    res = scipy.optimize.minimize(weighted_ess, x0=0.5,
+                                  args=sample,
+                                  bounds=[[0, 1]])
+    return res.x
+
+
+def normalize_with_opt_ess(sample: Sample, n: int) -> Sample:
+    """
+    Applies subpopulation-wise self-normalization of samples,
+    with reweighting factor that maximizes ESS.
+
+        Parameters
+        ----------
+        sample: The population to be returned by the sampler.
+        n: Population size.
+
+        Returns
+        -------
+        sample: The same, weight-adjusted sample.
+    """
+
+    alpha_opt = determine_opt_subpop_ratio(sample)
+    sample = reweight_sample(alpha_opt, sample)
+
+    return sample
