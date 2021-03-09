@@ -88,8 +88,8 @@ def plot_credible_intervals(
     levels = sorted(levels)
     if colors is None:
         colors = [None for _ in range(len(levels))]
-    if color_obs is None:
-        color_obs = colors[0]
+    if color_median is None:
+        color_median = colors[0]
     if par_names is None:
         # extract all parameter names
         df, _ = history.get_distribution(m=m)
