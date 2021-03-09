@@ -19,7 +19,7 @@ def plot_credible_intervals(
         par_names: List = None,
         levels: List = None,
         colors: List = None,
-        color_obs: str = None,
+        color_median: str = None,
         show_mean: bool = False,
         color_mean: str = None,
         show_kde_max: bool = False,

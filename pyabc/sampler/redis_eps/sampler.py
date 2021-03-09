@@ -657,7 +657,8 @@ def reweight_sample(alpha, sample: Sample) -> Sample:
     if len(prop_ids) > 2:
         # TODO for several proposals, pass alpha as list
         # prop ids are numbered ...,-1,0 (cant use as index)
-        raise AssertionError("Currently only works for single prel proposal")
+        raise NotImplementedError(
+            "Currently only works for single preliminary proposal")
 
     accepted_particles = sample.accepted_particles
     normalizations = {}
@@ -680,26 +681,84 @@ def reweight_sample(alpha, sample: Sample) -> Sample:
     return sample
 
 
-def weighted_ess(alpha, sample: Sample):
+def weighted_ess(alpha, weights: np.array,
+                 subpopulation_sizes: np.array,
+                 minimize: bool = False):
+    """Returns ess of by alpha reweighted sample
+    Multiplied by -1 for minimization
     """
-    returns ess of by alpha reweighted sample
-    """
-    reweighted_sample = reweight_sample(alpha, sample)
-    ess_weighted = effective_sample_size([particle.weight for particle
-                                          in reweighted_sample.particles])
 
-    return ess_weighted
+    scaled_weights = scale_weights(alpha, weights, subpopulation_sizes)
+    ess_weighted = effective_sample_size(scaled_weights)
+
+    if not minimize:
+        sign = 1
+    else:
+        sign = -1
+
+    return sign*ess_weighted
 
 
-def determine_opt_subpop_ratio(sample: Sample):
+def scale_weights(alpha: np.array,
+                  weights: np.array,
+                  subpopulation_sizes: np.array):
+    """Takes the weights as single array and returns the rescaled version"""
+
+    if alpha.sum() != 1:
+        raise ValueError("Total weight needs to equal 1")
+
+    n_proposals = len(subpopulation_sizes)
+    normalizations = np.zeros(n_proposals)
+    start_index = 0
+    for j in range(n_proposals):
+        normalizations[j] = alpha[j] / \
+                            weights[start_index:
+                                    start_index+subpopulation_sizes[j]]
+        for i in range(subpopulation_sizes[j]):
+            weights[start_index+i] *= normalizations[j]
+        start_index += subpopulation_sizes[j]
+
+    return weights
+
+
+def determine_opt_subpopulation_ratio(sample: Sample):
+    """Determines and returns ess-maximizing alpha for the sample
+    If there is only one proposal, returns the analytical solution,
+    else uses a scipy minimizer
     """
-    determines and returns ess-maximizing alpha for the sample
-    """
-    import scipy.optimize
-    res = scipy.optimize.minimize(weighted_ess, x0=0.5,
-                                  args=sample,
-                                  bounds=[[0, 1]])
-    return res.x
+
+    prop_ids = {particle.proposal_id for particle in sample.particles}
+    accepted_particles = sample.accepted_particles
+    particles_per_prop = {
+        prop_id: [particle for particle in accepted_particles
+                  if particle.proposal_id == prop_id]
+        for prop_id in prop_ids}
+
+    all_weights = np.array([])
+    subpopulation_sizes = np.array([])
+
+    for _prop_id, particles_for_prop in particles_per_prop.items():
+        weights = np.array(
+            [particle.weight for particle in particles_for_prop])
+        all_weights = np.append(all_weights, weights)
+        subpopulation_sizes = np.append(subpopulation_sizes, len(weights))
+
+    if len(prop_ids) <= 2:
+        n1 = subpopulation_sizes[0]
+        alpha_opt = ((np.sum(all_weights[:n1])*np.sum(all_weights[n1:]**2)) /
+                     (np.sum(all_weights[:n1])*np.sum(all_weights[n1:]**2) +
+                     np.sum(all_weights[n1:])*np.sum(all_weights[:n1]**2)))
+        return alpha_opt
+    else:
+        import scipy.optimize
+        res = scipy.optimize.minimize(weighted_ess,
+                                      x0=np.array([1/len(prop_ids)
+                                                   for _ in
+                                                   range(len(prop_ids))]),
+                                      args=[all_weights,
+                                            subpopulation_sizes, True],
+                                      bounds=[[0, 1]])
+        return res.x
 
 
 def normalize_with_opt_ess(sample: Sample, n: int) -> Sample:
@@ -717,7 +776,7 @@ def normalize_with_opt_ess(sample: Sample, n: int) -> Sample:
         sample: The same, weight-adjusted sample.
     """
 
-    alpha_opt = determine_opt_subpop_ratio(sample)
+    alpha_opt = determine_opt_subpopulation_ratio(sample)
     sample = reweight_sample(alpha_opt, sample)
 
     return sample
