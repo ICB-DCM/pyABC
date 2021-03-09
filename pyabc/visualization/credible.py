@@ -49,8 +49,8 @@ def plot_credible_intervals(
     colors: List, optional
         Colors to use for the errorbars. If None, then the matplotlib
         default values are used.
-    color_obs: str, optional
-        Color to use for the observation.
+    color_median: str, optional
+        Color to use for the median line.
         If None, uses color of smallest errorbar.
     show_mean: bool, optional (default = False)
         Whether to show the mean apart from the median as well.
