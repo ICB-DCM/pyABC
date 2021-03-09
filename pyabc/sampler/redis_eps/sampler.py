@@ -641,7 +641,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 def reweight_sample(alpha, sample: Sample) -> Sample:
     """
     reweights the sample with factor alpha for particles
-    from the first(preliminary) proposal
+    from the first (preliminary) proposal
 
     Parameters
     ----------
