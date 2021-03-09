@@ -162,7 +162,7 @@ def plot_credible_intervals(
                 y=median[i_par].flatten(),
                 yerr=[median[i_par] - cis[i_par, :, i_c],
                       cis[i_par, :, -1 - i_c] - median[i_par]],
-                color=color_obs,
+                color=color_median,
                 ecolor=colors[i_c],
                 capsize=(5.0 / n_confidence) * (i_c + 1),
                 label="{:.2f}".format(confidence))
