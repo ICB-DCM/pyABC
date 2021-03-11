@@ -4,12 +4,13 @@ import sys
 from redis import StrictRedis
 import pickle
 import cloudpickle
-from time import time
+from time import sleep, time
 import logging
 
 from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, SSA, QUEUE,
+                  N_WORKER, N_LOOKAHEAD_EVAL, SSA, QUEUE,
                   BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
+                  MAX_N_EVAL_LOOK_AHEAD,
                   idfy)
 from ..util import any_particle_preliminary
 from .cli import KillHandler
@@ -43,11 +44,13 @@ def work_on_population_dynamic(
     pipeline = redis.pipeline()
 
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b \
-        = (pipeline.get(idfy(SSA, ana_id, t))
-           .get(idfy(BATCH_SIZE, ana_id, t))
-           .get(idfy(ALL_ACCEPTED, ana_id, t))
-           .get(idfy(IS_LOOK_AHEAD, ana_id, t)).execute())
+    (ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b,
+     max_eval_look_ahead_b) = (
+        pipeline.get(idfy(SSA, ana_id, t))
+        .get(idfy(BATCH_SIZE, ana_id, t))
+        .get(idfy(ALL_ACCEPTED, ana_id, t))
+        .get(idfy(IS_LOOK_AHEAD, ana_id, t))
+        .get(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t)).execute())
 
     # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
@@ -61,6 +64,7 @@ def work_on_population_dynamic(
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
     is_look_ahead = bool(int(is_look_ahead_b.decode()))
+    max_n_eval_look_ahead = float(max_eval_look_ahead_b.decode())
 
     # notify sign up as worker
     n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
@@ -124,8 +128,17 @@ def work_on_population_dynamic(
             # create new empty sample for clean split
             sample = sample_factory(is_look_ahead=is_look_ahead)
 
+        # check if in look-ahead mode and should sleep
+        if is_look_ahead and get_int(N_EVAL) >= max_n_eval_look_ahead:
+            # sleep 0.1 seconds
+            sleep(0.1)
+            continue
+
         # increase global evaluation counter (before simulation!)
         particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
+        if is_look_ahead:
+            # increment look-ahead evaluation counter
+            redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
@@ -154,9 +167,9 @@ def work_on_population_dynamic(
             sample.append(new_sim)
             # check for acceptance
             if new_sim.accepted:
-                # the order of the IDs is reversed, but this does not
-                # matter. Important is only that the IDs are specified
-                # before the simulation starts
+                # The order of the IDs is reversed, but this does not
+                #  matter. Important is only that the IDs are specified
+                #  before the simulation starts
 
                 # append to accepted list
                 accepted_samples.append(

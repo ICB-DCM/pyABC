@@ -15,7 +15,7 @@ myModel <- function(pars){
 }
 
 #' Calculates summary statistics from whatever the model returns
-#' 
+#'
 #' It is important that the summary statistics have names
 #' to store them correctly in pyABC's database.
 #' In many cases, the summary statistics function might just
@@ -23,7 +23,7 @@ myModel <- function(pars){
 #' summary statistics calculation is already
 #' done there. Splitting summary statistics and the model
 #' makes most sense in a model selection scenario.
-#' 
+#'
 #' @param modelResult The data simulated by the model
 #' @return Named list of summary statistics.
 mySummaryStatistics <- function(modelResult){
@@ -35,7 +35,7 @@ mySummaryStatistics <- function(modelResult){
 }
 
 #' Calculate distance between summary statistics
-#' 
+#'
 #' @param sumStatSample The summary statistics of the sample
 #' proposed py pyABC
 #' @param sumStatData The summary statistics of the observed
@@ -61,4 +61,3 @@ mySumStatData <- list(x=4, y=8, mtcars=mtcars, cars=cars)
 # myDistance(
 #   mySummaryStatistics(myModel(list(meanX=1, meanY=2))),
 #   mySummaryStatistics(myModel(list(meanX=2, meanY=2))))
-

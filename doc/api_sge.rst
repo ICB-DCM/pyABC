@@ -17,6 +17,3 @@
 
 .. autoclass:: pyabc.sge.ProfilingContext
    :members:
-
-
-

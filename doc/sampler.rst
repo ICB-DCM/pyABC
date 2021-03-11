@@ -4,13 +4,28 @@
 Parallel and Distributed Sampling
 =================================
 
+pyABC offers a variety of multi-core parallel and distributed samplers,
+which handle the usually most time-expensive part of an ABC analysis:
+the simulation of data from the model for sampled parameters, the
+generation of summary statistics, and the calculation of the distance
+of simulated and observed data.
+
+The most-used and best-supported samplers are the
+:class:`pyabc.sampler.MulticoreEvalParallelSampler` for multi-processed
+sampling, the
+:class:`pyabc.sampler.RedisEvalParallelSampler` for distributed sampling,
+and for deterministic sampling purposes the non-parallelized
+:class:`pyabc.sampler.SingleCoreSampler`. These should be preferably used,
+however also the other parallelization engines mentioned below should work.
+
 
 Strategies
 ----------
 
-The pyABC package offers a variety of different parallel and distributed
-sampling strategies. Single-core, multi-core and distributed execution is
-supported in a couple different ways.
+The various samplers implement two different sampling strategies:
+"Static Scheduling (STAT)" and "Dynamic Scheduling (DYN)". STAT minimizes
+the total execution time, whereas DYN minimizes the wall-time and is
+generally preferable as it finishes faster. For details see [Klinger2018]_.
 
 The `ParticleParallel` samplers, the `MappingSampler` and the
 `RedisStaticSampler` implement the "Static Scheduling (STAT)" strategy.
@@ -23,6 +38,10 @@ The batchsize arguments of the `DaskDistributedSampler`, the
 `ConcurrentFutureSampler` and the `RedisEvalParallelSampler`
 allow to interpolate between dynamic and static scheduling and to reduce
 communication overhead.
+
+.. [Klinger2018] Emmanuel Klinger, Dennis Rickert, Jan Hasenauer.
+   pyABC: distributed, likelihood-free inference.
+   Bioinformatics 2018; https://doi.org/10.1093/bioinformatics/bty361
 
 
 Single-core execution
@@ -133,7 +152,7 @@ exists under ``REDIS_INSTALL_DIR/etc/redis.conf``. You can however also set
 up your own file. It suffices to add or uncomment the line
 
 .. code:: bash
-   
+
     requirepass PASSWORD
 
 where `PASSWORD` should be replaced by a more secure password.
@@ -185,7 +204,7 @@ If password protection is used, in addition pass the argument
 
 For the :class:`pyabc.sampler.RedisStaticSampler`, the same applies, no
 modifications of the workers are necessary.
-   
+
 Then start the ABC-SMC run as usual with
 
 .. code:: python
@@ -289,7 +308,8 @@ In such cases, the following can be done
 High-performance infrastructure
 -------------------------------
 
-pyABC has been successfully employed on various high-performance computing (HPC) infrastructures. There are a few things to keep in mind.
+pyABC has been successfully employed on various high-performance computing
+(HPC) infrastructures. There are a few things to keep in mind.
 
 
 Long-running master process
@@ -323,7 +343,7 @@ Let us consider the widely used job scheduler
 .. code:: bash
 
    #!/bin/bash
-   
+
    # slurm settings
    #SBATCH -p {partition_id}
    #SBATCH -c {number_of_cpus}
@@ -415,7 +435,7 @@ serialized. For developers, the following example illustrates the problem:
 
          def fun(x):
             print(small_arr, x)
-         
+
          return fun
 
 
@@ -432,3 +452,72 @@ serialized. For developers, the following example illustrates the problem:
    print("Efficient function:")
    print(len(pickle.dumps(a.efficient_function())))
    # 522
+
+
+SGE cluster scheduling
+----------------------
+
+Quick start
+~~~~~~~~~~~
+
+The pyabc.sge package provides as most important class
+the :class:`SGE <pyabc.sge.SGE>`. Its ``map`` method
+automatically parallelizes across an SGE/UGE cluster.
+The SGE class can be used in standalone mode or in combination
+with the ABCSMC class (see below :ref:`sge-abcsmc`).
+
+Usage of the parallel package is fairly easy. For example:
+
+.. code-block:: python
+
+   from pyabc.sge import SGE
+   sge = SGE(priority=-200, memory="3G")
+
+   def f(x):
+       return x * 2
+
+   tasks = [1, 2, 3, 4]
+
+   result = sge.map(f, tasks)
+
+   print(result)
+
+
+.. parsed-literal::
+
+   [2, 4, 6, 8]
+
+
+The job scheduling is either done via an SQLite database or a REDIS instance.
+REDIS is recommended as it works more robustly, in particular in cases
+where distributed file systems are rather slow.
+
+.. note::
+
+   A configuration file in ``~/.parallel`` is required.
+   See :class:`SGE <pyabc.sge.SGE>`.
+
+The ``pyabc.sge.sge_available`` can be used to check if an SGE cluster can be used on the machine.
+
+Check the :doc:`API documentation <api_sge>` for more details.
+
+
+Information about running jobs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the ``python -m pyabc.sge.job_info_redis`` to get a nicely formatted output
+of the current execution state, in case the REDIS mode is used.
+Check ``python -m pyabc.sge.job_info_redis --help`` for more details.
+
+
+.. _sge-abcsmc:
+
+Usage notes
+~~~~~~~~~~~
+
+The :class:`SGE <pyabc.sge.SGE>` class can be used in standalone mode for
+convenient parallelization of jobs across a cluster, completely independent
+of the rest of the pyABC package.
+The :class:`SGE <pyabc.sge.SGE>` class can also be combined, for instance, with
+the :class:`pyabc.sampler.MappingSampler` class for simple parallelization
+of ABC-SCM runs across an SGE cluster.

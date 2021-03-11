@@ -1,0 +1,18 @@
+########################
+# Flake8 Configuration #
+########################
+
+[flake8]
+
+extend-ignore =
+    # Related to security for pickles
+    S301, S403
+
+per-file-ignores =
+    # Imported but unused
+    */__init__.py:F401
+    # Print
+    */cli.py:T001
+    pyabc/storage/migrate.py:T001
+    # Print and asserts
+    test*/*.py:T001,S101

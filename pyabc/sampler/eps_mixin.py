@@ -1,9 +1,11 @@
 import numpy as np
 import cloudpickle as pickle
 from sortedcontainers import SortedListWithKey
+import abc
 
 
-class EPSMixin:
+class EPSMixin(abc.ABC):
+
     def full_submit_function_pickle(self, job_id):
         simulate_one = pickle.loads(self.simulate_accept_one)
         result_batch = []

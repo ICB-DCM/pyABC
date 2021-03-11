@@ -23,7 +23,7 @@ My system's Python distribution is outdated, what now?
 
 Several Python distributions can coexist on a single system.
 If you don't have access to a recent Python version via your
-system's package manager (this might be the case for old 
+system's package manager (this might be the case for old
 Debian or Ubuntu operating systems),
 it is recommended to install the latest version of the
 `Anaconda Python 3 distribution <https://www.continuum.io/downloads>`_.

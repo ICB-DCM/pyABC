@@ -108,13 +108,30 @@ def _work(host="localhost", port=6379, runtime="2h", password=None,
         except AttributeError:
             data = msg["data"]
 
-        if data == START:
-            # extract population definition
-            #  analysis id
-            analysis_id = str(redis.get(ANALYSIS_ID).decode())
+        if data == START or isinstance(data, int):
+            # Sometimes, redis weirdly only publishes an int (1) at the
+            #  beginning, but not the actual START message if the workers
+            #  were started later.
+            #  Therefore make sure all variables are really there.
+
+            # analysis id
+            analysis_id_b = redis.get(ANALYSIS_ID)
+            if analysis_id_b is None:
+                continue
+            analysis_id = str(analysis_id_b.decode())
+
             #  current time index
-            t = int(redis.get(idfy(GENERATION, analysis_id)).decode())
-            mode = str(redis.get(idfy(MODE, analysis_id, t)).decode())
+            t_b = redis.get(idfy(GENERATION, analysis_id))
+            if t_b is None:
+                continue
+            t = int(t_b.decode())
+
+            # parallelization mode
+            mode_b = redis.get(idfy(MODE, analysis_id, t))
+            if mode_b is None:
+                continue
+            mode = str(mode_b.decode())
+
             # work on the specified population in dynamic or static mode
             if mode == DYNAMIC:
                 work_on_population_dynamic(

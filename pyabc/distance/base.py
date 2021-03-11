@@ -126,6 +126,20 @@ class Distance(ABC):
             observed data.
         """
 
+    def requires_calibration(self) -> bool:
+        """
+        Whether the class requires an initial calibration, based on
+        samples from the prior. Default: False.
+        """
+        return False
+
+    def is_adaptive(self) -> bool:
+        """
+        Whether the class is dynamically updated after each generation,
+        based on the last generation's available data. Default: False.
+        """
+        return False
+
     def get_config(self) -> dict:
         """
         Return configuration of the distance.
@@ -176,7 +190,7 @@ class NoDistance(Distance):
                  t: int = None,
                  par: dict = None) -> float:
         raise AssertionError(
-            f"{self.__class__.__name__} is not intended to be called.")
+            f"Distance {self.__class__.__name__} should not be called.")
 
 
 class AcceptAllDistance(Distance):

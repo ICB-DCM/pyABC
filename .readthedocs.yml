@@ -2,23 +2,23 @@
 # readthedocs configuration file
 # see https://docs.readthedocs.io/en/stable/config-file/v2.html for details
 
-# required
+# Format version
 version: 2
 
-# conda setup
-conda:
-  environment: .rtd_conda_env.yml
+# Build documentation in the doc/ directory with Sphinx
+sphinx:
+  configuration: doc/conf.py
 
 # python requirements
 python:
   version: 3.7
   install:
-    - requirements: .rtd_pip_reqs.txt
     - method: pip
       path: .
+      extra_requirements:
+        - doc
 
 # what to build
 formats:
-  - epub
-  - pdf
   - htmlzip
+  - pdf
