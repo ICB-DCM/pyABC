@@ -8,8 +8,8 @@ The following examples should help to get a better idea of how to use pyABC.
 .. toctree::
    :maxdepth: 1
 
-   examples/quickstart.ipynb
    examples/parameter_inference.ipynb
+   examples/model_selection.ipynb
    examples/early_stopping.ipynb
    examples/resuming.ipynb
    examples/using_R.ipynb
@@ -22,16 +22,16 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/external_simulators.ipynb
    examples/data_plots.ipynb
    examples/noise.ipynb
-   examples/petab.ipynb
+   examples/petab_yaml2sbml.ipynb
+   examples/petab_application.ipynb
    examples/discrete_parameters.ipynb
 
 
 Download the examples as notebooks
 ----------------------------------
 
-* :download:`Quickstart <examples/quickstart.ipynb>`
 * :download:`Parameter inference <examples/parameter_inference.ipynb>`
-* :download:`Model selection (Quickstart) <examples/quickstart.ipynb>`
+* :download:`Model selection <examples/model_selection.ipynb>`
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
@@ -44,7 +44,8 @@ Download the examples as notebooks
 * :download:`External Simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise assessment <examples/noise.ipynb>`
-* :download:`PEtab import <examples/petab.ipynb>`
+* :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
+* :download:`PEtab application example <examples/petab_application.ipynb>`
 * :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
 
 

@@ -28,6 +28,8 @@ ALL_ACCEPTED = "all_accepted"
 SSA = "sample_simulate_accept"
 # whether look-ahead mode is to be employed
 IS_LOOK_AHEAD = "is_look_ahead"
+# maximum number of evaluations in look-ahead mode
+MAX_N_EVAL_LOOK_AHEAD = "max_n_eval_look_ahead"
 # batch size to use
 BATCH_SIZE = "batch_size"
 
@@ -42,6 +44,8 @@ N_REQ = "n_req"
 N_FAIL = "n_fail"
 #  active workers
 N_WORKER = "n_worker"
+#  lookahead evaluations
+N_LOOKAHEAD_EVAL = "n_lookahead_eval"
 #  jobs (static only)
 N_JOB = "n_job"
 

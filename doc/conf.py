@@ -25,22 +25,23 @@ sys.path.insert(0, os.path.abspath('../'))
 
 # -- General configuration ------------------------------------------------
 
-# If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '3.0.4'
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
+    # link to code
     'sphinx.ext.viewcode',
+    # link to other projects' docs
+    'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.doctest',
     'nbsphinx',
+    # code highlighting in jupyter cells
     'IPython.sphinxext.ipython_console_highlighting',
-    'sphinx.ext.autosummary'
+    'sphinx.ext.autosummary',
 ]
 
 # default autodoc options
@@ -49,6 +50,16 @@ autodoc_default_options = {
     'members': True,
     'special-members': '__init__, __call__',
     'show-inheritance': True,
+}
+
+# links for intersphinx
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/devdocs/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'pandas': ('https://pandas.pydata.org/docs/', None),
+    'petab': ('https://petab.readthedocs.io/en/stable/', None),
+    'amici': ('https://amici.readthedocs.io/en/latest/', None),
 }
 
 

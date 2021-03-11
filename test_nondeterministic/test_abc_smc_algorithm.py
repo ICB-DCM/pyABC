@@ -10,6 +10,7 @@ import random
 import tempfile
 
 import pytest
+import numpy as np
 import scipy as sp
 import scipy.stats as st
 from scipy.special import gamma, binom
@@ -47,8 +48,7 @@ def db_path():
     yield db
     if REMOVE_DB:
         try:
-            if REMOVE_DB:
-                os.remove(db_file_location)
+            os.remove(db_file_location)
         except FileNotFoundError:
             pass
 
@@ -62,7 +62,6 @@ def test_cookie_jar(db_path, sampler):
 
     theta1 = .2
     theta2 = .6
-
 
     model1 = make_model(theta1)
     model2 = make_model(theta2)
@@ -144,10 +143,10 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
 
 class AllInOneModel(Model):
-    def summary_statistics(self, t, pars, sum_stats_calculator) -> ModelResult:
-        return ModelResult(sum_stats={"result": 1})
+    def summary_statistics(self, t, pars, sum_stat_calculator) -> ModelResult:
+        return ModelResult(sum_stat={"result": 1})
 
-    def accept(self, t, pars, sum_stats_calculator, distance_calculator,
+    def accept(self, t, pars, sum_stat_calculator, distance_calculator,
                eps_calculator, acceptor, x_0) -> ModelResult:
         return ModelResult(accepted=True)
 
@@ -213,8 +212,8 @@ def test_beta_binomial_different_priors(db_path, sampler):
     assert abs(mp.p[0] - p1_expected) + abs(mp.p[1] - p2_expected) < .08
 
 
-def test_beta_binomial_different_priors_initial_epsilon_from_sample(db_path,
-                                                                    sampler):
+def test_beta_binomial_different_priors_initial_epsilon_from_sample(
+        db_path, sampler):
     binomial_n = 5
 
     def model(args):
