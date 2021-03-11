@@ -48,6 +48,9 @@ class ExternalHandler:
         suffix, prefix, dir: str, optional (default = None)
             Specify suffix, prefix, or base directory for the created
             temporary files.
+        clean_simulation: bool
+            Wheather or not to save the simulation outout after calculating
+            the summary statistics
         show_stdout, show_stderr: bool, optional (default: False, True)
             Whether to show or hide the stdout and stderr streams.
         raise_on_error: bool, optional (default = False)
@@ -85,6 +88,16 @@ class ExternalHandler:
                 suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
 
     def clean_simulation_output(loc):
+        """
+        Remove the simulation output directory after calculating the
+        summary statistics.
+
+        Parameters
+        ----------
+        loc: str
+            Location of the simulation directory.
+        """
+
         shutil.rmtree(loc, ignore_errors=True)
 
     def create_executable(self, loc):
