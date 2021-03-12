@@ -198,6 +198,7 @@ def test_data_callback():
 
     pyabc.visualization.plot_data_callback(
         histories[0], plot_data, plot_data_aggregated)
+    plt.close()
 
 
 def test_data_default():
