@@ -20,11 +20,10 @@ class Distance(ABC):
             t: int,
             get_sample: Callable[[], Sample],
             x_0: dict = None):
-        """
-        This method is called by the ABCSMC framework before the first
-        use of the distance (at the beginning of ABCSMC.run()),
-        and can be used to calibrate it to the statistics of the samples.
+        """Initialize before the first generation.
 
+        Called at the beginning by the inference routine, can be used for
+        calibration to the problem.
         The default is to do nothing.
 
         Parameters
@@ -37,34 +36,27 @@ class Distance(ABC):
             The observed summary statistics.
         """
 
-    def configure_sampler(
-            self,
-            sampler):
-        """
-        This is called by the ABCSMC class and gives the distance
-        the opportunity to configure the sampler.
-        For example, the distance might request the sampler to
-        also return rejected particles in order to adapt the
-        distance to the statistics of the sample.
-        The method is called by the ABCSMC framework before the first
-        used of the distance (at the beginning of ABCSMC.run()), after
-        initialize().
+    def configure_sampler(self, sampler):
+        """Configure the sampler.
 
+        This method is called by the inference routine at the beginning.
+        A possible configuration would be to request also the storing of
+        rejected particles.
         The default is to do nothing.
 
         Parameters
         ----------
         sampler: Sampler
-            The sampler used in ABCSMC.
+            The used sampler.
         """
 
-    # pylint: disable=R0201
     def update(
             self,
             t: int,
             get_sample: Callable[[], Sample]) -> bool:
-        """Update the distance for the upcoming generation t.
+        """Update for the upcoming generation t.
 
+        Similar as `initialize`, however called for every subsequent iteration.
         The default is to do nothing.
 
         Parameters

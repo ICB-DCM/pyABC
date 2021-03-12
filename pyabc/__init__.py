@@ -23,6 +23,7 @@ from .random_variables import (
     RVBase,
     RVDecorator,
     LowerBoundDecorator)
+from .britney import *
 from .distance import (
     Distance,
     NoDistance,
