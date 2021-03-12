@@ -173,7 +173,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
 
     # We plug all the ABC setups together
     nr_populations = 2
-    pop_size = pyabc.ConstantPopulationSize(23, nr_samples_per_parameter=n_sim)
+    pop_size = pyabc.ConstantPopulationSize(23)
     abc = pyabc.ABCSMC(models, parameter_given_model_prior_distribution,
                        pyabc.PercentileDistance(measures_to_use=["y"]),
                        pop_size,
@@ -258,7 +258,7 @@ def test_wrong_output_sampler():
 
     def simulate_one():
         return pyabc.Particle(m=0, parameter={}, weight=0,
-                              accepted_sum_stats=[], accepted_distances=[],
+                              sum_stat={}, distance=42,
                               accepted=True)
     with pytest.raises(AssertionError):
         sampler.sample_until_n_accepted(5, simulate_one, 0)
@@ -267,7 +267,7 @@ def test_wrong_output_sampler():
 def test_redis_multiprocess():
     def simulate_one():
         accepted = np.random.randint(2)
-        return pyabc.Particle(0, {}, 0.1, [], [], accepted)
+        return pyabc.Particle(0, {}, 0.1, {}, 0, accepted)
 
     sampler = RedisEvalParallelSamplerServerStarter(
         batch_size=3, workers=1, processes_per_worker=2)
@@ -308,7 +308,7 @@ def test_redis_catch_error():
 def test_redis_pw_protection():
     def simulate_one():
         accepted = np.random.randint(2)
-        return pyabc.Particle(0, {}, 0.1, [], [], accepted)
+        return pyabc.Particle(0, {}, 0.1, {}, 0, accepted)
 
     sampler = RedisEvalParallelSamplerServerStarter(  # noqa: S106
         password="daenerys")
@@ -404,6 +404,16 @@ def test_redis_look_ahead():
         assert (df.n_lookahead_accepted > 0).any()
         assert (df.n_preliminary == 0).all()
 
+        # check history proposal ids
+        for t in range(0, h.max_t + 1):
+            pop = h.get_population(t=t)
+            pop_size = len(pop)
+            n_lookahead_pop = len(
+                [p for p in pop.get_list() if p.proposal_id == -1])
+            assert min(
+                pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
+                == n_lookahead_pop
+
 
 def test_redis_look_ahead_error():
     """Test whether the look-ahead mode fails as expected."""
@@ -445,7 +455,7 @@ def test_redis_look_ahead_delayed():
                 model, prior, distance, sampler=sampler,
                 population_size=pop_size)
             abc.new(pyabc.create_sqlite_db_id(), obs)
-            abc.run(max_nr_populations=3)
+            h = abc.run(max_nr_populations=3)
         finally:
             sampler.shutdown()
         # read log file
@@ -454,3 +464,14 @@ def test_redis_look_ahead_delayed():
         assert (df.n_lookahead_accepted > 0).any()
         # in delayed mode, all look-aheads must have been preliminary
         assert (df.n_lookahead == df.n_preliminary).all()
+        print(df)
+
+        # check history proposal ids
+        for t in range(0, h.max_t + 1):
+            pop = h.get_population(t=t)
+            pop_size = len(pop)
+            n_lookahead_pop = len(
+                [p for p in pop.get_list() if p.proposal_id == -1])
+            assert min(
+                pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
+                == n_lookahead_pop

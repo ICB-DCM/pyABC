@@ -13,7 +13,7 @@ assignees: ''
 **Expected behavior**
 [A clear and concise description of what you expected to happen.]
 
-**To Reproduce**
+**To reproduce**
 [A minimal example to reproduce this error, ideally a python script.]
 
 **Environment**
