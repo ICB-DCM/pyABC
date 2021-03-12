@@ -3,8 +3,10 @@
 import numpy as np
 import pandas as pd
 from time import time
+import pytest
 
 
+@pytest.mark.flaky(reruns=2)
 def test_parameter_dict_numpy_conversion():
     """Check that the way parameter values are extracted in
     `pyabc.transition.MultivariateNormalTransition.pdf()` is efficient.
@@ -78,6 +80,7 @@ def test_parameter_dict_numpy_conversion():
         assert (par1 == par4).all()
 
 
+@pytest.mark.flaky(reruns=2)
 def test_sample_selection():
     """Check that the selection of parameters from the population according
     to the weights as in `pyabc.transition.MultivariateNormalTransition.rvs()`
