@@ -126,7 +126,7 @@ jobs:
       run: |
         time .github/workflows/install_deps.sh amici
         time pip install petab
-        time pip install petab
+        time pip install amici
         time pip install .[test,test_petab]
         time pytest test/petab
 
