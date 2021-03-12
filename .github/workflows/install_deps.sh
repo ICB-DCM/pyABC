@@ -9,6 +9,9 @@ pip install wheel
 # tox
 pip install tox
 
+# update apt package lists
+sudo apt-get update
+
 # optional dependencies
 for par in "$@"
 do
