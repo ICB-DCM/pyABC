@@ -107,6 +107,29 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
 
+  stuff:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+
+        steps:
+        - name: Check out repository
+          uses: actions/checkout@v2
+
+        - name: Prepare python ${{ matrix.python-version }}
+          uses: actions/setup-python@v1
+          with:
+            python-version: ${{ matrix.python-version }}
+
+        - name: Stuff
+          run: |
+            time .github/workflows/install_deps.sh amici
+            time pip install petab
+            time pip install petab
+            time pip install .[test,test_petab]
+            time pytest test/petab
+
   mac:
     runs-on: macos-latest
     strategy:
