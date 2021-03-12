@@ -33,6 +33,10 @@ jobs:
       timeout-minutes: 12
       run: tox -e base
 
+    - name: Run visualization tests
+      timeout-minutes: 3
+      run: tox -e visualization
+
     - name: Coverage
       uses: codecov/codecov-action@v1
       with:
@@ -98,7 +102,7 @@ jobs:
       run: .github/workflows/install_deps.sh amici
 
     - name: Run tests
-      timeout-minutes: 12
+      timeout-minutes: 16
       run: tox -e petab
 
     - name: Coverage
