@@ -157,4 +157,3 @@ class GimmeMoreEuclidean(Euclidean):
         scale = self.scale_function(data=xs, x_0=x0)
 
         # calculate finite differences
-

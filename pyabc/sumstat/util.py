@@ -70,7 +70,7 @@ def dict2arrlabels(dct: dict, keys: List) -> List[str]
     ----------
     dct: Model output or observed data.
     keys: Keys of interest, also defines the order.
-    
+
     Returns
     -------
     labels: List of labels consistent with the output of `dict2arr`.
@@ -131,4 +131,3 @@ def only_finites(samples: np.ndarray, targets: np.ndarray):
         np.all(np.isfinite(targets), axis=0))
 
     return samples[all_finite, :], targets[all_finite, :]
-
