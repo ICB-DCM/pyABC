@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import copy
 from abc import ABC, abstractmethod
-from typing import Callable, Union
+from typing import Callable, Dict, Union
 
 from ..population import Sample
 from ..distance import Distance

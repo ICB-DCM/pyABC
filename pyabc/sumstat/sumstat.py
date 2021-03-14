@@ -113,8 +113,8 @@ class Sumstat(ABC):
         if self.prev is not None:
             self.prev.configure_sampler(sampler=sampler)
 
-    def get_labels(self) -> List[str]:
-        """Get labels for the summary statistics."""
+    def get_ids(self) -> List[str]:
+        """Get ids/labels for the summary statistics."""
         # default: indices
         s_0 = self(self.x_0)
         return [f"S_{ix}" for ix in range(s_0.size)]
@@ -150,14 +150,14 @@ class IdentitySumstat(Sumstat):
             data = np.asarray([trafo(data) for trafo in self.trafos])
         return data
 
-    def get_labels(self):
-        """Get labels for the summary statistics.
+    def get_ids(self):
+        """Get ids/labels for the summary statistics.
 
         Uses the more meaningful data labels if the transformation is id.
         """
         if self.prev is None and self.trafos is None:
             return dict2arrlabels(self.x_0, keys=self.x_keys)
-        return super().get_labels()
+        return super().get_ids()
 
 
 class PredictorSumstat(Sumstat):

@@ -9,6 +9,7 @@ from .scale import standard_deviation, span
 from .base import Distance, to_distance
 from ..storage import save_dict_to_json
 from ..population import Sample
+from ..sumstat import Sumstat, IdentitySumstat
 
 
 logger = logging.getLogger("Distance")
@@ -51,42 +52,101 @@ class PNormDistance(Distance):
     """
 
     def __init__(self,
+                 sumstat: Sumstat = None,
                  p: float = 2,
                  weights: dict = None,
                  factors: dict = None):
         super().__init__()
 
+        if sumstat is None:
+            sumstat = IdentitySumstat()
+        self.sumstat: Sumstat = sumstat
+
         if p < 1:
             raise ValueError("It must be p >= 1")
-        self.p = p
+        self.p: float = p
 
-        self.weights = weights
-        self.factors = factors
+        self.weights: dict = weights
+        self.factors: dict = factors
+
+        # to cache the observed summary statistics
+        self.x_0: Union[dict, None] = None
+        self.s_0: Union[dict, None] = None
 
     def initialize(self,
                    t: int,
                    get_sample: Callable[[], Sample],
                    x_0: dict = None):
-        super().initialize(t, get_sample, x_0)
-        self.format_weights_and_factors(t, x_0.keys())
+        # update summary statistics
+        self.sumstat.initialize(t=t, get_sample=get_sample, x_0=x_0)
 
-    def format_weights_and_factors(self, t, sum_stat_keys):
+        # observed data
+        self.x_0 = x_0
+        self.s_0 = self.sumstat(self.x_0)
+        # initialize weights and factors
+        self._format_weights_and_factors(t=t)
+
+        # set observed data and translate weights
+        self._initialize_x_0_and_weights(x_0=x_0)
+
+    def update(
+            self,
+            t: int,
+            get_sample: Callable[[], Sample]) -> bool:
+        # update summary statistics
+        updated = self.sumstat.update(t=t, get_sample=get_sample)
+        if updated:
+            self.s_0 = self.sumstat(self.x_0)
+        return updated
+
+    def configure_sampler(self, sampler):
+        self.sumstat.configure_sampler(sampler=sampler)
+
+    def _initialize_x_0_and_weights(self, x_0: dict):
+
+
+    def _format_weights_and_factors(self, t):
+        s_ids = self.sumstat.get_ids()
         self.weights = PNormDistance.format_dict(
-            self.weights, t, sum_stat_keys)
+            vals=self.weights, t=t, s_0=self.s_0, s_ids=s_ids)
         self.factors = PNormDistance.format_dict(
-            self.factors, t, sum_stat_keys)
+            vals=self.factors, t=t, s_0=self.s_0, s_ids=s_ids)
+
+    @staticmethod
+    def format_dict(vals, t, s_0, s_ids, default_val=1.):
+        """
+        Normalize weight or factor dictionary to the employed format.
+        """
+        if vals is None:
+            # use default
+            vals = {t: default_val * np.ones(len(s_0))}
+        elif isinstance(vals, np.ndarray):
+            # f is not time-dependent
+            # so just create one for time t
+            vals = {t: vals}
+        elif isinstance(vals.values()[0], dict):
+            vals = {t: dict2arr(vals, s_ids)}
+        return vals
+
+    @staticmethod
+    def get_for_t_or_latest(w, t):
+        """
+        Extract values from dict for given time point.
+        """
+        # take last time point for which values exist
+        if t not in w:
+            t = max(w)
+        # extract values for time point
+        return w[t]
 
     def __call__(self,
                  x: dict,
                  x_0: dict,
                  t: int = None,
                  par: dict = None) -> float:
-        # make sure everything is formatted correctly
-        self.format_weights_and_factors(t, x_0.keys())
-
         # extract values for given time point
-        w = PNormDistance.get_for_t_or_latest(self.weights, t)
-        f = PNormDistance.get_for_t_or_latest(self.factors, t)
+        weights = PNormDistance.get_for_t_or_latest(self.weights, t)
+        factors = PNormDistance.get_for_t_or_latest(self.factors, t)
 
         # compute distance
         if self.p == np.inf:
@@ -110,30 +170,6 @@ class PNormDistance(Distance):
                 "weights": self.weights,
                 "factors": self.factors}
 
-    @staticmethod
-    def format_dict(w, t, sum_stat_keys, default_val=1.):
-        """
-        Normalize weight or factor dictionary to the employed format.
-        """
-        if w is None:
-            # use default
-            w = {t: {k: default_val for k in sum_stat_keys}}
-        elif not isinstance(next(iter(w.values())), dict):
-            # f is not time-dependent
-            # so just create one for time t
-            w = {t: w}
-        return w
-
-    @staticmethod
-    def get_for_t_or_latest(w, t):
-        """
-        Extract values from dict for given time point.
-        """
-        # take last time point for which values exist
-        if t not in w:
-            t = max(w)
-        # extract values for time point
-        return w[t]
 
 
 class AdaptivePNormDistance(PNormDistance):

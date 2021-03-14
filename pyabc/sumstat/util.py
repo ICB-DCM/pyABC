@@ -44,6 +44,23 @@ def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
     return np.asarray(arr)
 
 
+def arr2dict(arr: Union[np.ndarray, dict], keys: List) -> dict:
+    """Convert ndarray to dict, using the specified keys.
+
+    Parameters
+    ----------
+    arr: Value array.
+    keys: Keys in the same order as the array entries.
+
+    Returns
+    -------
+    dct: Dictionary of values.
+    """
+    if isinstance(arr, dict):
+        return arr
+    return {key: val for key, val in zip(arr, keys)}
+
+
 def dict2arrlabels(dct: dict, keys: List) -> List[str]
     """Get label array consistent with the output of `dict2arr`.
 
@@ -77,7 +94,6 @@ def dict2arrlabels(dct: dict, keys: List) -> List[str]
                 f"Cannot parse variable {key}={val} of type {type(val)} "
                 "to numeric.")
     return labels
-
 
 
 def io_dict2arr(fun):
