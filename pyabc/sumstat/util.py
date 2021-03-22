@@ -61,7 +61,7 @@ def arr2dict(arr: Union[np.ndarray, dict], keys: List) -> dict:
     return {key: val for key, val in zip(arr, keys)}
 
 
-def dict2arrlabels(dct: dict, keys: List) -> List[str]
+def dict2arrlabels(dct: dict, keys: List) -> List[str]:
     """Get label array consistent with the output of `dict2arr`.
 
     Can be called e.g. once on the observed data and used for logging.

@@ -2,7 +2,8 @@
 
 import numpy as np
 from scipy import linalg as la
-from typing import List, Callable, Union
+from numbers import Number
+from typing import Dict, List, Callable, Union
 import logging
 
 from .scale import standard_deviation, span
@@ -10,52 +11,55 @@ from .base import Distance, to_distance
 from ..storage import save_dict_to_json
 from ..population import Sample
 from ..sumstat import Sumstat, IdentitySumstat
+from ..sumstat.util import dict2arr
 
 
 logger = logging.getLogger("Distance")
 
 
 class PNormDistance(Distance):
-    """
-    Use a weighted p-norm
+    """Weighted p-norm distance.
+
+    Distance between summary statistics calculated according to
 
     .. math::
 
         d(x, y) = \
         \\left [\\sum_{i} \\left| w_i ( x_i-y_i ) \\right|^{p} \\right ]^{1/p}
 
-    to compute distances between sets of summary statistics. E.g. set p=2 to
-    get a Euclidean distance.
+    E.g.
+    * p=1 for a Euclidean or L1 metric,
+    * p=2 for a Manhattan or L2 metric,
+    * p=np.inf for a Chebyshev, maximum or Linf metric.
 
     Parameters
     ----------
-
-    p: float, optional (default = 2)
-        p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
-    weights: dict, optional (default = 1)
-        Weights. Dictionary indexed by time points. Each entry contains a
-        dictionary of numeric weights, indexed by summary statistics labels.
+    p:
+        p for p-norm. p >= 1, p = np.inf implies max norm.
+    weights:
+        Weights. Dictionary indexed by time points, or only one entry if
+        the weights should not change over time.
+        Each entry contains a dictionary of numeric weights, indexed by summary
+        statistics labels, or the corresponding array representation.
         If None is passed, a weight of 1 is considered for every summary
-        statistic. If no entry is available in `weights` for a given time
-        point, the maximum available time point is selected.
-        It is also possible to pass a single dictionary index by summary
-        statistics labels, if weights do not change in time.
-    factors: dict, optional (default = 1)
-        Scaling factors that the weights are multiplied with. The same
-        structure applies as to weights.
-        If None is passed, a factor of 1 is considered for every summary
         statistic.
-        Note that in this class, factors are superfluous as everything can
-        be achieved with weights alone, however in subclasses the factors
-        can remain static while weights adapt over time, allowing for
-        greater flexibility.
+        If no entry is available in `weights` for a given time point, the
+        maximum available time point is selected.
+    factors:
+        Fixed multiplicative factors the weights are multiplied with. The
+        discrimination of weights and factors makes only sense for adaptive
+        distance functions.
+    sumstat:
+        Summary statistics transformation to apply to the model output.
     """
 
-    def __init__(self,
-                 sumstat: Sumstat = None,
-                 p: float = 2,
-                 weights: dict = None,
-                 factors: dict = None):
+    def __init__(
+        self,
+        p: float = 2,
+        weights: Union[Dict[str, float], Dict[int, Dict[str, float]]] = None,
+        factors: Dict[str, float] = None,
+        sumstat: Sumstat = None,
+    ):
         super().__init__()
 
         if sumstat is None:
@@ -66,110 +70,121 @@ class PNormDistance(Distance):
             raise ValueError("It must be p >= 1")
         self.p: float = p
 
-        self.weights: dict = weights
-        self.factors: dict = factors
+        self._arg_weights = weights
+        self._arg_factors = factors
 
-        # to cache the observed summary statistics
+        self.weights: Union[Dict[int, np.ndarray], None] = None
+        self.factors: Union[np.ndarray, None] = None
+
+        # to cache the observed data and summary statistics
         self.x_0: Union[dict, None] = None
         self.s_0: Union[dict, None] = None
 
-    def initialize(self,
-                   t: int,
-                   get_sample: Callable[[], Sample],
-                   x_0: dict = None):
+    def initialize(
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict = None
+    ) -> None:
         # update summary statistics
         self.sumstat.initialize(t=t, get_sample=get_sample, x_0=x_0)
 
         # observed data
         self.x_0 = x_0
         self.s_0 = self.sumstat(self.x_0)
-        # initialize weights and factors
-        self._format_weights_and_factors(t=t)
 
-        # set observed data and translate weights
-        self._initialize_x_0_and_weights(x_0=x_0)
+        # initialize weights
+        self.weights = PNormDistance.format_dict(
+            vals=self._arg_weights, t=t, s_0=self.s_0,
+            s_ids=self.sumstat.get_ids(),
+        )
+        self.factors = PNormDistance.format_dict(
+            vals=self._arg_factors, t=t, s_0=self.s_0,
+            s_ids=self.sumstat.get_ids(),
+        )[t]
 
     def update(
-            self,
-            t: int,
-            get_sample: Callable[[], Sample]) -> bool:
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+    ) -> bool:
         # update summary statistics
         updated = self.sumstat.update(t=t, get_sample=get_sample)
         if updated:
             self.s_0 = self.sumstat(self.x_0)
         return updated
 
-    def configure_sampler(self, sampler):
+    def configure_sampler(self, sampler) -> None:
         self.sumstat.configure_sampler(sampler=sampler)
 
-    def _initialize_x_0_and_weights(self, x_0: dict):
-
-
-    def _format_weights_and_factors(self, t):
-        s_ids = self.sumstat.get_ids()
-        self.weights = PNormDistance.format_dict(
-            vals=self.weights, t=t, s_0=self.s_0, s_ids=s_ids)
-        self.factors = PNormDistance.format_dict(
-            vals=self.factors, t=t, s_0=self.s_0, s_ids=s_ids)
-
     @staticmethod
-    def format_dict(vals, t, s_0, s_ids, default_val=1.):
-        """
-        Normalize weight or factor dictionary to the employed format.
-        """
+    def format_dict(
+        vals: Union[Dict[str, float], Dict[int, Dict[str, float]]],
+        t: int,
+        s_0: np.ndarray,
+        s_ids: List[str],
+        default_val: float = 1.
+    ) -> Dict[int, np.ndarray]:
+        """Normalize weight dictionary to the employed format."""
         if vals is None:
             # use default
             vals = {t: default_val * np.ones(len(s_0))}
-        elif isinstance(vals, np.ndarray):
-            # f is not time-dependent
-            # so just create one for time t
+        elif isinstance(next(iter(vals.values())), Number):
             vals = {t: vals}
-        elif isinstance(vals.values()[0], dict):
-            vals = {t: dict2arr(vals, s_ids)}
+
+        # convert dicts to arrays
+        for _t, dct in vals.items():
+            vals[_t] = dict2arr(dct, keys=s_ids)
+
         return vals
 
     @staticmethod
-    def get_for_t_or_latest(w, t):
+    def for_t_or_latest(w: Dict[int, np.ndarray], t: int) -> np.ndarray:
         """
         Extract values from dict for given time point.
         """
         # take last time point for which values exist
         if t not in w:
-            t = max(w)
+            t = max(w.keys())
         # extract values for time point
         return w[t]
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
-        # extract values for given time point
-        weights = PNormDistance.get_for_t_or_latest(self.weights, t)
-        factors = PNormDistance.get_for_t_or_latest(self.factors, t)
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None
+    ) -> float:
+        # extract weights for given time point
+        weights = PNormDistance.for_t_or_latest(self.weights, t)
+        factors = self.factors
 
-        # compute distance
+        # compute summary statistics
+        s, s0 = self.sumstat(x), self.s_0
+
+        # assert shapes match
+        if (
+            s.shape != weights.shape or s.shape != s0.shape
+            or s.shape != factors.shape
+        ):
+            raise AssertionError("Shapes do not match")
+
+        # component-wise distances
+        distances = np.abs(factors * weights * (s - s0))
+
+        # maximum or p-norm distance
         if self.p == np.inf:
-            # maximum absolute distance
-            d = max(abs((f[key] * w[key]) * (x[key] - x_0[key]))
-                    if key in x and key in x_0 else 0
-                    for key in w)
-        else:
-            # weighted p-norm distance
-            d = pow(
-                sum(pow(abs((f[key] * w[key]) * (x[key] - x_0[key])), self.p)
-                    if key in x and key in x_0 else 0
-                    for key in w),
-                1 / self.p)
-
-        return d
+            return distances.max()
+        return (distances**self.p).sum()**(1/self.p)
 
     def get_config(self) -> dict:
-        return {"name": self.__class__.__name__,
-                "p": self.p,
-                "weights": self.weights,
-                "factors": self.factors}
-
+        return {
+            "name": self.__class__.__name__,
+            "p": self.p,
+            "weights": self.weights,
+            "factors": self.factors,
+        }
 
 
 class AdaptivePNormDistance(PNormDistance):
@@ -179,7 +194,6 @@ class AdaptivePNormDistance(PNormDistance):
 
     Parameters
     ----------
-
     p:
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
         Default: p=2.
@@ -217,34 +231,32 @@ class AdaptivePNormDistance(PNormDistance):
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
     """
 
-    def __init__(self,
-                 p: float = 2,
-                 initial_weights: dict = None,
-                 factors: dict = None,
-                 adaptive: bool = True,
-                 scale_function: Callable = None,
-                 normalize_weights: bool = True,
-                 max_weight_ratio: float = None,
-                 log_file: str = None):
+    def __init__(
+        self,
+        p: float = 2,
+        initial_weights: Dict[str, float] = None,
+        factors: Dict[str, float] = None,
+        adaptive: bool = True,
+        scale_function: Callable = None,
+        max_weight_ratio: float = None,
+        log_file: str = None,
+        sumstat: Sumstat = None,
+    ):
         # call p-norm constructor
-        super().__init__(p=p, weights=None, factors=factors)
+        super().__init__(p=p, weights=None, factors=factors, sumstat=sumstat)
 
-        self.initial_weights = initial_weights
-        self.factors = factors
-        self.adaptive = adaptive
+        self.initial_weights: Dict[str, float] = initial_weights
+
+        self.adaptive: bool = adaptive
 
         if scale_function is None:
             scale_function = standard_deviation
-        self.scale_function = scale_function
+        self.scale_function: Callable = scale_function
 
-        self.normalize_weights = normalize_weights
         self.max_weight_ratio = max_weight_ratio
         self.log_file = log_file
 
-        self.x_0 = None
-
-    def configure_sampler(self,
-                          sampler):
+    def configure_sampler(self, sampler) -> None:
         """
         Make the sampler return also rejected particles,
         because these are needed to get a better estimate of the summary
@@ -256,120 +268,87 @@ class AdaptivePNormDistance(PNormDistance):
         sampler: Sampler
             The sampler employed.
         """
+        super().configure_sampler(sampler=sampler)
         if self.adaptive:
             sampler.sample_factory.record_rejected = True
 
-    def requires_calibration(self) -> bool:
-        return self.initial_weights is None
+    def initialize(
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict = None
+    ) -> None:
+        # esp. initialize sumstats
+        super().initialize(t=t, get_sample=get_sample, x_0=x_0)
 
-    def is_adaptive(self) -> bool:
-        return self.adaptive
-
-    def initialize(self,
-                   t: int,
-                   get_sample: Callable[[], Sample],
-                   x_0: dict = None):
-        """
-        Initialize weights.
-        """
-        super().initialize(t, get_sample, x_0)
-        self.x_0 = x_0
-
-        # initial weights pre-defined
+        # are initial weights pre-defined
         if not self.requires_calibration():
-            self.weights[t] = self.initial_weights
+            self.weights[t] = dict2arr(
+                self.initial_weights, keys=self.sumstat.get_ids())
             return
 
-        # execute function
+        # execute cached function
         sample = get_sample()
 
         # update weights from samples
-        self._update(t, sample)
+        self._fit(t=t, sample=sample)
 
-    def update(self,
-               t: int,
-               get_sample: Callable[[], Sample]):
-        """
-        Update weights.
-        """
+    def update(
+        self,
+        t: int,
+        get_sample: Callable[[], Sample]
+    ) -> bool:
+        # esp. updates summary statistics
+        updated = super().update(t=t, get_sample=get_sample)
         if not self.is_adaptive():
-            return False
+            return updated
 
-        # execute function
+        # execute cached function
         sample = get_sample()
 
-        self._update(t, sample)
+        self._fit(t=t, sample=sample)
 
         return True
 
-    def _update(self,
-                t: int,
-                sample: Sample):
-        """
-        Here the real update of weights happens.
-        """
-        # retrieve keys
-        keys = self.x_0.keys()
+    def _fit(
+        self,
+        t: int,
+        sample: Sample
+    ) -> None:
+        """Here the real weight update happens."""
+        # create (n_sample, n_feature) matrix of all summary statistics
+        ss = np.array(
+            [self.sumstat(p.sum_stat).flatten() for p in sample.all_particles]
+        )
 
-        all_sum_stats = sample.all_sum_stats
+        # observed summary statistics
+        s0 = self.s_0
 
-        # number of samples
-        n_samples = len(all_sum_stats)
+        # calculate scales
+        scales = self.scale_function(samples=ss, s0=s0)
 
-        # to-be-filled-and-appended weights dictionary
-        w = {}
+        # weights are the inverse scales
+        # a scale close to zero happens e.g. if all simulations are identical
+        # in any case, it should be safe to ignore this statistic
+        weights = np.zeros_like(scales)
+        weights[~np.isclose(scales, 0)] = 1 / scales[~np.isclose(scales, 0)]
 
-        for key in keys:
-            # prepare list for key
-            current_list = []
-            for j in range(n_samples):
-                if key in all_sum_stats[j]:
-                    current_list.append(all_sum_stats[j][key])
-
-            # compute scaling
-            scale = self.scale_function(data=current_list, x_0=self.x_0[key])
-
-            # compute weight (inverted scale)
-            if np.isclose(scale, 0):
-                # This means that either the summary statistic is not in the
-                # samples, or that all simulations were identical. In either
-                # case, it should be safe to ignore this summary statistic.
-                w[key] = 0
-            else:
-                w[key] = 1 / scale
-
-        # normalize weights to have mean 1
-        w = self._normalize_weights(w)
+        if (weights < 0).any():
+            raise AssertionError(f"There are weights <0: {weights}")
 
         # bound weights
-        w = self._bound_weights(w)
+        weights = self._bound_weights(weights)
 
-        # add to w attribute, at time t
-        self.weights[t] = w
+        # update weights attribute
+        self.weights[t] = weights
 
         # logging
         self.log(t)
 
-    def _normalize_weights(self, w):
-        """
-        Normalize weights to have mean 1.
-
-        This has just the effect that eps will decrease more smoothly, but is
-        not important otherwise.
-        """
-        if not self.normalize_weights:
-            return w
-
-        mean_weight = np.mean(list(w.values()))
-        for key in w:
-            w[key] /= mean_weight
-
-        return w
-
-    def _bound_weights(self, w):
+    def _bound_weights(self, w: np.ndarray) -> np.ndarray:
         """
         Bound all weights to self.max_weight_ratio times the minimum
-        non-zero absolute weight, if self.max_weight_ratio is not None.
+        non-zero absolute weight, if `self.max_weight_ratio` is not None.
 
         While this is usually not required in practice, it is theoretically
         necessary that the ellipses are not arbitrarily eccentric, in order
@@ -378,33 +357,52 @@ class AdaptivePNormDistance(PNormDistance):
         if self.max_weight_ratio is None:
             return w
 
-        # find minimum weight != 0
-        w_arr = np.array(list(w.values()))
-        min_abs_weight = np.min(np.abs(w_arr[w_arr != 0]))
-        # can be assumed to be != 0
+        # find minimum weight > 0
+        min_w = np.min(w[~np.isclose(w, 0)])
 
-        for key, value in w.items():
-            # bound too large weights
-            if abs(value) / min_abs_weight > self.max_weight_ratio:
-                w[key] = np.sign(value) * self.max_weight_ratio \
-                    * min_abs_weight
+        # cap weights
+        w[w / min_w > self.max_weight_ratio] = min_w * self.max_weight_ratio
 
         return w
 
+    def requires_calibration(self) -> bool:
+        if self.initial_weights is None:
+            return True
+        return self.sumstat.requires_calibration()
+
+    def is_adaptive(self) -> bool:
+        if self.adaptive:
+            return True
+        return self.sumstat.is_adaptive()
+
     def get_config(self) -> dict:
-        return {"name": self.__class__.__name__,
-                "p": self.p,
-                "factors": self.factors,
-                "adaptive": self.adaptive,
-                "scale_function": self.scale_function.__name__,
-                "normalize_weights": self.normalize_weights,
-                "max_weight_ratio": self.max_weight_ratio}
+        return {
+            "name": self.__class__.__name__,
+            "p": self.p,
+            "factors": self.factors,
+            "adaptive": self.adaptive,
+            "scale_function": self.scale_function.__name__,
+            "max_weight_ratio": self.max_weight_ratio
+        }
 
     def log(self, t: int) -> None:
-        logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+        """Log weights.
+
+        Parameters
+        ----------
+        t: Time point to log for.
+        """
+        # create weights dictionary with labels
+        weights_dict = {
+            key: val
+            for key, val in zip(
+                self.sumstat.get_ids(), self.weights[t])
+        }
+
+        logger.info(f"Weights[{t}] = {weights_dict}")
 
         if self.log_file:
-            save_dict_to_json(self.weights, self.log_file)
+            save_dict_to_json(weights_dict, self.log_file)
 
 
 class AggregatedDistance(Distance):

@@ -1,7 +1,7 @@
 """Summary statistics learning."""
 
 import numpy as np
-from typing import Callable, List, Union
+from typing import Callable, Dict, List, Union
 import copy
 from abc import ABC, abstractmethod
 
@@ -32,7 +32,10 @@ class Sumstat(ABC):
         self.prev: Union['Sumstat', None] = prev
 
     @abstractmethod
-    def __call__(self, data: Union[dict, np.ndarray]) -> np.ndarray:
+    def __call__(
+        self,
+        data: Union[dict, np.ndarray],
+    ) -> Union[np.ndarray, Dict[str, float]]:
         """Calculate summary statistics.
 
         Parameters
@@ -112,6 +115,24 @@ class Sumstat(ABC):
         """
         if self.prev is not None:
             self.prev.configure_sampler(sampler=sampler)
+
+    def requires_calibration(self) -> bool:
+        """
+        Whether the class requires an initial calibration, based on
+        samples from the prior. Default: False.
+        """
+        if self.prev is not None:
+            return self.prev.requires_calibration()
+        return False
+
+    def is_adaptive(self) -> bool:
+        """
+        Whether the class is dynamically updated after each generation,
+        based on the last generation's available data. Default: False.
+        """
+        if self.prev is not None:
+            return self.prev.is_adaptive()
+        return False
 
     def get_ids(self) -> List[str]:
         """Get ids/labels for the summary statistics."""
@@ -252,6 +273,16 @@ class PredictorSumstat(Sumstat):
         if self.adaptive:
             # record rejected particles
             sampler.sample_factory.record_rejected = True
+
+    def requires_calibration(self) -> bool:
+        return True
+
+    def is_adaptive(self) -> bool:
+        if self.adaptive:
+            return True
+        if self.prev is not None:
+            return self.prev.is_adaptive()
+        return False
 
     def fit(self, sample: Sample) -> None:
         """Fit the model to the sample.
