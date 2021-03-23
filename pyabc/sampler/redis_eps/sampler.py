@@ -80,14 +80,14 @@ class RedisSamplerBase(Sampler):
         self.redis.set(ANALYSIS_ID, analysis_id)
 
     def sample_until_n_accepted(
-        self,
-        n: int,
-        simulate_one: Callable,
-        t: int,
-        *,
-        max_eval: int = np.inf,
-        all_accepted: bool = False,
-        ana_vars: AnalysisVars = None,
+            self,
+            n: int,
+            simulate_one: Callable,
+            t: int,
+            *,
+            max_eval: int = np.inf,
+            all_accepted: bool = False,
+            ana_vars: AnalysisVars = None,
     ) -> Sample:
         raise NotImplementedError()
 
@@ -399,25 +399,25 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         walltime = datetime.now() - ana_vars.init_walltime
 
         if termination_criteria_fulfilled(
-            current_eps=ana_vars.eps(t),
-            min_eps=ana_vars.min_eps,
-            stop_if_single_model_alive=  # noqa: E251
-            ana_vars.stop_if_single_model_alive,
-            nr_of_models_alive=population.nr_of_models_alive(),
-            acceptance_rate=acceptance_rate,
-            min_acceptance_rate=ana_vars.min_acceptance_rate,
-            total_nr_simulations=total_nr_simulations,
-            max_total_nr_simulations=ana_vars.max_total_nr_simulations,
-            walltime=walltime,
-            max_walltime=ana_vars.max_walltime,
-            t=t, max_t=ana_vars.max_t,
+                current_eps=ana_vars.eps(t),
+                min_eps=ana_vars.min_eps,
+                stop_if_single_model_alive=  # noqa: E251
+                ana_vars.stop_if_single_model_alive,
+                nr_of_models_alive=population.nr_of_models_alive(),
+                acceptance_rate=acceptance_rate,
+                min_acceptance_rate=ana_vars.min_acceptance_rate,
+                total_nr_simulations=total_nr_simulations,
+                max_total_nr_simulations=ana_vars.max_total_nr_simulations,
+                walltime=walltime,
+                max_walltime=ana_vars.max_walltime,
+                t=t, max_t=ana_vars.max_t,
         ):
             # do not head-start a new generation as this is likely not needed
             return
 
         # create a preliminary simulate_one function
         simulate_one_prel = create_preliminary_simulate_one(
-            t=t+1, population=population,
+            t=t + 1, population=population,
             delay_evaluation=self.look_ahead_delay_evaluation,
             ana_vars=ana_vars)
 
@@ -435,7 +435,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # head-start the next generation
         #  all_accepted is most certainly False for t>0
         self.start_generation_t(
-            n=n, t=t+1, simulate_one=simulate_one_prel,
+            n=n, t=t + 1, simulate_one=simulate_one_prel,
             all_accepted=False, is_look_ahead=True,
             max_n_eval_look_ahead=max_n_eval_look_ahead)
 
@@ -687,7 +687,6 @@ def weighted_ess(alpha, weights: np.array,
     """Returns ess of by alpha reweighted sample
     Multiplied by -1 for minimization
     """
-
     scaled_weights = scale_weights(alpha, weights, subpopulation_sizes)
     ess_weighted = effective_sample_size(scaled_weights)
 
@@ -696,13 +695,18 @@ def weighted_ess(alpha, weights: np.array,
     else:
         sign = -1
 
-    return sign*ess_weighted
+    return sign * ess_weighted
 
 
 def scale_weights(alpha: np.array,
                   weights: np.array,
                   subpopulation_sizes: np.array):
-    """Takes the weights as single array and returns the rescaled version"""
+    """Takes the weights as single array and returns the rescaled version
+    """
+
+    weights_copy = copy.deepcopy(weights)
+    if alpha.size == 1:
+        alpha = np.array([alpha[0], 1 - alpha[0]])
 
     if alpha.sum() != 1:
         raise ValueError("Total weight needs to equal 1")
@@ -712,13 +716,13 @@ def scale_weights(alpha: np.array,
     start_index = 0
     for j in range(n_proposals):
         normalizations[j] = alpha[j] / \
-                            weights[start_index:
-                                    start_index+subpopulation_sizes[j]]
+                            weights_copy[start_index:
+                                         start_index + subpopulation_sizes[j]].sum()
         for i in range(subpopulation_sizes[j]):
-            weights[start_index+i] *= normalizations[j]
+            weights_copy[start_index + i] *= normalizations[j]
         start_index += subpopulation_sizes[j]
 
-    return weights
+    return weights_copy
 
 
 def determine_opt_subpopulation_ratio(sample: Sample):
@@ -743,25 +747,53 @@ def determine_opt_subpopulation_ratio(sample: Sample):
         all_weights = np.append(all_weights, weights)
         subpopulation_sizes = np.append(subpopulation_sizes, len(weights))
 
-    if len(prop_ids) <= 2:
-        n1 = subpopulation_sizes[0]
-        alpha_opt = ((np.sum(all_weights[:n1])*np.sum(all_weights[n1:]**2)) /
-                     (np.sum(all_weights[:n1])*np.sum(all_weights[n1:]**2) +
-                     np.sum(all_weights[n1:])*np.sum(all_weights[:n1]**2)))
-        return alpha_opt
+    if len(prop_ids) == 2:
+        alpha_opt = analytical_solution(all_weights, subpopulation_sizes)
     else:
-        import scipy.optimize
-        res = scipy.optimize.minimize(weighted_ess,
-                                      x0=np.array([1/len(prop_ids)
+        alpha_opt = solution_by_minimizer(weighted_ess,
+                                          prop_ids,
+                                          all_weights,
+                                          subpopulation_sizes)
+
+    return alpha_opt
+
+
+def analytical_solution(all_weights, subpopulation_sizes):
+    """Compute optimum alpha using the analytical solution.
+    Only for a single proposal
+    """
+    n1 = subpopulation_sizes[0]
+    alpha_opt = ((np.sum(all_weights[:n1]) * np.sum(all_weights[n1:] ** 2)) /
+                 (np.sum(all_weights[:n1]) * np.sum(all_weights[n1:] ** 2) +
+                  np.sum(all_weights[n1:]) * np.sum(all_weights[:n1] ** 2)))
+    return alpha_opt
+
+
+def solution_by_minimizer(weighted_ess_fct,
+                          prop_ids,
+                          all_weights,
+                          subpopulation_sizes):
+    """Compute optimum alpha using scipy minimize"""
+    import scipy.optimize
+    if len(prop_ids) == 2:
+        res = scipy.optimize.minimize(weighted_ess_fct,
+                                      x0=0.5,
+                                      args=(all_weights,
+                                            subpopulation_sizes, True),
+                                      bounds=[[0, 1]])
+    else:
+        res = scipy.optimize.minimize(weighted_ess_fct,
+                                      x0=np.array([1 / len(prop_ids)
                                                    for _ in
                                                    range(len(prop_ids))]),
                                       args=[all_weights,
                                             subpopulation_sizes, True],
                                       bounds=[[0, 1]])
-        return res.x
+    return res.x
 
 
 def normalize_with_opt_ess(sample: Sample, n: int) -> Sample:
+    # TODO needs to be called instead of self_normalize_within_subpopulations
     """
     Applies subpopulation-wise self-normalization of samples,
     with reweighting factor that maximizes ESS.
@@ -775,6 +807,12 @@ def normalize_with_opt_ess(sample: Sample, n: int) -> Sample:
         -------
         sample: The same, weight-adjusted sample.
     """
+    prop_ids = {particle.proposal_id for particle in sample.particles}
+
+    if len(prop_ids) == 1:
+        # Nothing to be done, as we only have one proposal, and normalization
+        #  is applied later when the population is created
+        return sample
 
     alpha_opt = determine_opt_subpopulation_ratio(sample)
     sample = reweight_sample(alpha_opt, sample)
