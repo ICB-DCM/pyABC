@@ -100,11 +100,10 @@ def test_pnormdistance():
     # call distance function, also to initialize w
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
 
-    expected = pow(1**2 + 2**2, 1/2)
+    expected = pow(0**2 + 1**2 + 2**2, 1/2)
     assert expected == d
 
-    assert sum(abs(a - b) for a, b in
-               zip(list(dist_f.weights[0].values()), [1, 1, 1])) < 0.01
+    assert sum(abs(a - b) for a, b in zip(dist_f.weights[0], [1, 1, 1])) < 0.01
 
 
 def test_adaptivepnormdistance():
@@ -133,7 +132,7 @@ def test_adaptivepnormdistance():
             scale_function=scale_function)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
         dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
-        assert dist_f.weights[0] != {'s1': 1, 's2': 1, 's3': 1}
+        assert (dist_f.weights[0] != np.ones(3)).any()
 
     # test max weight ratio
     for scale_function in scale_functions:
@@ -142,7 +141,7 @@ def test_adaptivepnormdistance():
             max_weight_ratio=20)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
         dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
-        assert dist_f.weights[0] != {'s1': 1, 's2': 1, 's3': 1}
+        assert (dist_f.weights[0] != np.ones(3)).any()
 
 
 def test_adaptivepnormdistance_initial_weights():
@@ -154,7 +153,7 @@ def test_adaptivepnormdistance_initial_weights():
     initial_weights = {'s1': 1, 's2': 2, 's3': 3}
     dist_f = AdaptivePNormDistance(initial_weights=initial_weights)
     dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
-    assert dist_f.weights[0] == initial_weights
+    assert (dist_f.weights[0] == np.array([1, 2, 3])).all()
 
     # call distance function
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
@@ -163,7 +162,7 @@ def test_adaptivepnormdistance_initial_weights():
 
     # check updating works
     dist_f.update(1, abc.sample_from_prior)
-    assert dist_f.weights[1] != dist_f.weights[0]
+    assert (dist_f.weights[1] != dist_f.weights[0]).any()
 
 
 def test_aggregateddistance():
@@ -430,11 +429,11 @@ def test_store_weights():
     weights_file = tempfile.mkstemp(suffix=".json")[1]
     print(weights_file)
 
-    def distance0(x, x_0):
-        return abs(x['s1'] - x_0['s1'])
+    def distance0(x_, x_0_):
+        return abs(x_['s1'] - x_0_['s1'])
 
-    def distance1(x, x_0):
-        return np.sqrt((x['s2'] - x_0['s2'])**2)
+    def distance1(x_, x_0_):
+        return np.sqrt((x_['s2'] - x_0_['s2'])**2)
 
     for distance in [AdaptivePNormDistance(log_file=weights_file),
                      AdaptiveAggregatedDistance(
@@ -446,7 +445,7 @@ def test_store_weights():
         weights = load_dict_from_json(weights_file)
         assert set(weights.keys()) == {0, 1, 2}
 
-        expected = distance.weights
+        expected = distance.get_weights_dict()
         for key, val in expected.items():
             if isinstance(val, np.ndarray):
                 expected[key] = val.tolist()

@@ -302,7 +302,7 @@ class AcceptanceRateScheme(TemperatureScheme):
         self.min_rate = min_rate
 
     def configure_sampler(self, sampler):
-        sampler.sample_factory.record_rejected = True
+        sampler.sample_factory.record_rejected()
 
     def __call__(self,
                  t: int,

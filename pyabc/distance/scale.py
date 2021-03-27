@@ -2,9 +2,10 @@
 Various schemes to compute scales for the AdaptivePNormDistance and the
 AdaptiveAggregatedDistance.
 
-All of the functions take as argument a `samples` list of values, and some in
-addition other arguments, in particular a float `s0` for the observed
-value.
+The functions take arguments `samples`, a np.ndarray of the sampled summary
+statistics of shape (n_sample, n_feature), and `s0`, a np.ndarray of the
+observed summary statistics, shape (n_feature,). They return a np.ndarray
+`scales` of shape (n_feature,).
 
 For usage with AdaptivePNormDistance, the following are recommended:
 * standard_deviation
@@ -30,23 +31,41 @@ values, but distance values, instead use either of
 * mean
 * median
 """
-
-
 import numpy as np
 
 
-def median_absolute_deviation(samples, **kwargs):
+def check_io(fun):
+    """Check input and output for their dimensions.
+
+    Wrapper around scale functions.
+    """
+    def checked_fun(samples: np.ndarray, **kwargs):
+        if "s0" in kwargs:
+            if (samples.ndim == 1 and np.ndim(kwargs["s0"]) > 0) or (
+                    samples.ndim > 1 and
+                    samples.shape[1] != kwargs["s0"].shape[0]):
+                raise AssertionError("Shape mismatch of samples and s0")
+        scales: np.ndarray = fun(samples=samples, **kwargs)
+        if (samples.ndim == 1 and np.ndim(scales) > 0) or (
+                samples.ndim > 1 and scales.shape != (samples.shape[1],)):
+            raise AssertionError("Shape mismatch of s0 and scales")
+        return scales
+    return checked_fun
+
+
+@check_io
+def median_absolute_deviation(*, samples: np.ndarray, **kwargs) -> np.ndarray:
     """
     Calculate the sample `median absolute deviation (MAD)
     <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_
-    from the median, defined as
-    median(abs(samples - median(samples)).
+    from the median, defined as median(abs(samples - median(samples)).
     """
     mad = np.nanmedian(np.abs(samples - np.nanmedian(samples, axis=0)), axis=0)
     return mad
 
 
-def mean_absolute_deviation(samples, **kwargs):
+@check_io
+def mean_absolute_deviation(*, samples: np.ndarray, **kwargs) -> np.ndarray:
     """
     Calculate the mean absolute deviation from the mean.
     """
@@ -54,7 +73,8 @@ def mean_absolute_deviation(samples, **kwargs):
     return mad
 
 
-def standard_deviation(samples, **kwargs):
+@check_io
+def standard_deviation(*, samples: np.ndarray, **kwargs) -> np.ndarray:
     """
     Calculate the sample `standard deviation (SD)
     <https://en.wikipedia.org/wiki/Standard_deviation/>`_.
@@ -63,7 +83,8 @@ def standard_deviation(samples, **kwargs):
     return std
 
 
-def bias(samples, s0, **kwargs):
+@check_io
+def bias(*, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Bias of sample to observed value.
     """
@@ -71,19 +92,23 @@ def bias(samples, s0, **kwargs):
     return bias
 
 
-def root_mean_square_deviation(samples, s0, **kwargs):
+@check_io
+def root_mean_square_deviation(
+        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Square root of the mean squared error, i.e.
     of the bias squared plus the variance.
     """
-    bs = bias(samples, s0)
-    std = standard_deviation(samples)
+    bs = bias(samples=samples, s0=s0)
+    std = standard_deviation(samples=samples)
     mse = bs**2 + std**2
     rmse = np.sqrt(mse)
     return rmse
 
 
-def median_absolute_deviation_to_observation(samples, s0, **kwargs):
+@check_io
+def median_absolute_deviation_to_observation(
+        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Median absolute deviation of samples w.r.t. the observation s0.
     """
@@ -91,7 +116,9 @@ def median_absolute_deviation_to_observation(samples, s0, **kwargs):
     return mado
 
 
-def mean_absolute_deviation_to_observation(samples, s0, **kwargs):
+@check_io
+def mean_absolute_deviation_to_observation(
+        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Mean absolute deviation of samples w.r.t. the observation s0.
     """
@@ -99,29 +126,35 @@ def mean_absolute_deviation_to_observation(samples, s0, **kwargs):
     return mado
 
 
-def combined_median_absolute_deviation(samples, s0, **kwargs):
+@check_io
+def combined_median_absolute_deviation(
+        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Compute the sum of the median absolute deviations to the
     median of the samples and to the observed value.
     """
-    mad = median_absolute_deviation(samples)
-    mado = median_absolute_deviation_to_observation(samples, s0)
+    mad = median_absolute_deviation(samples=samples)
+    mado = median_absolute_deviation_to_observation(samples=samples, s0=s0)
     cmad = mad + mado
     return cmad
 
 
-def combined_mean_absolute_deviation(samples, s0, **kwargs):
+@check_io
+def combined_mean_absolute_deviation(
+        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Compute the sum of the mean absolute deviations to the
     mean of the samples and to the observed value.
     """
-    mad = mean_absolute_deviation(samples)
-    mado = mean_absolute_deviation_to_observation(samples, s0)
+    mad = mean_absolute_deviation(samples=samples)
+    mado = mean_absolute_deviation_to_observation(samples=samples, s0=s0)
     cmad = mad + mado
     return cmad
 
 
-def standard_deviation_to_observation(samples, s0, **kwargs):
+@check_io
+def standard_deviation_to_observation(
+        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
     """
     Standard deviation of absolute deviations of the samples w.r.t.
     the observation s0.
@@ -130,22 +163,19 @@ def standard_deviation_to_observation(samples, s0, **kwargs):
     return stdo
 
 
-def span(samples, **kwargs):
-    """
-    Compute the difference of largest and smallest samples point.
-    """
+@check_io
+def span(*, samples: np.ndarray, **kwargs) -> np.ndarray:
+    """Compute the difference of largest and smallest sample point."""
     return np.nanmax(samples, axis=0) - np.nanmin(samples, axis=0)
 
 
-def mean(samples, **kwargs):
-    """
-    Compute the mean.
-    """
+@check_io
+def mean(*, samples: np.ndarray, **kwargs) -> np.ndarray:
+    """Compute the mean."""
     return np.nanmean(samples, axis=0)
 
 
-def median(samples, **kwargs):
-    """
-    Compute the median.
-    """
+@check_io
+def median(*, samples: np.ndarray, **kwargs) -> np.ndarray:
+    """Compute the median."""
     return np.nanmedian(samples, axis=0)

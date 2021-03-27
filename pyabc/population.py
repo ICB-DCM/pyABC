@@ -418,12 +418,17 @@ class SampleFactory:
             self,
             record_rejected: bool = False,
             max_nr_rejected: int = np.inf):
-        self.record_rejected = record_rejected
-        self.max_nr_rejected = max_nr_rejected
+        self._record_rejected = record_rejected
+        self._max_nr_rejected = max_nr_rejected
+
+    def record_rejected(self, record: bool = True):
+        """Switch whether to record rejected particles."""
+        logger.info(f"Recording also rejected particles: {record}")
+        self._record_rejected = record
 
     def __call__(self, is_look_ahead: bool = False):
         """Create a new empty sample."""
         return Sample(
-            record_rejected=self.record_rejected,
-            max_nr_rejected=self.max_nr_rejected,
+            record_rejected=self._record_rejected,
+            max_nr_rejected=self._max_nr_rejected,
             is_look_ahead=is_look_ahead)

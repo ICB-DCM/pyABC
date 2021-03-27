@@ -105,6 +105,21 @@ from .population import (
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
+from .predictor import (
+    Predictor,
+    LinearPredictor,
+    LassoPredictor,
+    GPPredictor,
+    MLPPredictor,
+    ModelSelection,
+)
+from .sumstat import (
+    Sumstat,
+    IdentitySumstat,
+    PredictorSumstat,
+    LinearPredictorSumstat,
+    GPPredictorSumstat,
+)
 from . import visualization
 from . import settings
 

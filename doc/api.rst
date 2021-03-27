@@ -12,6 +12,8 @@ API reference
    api_acceptor
    api_model
    api_epsilon
+   api_predictor
+   api_sumstat
    api_datastore
    api_transition
    api_populationstrategy

@@ -20,6 +20,7 @@ from .base import (
 from .distance import (
     PNormDistance,
     AdaptivePNormDistance,
+    InfoWeightedPNormDistance,
     AggregatedDistance,
     AdaptiveAggregatedDistance,
     ZScoreDistance,

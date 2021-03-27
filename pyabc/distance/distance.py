@@ -1,4 +1,5 @@
 """Distance functions."""
+from abc import ABC
 
 import numpy as np
 from scipy import linalg as la
@@ -8,10 +9,12 @@ import logging
 
 from .scale import standard_deviation, span
 from .base import Distance, to_distance
+from .util import bound_weights, log_weights
 from ..storage import save_dict_to_json
 from ..population import Sample
+from ..predictor import Predictor
 from ..sumstat import Sumstat, IdentitySumstat
-from ..sumstat.util import dict2arr
+from ..sumstat.util import dict2arr, read_sample
 
 
 logger = logging.getLogger("Distance")
@@ -78,7 +81,7 @@ class PNormDistance(Distance):
 
         # to cache the observed data and summary statistics
         self.x_0: Union[dict, None] = None
-        self.s_0: Union[dict, None] = None
+        self.s_0: Union[np.ndarray, None] = None
 
     def initialize(
         self,
@@ -161,7 +164,7 @@ class PNormDistance(Distance):
         factors = self.factors
 
         # compute summary statistics
-        s, s0 = self.sumstat(x), self.s_0
+        s, s0 = self.sumstat(x), self.sumstat(x_0)
 
         # assert shapes match
         if (
@@ -184,6 +187,18 @@ class PNormDistance(Distance):
             "p": self.p,
             "weights": self.weights,
             "factors": self.factors,
+            "sumstat": self.sumstat.__str__(),
+        }
+
+    def get_weights_dict(self) -> Dict[int, Dict[str, float]]:
+        """Create labeled weights dictionary."""
+        # assumes that the summary statistic labels do not change over time
+        return {
+            t: {
+                key: val
+                for key, val in zip(self.sumstat.get_ids(), self.weights[t])
+            }
+            for t in self.weights
         }
 
 
@@ -213,10 +228,6 @@ class AdaptivePNormDistance(PNormDistance):
         summary statistic. Implemented are absolute_median_deviation,
         standard_deviation (default), centered_absolute_median_deviation,
         centered_standard_deviation.
-    normalize_weights:
-        Whether to normalize the weights to have mean 1. This just possibly
-        smoothes the decrease of epsilon and might aid numeric stability, but
-        is not strictly necessary.
     max_weight_ratio:
         If not None, large weights will be bounded by the ratio times the
         smallest non-zero absolute weight. In practice usually not necessary,
@@ -253,14 +264,14 @@ class AdaptivePNormDistance(PNormDistance):
             scale_function = standard_deviation
         self.scale_function: Callable = scale_function
 
-        self.max_weight_ratio = max_weight_ratio
-        self.log_file = log_file
+        self.max_weight_ratio: float = max_weight_ratio
+        self.log_file: str = log_file
 
     def configure_sampler(self, sampler) -> None:
         """
         Make the sampler return also rejected particles,
         because these are needed to get a better estimate of the summary
-        statistic variabilities, avoiding a bias to accepted ones only.
+        statistic variability, avoiding a bias to accepted ones only.
 
         Parameters
         ----------
@@ -270,7 +281,7 @@ class AdaptivePNormDistance(PNormDistance):
         """
         super().configure_sampler(sampler=sampler)
         if self.adaptive:
-            sampler.sample_factory.record_rejected = True
+            sampler.sample_factory.record_rejected()
 
     def initialize(
         self,
@@ -337,33 +348,16 @@ class AdaptivePNormDistance(PNormDistance):
             raise AssertionError(f"There are weights <0: {weights}")
 
         # bound weights
-        weights = self._bound_weights(weights)
+        weights = bound_weights(
+            weights, max_weight_ratio=self.max_weight_ratio)
 
         # update weights attribute
         self.weights[t] = weights
 
         # logging
-        self.log(t)
-
-    def _bound_weights(self, w: np.ndarray) -> np.ndarray:
-        """
-        Bound all weights to self.max_weight_ratio times the minimum
-        non-zero absolute weight, if `self.max_weight_ratio` is not None.
-
-        While this is usually not required in practice, it is theoretically
-        necessary that the ellipses are not arbitrarily eccentric, in order
-        to ensure convergence.
-        """
-        if self.max_weight_ratio is None:
-            return w
-
-        # find minimum weight > 0
-        min_w = np.min(w[~np.isclose(w, 0)])
-
-        # cap weights
-        w[w / min_w > self.max_weight_ratio] = min_w * self.max_weight_ratio
-
-        return w
+        log_weights(
+            t=t, weights=self.weights, keys=self.sumstat.get_ids(),
+            log_file=self.log_file, logger=logger)
 
     def requires_calibration(self) -> bool:
         if self.initial_weights is None:
@@ -376,33 +370,198 @@ class AdaptivePNormDistance(PNormDistance):
         return self.sumstat.is_adaptive()
 
     def get_config(self) -> dict:
-        return {
-            "name": self.__class__.__name__,
-            "p": self.p,
-            "factors": self.factors,
+        config = super().get_config()
+        config.update({
             "adaptive": self.adaptive,
             "scale_function": self.scale_function.__name__,
-            "max_weight_ratio": self.max_weight_ratio
-        }
+            "max_weight_ratio": self.max_weight_ratio,
+        })
+        return config
 
-    def log(self, t: int) -> None:
-        """Log weights.
+
+class InfoWeightedPNormDistance(PNormDistance):
+    """Weight summary statistics by sensitivity of a predictor `y -> theta`."""
+
+    def __init__(
+            self,
+            predictor: Predictor,
+            p: float = 2,
+            initial_weights: Dict[str, float] = None,
+            factors: Dict[str, float] = None,
+            n_fit: int = 1,
+            scale_function: Callable = None,
+            max_weight_ratio: float = None,
+            log_file: str = None,
+            sumstat: Sumstat = None,
+            eps: float = 1e-2,
+    ):
+        # call p-norm constructor
+        super().__init__(p=p, weights=None, factors=factors, sumstat=sumstat)
+
+        self.predictor = predictor
+
+        self.initial_weights: Dict[str, float] = initial_weights
+
+        self.n_fit: int = n_fit
+
+        if scale_function is None:
+            scale_function = standard_deviation
+        self.scale_function: Callable = scale_function
+
+        self.max_weight_ratio: float = max_weight_ratio
+        self.log_file: str = log_file
+        self.eps: float = eps
+
+        # parameter keys (for correct order)
+        self.par_keys: Union[List[str], None] = None
+
+        # fit counter
+        self.i_fit: int = 0
+
+    def configure_sampler(self, sampler) -> None:
+        """
+        Make the sampler return also rejected particles,
+        because these are needed to get a better estimate of the summary
+        statistic variability, avoiding a bias to accepted ones only.
 
         Parameters
         ----------
-        t: Time point to log for.
+
+        sampler: Sampler
+            The sampler employed.
         """
-        # create weights dictionary with labels
-        weights_dict = {
-            key: val
-            for key, val in zip(
-                self.sumstat.get_ids(), self.weights[t])
-        }
+        super().configure_sampler(sampler=sampler)
+        if self.n_fit > 1:
+            sampler.sample_factory.record_rejected()
 
-        logger.info(f"Weights[{t}] = {weights_dict}")
+    def initialize(
+            self,
+            t: int,
+            get_sample: Callable[[], Sample],
+            x_0: dict = None
+    ) -> None:
+        # esp. initialize sumstats
+        super().initialize(t=t, get_sample=get_sample, x_0=x_0)
 
-        if self.log_file:
-            save_dict_to_json(weights_dict, self.log_file)
+        # are initial weights pre-defined
+        if not self.requires_calibration():
+            self.weights[t] = dict2arr(
+                self.initial_weights, keys=self.sumstat.get_ids())
+            return
+
+        # execute cached function
+        sample = get_sample()
+
+        # fix parameter key order
+        self.par_keys: List[str] = \
+            list(sample.accepted_particles[0].parameter.keys())
+
+        # check whether refitting is desired
+        if self.i_fit >= self.n_fit:
+            return
+        else:
+            self.i_fit += 1
+
+        # update weights from samples
+        self._fit(t=t, sample=sample)
+
+    def update(
+            self,
+            t: int,
+            get_sample: Callable[[], Sample]
+    ) -> bool:
+        # esp. updates summary statistics
+        updated = super().update(t=t, get_sample=get_sample)
+
+        # check whether refitting is desired
+        if self.i_fit >= self.n_fit:
+            return updated
+        else:
+            self.i_fit += 1
+
+        # execute cached function
+        sample = get_sample()
+
+        self._fit(t=t, sample=sample)
+
+        return True
+
+    def _fit(
+            self,
+            t: int,
+            sample: Sample
+    ) -> None:
+        """Here the real weight update happens."""
+        # create (n_sample, n_feature) matrix of all summary statistics
+        sumstats, parameters, weights = read_sample(
+            sample=sample, sumstat=self.sumstat, all_particles=True,
+            par_keys=self.par_keys,
+        )
+        s_0 = self.s_0
+
+        # learn predictor model
+        self.predictor.fit(x=sumstats, y=parameters, w=weights)
+
+        # sensitivity matrix
+        n_sumstat = sumstats.shape[1]
+        n_par = parameters.shape[1]
+        sensis = np.empty((n_sumstat, n_par))
+
+        # calculate all sensitivities of the predictor
+        eye = np.eye(n_sumstat)
+        eps = self.eps
+        for i_s in range(n_sumstat):
+            vp = self.predictor.predict(
+                (s_0 + eps * eye[i_s]).reshape(1, -1),
+                orig_scale=False,
+            )
+            vm = self.predictor.predict(
+                (s_0 - eps * eye[i_s]).reshape(1, -1),
+                orig_scale=False,
+            )
+            sensis[i_s, :] = (vp - vm) / (2 * eps)
+
+        # we are only interested in absolute values
+        sensis = np.abs(sensis)
+
+        # normalize sums over sumstats to 1
+        sensis /= np.sum(sensis, axis=0)
+
+        # the weight of a sumstat is the sum of the sensitivities over all
+        #  parameters
+        weights = np.sum(sensis, axis=1)
+
+        # bound weights
+        weights = bound_weights(
+            weights, max_weight_ratio=self.max_weight_ratio)
+
+        # update weights attribute
+        self.weights[t] = weights
+
+        # logging
+        log_weights(
+            t=t, weights=self.weights, keys=self.sumstat.get_ids(),
+            log_file=self.log_file, logger=logger)
+
+    def requires_calibration(self) -> bool:
+        if self.initial_weights is None:
+            return True
+        return self.sumstat.requires_calibration()
+
+    def is_adaptive(self) -> bool:
+        if self.n_fit > 1:
+            return True
+        return self.sumstat.is_adaptive()
+
+    def get_config(self) -> dict:
+        config = super().get_config()
+        config.update({
+            "predictor": self.predictor.__str__(),
+            "n_fit": self.n_fit,
+            "scale_function": self.scale_function.__name__,
+            "max_weight_ratio": self.max_weight_ratio,
+        })
+        return config
 
 
 class AggregatedDistance(Distance):
@@ -660,12 +819,12 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         for distance in self.distances:
             # apply distance to all samples
-            current_list = [
+            current_list = np.array([
                 distance(sum_stat, self.x_0)
                 for sum_stat in sum_stats
-            ]
+            ])
             # compute scaling
-            scale = self.scale_function(current_list)
+            scale = self.scale_function(samples=current_list)
 
             # compute weight (inverted scale)
             if np.isclose(scale, 0):
@@ -682,14 +841,33 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         # logging
         self.log(t)
 
+    def configure_sampler(self, sampler) -> None:
+        """
+        Make the sampler return also rejected particles,
+        because these are needed to get a better estimate of the summary
+        statistic variability, avoiding a bias to accepted ones only.
+
+        Parameters
+        ----------
+
+        sampler: Sampler
+            The sampler employed.
+        """
+        super().configure_sampler(sampler=sampler)
+        if self.adaptive:
+            sampler.sample_factory.record_rejected()
+
     def log(self, t: int) -> None:
-        logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+        logger.debug(f"Weights[{t}] = {self.weights[t]}")
 
         if self.log_file:
             save_dict_to_json(self.weights, self.log_file)
 
+    def get_weights_dict(self) -> Dict[int, Dict[str, float]]:
+        return self.weights
 
-class DistanceWithMeasureList(Distance):
+
+class DistanceWithMeasureList(Distance, ABC):
     """
     Base class for distance functions with measure list.
     This class is not functional on its own.

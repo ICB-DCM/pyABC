@@ -383,7 +383,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
         sample = copy.deepcopy(sample)
-        # normalize weights
+        # normalize_features weights
         sample.normalize_weights()
         # extract population
         population = sample.get_accepted_population()
@@ -641,7 +641,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
                   if particle.proposal_id == prop_id]
         for prop_id in prop_ids}
 
-    # normalize weights by ESS_l / sum_l[w_l] for proposal id l
+    # normalize_features weights by ESS_l / sum_l[w_l] for proposal id l
     # this is s.t. sum_i w_{l,i} \propto ESS_l
     normalizations = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
@@ -653,7 +653,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 
     # TODO It might cause problems if adaptive components use rejected weights
 
-    # normalize every accepted article
+    # normalize_features every accepted article
     for particle in sample.accepted_particles:
         particle.weight *= normalizations[particle.proposal_id]
 
