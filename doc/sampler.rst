@@ -398,7 +398,7 @@ advance.
 JupyterHub
 ~~~~~~~~~~
 
-As an intermdiate step between local desktop systems and a full HPC cluster
+As an intermediate step between local desktop systems and a full HPC cluster
 system, Jupyterhub (https://jupyterhub.readthedocs.io/en/stable/) can speed up
 computations with pyABC without requiring detailed knowledge about the HPC
 system.
