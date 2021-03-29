@@ -410,8 +410,8 @@ samplers.
 Depending on the hardware, this could be as much as 128 CPU cores.
 No interaction with the command line and the batch system is required.
 Jupyterhub is installed on many HPC centers, e.g. at the Centre for Information
-Services and High Performance Computing (TU Dresden)
-https://doc.zih.tu-dresden.de/hpc-wiki/bin/view/Compendium/JupyterHub
+Services and High Performance Computing at TU Dresden
+(https://doc.zih.tu-dresden.de/hpc-wiki/bin/view/Compendium/JupyterHub)
 or at the Juelich Supercomputing Centre (https://jupyter-jsc.fz-juelich.de).
 
 
