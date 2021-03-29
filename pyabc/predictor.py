@@ -370,10 +370,8 @@ class ModelSelection(Predictor):
                 y_predicted = predictor.predict(x=x_test, orig_scale=True)
 
                 # score of z-score normalized variables
-                scores[i_predictor, i_split] = np.sqrt(
-                    np.sum(
-                        ((y_predicted - y_test) / std_y)**2,
-                    ) / x_train.shape[0]
+                scores[i_predictor, i_split] = root_mean_square_error(
+                    y1=y_predicted, y2=y_test, sigma=std_y,
                 )
 
         # the score of a predictor is the sum over all folds
@@ -391,3 +389,27 @@ class ModelSelection(Predictor):
 
     def predict(self, x: np.ndarray, orig_scale: bool = True) -> np.ndarray:
         return self.chosen_one.predict(x=x, orig_scale=orig_scale)
+
+
+def root_mean_square_error(
+    y1: np.ndarray,
+    y2: np.ndarray,
+    sigma: np.ndarray
+) -> float:
+    """Root mean square error of `y1 - y2 / sigma`.
+
+    Parameters
+    ----------
+    y1: Model simulations.
+    y2: Ground truth values.
+    sigma: Normalizations.
+
+    Returns
+    -------
+    val: The normalized root mean square value.
+    """
+    return np.sqrt(
+        np.sum(
+            ((y1 - y2) / sigma)**2,
+        ) / y1.shape[0]
+    )
