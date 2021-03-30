@@ -763,9 +763,13 @@ def analytical_solution(all_weights, subpopulation_sizes):
     Only for a single proposal
     """
     n1 = subpopulation_sizes[0]
-    alpha_opt = ((np.sum(all_weights[:n1]) * np.sum(all_weights[n1:] ** 2)) /
-                 (np.sum(all_weights[:n1]) * np.sum(all_weights[n1:] ** 2) +
-                  np.sum(all_weights[n1:]) * np.sum(all_weights[:n1] ** 2)))
+    normalization_constant = 1/all_weights.sum()
+    print(normalization_constant)
+    all_weights *= normalization_constant
+    print(np.sum(all_weights[:n1]), np.sum(all_weights[n1:]**2))
+    alpha_opt = ((np.sum(all_weights[:n1]) ** 2 * np.sum(all_weights[n1:] ** 2)) /
+                 (np.sum(all_weights[:n1]) ** 2 * np.sum(all_weights[n1:] ** 2) +
+                  np.sum(all_weights[n1:]) ** 2 * np.sum(all_weights[:n1] ** 2)))
     return alpha_opt
 
 
