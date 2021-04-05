@@ -45,7 +45,7 @@ def execute_case(case):
         _execute_case(case)
     except Exception as e:
         if isinstance(e, NotImplementedError) \
-                or "Timepoint-specific parameter overrides" in str(e):
+                or "timepoint specific" in str(e):
             logger.info(
                 f"Case {case} expectedly failed. Required functionality is "
                 f"not implemented: {e}")
@@ -85,7 +85,8 @@ def _execute_case(case):
         sys.path.insert(0, output_folder)
     amici_model = amici.petab_import.import_petab_problem(
         petab_problem=petab_problem,
-        model_output_dir=output_folder)
+        model_output_dir=output_folder,
+    )
     solver = amici_model.getSolver()
 
     # import to pyabc
