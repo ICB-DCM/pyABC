@@ -156,7 +156,7 @@ def work_on_population_dynamic(
                 new_sim = simulate_one()
             except Exception as e:
                 if all_accepted:
-                    redis.decr(idfy(N_ACC, ana_id, t), 1)
+                    redis.decr(idfy(N_EVAL, ana_id, t), 1)
                 logger.warning(f"Redis worker number {n_worker} failed. "
                                f"Error message is: {e}")
                 # increment the failure counter
