@@ -2,8 +2,17 @@ import pandas as pd
 from io import StringIO, BytesIO
 import csv
 import numpy as np
-import pyarrow
-import pyarrow.parquet as parquet
+import warnings
+
+try:
+    import pyarrow
+    import pyarrow.parquet as parquet
+except ImportError:
+    pyarrow = parquet = None
+    warnings.warn(
+        "Cannot find pyarrow, thus falling back to the less efficient csv "
+        "format to store pandas.DataFrame data. ",
+    )
 
 
 class DataFrameLoadException(Exception):
@@ -18,9 +27,9 @@ def df_from_bytes_csv_(bytes_: bytes) -> pd.DataFrame:
     try:
         s = StringIO(bytes_.decode())
         s.seek(0)
-        return pd.read_csv(s, index_col=0, header=0,
-                           float_precision="round_trip",
-                           quotechar='"')
+        return pd.read_csv(
+            s, index_col=0, header=0, float_precision="round_trip",
+            quotechar='"')
     except UnicodeDecodeError:
         raise DataFrameLoadException("Not a DataFram")
 
@@ -93,5 +102,26 @@ def df_from_np_records_(bytes_: bytes) -> pd.DataFrame:
     return df
 
 
-df_to_bytes = df_to_bytes_parquet_
-df_from_bytes = df_from_bytes_parquet_
+def df_to_bytes(df: pd.DataFrame) -> bytes:
+    """Write dataframes to bytes.
+
+    Uses pyarrow parquet if available, otherwise csv.
+    """
+    if pyarrow is None:
+        return df_to_bytes_csv_(df)
+    return df_to_bytes_parquet_(df)
+
+
+def df_from_bytes(bytes_: bytes) -> pd.DataFrame:
+    """Read dataframe from bytes.
+
+    If pyarrow is not available, try csv.
+    """
+    if pyarrow is None:
+        try:
+            return df_from_bytes_csv_(bytes_)
+        except pd.errors.EmptyDataError:
+            raise AssertionError(
+                "Cannot read dataframe as csv, it may be based on pyarrow "
+                "parquet.")
+    return df_from_bytes_parquet_(bytes_)
