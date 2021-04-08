@@ -103,7 +103,7 @@ def df_from_bytes_np_records(bytes_: bytes) -> pd.DataFrame:
 
 
 def df_to_bytes(df: pd.DataFrame) -> bytes:
-    """Write dataframes to bytes.
+    """Write dataframe to bytes.
 
     Use pyarrow parquet if available, otherwise csv.
     """
