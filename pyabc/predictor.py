@@ -93,6 +93,9 @@ class SimplePredictor(Predictor):
         self.joint: bool = joint
         self.weight_samples: bool = weight_samples
 
+        # indices to use
+        self.use_ixs: Union[np.ndarray, None] = None
+
         # z-score normalization coefficients
         self.mean_x: Union[np.ndarray, None] = None
         self.std_x: Union[np.ndarray, None] = None
@@ -108,6 +111,10 @@ class SimplePredictor(Predictor):
         y: Targets, shape (n_sample, n_out).
         w: Weights, shape (n_sample,).
         """
+        # remove trivial features
+        self.use_ixs = np.any(x != x[0], axis=0)
+        x = x[:, self.use_ixs]
+
         # normalize features
         if self.normalize_features:
             self.mean_x = np.mean(x, axis=0)
@@ -129,7 +136,7 @@ class SimplePredictor(Predictor):
         else:
             # set up predictors
             if self.single_predictors is None:
-                n_par = x.shape[1]
+                n_par = y.shape[1]
                 self.single_predictors: List = [
                     copy.deepcopy(self.predictor) for _ in range(n_par)]
             # fit a model for each parameter separately
@@ -153,6 +160,9 @@ class SimplePredictor(Predictor):
         -------
         y: Predicted targets, shape (n_sample, n_out).
         """
+        # remove trivial features
+        x = x[:, self.use_ixs]
+
         # normalize features
         if self.normalize_features:
             x = (x - self.mean_x) / self.std_x
