@@ -15,6 +15,17 @@ from pyabc.parameters import Parameter
 from pyabc.population import Particle, Population
 from pyabc import History
 from pyabc.storage.df_to_file import sumstat_to_json
+from pyabc.storage.dataframe_bytes_storage import (
+    df_to_bytes_parquet,
+    df_from_bytes_parquet,
+    df_to_bytes_csv,
+    df_from_bytes_csv,
+    df_to_bytes_json,
+    df_from_bytes_json,
+    df_to_bytes_np_records,
+    df_from_bytes_np_records,
+    DataFrameLoadException,
+)
 
 
 def example_df():
@@ -468,3 +479,32 @@ def test_create_db():
     os.remove(file_)
     with pytest.raises(ValueError):
         pyabc.History("sqlite:///" + file_, create=False)
+
+
+def test_dataframe_formats():
+    """Test correct behavior of the different dataframe storage methods."""
+    df = pd.DataFrame(
+        {'a': [6.57, 7],
+         'b': [True, False],
+         'c': ['hola', 'hej']},
+    )
+
+    df_parquet = df_to_bytes_parquet(df)
+    df_csv = df_to_bytes_csv(df)
+    df_json = df_to_bytes_json(df)
+
+    # np does not allow object arrays
+    df_float = pd.DataFrame({'a': [4.32, 5], 'b': [4, 1.24]})
+    df_np_records = df_to_bytes_np_records(df_float)
+
+    assert (df == df_from_bytes_parquet(df_parquet)).all(axis=None)
+    assert (df == df_from_bytes_csv(df_csv)).all(axis=None)
+    assert (df == df_from_bytes_json(df_json)).all(axis=None)
+    assert (df_float == df_from_bytes_np_records(df_np_records)).all(axis=None)
+
+    with pytest.raises(DataFrameLoadException):
+        df_from_bytes_csv(df_parquet)
+
+    # will interpret as mspack, but late pandas version dropped that method
+    with pytest.raises(AttributeError):
+        df_from_bytes_parquet(df_csv)
