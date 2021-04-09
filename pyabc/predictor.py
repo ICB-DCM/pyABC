@@ -160,15 +160,16 @@ class SimplePredictor(Predictor):
         -------
         y: Predicted targets, shape (n_sample, n_out).
         """
+        # to 2d matrix
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
+
         # remove trivial features
         x = x[:, self.use_ixs]
 
         # normalize features
         if self.normalize_features:
             x = (x - self.mean_x) / self.std_x
-
-        if x.ndim == 1:
-            x = x.reshape(1, -1)
 
         if self.joint:
             y = self.predictor.predict(x)

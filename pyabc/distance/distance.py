@@ -499,27 +499,39 @@ class InfoWeightedPNormDistance(PNormDistance):
         )
         s_0 = self.s_0
 
+        # remove trivial features
+        use_ixs = np.any(sumstats != sumstats[0], axis=0)
+        x = sumstats[:, use_ixs]
+
+        # normalize features
+        mean_x = np.mean(x, axis=0)
+        std_x = np.std(x, axis=0)
+        x = (x - mean_x) / std_x
+
+        # normalize observed features
+        x0 = (s_0[use_ixs] - mean_x) / std_x
+
+        # normalize labels
+        y = parameters
+        mean_y = np.mean(y, axis=0)
+        std_y = np.std(y, axis=0)
+        y = (y - mean_y) / std_y
+
         # learn predictor model
-        self.predictor.fit(x=sumstats, y=parameters, w=weights)
+        self.predictor.fit(x=x, y=y, w=weights)
 
         # sensitivity matrix
-        n_sumstat = sumstats.shape[1]
-        n_par = parameters.shape[1]
-        sensis = np.empty((n_sumstat, n_par))
+        n_x = x.shape[1]
+        n_y = y.shape[1]
+        sensis = np.empty((n_x, n_y))
 
         # calculate all sensitivities of the predictor
-        eye = np.eye(n_sumstat)
+        eye = np.eye(n_x)
         eps = self.eps
-        for i_s in range(n_sumstat):
-            vp = self.predictor.predict(
-                (s_0 + eps * eye[i_s]).reshape(1, -1),
-                orig_scale=False,
-            )
-            vm = self.predictor.predict(
-                (s_0 - eps * eye[i_s]).reshape(1, -1),
-                orig_scale=False,
-            )
-            sensis[i_s, :] = (vp - vm) / (2 * eps)
+        for i_x in range(n_x):
+            vp = self.predictor.predict((x0 + eps * eye[i_x]).reshape(1, -1))
+            vm = self.predictor.predict((x0 - eps * eye[i_x]).reshape(1, -1))
+            sensis[i_x, :] = (vp - vm) / (2 * eps)
 
         # we are only interested in absolute values
         sensis = np.abs(sensis)
@@ -531,12 +543,16 @@ class InfoWeightedPNormDistance(PNormDistance):
         #  parameters
         weights = np.sum(sensis, axis=1)
 
+        # project onto full sumstat vector and normalize by scale
+        weights_full = np.zeros_like(s_0)
+        weights_full[use_ixs] = weights / std_x
+
         # bound weights
-        weights = bound_weights(
-            weights, max_weight_ratio=self.max_weight_ratio)
+        weights_full = bound_weights(
+            weights_full, max_weight_ratio=self.max_weight_ratio)
 
         # update weights attribute
-        self.weights[t] = weights
+        self.weights[t] = weights_full
 
         # logging
         log_weights(
