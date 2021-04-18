@@ -199,4 +199,4 @@ def run_app(db, debug, port):
     db = os.path.expanduser(db)
     history = History("sqlite:///" + db)
     app.config["HISTORY"] = history
-    app.run(port=port,debug=debug)
+    app.run(port=port, debug=debug)
