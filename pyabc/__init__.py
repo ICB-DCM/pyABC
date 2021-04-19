@@ -120,6 +120,7 @@ from .sumstat import (
     IdentitySumstat,
     PredictorSumstat,
     LinearPredictorSumstat,
+    LassoPredictorSumstat,
     GPPredictorSumstat,
     MLPPredictorSumstat,
 )
