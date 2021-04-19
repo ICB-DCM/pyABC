@@ -6,6 +6,7 @@ from scipy import linalg as la
 from numbers import Number
 from typing import Dict, List, Callable, Union
 import logging
+import warnings
 
 from .scale import standard_deviation, span
 from .base import Distance, to_distance
@@ -39,19 +40,16 @@ class PNormDistance(Distance):
     ----------
     p:
         p for p-norm. p >= 1, p = np.inf implies max norm.
-    weights:
-        Weights. Dictionary indexed by time points, or only one entry if
+    fixed_weights:
+        Weights.
+        Dictionary indexed by time points, or only one entry if
         the weights should not change over time.
         Each entry contains a dictionary of numeric weights, indexed by summary
         statistics labels, or the corresponding array representation.
         If None is passed, a weight of 1 is considered for every summary
         statistic.
-        If no entry is available in `weights` for a given time point, the
-        maximum available time point is selected.
-    factors:
-        Fixed multiplicative factors the weights are multiplied with. The
-        discrimination of weights and factors makes only sense for adaptive
-        distance functions.
+        If no entry is available for a given time point, the maximum available
+        time point is selected.
     sumstat:
         Summary statistics transformation to apply to the model output.
     """
@@ -59,8 +57,8 @@ class PNormDistance(Distance):
     def __init__(
         self,
         p: float = 2,
-        weights: Union[Dict[str, float], Dict[int, Dict[str, float]]] = None,
-        factors: Dict[str, float] = None,
+        fixed_weights: Union[Dict[str, float],
+                             Dict[int, Dict[str, float]]] = None,
         sumstat: Sumstat = None,
     ):
         super().__init__()
@@ -73,11 +71,8 @@ class PNormDistance(Distance):
             raise ValueError("It must be p >= 1")
         self.p: float = p
 
-        self._arg_weights = weights
-        self._arg_factors = factors
-
-        self.weights: Union[Dict[int, np.ndarray], None] = None
-        self.factors: Union[np.ndarray, None] = None
+        self._arg_fixed_weights = fixed_weights
+        self.fixed_weights: Union[Dict[int, np.ndarray], None] = None
 
         # to cache the observed data and summary statistics
         self.x_0: Union[dict, None] = None
@@ -97,14 +92,10 @@ class PNormDistance(Distance):
         self.s_0 = self.sumstat(self.x_0)
 
         # initialize weights
-        self.weights = PNormDistance.format_dict(
-            vals=self._arg_weights, t=t, s_0=self.s_0,
+        self.fixed_weights = PNormDistance.format_dict(
+            vals=self._arg_fixed_weights, t=t, s_0=self.s_0,
             s_ids=self.sumstat.get_ids(),
         )
-        self.factors = PNormDistance.format_dict(
-            vals=self._arg_factors, t=t, s_0=self.s_0,
-            s_ids=self.sumstat.get_ids(),
-        )[t]
 
     def update(
         self,
@@ -120,6 +111,24 @@ class PNormDistance(Distance):
     def configure_sampler(self, sampler) -> None:
         self.sumstat.configure_sampler(sampler=sampler)
 
+    def get_weights(self, t: int) -> np.ndarray:
+        """Compute weights for time `t`.
+
+        Generates weights from the multiple possible contributing factors.
+        Overwrite in subclasses if there are additional weights.
+
+        Parameters
+        ----------
+        t: Current time point.
+
+        Returns
+        -------
+        The combined weights.
+        """
+        fixed_weights: np.ndarray = \
+            PNormDistance.for_t_or_latest(self.fixed_weights, t)
+        return fixed_weights
+
     @staticmethod
     def format_dict(
         vals: Union[Dict[str, float], Dict[int, Dict[str, float]]],
@@ -128,7 +137,20 @@ class PNormDistance(Distance):
         s_ids: List[str],
         default_val: float = 1.
     ) -> Dict[int, np.ndarray]:
-        """Normalize weight dictionary to the employed format."""
+        """Normalize weight dictionary to the employed format.
+
+        Parameters
+        ----------
+        vals: Possibly unformatted weight values.
+        t: Current time point.
+        s_0: Observed summary statistics, for reference.
+        s_ids: Summary statistic labels for correct conversion to array.
+        default_val: Default fill value if vals is None.
+
+        Returns
+        -------
+        Dictionary indexed by time points and, with array values.
+        """
         if vals is None:
             # use default
             vals = {t: default_val * np.ones(len(s_0))}
@@ -143,8 +165,16 @@ class PNormDistance(Distance):
 
     @staticmethod
     def for_t_or_latest(w: Dict[int, np.ndarray], t: int) -> np.ndarray:
-        """
-        Extract values from dict for given time point.
+        """Extract values from dict for given time point.
+
+        Parameters
+        ----------
+        w: Weights dictionary.
+        t: Time point to extract weights for.
+
+        Returns
+        -------
+        The The weights at time t, or the maximal key if t is not present.
         """
         # take last time point for which values exist
         if t not in w:
@@ -160,21 +190,17 @@ class PNormDistance(Distance):
         par: dict = None
     ) -> float:
         # extract weights for given time point
-        weights = PNormDistance.for_t_or_latest(self.weights, t)
-        factors = self.factors
+        weights = self.get_weights(t=t)
 
         # compute summary statistics
         s, s0 = self.sumstat(x), self.sumstat(x_0)
 
         # assert shapes match
-        if (
-            s.shape != weights.shape or s.shape != s0.shape
-            or s.shape != factors.shape
-        ):
+        if s.shape != weights.shape or s.shape != s0.shape:
             raise AssertionError("Shapes do not match")
 
         # component-wise distances
-        distances = np.abs(factors * weights * (s - s0))
+        distances = np.abs(weights * (s - s0))
 
         # maximum or p-norm distance
         if self.p == np.inf:
@@ -185,20 +211,31 @@ class PNormDistance(Distance):
         return {
             "name": self.__class__.__name__,
             "p": self.p,
-            "weights": self.weights,
-            "factors": self.factors,
+            "fixed_weights": self.fixed_weights,
             "sumstat": self.sumstat.__str__(),
         }
 
-    def get_weights_dict(self) -> Dict[int, Dict[str, float]]:
-        """Create labeled weights dictionary."""
+    def weights2dict(
+        self, weights: Dict[int, np.ndarray],
+    ) -> Dict[int, Dict[str, float]]:
+        """Create labeled weights dictionary.
+
+        Parameters
+        ----------
+        weights:
+            Array formatted weight dictionary.
+
+        Returns
+        -------
+        weights_dict: Key-value formatted weight dictionary.
+        """
         # assumes that the summary statistic labels do not change over time
         return {
             t: {
                 key: val
-                for key, val in zip(self.sumstat.get_ids(), self.weights[t])
+                for key, val in zip(self.sumstat.get_ids(), weights[t])
             }
-            for t in self.weights
+            for t in weights
         }
 
 
@@ -212,15 +249,17 @@ class AdaptivePNormDistance(PNormDistance):
     p:
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
         Default: p=2.
-    initial_weights:
-        Weights to be used in the initial iteration. Dictionary with
+    initial_scale_weights:
+        Scale weights to be used in the initial iteration. Dictionary with
         observables as keys and weights as values.
-    factors:
-        As in PNormDistance.
-    adaptive:
-        True: Adapt distance after each iteration.
-        False: Adapt distance only once at the beginning in initialize().
-        This corresponds to a pre-calibration.
+    fixed_weights:
+        Fixed multiplicative factors the weights are multiplied with, to
+        e.g. account for heterogeneous numbers of data points.
+        The discrimination of various weight types makes only sense for
+        adaptive distances.
+    n_fit_scales:
+        Number of times the scales are refitted. inf means in every iteration,
+        1 means only once at the beginning for calibration in initialize().
     scale_function:
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
@@ -232,11 +271,12 @@ class AdaptivePNormDistance(PNormDistance):
         If not None, large weights will be bounded by the ratio times the
         smallest non-zero absolute weight. In practice usually not necessary,
         it is theoretically required to ensure convergence.
-    log_file:
-        A log file to store weights for each time point in. Weights are
+    scale_log_file:
+        A log file to store scale weights for each time point in. Weights are
         currently not stored in the database. The data are saved in json
         format and can be retrieved via `pyabc.storage.load_dict_from_json`.
-
+    sumstat:
+        Summary statistics. Defaults to an identity mapping.
 
     .. [#prangle] Prangle, Dennis. "Adapting the ABC Distance Function".
                 Bayesian Analysis, 2017. doi:10.1214/16-BA1002.
@@ -245,27 +285,31 @@ class AdaptivePNormDistance(PNormDistance):
     def __init__(
         self,
         p: float = 2,
-        initial_weights: Dict[str, float] = None,
-        factors: Dict[str, float] = None,
-        adaptive: bool = True,
+        initial_scale_weights: Dict[str, float] = None,
+        fixed_weights: Dict[str, float] = None,
+        n_fit_scales: int = np.inf,
         scale_function: Callable = None,
         max_weight_ratio: float = None,
-        log_file: str = None,
+        scale_log_file: str = None,
         sumstat: Sumstat = None,
     ):
         # call p-norm constructor
-        super().__init__(p=p, weights=None, factors=factors, sumstat=sumstat)
+        super().__init__(p=p, fixed_weights=fixed_weights, sumstat=sumstat)
 
-        self.initial_weights: Dict[str, float] = initial_weights
+        self.initial_scale_weights: Dict[str, float] = initial_scale_weights
 
-        self.adaptive: bool = adaptive
+        self.scale_weights: Dict[int, np.ndarray] = {}
+
+        self.n_fit_scales: int = n_fit_scales
+        # counter
+        self.i_fit_scales: int = 0
 
         if scale_function is None:
             scale_function = standard_deviation
         self.scale_function: Callable = scale_function
 
         self.max_weight_ratio: float = max_weight_ratio
-        self.log_file: str = log_file
+        self.scale_log_file: str = scale_log_file
 
     def configure_sampler(self, sampler) -> None:
         """
@@ -280,7 +324,7 @@ class AdaptivePNormDistance(PNormDistance):
             The sampler employed.
         """
         super().configure_sampler(sampler=sampler)
-        if self.adaptive:
+        if self.n_fit_scales > 1:
             sampler.sample_factory.record_rejected()
 
     def initialize(
@@ -292,17 +336,20 @@ class AdaptivePNormDistance(PNormDistance):
         # esp. initialize sumstats
         super().initialize(t=t, get_sample=get_sample, x_0=x_0)
 
+        # weighting counter is incremented either way (pre-defined counts too)
+        self.i_fit_scales += 1
+
         # are initial weights pre-defined
-        if not self.requires_calibration():
-            self.weights[t] = dict2arr(
-                self.initial_weights, keys=self.sumstat.get_ids())
+        if self.initial_scale_weights is not None:
+            self.scale_weights[t] = dict2arr(
+                self.initial_scale_weights, keys=self.sumstat.get_ids())
             return
 
         # execute cached function
         sample = get_sample()
 
         # update weights from samples
-        self._fit(t=t, sample=sample)
+        self.fit_scales(t=t, sample=sample)
 
     def update(
         self,
@@ -311,17 +358,21 @@ class AdaptivePNormDistance(PNormDistance):
     ) -> bool:
         # esp. updates summary statistics
         updated = super().update(t=t, get_sample=get_sample)
-        if not self.is_adaptive():
+
+        # check whether weight fitting is desired
+        if self.i_fit_scales >= self.n_fit_scales:
             return updated
+        else:
+            self.i_fit_scales += 1
 
         # execute cached function
         sample = get_sample()
 
-        self._fit(t=t, sample=sample)
+        self.fit_scales(t=t, sample=sample)
 
         return True
 
-    def _fit(
+    def fit_scales(
         self,
         t: int,
         sample: Sample
@@ -336,7 +387,8 @@ class AdaptivePNormDistance(PNormDistance):
         s0 = self.s_0
 
         # calculate scales
-        scales = self.scale_function(samples=ss, s0=s0)
+        scales = self.scale_function(
+            samples=ss, s0=s0, s_ids=self.sumstat.get_ids())
 
         # weights are the inverse scales
         # a scale close to zero happens e.g. if all simulations are identical
@@ -344,79 +396,102 @@ class AdaptivePNormDistance(PNormDistance):
         weights = np.zeros_like(scales)
         weights[~np.isclose(scales, 0)] = 1 / scales[~np.isclose(scales, 0)]
 
-        if (weights < 0).any():
-            raise AssertionError(f"There are weights <0: {weights}")
-
         # bound weights
         weights = bound_weights(
             weights, max_weight_ratio=self.max_weight_ratio)
 
         # update weights attribute
-        self.weights[t] = weights
+        self.scale_weights[t] = weights
 
         # logging
         log_weights(
-            t=t, weights=self.weights, keys=self.sumstat.get_ids(),
-            log_file=self.log_file, logger=logger)
+            t=t, weights=self.scale_weights, keys=self.sumstat.get_ids(),
+            label="Scale", log_file=self.scale_log_file, logger=logger)
+
+    def get_weights(self, t: int) -> np.ndarray:
+        scale_weights: np.ndarray = \
+            PNormDistance.for_t_or_latest(self.scale_weights, t)
+        return super().get_weights(t=t) * scale_weights
 
     def requires_calibration(self) -> bool:
-        if self.initial_weights is None:
+        if self.initial_scale_weights is None:
             return True
         return self.sumstat.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        if self.adaptive:
+        if self.n_fit_scales > 1:
             return True
         return self.sumstat.is_adaptive()
 
     def get_config(self) -> dict:
         config = super().get_config()
         config.update({
-            "adaptive": self.adaptive,
+            "n_fit_scales": self.n_fit_scales,
             "scale_function": self.scale_function.__name__,
             "max_weight_ratio": self.max_weight_ratio,
         })
         return config
 
 
-class InfoWeightedPNormDistance(PNormDistance):
+class InfoWeightedPNormDistance(AdaptivePNormDistance):
     """Weight summary statistics by sensitivity of a predictor `y -> theta`."""
 
     def __init__(
-            self,
-            predictor: Predictor,
-            p: float = 2,
-            initial_weights: Dict[str, float] = None,
-            factors: Dict[str, float] = None,
-            n_fit: int = 1,
-            scale_function: Callable = None,
-            max_weight_ratio: float = None,
-            log_file: str = None,
-            sumstat: Sumstat = None,
-            eps: float = 1e-2,
+        self,
+        predictor: Predictor,
+        p: float = 2,
+        initial_scale_weights: Dict[str, float] = None,
+        initial_info_weights: Dict[str, float] = None,
+        fixed_weights: Dict[str, float] = None,
+        n_fit_scales: int = np.inf,
+        n_fit_info: int = 1,
+        scale_function: Callable = None,
+        max_weight_ratio: float = None,
+        scale_log_file: str = None,
+        info_log_file: str = None,
+        sumstat: Sumstat = None,
+        eps: float = 1e-2,
     ):
+        """
+        Parameters
+        ----------
+        predictor:
+            Predictor model used to quantify the information in data on
+            parameters.
+        initial_info_weights:
+            Initial information weights. Can be passed to avoid
+            (re)-calibration.
+        n_fit_info:
+            Number of times to fit the information weights.
+        info_log_file:
+            Log file for the information weights.
+        eps:
+            Finite difference width (rel. to 1), used to approximate the
+            gradient of the predictor.
+        """
         # call p-norm constructor
-        super().__init__(p=p, weights=None, factors=factors, sumstat=sumstat)
+        super().__init__(
+            p=p, initial_scale_weights=initial_scale_weights,
+            fixed_weights=fixed_weights, n_fit_scales=n_fit_scales,
+            scale_function=scale_function,
+            max_weight_ratio = max_weight_ratio,
+            scale_log_file=scale_log_file, sumstat=sumstat,
+        )
 
         self.predictor = predictor
 
-        self.initial_weights: Dict[str, float] = initial_weights
+        self.initial_info_weights: Dict[str, float] = initial_info_weights
+        self.info_weights: Dict[int, np.ndarray] = {}
 
-        self.n_fit: int = n_fit
+        self.n_fit_info: int = n_fit_info
+        # counter
+        self.i_fit_info: int = 0
 
-        if scale_function is None:
-            scale_function = standard_deviation
-        self.scale_function: Callable = scale_function
-
-        self.max_weight_ratio: float = max_weight_ratio
-        self.log_file: str = log_file
+        self.info_log_file: str = info_log_file
         self.eps: float = eps
 
         # parameter keys (for correct order)
         self.par_keys: Union[List[str], None] = None
-
-        # fit counter
-        self.i_fit: int = 0
 
     def configure_sampler(self, sampler) -> None:
         """
@@ -431,73 +506,71 @@ class InfoWeightedPNormDistance(PNormDistance):
             The sampler employed.
         """
         super().configure_sampler(sampler=sampler)
-        if self.n_fit > 1:
+        if self.n_fit_info > 1:
             sampler.sample_factory.record_rejected()
 
     def initialize(
-            self,
-            t: int,
-            get_sample: Callable[[], Sample],
-            x_0: dict = None
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict = None
     ) -> None:
-        # esp. initialize sumstats
+        # esp. initialize sumstats, weights
         super().initialize(t=t, get_sample=get_sample, x_0=x_0)
 
+        # counter is incremented either way (pre-defined counts too)
+        self.i_fit_info += 1
+
         # are initial weights pre-defined
-        if not self.requires_calibration():
-            self.weights[t] = dict2arr(
-                self.initial_weights, keys=self.sumstat.get_ids())
+        if self.initial_info_weights is not None:
+            self.info_weights[t] = dict2arr(
+                self.initial_info_weights, keys=self.sumstat.get_ids())
             return
 
         # execute cached function
         sample = get_sample()
 
-        # fix parameter key order
-        self.par_keys: List[str] = \
-            list(sample.accepted_particles[0].parameter.keys())
-
-        # check whether refitting is desired
-        if self.i_fit >= self.n_fit:
-            return
-        else:
-            self.i_fit += 1
-
         # update weights from samples
-        self._fit(t=t, sample=sample)
+        self.fit_info(t=t, sample=sample)
 
     def update(
-            self,
-            t: int,
-            get_sample: Callable[[], Sample]
+        self,
+        t: int,
+        get_sample: Callable[[], Sample]
     ) -> bool:
-        # esp. updates summary statistics
+        # esp. updates summary statistics, weights
         updated = super().update(t=t, get_sample=get_sample)
 
         # check whether refitting is desired
-        if self.i_fit >= self.n_fit:
+        if self.i_fit_info >= self.n_fit_info:
             return updated
         else:
-            self.i_fit += 1
+            self.i_fit_info += 1
 
         # execute cached function
         sample = get_sample()
 
-        self._fit(t=t, sample=sample)
+        self.fit_info(t=t, sample=sample)
 
         return True
 
-    def _fit(
-            self,
-            t: int,
-            sample: Sample
+    def fit_info(
+        self,
+        t: int,
+        sample: Sample
     ) -> None:
-        """Here the real weight update happens."""
+        """Update information weights from model fits."""
+        # make sure parameter key order is defined
+        if self.par_keys is None:
+            self.par_keys: List[str] = \
+                list(sample.accepted_particles[0].parameter.keys())
+
         # create (n_sample, n_feature) matrix of all summary statistics
         sumstats, parameters, weights = read_sample(
             sample=sample, sumstat=self.sumstat, all_particles=True,
             par_keys=self.par_keys,
         )
-        s_0 = self.s_0
+        s_0 = self.sumstat(self.x_0)
 
         # remove trivial features
         use_ixs = np.any(sumstats != sumstats[0], axis=0)
@@ -541,39 +614,44 @@ class InfoWeightedPNormDistance(PNormDistance):
 
         # the weight of a sumstat is the sum of the sensitivities over all
         #  parameters
-        weights = np.sum(sensis, axis=1)
+        info_weights_red = np.sum(sensis, axis=1)
 
         # project onto full sumstat vector and normalize by scale
-        weights_full = np.zeros_like(s_0)
-        weights_full[use_ixs] = weights / std_x
+        info_weights = np.zeros_like(s_0)
+        info_weights[use_ixs] = info_weights_red
 
         # bound weights
-        weights_full = bound_weights(
-            weights_full, max_weight_ratio=self.max_weight_ratio)
+        info_weights = bound_weights(
+            info_weights, max_weight_ratio=self.max_weight_ratio)
 
         # update weights attribute
-        self.weights[t] = weights_full
+        self.info_weights[t] = info_weights
 
         # logging
         log_weights(
-            t=t, weights=self.weights, keys=self.sumstat.get_ids(),
-            log_file=self.log_file, logger=logger)
+            t=t, weights=self.info_weights, keys=self.sumstat.get_ids(),
+            label="Info", log_file=self.info_log_file, logger=logger)
+
+    def get_weights(self, t: int) -> np.ndarray:
+        info_weights: np.ndarray = \
+            PNormDistance.for_t_or_latest(self.info_weights, t)
+        return super().get_weights(t=t) * info_weights
 
     def requires_calibration(self) -> bool:
-        if self.initial_weights is None:
+        if self.initial_info_weights is None:
             return True
         return self.sumstat.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        if self.n_fit > 1:
+        if self.n_fit_info > 1:
             return True
-        return self.sumstat.is_adaptive()
+        return super().is_adaptive()
 
     def get_config(self) -> dict:
         config = super().get_config()
         config.update({
             "predictor": self.predictor.__str__(),
-            "n_fit": self.n_fit,
+            "n_fit_info": self.n_fit_info,
             "scale_function": self.scale_function.__name__,
             "max_weight_ratio": self.max_weight_ratio,
         })

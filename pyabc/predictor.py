@@ -1,5 +1,5 @@
 import numpy as np
-from typing import List, Union
+from typing import Callable, List, Tuple, Union
 import copy
 import logging
 from abc import ABC, abstractmethod
@@ -42,18 +42,23 @@ class Predictor(ABC):
         """
 
     @abstractmethod
-    def predict(self, x: np.ndarray, orig_scale: bool = True) -> np.ndarray:
+    def predict(self, x: np.ndarray, normalize: bool = False) -> np.ndarray:
         """Predict outputs using the model.
 
         Parameters
         ---------
-        x: Samples, shape (n_sample, n_feature) or (n_feature,).
-        orig_scale: Whether outputs should be on the original scale.
+        x:
+            Samples, shape (n_sample, n_feature) or (n_feature,).
+        normalize:
+            Whether outputs should be normalized, or on the original scale.
 
         Returns
         -------
         y: Predicted targets, shape (n_sample, n_out).
         """
+
+    def __repr__(self) -> str:
+        return f"<{self.__class__.__name__}>"
 
 
 class SimplePredictor(Predictor):
@@ -146,15 +151,17 @@ class SimplePredictor(Predictor):
                 else:
                     predictor.fit(x, y_)
 
-        logger.info(f"Fitted {self.__class__.__name__}")
+        logger.info(f"Fitted {self}")
 
-    def predict(self, x: np.ndarray, orig_scale: bool = True) -> np.ndarray:
+    def predict(self, x: np.ndarray, normalize: bool = False) -> np.ndarray:
         """Predict outputs using the model.
 
         Parameters
         ---------
-        x: Samples, shape (n_sample, n_feature) or (n_feature,).
-        orig_scale: Whether outputs should be on the original scale.
+        x:
+            Samples, shape (n_sample, n_feature) or (n_feature,).
+        normalize:
+            Whether outputs should be normalized, or on the original scale.
 
         Returns
         -------
@@ -177,10 +184,23 @@ class SimplePredictor(Predictor):
             y = [predictor.predict(x) for predictor in self.single_predictors]
             y = np.array(y).T
 
-        if orig_scale and self.normalize_labels:
+        if not normalize and self.normalize_labels:
             y = y * self.std_y + self.mean_y
 
         return y
+
+    def __repr__(self) -> str:
+        rep = f"<{self.__class__.__name__} predictor={self.predictor}"
+        # print everything that is customized
+        if not self.normalize_features:
+            rep += f" normalize_features={self.normalize_features}"
+        if not self.normalize_labels:
+            rep += f" normalize_labels={self.normalize_labels}"
+        if not self.joint:
+            rep += f" joint={self.joint}"
+        if self.weight_samples:
+            rep += f" weight_samples={self.weight_samples}"
+        return rep + ">"
 
 
 class LinearPredictor(SimplePredictor):
@@ -254,12 +274,18 @@ class GPPredictor(SimplePredictor):
 
     def __init__(
         self,
-        kernel=None,
+        kernel: Union[Callable, skl_gp.kernels.Kernel] = None,
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
         **kwargs,
     ):
+        """
+        Parameters
+        ----------
+        kernel:
+            Covariance kernel. Can be either a kernel, o
+        """
         # check installation
         if skl_gp is None:
             raise ImportError(
@@ -268,17 +294,91 @@ class GPPredictor(SimplePredictor):
 
         # default kernel
         if kernel is None:
-            kernel = skl_gp.kernels.RBF() + skl_gp.kernels.WhiteKernel()
+            kernel = GPKernelHandle()
+        self.kernel: Union[Callable, skl_gp.kernels.Kernel] = kernel
 
-        predictor = skl_gp.GaussianProcessRegressor(kernel=kernel, **kwargs)
+        self.kwargs = kwargs
 
         super().__init__(
-            predictor=predictor,
+            predictor=None,
             normalize_features=normalize_features,
             normalize_labels=normalize_labels,
             joint=joint,
             weight_samples=False,
         )
+
+    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+        # need to recreate the model
+
+        # kernel
+        kernel = self.kernel
+        if not isinstance(kernel, skl_gp.kernels.Kernel):
+            n_in = x.shape[1]
+            kernel = kernel(n_in)
+
+        self.predictor = skl_gp.GaussianProcessRegressor(
+            kernel=kernel, **self.kwargs)
+
+        super().fit(x=x, y=y, w=w)
+
+
+class GPKernelHandle:
+    """Convenience class for Gaussian process kernel construction.
+
+    Allows to create kernels depending on problem dimensions.
+    """
+
+    # kernels supporting features specific length scales
+    ARD_KERNELS = ["RBF", "Matern"]
+
+    def __init__(
+        self,
+        kernels: List[str] = None,
+        kernel_kwargs: List[dict] = None,
+        ard: bool = True,
+    ):
+        """
+        Parameters
+        ----------
+        kernels:
+            Names of `sklearn.kernel` covariance kernels. Defaults to a
+            radial basis function (a.k.a. squared exponential) kernel "RBF"
+            and a "WhiteKernel" to explain noise in the data. The resulting
+            kernel is the sum of all kernels.
+        kernel_kwargs:
+            Optional arguments passed to the kernel constructors.
+        ard:
+            Automatic relevance determination by assigning a separate length
+            scale per input variable. Only supported by some kernels.
+        """
+        if kernels is None:
+            kernels = ["RBF", "WhiteKernel"]
+        self.kernels: List[str] = kernels
+
+        if kernel_kwargs is None:
+            kernel_kwargs = [{} for _ in self.kernels]
+        self.kernel_kwargs = kernel_kwargs
+
+        self.ard: bool = ard
+
+    def __call__(self, n_in: int) -> "skl_gp.kernels.Kernel":
+        """
+        Parameters
+        ----------
+        n_in: Input (feature) dimension.
+
+        Returns
+        -------
+        kernel: Kernel created from inputs.
+        """
+        kernels = [
+            getattr(skl_gp.kernels, kernel)(
+                length_scale=np.ones(n_in), **kernel_kwargs)
+            if self.ard and kernel in GPKernelHandle.ARD_KERNELS
+            else getattr(skl_gp.kernels, kernel)(**kernel_kwargs)
+            for kernel, kernel_kwargs in zip(self.kernels, self.kernel_kwargs)
+        ]
+        return sum(kernels)
 
 
 class MLPPredictor(SimplePredictor):
@@ -289,19 +389,34 @@ class MLPPredictor(SimplePredictor):
             normalize_features: bool = True,
             normalize_labels: bool = True,
             joint: bool = True,
+            hidden_layer_sizes: Union[Tuple[int, ...], Callable] = None,
             **kwargs,
     ):
-        """Additional keyword arguments are passed on to the model."""
+        """Additional keyword arguments are passed on to the model.
+
+        Parameters
+        ----------
+        hidden_layer_sizes:
+            Network hidden layer sizes. Can be either a tuple of ints, or
+            a callable taking input dimension, output dimension, and number
+            of samples and returning a tuple of ints.
+            The :class:`HiddenLayerSize` provides some useful defaults.
+        """
         # check installation
         if skl_nn is None:
             raise ImportError(
                 "This predictor requires an installation of scikit-learn. "
                 "Install e.g. via `pip install pyabc[scikit-learn]`")
 
+        if hidden_layer_sizes is None:
+            hidden_layer_sizes = HiddenLayerHandle(
+                method=HiddenLayerHandle.HEURISTIC)
+        self.hidden_layer_sizes = hidden_layer_sizes
+
         self.kwargs = {
-            'hidden_layer_sizes': None,
             'solver': 'lbfgs',
             'max_iter': 10000,
+            'early_stopping': True,
         }
         self.kwargs.update(kwargs)
 
@@ -315,44 +430,127 @@ class MLPPredictor(SimplePredictor):
 
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
         # need to recreate the model
-        kwargs = copy.deepcopy(self.kwargs)
 
-        # default hidden layer sizes
-        if kwargs['hidden_layer_sizes'] is None:
-            n_in, n_out = x.shape[1], y.shape[1]
-            if not self.joint:
-                n_out = 1
-            hidden_layer_sizes = (
-                int(n_in * 1.5),
-                int(0.5 * (n_in + n_out)),
-            )
-            kwargs['hidden_layer_sizes'] = hidden_layer_sizes
+        # hidden layer sizes
+        hidden_layer_sizes = self.hidden_layer_sizes
+        if callable(hidden_layer_sizes):
+            n_in, n_out, n_sample = x.shape[1], y.shape[1], x.shape[0]
+            hidden_layer_sizes = hidden_layer_sizes(n_in, n_out, n_sample)
 
-        self.predictor = skl_nn.MLPRegressor(**kwargs)
-        super().fit(x, y, w)
+        self.predictor = skl_nn.MLPRegressor(
+            hidden_layer_sizes=hidden_layer_sizes, **self.kwargs)
+
+        super().fit(x=x, y=y, w=w)
 
 
-class ModelSelection(Predictor):
+class HiddenLayerHandle:
+    """Convenience class for various layer size strategies.
+
+    Allows to define sizes depending on problem dimensions.
+    """
+
+    HEURISTIC = "heuristic"
+    MEAN = "mean"
+    MAX = "max"
+
+    def __init__(
+        self,
+        method: str = MEAN,
+        n_layer: int = 1,
+        max_size: int = np.inf,
+        alpha: float = 5.,
+    ):
+        """
+        Parameters
+        ----------
+        method: {"heuristic", "mean", "max"}
+            Method to use.
+            * "heuristic" bases the number of neurons on the number of samples
+              to avoid overfitting. See
+              https://stats.stackexchange.com/questions/181.
+            * "mean" takes the mean of input and output dimension.
+            * "max" takes the maximum of input and output dimension.
+        n_layer:
+            Number of layers.
+        max_size:
+            Maximum layer size. Applied to all strategies.
+        alpha:
+            Factor used in "heuristic". The higher, the fewer neurons.
+            Recommended is a value in the range 2-10.
+        """
+        self.method = method
+        self.n_layer = n_layer
+        self.max_size = max_size
+        self.alpha = alpha
+
+    def __call__(
+        self, n_in: int, n_out: int, n_sample: int,
+    ) -> Tuple[int, ...]:
+        """
+        Parameters
+        ----------
+        n_in: Input (feature) dimension.
+        n_out: Output (target) dimension.
+        n_sample: Number of samples.
+
+        Returns
+        -------
+        hidden_layer_sizes: Tuple of hidden layer sizes.
+        """
+        if self.method == HiddenLayerHandle.HEURISTIC:
+            # number of neurons
+            neurons = n_sample / (self.alpha * (n_in + n_out))
+            # divide by number of layers
+            neurons_per_layer = neurons / self.n_layer
+        elif self.method == HiddenLayerHandle.MEAN:
+            neurons_per_layer = 0.5 * (n_in + n_out)
+        elif self.method == HiddenLayerHandle.MAX:
+            neurons_per_layer = max(n_in, n_out)
+        else:
+            raise ValueError(f"Did not recognize method {self.method}.")
+
+        # cap
+        neurons_per_layer = min(neurons_per_layer, self.max_size)
+
+        # only >=2 dim makes sense, round
+        neurons_per_layer = int(max(2, neurons_per_layer))
+
+        # return equal-sized layers
+        return tuple(neurons_per_layer for _ in range(self.n_layer))
+
+
+class ModelSelectionPredictor(Predictor):
     """Model selection over a set of predictors.
 
-    Performs k-fold cross validation with root mean square error score on
-    z-score normalized targets.
+    Picks the model with minimum k-fold cross valdation score and retrains on
+    full data set.
     """
 
     def __init__(
         self,
         predictors: List[Predictor],
         n_splits: int = 5,
+        f_score: Callable = None,
     ):
         """
         Parameters
         ----------
         predictors:
             Set of predictors over which to perform model selection.
+        n_splits:
+            Number of splits to use in k-fold cross validation.
+        f_score:
+            Score function to assess prediction quality. Defaults to
+            root mean square error normalized by target standard variation.
+            Takes arguments y1, y2, std for prediction, ground truth, and
+            standard variation, and returns the score as a float.
         """
         super().__init__()
         self.predictors: List[Predictor] = predictors
         self.n_splits: int = n_splits
+
+        if f_score is None:
+            self.f_score = root_mean_square_error
 
         # holds the chosen predictor model
         self.chosen_one: Union[Predictor, None] = None
@@ -363,7 +561,11 @@ class ModelSelection(Predictor):
 
         # k-fold cross validation
         kfold = skl_ms.KFold(n_splits=self.n_splits, shuffle=True)
-        scores = np.empty((len(self.predictors), self.n_splits))
+
+        # scores on training and test set
+        scores_test = np.empty((len(self.predictors), self.n_splits))
+        #  for debugging
+        scores_train = np.empty((len(self.predictors), self.n_splits))
 
         # iterate over cross validation sets
         for i_split, (train_ix, test_ix) in enumerate(
@@ -373,33 +575,42 @@ class ModelSelection(Predictor):
             x_test, y_test = x[test_ix], y[test_ix]
 
             # iterate over predictors
-            for i_predictor, predictor in enumerate(self.predictors):
+            for i_pred, predictor in enumerate(self.predictors):
                 # fit predictor on training set
                 predictor.fit(x=x_train, y=y_train, w=w_train)
 
-                # get predictions on original scale
-                y_predicted = predictor.predict(x=x_test, orig_scale=True)
+                # test score of z-score normalized variables
+                y_test_pred = predictor.predict(x=x_test)
+                scores_test[i_pred, i_split] = self.f_score(
+                    y1=y_test_pred, y2=y_test, sigma=std_y,
+                )
 
-                # score of z-score normalized variables
-                scores[i_predictor, i_split] = root_mean_square_error(
-                    y1=y_predicted, y2=y_test, sigma=std_y,
+                # for debugging, log training scores
+                y_train_pred = predictor.predict(x=x_train)
+                scores_train[i_pred, i_split] = self.f_score(
+                    y1=y_train_pred, y2=y_train, sigma=std_y,
                 )
 
         # the score of a predictor is the sum over all folds
-        scores = np.sum(scores, axis=1)
+        scores_test = np.sum(scores_test, axis=1)
+        scores_train = np.sum(scores_train, axis=1)
 
         # logging
-        for predictor, score in zip(self.predictors, scores):
-            logger.info(f"Score {predictor.__class__.__name__}: {score:.2e}")
+        for predictor, score_train, score_test in zip(
+                self.predictors, scores_train, scores_test):
+            logger.info(
+                f"Test score {score_test:.3e} (train {score_train:.3e}) for "
+                f"{predictor}")
 
         # best predictor has minimum score
-        self.chosen_one = self.predictors[np.argmin(scores)]
+        self.chosen_one = self.predictors[np.argmin(scores_test)]
 
         # retrain chosen model on full data set
         self.chosen_one.fit(x=x, y=y, w=w)
 
-    def predict(self, x: np.ndarray, orig_scale: bool = True) -> np.ndarray:
-        return self.chosen_one.predict(x=x, orig_scale=orig_scale)
+    def predict(self, x: np.ndarray, normalize: bool = False) -> np.ndarray:
+        # predict from the chosen model
+        return self.chosen_one.predict(x=x, normalize=normalize)
 
 
 def root_mean_square_error(
@@ -417,10 +628,34 @@ def root_mean_square_error(
 
     Returns
     -------
-    val: The normalized root mean square value.
+    val: The normalized root mean square error value.
     """
     return np.sqrt(
         np.sum(
             ((y1 - y2) / sigma)**2,
+        ) / y1.shape[0]
+    )
+
+
+def root_mean_square_relative_error(
+    y1: np.ndarray,
+    y2: np.ndarray,
+) -> float:
+    """Root mean square relative error of `(y1 - y2) / y2`.
+
+    Note that this may behave badly for ground truth parameters close to 0.
+
+    Parameters
+    ----------
+    y1: Model simulations.
+    y2: Ground truth values.
+
+    Returns
+    -------
+    val: The normalized root mean square relative error value.
+    """
+    return np.sqrt(
+        np.sum(
+            ((y1 - y2) / y2)**2,
         ) / y1.shape[0]
     )

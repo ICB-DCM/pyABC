@@ -30,4 +30,5 @@ from .learn import (
     PredictorSumstat,
     LinearPredictorSumstat,
     GPPredictorSumstat,
+    MLPPredictorSumstat,
 )

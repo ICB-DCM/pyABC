@@ -110,8 +110,10 @@ from .predictor import (
     LinearPredictor,
     LassoPredictor,
     GPPredictor,
+    GPKernelHandle,
     MLPPredictor,
-    ModelSelection,
+    HiddenLayerHandle,
+    ModelSelectionPredictor,
 )
 from .sumstat import (
     Sumstat,
@@ -119,6 +121,7 @@ from .sumstat import (
     PredictorSumstat,
     LinearPredictorSumstat,
     GPPredictorSumstat,
+    MLPPredictorSumstat,
 )
 from . import visualization
 from . import settings

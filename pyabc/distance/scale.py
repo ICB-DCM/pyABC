@@ -32,6 +32,10 @@ values, but distance values, instead use either of
 * median
 """
 import numpy as np
+from typing import List
+import logging
+
+logger = logging.getLogger("Distance")
 
 
 def check_io(fun):
@@ -51,6 +55,19 @@ def check_io(fun):
             raise AssertionError("Shape mismatch of s0 and scales")
         return scales
     return checked_fun
+
+
+def warn_obs_off(off_ixs: np.ndarray, s_ids: List[str]):
+    """Raise warnings for features with high bias to the samples.
+
+    Parameters
+    ----------
+    off_ixs: Indices of features with suspicious bias.
+    s_ids: List of textual feature labels.
+    """
+    off_ixs = np.asarray(off_ixs, dtype=int)
+    for ix in off_ixs:
+        logger.warning(f"Feature {ix} ({s_ids[ix]}) has a high bias.")
 
 
 @check_io
@@ -94,7 +111,8 @@ def bias(*, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
 
 @check_io
 def root_mean_square_deviation(
-        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str],
+) -> np.ndarray:
     """
     Square root of the mean squared error, i.e.
     of the bias squared plus the variance.
@@ -103,6 +121,10 @@ def root_mean_square_deviation(
     std = standard_deviation(samples=samples)
     mse = bs**2 + std**2
     rmse = np.sqrt(mse)
+
+    # debugging
+    warn_obs_off(off_ixs=np.flatnonzero(bs > 2 * std), s_ids=s_ids)
+
     return rmse
 
 
@@ -128,7 +150,8 @@ def mean_absolute_deviation_to_observation(
 
 @check_io
 def combined_median_absolute_deviation(
-        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str],
+) -> np.ndarray:
     """
     Compute the sum of the median absolute deviations to the
     median of the samples and to the observed value.
@@ -136,12 +159,17 @@ def combined_median_absolute_deviation(
     mad = median_absolute_deviation(samples=samples)
     mado = median_absolute_deviation_to_observation(samples=samples, s0=s0)
     cmad = mad + mado
+
+    # debugging
+    warn_obs_off(off_ixs=np.flatnonzero(mado > 2 * mad), s_ids=s_ids)
+
     return cmad
 
 
 @check_io
 def combined_mean_absolute_deviation(
-        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str],
+) -> np.ndarray:
     """
     Compute the sum of the mean absolute deviations to the
     mean of the samples and to the observed value.
@@ -149,6 +177,10 @@ def combined_mean_absolute_deviation(
     mad = mean_absolute_deviation(samples=samples)
     mado = mean_absolute_deviation_to_observation(samples=samples, s0=s0)
     cmad = mad + mado
+
+    # debugging
+    warn_obs_off(off_ixs=np.flatnonzero(mado > 2 * mad), s_ids=s_ids)
+
     return cmad
 
 

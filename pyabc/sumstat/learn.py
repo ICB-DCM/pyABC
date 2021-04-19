@@ -45,6 +45,7 @@ class PredictorSumstat(Sumstat):
         predictor: Union[Predictor, Callable],
         n_fit: int = 1,
         all_particles: bool = True,
+        normalize_labels: bool = True,
         pre: Sumstat = None,
     ):
         """
@@ -54,16 +55,21 @@ class PredictorSumstat(Sumstat):
             The predictor mapping data (inputs) to parameters (targets). See
             :class:`Predictor` for the functionality contract.
         n_fit:
-            Number of generations after which the model is updated.
-            1 means only at the beginning in `initialize`, for >1 also in
-            subsequent generations in `update`.
+            Number of generations in which the model is updated.
+            1 means only at the beginning in `initialize`, for > 1 also in
+            subsequent generations in `update`. Can be inf.
         all_particles:
             Whether to base the predictors on all samples, or only accepted
             ones. Basing it on all samples reflects the sample process,
             while only considering accepted particles (and additionally
             weighting them) reflects the posterior approximation.
+        normalize_labels:
+            Whether the outputs in `__call__` are normalized according to
+            potentially applied internal normalization of the predictor.
+            This allows to level the influence of labels.
         pre:
-            Previously applied summary statistics, enables chaining.
+            Previously applied summary statistics, enables chaining. Should
+            usually not be adaptive.
         """
         if pre is None:
             pre = IdentitySumstat()
@@ -75,6 +81,7 @@ class PredictorSumstat(Sumstat):
 
         self.n_fit: int = n_fit
         self.all_particles: bool = all_particles
+        self.normalize_labels: bool = normalize_labels
 
         # parameter keys (for correct order)
         self.par_keys: Union[List[str], None] = None
@@ -140,28 +147,24 @@ class PredictorSumstat(Sumstat):
         return True
 
     def configure_sampler(self, sampler) -> None:
-        if self.n_fit > 1:
+        if self.n_fit > 1 and self.all_particles:
             # record rejected particles as a more representative of the
             #  sampling process
             sampler.sample_factory.record_rejected()
 
     def requires_calibration(self) -> bool:
-        return True
+        return self.n_fit > 0 or self.pre.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        if self.n_fit > 1:
-            return True
-        if self.pre is not None:
-            # pre will usually not be adaptive
-            return self.pre.is_adaptive()
-        return False
+        return self.n_fit > 1 or self.pre.is_adaptive()
 
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]):
         data = self.pre(data)
 
-        # summary statistic is the normalized predictor value
-        sumstat = self.predictor.predict(data, orig_scale=False).flatten()
+        # summary statistic is the (normalized) predictor value
+        sumstat = self.predictor.predict(
+            data, normalize=self.normalize_labels).flatten()
 
         if sumstat.size != len(self.par_keys):
             raise AssertionError("Predictor should return #parameters values")
@@ -171,6 +174,10 @@ class PredictorSumstat(Sumstat):
     def __str__(self) -> str:
         return f"<{self.__class__.__name__} pre={self.pre}, " \
                f"predictor={self.predictor}>"
+
+    def get_ids(self) -> List[str]:
+        # label by parameter keys
+        return [f"s_{par_key}" for par_key in self.par_keys]
 
 
 # Convenience wrappers around the respective predictors
@@ -315,7 +322,16 @@ class GPPredictorSumstat(PredictorSumstat):
 
 
 class MLPPredictorSumstat(PredictorSumstat):
-    """Use a multi-layer perceptron model for `y -> theta`."""
+    """Use a multi-layer perceptron model for `y -> theta`.
+
+    See e.g. [#jiang2017]_.
+
+    .. [#jiang2017]
+        Jiang, Bai, et al.
+        "Learning summary statistic for approximate Bayesian computation via
+        deep neural network."
+        Statistica Sinica (2017): 1595-1618.
+    """
 
     def __init__(
         self,

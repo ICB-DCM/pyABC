@@ -645,6 +645,7 @@ class ABCSMC:
 
         # configure recording of rejected particles
         self.distance_function.configure_sampler(self.sampler)
+        # TODO update configuration in each iteration
         self.eps.configure_sampler(self.sampler)
 
         # run loop over time points

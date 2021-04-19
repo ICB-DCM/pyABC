@@ -144,7 +144,7 @@ class Sumstat(ABC):
         Defaults to indexing the statistics as `S_{ix}`.
         """
         s_0 = self(self.x_0)
-        return [f"S_{ix}" for ix in range(s_0.size)]
+        return [f"s_{ix}" for ix in range(s_0.size)]
 
     def __str__(self) -> str:
         return f"<{self.__class__.__name__} pre={self.pre.__str__()}>"
