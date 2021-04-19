@@ -6,7 +6,7 @@ from typing import Callable, List, Union
 try:
     import sklearn.linear_model as skl_lm
     import sklearn.gaussian_process as skl_gp
-except ImportError as e:
+except ImportError:
     skl_lm = skl_gp = None
 
 from ..population import Sample

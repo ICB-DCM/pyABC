@@ -9,7 +9,7 @@ try:
     import sklearn.gaussian_process as skl_gp
     import sklearn.neural_network as skl_nn
     import sklearn.model_selection as skl_ms
-except ImportError as e:
+except ImportError:
     skl_lm = skl_gp = skl_nn = skl_ms = None
 
 
@@ -616,7 +616,7 @@ class ModelSelectionPredictor(Predictor):
 def root_mean_square_error(
     y1: np.ndarray,
     y2: np.ndarray,
-    sigma: np.ndarray
+    sigma: np.ndarray,
 ) -> float:
     """Root mean square error of `y1 - y2 / sigma`.
 
@@ -633,7 +633,7 @@ def root_mean_square_error(
     return np.sqrt(
         np.sum(
             ((y1 - y2) / sigma)**2,
-        ) / y1.shape[0]
+        ) / y1.shape[0],
     )
 
 
@@ -657,5 +657,5 @@ def root_mean_square_relative_error(
     return np.sqrt(
         np.sum(
             ((y1 - y2) / y2)**2,
-        ) / y1.shape[0]
+        ) / y1.shape[0],
     )

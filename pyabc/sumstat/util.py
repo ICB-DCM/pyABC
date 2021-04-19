@@ -143,7 +143,7 @@ def only_finites(*args):
 
 def read_sample(
     sample: Sample,
-    sumstat: 'Sumstat',
+    sumstat,
     all_particles: bool,
     par_keys: List[str],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

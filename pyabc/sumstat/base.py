@@ -79,7 +79,7 @@ class Sumstat(ABC):
     def update(
         self,
         t: int,
-        get_sample: Callable[[], Sample]
+        get_sample: Callable[[], Sample],
     ) -> bool:
         """Update for the upcoming generation t.
 
@@ -156,7 +156,7 @@ class IdentitySumstat(Sumstat):
     def __init__(
         self,
         trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
-        pre: Sumstat = None
+        pre: Sumstat = None,
     ):
         """
         Parameters
