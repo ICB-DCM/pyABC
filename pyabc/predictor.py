@@ -117,7 +117,7 @@ class SimplePredictor(Predictor):
         w: Weights, shape (n_sample,).
         """
         # remove trivial features
-        self.use_ixs = np.any(x != x[0], axis=0)
+        self.set_use_ixs(x=x)
         x = x[:, self.use_ixs]
 
         # normalize features
@@ -188,6 +188,23 @@ class SimplePredictor(Predictor):
             y = y * self.std_y + self.mean_y
 
         return y
+
+    def set_use_ixs(self, x: np.ndarray, log: bool = True) -> None:
+        """Set feature indices to use.
+
+        Parameters
+        ----------
+        x: Feature matrix, shape (n_sample, n_feature).
+        log: Whether to log.
+        """
+        # remove trivial features
+        self.use_ixs = np.any(x != x[0], axis=0)
+
+        # log omitted indices
+        if log and not self.use_ixs.all():
+            logger.info(
+                "Ignore trivial features "
+                f"{list(np.flatnonzero(~self.use_ixs))}")
 
     def __repr__(self) -> str:
         rep = f"<{self.__class__.__name__} predictor={self.predictor}"
@@ -310,10 +327,13 @@ class GPPredictor(SimplePredictor):
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
         # need to recreate the model
 
+        # set indices to keep
+        self.set_use_ixs(x=x, log=False)
+
         # kernel
         kernel = self.kernel
         if not isinstance(kernel, skl_gp.kernels.Kernel):
-            n_in = x.shape[1]
+            n_in = sum(self.use_ixs)
             kernel = kernel(n_in)
 
         self.predictor = skl_gp.GaussianProcessRegressor(
@@ -431,10 +451,13 @@ class MLPPredictor(SimplePredictor):
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
         # need to recreate the model
 
+        # set indices to keep
+        self.set_use_ixs(x=x, log=False)
+
         # hidden layer sizes
         hidden_layer_sizes = self.hidden_layer_sizes
         if callable(hidden_layer_sizes):
-            n_in, n_out, n_sample = x.shape[1], y.shape[1], x.shape[0]
+            n_in, n_out, n_sample = sum(self.use_ixs), y.shape[1], x.shape[0]
             hidden_layer_sizes = hidden_layer_sizes(n_in, n_out, n_sample)
 
         self.predictor = skl_nn.MLPRegressor(

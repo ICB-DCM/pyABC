@@ -50,7 +50,8 @@ def log_weights(
         for t in weights
     }
 
-    logger.debug(f"{label} weights[{t}] = {weights_dict[t]}")
+    vals = [f"'{key}': {val:.4e}" for key, val in weights_dict[t].items()]
+    logger.debug(f"{label} weights[{t}] = {{{', '.join(vals)}}}")
 
     if log_file:
         save_dict_to_json(weights_dict, log_file)
