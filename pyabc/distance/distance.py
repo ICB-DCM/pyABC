@@ -444,6 +444,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         fixed_weights: Dict[str, float] = None,
         n_fit_scales: int = np.inf,
         n_fit_info: int = 1,
+        normalize_by_par: bool = True,
         scale_function: Callable = None,
         max_weight_ratio: float = None,
         scale_log_file: str = None,
@@ -462,6 +463,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             (re)-calibration.
         n_fit_info:
             Number of times to fit the information weights.
+        normalize_by_par:
+            Whether to normalize total sensitivities of each parameter to 1.
         info_log_file:
             Log file for the information weights.
         eps:
@@ -486,6 +489,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         # counter
         self.i_fit_info: int = 0
 
+        self.normalize_by_par: bool = normalize_by_par
         self.info_log_file: str = info_log_file
         self.eps: float = eps
 
@@ -608,8 +612,22 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         # we are only interested in absolute values
         sensis = np.abs(sensis)
 
-        # normalize sums over sumstats to 1
-        sensis /= np.sum(sensis, axis=0)
+        # total sensitivities per parameter
+        sensi_per_y = np.sum(sensis, axis=0)
+
+        # identify parameters that have mostly zero gradients throughout
+        y_has_sensi = ~np.isclose(sensi_per_y, 0)
+        # set values of near-zero contribution to zero
+        sensis[:, ~y_has_sensi] = 0
+        # log
+        if not y_has_sensi.all():
+            insensi_par_keys = [
+                self.par_keys[ix] for ix in np.flatnonzero(~y_has_sensi)]
+            logger.info(f"Zero info for parameters {insensi_par_keys}")
+
+        if self.normalize_by_par:
+            # normalize sums over sumstats to 1
+            sensis[:, y_has_sensi] /= sensi_per_y[y_has_sensi]
 
         # the weight of a sumstat is the sum of the sensitivities over all
         #  parameters
