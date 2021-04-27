@@ -169,7 +169,7 @@ class ABCSMC:
             acceptor: Acceptor = None,
             stop_if_only_single_model_alive: bool = False,
             max_nr_recorded_particles: int = np.inf,
-            all_accepted = True):
+            all_accepted: bool = True):
         if not isinstance(models, list):
             models = [models]
         models = list(map(SimpleModel.assert_model, models))
@@ -516,7 +516,8 @@ class ABCSMC:
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
             n=self.population_size(-1), simulate_one=simulate_one, t=t,
-            max_eval=np.inf, all_accepted=self.all_accepted, ana_vars=self._vars())
+            max_eval=np.inf, all_accepted=self.all_accepted,
+            ana_vars=self._vars())
 
         # extract accepted population
         population = sample.get_accepted_population()

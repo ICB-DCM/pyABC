@@ -377,7 +377,9 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         #  want to look ahead yet
         if all_accepted:
             return
-
+        if t == -1:
+            if n == len(id_results):
+                return
         # create a result sample
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
