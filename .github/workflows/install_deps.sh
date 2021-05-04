@@ -6,6 +6,12 @@ python -m pip install --upgrade pip
 # wheel
 pip install wheel
 
+# tox
+pip install tox
+
+# update apt package lists
+sudo apt-get update
+
 # optional dependencies
 for par in "$@"
 do
@@ -32,25 +38,18 @@ do
           --keyserver keyserver.ubuntu.com \
           --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
         sudo add-apt-repository \
-          'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+          'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
         sudo apt-get update
         sudo apt-get install r-base
       fi
     ;;
 
-    petab)
-      # PEtab
+    amici)
       # AMICI dependencies
-      sudo apt-get install swig3.0 libatlas-base-dev libhdf5-serial-dev
-      sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
-      # install dev AMICI for latest changes
-      pip install \
-        git+https://github.com/amici-dev/amici.git@develop#egg=amici\&subdirectory=python/sdist
-      # install test suite
-      pip install petabtests
+      sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev
     ;;
 
-    docs)
+    doc)
       # documentation
       sudo apt-get install pandoc
     ;;

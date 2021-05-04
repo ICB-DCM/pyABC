@@ -4,7 +4,7 @@ import subprocess  # noqa: S404
 import os
 from typing import List
 import logging
-
+import shutil
 from ..model import Model
 from ..parameters import Parameter
 
@@ -24,6 +24,7 @@ class ExternalHandler:
                  fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = None, dir: str = None,
+                 clean_simulation: bool = True,
                  show_stdout: bool = False,
                  show_stderr: bool = True,
                  raise_on_error: bool = False,
@@ -48,6 +49,9 @@ class ExternalHandler:
         suffix, prefix, dir: str, optional (default = None)
             Specify suffix, prefix, or base directory for the created
             temporary files.
+        clean_simulation: bool
+            Wheather or not to save the simulation outout after calculating
+            the summary statistics
         show_stdout, show_stderr: bool, optional (default: False, True)
             Whether to show or hide the stdout and stderr streams.
         raise_on_error: bool, optional (default = False)
@@ -64,6 +68,7 @@ class ExternalHandler:
         self.suffix = suffix
         self.prefix = prefix
         self.dir = dir
+        self.clean_simulation = clean_simulation
         self.show_stdout = show_stdout
         self.show_stderr = show_stderr
         self.raise_on_error = raise_on_error
@@ -83,6 +88,19 @@ class ExternalHandler:
         else:
             return tempfile.mkstemp(
                 suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+
+    def clean_simulation_output(loc):
+        """
+        Remove the simulation output directory after calculating the
+        summary statistics.
+
+        Parameters
+        ----------
+        loc: str
+            Location of the simulation directory.
+        """
+
+        shutil.rmtree(loc, ignore_errors=True)
 
     def create_executable(self, loc):
         """
@@ -169,6 +187,7 @@ class ExternalModel(Model):
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "modelsim_",
                  dir: str = None,
+                 clean_simulation: bool = True,
                  show_stdout: bool = False,
                  show_stderr: bool = True,
                  raise_on_error: bool = False,
@@ -190,6 +209,7 @@ class ExternalModel(Model):
             fixed_args=fixed_args,
             create_folder=create_folder,
             suffix=suffix, prefix=prefix, dir=dir,
+            clean_simulation=clean_simulation,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
             raise_on_error=raise_on_error)

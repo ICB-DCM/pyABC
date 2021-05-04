@@ -4,18 +4,21 @@ from typing import List, Union
 import json
 import numpy as np
 import pandas as pd
-from sqlalchemy import func
+import sqlalchemy as sa
 from sqlalchemy.orm import subqueryload
 from functools import wraps
 import tempfile
 import logging
 
-from .db_model import (ABCSMC, Population, Model, Particle,
+from .db_model import (Version, ABCSMC, Population, Model, Particle,
                        Parameter, Sample, SummaryStatistic, Base)
+from .version import __db_version__
 from ..population import Particle as PyParticle, Population as PyPopulation
 from ..parameters import Parameter as PyParameter
 
 logger = logging.getLogger("History")
+
+SQLITE_STR = "sqlite:///"
 
 
 def with_session(f):
@@ -38,7 +41,7 @@ def internal_docstring_warning(f):
     indent_level = len(first_line) - len(first_line.lstrip())
     indent = " " * indent_level
     warning = (
-        "\n" + indent +
+        "\n\n" + indent +
         "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
         "class internally. "
         "You should most likely not find it necessary to call "
@@ -54,11 +57,11 @@ def git_hash():
     except ImportError:
         return "Install pyABC's optional git dependency for git support"
     try:
-        git_hash = git.Repo(os.getcwd()).head.commit.hexsha
+        hash_ = git.Repo(os.getcwd()).head.commit.hexsha
     except (git.exc.NoSuchPathError, KeyError, ValueError,
             git.exc.InvalidGitRepositoryError) as e:
-        git_hash = str(e)
-    return git_hash
+        hash_ = str(e)
+    return hash_
 
 
 def create_sqlite_db_id(
@@ -83,22 +86,13 @@ def create_sqlite_db_id(
     return "sqlite:///" + os.path.join(dir_, file_)
 
 
-def assert_db_exists(db: str):
-    """
-    Check if db exists. If it is a file and does not exist, raise
-    an error. This is helpful to avoid misspelling a file name and
-    then working with an empty history.
-
-    Parameters
-    ----------
-    db:
-        As passed to History.
-    """
-    if not db.startswith("sqlite:///"):
-        return
-    file_ = db[10:]
-    if not os.path.exists(file_):
-        raise ValueError(f"Database file {db} does not exist.")
+def database_exists(db: str) -> bool:
+    """Does the database file exist already?"""
+    return (
+        db != "sqlite://" and
+        os.path.exists(db[len(SQLITE_STR):]) and
+        os.path.getsize(db[len(SQLITE_STR):]) > 0
+    )
 
 
 class History:
@@ -110,20 +104,17 @@ class History:
 
     Attributes
     ----------
-
     db: str
         SQLalchemy database identifier. For a relative path use the
         template "sqlite:///file.db", for an absolute path
         "sqlite:////path/to/file.db", and for an in-memory database
         "sqlite://".
-
     stores_sum_stats: bool, optional (default = True)
         Whether to store summary statistics to the database. Note: this
         is True by default, and should be set to False only for testing
         purposes (i.e. to speed up the writing to the file system),
         as it can not be guaranteed that all methods of pyabc work
         correctly if the summary statistics are not stored.
-
     id: int
         The id of the ABCSMC analysis that is currently in use.
         If there are analyses in the database already, this defaults
@@ -139,16 +130,16 @@ class History:
                  stores_sum_stats: bool = True,
                  _id: int = None,
                  create: bool = True):
-        """
-        Initialize history object.
+        """Initialize history object.
 
         Parameters
         ----------
         create:
             If False, an error is thrown if the database does not exist.
         """
-        if not create:
-            assert_db_exists(db)
+        db_exists = database_exists(db)
+        if not create and not db_exists:
+            raise ValueError(f"Database file {db} does not exist.")
 
         self.db = db
         self.stores_sum_stats = stores_sum_stats
@@ -156,6 +147,13 @@ class History:
         # to be filled using the session wrappers
         self._session = None
         self._engine = None
+
+        # set version if new file
+        if not db_exists:
+            self._set_version()
+
+        # check that the database version is up-to-date
+        self._check_version()
 
         # find id in database
         if _id is None:
@@ -178,13 +176,11 @@ class History:
 
         Returns
         -------
-
         db_size: int, str
             Size of the SQLite database in MB.
             Currently this only works for SQLite databases.
 
             Returns an error string if the DB size cannot be calculated.
-
         """
         try:
             return os.path.getsize(self.db_file()) / 10 ** 6
@@ -198,6 +194,31 @@ class History:
         """
         runs = self._session.query(ABCSMC).all()
         return runs
+
+    @with_session
+    def _check_version(self):
+        """Check that the database version is up-to-date.
+
+        Raises
+        ------
+        ValueError if the version is not up-to-date.
+        """
+        # extract version table
+        version = self._session.query(Version)
+        if len(version.all()) == 0:
+            # the first version has no version table
+            version = '0'
+        else:
+            version = str(version.one().version_num)
+
+        # compare to current version
+        if version != __db_version__:
+            raise AssertionError(
+                f"Database has version {version}, latest format version is "
+                f"{__db_version__}. Thus, not all queries may work correctly. "
+                "Consider migrating the database to the latest version via "
+                "`abc-migrate`. Check `abc-migrate --help` and the "
+                "documentation for further information.")
 
     @with_session
     def _find_latest_id(self):
@@ -272,17 +293,14 @@ class History:
 
         Parameters
         ----------
-
         m: int, optional (default = 0)
             Model index.
-
         t: int, optional (default = self.max_t)
             Population index.
             If t is not specified, then the last population is returned.
 
         Returns
         -------
-
         df, w: pandas.DataFrame, np.ndarray
             * df: a DataFrame of parameters
             * w: are the weights associated with each parameter
@@ -352,7 +370,6 @@ class History:
 
         Returns
         -------
-
         all_populations: pd.DataFrame
             DataFrame with population info
         """
@@ -369,48 +386,47 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def store_initial_data(self, ground_truth_model: int, options: dict,
+    def store_initial_data(self,
+                           ground_truth_model: int,
+                           options: dict,
                            observed_summary_statistics: dict,
                            ground_truth_parameter: dict,
                            model_names: List[str],
                            distance_function_json_str: str,
                            eps_function_json_str: str,
-                           population_strategy_json_str: str):
+                           population_strategy_json_str: str,
+                           start_time: datetime.datetime = None) -> None:
         """
         Store the initial configuration data.
 
         Parameters
         ----------
-
-        ground_truth_model: int
+        ground_truth_model:
             Index of the ground truth model.
-
-        options: dict
+        options:
             Of ABC metadata.
-
-        observed_summary_statistics: dict
+        observed_summary_statistics:
             The measured summary statistics.
-
-        ground_truth_parameter: dict
+        ground_truth_parameter:
             The ground truth parameters.
-
-        model_names: List
+        model_names:
             A list of model names.
-
-        distance_function_json_str: str
+        distance_function_json_str:
             The distance function represented as json string.
-
-        eps_function_json_str: str
+        eps_function_json_str:
             The epsilon represented as json string.
-
-        population_strategy_json_str: str
+        population_strategy_json_str:
             The population strategy represented as json string.
-
+        start_time:
+            Start time of the analysis.
         """
+        if start_time is None:
+            start_time = datetime.datetime.now()
+
         # create a new ABCSMC analysis object
         abcsmc = ABCSMC(
             json_parameters=str(options),
-            start_time=datetime.datetime.now(),
+            start_time=start_time,
             git_hash=git_hash(),
             distance_function=distance_function_json_str,
             epsilon_function=eps_function_json_str,
@@ -429,7 +445,7 @@ class History:
             ground_truth_parameter, model_names)
 
         # log
-        logger.info("Start {}".format(abcsmc))
+        logger.info(f"Start {abcsmc.start_info()}")
 
     @with_session
     @internal_docstring_warning
@@ -443,6 +459,7 @@ class History:
         and in particular some ground truth values.
 
         For the parameters, see store_initial_data.
+
         """
         # extract analysis object
         abcsmc = (self._session.query(ABCSMC)
@@ -495,30 +512,29 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def update_nr_samples(self, t: int = PRE_TIME, nr_samples: int = 0):
-        """
-        Update the number of samples used in iteration `t`. The default
-        time of `PRE_TIME` implies an update of the number of samples
-        used in calibration.
+    def update_after_calibration(
+            self,  nr_samples: int, end_time: datetime.datetime):
+        """Update after the calibration iteration.
+        In particular set time and number of samples.
+        Update the number of samples used in iteration `t`.
 
         Parameters
         ----------
-
-        t: int, optional (default = -1)
-            Time to update for.
-        nr_samples: int, optional (default = 0)
+        nr_samples:
             Number of samples reported.
-
+        end_time:
+            End time of the calibration iteration.
         """
         # extract population
         population = (self._session.query(Population)
                       .join(ABCSMC)
                       .filter(ABCSMC.id == self.id)
-                      .filter(Population.t == t)
+                      .filter(Population.t == History.PRE_TIME)
                       .one())
 
         # update samples number
         population.nr_samples = nr_samples
+        population.population_end_time = end_time
 
         # commit changes
         self._session.commit()
@@ -530,7 +546,6 @@ class History:
 
         Returns
         -------
-
         sum_stats_dct: dict
             The observed summary statistics.
         """
@@ -557,11 +572,10 @@ class History:
 
         Returns
         -------
-
         nr_sim: int
             Total nr of sample attempts for the ABC run.
         """
-        nr_sim = (self._session.query(func.sum(Population.nr_samples))
+        nr_sim = (self._session.query(sa.func.sum(Population.nr_samples))
                   .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return nr_sim
 
@@ -579,6 +593,21 @@ class History:
         self._session = session
         self._engine = engine
         return session
+
+    @with_session
+    def _set_version(self):
+        """Set database version.
+
+        This should only be called if the database is new, in order not to
+        wrongly assign a version to an unversioned (outdated) database.
+        """
+        # check if version exists already
+        if len(self._session.query(Version).all()) > 0:
+            raise AssertionError("Cannot set version as already exists.")
+
+        # set version to latest
+        self._session.add(Version(version_num=__db_version__))
+        self._session.commit()
 
     def _close_session(self):
         # don't close in memory database
@@ -599,17 +628,23 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def done(self):
+    def done(self, end_time: datetime.datetime = None):
         """
-        Close database sessions and store end time of population.
-        """
+        Close database sessions and store end time of the analysis.
 
-        abc_smc_simulation = (self._session.query(ABCSMC)
-                              .filter(ABCSMC.id == self.id)
-                              .one())
-        abc_smc_simulation.end_time = datetime.datetime.now()
+        Parameters
+        ----------
+        end_time:
+            End time of the analysis.
+        """
+        if end_time is None:
+            end_time = datetime.datetime.now()
+
+        abcsmc = (self._session.query(ABCSMC)
+                  .filter(ABCSMC.id == self.id).one())
+        abcsmc.end_time = end_time
         self._session.commit()
-        logger.info("Done {}".format(abc_smc_simulation))
+        logger.info(f"Done {abcsmc.end_info()}")
 
     @with_session
     def _save_to_population_db(self,
@@ -645,13 +680,11 @@ class History:
             # iterate over model population of particles
             for store_item in model_population:
                 # a store_item is a Particle
-                weight = store_item.weight
-                distance_list = store_item.accepted_distances
                 parameter = store_item.parameter
-                summary_statistics_list = store_item.accepted_sum_stats
 
                 # create new particle
-                particle = Particle(w=weight)
+                particle = Particle(
+                    w=store_item.weight, proposal_id=store_item.proposal_id)
                 # append particle to model
                 model.particles.append(particle)
 
@@ -669,21 +702,18 @@ class History:
                         particle.parameters.append(
                             Parameter(name=key, value=value))
 
-                # append samples to particle
-                for distance, sum_stat in zip(distance_list,
-                                              summary_statistics_list):
-                    # create new sample from distance
-                    sample = Sample(distance=distance)
-                    # append to particle
-                    particle.samples.append(sample)
-                    # append sum stat dimensions to sample
-                    if self.stores_sum_stats:
-                        for name, value in sum_stat.items():
-                            if name is None:
-                                raise Exception(
-                                    "Summary statistics need names.")
-                            sample.summary_statistics.append(
-                                SummaryStatistic(name=name, value=value))
+                # create new sample from distance
+                sample = Sample(distance=store_item.distance)
+                # append to particle
+                particle.samples.append(sample)
+                # append sum stat dimensions to sample
+                if self.stores_sum_stats:
+                    for name, value in store_item.sum_stat.items():
+                        if name is None:
+                            raise Exception(
+                                "Summary statistics need names.")
+                        sample.summary_statistics.append(
+                            SummaryStatistic(name=name, value=value))
 
         # commit changes
         self._session.commit()
@@ -703,22 +733,16 @@ class History:
 
         Parameters
         ----------
-
         t: int
             Population number.
-
         current_epsilon: float
             Current epsilon value.
-
         population: Population
             List of sampled particles.
-
         nr_simulations: int
             The number of model evaluations for this population.
-
         model_names: list
             The model names.
-
         """
         store = population.to_dict()
         model_probabilities = population.get_model_probabilities()
@@ -777,13 +801,11 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
-
         nr_alive: int >= 0 or None
             Number of models still alive.
             None is for the last population
@@ -802,19 +824,15 @@ class History:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
-        In case more than one simulation per parameter is performed and
-        accepted the sum might be larger.
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
             If t is None, the last population is selected.
 
         Returns
         -------
-
         df_weighted: pd.DataFrame
             Weighted distances.
             The dataframe has column "w" for the weights
@@ -862,7 +880,6 @@ class History:
 
         Returns
         -------
-
         nr_particles_per_population: pd.DataFrame
             A pandas DataFrame containing the number
             of particles for each population.
@@ -884,7 +901,7 @@ class History:
         The population number of the last populations.
         This is equivalent to ``n_populations - 1``.
         """
-        max_t = (self._session.query(func.max(Population.t))
+        max_t = (self._session.query(sa.func.max(Population.t))
                  .join(ABCSMC).filter(ABCSMC.id == self.id).one()[0])
         return max_t
 
@@ -905,16 +922,13 @@ class History:
 
         Parameters
         ----------
-
         m: int, optional (default = 0)
             Model index.
-
         t: int, optional (default = self.max_t)
             Population index.
 
         Returns
         -------
-
         w, sum_stats: np.ndarray, list
             * w: the weights associated with the summary statistics
             * sum_stats: list of summary statistics
@@ -949,20 +963,16 @@ class History:
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
-        In case more than one simulation per parameter is performed and
-        accepted, the sum might be larger.
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             Population index.
             If t is None, the latest population is selected.
 
         Returns
         -------
-
-        (weights, sum_stats): (List[float], List[dict])
+        weights, sum_stats:
             In the same order in the first array the weights (multiplied by
             the model probabilities), and tin the second array the summary
             statistics.
@@ -1008,7 +1018,6 @@ class History:
 
         Parameters
         ----------
-
         t: int, optional (default = self.max_t)
             The population index.
         """
@@ -1045,30 +1054,26 @@ class History:
                     py_parameter[parameter.name] = parameter.value
                 py_parameter = PyParameter(**py_parameter)
 
-                # samples
-                py_accepted_sum_stats = []
-                py_accepted_distances = []
-                for sample in particle.samples:
-                    # summary statistic
-                    py_sum_stat = {}
-                    for sum_stat in sample.summary_statistics:
-                        py_sum_stat[sum_stat.name] = sum_stat.value
-                    py_accepted_sum_stats.append(py_sum_stat)
-
-                    # distance
-                    py_distance = sample.distance
-                    py_accepted_distances.append(py_distance)
+                # simulations
+                # TODO this is legacy from when there were multiple
+                if len(particle.samples) != 1:
+                    raise AssertionError(
+                        "There should be exactly one sample.")
+                sample = particle.samples[0]
+                # summary statistics
+                py_sum_stat = {}
+                for sum_stat in sample.summary_statistics:
+                    py_sum_stat[sum_stat.name] = sum_stat.value
 
                 # create particle
                 py_particle = PyParticle(
                     m=py_m,
                     parameter=py_parameter,
                     weight=py_weight,
-                    accepted_sum_stats=py_accepted_sum_stats,
-                    accepted_distances=py_accepted_distances,
-                    rejected_sum_stats=[],
-                    rejected_distances=[],
-                    accepted=True)
+                    sum_stat=py_sum_stat,
+                    distance=sample.distance,
+                    accepted=True,
+                    proposal_id=particle.proposal_id)
                 py_particles.append(py_particle)
 
         # create population
@@ -1078,7 +1083,7 @@ class History:
 
     @with_session
     def get_population_strategy(self):
-        """
+        """Get information on the population size strategy.
 
         Returns
         -------
@@ -1099,16 +1104,13 @@ class History:
 
         Parameters
         ----------
-
         m: int or None, optional (default = None)
             The model to query. If omitted, all models are returned.
-
         t: int or str, optional (default = "last")
             Can be "last" or "all", or a population index (i.e. an int).
             In case of "all", all populations are returned.
             If "last", only the last population is returned, for an int value
             only the corresponding population at that time index.
-
         tidy: bool, optional
             If True, try to return a tidy DataFrame, where the individual
             parameters and summary statistics are pivoted.
@@ -1117,7 +1119,6 @@ class History:
 
         Returns
         -------
-
         full_population: DataFrame
         """
         query = (self._session.query(Population.t,

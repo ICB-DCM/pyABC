@@ -1,9 +1,13 @@
 from abc import ABC, ABCMeta, abstractmethod
 import numpy as np
+from numbers import Real
 from typing import Callable, List, Union
 
 from ..population import Particle, Population
 from ..util import AnalysisVars
+from ..distance import Distance
+from ..epsilon import Epsilon
+from ..acceptor import Acceptor
 
 
 class Sample:
@@ -42,8 +46,7 @@ class Sample:
             Concatenation of all the all_sum_stats lists of all
             particles added and accepted to this sample via append().
         """
-        return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self.particles), [])
+        return [particle.sum_stat for particle in self.particles]
 
     def first_m_sum_stats(self, m):
         """
@@ -57,9 +60,7 @@ class Sample:
             particles added and accepted to this sample via append().
         """
         m = min(len(self.particles), m)
-
-        return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self.particles[:m]), [])
+        return [particle.sum_stat for particle in self.particles[:m]]
 
     def first_m_particles(self, m) -> List:
         m = min(len(self.particles), m)
@@ -224,7 +225,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
         simulate_one: Callable,
         t: int,
         *,
-        max_eval: int = np.inf,
+        max_eval: Real = np.inf,
         all_accepted: bool = False,
         ana_vars: AnalysisVars = None,
     ) -> Sample:
@@ -262,9 +263,19 @@ class Sampler(ABC, metaclass=SamplerMeta):
             The generated sample, which contains the new population.
         """
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the sampler.
         Called by the inference routine when an analysis is finished.
         Some samplers may need to e.g. finish ongoing processes or close
         servers.
+        """
+
+    def check_analysis_variables(
+            self,
+            distance_function: Distance,
+            eps: Epsilon,
+            acceptor: Acceptor) -> None:
+        """Raise if any analysis variable is not conform with the sampler.
+        This check serves in particular to ensure that all components are fit
+        for look-ahead sampling. Default: Do nothing.
         """

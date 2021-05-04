@@ -1,14 +1,15 @@
 name: CI
 
 # trigger
-on: [push]
+on: [pull_request]
 
 jobs:
+
   base:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
     - name: Check out repository
@@ -23,19 +24,18 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-base
-        restore-keys: ${{ runner.os }}-
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-base
 
     - name: Install dependencies
-      run: |
-        .github/workflows/ci_dependencies.sh base R
-        pip install -e .[R,test]
+      run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
-      timeout-minutes: 7
-      run: |
-        python -m pytest --cov=pyabc --cov-report=xml \
-          test/base test/visualization -s
+      timeout-minutes: 12
+      run: tox -e base
+
+    - name: Run visualization tests
+      timeout-minutes: 3
+      run: tox -e visualization
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
     - name: Check out repository
@@ -62,18 +62,14 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-external
-        restore-keys: ${{ runner.os }}-
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-external
 
     - name: Install dependencies
-      run: |
-        .github/workflows/ci_dependencies.sh base R
-        pip install -e .[R,test]
+      run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
       timeout-minutes: 10
-      run: |
-        python -m pytest --cov=pyabc --cov-report=xml test/external -s
+      run: tox -e external
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -85,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -100,18 +96,14 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-petab
-        restore-keys: ${{ runner.os }}-
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-petab
 
     - name: Install dependencies
-      run: |
-        .github/workflows/ci_dependencies.sh petab
-        pip install -e .[petab,test]
+      run: .github/workflows/install_deps.sh amici
 
     - name: Run tests
-      timeout-minutes: 10
-      run: |
-        python -m pytest --cov=pyabc --cov-report=xml test/petab -s
+      timeout-minutes: 16
+      run: tox -e petab
 
     - name: Coverage
       uses: codecov/codecov-action@v1
@@ -123,7 +115,7 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.7]
+        python-version: [3.9, 3.7]
 
     steps:
       - name: Check out repository
@@ -138,19 +130,14 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ~/Library/Caches/pip
-          key: ${{ runner.os }}-ci-base
-          restore-keys: ${{ runner.os }}-
+          key: ci-${{ runner.os }}-${{ matrix.python-version }}-mac
 
       - name: Install dependencies
-        run: |
-          .github/workflows/ci_dependencies.sh
-          pip install -e .[test]
+        run: .github/workflows/install_deps.sh
 
       - name: Run tests
-        timeout-minutes: 4
-        run: |
-          python -m pytest --cov=pyabc --cov-report=xml \
-            test/base/test_macos.py -s
+        timeout-minutes: 7
+        run: tox -e mac
 
       - name: Coverage
         uses: codecov/codecov-action@v1
@@ -158,11 +145,11 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage.xml
 
-  quality:
+  notebooks1:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.9]
 
     steps:
     - name: Check out repository
@@ -177,20 +164,79 @@ jobs:
       uses: actions/cache@v1
       with:
         path: ~/.cache
-        key: ${{ runner.os }}-ci-quality
-        restore-keys: ${{ runner.os }}-
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks1
+
+    - name: Install dependencies
+      run: .github/workflows/install_deps.sh
+
+    - name: Run notebooks
+      timeout-minutes: 10
+      run: tox -e notebooks1
+
+  notebooks2:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks2
+
+    - name: Install dependencies
+      run: .github/workflows/install_deps.sh R amici
+
+    - name: Run notebooks
+      timeout-minutes: 10
+      run: tox -e notebooks2
+
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Prepare python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache
+        key: ci-${{ runner.os }}-${{ matrix.python-version }}-quality
 
     - name: Install dependencies
       run: |
-        pip install -e .[quality]
+        .github/workflows/install_deps.sh doc
+        pip install tox
 
-    - name: Run flake8
-      timeout-minutes: 2
-      run: ./run_flake8.sh
+    - name: Run quality checks
+      timeout-minutes: 10
+      run: tox -e project,flake8,doc
 
-    - name: Run pyroma
-      run: pyroma --min=10 .
+    - name: Test migration
+      timeout-minutes: 3
+      run: tox -e migrate
 
-    - name: Run rst-lint
-      run: rst-lint README.rst
-
+    - name: Coverage
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml

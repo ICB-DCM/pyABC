@@ -1,3 +1,5 @@
 include README.md
 recursive-include pyabc/visserver/static *
 recursive-include pyabc/visserver/templates *
+include pyabc/storage/alembic.ini
+recursive-include pyabc/storage/migrations *

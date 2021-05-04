@@ -95,6 +95,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
                  batch_size: int = 1,
                  look_ahead: bool = False,
                  look_ahead_delay_evaluation=True,
+                 max_n_eval_look_ahead_factor: float = 10.,
                  workers: int = 2,
                  processes_per_worker: int = 1,
                  daemon: bool = True,
@@ -111,6 +112,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
             password=self.server_starter.password,
             batch_size=batch_size, look_ahead=look_ahead,
             look_ahead_delay_evaluation=look_ahead_delay_evaluation,
+            max_n_eval_look_ahead_factor=max_n_eval_look_ahead_factor,
             log_file=log_file)
 
     def shutdown(self):

@@ -1,0 +1,43 @@
+odes:
+  - stateId: x1
+    rightHandSide: (- theta1 * x1 + theta2 * x2)
+    initialValue: 1
+
+  - stateId: x2
+    rightHandSide: (theta1 * x1 - theta2 * x2)
+    initialValue: 0
+
+parameters:
+  - parameterId: theta1
+    parameterName: $\theta_1$
+    nominalValue: 0.08
+    parameterScale: lin
+    lowerBound: 0.05
+    upperBound: 0.12
+    estimate: 1
+
+  - parameterId: theta2
+    parameterName: $\theta_2$
+    nominalValue: 0.12
+    parameterScale: lin
+    lowerBound: 0.05
+    upperBound: 0.2
+    estimate: 0
+
+  - parameterId: sigma
+    parameterName: $\sigma$
+    nominalValue: 0.02
+    parameterScale: log10
+    lowerBound: 0.002
+    upperBound: 1
+    estimate: 1
+
+observables:
+  - observableId: obs_x2
+    observableFormula: x2
+    observableTransformation: lin
+    noiseFormula: noiseParameter1_obs_x2
+    noiseDistribution: normal
+
+conditions:
+  - conditionId: condition1

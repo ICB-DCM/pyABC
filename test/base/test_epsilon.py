@@ -99,21 +99,22 @@ def get_weighted_distances():
 
 def get_all_records():
     return [
-        dict(distance=np.random.randn(),
-             transition_pd_prev=np.random.randn(),
-             transition_pd=np.random.randn(),
-             accepted=True if np.random.random() > 0.5 else False)
+        {'distance': np.random.randn(),
+         'transition_pd_prev': np.random.randn(),
+         'transition_pd': np.random.randn(),
+         'accepted': True if np.random.random() > 0.5 else False}
         for _ in range(20)]
 
 
-scheme_args = dict(
-    get_weighted_distances=get_weighted_distances,
-    get_all_records=get_all_records,
-    max_nr_populations=3,
-    pdf_norm=10,
-    kernel_scale=pyabc.distance.SCALE_LOG,
-    prev_temperature=7.53,
-    acceptance_rate=0.4)
+scheme_args = {
+    'get_weighted_distances': get_weighted_distances,
+    'get_all_records': get_all_records,
+    'max_nr_populations': 3,
+    'pdf_norm': 10,
+    'kernel_scale': pyabc.distance.SCALE_LOG,
+    'prev_temperature': 7.53,
+    'acceptance_rate': 0.4,
+}
 
 
 def test_scheme_basic():
