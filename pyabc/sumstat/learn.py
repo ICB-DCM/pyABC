@@ -44,6 +44,7 @@ class PredictorSumstat(Sumstat):
         self,
         predictor: Union[Predictor, Callable],
         n_fit: int = 1,
+        n_skip_fit: int = 0,
         all_particles: bool = True,
         normalize_labels: bool = True,
         pre: Sumstat = None,
@@ -58,6 +59,9 @@ class PredictorSumstat(Sumstat):
             Number of generations in which the model is updated.
             1 means only at the beginning in `initialize`, for > 1 also in
             subsequent generations in `update`. Can be inf.
+        n_skip_fit:
+            Number of initial iterations during which fitting is skipped and
+            instead `pre` is returned as-is.
         all_particles:
             Whether to base the predictors on all samples, or only accepted
             ones. Basing it on all samples reflects the sample process,
@@ -80,6 +84,7 @@ class PredictorSumstat(Sumstat):
         self.predictor = predictor
 
         self.n_fit: int = n_fit
+        self.n_skip_fit: int = n_skip_fit
         self.all_particles: bool = all_particles
         self.normalize_labels: bool = normalize_labels
 
@@ -88,6 +93,7 @@ class PredictorSumstat(Sumstat):
 
         # fit counter
         self.i_fit: int = 0
+        self.i_skip_fit: int = 0
 
     def initialize(
         self,
@@ -103,6 +109,11 @@ class PredictorSumstat(Sumstat):
         # fix parameter key order
         self.par_keys: List[str] = \
             list(sample.accepted_particles[0].parameter.keys())
+
+        # check whether to skip
+        if self.i_skip_fit < self.n_skip_fit:
+            self.i_skip_fit += 1
+            return
 
         # check whether refitting is desired
         if self.i_fit >= self.n_fit:
@@ -125,6 +136,11 @@ class PredictorSumstat(Sumstat):
         get_sample: Callable[[], Sample],
     ) -> bool:
         updated = super().update(t=t, get_sample=get_sample)
+
+        # check whether to skip
+        if self.i_skip_fit < self.n_skip_fit:
+            self.i_skip_fit += 1
+            return updated
 
         # check whether refitting is desired
         if self.i_fit >= self.n_fit:
@@ -161,6 +177,10 @@ class PredictorSumstat(Sumstat):
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]):
         data = self.pre(data)
+
+        # check whether to return data directly
+        if self.i_skip_fit <= self.n_skip_fit:
+            return data
 
         # summary statistic is the (normalized) predictor value
         sumstat = self.predictor.predict(

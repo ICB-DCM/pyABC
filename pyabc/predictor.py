@@ -248,6 +248,13 @@ class LinearPredictor(SimplePredictor):
             weight_samples=weight_samples,
         )
 
+    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+        super().fit(x, y, w)
+        # log
+        logger.debug(
+            f"Linear regression coefficients (n_target, n_feature):\n"
+            f"{self.predictor.coef_}")
+
 
 class LassoPredictor(SimplePredictor):
     """Lasso (least absolute shrinkage and selection) model.

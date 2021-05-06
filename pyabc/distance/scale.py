@@ -67,7 +67,8 @@ def warn_obs_off(off_ixs: np.ndarray, s_ids: List[str]):
     """
     off_ixs = np.asarray(off_ixs, dtype=int)
     for ix in off_ixs:
-        logger.warning(f"Feature {ix} ({s_ids[ix]}) has a high bias.")
+        logger.warning(
+            f"Feature {ix} ({s_ids[ix]}) has a high bias, down-weighting")
 
 
 @check_io

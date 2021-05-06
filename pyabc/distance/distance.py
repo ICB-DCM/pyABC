@@ -1,10 +1,10 @@
 """Distance functions."""
 from abc import ABC
-
+from collections.abc import Collection
 import numpy as np
 from scipy import linalg as la
 from numbers import Number
-from typing import Dict, List, Callable, Union
+from typing import Callable, Dict, List, Set, Union
 import logging
 
 from .scale import standard_deviation, span
@@ -259,6 +259,7 @@ class AdaptivePNormDistance(PNormDistance):
     n_fit_scales:
         Number of times the scales are refitted. inf means in every iteration,
         1 means only once at the beginning for calibration in initialize().
+        An integer is converted to {-1, ..., n_fit_scales -1}
     scale_function:
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
@@ -286,7 +287,7 @@ class AdaptivePNormDistance(PNormDistance):
         p: float = 2,
         initial_scale_weights: Dict[str, float] = None,
         fixed_weights: Dict[str, float] = None,
-        n_fit_scales: int = np.inf,
+        fit_scale_ixs: int = np.inf,
         scale_function: Callable = None,
         max_weight_ratio: float = None,
         scale_log_file: str = None,
@@ -299,9 +300,18 @@ class AdaptivePNormDistance(PNormDistance):
 
         self.scale_weights: Dict[int, np.ndarray] = {}
 
-        self.n_fit_scales: int = n_fit_scales
-        # counter
-        self.i_fit_scales: int = 0
+        # extract indices when to fit scales from input
+        #  convert int to range
+        if not isinstance(fit_scale_ixs, Collection):
+            if fit_scale_ixs == np.inf:
+                fit_scale_ixs = {-1, np.inf}
+            else:
+                # create set {-1, 0, ..., n_fit_scales-2} , # = n_fit_scales
+                fit_scale_ixs = {*np.arange(-1, int(fit_scale_ixs-1))}
+        #  check whether initial weights exist
+        if initial_scale_weights is not None:
+            fit_scale_ixs.discard(-1)
+        self.fit_scale_ixs: Set[int] = fit_scale_ixs
 
         if scale_function is None:
             scale_function = standard_deviation
@@ -634,7 +644,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         info_weights_red = np.sum(sensis, axis=1)
 
         # project onto full sumstat vector and normalize by scale
-        info_weights = np.zeros_like(s_0)
+        info_weights = np.zeros_like(s_0, dtype=float)
+        use_ixs = np.asarray(use_ixs, dtype=bool)
+
         info_weights[use_ixs] = info_weights_red
 
         # bound weights
