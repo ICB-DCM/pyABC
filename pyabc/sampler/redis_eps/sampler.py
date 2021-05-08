@@ -248,7 +248,8 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
         # log active set
         _log_active_set(
-            redis=self.redis, ana_id=ana_id, t=t, id_results=id_results, n=n)
+            redis=self.redis, ana_id=ana_id, t=t, id_results=id_results,
+            batch_size=self.batch_size)
 
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
@@ -663,13 +664,15 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 
 def _log_active_set(
     redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple],
+    batch_size: int,
 ) -> None:
     """Log the status of active simulations after the first n acceptances."""
-    accepted_ids = {id_result[0] for id_result in id_results}
+    accepted_ids = [id_result[0] for id_result in id_results]
     active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
     # remove entries that are already accepted (runtime conditions)
     active_set = active_set.difference(accepted_ids)
     earlier = {ix for ix in active_set if max(accepted_ids) > ix}
     logger.debug(
         f"After {len(accepted_ids)} acceptances, "
-        f"{len(active_set)} simulations busy, thereof {len(earlier)} earlier.")
+        f"{len(active_set) * batch_size} simulations busy, "
+        f"thereof {len(earlier) * batch_size} earlier.")
