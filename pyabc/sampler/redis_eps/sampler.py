@@ -665,9 +665,11 @@ def _log_active_set(
     redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple], n: int,
 ) -> None:
     """Log the status of active simulations after the first n acceptances."""
-    max_ix = max(id_result[0] for id_result in id_results)
+    accepted_ids = {id_result[0] for id_result in id_results}
     active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
-    earlier = [ix for ix in active_set if max_ix > ix]
+    # remove entries that are already accepted (runtime conditions)
+    active_set = active_set.difference(accepted_ids)
+    earlier = {ix for ix in active_set if max(accepted_ids) > ix}
     logger.debug(
         f"After {n} acceptances, {len(active_set)} simulations busy, thereof "
         f"{len(earlier)} earlier.")
