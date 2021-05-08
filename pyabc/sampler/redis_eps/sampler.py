@@ -287,8 +287,8 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # remove all time-specific variables if no more active workers,
         #  also for previous generations
         for _t in range(-1, t+1):
-            n_worker = self.redis.get(idfy(N_WORKER, ana_id, _t))
-            if n_worker is not None and int(n_worker.decode()) == 0:
+            n_worker_b = self.redis.get(idfy(N_WORKER, ana_id, _t))
+            if n_worker_b is not None and int(n_worker_b.decode()) == 0:
                 self.clear_generation_t(t=_t)
 
         # create a single sample result, with start time correction
