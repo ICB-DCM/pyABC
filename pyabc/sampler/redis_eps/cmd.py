@@ -12,6 +12,8 @@ STATIC = "static"
 DYNAMIC = "dynamic"
 # the queue to return results through
 QUEUE = "queue"
+# collection of active indices
+ACTIVE_SET = "active_set"
 
 # default sleep time
 SLEEP_TIME = .1

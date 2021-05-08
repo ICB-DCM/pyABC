@@ -2,17 +2,16 @@
 
 import sys
 from redis import StrictRedis
-import pickle
-import cloudpickle
+import cloudpickle as pickle
 from time import sleep, time
 import logging
 
-from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, N_LOOKAHEAD_EVAL, SSA, QUEUE,
-                  BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
-                  MAX_N_EVAL_LOOK_AHEAD,
-                  idfy)
 from ..util import any_particle_preliminary
+from .cmd import (
+    N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED, N_WORKER, N_LOOKAHEAD_EVAL,
+    SSA, QUEUE, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, MAX_N_EVAL_LOOK_AHEAD,
+    idfy)
+from .util import add_ix_to_active_set, discard_ix_from_active_set
 from .cli import KillHandler
 
 logger = logging.getLogger("Redis-Worker")
@@ -130,12 +129,16 @@ def work_on_population_dynamic(
 
         # check if in look-ahead mode and should sleep
         if is_look_ahead and get_int(N_EVAL) >= max_n_eval_look_ahead:
-            # sleep 0.1 seconds
+            # sleep ... seconds
             sleep(0.1)
             continue
 
         # increase global evaluation counter (before simulation!)
-        particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
+        particle_max_id: int = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
+        # update collection of active indices
+        add_ix_to_active_set(
+            redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
+
         if is_look_ahead:
             # increment look-ahead evaluation counter
             redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
@@ -173,8 +176,7 @@ def work_on_population_dynamic(
 
                 # append to accepted list
                 accepted_samples.append(
-                    cloudpickle.dumps(
-                        (particle_max_id - n_batched, sample)))
+                    pickle.dumps((particle_max_id - n_batched, sample)))
                 any_prel = any_prel or any_particle_preliminary(sample)
                 # initialize new sample
                 sample = sample_factory(is_look_ahead=is_look_ahead)
@@ -194,6 +196,10 @@ def work_on_population_dynamic(
             pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)
             # execute all commands
             pipeline.execute()
+
+        # update collection of active indices
+        discard_ix_from_active_set(
+            redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
 
     # end of sampling loop
 
