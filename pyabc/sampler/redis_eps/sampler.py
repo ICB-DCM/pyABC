@@ -667,7 +667,7 @@ def _log_active_set(
     """Log the status of active simulations after the first n acceptances."""
     max_ix = max(id_result[0] for id_result in id_results)
     active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
-    earlier = [ix for ix in active_set if max_ix >= ix]
+    earlier = [ix for ix in active_set if max_ix > ix]
     logger.debug(
         f"After {n} acceptances, {len(active_set)} simulations busy, thereof "
         f"{len(earlier)} earlier.")
