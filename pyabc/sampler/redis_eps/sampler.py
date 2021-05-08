@@ -246,6 +246,10 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                     id_results.append(sample_with_id)
                     bar.update(len(id_results))
 
+        # log active set
+        _log_active_set(
+            redis=self.redis, ana_id=ana_id, t=t, id_results=id_results, n=n)
+
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
             t=t, n=n, id_results=id_results, all_accepted=all_accepted,
@@ -655,3 +659,15 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         particle.weight *= normalizations[particle.proposal_id]
 
     return sample
+
+
+def _log_active_set(
+    redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple], n: int,
+) -> None:
+    """Log the status of active simulations after the first n acceptances."""
+    max_ix = max(id_result[0] for id_result in id_results)
+    active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
+    earlier = [ix for ix in active_set if max_ix >= ix]
+    logger.debug(
+        f"After {n} acceptances, {len(active_set)} simulations busy, thereof "
+        f"{len(earlier)} earlier.")
