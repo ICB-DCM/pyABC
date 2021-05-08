@@ -662,7 +662,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 
 
 def _log_active_set(
-    redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple], n: int,
+    redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple],
 ) -> None:
     """Log the status of active simulations after the first n acceptances."""
     accepted_ids = {id_result[0] for id_result in id_results}
@@ -671,5 +671,5 @@ def _log_active_set(
     active_set = active_set.difference(accepted_ids)
     earlier = {ix for ix in active_set if max(accepted_ids) > ix}
     logger.debug(
-        f"After {n} acceptances, {len(active_set)} simulations busy, thereof "
-        f"{len(earlier)} earlier.")
+        f"After {len(accepted_ids)} acceptances, "
+        f"{len(active_set)} simulations busy, thereof {len(earlier)} earlier.")
