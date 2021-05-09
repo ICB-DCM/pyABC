@@ -14,7 +14,7 @@ import sys
 
 from pyabc import History
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC.VisServer")
 
 
 # enable ctrl+c handling (python+R fight for it otherwise)

@@ -10,7 +10,7 @@ from functools import reduce
 from typing import Union
 from .parameters import Parameter, ParameterStructure
 
-rv_logger = logging.getLogger("RV")
+rv_logger = logging.getLogger("ABC.RV")
 
 
 class RVBase(ABC):

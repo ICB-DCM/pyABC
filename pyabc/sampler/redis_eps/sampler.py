@@ -26,7 +26,7 @@ from .cmd import (
 from .util import get_active_set
 from .redis_logging import RedisSamplerLogger
 
-logger = logging.getLogger("Redis-Sampler")
+logger = logging.getLogger("ABC.Sampler")
 
 
 class RedisSamplerBase(Sampler):

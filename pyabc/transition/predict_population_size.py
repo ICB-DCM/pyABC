@@ -3,7 +3,7 @@ from collections import namedtuple
 
 from pyabc.cv.powerlaw import fitpowerlaw
 
-logger = logging.getLogger("CV Estimation")
+logger = logging.getLogger("ABC.Transition")
 
 CVEstimate = namedtuple("CVEstimate", "n_estimated n_samples_list cvs f popt")
 

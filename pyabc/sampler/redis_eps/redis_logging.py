@@ -2,7 +2,7 @@ import os
 import logging
 import pandas as pd
 
-logger = logging.getLogger("Redis-Sampler")
+logger = logging.getLogger("ABC.Sampler")
 
 
 class RedisSamplerLogger:
