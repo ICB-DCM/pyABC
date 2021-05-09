@@ -662,7 +662,7 @@ class ABCSMC:
             if current_eps is None or np.isnan(current_eps):
                 raise ValueError(
                     f"The epsilon threshold {current_eps} is invalid.")
-            logger.info(f"t: {t}, eps: {current_eps}.")
+            logger.info(f"t: {t}, eps: {current_eps:.8e}.")
 
             # create simulate function
             simulate_one = self._create_simulate_function(t)
@@ -673,7 +673,7 @@ class ABCSMC:
                 else pop_size / min_acceptance_rate
 
             # perform the sampling
-            logger.debug(f"Now submitting population {t}.")
+            logger.debug(f"Submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
                 max_eval=max_eval, ana_vars=self._vars(),
@@ -702,8 +702,8 @@ class ABCSMC:
             acceptance_rate = pop_size / n_sim
             ess = effective_sample_size(
                 population.get_weighted_distances()['w'])
-            logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
-                        f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
+            logger.info(f"Accepted: {pop_size} / {n_sim} = "
+                        f"{acceptance_rate:.4e}, ESS: {ess:.4e}.")
 
             # prepare next iteration
             self._prepare_next_iteration(
