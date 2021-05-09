@@ -8,7 +8,7 @@ import pandas as pd
 
 import pyabc
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC.PEtab")
 
 try:
     import petab

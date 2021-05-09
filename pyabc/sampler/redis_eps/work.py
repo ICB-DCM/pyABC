@@ -14,7 +14,7 @@ from .cmd import (
 from .util import add_ix_to_active_set, discard_ix_from_active_set
 from .cli import KillHandler
 
-logger = logging.getLogger("Redis-Worker")
+logger = logging.getLogger("ABC.Sampler")
 
 
 def work_on_population_dynamic(

@@ -6,7 +6,7 @@ import os
 import platform
 import logging
 
-logger = logging.getLogger("Sampler")
+logger = logging.getLogger("ABC.Sampler")
 
 
 class MultiCoreSampler(Sampler):
@@ -45,7 +45,7 @@ class MultiCoreSampler(Sampler):
         self.check_max_eval = check_max_eval
 
         # inform user about number of cores used
-        logger.info(f"Parallelizing the sampling on {self.n_procs} cores.")
+        logger.info(f"Parallelize sampling on {self.n_procs} processes.")
 
     @property
     def n_procs(self):

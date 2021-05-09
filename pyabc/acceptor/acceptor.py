@@ -26,7 +26,7 @@ from .pdf_norm import pdf_norm_from_kernel, pdf_norm_max_found
 from ..storage import save_dict_to_json
 
 
-logger = logging.getLogger("Acceptor")
+logger = logging.getLogger("ABC.Acceptor")
 
 
 class AcceptorResult(dict):
