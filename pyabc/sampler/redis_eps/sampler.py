@@ -258,12 +258,17 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
         # wait until all relevant simulations done
         if self.wait_for_all_samples:
-            while int(self.redis.get(idfy(N_WORKER, ana_id, t)).decode()) > 0:
+            while get_int(N_WORKER) > 0:
                 sleep(SLEEP_TIME)
         else:
             max_ix = max(id_result[0] for id_result in id_results)
-            while any(ix <= max_ix for ix in get_active_set(
-                    redis=self.redis, ana_id=ana_id, t=t)):
+            while (
+                # check whether any active evaluation was started earlier
+                any(ix <= max_ix for ix in get_active_set(
+                    redis=self.redis, ana_id=ana_id, t=t))
+                # also stop if no worker is active, useful for server resets
+                and get_int(N_WORKER) > 0
+            ):
                 sleep(SLEEP_TIME)
 
         # collect all remaining results in queue at this point
@@ -284,10 +289,8 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                 id_results.append(sample_with_id)
 
         # set total number of evaluations
-        self.nr_evaluations_ = int(
-            self.redis.get(idfy(N_EVAL, ana_id, t)).decode())
-        n_lookahead_eval = \
-            int(self.redis.get(idfy(N_LOOKAHEAD_EVAL, ana_id, t)).decode())
+        self.nr_evaluations_ = get_int(N_EVAL)
+        n_lookahead_eval = get_int(N_LOOKAHEAD_EVAL)
 
         # remove all time-specific variables if no more active workers,
         #  also for previous generations
