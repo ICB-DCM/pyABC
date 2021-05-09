@@ -6,7 +6,7 @@ from .base import Epsilon
 from ..weighted_statistics import weighted_quantile
 
 
-logger = logging.getLogger("Epsilon")
+logger = logging.getLogger("ABC.Epsilon")
 
 
 class ConstantEpsilon(Epsilon):

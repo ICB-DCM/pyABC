@@ -14,7 +14,7 @@ from .execution_contexts import DefaultContext
 from .db import job_db_factory
 from .util import sge_available
 
-logger = logging.getLogger("SGE")
+logger = logging.getLogger("ABC.SGE")
 
 
 class SGESignatureMismatchException(Exception):

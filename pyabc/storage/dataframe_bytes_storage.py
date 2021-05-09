@@ -4,7 +4,7 @@ import csv
 import numpy as np
 import logging
 
-logger = logging.getLogger("History")
+logger = logging.getLogger("ABC.History")
 
 try:
     import pyarrow

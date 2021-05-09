@@ -14,7 +14,7 @@ from .util import KillHandler
 from .work import work_on_population_dynamic
 from .work_static import work_on_population_static
 
-logger = logging.getLogger("Redis-Worker")
+logger = logging.getLogger("ABC.Sampler")
 
 TIMES = {"s": 1,
          "m": 60,
