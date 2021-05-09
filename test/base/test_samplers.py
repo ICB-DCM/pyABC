@@ -75,6 +75,13 @@ def RedisEvalParallelSamplerWrapper(**kwargs):
     return RedisEvalParallelSamplerServerStarter(**kwargs)
 
 
+def RedisEvalParallelSamplerWaitForAllWrapper(**kwargs):
+    kwargs.setdefault('batch_size', 5)
+    kwargs.setdefault('catch', False)
+    return RedisEvalParallelSamplerServerStarter(
+        wait_for_all_samples=True, **kwargs)
+
+
 def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
     kwargs.setdefault('catch', False)
     return RedisEvalParallelSamplerServerStarter(
@@ -96,6 +103,7 @@ def PicklingMulticoreEvalParallelSampler():
 
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerWrapper,
+                        RedisEvalParallelSamplerWaitForAllWrapper,
                         RedisEvalParallelSamplerLookAheadDelayWrapper,
                         RedisStaticSamplerWrapper,
                         MulticoreEvalParallelSampler,
