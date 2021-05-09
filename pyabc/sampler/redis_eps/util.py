@@ -3,11 +3,8 @@ import sys
 import cloudpickle as pickle
 from redis import StrictRedis
 
-from .cmd import ACTIVE_SET, idfy
+from .cmd import ACTIVE_SET, ACTIVE_SET_LOCK, idfy
 from .redis_logging import logger
-
-# lock for accessing the active set data structure
-ACTIVE_SET_LOCK = "active_set_lock"
 
 
 class KillHandler:

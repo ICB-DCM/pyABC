@@ -10,7 +10,7 @@ from ..util import any_particle_preliminary
 from .cmd import (
     N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED, N_WORKER, N_LOOKAHEAD_EVAL,
     SSA, QUEUE, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, MAX_N_EVAL_LOOK_AHEAD,
-    idfy)
+    EVAL_LOCK, idfy)
 from .util import add_ix_to_active_set, discard_ix_from_active_set
 from .cli import KillHandler
 
@@ -134,7 +134,7 @@ def work_on_population_dynamic(
             continue
 
         # all synchronized operations should be in a lock
-        with redis.lock("eval_lock"):
+        with redis.lock(EVAL_LOCK):
             # increase global evaluation counter (before simulation!)
             particle_max_id: int = redis.incr(
                 idfy(N_EVAL, ana_id, t), batch_size)
