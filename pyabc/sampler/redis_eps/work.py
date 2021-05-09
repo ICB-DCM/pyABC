@@ -133,15 +133,19 @@ def work_on_population_dynamic(
             sleep(0.1)
             continue
 
-        # increase global evaluation counter (before simulation!)
-        particle_max_id: int = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
-        # update collection of active indices
-        add_ix_to_active_set(
-            redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
+        # all synchronized operations should be in a lock
+        with redis.lock("eval_lock"):
+            # increase global evaluation counter (before simulation!)
+            particle_max_id: int = redis.incr(
+                idfy(N_EVAL, ana_id, t), batch_size)
 
-        if is_look_ahead:
-            # increment look-ahead evaluation counter
-            redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
+            # update collection of active indices
+            add_ix_to_active_set(
+                redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
+
+            if is_look_ahead:
+                # increment look-ahead evaluation counter
+                redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
