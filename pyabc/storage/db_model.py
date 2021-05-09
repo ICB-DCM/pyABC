@@ -53,7 +53,7 @@ class ABCSMC(Base):
 
     def __repr__(self):
         return (f"<ABCSMC id={self.id}, start_time={self.start_time}, "
-                "end_time={self.end_time}>")
+                f"end_time={self.end_time}>")
 
     def start_info(self):
         return f"<ABCSMC id={self.id}, start_time={self.start_time}>"
