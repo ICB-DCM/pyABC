@@ -43,7 +43,7 @@ class AcceptorResult(dict):
         More specifically:
         True: The distance is below the acceptance threshold.
         False: The distance is above the acceptance threshold.
-    weight: float,
+    weight:
         Weight associated with the evaluation, which may need
         to be taken into account via importance sampling when
         calculating the parameter weight. Defaults to 1.0.

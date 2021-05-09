@@ -10,7 +10,7 @@ from ..util import any_particle_preliminary
 from .cmd import (
     N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED, N_WORKER, N_LOOKAHEAD_EVAL,
     SSA, QUEUE, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, MAX_N_EVAL_LOOK_AHEAD,
-    EVAL_LOCK, idfy)
+    EVAL_LOCK, SLEEP_TIME, idfy)
 from .util import add_ix_to_active_set, discard_ix_from_active_set
 from .cli import KillHandler
 
@@ -130,7 +130,7 @@ def work_on_population_dynamic(
         # check if in look-ahead mode and should sleep
         if is_look_ahead and get_int(N_EVAL) >= max_n_eval_look_ahead:
             # sleep ... seconds
-            sleep(0.1)
+            sleep(SLEEP_TIME)
             continue
 
         # all synchronized operations should be in a lock

@@ -165,9 +165,10 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         for short-running models the number of evaluations can otherwise
         explode unnecessarily.
     wait_for_all_samples:
-        Whether to wait for all simulations in an iteration to finish. If not,
-        then the sampler only waits for all simulations that were started
-        before the latest started accepted sample.
+        Whether to wait for all simulations in an iteration to finish.
+        If not, then the sampler only waits for all simulations that were
+        started prior to the last started particle of the first `n`
+        acceptances.
     log_file:
         A file for a dedicated sampler history. Updated in each iteration.
         This log file is complementary to the logging realized via the
