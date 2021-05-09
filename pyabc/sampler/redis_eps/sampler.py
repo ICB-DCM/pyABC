@@ -1,10 +1,9 @@
 """Redis based sampler base class and dynamic scheduling samplers."""
 
 import numpy as np
-import pickle
 from time import sleep
 from datetime import datetime
-import cloudpickle
+import cloudpickle as pickle
 import copy
 import logging
 from redis import StrictRedis
@@ -22,7 +21,9 @@ from ...weighted_statistics import effective_sample_size
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
-    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, idfy)
+    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, ACTIVE_SET,
+    idfy)
+from .util import get_active_set
 from .redis_logging import RedisSamplerLogger
 
 logger = logging.getLogger("Redis-Sampler")
@@ -163,6 +164,11 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         This allows to perform a reasonable number of evaluations only, as
         for short-running models the number of evaluations can otherwise
         explode unnecessarily.
+    wait_for_all_samples:
+        Whether to wait for all simulations in an iteration to finish.
+        If not, then the sampler only waits for all simulations that were
+        started prior to the last started particle of the first `n`
+        acceptances.
     log_file:
         A file for a dedicated sampler history. Updated in each iteration.
         This log file is complementary to the logging realized via the
@@ -177,13 +183,15 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                  look_ahead: bool = False,
                  look_ahead_delay_evaluation: bool = True,
                  max_n_eval_look_ahead_factor: float = 10.,
+                 wait_for_all_samples: bool = False,
                  log_file: str = None):
         super().__init__(
             host=host, port=port, password=password, log_file=log_file)
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
-        self.look_ahead_delay_evaluation = look_ahead_delay_evaluation
-        self.max_n_eval_look_ahead_factor = max_n_eval_look_ahead_factor
+        self.look_ahead_delay_evaluation: bool = look_ahead_delay_evaluation
+        self.max_n_eval_look_ahead_factor: float = max_n_eval_look_ahead_factor
+        self.wait_for_all_samples: bool = wait_for_all_samples
 
     def sample_until_n_accepted(
             self, n, simulate_one, t, *,
@@ -199,7 +207,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             # update the SSA function
             self.redis.set(
                 idfy(SSA, ana_id, t),
-                cloudpickle.dumps((simulate_one, self.sample_factory)))
+                pickle.dumps((simulate_one, self.sample_factory)))
             # update the required population size
             self.redis.set(idfy(N_REQ, ana_id, t), n)
             # let the workers know they should update their ssa
@@ -239,16 +247,32 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                     id_results.append(sample_with_id)
                     bar.update(len(id_results))
 
+        # log active set
+        _log_active_set(
+            redis=self.redis, ana_id=ana_id, t=t, id_results=id_results,
+            batch_size=self.batch_size)
+
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
             t=t, n=n, id_results=id_results, all_accepted=all_accepted,
             ana_vars=ana_vars)
 
-        # wait until all workers done
-        while int(self.redis.get(idfy(N_WORKER, ana_id, t)).decode()) > 0:
-            sleep(SLEEP_TIME)
+        # wait until all relevant simulations done
+        if self.wait_for_all_samples:
+            while get_int(N_WORKER) > 0:
+                sleep(SLEEP_TIME)
+        else:
+            max_ix = max(id_result[0] for id_result in id_results)
+            while (
+                # check whether any active evaluation was started earlier
+                any(ix <= max_ix for ix in get_active_set(
+                    redis=self.redis, ana_id=ana_id, t=t))
+                # also stop if no worker is active, useful for server resets
+                and get_int(N_WORKER) > 0
+            ):
+                sleep(SLEEP_TIME)
 
-        # make sure all results are collected
+        # collect all remaining results in queue at this point
         while self.redis.llen(idfy(QUEUE, ana_id, t)) > 0:
             # pop result from queue, block until one is available
             dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
@@ -266,13 +290,15 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                 id_results.append(sample_with_id)
 
         # set total number of evaluations
-        self.nr_evaluations_ = int(
-            self.redis.get(idfy(N_EVAL, ana_id, t)).decode())
-        n_lookahead_eval = \
-            int(self.redis.get(idfy(N_LOOKAHEAD_EVAL, ana_id, t)).decode())
+        self.nr_evaluations_ = get_int(N_EVAL)
+        n_lookahead_eval = get_int(N_LOOKAHEAD_EVAL)
 
-        # remove all time-specific variables
-        self.clear_generation_t(t)
+        # remove all time-specific variables if no more active workers,
+        #  also for previous generations
+        for _t in range(-1, t+1):
+            n_worker_b = self.redis.get(idfy(N_WORKER, ana_id, _t))
+            if n_worker_b is not None and int(n_worker_b.decode()) == 0:
+                self.clear_generation_t(t=_t)
 
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
@@ -299,7 +325,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         (self.redis.pipeline()
          # initialize variables for time t
          .set(idfy(SSA, ana_id, t),
-              cloudpickle.dumps((simulate_one, self.sample_factory)))
+              pickle.dumps((simulate_one, self.sample_factory)))
          .set(idfy(N_EVAL, ana_id, t), 0)
          .set(idfy(N_ACC, ana_id, t), 0)
          .set(idfy(N_REQ, ana_id, t), n)
@@ -313,6 +339,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .set(idfy(IS_LOOK_AHEAD, ana_id, t), int(is_look_ahead))
          .set(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t), max_n_eval_look_ahead)
          .set(idfy(MODE, ana_id, t), DYNAMIC)
+         .set(idfy(ACTIVE_SET, ana_id, t), pickle.dumps(set()))
          # update the current-generation variable
          .set(idfy(GENERATION, ana_id), t)
          # execute all commands
@@ -353,6 +380,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .delete(idfy(IS_LOOK_AHEAD, ana_id, t))
          .delete(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t))
          .delete(idfy(MODE, ana_id, t))
+         .delete(idfy(ACTIVE_SET, ana_id, t))
          .delete(idfy(QUEUE, ana_id, t))
          .execute())
 
@@ -636,3 +664,19 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         particle.weight *= normalizations[particle.proposal_id]
 
     return sample
+
+
+def _log_active_set(
+    redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple],
+    batch_size: int,
+) -> None:
+    """Log the status of active simulations after the first n acceptances."""
+    accepted_ids = [id_result[0] for id_result in id_results]
+    active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
+    # remove entries that are already accepted (runtime conditions)
+    active_set = active_set.difference(accepted_ids)
+    earlier = {ix for ix in active_set if max(accepted_ids) > ix}
+    logger.debug(
+        f"After {len(accepted_ids)} acceptances, "
+        f"{len(active_set) * batch_size} simulations busy, "
+        f"thereof {len(earlier) * batch_size} earlier.")
