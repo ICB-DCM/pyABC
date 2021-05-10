@@ -43,7 +43,7 @@ def set_figure_params(
     elif theme == 'default':
         _set_figure_params_default()
     else:
-        raise ValueError(f"Style not recognized: {theme}")
+        raise ValueError(f"Theme not recognized: {theme}")
 
 
 def _set_figure_params_pyabc(
