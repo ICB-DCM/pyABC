@@ -23,9 +23,9 @@ def plot_credible_intervals(
         show_mean: bool = False,
         color_mean: str = None,
         show_kde_max: bool = False,
-        color_kde: str = None,
+        color_kde_max: str = None,
         show_kde_max_1d: bool = False,
-        color_kde_1d: str = None,
+        color_kde_max_1d: str = None,
         size: tuple = None,
         refval: dict = None,
         refval_color: str = 'C1',
@@ -36,47 +36,50 @@ def plot_credible_intervals(
 
     Parameters
     ----------
-    history: History
+    history:
         The history to extract data from.
-    m: int, optional (default = 0)
+    m:
         The id of the model to plot for.
-    ts: Union[List[int], int], optional (default = all)
+    ts:
         The time points to plot for.
-    par_names: List[str], optional
+    par_names:
         The parameter to plot for. If None, then all parameters are used.
-    levels: List[float], optional (default = [0.95])
-        Confidence intervals to compute.
-    colors: List, optional
-        Colors to use for the errorbars. If None, then the matplotlib
-        default values are used.
-    color_median: str, optional
+    levels:
+        Confidence intervals to compute. Default is [0.95].
+    colors:
+        Colors to use for the errorbars.
+    color_median:
         Color to use for the median line.
-        If None, uses color of smallest errorbar.
-    show_mean: bool, optional (default = False)
+    show_mean:
         Whether to show the mean apart from the median as well.
-    color_mean: color to use for the mean.
-    show_kde_max: bool, optional (default = False)
+    color_mean:
+        Color to use for the mean.
+    show_kde_max:
         Whether to show the one of the sampled points that gives the highest
         KDE value for the specified KDE.
         Note: It is not attemtped to find the overall hightest KDE value, but
         rather the sampled point with the highest value is taken as an
         approximation (of the MAP-value).
-    color_kde: Color to use. Defaults to matplotlib default.
-    show_kde_max_1d: bool, optional (default = False)
-        Same as `show_kde_max`, but here the KDE is applied componentwise.
-    color_kde_1d: Color to use. Defaults to matplotlib default.
-    size: tuple of float
+    color_kde_max:
+        Color to use for KDE max value.
+    show_kde_max_1d:
+        Same as `show_kde_max`, but here the KDE is applied component-wise.
+    color_kde_max_1d:
+        Color to use for the  KDE max value.
+    size:
         Size of the plot.
-    refval: dict, optional (default = None)
+    refval:
         A dictionary of reference parameter values to plot for each of
         `par_names`.
-    refval_color: str, optional
+    refval_color:
         Color to use for the reference value.
-    kde: Transition, optional (default = MultivariateNormalTransition)
+    kde:
         The KDE to use for `show_kde_max`.
-    kde_1d: Transition, optional (default = MultivariateNormalTransition)
+        Defaults to :class:`pyabc.MultivariateNormalTransition`.
+    kde_1d:
         The KDE to use for `show_kde_max_1d`.
-    arr_ax: List, optional
+        Defaults to :class:`pyabc.MultivariateNormalTransition`.
+    arr_ax:
         Array of axes to use. Assumed to be a 1-dimensional list.
 
     Returns
@@ -174,10 +177,10 @@ def plot_credible_intervals(
         # kde max
         if show_kde_max:
             ax.plot(range(n_pop), kde_max[i_par], 'x-',
-                    label="Max KDE", color=color_kde)
+                    label="Max KDE", color=color_kde_max)
         if show_kde_max_1d:
             ax.plot(range(n_pop), kde_max_1d[i_par], 'x-',
-                    label="Max KDE 1d", color=color_kde_1d)
+                    label="Max KDE 1d", color=color_kde_max_1d)
         # reference value
         if refval is not None:
             ax.hlines(refval[par], xmin=0, xmax=n_pop - 1,
