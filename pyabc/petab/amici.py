@@ -6,7 +6,7 @@ import copy
 import pyabc
 from .base import PetabImporter, rescale
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC.PEtab")
 
 try:
     import petab

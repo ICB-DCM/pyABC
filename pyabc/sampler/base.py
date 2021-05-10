@@ -46,8 +46,7 @@ class Sample:
             Concatenation of all the all_sum_stats lists of all
             particles added and accepted to this sample via append().
         """
-        return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self.particles), [])
+        return [particle.sum_stat for particle in self.particles]
 
     def first_m_sum_stats(self, m):
         """
@@ -61,9 +60,7 @@ class Sample:
             particles added and accepted to this sample via append().
         """
         m = min(len(self.particles), m)
-
-        return sum((particle.accepted_sum_stats + particle.rejected_sum_stats
-                    for particle in self.particles[:m]), [])
+        return [particle.sum_stat for particle in self.particles[:m]]
 
     def first_m_particles(self, m) -> List:
         m = min(len(self.particles), m)

@@ -2,19 +2,19 @@
 
 import sys
 from redis import StrictRedis
-import pickle
-import cloudpickle
-from time import time
+import cloudpickle as pickle
+from time import sleep, time
 import logging
 
-from .cmd import (N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED,
-                  N_WORKER, N_LOOKAHEAD_EVAL, SSA, QUEUE,
-                  BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID,
-                  idfy)
 from ..util import any_particle_preliminary
+from .cmd import (
+    N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED, N_WORKER, N_LOOKAHEAD_EVAL,
+    SSA, QUEUE, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, MAX_N_EVAL_LOOK_AHEAD,
+    EVAL_LOCK, SLEEP_TIME, idfy)
+from .util import add_ix_to_active_set, discard_ix_from_active_set
 from .cli import KillHandler
 
-logger = logging.getLogger("Redis-Worker")
+logger = logging.getLogger("ABC.Sampler")
 
 
 def work_on_population_dynamic(
@@ -43,11 +43,13 @@ def work_on_population_dynamic(
     pipeline = redis.pipeline()
 
     # extract bytes
-    ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b \
-        = (pipeline.get(idfy(SSA, ana_id, t))
-           .get(idfy(BATCH_SIZE, ana_id, t))
-           .get(idfy(ALL_ACCEPTED, ana_id, t))
-           .get(idfy(IS_LOOK_AHEAD, ana_id, t)).execute())
+    (ssa_b, batch_size_b, all_accepted_b, is_look_ahead_b,
+     max_eval_look_ahead_b) = (
+        pipeline.get(idfy(SSA, ana_id, t))
+        .get(idfy(BATCH_SIZE, ana_id, t))
+        .get(idfy(ALL_ACCEPTED, ana_id, t))
+        .get(idfy(IS_LOOK_AHEAD, ana_id, t))
+        .get(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t)).execute())
 
     # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
@@ -61,6 +63,7 @@ def work_on_population_dynamic(
     batch_size = int(batch_size_b.decode())
     all_accepted = bool(int(all_accepted_b.decode()))
     is_look_ahead = bool(int(is_look_ahead_b.decode()))
+    max_n_eval_look_ahead = float(max_eval_look_ahead_b.decode())
 
     # notify sign up as worker
     n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
@@ -124,10 +127,25 @@ def work_on_population_dynamic(
             # create new empty sample for clean split
             sample = sample_factory(is_look_ahead=is_look_ahead)
 
-        # increase global evaluation counter (before simulation!)
-        particle_max_id = redis.incr(idfy(N_EVAL, ana_id, t), batch_size)
-        if is_look_ahead:
-            redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
+        # check if in look-ahead mode and should sleep
+        if is_look_ahead and get_int(N_EVAL) >= max_n_eval_look_ahead:
+            # sleep ... seconds
+            sleep(SLEEP_TIME)
+            continue
+
+        # all synchronized operations should be in a lock
+        with redis.lock(EVAL_LOCK):
+            # increase global evaluation counter (before simulation!)
+            particle_max_id: int = redis.incr(
+                idfy(N_EVAL, ana_id, t), batch_size)
+
+            # update collection of active indices
+            add_ix_to_active_set(
+                redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
+
+            if is_look_ahead:
+                # increment look-ahead evaluation counter
+                redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
@@ -156,14 +174,13 @@ def work_on_population_dynamic(
             sample.append(new_sim)
             # check for acceptance
             if new_sim.accepted:
-                # the order of the IDs is reversed, but this does not
-                # matter. Important is only that the IDs are specified
-                # before the simulation starts
+                # The order of the IDs is reversed, but this does not
+                #  matter. Important is only that the IDs are specified
+                #  before the simulation starts
 
                 # append to accepted list
                 accepted_samples.append(
-                    cloudpickle.dumps(
-                        (particle_max_id - n_batched, sample)))
+                    pickle.dumps((particle_max_id - n_batched, sample)))
                 any_prel = any_prel or any_particle_preliminary(sample)
                 # initialize new sample
                 sample = sample_factory(is_look_ahead=is_look_ahead)
@@ -183,6 +200,10 @@ def work_on_population_dynamic(
             pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)
             # execute all commands
             pipeline.execute()
+
+        # update collection of active indices
+        discard_ix_from_active_set(
+            redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
 
     # end of sampling loop
 

@@ -445,14 +445,13 @@ class ABCSMC:
             population = _get_initial_population_with_distances()
             records = []
             for particle in population.get_list():
-                for d in particle.accepted_distances:
-                    # we use dummy densities here, since only the quotient
-                    # is of interest
-                    records.append({
-                        'distance': d,
-                        'transition_pd_prev': 1.0,
-                        'transition_pd': 1.0,
-                        'accepted': True})
+                # we use dummy densities here, since only the quotient
+                #  is of interest
+                records.append({
+                    'distance': particle.distance,
+                    'transition_pd_prev': 1.0,
+                    'transition_pd': 1.0,
+                    'accepted': True})
             return records
 
         self.eps.initialize(
@@ -507,7 +506,7 @@ class ABCSMC:
         # create simulate function
         simulate_one = self._create_simulate_from_prior_function()
 
-        logger.info(f"Calibration sample t={t}.")
+        logger.info(f"Calibration sample t = {t}.")
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
@@ -546,14 +545,11 @@ class ABCSMC:
             happens. Therefore, the returned function should be light, and
             in particular not contain references to the ABCSMC class.
         """
-        nr_samples_per_parameter = \
-            self.population_size.nr_samples_per_parameter
         return create_simulate_function(
             t=t, model_probabilities=self.history.get_model_probabilities(t-1),
             model_perturbation_kernel=self.model_perturbation_kernel,
             transitions=self.transitions, model_prior=self.model_prior,
             parameter_priors=self.parameter_priors,
-            nr_samples_per_parameter=nr_samples_per_parameter,
             models=self.models, summary_statistics=self.summary_statistics,
             x_0=self.x_0, distance_function=self.distance_function,
             eps=self.eps, acceptor=self.acceptor,
@@ -666,7 +662,7 @@ class ABCSMC:
             if current_eps is None or np.isnan(current_eps):
                 raise ValueError(
                     f"The epsilon threshold {current_eps} is invalid.")
-            logger.info(f"t: {t}, eps: {current_eps}.")
+            logger.info(f"t: {t}, eps: {current_eps:.8e}.")
 
             # create simulate function
             simulate_one = self._create_simulate_function(t)
@@ -677,7 +673,7 @@ class ABCSMC:
                 else pop_size / min_acceptance_rate
 
             # perform the sampling
-            logger.debug(f"Now submitting population {t}.")
+            logger.debug(f"Submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
                 max_eval=max_eval, ana_vars=self._vars(),
@@ -706,8 +702,8 @@ class ABCSMC:
             acceptance_rate = pop_size / n_sim
             ess = effective_sample_size(
                 population.get_weighted_distances()['w'])
-            logger.info(f"Acceptance rate: {pop_size} / {n_sim} = "
-                        f"{acceptance_rate:.4e}, ESS={ess:.4e}.")
+            logger.info(f"Accepted: {pop_size} / {n_sim} = "
+                        f"{acceptance_rate:.4e}, ESS: {ess:.4e}.")
 
             # prepare next iteration
             self._prepare_next_iteration(
@@ -796,20 +792,16 @@ class ABCSMC:
 
             # iterate over all particles
             for particle in recorded_particles:
-                all_distances = \
-                    particle.accepted_distances + particle.rejected_distances
-                # evaluate previous and currenttransition density
+                # evaluate previous and current transition density
                 transition_pd_prev = transition_pdf_prev(
                     particle.m, particle.parameter)
                 transition_pd = transition_pdf(
                     particle.m, particle.parameter)
-                # iterate over all distances
-                for d in all_distances:
-                    records.append({
-                        'distance': d,
-                        'transition_pd_prev': transition_pd_prev,
-                        'transition_pd': transition_pd,
-                        'accepted': particle.accepted})
+                records.append({
+                    'distance': particle.distance,
+                    'transition_pd_prev': transition_pd_prev,
+                    'transition_pd': transition_pd,
+                    'accepted': particle.accepted})
             return records
 
         # update epsilon
@@ -864,14 +856,11 @@ class ABCSMC:
         These variables are passed to the sampler, as some need to create
         simulation settings themselves.
         """
-        nr_samples_per_parameter = \
-            self.population_size.nr_samples_per_parameter
         return AnalysisVars(
             model_prior=self.model_prior,
             parameter_priors=self.parameter_priors,
             model_perturbation_kernel=self.model_perturbation_kernel,
             transitions=self.transitions,
-            nr_samples_per_parameter=nr_samples_per_parameter,
             models=self.models,
             summary_statistics=self.summary_statistics,
             x_0=self.x_0,

@@ -17,7 +17,7 @@ from pyabc.random_choice import fast_random_choice
 from pyabc.parameters import Parameter
 from pyabc.population import Particle
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC")
 
 
 class AnalysisVars:
@@ -32,7 +32,6 @@ class AnalysisVars:
         parameter_priors: List[Distribution],
         model_perturbation_kernel: ModelPerturbationKernel,
         transitions: List[Transition],
-        nr_samples_per_parameter: int,
         models: List[Model],
         summary_statistics: Callable,
         x_0: dict,
@@ -52,7 +51,6 @@ class AnalysisVars:
         self.parameter_priors = parameter_priors
         self.model_perturbation_kernel = model_perturbation_kernel
         self.transitions = transitions
-        self.nr_samples_per_parameter = nr_samples_per_parameter
         self.models = models
         self.summary_statistics = summary_statistics
         self.x_0 = x_0
@@ -83,8 +81,7 @@ def create_simulate_from_prior_function(
     model_prior: The model prior.
     parameter_priors: The parameter priors.
     models: List of all models.
-    summary_statistics:
-        Function to compute summary statistics from model output.
+    summary_statistics: Computes summary statistics from model output.
 
     Returns
     -------
@@ -103,11 +100,9 @@ def create_simulate_from_prior_function(
             0, theta, summary_statistics)
         # sampled from prior, so all have uniform weight
         weight = 1.0
-        # remember sum stat as accepted
-        accepted_sum_stats = [model_result.sum_stats]
         # distance will be computed after initialization of the
         #  distance function
-        accepted_distances = [np.inf]
+        distance = np.inf
         # all are happy and accepted
         accepted = True
 
@@ -115,10 +110,8 @@ def create_simulate_from_prior_function(
             m=m,
             parameter=theta,
             weight=weight,
-            accepted_sum_stats=accepted_sum_stats,
-            accepted_distances=accepted_distances,
-            rejected_sum_stats=[],
-            rejected_distances=[],
+            sum_stat=model_result.sum_stat,
+            distance=distance,
             accepted=accepted,
             proposal_id=0,
             preliminary=False)
@@ -188,17 +181,17 @@ def generate_valid_proposal(
 
 def evaluate_proposal(
         m_ss: int, theta_ss: Parameter, t: int,
-        nr_samples_per_parameter: int, models: List[Model],
+        models: List[Model],
         summary_statistics: Callable,
         distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
-        x_0: dict, weight_function: Callable, proposal_id: int) -> Particle:
+        x_0: dict, weight_function: Callable, proposal_id: int,
+) -> Particle:
     """Evaluate a proposed parameter.
 
     Parameters
     ----------
     m_ss, theta_ss: The proposed (model, parameter) sample.
     t: The current time.
-    nr_samples_per_parameter: Number of samples per parameter.
     models: List of all models.
     summary_statistics:
         Function to compute summary statistics from model output.
@@ -216,39 +209,19 @@ def evaluate_proposal(
     Data for the given parameters theta_ss are simulated, summary statistics
     computed and evaluated.
     """
-    accepted_sum_stats = []
-    accepted_distances = []
-    rejected_sum_stats = []
-    rejected_distances = []
-    accepted_weights = []
-
-    # perform nr_samples_per_parameter simulations and check acceptance
-    for _ in range(nr_samples_per_parameter):
-        # simulate, compute distance, check acceptance
-        model_result = models[m_ss].accept(
-            t,
-            theta_ss,
-            summary_statistics,
-            distance_function,
-            eps,
-            acceptor,
-            x_0)
-        # check whether to append to accepted particles
-        if model_result.accepted:
-            accepted_sum_stats.append(model_result.sum_stats)
-            accepted_distances.append(model_result.distance)
-            accepted_weights.append(model_result.weight)
-        else:
-            rejected_sum_stats.append(model_result.sum_stats)
-            rejected_distances.append(model_result.distance)
-
-    # check whether any simulation got accepted
-    accepted = len(accepted_sum_stats) > 0
+    # simulate, compute distance, check acceptance
+    model_result = models[m_ss].accept(
+        t,
+        theta_ss,
+        summary_statistics,
+        distance_function,
+        eps,
+        acceptor,
+        x_0)
 
     # compute acceptance weight
-    if accepted:
-        weight = weight_function(
-            accepted_distances, m_ss, theta_ss, accepted_weights)
+    if model_result.accepted:
+        weight = weight_function(m_ss, theta_ss, model_result.weight)
     else:
         weight = 0
 
@@ -256,11 +229,9 @@ def evaluate_proposal(
         m=m_ss,
         parameter=theta_ss,
         weight=weight,
-        accepted_sum_stats=accepted_sum_stats,
-        accepted_distances=accepted_distances,
-        rejected_sum_stats=rejected_sum_stats,
-        rejected_distances=rejected_distances,
-        accepted=accepted,
+        sum_stat=model_result.sum_stat,
+        distance=model_result.distance,
+        accepted=model_result.accepted,
         preliminary=False,
         proposal_id=proposal_id)
 
@@ -318,16 +289,15 @@ def create_transition_pdf(
 
 
 def create_weight_function(
-        nr_samples_per_parameter: int,
         prior_pdf: Callable,
-        transition_pdf: Callable) -> Callable:
+        transition_pdf: Callable,
+) -> Callable:
     """Create a function that calculates a sample's importance weight.
     The weight is the prior divided by the transition density and the
     acceptance step weight.
 
     Parameters
     ----------
-    nr_samples_per_parameter: Number of samples per parameter.
     prior_pdf: The prior density.
     transition_pdf: The transition density.
 
@@ -335,24 +305,24 @@ def create_weight_function(
     -------
     weight_function: The importance sample weight function.
     """
-    def weight_function(
-            distance_list, m_ss, theta_ss, acceptance_weights):
+    def weight_function(m_ss, theta_ss, acceptance_weight: float):
+        """Calculate total weight, from sampling and acceptance weight.
+
+        Parameters
+        ----------
+        m_ss: The model sample.
+        theta_ss: The parameter sample.
+        acceptance_weight: The acceptance weight sample. In most cases 1.
+
+        Returns
+        -------
+        weight: The total weight.
+        """
         # prior and transition density (can be equal)
         prior_pd = prior_pdf(m_ss, theta_ss)
         transition_pd = transition_pdf(m_ss, theta_ss)
-
-        # account for stochastic acceptance
-        # TODO This is only valid for single samples (see #54)
-        acceptance_weight = np.prod(acceptance_weights)
-
-        # account for multiple tries
-        fr_accepted_for_par = \
-            len(distance_list) / nr_samples_per_parameter
-
         # calculate weight
-        weight = (
-            prior_pd * acceptance_weight / transition_pd
-            * fr_accepted_for_par)
+        weight = acceptance_weight * prior_pd / transition_pd
         return weight
 
     return weight_function
@@ -365,7 +335,6 @@ def create_simulate_function(
         transitions: List[Transition],
         model_prior: RV,
         parameter_priors: List[Distribution],
-        nr_samples_per_parameter: int,
         models: List[Model],
         summary_statistics: Callable,
         x_0: dict,
@@ -388,7 +357,6 @@ def create_simulate_function(
     transitions: The parameter transition kernels.
     model_prior: The model prior.
     parameter_priors: The parameter priors.
-    nr_samples_per_parameter: Number of samples per parameter.
     models: List of all models.
     summary_statistics:
         Function to compute summary statistics from model output.
@@ -431,7 +399,6 @@ def create_simulate_function(
 
     # create weight function
     weight_function = create_weight_function(
-        nr_samples_per_parameter=nr_samples_per_parameter,
         prior_pdf=prior_pdf, transition_pdf=transition_pdf)
 
     # simulation function
@@ -444,7 +411,6 @@ def create_simulate_function(
         if evaluate:
             particle = evaluate_proposal(
                 *parameter, t=t,
-                nr_samples_per_parameter=nr_samples_per_parameter,
                 models=models, summary_statistics=summary_statistics,
                 distance_function=distance_function, eps=eps,
                 acceptor=acceptor,
@@ -453,7 +419,6 @@ def create_simulate_function(
         else:
             particle = only_simulate_data_for_proposal(
                 *parameter, t=t,
-                nr_samples_per_parameter=nr_samples_per_parameter,
                 models=models, summary_statistics=summary_statistics,
                 weight_function=weight_function, proposal_id=proposal_id)
         return particle
@@ -463,7 +428,7 @@ def create_simulate_function(
 
 def only_simulate_data_for_proposal(
         m_ss: int, theta_ss: Parameter, t: int,
-        nr_samples_per_parameter: int, models: List[Model],
+        models: List[Model],
         summary_statistics: Callable,
         weight_function: Callable,
         proposal_id: int,
@@ -473,38 +438,28 @@ def only_simulate_data_for_proposal(
     Similar to `evaluate_proposal`, however here for the passed parameters
     only data are simulated, but no distances calculated or acceptance
     checked. That needs to be done post-hoc then, not checked here."""
-    # for the results
-    accepted_sum_stats = []
-    # distance and weight are just dummies here, they need to be recomputed
-    #  later again
-    accepted_distances = []
-    accepted_weights = []
 
-    # perform nr_samples_per_parameter simulations
-    for _ in range(nr_samples_per_parameter):
-        # simulate
-        model_result = models[m_ss].summary_statistics(
-            t, theta_ss, summary_statistics)
-        accepted_sum_stats.append(model_result.sum_stats)
-        # fill in dummies for distance and weight
-        accepted_distances.append(np.inf)
-        accepted_weights.append(1.)
+    # simulate
+    model_result = models[m_ss].summary_statistics(
+        t, theta_ss, summary_statistics)
+
+    # dummies for distance and weight, need to be recomputed later
+    distance = np.inf
+    acceptance_weight = 1.
 
     # needs to be accepted in order to be forwarded by the sampler, and so
     #  as a single particle
     accepted = True
 
-    # compute acceptance weight
-    # TODO later replacement only works with nr_samples_per_parameter == 1
-    weight = weight_function(
-        accepted_distances, m_ss, theta_ss, accepted_weights)
+    # compute weight
+    weight = weight_function(m_ss, theta_ss, acceptance_weight)
 
     return Particle(
         m=m_ss,
         parameter=theta_ss,
         weight=weight,
-        accepted_sum_stats=accepted_sum_stats,
-        accepted_distances=accepted_distances,
+        sum_stat=model_result.sum_stat,
+        distance=distance,
         accepted=accepted,
         preliminary=True,
         proposal_id=proposal_id,
@@ -523,49 +478,30 @@ def evaluate_preliminary_particle(
     if not particle.preliminary:
         raise AssertionError("Particle is not preliminary")
 
-    # for results
-    accepted_sum_stats = []
-    accepted_distances = []
-    accepted_weights = []
-    rejected_sum_stats = []
-    rejected_distances = []
-
-    for sum_stat in particle.accepted_sum_stats:
-        acc_res = ana_vars.acceptor(
-            distance_function=ana_vars.distance_function,
-            eps=ana_vars.eps,
-            x=sum_stat,
-            x_0=ana_vars.x_0,
-            t=t,
-            par=particle.parameter)
-
-        if acc_res.accept:
-            accepted_sum_stats.append(sum_stat)
-            accepted_distances.append(acc_res.distance)
-            # the acceptance weight
-            accepted_weights.append(acc_res.weight)
-        else:
-            rejected_sum_stats.append(sum_stat)
-            rejected_distances.append(acc_res.distance)
+    acc_res = ana_vars.acceptor(
+        distance_function=ana_vars.distance_function,
+        eps=ana_vars.eps,
+        x=particle.sum_stat,
+        x_0=ana_vars.x_0,
+        t=t,
+        par=particle.parameter)
 
     # reconstruct weighting function from `weight_function`
     sampling_weight = particle.weight
-    fr_accepted_for_par = \
-        len(accepted_sum_stats) / ana_vars.nr_samples_per_parameter
     # the weight is the sampling weight times the acceptance weight(s)
-    weight = sampling_weight * np.prod(accepted_weights) * \
-        fr_accepted_for_par
+    if acc_res.accept:
+        weight = sampling_weight * acc_res.weight
+    else:
+        weight = 0
 
     # return the evaluated particle
     return Particle(
         m=particle.m,
         parameter=particle.parameter,
         weight=weight,
-        accepted_sum_stats=accepted_sum_stats,
-        accepted_distances=accepted_distances,
-        rejected_sum_stats=rejected_sum_stats,
-        rejected_distances=rejected_distances,
-        accepted=len(accepted_distances) > 0,
+        sum_stat=particle.sum_stat,
+        distance=acc_res.distance,
+        accepted=acc_res.accept,
         preliminary=False,
         proposal_id=particle.proposal_id,
     )
@@ -600,22 +536,22 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
-        logger.info("Stopping: maximum number of generations.")
+        logger.info("Stop: Maximum number of generations.")
         return True
     if current_eps <= min_eps:
-        logger.info("Stopping: minimum epsilon.")
+        logger.info("Stop: Minimum epsilon.")
         return True
     elif stop_if_single_model_alive and nr_of_models_alive <= 1:
-        logger.info("Stopping: single model alive.")
+        logger.info("Stop: Single model alive.")
         return True
     elif acceptance_rate < min_acceptance_rate:
-        logger.info("Stopping: minimum acceptance rate.")
+        logger.info("Stop: Minimum acceptance rate.")
         return True
     elif total_nr_simulations >= max_total_nr_simulations:
-        logger.info("Stopping: total simulations budget.")
+        logger.info("Stop: Total simulations budget.")
         return True
     elif max_walltime is not None and walltime > max_walltime:
-        logger.info("Stopping: maximum walltime.")
+        logger.info("Stop: Maximum walltime.")
         return True
     return False
 

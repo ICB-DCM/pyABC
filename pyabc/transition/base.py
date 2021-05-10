@@ -11,7 +11,7 @@ from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
 from .transitionmeta import TransitionMeta
 
-logger = logging.getLogger("Transitions")
+logger = logging.getLogger("ABC.Transition")
 
 
 class Transition(BaseEstimator, metaclass=TransitionMeta):
