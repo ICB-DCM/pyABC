@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -14,9 +12,9 @@
    viewBox="0 0 50.119755 38.169258"
    version="1.1"
    id="svg8"
-   inkscape:version="0.92.4 (f8dce91, 2019-08-02)"
-   sodipodi:docname="logo.svg"
-   inkscape:export-filename="/home/yannik/pyabc/doc/logo_social_preview.png"
+   inkscape:version="1.0.2 (394de47547, 2021-03-26)"
+   sodipodi:docname="logo_inkscape.svg"
+   inkscape:export-filename="/home/yannik/pyabc/doc/logo.png"
    inkscape:export-xdpi="277.30121"
    inkscape:export-ydpi="277.30121">
   <defs
@@ -28,17 +26,18 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="130.3259"
-     inkscape:cy="99.897058"
+     inkscape:zoom="3.959798"
+     inkscape:cx="155.91212"
+     inkscape:cy="111.96341"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
-     inkscape:window-width="933"
-     inkscape:window-height="1016"
-     inkscape:window-x="987"
-     inkscape:window-y="27"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1864"
+     inkscape:window-height="1043"
+     inkscape:window-x="56"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:document-rotation="0" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -62,11 +61,11 @@
        cy="38.802254"
        cx="-135.03094"
        id="path4233"
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#d2d2d2;stroke-width:1.23472226;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#c4c4c4;stroke-width:1.23472226;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        transform="rotate(-35.24889)" />
     <ellipse
        transform="rotate(-35.248889)"
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#d2d2d2;stroke-width:1.23472226;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#c4c4c4;stroke-width:1.23472226;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="use4235"
        cx="-135.03094"
        cy="38.802238"
@@ -74,7 +73,7 @@
        ry="6.0546575" />
     <ellipse
        transform="matrix(0.81573106,-0.57843136,0.57582818,0.81757074,0,0)"
-       style="opacity:1;fill:none;fill-opacity:1;stroke:#d2d2d2;stroke-width:1.23472536;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#c4c4c4;stroke-width:1.23472536;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="use4246"
        cx="-134.96968"
        cy="38.587013"
@@ -82,14 +81,15 @@
        ry="8.9865894" />
     <g
        id="g865"
-       transform="translate(0.98675189,2.6198648)">
+       transform="translate(0.98675189,2.6198648)"
+       style="stroke:none;stroke-opacity:1;fill:#424242;fill-opacity:1">
       <text
          id="text835"
          y="111.07397"
          x="-111.44828"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:27.81769943px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1.73860621"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:27.8177px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;letter-spacing:0px;word-spacing:0px;fill:#424242;fill-opacity:1;stroke:none;stroke-width:1.73861;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';stroke-width:1.73860621"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman, ';stroke-width:1.73861;stroke:none;stroke-opacity:1;fill:#424242;fill-opacity:1"
            y="111.07397"
            x="-111.44828"
            id="tspan833"
@@ -98,9 +98,9 @@
          id="text839"
          y="115.15675"
          x="-98.47245"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15.78237247px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.98639828"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15.7824px;line-height:1.25;font-family:Verdana;-inkscape-font-specification:Verdana;letter-spacing:0px;word-spacing:0px;fill:#424242;fill-opacity:1;stroke:none;stroke-width:0.986398;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="stroke-width:0.98639828"
+           style="stroke-width:0.986398;stroke:none;stroke-opacity:1;fill:#424242;fill-opacity:1"
            y="115.15675"
            x="-98.47245"
            id="tspan837"
