@@ -441,18 +441,18 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         walltime = datetime.now() - ana_vars.init_walltime
 
         if termination_criteria_fulfilled(
-                current_eps=ana_vars.eps(t),
-                min_eps=ana_vars.min_eps,
-                stop_if_single_model_alive=  # noqa: E251
-                ana_vars.stop_if_single_model_alive,
-                nr_of_models_alive=population.nr_of_models_alive(),
-                acceptance_rate=acceptance_rate,
-                min_acceptance_rate=ana_vars.min_acceptance_rate,
-                total_nr_simulations=total_nr_simulations,
-                max_total_nr_simulations=ana_vars.max_total_nr_simulations,
-                walltime=walltime,
-                max_walltime=ana_vars.max_walltime,
-                t=t, max_t=ana_vars.max_t,
+            current_eps=ana_vars.eps(t),
+            min_eps=ana_vars.min_eps,
+            stop_if_single_model_alive=  # noqa: E251
+            ana_vars.stop_if_single_model_alive,
+            nr_of_models_alive=population.nr_of_models_alive(),
+            acceptance_rate=acceptance_rate,
+            min_acceptance_rate=ana_vars.min_acceptance_rate,
+            total_nr_simulations=total_nr_simulations,
+            max_total_nr_simulations=ana_vars.max_total_nr_simulations,
+            walltime=walltime,
+            max_walltime=ana_vars.max_walltime,
+            t=t, max_t=ana_vars.max_t,
         ):
             # do not head-start a new generation as this is likely not needed
             return
