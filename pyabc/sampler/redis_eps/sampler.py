@@ -1,10 +1,9 @@
 """Redis based sampler base class and dynamic scheduling samplers."""
 
 import numpy as np
-import pickle
 from time import sleep
 from datetime import datetime
-import cloudpickle
+import cloudpickle as pickle
 import copy
 import logging
 from redis import StrictRedis
@@ -22,10 +21,12 @@ from ...weighted_statistics import effective_sample_size
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
-    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, idfy)
+    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, ACTIVE_SET,
+    idfy)
+from .util import get_active_set
 from .redis_logging import RedisSamplerLogger
 
-logger = logging.getLogger("Redis-Sampler")
+logger = logging.getLogger("ABC.Sampler")
 
 
 class RedisSamplerBase(Sampler):
@@ -163,6 +164,11 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         This allows to perform a reasonable number of evaluations only, as
         for short-running models the number of evaluations can otherwise
         explode unnecessarily.
+    wait_for_all_samples:
+        Whether to wait for all simulations in an iteration to finish.
+        If not, then the sampler only waits for all simulations that were
+        started prior to the last started particle of the first `n`
+        acceptances.
     log_file:
         A file for a dedicated sampler history. Updated in each iteration.
         This log file is complementary to the logging realized via the
@@ -177,13 +183,15 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                  look_ahead: bool = False,
                  look_ahead_delay_evaluation: bool = True,
                  max_n_eval_look_ahead_factor: float = 10.,
+                 wait_for_all_samples: bool = False,
                  log_file: str = None):
         super().__init__(
             host=host, port=port, password=password, log_file=log_file)
         self.batch_size: int = batch_size
         self.look_ahead: bool = look_ahead
-        self.look_ahead_delay_evaluation = look_ahead_delay_evaluation
-        self.max_n_eval_look_ahead_factor = max_n_eval_look_ahead_factor
+        self.look_ahead_delay_evaluation: bool = look_ahead_delay_evaluation
+        self.max_n_eval_look_ahead_factor: float = max_n_eval_look_ahead_factor
+        self.wait_for_all_samples: bool = wait_for_all_samples
 
     def sample_until_n_accepted(
             self, n, simulate_one, t, *,
@@ -199,7 +207,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             # update the SSA function
             self.redis.set(
                 idfy(SSA, ana_id, t),
-                cloudpickle.dumps((simulate_one, self.sample_factory)))
+                pickle.dumps((simulate_one, self.sample_factory)))
             # update the required population size
             self.redis.set(idfy(N_REQ, ana_id, t), n)
             # let the workers know they should update their ssa
@@ -239,16 +247,32 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                     id_results.append(sample_with_id)
                     bar.update(len(id_results))
 
+        # log active set
+        _log_active_set(
+            redis=self.redis, ana_id=ana_id, t=t, id_results=id_results,
+            batch_size=self.batch_size)
+
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
             t=t, n=n, id_results=id_results, all_accepted=all_accepted,
             ana_vars=ana_vars)
 
-        # wait until all workers done
-        while int(self.redis.get(idfy(N_WORKER, ana_id, t)).decode()) > 0:
-            sleep(SLEEP_TIME)
+        # wait until all relevant simulations done
+        if self.wait_for_all_samples:
+            while get_int(N_WORKER) > 0:
+                sleep(SLEEP_TIME)
+        else:
+            max_ix = max(id_result[0] for id_result in id_results)
+            while (
+                # check whether any active evaluation was started earlier
+                any(ix <= max_ix for ix in get_active_set(
+                    redis=self.redis, ana_id=ana_id, t=t))
+                # also stop if no worker is active, useful for server resets
+                and get_int(N_WORKER) > 0
+            ):
+                sleep(SLEEP_TIME)
 
-        # make sure all results are collected
+        # collect all remaining results in queue at this point
         while self.redis.llen(idfy(QUEUE, ana_id, t)) > 0:
             # pop result from queue, block until one is available
             dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
@@ -266,13 +290,15 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                 id_results.append(sample_with_id)
 
         # set total number of evaluations
-        self.nr_evaluations_ = int(
-            self.redis.get(idfy(N_EVAL, ana_id, t)).decode())
-        n_lookahead_eval = \
-            int(self.redis.get(idfy(N_LOOKAHEAD_EVAL, ana_id, t)).decode())
+        self.nr_evaluations_ = get_int(N_EVAL)
+        n_lookahead_eval = get_int(N_LOOKAHEAD_EVAL)
 
-        # remove all time-specific variables
-        self.clear_generation_t(t)
+        # remove all time-specific variables if no more active workers,
+        #  also for previous generations
+        for _t in range(-1, t+1):
+            n_worker_b = self.redis.get(idfy(N_WORKER, ana_id, _t))
+            if n_worker_b is not None and int(n_worker_b.decode()) == 0:
+                self.clear_generation_t(t=_t)
 
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
@@ -299,7 +325,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         (self.redis.pipeline()
          # initialize variables for time t
          .set(idfy(SSA, ana_id, t),
-              cloudpickle.dumps((simulate_one, self.sample_factory)))
+              pickle.dumps((simulate_one, self.sample_factory)))
          .set(idfy(N_EVAL, ana_id, t), 0)
          .set(idfy(N_ACC, ana_id, t), 0)
          .set(idfy(N_REQ, ana_id, t), n)
@@ -313,6 +339,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .set(idfy(IS_LOOK_AHEAD, ana_id, t), int(is_look_ahead))
          .set(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t), max_n_eval_look_ahead)
          .set(idfy(MODE, ana_id, t), DYNAMIC)
+         .set(idfy(ACTIVE_SET, ana_id, t), pickle.dumps(set()))
          # update the current-generation variable
          .set(idfy(GENERATION, ana_id), t)
          # execute all commands
@@ -353,6 +380,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .delete(idfy(IS_LOOK_AHEAD, ana_id, t))
          .delete(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t))
          .delete(idfy(MODE, ana_id, t))
+         .delete(idfy(ACTIVE_SET, ana_id, t))
          .delete(idfy(QUEUE, ana_id, t))
          .execute())
 
@@ -638,187 +666,17 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
     return sample
 
 
-def reweight_sample(alpha, sample: Sample) -> Sample:
-    """
-    reweights the sample with factor alpha for particles
-    from the first (preliminary) proposal
-
-    Parameters
-    ----------
-    alpha: weight adjustment for the preliminary proposal
-    sample: The population to be returned by the sampler.
-
-    Returns
-    -------
-    sample: The same, weight-adjusted sample.
-    """
-
-    prop_ids = {particle.proposal_id for particle in sample.particles}
-    if len(prop_ids) > 2:
-        # TODO for several proposals, pass alpha as list
-        # prop ids are numbered ...,-1,0 (cant use as index)
-        raise NotImplementedError(
-            "Currently only works for single preliminary proposal")
-
-    accepted_particles = sample.accepted_particles
-    normalizations = {}
-    # get particles per proposal
-    particles_per_prop = {
-        prop_id: [particle for particle in accepted_particles
-                  if particle.proposal_id == prop_id]
-        for prop_id in prop_ids}
-    for prop_id, particles_for_prop in particles_per_prop.items():
-        weights = np.array(
-            [particle.weight for particle in particles_for_prop])
-        total_weight_subpop = weights.sum()
-        if prop_id == -1:
-            normalizations[prop_id] = alpha / total_weight_subpop
-        else:
-            normalizations[prop_id] = (1 - alpha) / total_weight_subpop
-    for particle in sample.particles:
-        particle.weight *= normalizations[particle.proposal_id]
-
-    return sample
-
-
-def weighted_ess(alpha, weights: np.array,
-                 subpopulation_sizes: np.array,
-                 minimize: bool = False):
-    """Returns ess of by alpha reweighted sample
-    Multiplied by -1 for minimization
-    """
-    scaled_weights = scale_weights(alpha, weights, subpopulation_sizes)
-    ess_weighted = effective_sample_size(scaled_weights)
-
-    if not minimize:
-        sign = 1
-    else:
-        sign = -1
-
-    return sign * ess_weighted
-
-
-def scale_weights(alpha: np.array,
-                  weights: np.array,
-                  subpopulation_sizes: np.array):
-    """Takes the weights as single array and returns the rescaled version
-    """
-
-    weights_copy = copy.deepcopy(weights)
-    if alpha.size == 1:
-        alpha = np.array([alpha[0], 1 - alpha[0]])
-
-    if alpha.sum() != 1:
-        raise ValueError("Total weight needs to equal 1")
-
-    n_proposals = len(subpopulation_sizes)
-    normalizations = np.zeros(n_proposals)
-    start_index = 0
-    for j in range(n_proposals):
-        normalizations[j] = alpha[j] / \
-                            weights_copy[start_index:
-                                         start_index + subpopulation_sizes[j]].sum()
-        for i in range(subpopulation_sizes[j]):
-            weights_copy[start_index + i] *= normalizations[j]
-        start_index += subpopulation_sizes[j]
-
-    return weights_copy
-
-
-def determine_opt_subpopulation_ratio(sample: Sample):
-    """Determines and returns ess-maximizing alpha for the sample
-    If there is only one proposal, returns the analytical solution,
-    else uses a scipy minimizer
-    """
-
-    prop_ids = {particle.proposal_id for particle in sample.particles}
-    accepted_particles = sample.accepted_particles
-    particles_per_prop = {
-        prop_id: [particle for particle in accepted_particles
-                  if particle.proposal_id == prop_id]
-        for prop_id in prop_ids}
-
-    all_weights = np.array([])
-    subpopulation_sizes = np.array([])
-
-    for _prop_id, particles_for_prop in particles_per_prop.items():
-        weights = np.array(
-            [particle.weight for particle in particles_for_prop])
-        all_weights = np.append(all_weights, weights)
-        subpopulation_sizes = np.append(subpopulation_sizes, len(weights))
-
-    if len(prop_ids) == 2:
-        alpha_opt = analytical_solution(all_weights, subpopulation_sizes)
-    else:
-        alpha_opt = solution_by_minimizer(weighted_ess,
-                                          prop_ids,
-                                          all_weights,
-                                          subpopulation_sizes)
-
-    return alpha_opt
-
-
-def analytical_solution(all_weights, subpopulation_sizes):
-    """Compute optimum alpha using the analytical solution.
-    Only for a single proposal
-    """
-    n1 = subpopulation_sizes[0]
-    normalization_constant = 1/all_weights.sum()
-    print(normalization_constant)
-    all_weights *= normalization_constant
-    print(np.sum(all_weights[:n1]), np.sum(all_weights[n1:]**2))
-    alpha_opt = ((np.sum(all_weights[:n1]) ** 2 * np.sum(all_weights[n1:] ** 2)) /
-                 (np.sum(all_weights[:n1]) ** 2 * np.sum(all_weights[n1:] ** 2) +
-                  np.sum(all_weights[n1:]) ** 2 * np.sum(all_weights[:n1] ** 2)))
-    return alpha_opt
-
-
-def solution_by_minimizer(weighted_ess_fct,
-                          prop_ids,
-                          all_weights,
-                          subpopulation_sizes):
-    """Compute optimum alpha using scipy minimize"""
-    import scipy.optimize
-    if len(prop_ids) == 2:
-        res = scipy.optimize.minimize(weighted_ess_fct,
-                                      x0=0.5,
-                                      args=(all_weights,
-                                            subpopulation_sizes, True),
-                                      bounds=[[0, 1]])
-    else:
-        res = scipy.optimize.minimize(weighted_ess_fct,
-                                      x0=np.array([1 / len(prop_ids)
-                                                   for _ in
-                                                   range(len(prop_ids))]),
-                                      args=[all_weights,
-                                            subpopulation_sizes, True],
-                                      bounds=[[0, 1]])
-    return res.x
-
-
-def normalize_with_opt_ess(sample: Sample, n: int) -> Sample:
-    # TODO needs to be called instead of self_normalize_within_subpopulations
-    """
-    Applies subpopulation-wise self-normalization of samples,
-    with reweighting factor that maximizes ESS.
-
-        Parameters
-        ----------
-        sample: The population to be returned by the sampler.
-        n: Population size.
-
-        Returns
-        -------
-        sample: The same, weight-adjusted sample.
-    """
-    prop_ids = {particle.proposal_id for particle in sample.particles}
-
-    if len(prop_ids) == 1:
-        # Nothing to be done, as we only have one proposal, and normalization
-        #  is applied later when the population is created
-        return sample
-
-    alpha_opt = determine_opt_subpopulation_ratio(sample)
-    sample = reweight_sample(alpha_opt, sample)
-
-    return sample
+def _log_active_set(
+    redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple],
+    batch_size: int,
+) -> None:
+    """Log the status of active simulations after the first n acceptances."""
+    accepted_ids = [id_result[0] for id_result in id_results]
+    active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
+    # remove entries that are already accepted (runtime conditions)
+    active_set = active_set.difference(accepted_ids)
+    earlier = {ix for ix in active_set if max(accepted_ids) > ix}
+    logger.debug(
+        f"After {len(accepted_ids)} acceptances, "
+        f"{len(active_set) * batch_size} simulations busy, "
+        f"thereof {len(earlier) * batch_size} earlier.")

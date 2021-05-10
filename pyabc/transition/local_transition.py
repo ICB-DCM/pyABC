@@ -10,7 +10,7 @@ from .base import Transition
 from .util import smart_cov
 from .exceptions import NotEnoughParticles
 
-logger = logging.getLogger("LocalTransition")
+logger = logging.getLogger("ABC.Transition")
 
 
 class LocalTransition(Transition):

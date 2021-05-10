@@ -10,7 +10,7 @@ from .base import Epsilon
 from ..distance import SCALE_LIN
 from ..storage import save_dict_to_json
 
-logger = logging.getLogger("Epsilon")
+logger = logging.getLogger("ABC.Epsilon")
 
 
 class TemperatureBase(Epsilon):

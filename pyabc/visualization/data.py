@@ -10,7 +10,7 @@ from typing import Callable, List, Union
 from ..storage import History
 
 
-logger = logging.getLogger("Data_plot")
+logger = logging.getLogger("ABC.Visualization")
 
 
 def plot_data_callback(

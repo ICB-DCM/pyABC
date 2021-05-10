@@ -9,6 +9,9 @@ pip install wheel
 # tox
 pip install tox
 
+# update apt package lists
+sudo apt-get update
+
 # optional dependencies
 for par in "$@"
 do
@@ -35,7 +38,7 @@ do
           --keyserver keyserver.ubuntu.com \
           --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
         sudo add-apt-repository \
-          'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+          'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
         sudo apt-get update
         sudo apt-get install r-base
       fi
@@ -43,10 +46,7 @@ do
 
     amici)
       # AMICI dependencies
-      sudo apt-get install swig3.0 libatlas-base-dev libhdf5-serial-dev
-      if [ ! -e /usr/bin/swig ]; then
-        sudo ln -s /usr/bin/swig3.0 /usr/bin/swig
-      fi
+      sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev
     ;;
 
     doc)
