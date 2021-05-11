@@ -8,6 +8,14 @@ Release Notes
 ...........
 
 
+0.10.16 (2021-05-11)
+--------------------
+
+* Allow color customization for `plot_credible_intervals` plots (#414)
+* pyABC logo to grey to fit with both black and white backgrounds (#453)
+* Add style set to global figure parameters, enabling dark mode (#454)
+
+
 0.10.15 (2021-05-09)
 --------------------
 
