@@ -48,11 +48,13 @@ class RedisSamplerBase(Sampler):
         logging module.
     """
 
-    def __init__(self,
-                 host: str = "localhost",
-                 port: int = 6379,
-                 password: str = None,
-                 log_file: str = None):
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 6379,
+        password: str = None,
+        log_file: str = None,
+    ):
         super().__init__()
         logger.debug(
             f"Redis sampler: host={host} port={port}")
@@ -175,16 +177,18 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         logging module.
     """
 
-    def __init__(self,
-                 host: str = "localhost",
-                 port: int = 6379,
-                 password: str = None,
-                 batch_size: int = 1,
-                 look_ahead: bool = False,
-                 look_ahead_delay_evaluation: bool = True,
-                 max_n_eval_look_ahead_factor: float = 10.,
-                 wait_for_all_samples: bool = False,
-                 log_file: str = None):
+    def __init__(
+        self,
+        host: str = "localhost",
+        port: int = 6379,
+        password: str = None,
+        batch_size: int = 1,
+        look_ahead: bool = False,
+        look_ahead_delay_evaluation: bool = True,
+        max_n_eval_look_ahead_factor: float = 10.,
+        wait_for_all_samples: bool = False,
+        log_file: str = None,
+    ):
         super().__init__(
             host=host, port=port, password=password, log_file=log_file)
         self.batch_size: int = batch_size
@@ -315,8 +319,13 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         return sample
 
     def start_generation_t(
-            self, n: int, t: int, simulate_one: Callable, all_accepted: bool,
-            is_look_ahead: bool, max_n_eval_look_ahead: float = np.inf,
+        self,
+        n: int,
+        t: int,
+        simulate_one: Callable,
+        all_accepted: bool,
+        is_look_ahead: bool,
+        max_n_eval_look_ahead: float = np.inf,
     ) -> None:
         """Start generation `t`."""
         ana_id = self.analysis_id
@@ -385,8 +394,13 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .execute())
 
     def maybe_start_next_generation(
-            self, t: int, n: int, id_results: List, all_accepted: bool,
-            ana_vars: AnalysisVars) -> None:
+        self,
+        t: int,
+        n: int,
+        id_results: List,
+        all_accepted: bool,
+        ana_vars: AnalysisVars,
+    ) -> None:
         """Start the next generation already, if that looks reasonable.
 
         Parameters
@@ -445,7 +459,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
         # create a preliminary simulate_one function
         simulate_one_prel = create_preliminary_simulate_one(
-            t=t+1, population=population,
+            t=t + 1, population=population,
             delay_evaluation=self.look_ahead_delay_evaluation,
             ana_vars=ana_vars)
 
@@ -463,7 +477,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # head-start the next generation
         #  all_accepted is most certainly False for t>0
         self.start_generation_t(
-            n=n, t=t+1, simulate_one=simulate_one_prel,
+            n=n, t=t + 1, simulate_one=simulate_one_prel,
             all_accepted=False, is_look_ahead=True,
             max_n_eval_look_ahead=max_n_eval_look_ahead)
 
@@ -488,10 +502,12 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         return sample
 
     def check_analysis_variables(
-            self,
-            distance_function: Distance,
-            eps: Epsilon,
-            acceptor: Acceptor) -> None:
+        self,
+        distance_function: Distance,
+        eps: Epsilon,
+        acceptor: Acceptor,
+    ) -> None:
+        """"Check analysis variables appropriateness for sampling."""
         if self.look_ahead_delay_evaluation:
             # nothing to be done
             return
@@ -512,7 +528,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
 
 def create_preliminary_simulate_one(
-        t, population, delay_evaluation: bool, ana_vars: AnalysisVars,
+    t, population, delay_evaluation: bool, ana_vars: AnalysisVars,
 ) -> Callable:
     """Create a preliminary simulate_one function for generation `t`.
 
@@ -555,8 +571,10 @@ def create_preliminary_simulate_one(
     )
 
 
-def post_check_acceptance(sample_with_id, ana_id, t, redis, ana_vars,
-                          logger: RedisSamplerLogger) -> Tuple:
+def post_check_acceptance(
+    sample_with_id, ana_id, t, redis, ana_vars,
+    logger: RedisSamplerLogger,
+) -> Tuple:
     """Check whether the sample is really acceptable.
 
     This is where evaluation of preliminary samples happens, using the analysis
@@ -667,7 +685,10 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 
 
 def _log_active_set(
-    redis: StrictRedis, ana_id: str, t: int, id_results: List[Tuple],
+    redis: StrictRedis,
+    ana_id: str,
+    t: int,
+    id_results: List[Tuple],
     batch_size: int,
 ) -> None:
     """Log the status of active simulations after the first n acceptances."""
