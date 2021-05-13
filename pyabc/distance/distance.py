@@ -17,7 +17,7 @@ from ..sumstat import Sumstat, IdentitySumstat
 from ..sumstat.util import dict2arr, read_sample
 
 
-logger = logging.getLogger("Distance")
+logger = logging.getLogger("ABC.Distance")
 
 
 class PNormDistance(Distance):

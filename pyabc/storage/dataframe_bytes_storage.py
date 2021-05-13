@@ -2,16 +2,17 @@ import pandas as pd
 from io import StringIO, BytesIO
 import csv
 import numpy as np
-import warnings
+import logging
+
+logger = logging.getLogger("ABC.History")
 
 try:
     import pyarrow
     import pyarrow.parquet as parquet
 except ImportError:
     pyarrow = parquet = None
-    warnings.warn(
-        "Cannot find pyarrow, thus falling back to the less efficient csv "
-        "format to store pandas.DataFrame data.",
+    logger.warning(
+        "Can't find pyarrow, thus falling back to csv to store pandas data.",
     )
 
 

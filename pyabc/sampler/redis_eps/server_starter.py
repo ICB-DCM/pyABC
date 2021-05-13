@@ -93,6 +93,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
     def __init__(self,
                  password: str = None,
                  batch_size: int = 1,
+                 wait_for_all_samples: bool = False,
                  look_ahead: bool = False,
                  look_ahead_delay_evaluation=True,
                  max_n_eval_look_ahead_factor: float = 10.,
@@ -110,7 +111,8 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         super().__init__(
             host="localhost", port=self.server_starter.port,
             password=self.server_starter.password,
-            batch_size=batch_size, look_ahead=look_ahead,
+            batch_size=batch_size, wait_for_all_samples=wait_for_all_samples,
+            look_ahead=look_ahead,
             look_ahead_delay_evaluation=look_ahead_delay_evaluation,
             max_n_eval_look_ahead_factor=max_n_eval_look_ahead_factor,
             log_file=log_file)

@@ -70,15 +70,26 @@ class WrongOutputSampler(SingleCoreSampler):
 
 
 def RedisEvalParallelSamplerWrapper(**kwargs):
-    return RedisEvalParallelSamplerServerStarter(batch_size=5, **kwargs)
+    kwargs.setdefault('batch_size', 5)
+    kwargs.setdefault('catch', False)
+    return RedisEvalParallelSamplerServerStarter(**kwargs)
+
+
+def RedisEvalParallelSamplerWaitForAllWrapper(**kwargs):
+    kwargs.setdefault('batch_size', 5)
+    kwargs.setdefault('catch', False)
+    return RedisEvalParallelSamplerServerStarter(
+        wait_for_all_samples=True, **kwargs)
 
 
 def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
+    kwargs.setdefault('catch', False)
     return RedisEvalParallelSamplerServerStarter(
         look_ahead=True, look_ahead_delay_evaluation=True, **kwargs)
 
 
 def RedisStaticSamplerWrapper(**kwargs):
+    kwargs.setdefault('catch', False)
     return RedisStaticSamplerServerStarter(**kwargs)
 
 
@@ -92,6 +103,7 @@ def PicklingMulticoreEvalParallelSampler():
 
 @pytest.fixture(params=[SingleCoreSampler,
                         RedisEvalParallelSamplerWrapper,
+                        RedisEvalParallelSamplerWaitForAllWrapper,
                         RedisEvalParallelSamplerLookAheadDelayWrapper,
                         RedisStaticSamplerWrapper,
                         MulticoreEvalParallelSampler,

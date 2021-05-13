@@ -135,7 +135,13 @@ try:
     loglevel = os.environ['ABC_LOG_LEVEL'].upper()
 except KeyError:
     loglevel = 'INFO'
-logging.basicConfig(level=loglevel)
+
+logger = logging.getLogger("ABC")
+logger.setLevel(loglevel)
+sh = logging.StreamHandler()
+sh.setFormatter(logging.Formatter(
+    '%(name)s %(levelname)s: %(message)s'))
+logger.addHandler(sh)
 
 # Set number of threads e.g. for numpy. as pyabc uses parallelization on its
 #  own, this is a safer default.
