@@ -6,7 +6,7 @@ from .base import Epsilon
 from ..weighted_statistics import weighted_quantile
 
 
-logger = logging.getLogger("Epsilon")
+logger = logging.getLogger("ABC.Epsilon")
 
 
 class ConstantEpsilon(Epsilon):
@@ -161,7 +161,7 @@ class QuantileEpsilon(Epsilon):
         self._update(t, weighted_distances)
 
         # logging
-        logger.info("initial epsilon is {}".format(self._look_up[t]))
+        logger.debug(f"Initial eps: {self._look_up[t]:.4e}")
 
     def __call__(self,
                  t: int) -> float:
@@ -206,7 +206,7 @@ class QuantileEpsilon(Epsilon):
         self._update(t, weighted_distances)
 
         # logger
-        logger.debug("new eps, t={}, eps={}".format(t, self._look_up[t]))
+        logger.debug(f"New eps, t={t}, eps={self._look_up[t]}")
 
     def _update(self,
                 t: int,

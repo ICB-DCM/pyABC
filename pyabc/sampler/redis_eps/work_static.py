@@ -11,7 +11,7 @@ from .cmd import (N_EVAL, N_ACC, N_FAIL, N_JOB, N_WORKER, SSA, QUEUE,
                   ANALYSIS_ID, idfy)
 from .cli import KillHandler
 
-logger = logging.getLogger("Redis-Worker")
+logger = logging.getLogger("ABC.Sampler")
 
 
 def announce_work(work_on_population):

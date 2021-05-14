@@ -8,13 +8,46 @@ Release Notes
 ...........
 
 
-0.10.15 (2021-02-22)
+0.10.16 (2021-05-11)
 --------------------
+
+* Allow color customization for `plot_credible_intervals` plots (#414)
+* pyABC logo to grey to fit with both black and white backgrounds (#453)
+* Add style set to global figure parameters, enabling dark mode (#454)
+
+
+0.10.15 (2021-05-09)
+--------------------
+
+Sampler:
+
+* Allow redis dynamical sampler to only wait for relevant particles after
+  a generatio, giving a speed-up without drawbacks (#448)
+* Add option to limit number of delayed look-ahead samples to limit memory
+  usage (#428)
+
+Logging:
+
+* Standardize output of floats (#450)
+* Use hierarchical logging (ABC.Submodule) (#417)
+
+General:
 
 * Refactor: Remove deprecated `nr_samples_per_parameter`, internal
   simplifications (#422)
-* Add option to limit number of delayed look-ahead samples to limit memory
-  usage (#428)
+* Tidy up and minimize dependencies (#436, #441)
+* External: Remove simulation files after collecting results (#434)
+* Make feather/pyarrow dependency optional for older hardware (#442)
+
+Documentation:
+
+* Add description of JupyterHub to documentation (#439)
+
+CI:
+
+* Test webserver basic functionality
+* Rerun stochastically failing tests (all #436)
+* Test whether dataframe storage routines work properly (#442)
 
 
 0.10.14 (2021-02-21)

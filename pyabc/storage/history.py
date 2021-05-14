@@ -16,7 +16,9 @@ from .version import __db_version__
 from ..population import Particle as PyParticle, Population as PyPopulation
 from ..parameters import Parameter as PyParameter
 
-logger = logging.getLogger("History")
+logger = logging.getLogger("ABC.History")
+
+SQLITE_STR = "sqlite:///"
 
 SQLITE_STR = "sqlite:///"
 

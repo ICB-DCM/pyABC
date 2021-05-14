@@ -52,16 +52,20 @@ class ABCSMC(Base):
     populations = relationship("Population")
 
     def __repr__(self):
-        return (f"<ABCSMC id={self.id}, start_time={self.start_time}, "
-                "end_time={self.end_time}>")
+        return (
+            f"<ABCSMC id={self.id}, "
+            f"start_time={datetime2str(self.start_time)}, "
+            f"end_time={datetime2str(self.end_time)}>")
 
     def start_info(self):
-        return f"<ABCSMC id={self.id}, start_time={self.start_time}>"
+        return (
+            f"<ABCSMC id={self.id}, "
+            f"start_time={datetime2str(self.start_time)}>")
 
     def end_info(self):
         duration = self.end_time - self.start_time
         return (f"<ABCSMC id={self.id}, duration={duration}, "
-                f"end_time={self.end_time}>")
+                f"end_time={datetime2str(self.end_time)}>")
 
 
 class Population(Base):
@@ -134,3 +138,8 @@ class SummaryStatistic(Base):
     sample_id = Column(Integer, ForeignKey('samples.id'))
     name = Column(String(200))
     value = Column(BytesStorage)
+
+
+def datetime2str(datetime: datetime.datetime) -> str:
+    """Format print datetime."""
+    return datetime.strftime("%Y-%m-%d %H:%M:%S")

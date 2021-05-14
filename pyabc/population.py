@@ -14,7 +14,7 @@ import pandas as pd
 from pyabc.parameters import Parameter
 import logging
 
-logger = logging.getLogger("Population")
+logger = logging.getLogger("ABC.Population")
 
 
 class Particle:

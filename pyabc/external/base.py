@@ -9,7 +9,7 @@ from ..model import Model
 from ..parameters import Parameter
 
 
-logger = logging.getLogger("External")
+logger = logging.getLogger("ABC.External")
 
 
 class ExternalHandler:
