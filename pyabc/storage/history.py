@@ -20,6 +20,8 @@ logger = logging.getLogger("ABC.History")
 
 SQLITE_STR = "sqlite:///"
 
+SQLITE_STR = "sqlite:///"
+
 
 def with_session(f):
     @wraps(f)

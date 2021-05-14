@@ -20,14 +20,15 @@ class ExternalHandler:
     """
 
     def __init__(self,
-                 executable: str, file: str = None,
+                 executable: str, timeout: int = np.inf, file: str = None,
                  fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = None, dir: str = None,
                  clean_simulation: bool = True,
                  show_stdout: bool = False,
                  show_stderr: bool = True,
-                 raise_on_error: bool = False):
+                 raise_on_error: bool = False,
+                 ):
         """
         Parameters
         ----------
@@ -59,6 +60,7 @@ class ExternalHandler:
         """
         self.executable = executable
         self.file = file
+        self.timeout = timeout
         if fixed_args is None:
             fixed_args = []
         self.fixed_args = fixed_args
@@ -138,13 +140,17 @@ class ExternalHandler:
 
         # call
         if cmd is not None:
-            status = subprocess.run(
-                    cmd, shell=True, **stdout, **stderr)  # noqa: S602
+            try:
+                status = subprocess.run(
+                        cmd, shell=True, timeout=self.timeout, **stdout, **stderr)  # noqa: S602
+            except subprocess.TimeoutExpired:
+                return -15
+
         else:
             executable = self.create_executable(loc)
             status = subprocess.run(  # noqa: S603
                 [executable, self.file, *self.fixed_args, *args,
-                 f'target={loc}'], **stdout, **stderr)
+                 f'target={loc}'], **stdout, **stderr, timeout=self.timeout)
         if status.returncode:
             msg = (f"Simulation error for arguments {args}: "
                    f"returncode {status.returncode}.")
@@ -176,7 +182,7 @@ class ExternalModel(Model):
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, executable: str, file: str,
+    def __init__(self, executable: str, file: str, timeout: int = np.inf,
                  fixed_args: List = None,
                  create_folder: bool = False,
                  suffix: str = None, prefix: str = "modelsim_",
@@ -185,7 +191,8 @@ class ExternalModel(Model):
                  show_stdout: bool = False,
                  show_stderr: bool = True,
                  raise_on_error: bool = False,
-                 name: str = "ExternalModel"):
+                 name: str = "ExternalModel",
+                 ):
         """
         Initialize the model.
 
@@ -198,7 +205,7 @@ class ExternalModel(Model):
         """
         super().__init__(name=name)
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable, file=file, timeout=timeout,
             fixed_args=fixed_args,
             create_folder=create_folder,
             suffix=suffix, prefix=prefix, dir=dir,
