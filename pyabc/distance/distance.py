@@ -10,7 +10,7 @@ from .base import Distance, to_distance
 from ..storage import save_dict_to_json
 
 
-logger = logging.getLogger("Distance")
+logger = logging.getLogger("ABC.Distance")
 
 
 class PNormDistance(Distance):
@@ -362,7 +362,7 @@ class AdaptivePNormDistance(PNormDistance):
                 "max_weight_ratio": self.max_weight_ratio}
 
     def log(self, t: int) -> None:
-        logger.debug(f"updated weights[{t}] = {self.weights[t]}")
+        logger.debug(f"Weights[{t}] = {self.weights[t]}")
 
         if self.log_file:
             save_dict_to_json(self.weights, self.log_file)

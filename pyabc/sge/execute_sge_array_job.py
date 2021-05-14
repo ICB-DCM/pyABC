@@ -8,7 +8,7 @@ from .db import job_db_factory
 from pyabc.sge.execution_contexts import NamedPrinter
 
 
-logger = logging.getLogger("SGE")
+logger = logging.getLogger("ABC.SGE")
 
 tmp_path = sys.argv[1]
 job_nr = sys.argv[2]

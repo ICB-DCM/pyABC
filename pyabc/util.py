@@ -17,7 +17,7 @@ from pyabc.random_choice import fast_random_choice
 from pyabc.parameters import Parameter
 from pyabc.population import Particle
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC")
 
 
 class AnalysisVars:
@@ -536,22 +536,22 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
-        logger.info("Stopping: maximum number of generations.")
+        logger.info("Stop: Maximum number of generations.")
         return True
     if current_eps <= min_eps:
-        logger.info("Stopping: minimum epsilon.")
+        logger.info("Stop: Minimum epsilon.")
         return True
     elif stop_if_single_model_alive and nr_of_models_alive <= 1:
-        logger.info("Stopping: single model alive.")
+        logger.info("Stop: Single model alive.")
         return True
     elif acceptance_rate < min_acceptance_rate:
-        logger.info("Stopping: minimum acceptance rate.")
+        logger.info("Stop: Minimum acceptance rate.")
         return True
     elif total_nr_simulations >= max_total_nr_simulations:
-        logger.info("Stopping: total simulations budget.")
+        logger.info("Stop: Total simulations budget.")
         return True
     elif max_walltime is not None and walltime > max_walltime:
-        logger.info("Stopping: maximum walltime.")
+        logger.info("Stop: Maximum walltime.")
         return True
     return False
 

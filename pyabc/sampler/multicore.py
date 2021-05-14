@@ -8,7 +8,7 @@ from jabbar import jabbar
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 
 
-logger = logging.getLogger("MulticoreSampler")
+logger = logging.getLogger("ABC.Sampler")
 
 SENTINEL = None
 

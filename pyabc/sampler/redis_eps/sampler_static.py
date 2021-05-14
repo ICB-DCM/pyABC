@@ -14,7 +14,7 @@ from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_JOB, N_WORKER,
                   idfy)
 from .sampler import RedisSamplerBase
 
-logger = logging.getLogger("Redis-Sampler")
+logger = logging.getLogger("ABC.Sampler")
 
 
 class RedisStaticSampler(RedisSamplerBase):

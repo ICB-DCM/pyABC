@@ -22,7 +22,7 @@ import pandas as pd
 import warnings
 import logging
 
-logger = logging.getLogger("External")
+logger = logging.getLogger("ABC.External")
 
 try:
     from rpy2.robjects import (ListVector, r, default_converter, conversion,

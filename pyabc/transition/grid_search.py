@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from .multivariatenormal import MultivariateNormalTransition
 
-logger = logging.getLogger("GridSearchCV")
+logger = logging.getLogger("ABC.Transition")
 
 
 class GridSearchCV(GridSearchCVSKL):

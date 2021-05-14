@@ -18,7 +18,7 @@ from pyabc.cv.bootstrap import calc_cv
 from .transition import Transition
 from .transition.predict_population_size import predict_population_size
 
-logger = logging.getLogger("Adaptation")
+logger = logging.getLogger("ABC.Adaptation")
 
 
 class PopulationStrategy(ABC):
