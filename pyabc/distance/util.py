@@ -1,7 +1,10 @@
 import numpy as np
 from logging import Logger
-from typing import Dict, List
-from ..storage import save_dict_to_json
+from typing import Collection, Dict, List, Union
+import collections.abc
+import os
+
+from ..storage import load_dict_from_json, save_dict_to_json
 
 
 def bound_weights(w: np.ndarray, max_weight_ratio: float) -> np.ndarray:
@@ -45,13 +48,34 @@ def log_weights(
     logger: Logger for debugging purposes.
     """
     # create weights dictionary with labels
-    weights_dict = {
-        t: {key: val for key, val in zip(keys, weights[t])}
-        for t in weights
-    }
+    weights = {key: val for key, val in zip(keys, weights[t])}
 
-    vals = [f"'{key}': {val:.4e}" for key, val in weights_dict[t].items()]
+    vals = [f"'{key}': {val:.4e}" for key, val in weights.items()]
     logger.debug(f"{label} weights[{t}] = {{{', '.join(vals)}}}")
 
     if log_file:
-        save_dict_to_json(weights_dict, log_file)
+        # read in file
+        dct = {}
+        if os.path.exists(log_file):
+            dct = load_dict_from_json(file_=log_file)
+        # add column
+        if t in dct:
+            logger.warning(
+                f"Time {t} already in log file {log_file}. "
+                "Overwriting, but this looks suspicious.",
+            )
+        dct[t] = weights
+        # save to file
+        save_dict_to_json(dct, log_file)
+
+
+def to_fit_ixs(ixs: Union[Collection, int]) -> set:
+    """Input to collection of time indices when to fit."""
+    # convert inf or int to range
+    if not isinstance(ixs, collections.abc.Collection):
+        if ixs == np.inf:
+            ixs = {0, np.inf}
+        else:
+            # create set {0, ..., ixs-1}, # = ixs
+            ixs = set(range(0, int(ixs)))
+    return set(ixs)

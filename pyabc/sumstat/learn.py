@@ -1,7 +1,8 @@
 """Summary statistics learning."""
 
 import numpy as np
-from typing import Callable, List, Union
+from typing import Callable, Collection, List, Union
+import logging
 
 try:
     import sklearn.linear_model as skl_lm
@@ -20,6 +21,9 @@ from ..predictor import (
     GPPredictor,
     MLPPredictor,
 )
+
+
+logger = logging.getLogger("ABC.Sumstat")
 
 
 class PredictorSumstat(Sumstat):
@@ -43,9 +47,8 @@ class PredictorSumstat(Sumstat):
     def __init__(
         self,
         predictor: Union[Predictor, Callable],
-        n_fit: int = 1,
-        n_skip_fit: int = 0,
-        all_particles: bool = True,
+        fit_ixs: Union[Collection, int] = None,
+        all_particles: bool = False,
         normalize_labels: bool = True,
         pre: Sumstat = None,
     ):
@@ -55,16 +58,16 @@ class PredictorSumstat(Sumstat):
         predictor:
             The predictor mapping data (inputs) to parameters (targets). See
             :class:`Predictor` for the functionality contract.
-        n_fit:
-            Number of generations in which the model is updated.
-            1 means only at the beginning in `initialize`, for > 1 also in
-            subsequent generations in `update`. Can be inf.
-        n_skip_fit:
-            Number of initial iterations during which fitting is skipped and
-            instead `pre` is returned as-is.
+        fit_ixs:
+            Generation indices when to (re)fit the model, e.g. `{2, 4}`. An
+            integer indicates the number of consecutive generations
+            `{0, ..., fit_ixs - 1}`, e.g. 1 means only at the beginning for
+            calibration in `initialize`, and inf means in every generation.
+            In generations before the first fit index, the output of `pre`
+            is returned as-is.
         all_particles:
             Whether to base the predictors on all samples, or only accepted
-            ones. Basing it on all samples reflects the sample process,
+            ones. Basing it on all samples reflects the sampling process,
             while only considering accepted particles (and additionally
             weighting them) reflects the posterior approximation.
         normalize_labels:
@@ -83,17 +86,19 @@ class PredictorSumstat(Sumstat):
             predictor = SimplePredictor(predictor=predictor)
         self.predictor = predictor
 
-        self.n_fit: int = n_fit
-        self.n_skip_fit: int = n_skip_fit
+        if fit_ixs is None:
+            fit_ixs = {3, 5}
+        self.fit_ixs = fit_ixs
+        logger.debug(f"Fit model ixs: {self.fit_ixs}")
+
         self.all_particles: bool = all_particles
         self.normalize_labels: bool = normalize_labels
 
         # parameter keys (for correct order)
         self.par_keys: Union[List[str], None] = None
 
-        # fit counter
-        self.i_fit: int = 0
-        self.i_skip_fit: int = 0
+        # indicate whether the model has ever been fitted
+        self.fitted: bool = False
 
     def initialize(
         self,
@@ -110,16 +115,9 @@ class PredictorSumstat(Sumstat):
         self.par_keys: List[str] = \
             list(sample.accepted_particles[0].parameter.keys())
 
-        # check whether to skip
-        if self.i_skip_fit < self.n_skip_fit:
-            self.i_skip_fit += 1
+        # check whether to skip fitting
+        if t not in self.fit_ixs and np.inf not in self.fit_ixs:
             return
-
-        # check whether refitting is desired
-        if self.i_fit >= self.n_fit:
-            return
-        else:
-            self.i_fit += 1
 
         # extract information from sample
         sumstats, parameters, weights = read_sample(
@@ -129,6 +127,7 @@ class PredictorSumstat(Sumstat):
 
         # fit model to sample
         self.predictor.fit(x=sumstats, y=parameters, w=weights)
+        self.fitted = True
 
     def update(
         self,
@@ -137,16 +136,9 @@ class PredictorSumstat(Sumstat):
     ) -> bool:
         updated = super().update(t=t, get_sample=get_sample)
 
-        # check whether to skip
-        if self.i_skip_fit < self.n_skip_fit:
-            self.i_skip_fit += 1
+        # check whether to skip fitting
+        if t not in self.fit_ixs and np.inf not in self.fit_ixs:
             return updated
-
-        # check whether refitting is desired
-        if self.i_fit >= self.n_fit:
-            return updated
-        else:
-            self.i_fit += 1
 
         # call cached function
         sample = get_sample()
@@ -159,27 +151,29 @@ class PredictorSumstat(Sumstat):
 
         # fit model to sample
         self.predictor.fit(x=sumstats, y=parameters, w=weights)
+        self.fitted = True
 
         return True
 
     def configure_sampler(self, sampler) -> None:
-        if self.n_fit > 1 and self.all_particles:
+        if self.all_particles and any(t > 0 for t in self.fit_ixs):
             # record rejected particles as a more representative of the
             #  sampling process
             sampler.sample_factory.record_rejected()
 
     def requires_calibration(self) -> bool:
-        return self.n_fit > 0 or self.pre.requires_calibration()
+        return 0 in self.fit_ixs or np.inf in self.fit_ixs or \
+            self.pre.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        return self.n_fit > 1 or self.pre.is_adaptive()
+        return any(t > 0 for t in self.fit_ixs) or self.pre.is_adaptive()
 
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]):
         data = self.pre(data)
 
         # check whether to return data directly
-        if self.i_skip_fit <= self.n_skip_fit:
+        if not self.fitted:
             return data
 
         # summary statistic is the (normalized) predictor value
@@ -220,7 +214,8 @@ class LinearPredictorSumstat(PredictorSumstat):
         self,
         normalize_features: bool = True,
         normalize_labels: bool = True,
-        n_fit: int = 1,
+        fit_ixs: Union[Collection, int] = None,
+        all_particles: bool = False,
         joint: bool = True,
         weight_samples: bool = False,
         pre: Sumstat = None,
@@ -248,7 +243,9 @@ class LinearPredictorSumstat(PredictorSumstat):
 
         super().__init__(
             predictor=predictor,
-            n_fit=n_fit,
+            fit_ixs=fit_ixs,
+            all_particles=all_particles,
+            normalize_labels=normalize_labels,
             pre=pre,
         )
 
@@ -260,7 +257,8 @@ class LassoPredictorSumstat(PredictorSumstat):
         self,
         normalize_features: bool = True,
         normalize_labels: bool = True,
-        n_fit: int = 1,
+        fit_ixs: Union[Collection, int] = None,
+        all_particles: bool = False,
         joint: bool = True,
         pre: Sumstat = None,
         **kwargs,
@@ -285,7 +283,9 @@ class LassoPredictorSumstat(PredictorSumstat):
 
         super().__init__(
             predictor=predictor,
-            n_fit=n_fit,
+            fit_ixs=fit_ixs,
+            all_particles=all_particles,
+            normalize_labels=normalize_labels,
             pre=pre,
         )
 
@@ -308,7 +308,8 @@ class GPPredictorSumstat(PredictorSumstat):
         kernel=None,
         normalize_features: bool = True,
         normalize_labels: bool = True,
-        n_fit: int = 1,
+        fit_ixs: Union[Collection, int] = None,
+        all_particles: bool = False,
         joint: bool = True,
         pre: Sumstat = None,
         **kwargs,
@@ -336,7 +337,9 @@ class GPPredictorSumstat(PredictorSumstat):
 
         super().__init__(
             predictor=predictor,
-            n_fit=n_fit,
+            fit_ixs=fit_ixs,
+            all_particles=all_particles,
+            normalize_labels=normalize_labels,
             pre=pre,
         )
 
@@ -357,7 +360,8 @@ class MLPPredictorSumstat(PredictorSumstat):
         self,
         normalize_features: bool = True,
         normalize_labels: bool = True,
-        n_fit: int = 1,
+        fit_ixs: Union[Collection, int] = None,
+        all_particles: bool = False,
         joint: bool = True,
         pre: Sumstat = None,
         **kwargs,
@@ -384,6 +388,8 @@ class MLPPredictorSumstat(PredictorSumstat):
 
         super().__init__(
             predictor=predictor,
-            n_fit=n_fit,
+            fit_ixs=fit_ixs,
+            all_particles=all_particles,
+            normalize_labels=normalize_labels,
             pre=pre,
         )

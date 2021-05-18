@@ -145,10 +145,10 @@ class ABCSMC:
 
 
     .. [#tonistumpf] Toni, Tina, and Michael P. H. Stumpf.
-                  “Simulation-Based Model Selection for Dynamical
-                  Systems in Systems and Population Biology”.
-                  Bioinformatics 26, no. 1, 104–10, 2010.
-                  doi:10.1093/bioinformatics/btp619.
+        “Simulation-Based Model Selection for Dynamical Systems in Systems and
+        Population Biology”.
+        Bioinformatics 26, no. 1, 104–10, 2010.
+        https://doi.org/10.1093/bioinformatics/btp619
     """
     def __init__(
             self,

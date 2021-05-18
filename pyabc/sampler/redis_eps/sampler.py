@@ -14,7 +14,7 @@ from ...util import (
     AnalysisVars, create_simulate_function, evaluate_preliminary_particle,
     termination_criteria_fulfilled)
 from ...distance import Distance
-from ...epsilon import Epsilon, Temperature
+from ...epsilon import Epsilon
 from ...acceptor import Acceptor
 from ...sampler import Sampler
 from ...weighted_statistics import effective_sample_size
