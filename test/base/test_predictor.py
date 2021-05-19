@@ -135,3 +135,9 @@ def test_error_functions():
     assert root_mean_square_error(ys, ys-1, 1.) == 1.
     assert root_mean_square_relative_error(ys, ys) == 0.
     assert root_mean_square_relative_error(ys, ys-1) > 0.
+
+
+def test_wrong_input():
+    """Test all kinds of wrong inputs."""
+    with pytest.raises(ValueError):
+        HiddenLayerHandle(method="potato")(n_in=10, n_out=10, n_sample=100)
