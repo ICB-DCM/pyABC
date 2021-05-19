@@ -12,12 +12,15 @@ from pyabc.predictor import (
     HiddenLayerHandle,
     ModelSelectionPredictor,
     root_mean_square_error,
+    root_mean_square_relative_error,
 )
 
 
 @pytest.fixture(params=[
     "linear",
     "linear not joint",
+    "linear not normalized",
+    "linear weighted",
     "lasso",
     "GP no ard",
     "GP no ard not joint",
@@ -60,6 +63,11 @@ def test_fit(s_model, s_predictor):
         predictor = LinearPredictor()
     elif s_predictor == "linear not joint":
         predictor = LinearPredictor(joint=False)
+    elif s_predictor == "linear not normalized":
+        predictor = LinearPredictor(
+            normalize_features=False, normalize_labels=False)
+    elif s_predictor == "linear weighted":
+        predictor = LinearPredictor(weight_samples=True)
     elif s_predictor == "lasso":
         predictor = LassoPredictor()
     elif s_predictor == "GP no ard":
@@ -67,7 +75,7 @@ def test_fit(s_model, s_predictor):
     elif s_predictor == "GP no ard not joint":
         predictor = GPPredictor(kernel=GPKernelHandle(ard=False), joint=False)
     elif s_predictor == "GP ard":
-        predictor = GPPredictor(kernel=GPKernelHandle(ard=True))
+        predictor = GPPredictor()
     elif s_predictor == "MLP heuristic":
         predictor = MLPPredictor(
             hidden_layer_sizes=HiddenLayerHandle(method="heuristic"))
@@ -83,10 +91,11 @@ def test_fit(s_model, s_predictor):
     # training data
     ys_train = rng.normal(size=(n_sample_train, n_y))
     ps_train = model(ys_train)
+    w_train = 1 + 0.01 * rng.normal(size=(n_sample_train,))
     assert ps_train.shape == (n_sample_train, n_p)
 
     # fit model
-    predictor.fit(x=ys_train, y=ps_train, w=None)
+    predictor.fit(x=ys_train, y=ps_train, w=w_train)
 
     # test data
     ys_test = rng.normal(size=(n_sample_test, n_y))
@@ -102,8 +111,9 @@ def test_fit(s_model, s_predictor):
             predictor, (LinearPredictor, GPPredictor, MLPPredictor,
                         ModelSelectionPredictor)):
         if s_model == "linear":
-            # all should work well on linear
-            assert rmse < 0.1
+            if s_predictor not in ["linear not normalized"]:
+                # all should work well on linear
+                assert rmse < 0.1
         elif not isinstance(predictor, LinearPredictor):
             # none is overwhelming on quadratic
             assert rmse < 10
@@ -115,3 +125,13 @@ def test_fit(s_model, s_predictor):
     # import matplotlib.pyplot as plt
     # plt.plot(ps_test, ps_pred, '.')
     # plt.show()
+
+
+def test_error_functions():
+    """Test error functions used in model selection."""
+    rng = np.random.Generator(np.random.PCG64(0))
+    ys = rng.normal(size=(10, 100))
+    assert root_mean_square_error(ys, ys, 1.) == 0.
+    assert root_mean_square_error(ys, ys-1, 1.) == 1.
+    assert root_mean_square_relative_error(ys, ys) == 0.
+    assert root_mean_square_relative_error(ys, ys-1) > 0.

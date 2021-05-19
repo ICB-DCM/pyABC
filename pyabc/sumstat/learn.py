@@ -50,6 +50,7 @@ class PredictorSumstat(Sumstat):
         fit_ixs: Union[Collection, int] = None,
         all_particles: bool = False,
         normalize_labels: bool = True,
+        fitted: bool = False,
         pre: Sumstat = None,
     ):
         """
@@ -74,6 +75,11 @@ class PredictorSumstat(Sumstat):
             Whether the outputs in `__call__` are normalized according to
             potentially applied internal normalization of the predictor.
             This allows to level the influence of labels.
+        fitted:
+            Set to True if the predictor model passed has aready been fitted
+            externally.
+            If False, the `__call__` function will return the
+            output of `pre` until the first time index in `fit_ixs`.
         pre:
             Previously applied summary statistics, enables chaining. Should
             usually not be adaptive.
@@ -98,7 +104,7 @@ class PredictorSumstat(Sumstat):
         self.par_keys: Union[List[str], None] = None
 
         # indicate whether the model has ever been fitted
-        self.fitted: bool = False
+        self.fitted: bool = fitted
 
     def initialize(
         self,

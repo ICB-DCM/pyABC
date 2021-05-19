@@ -70,9 +70,6 @@ class Predictor(ABC):
         y: Predicted targets, shape (n_sample, n_out).
         """
 
-    def __repr__(self) -> str:
-        return f"<{self.__class__.__name__}>"
-
 
 class SimplePredictor(Predictor):
     """Wrapper around generic predictor routines."""
