@@ -46,23 +46,6 @@ def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
     return np.asarray(arr)
 
 
-def arr2dict(arr: Union[np.ndarray, dict], keys: List) -> dict:
-    """Convert ndarray to dict, using the specified keys.
-
-    Parameters
-    ----------
-    arr: Value array.
-    keys: Keys in the same order as the array entries.
-
-    Returns
-    -------
-    dct: Dictionary of values.
-    """
-    if isinstance(arr, dict):
-        return arr
-    return {key: val for key, val in zip(arr, keys)}
-
-
 def dict2arrlabels(dct: dict, keys: List) -> List[str]:
     """Get label array consistent with the output of `dict2arr`.
 
@@ -84,11 +67,11 @@ def dict2arrlabels(dct: dict, keys: List) -> List[str]:
             # default flattening mode is 'C', i.e. row-major, i.e. row-by-row
             for row in range(len(val.index)):
                 for col in val.columns:
-                    labels.append(f"{key}::{col}::{row}")
+                    labels.append(f"{key}:{col}:{row}")
         elif isinstance(val, np.ndarray):
             # array can have any dimension, thus just flat indices
             for ix in range(val.size):
-                labels.append(f"{key}::{ix}")
+                labels.append(f"{key}:{ix}")
         elif isinstance(val, Number):
             labels.append(key)
         else:

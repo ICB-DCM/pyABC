@@ -2,12 +2,32 @@
 
 import pytest
 import numpy as np
+import pandas as pd
 import os
 import tempfile
 
 import pyabc
 from pyabc.sumstat import IdentitySumstat, PredictorSumstat
+from pyabc.sumstat.util import dict2arr, dict2arrlabels
 from pyabc.predictor import LinearPredictor
+
+
+def test_dict2arr():
+    """Test conversion of dicts to arrays."""
+    dct = {"s0": pd.DataFrame({"a": [0, 1], "b": [2, 3]}),
+           "s1": np.array([4, 5]),
+           "s2": 6}
+    keys = ["s0", "s1", "s2"]
+    arr = dict2arr(dct, keys=keys)
+    assert (arr == np.array([0, 2, 1, 3, 4, 5, 6])).all()
+
+    labels = dict2arrlabels(dct, keys=keys)
+    assert len(labels) == len(arr)
+    assert labels == ["s0:a:0", "s0:b:0", "s0:a:1", "s0:b:1",
+                      "s1:0", "s1:1", "s2"]
+
+    with pytest.raises(TypeError):
+        dict2arr({"s0": "alice"}, keys=["s0"])
 
 
 @pytest.fixture(params=[None, [lambda x: x, lambda x: x**2]])
@@ -24,11 +44,16 @@ def test_identity_sumstat(trafos):
     sumstat.initialize(
         t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0)
 
+    assert not sumstat.requires_calibration()
+    assert not sumstat.is_adaptive()
+
     if trafos is None:
         assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7.])).all()
+        assert len(sumstat.get_ids()) == 2
     else:
         assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7., 9., 49.]))\
             .all()
+        assert len(sumstat.get_ids()) == 4
 
 
 def test_pre():
@@ -43,11 +68,14 @@ def test_pre():
 
     assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7., 9., 49.])**2)\
         .all()
+    assert len(sumstat.get_ids()) == 4
 
 
-def test_predictor_sumstats():
+def test_predictor_sumstat():
     """Test predictor sumstat."""
     sumstat = PredictorSumstat(LinearPredictor(), fit_ixs={3, 5})
+    assert not sumstat.requires_calibration()
+    assert sumstat.is_adaptive()
 
     rng = np.random.Generator(np.random.PCG64(0))
     n_sample, n_y, n_p = 1000, 100, 3
@@ -76,10 +104,13 @@ def test_predictor_sumstats():
     sumstat.initialize(t=0, get_sample=lambda: sample, x_0=x)
     assert sumstat(x).shape == (n_y,)
     assert (sumstat(x) == ys[0]).all()
+    assert len(sumstat.get_ids()) == n_y
+    assert sumstat.get_ids() == [f"s{ix}" for ix in range(n_y)]
 
     # 3 is a fit index --> afterwards the output size should have changed
     sumstat.update(t=3, get_sample=lambda: sample)
     assert sumstat(x).shape == (n_p,)
+    assert len(sumstat.get_ids()) == n_p
 
     # change fit indices
     sumstat = PredictorSumstat(LinearPredictor(), fit_ixs={0, 1})

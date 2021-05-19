@@ -193,4 +193,6 @@ class PredictorSumstat(Sumstat):
 
     def get_ids(self) -> List[str]:
         # label by parameter keys
-        return [f"s_{par_key}" for par_key in self.par_keys]
+        if self.fitted:
+            return [f"s_{par_key}" for par_key in self.par_keys]
+        return self.pre.get_ids()
