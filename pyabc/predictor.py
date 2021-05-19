@@ -1,3 +1,15 @@
+"""
+Predictor
+=========
+
+Predictor models that are used in pyABC to construct a regressor model from
+date to parameters. :class:`pypesto.predictor.Predictor` defines the abstract
+base class, :class:`pypesto.predictor.SimplePredictor` an interface to external
+predictor implementations.
+Further, various specific implementations including linear regression, Lasso,
+Gaussian processes, and neural networks are provided.
+"""
+
 import numpy as np
 from typing import Callable, List, Tuple, Union
 import copy

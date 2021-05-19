@@ -7,7 +7,7 @@ import cloudpickle as pickle
 import copy
 import logging
 from redis import StrictRedis
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 from jabbar import jabbar
 
 from ...util import (
@@ -314,7 +314,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             n_lookahead=n_lookahead_eval)
         self.logger.write()
 
-        # weight samples correctly
+        # weight sub-populations suitably
         sample = self_normalize_within_subpopulations(sample, n)
 
         return sample
@@ -425,8 +425,13 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
         sample = copy.deepcopy(sample)
-        # normalize_features weights
+
+        # weight sub-populations suitably
+        sample = self_normalize_within_subpopulations(sample, n)
+
+        # normalize accepted population weight to 1
         sample.normalize_weights()
+
         # extract population
         population = sample.get_accepted_population()
 
@@ -674,9 +679,9 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
                   if particle.proposal_id == prop_id]
         for prop_id in prop_ids}
 
-    # normalize_features weights by ESS_l / sum_l[w_l] for proposal id l
-    # this is s.t. sum_i w_{l,i} \propto ESS_l
-    normalizations = {}
+    # normalize weights by $ESS_l / sum_{i<=N_l} w^l_i$ for proposal id l
+    # this is s.t. $sum_{i<=N_l} w^l_i \propto ESS_l$
+    normalizations: Dict[int, float] = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
         weights = np.array(
             [particle.weight for particle in particles_for_prop])
@@ -684,11 +689,14 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         total_weight = weights.sum()
         normalizations[prop_id] = ess / total_weight
 
-    # TODO It might cause problems if adaptive components use rejected weights
-
-    # normalize_features every accepted article
+    # normalize all particles
     for particle in sample.accepted_particles:
-        particle.weight *= normalizations[particle.proposal_id]
+        if particle.proposal_id in normalizations:
+            particle.weight *= normalizations[particle.proposal_id]
+        else:
+            # set weight of particles from populations None of which was
+            #  accepted to 0 (until we start caring about those for real)
+            particle.weight = 0.
 
     return sample
 

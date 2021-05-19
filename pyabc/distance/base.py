@@ -56,7 +56,7 @@ class Distance(ABC):
             get_sample: Callable[[], Sample]) -> bool:
         """Update for the upcoming generation t.
 
-        Similar as `initialize`, however called for every subsequent iteration.
+        Similar to `initialize`, however called for every subsequent iteration.
         The default is to do nothing.
 
         Parameters

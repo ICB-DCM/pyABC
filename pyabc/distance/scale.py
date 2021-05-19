@@ -105,7 +105,7 @@ std = standard_deviation
 
 
 @check_io
-def bias(*, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+def bias(*, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
     """Bias of sample to observed value."""
     bias = np.nanmean(samples, axis=0) - s0
     return bias
@@ -135,7 +135,7 @@ rmsd = root_mean_square_deviation
 
 @check_io
 def median_absolute_deviation_to_observation(
-        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+        *, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
     """Median absolute deviation of samples w.r.t. the observation s0."""
     mado = np.nanmedian(np.abs(samples - s0), axis=0)
     return mado
@@ -143,7 +143,7 @@ def median_absolute_deviation_to_observation(
 
 @check_io
 def mean_absolute_deviation_to_observation(
-        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+        *, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
     """Mean absolute deviation of samples w.r.t. the observation s0."""
     mado = np.nanmean(np.abs(samples - s0), axis=0)
     return mado
@@ -187,7 +187,7 @@ def combined_mean_absolute_deviation(
 
 @check_io
 def standard_deviation_to_observation(
-        *, samples: np.ndarray, s0: np.ndarray) -> np.ndarray:
+        *, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
     """
     Standard deviation of absolute deviations of the samples w.r.t.
     the observation s0.

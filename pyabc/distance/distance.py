@@ -866,10 +866,10 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         False: Adapt weights only once at the beginning in initialize().
         This corresponds to a pre-calibration.
     scale_function:
-        Function that takes a list of floats, namely the values obtained
-        by applying one of the distances passed to a set of samples,
-        and returns a single float, namely the weight to apply to this
-        distance function. Default: scale_span.
+        Function that takes a np.ndarray of shape (n_sample,),
+        namely the values obtained by applying one of the distances on a set
+        of samples, and returns a single float, namely the weight to apply to
+        this distance function. Default: span.
     log_file:
         A log file to store weights for each time point in. Weights are
         currently not stored in the database. The data are saved in json
@@ -886,14 +886,14 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         log_file: str = None,
     ):
         super().__init__(distances=distances)
-        self.initial_weights = initial_weights
-        self.factors = factors
-        self.adaptive = adaptive
-        self.x_0 = None
+        self.initial_weights: List = initial_weights
+        self.factors: Union[List, dict] = factors
+        self.adaptive: bool = adaptive
+        self.x_0: Union[dict, None] = None
         if scale_function is None:
             scale_function = span
-        self.scale_function = scale_function
-        self.log_file = log_file
+        self.scale_function: Callable = scale_function
+        self.log_file: str = log_file
 
     def requires_calibration(self) -> bool:
         return (self.initial_weights is None
@@ -976,6 +976,12 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
             else:
                 w.append(1 / scale)
 
+        w = np.array(w)
+        if w.size != len(self.distances):
+            raise AssertionError(
+                f"weights.size={w.size} != "
+                f"len(distances)={len(self.distances)}")
+
         # add to w attribute, at time t
         self.weights[t] = np.array(w)
 
@@ -1003,9 +1009,6 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         if self.log_file:
             save_dict_to_json(self.weights, self.log_file)
-
-    def get_weights_dict(self) -> Dict[int, Dict[str, float]]:
-        return self.weights
 
 
 class DistanceWithMeasureList(Distance, ABC):

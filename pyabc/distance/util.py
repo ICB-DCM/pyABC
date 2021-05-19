@@ -7,7 +7,10 @@ import os
 from ..storage import load_dict_from_json, save_dict_to_json
 
 
-def bound_weights(w: np.ndarray, max_weight_ratio: float) -> np.ndarray:
+def bound_weights(
+    w: np.ndarray,
+    max_weight_ratio: float,
+) -> np.ndarray:
     """
     Bound all weights to `max_weight_ratio` times the minimum
     non-zero absolute weight, if `max_weight_ratio` is not None.
@@ -15,6 +18,15 @@ def bound_weights(w: np.ndarray, max_weight_ratio: float) -> np.ndarray:
     While this is usually not required in practice, it is theoretically
     necessary that the ellipses are not arbitrarily eccentric, in order
     to ensure convergence.
+
+    Parameters
+    ----------
+    w: Weights.
+    max_weight_ratio: Maximum ratio of maximum and minimum weight.
+
+    Returns
+    -------
+    w: The bounded weights.
     """
     if max_weight_ratio is None:
         return w
@@ -56,7 +68,7 @@ def log_weights(
     if log_file:
         # read in file
         dct = {}
-        if os.path.exists(log_file):
+        if os.path.exists(log_file) and os.path.getsize(log_file) > 0:
             dct = load_dict_from_json(file_=log_file)
         # add column
         if t in dct:
@@ -70,7 +82,16 @@ def log_weights(
 
 
 def to_fit_ixs(ixs: Union[Collection, int]) -> set:
-    """Input to collection of time indices when to fit."""
+    """Input to collection of time indices when to fit.
+
+    Parameters
+    ----------
+    ixs: Various input formats that can be converted to indices.
+
+    Returns
+    -------
+    ixs: An actual index set.
+    """
     # convert inf or int to range
     if not isinstance(ixs, collections.abc.Collection):
         if ixs == np.inf:

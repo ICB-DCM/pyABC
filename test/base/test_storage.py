@@ -64,7 +64,10 @@ class TestPopulation(Population):
     """Simple creation of populations from unnormalized weights."""
 
     def __init__(self, particles: List[Particle]):
-        super().__init__(particles, normalized=False)
+        total_weight = sum(p.weight for p in particles)
+        for p in particles:
+            p.weight /= total_weight
+        super().__init__(particles)
 
 
 @pytest.fixture

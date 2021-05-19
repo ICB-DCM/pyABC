@@ -503,7 +503,7 @@ class ABCSMC:
             n=self.population_size(-1), simulate_one=simulate_one, t=t,
             max_eval=np.inf, all_accepted=True, ana_vars=self._vars())
 
-        # normalize sample weights
+        # normalize accepted population weight to 1
         sample.normalize_weights()
 
         # extract accepted population
@@ -678,17 +678,12 @@ class ABCSMC:
                 logger.info("Stopping: sample not ok.")
                 break
 
-            # normalize sample weights
+            # normalize accepted population weight to 1
             sample.normalize_weights()
 
             # retrieve accepted population
             population = sample.get_accepted_population()
             logger.debug(f"Population {t} done.")
-
-            # normalize weights
-            total_weight = sum(p.weight for p in population.particles)
-            for p in sample.all_particles:
-                p.weight /= total_weight
 
             # save to database
             n_sim = self.sampler.nr_evaluations_

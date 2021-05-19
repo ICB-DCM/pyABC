@@ -8,7 +8,7 @@ iteration.
 """
 
 
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 import logging
@@ -89,20 +89,17 @@ class Population:
     ----------
     particles:
         Particles that constitute the accepted population.
-    normalized:
-        Whether the weights should be normalized already. If True but the
-        weights are not, an error is raised. Should be True only in tests.
     """
 
-    def __init__(self, particles: List[Particle], normalized: bool = True):
+    def __init__(self, particles: List[Particle]):
         self.particles = particles
         self._model_probabilities = None
-        self.normalize_and_calculate_model_probabilities(normalized)
+        self.calculate_model_probabilities()
 
     def __len__(self):
         return len(self.particles)
 
-    def normalize_and_calculate_model_probabilities(self, normalized: bool):
+    def calculate_model_probabilities(self):
         """Compute the model probabilities and ensure normalization.
 
         Computes model weights as relative sums of particles belonging to
@@ -122,15 +119,12 @@ class Population:
         if np.isclose(population_total_weight, 0):
             raise AssertionError("The total population weight is zero")
 
-        # update model_probabilities attribute
-        self._model_probabilities = model_probabilities
-
         if not np.isclose(population_total_weight, 1):
-            if normalized:
-                # this should not happen
-                raise AssertionError("Weights are not normalized")
-            for p in self.particles:
-                p.weight /= population_total_weight
+            raise AssertionError(
+                "The population total weight is not normalized.")
+
+        # cache model probabilities
+        self._model_probabilities = model_probabilities
 
     def update_distances(
             self,
@@ -242,7 +236,7 @@ class Population:
 
         return ret
 
-    def get_particles_by_model(self) -> dict:
+    def get_particles_by_model(self) -> Dict[int, List[Particle]]:
         """Get particles by model.
 
         Returns
@@ -251,18 +245,17 @@ class Population:
             A dictionary with the models as keys and a list of particles for
             each model as values.
         """
-
-        store = {}
+        particlees_by_model = {}
 
         for particle in self.particles:
             if particle is not None:
                 # append particle for key particle.m, create empty list
                 # if key not yet existent
-                store.setdefault(particle.m, []).append(particle)
+                particlees_by_model.setdefault(particle.m, []).append(particle)
             else:
                 logger.warning("Empty particle.")
 
-        return store
+        return particlees_by_model
 
 
 class Sample:
@@ -390,7 +383,7 @@ class Sample:
         """Normalize weights to sum(accepted weights) = 1.
 
         This is done at the end of a sampling run. Normalizing rejected
-        weights be the same factor ensures that weights stay comparable.
+        weights by the same factor ensures that weights stay comparable.
         """
         total_weight_accepted = sum(p.weight for p in self.accepted_particles)
         if np.isclose(total_weight_accepted, 0):

@@ -6,7 +6,14 @@ from .test_storage import rand_pop_list
 
 
 def rand_pop(m: int):
-    return Population(rand_pop_list(m), normalized=False)
+    pop = rand_pop_list(m)
+
+    # normalize weights
+    total_weight = sum(p.weight for p in pop)
+    for p in pop:
+        p.weight /= total_weight
+
+    return Population(pop)
 
 
 def test_basic():
