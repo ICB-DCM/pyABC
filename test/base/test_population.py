@@ -52,3 +52,16 @@ def test_basic():
     pop.update_distances(dst)
     weighted_distances = pop.get_weighted_distances()
     assert all(weighted_distances['distance'] == dst_val)
+
+
+def test_raises():
+    """Test raises upon bad input."""
+    particles = rand_pop_list(0)
+    with pytest.raises(AssertionError):
+        Population(particles)
+
+    for p in particles:
+        p.weight = 0.
+
+    with pytest.raises(AssertionError):
+        Population(particles)

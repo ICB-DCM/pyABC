@@ -101,7 +101,9 @@ from .transition import (
     ModelPerturbationKernel)
 from .population import (
     Particle,
-    Population)
+    Population,
+    Sample,
+)
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
@@ -119,10 +121,15 @@ from .sumstat import (
     Sumstat,
     IdentitySumstat,
     PredictorSumstat,
-    LinearPredictorSumstat,
-    LassoPredictorSumstat,
-    GPPredictorSumstat,
-    MLPPredictorSumstat,
+)
+from .weighted_statistics import (
+    weighted_quantile,
+    weighted_median,
+    weighted_mean,
+    weighted_std,
+    effective_sample_size,
+    resample,
+    resample_deterministic,
 )
 from . import visualization
 from . import settings

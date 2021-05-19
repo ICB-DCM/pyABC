@@ -29,8 +29,4 @@ from .base import (
 )
 from .learn import (
     PredictorSumstat,
-    LinearPredictorSumstat,
-    LassoPredictorSumstat,
-    GPPredictorSumstat,
-    MLPPredictorSumstat,
 )

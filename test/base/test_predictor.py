@@ -3,6 +3,7 @@
 import pytest
 import numpy as np
 
+
 from pyabc.predictor import (
     LinearPredictor,
     LassoPredictor,
@@ -21,6 +22,7 @@ from pyabc.predictor import (
     "linear not joint",
     "linear not normalized",
     "linear weighted",
+    "linear not joint weighted",
     "lasso",
     "GP no ard",
     "GP no ard not joint",
@@ -38,10 +40,12 @@ def s_model(request) -> str:
     return request.param
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_fit(s_model, s_predictor):
     """Test fit on a simple model."""
+
     n_y = 10
-    n_p = 4
+    n_p = 3
     n_sample_train = 500
     n_sample_test = 100
 
@@ -68,6 +72,8 @@ def test_fit(s_model, s_predictor):
             normalize_features=False, normalize_labels=False)
     elif s_predictor == "linear weighted":
         predictor = LinearPredictor(weight_samples=True)
+    elif s_predictor == "linear not joint weighted":
+        predictor = LinearPredictor(joint=False,    weight_samples=True)
     elif s_predictor == "lasso":
         predictor = LassoPredictor()
     elif s_predictor == "GP no ard":
@@ -101,6 +107,7 @@ def test_fit(s_model, s_predictor):
     ys_test = rng.normal(size=(n_sample_test, n_y))
     ps_test = model(ys_test)
     ps_pred = predictor.predict(ys_test)
+    assert ps_pred.shape == ps_test.shape == (n_sample_test, n_p)
 
     # measure discrepancy
     rmse = root_mean_square_error(ps_test, ps_pred, 1.)
@@ -120,6 +127,9 @@ def test_fit(s_model, s_predictor):
         else:
             # linear model cannot fit non-linear data
             assert rmse > 10
+
+    # call on a single vector
+    assert predictor.predict(rng.normal(size=n_y)).shape == (1, n_p)
 
     # for visual analysis
     # import matplotlib.pyplot as plt

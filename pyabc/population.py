@@ -110,14 +110,18 @@ class Population:
         """
         store = self.get_particles_by_model()
 
+        # calculate weight per model
         model_total_weights = {m: sum(particle.weight for particle in plist)
                                for m, plist in store.items()}
-        population_total_weight = sum(model_total_weights.values())
-        model_probabilities = {m: w / population_total_weight
-                               for m, w in model_total_weights.items()}
 
+        # calculate total weight
+        population_total_weight = sum(model_total_weights.values())
         if np.isclose(population_total_weight, 0):
             raise AssertionError("The total population weight is zero")
+
+        # model probabilities are weights per model divided by total weight
+        model_probabilities = {m: w / population_total_weight
+                               for m, w in model_total_weights.items()}
 
         if not np.isclose(population_total_weight, 1):
             raise AssertionError(

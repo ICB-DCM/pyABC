@@ -231,7 +231,17 @@ class SimplePredictor(Predictor):
 
 
 class LinearPredictor(SimplePredictor):
-    """Linear predictor model."""
+    """Linear predictor model.
+
+    Based on [#fearnheadprangle2012]_.
+
+    .. [#fearnheadprangle2012]
+        Fearnhead, Paul, and Dennis Prangle.
+        "Constructing summary statistics for approximate Bayesian computation:
+        Semi‐automatic approximate Bayesian computation."
+        Journal of the Royal Statistical Society: Series B
+        (Statistical Methodology) 74.3 (2012): 419-474.
+    """
 
     def __init__(
         self,
@@ -310,7 +320,17 @@ class LassoPredictor(SimplePredictor):
 
 
 class GPPredictor(SimplePredictor):
-    """Gaussian process model."""
+    """Gaussian process model.
+
+    Similar to [#borowska2021]_.
+
+    .. [#borowska2021]
+        Borowska, Agnieszka, Diana Giurghita, and Dirk Husmeier.
+        "Gaussian process enhanced semi-automatic approximate Bayesian
+        computation: parameter inference in a stochastic differential equation
+        system for chemotaxis."
+        Journal of Computational Physics 429 (2021): 109999.
+    """
 
     def __init__(
         self,
@@ -425,7 +445,16 @@ class GPKernelHandle:
 
 
 class MLPPredictor(SimplePredictor):
-    """Multi-layer perceptron regressor predictor."""
+    """Multi-layer perceptron regressor predictor.
+
+    See e.g. [#jiang2017]_.
+
+    .. [#jiang2017]
+        Jiang, Bai, et al.
+        "Learning summary statistic for approximate Bayesian computation via
+        deep neural network."
+        Statistica Sinica (2017): 1595-1618.
+    """
 
     def __init__(
             self,
