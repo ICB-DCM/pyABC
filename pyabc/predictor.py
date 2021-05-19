@@ -2,8 +2,8 @@
 Predictor
 =========
 
-Predictor models that are used in pyABC to construct a regressor model from
-date to parameters. :class:`pypesto.predictor.Predictor` defines the abstract
+Predictor models are used in pyABC to regress parameters from data.
+:class:`pypesto.predictor.Predictor` defines the abstract
 base class, :class:`pypesto.predictor.SimplePredictor` an interface to external
 predictor implementations.
 Further, various specific implementations including linear regression, Lasso,
@@ -25,7 +25,7 @@ except ImportError:
     skl_lm = skl_gp = skl_nn = skl_ms = None
 
 
-logger = logging.getLogger("Predictor")
+logger = logging.getLogger("ABC.Predictor")
 
 
 class Predictor(ABC):
@@ -33,13 +33,14 @@ class Predictor(ABC):
 
     A predictor should define:
 
-    - `fit(x, y, w=None)` to fit the model on a sample of data x and outputs y,
+    * `fit(x, y, w=None)` to fit the model on a sample of data x and outputs y,
       where x has shape (n_sample, n_feature), and
       y has shape (n_sample, n_out).
       Further, gets as a third argument the sample weights
       if `weight_samples` is set. Not all predictors support this.
-    - `predict(X)` to predict outputs of shape (n_out,), where X has shape
+    * `predict(X)` to predict outputs of shape (n_out,), where X has shape
       (n_sample, n_feature).
+
     """
 
     @abstractmethod
@@ -58,7 +59,7 @@ class Predictor(ABC):
         """Predict outputs using the model.
 
         Parameters
-        ---------
+        ----------
         x:
             Samples, shape (n_sample, n_feature) or (n_feature,).
         normalize:
@@ -86,7 +87,7 @@ class SimplePredictor(Predictor):
     ):
         """
         Parameters
-        -----------
+        ----------
         predictor:
             Predictor model to use, fulfilling the predictor contract.
         normalize_features:
@@ -169,7 +170,7 @@ class SimplePredictor(Predictor):
         """Predict outputs using the model.
 
         Parameters
-        ---------
+        ----------
         x:
             Samples, shape (n_sample, n_feature) or (n_feature,).
         normalize:
@@ -263,9 +264,15 @@ class LinearPredictor(SimplePredictor):
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
         super().fit(x, y, w)
         # log
-        logger.debug(
-            f"Linear regression coefficients (n_target, n_feature):\n"
-            f"{self.predictor.coef_}")
+        if self.joint:
+            logger.debug(
+                "Linear regression coefficients (n_target, n_feature):\n"
+                f"{self.predictor.coef_}")
+        else:
+            for i_pred, predictor in enumerate(self.single_predictors):
+                logger.debug(
+                    "Linear regression coefficients (n_target, n_feature):\n"
+                    f"for predictor {i_pred}: {predictor.coef_}")
 
 
 class LassoPredictor(SimplePredictor):
@@ -493,25 +500,24 @@ class HiddenLayerHandle:
 
     HEURISTIC = "heuristic"
     MEAN = "mean"
-    MAX = "max"
 
     def __init__(
         self,
-        method: str = MEAN,
+        method: str = HEURISTIC,
         n_layer: int = 1,
         max_size: int = np.inf,
-        alpha: float = 5.,
+        alpha: float = 1.,
     ):
         """
         Parameters
         ----------
-        method: {"heuristic", "mean", "max"}
+        method: {"heuristic", "mean"}
             Method to use.
+
             * "heuristic" bases the number of neurons on the number of samples
               to avoid overfitting. See
               https://stats.stackexchange.com/questions/181.
             * "mean" takes the mean of input and output dimension.
-            * "max" takes the maximum of input and output dimension.
         n_layer:
             Number of layers.
         max_size:
@@ -546,8 +552,6 @@ class HiddenLayerHandle:
             neurons_per_layer = neurons / self.n_layer
         elif self.method == HiddenLayerHandle.MEAN:
             neurons_per_layer = 0.5 * (n_in + n_out)
-        elif self.method == HiddenLayerHandle.MAX:
-            neurons_per_layer = max(n_in, n_out)
         else:
             raise ValueError(f"Did not recognize method {self.method}.")
 
@@ -555,10 +559,12 @@ class HiddenLayerHandle:
         neurons_per_layer = min(neurons_per_layer, self.max_size)
 
         # only >=2 dim makes sense, round
-        neurons_per_layer = int(max(2, neurons_per_layer))
+        neurons_per_layer = int(max(2., neurons_per_layer))
 
-        # return equal-sized layers
-        return tuple(neurons_per_layer for _ in range(self.n_layer))
+        layer_sizes = tuple(neurons_per_layer for _ in range(self.n_layer))
+        logger.info(f"Layer sizes: {layer_sizes}")
+
+        return layer_sizes
 
 
 class ModelSelectionPredictor(Predictor):
@@ -658,15 +664,15 @@ class ModelSelectionPredictor(Predictor):
 def root_mean_square_error(
     y1: np.ndarray,
     y2: np.ndarray,
-    sigma: np.ndarray,
+    sigma: Union[np.ndarray, float],
 ) -> float:
     """Root mean square error of `y1 - y2 / sigma`.
 
     Parameters
     ----------
-    y1: Model simulations.
-    y2: Ground truth values.
-    sigma: Normalizations.
+    y1: Model simulations, shape (n_sample, n_par).
+    y2: Ground truth values, shape (n_sample, n_par).
+    sigma: Normalizations, shape (n_sample,) or (1,).
 
     Returns
     -------
@@ -675,7 +681,7 @@ def root_mean_square_error(
     return np.sqrt(
         np.sum(
             ((y1 - y2) / sigma)**2,
-        ) / y1.shape[0],
+        ) / y1.size,
     )
 
 
@@ -699,5 +705,5 @@ def root_mean_square_relative_error(
     return np.sqrt(
         np.sum(
             ((y1 - y2) / y2)**2,
-        ) / y1.shape[0],
+        ) / y1.size,
     )

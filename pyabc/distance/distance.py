@@ -284,6 +284,7 @@ class AdaptivePNormDistance(PNormDistance):
     sumstat:
         Summary statistics. Defaults to an identity mapping.
 
+
     .. [#prangle] Prangle, Dennis.
         "Adapting the ABC Distance Function".
         Bayesian Analysis, 2017.
