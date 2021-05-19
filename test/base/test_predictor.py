@@ -10,6 +10,7 @@ from pyabc.predictor import (
     GPKernelHandle,
     MLPPredictor,
     HiddenLayerHandle,
+    ModelSelectionPredictor,
     root_mean_square_error,
 )
 
@@ -23,6 +24,7 @@ from pyabc.predictor import (
     "GP ard",
     "MLP heuristic",
     "MLP mean",
+    "MS",
 ])
 def s_predictor(request) -> str:
     return request.param
@@ -72,6 +74,9 @@ def test_fit(s_model, s_predictor):
     elif s_predictor == "MLP mean":
         predictor = MLPPredictor(
             hidden_layer_sizes=HiddenLayerHandle(method="mean"))
+    elif s_predictor == "MS":
+        predictor = ModelSelectionPredictor(
+            predictors=[LinearPredictor(), MLPPredictor()])
     else:
         raise ValueError("Invalid argument")
 
@@ -94,7 +99,8 @@ def test_fit(s_model, s_predictor):
 
     # ignore lasso
     if isinstance(
-            predictor, (LinearPredictor, GPPredictor, MLPPredictor)):
+            predictor, (LinearPredictor, GPPredictor, MLPPredictor,
+                        ModelSelectionPredictor)):
         if s_model == "linear":
             # all should work well on linear
             assert rmse < 0.1

@@ -619,7 +619,10 @@ class ModelSelectionPredictor(Predictor):
         for i_split, (train_ix, test_ix) in enumerate(
                 kfold.split(np.arange(x.shape[0]))):
             # training and test sets
-            x_train, y_train, w_train = x[train_ix], y[train_ix], w[train_ix]
+            x_train, y_train = x[train_ix], y[train_ix]
+            w_train = w
+            if w is not None:
+                w_train = w[train_ix]
             x_test, y_test = x[test_ix], y[test_ix]
 
             # iterate over predictors
