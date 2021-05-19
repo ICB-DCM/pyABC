@@ -163,8 +163,18 @@ def test_pipeline(db_file):
     abc.new("sqlite:///" + db_file, data)
     h = abc.run(max_total_nr_simulations=1000)
 
-    # last iteration
     df_comp, w_comp = h.get_distribution()
     off_comp = abs(pyabc.weighted_mean(df_comp.p0, w_comp) - 0.1)
-
     assert off_comp > off
+
+    # alternative run with info weighting
+    distance = pyabc.InfoWeightedPNormDistance(
+        predictor=LinearPredictor(),
+    )
+    abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
+    abc.new("sqlite:///" + db_file, data)
+    h = abc.run(max_total_nr_simulations=1000)
+
+    df_info, w_info = h.get_distribution()
+    off_info = abs(pyabc.weighted_mean(df_info.p0, w_info) - 0.1)
+    assert off_comp > off_info

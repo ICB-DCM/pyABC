@@ -30,6 +30,7 @@ from .distance import (
     SimpleFunctionDistance,
     PNormDistance,
     AdaptivePNormDistance,
+    InfoWeightedPNormDistance,
     AggregatedDistance,
     AdaptiveAggregatedDistance,
     ZScoreDistance,
