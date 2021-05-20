@@ -32,6 +32,7 @@ from pyabc.distance import (
     median,
     SCALE_LIN,
 )
+from pyabc.distance.util import to_fit_ixs
 from pyabc.population import Particle, Sample
 from pyabc.parameters import Parameter
 from pyabc.storage import load_dict_from_json
@@ -87,6 +88,13 @@ def test_single_parameter_percentile():
         1 / (np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20))
     )
     assert expected == d
+
+
+def test_to_fit_ixs():
+    """Test fit index construction."""
+    assert to_fit_ixs(3) == {0, 1, 2}
+    assert to_fit_ixs(np.inf) == {0, np.inf}
+    assert to_fit_ixs({3, 5}) == {3, 5}
 
 
 def test_pnormdistance():

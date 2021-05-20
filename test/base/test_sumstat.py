@@ -28,6 +28,8 @@ def test_dict2arr():
 
     with pytest.raises(TypeError):
         dict2arr({"s0": "alice"}, keys=["s0"])
+    with pytest.raises(TypeError):
+        dict2arrlabels({"s0": "alice"}, keys=["s0"])
 
 
 @pytest.fixture(params=[None, [lambda x: x, lambda x: x**2]])
@@ -61,6 +63,10 @@ def test_pre():
     sumstat = IdentitySumstat(
         trafos=[lambda x: x**2],
         pre=IdentitySumstat(trafos=[lambda x: x, lambda x: x**2]))
+
+    assert not sumstat.requires_calibration()
+    assert not sumstat.is_adaptive()
+    sumstat.configure_sampler(pyabc.SingleCoreSampler())
 
     x0 = {'s0': 1., 's1': 42.}
     sumstat.initialize(
