@@ -94,6 +94,15 @@ class Population:
     def __init__(self, particles: List[Particle]):
         self.particles = particles
         self._model_probabilities = None
+
+        # checks
+        if any(not p.accepted for p in particles):
+            raise AssertionError(
+                "A population should only consist of accepted particles")
+        if not np.isclose(sum(p.weight for p in particles), 1):
+            raise AssertionError(
+                "The population total weight is not normalized.")
+
         self.calculate_model_probabilities()
 
     def __len__(self):
@@ -115,17 +124,11 @@ class Population:
                                for m, plist in store.items()}
 
         # calculate total weight
-        population_total_weight = sum(model_total_weights.values())
-        if np.isclose(population_total_weight, 0):
-            raise AssertionError("The total population weight is zero")
+        population_total_weight = sum(model_total_weights.values())  # 1
 
         # model probabilities are weights per model divided by total weight
         model_probabilities = {m: w / population_total_weight
                                for m, w in model_total_weights.items()}
-
-        if not np.isclose(population_total_weight, 1):
-            raise AssertionError(
-                "The population total weight is not normalized.")
 
         # cache model probabilities
         self._model_probabilities = model_probabilities
