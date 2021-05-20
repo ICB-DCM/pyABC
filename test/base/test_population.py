@@ -100,3 +100,13 @@ def test_sample():
 
     population = sample.get_accepted_population()
     assert len(population) == 90
+
+    # zero weight
+    particles = rand_pop_list(n_sample=100)
+    for p in particles:
+        p.weight = 0.
+    sample = Sample(record_rejected=True, max_nr_rejected=10)
+    for p in particles:
+        sample.append(p)
+    with pytest.raises(AssertionError):
+        sample.normalize_weights()

@@ -3,6 +3,7 @@ import scipy as sp
 import scipy.stats
 import os
 import tempfile
+import pytest
 
 from pyabc.distance import (
     PercentileDistance,
@@ -103,7 +104,7 @@ def test_pnormdistance():
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
     # first test that for PNormDistance, the weights stay constant
-    dist_f = PNormDistance()
+    dist_f = PNormDistance(p=2)
     dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
 
     # call distance function, also to initialize w
@@ -113,6 +114,12 @@ def test_pnormdistance():
     assert expected == d
 
     assert dist_f.fixed_weights[0] == 1
+
+    # maximum norm
+    dist_f = PNormDistance(p=np.inf)
+    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+    d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
+    assert d == 2
 
 
 def test_adaptivepnormdistance():
@@ -154,6 +161,44 @@ def test_adaptivepnormdistance():
         weights = dist_f.scale_weights[0]
         assert (weights != np.ones(3)).any()
         assert np.max(weights) / np.min(weights[~np.isclose(weights, 0)]) <= 20
+
+
+def test_scales():
+    """Test scale functions directly."""
+    scale_functions = [
+        median_absolute_deviation,
+        mean_absolute_deviation,
+        standard_deviation,
+        bias,
+        root_mean_square_deviation,
+        median_absolute_deviation_to_observation,
+        mean_absolute_deviation_to_observation,
+        combined_median_absolute_deviation,
+        combined_mean_absolute_deviation,
+        standard_deviation_to_observation,
+    ]
+    n_sample = 1000
+    n_y = 50
+
+    samples = np.random.normal(size=(n_sample, n_y))
+    s0 = np.random.normal(size=(n_y,))
+    s_ids = [f"s{ix}" for ix in range(n_y)]
+    for scale in scale_functions:
+        assert np.isfinite(scale(samples=samples, s0=s0, s_ids=s_ids)).all()
+
+    samples[0, 0] = samples[1, 3] = samples[10, 2] = np.nan
+    for scale in scale_functions:
+        assert np.isfinite(scale(samples=samples, s0=s0, s_ids=s_ids)).all()
+
+    s0_bad = np.random.normal(size=(n_y-1,))
+    for scale in scale_functions:
+        with pytest.raises(AssertionError):
+            scale(samples=samples, s0=s0_bad, s_ids=s_ids)
+
+    s_ids_bad = [f"s{ix}" for ix in range(n_y+1)]
+    for scale in scale_functions:
+        with pytest.raises(AssertionError):
+            scale(samples=samples, s0=s0, s_ids=s_ids_bad)
 
 
 def test_adaptivepnormdistance_initial_weights():
