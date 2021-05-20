@@ -49,6 +49,11 @@ def check_io(fun):
                     samples.ndim > 1 and
                     samples.shape[1] != kwargs["s0"].shape[0]):
                 raise AssertionError("Shape mismatch of samples and s0")
+        if "s_ids" in kwargs:
+            if (samples.ndim == 1 and len(kwargs["s_ids"]) > 1) or (
+                    samples.ndim > 1 and
+                    len(kwargs["s_ids"]) != samples.shape[1]):
+                raise AssertionError("Shape mismatch of samples and s_ids")
         scales: np.ndarray = fun(samples=samples, **kwargs)
         if (samples.ndim == 1 and np.ndim(scales) > 0) or (
                 samples.ndim > 1 and scales.shape != (samples.shape[1],)):
