@@ -65,7 +65,7 @@ class IdSubsetter(Subsetter):
         return x, y, w
 
 
-class GMMSubsetter:
+class GMMSubsetter(Subsetter):
     """Using a Gaussian mixed model for subset identification.
 
     Performs model selection over Gaussian mixed models with up to
