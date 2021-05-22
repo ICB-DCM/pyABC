@@ -32,10 +32,10 @@ class Subsetter(ABC):
 
     @abstractmethod
     def select(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            w: np.ndarray,
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        w: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Select samples for model training. This is the main method.
 
@@ -47,9 +47,8 @@ class Subsetter(ABC):
 
         Returns
         -------
-        x_, y_, w_:
-            Subsetted samples, targets and weights with
-            n_sample -> n_sample_used <= n_sample.
+        A tuple x_, y_, w_ of the subsetted samples, targets and weights with
+        n_sample -> n_sample_used <= n_sample.
         """
 
 
@@ -57,10 +56,10 @@ class IdSubsetter(Subsetter):
     """Identity subset mapping."""
 
     def select(
-            self,
-            x: np.ndarray,
-            y: np.ndarray,
-            w: np.ndarray,
+        self,
+        x: np.ndarray,
+        y: np.ndarray,
+        w: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Just return x, y, w unchanged."""
         return x, y, w
@@ -127,14 +126,7 @@ class GMMSubsetter:
         y: np.ndarray,
         w: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Select based on GMM clusters.
-
-        Parameters
-        ----------
-        x: Samples, shape (n_sample, n_feature).
-        y: Targets, shape (n_sample, n_out).
-        w: Weights, shape (n_sample,).
-        """
+        """Select based on GMM clusters."""
         # find most suitable number of clusters
         gmm, n_components, bics = self._find_optimal_model(y=y)
         self.gmm = gmm

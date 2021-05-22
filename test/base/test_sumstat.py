@@ -149,8 +149,7 @@ def test_subsetter():
     assert (weights == weights_re).all()
 
     # Gaussian mixture model
-    min_fraction = 0.3
-    subsetter = GMMSubsetter(min_fraction=min_fraction)
+    subsetter = GMMSubsetter(min_fraction=0.3)
     ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
     assert n_sample * 0.6 > len(par_re) > n_sample * 0.4
     assert (par_re[0] < 0).all() or (par_re[0] > 0).all()
@@ -164,7 +163,13 @@ def test_subsetter():
         np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_third, n_p)),
     ))
     ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
-    assert n_sample * 0.4 > len(par_re) > n_sample * 0.2
+    assert n_sample * 0.4 > len(par_re) >= n_sample * 0.3
+    assert subsetter.n_components == 3
+
+    # augment
+    subsetter = GMMSubsetter(min_fraction=0.8)
+    ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
+    assert len(par_re) == int(n_sample * 0.8)
     assert subsetter.n_components == 3
 
     # one component
