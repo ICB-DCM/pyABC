@@ -20,4 +20,6 @@ from .predictor import (
     MLPPredictor,
     HiddenLayerHandle,
     ModelSelectionPredictor,
+    root_mean_square_error,
+    root_mean_square_relative_error,
 )
