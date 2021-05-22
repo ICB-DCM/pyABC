@@ -30,3 +30,13 @@ from .base import (
 from .learn import (
     PredictorSumstat,
 )
+from .subset import (
+    Subsetter,
+    IdSubsetter,
+    GMMSubsetter,
+)
+from .util import (
+    dict2arr,
+    dict2arrlabels,
+    read_sample,
+)

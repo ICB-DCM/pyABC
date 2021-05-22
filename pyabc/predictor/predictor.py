@@ -1,14 +1,4 @@
-"""
-Predictor
-=========
-
-Predictor models are used in pyABC to regress parameters from data.
-:class:`pypesto.predictor.Predictor` defines the abstract
-base class, :class:`pypesto.predictor.SimplePredictor` an interface to external
-predictor implementations.
-Further, various specific implementations including linear regression, Lasso,
-Gaussian processes, and neural networks are provided.
-"""
+"""Predictor implementations."""
 
 import numpy as np
 from typing import Callable, List, Tuple, Union
@@ -412,7 +402,11 @@ class GPKernelHandle:
             Optional arguments passed to the kernel constructors.
         ard:
             Automatic relevance determination by assigning a separate length
-            scale per input variable. Only supported by some kernels.
+            scale per input variable. Only supported by some kernels,
+            currently "RBF" and "Matern".
+            If set to True, the capable kernels are automatically informed.
+            It the underlying scitki-learn toolbox extends support, this
+            list needs to be updated.
         """
         if kernels is None:
             kernels = ["RBF", "WhiteKernel"]
@@ -532,7 +526,7 @@ class HiddenLayerHandle:
         method: str = HEURISTIC,
         n_layer: int = 1,
         max_size: int = np.inf,
-        alpha: float = 1.,
+        alpha: float = 2.,
     ):
         """
         Parameters

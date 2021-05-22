@@ -56,7 +56,7 @@ def weighted_mean(points, weights):
     """
     Compute the weighted mean.
     """
-    return (points * weights).sum()
+    return (points * weights).sum(axis=0)
 
 
 @weight_checked
@@ -66,7 +66,7 @@ def weighted_std(points, weights):
     weighted mean.
     """
     mean = weighted_mean(points, weights)
-    std = np.sqrt(((points - mean)**2 * weights).sum())
+    std = np.sqrt(((points - mean)**2 * weights).sum(axis=0))
     return std
 
 
@@ -83,7 +83,7 @@ def effective_sample_size(weights):
     ----------
     weights: Importance sampling weights.
     """
-    weights = np.array(weights)
+    weights = np.asarray(weights)
     n_eff = np.sum(weights)**2 / np.sum(weights**2)
     return n_eff
 
@@ -107,7 +107,7 @@ def resample(points, weights, n):
         A total of `n` points sampled from `points` with putting back
         according to `weights`.
     """
-    weights = np.array(weights)
+    weights = np.asarray(weights)
     weights /= np.sum(weights)
     resampled = np.random.choice(points, size=n, p=weights)
     return resampled
@@ -139,7 +139,7 @@ def resample_deterministic(points, weights, n, enforce_n=False):
         A total of (roughly) `n` points resampled from `points`
         deterministically using a rational representation of the `weights`.
     """
-    weights = np.array(weights)
+    weights = np.asarray(weights)
     numbers_f = weights * (n / np.sum(weights))
 
     numbers = np.round(numbers_f)

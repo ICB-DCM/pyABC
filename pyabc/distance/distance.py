@@ -6,14 +6,16 @@ from numbers import Number
 from typing import Callable, Collection, Dict, List, Union
 import logging
 
-from .scale import rmsd, span
-from .base import Distance, to_distance
-from .util import bound_weights, log_weights, to_fit_ixs
 from ..storage import save_dict_to_json
 from ..population import Sample
 from ..predictor import Predictor
-from ..sumstat import Sumstat, IdentitySumstat
-from ..sumstat.util import dict2arr, read_sample
+from ..sumstat import (
+    Sumstat, IdentitySumstat, Subsetter, IdSubsetter, dict2arr, read_sample,
+)
+
+from .scale import rmsd, span
+from .base import Distance, to_distance
+from .util import bound_weights, log_weights, to_fit_ixs, fd_nabla1_multi_delta
 
 
 logger = logging.getLogger("ABC.Distance")
@@ -328,7 +330,6 @@ class AdaptivePNormDistance(PNormDistance):
 
         Parameters
         ----------
-
         sampler: Sampler
             The sampler employed.
         """
@@ -417,7 +418,7 @@ class AdaptivePNormDistance(PNormDistance):
         # logging
         log_weights(
             t=t, weights=self.scale_weights, keys=self.sumstat.get_ids(),
-            label="Scale", log_file=self.scale_log_file, logger=logger)
+            label="Scale", log_file=self.scale_log_file)
 
     def get_weights(self, t: int) -> np.ndarray:
         scale_weights: np.ndarray = \
@@ -463,7 +464,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         scale_log_file: str = None,
         info_log_file: str = None,
         sumstat: Sumstat = None,
-        eps: float = 1e-2,
+        fd_deltas: Union[List[float], float] = None,
+        subsetter: Subsetter = None,
+        all_particles_for_prediction: bool = False,
     ):
         """
         Parameters
@@ -484,9 +487,17 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             `max_scale_weight_ratio`.
         info_log_file:
             Log file for the information weights.
-        eps:
-            Finite difference width (rel. to 1), used to approximate the
-            gradient of the predictor.
+        fd_deltas:
+            Finite difference step sizes. Can be a float, or a List of floats,
+            in which case component-wise step size selection is employed.
+         subsetter:
+            Sample subset/cluster selection method. Defaults to just taking all
+            samples. In the presence of e.g. multi-modalities it may make sense
+            to reduce.
+        all_particles_for_prediction:
+            Whether to include rejected particles for fitting predictor models.
+            The same arguments apply as for `PredictorSumstat.all_particles`,
+            i.e. not using all may yield a better local approximation.
         """
         # call p-norm constructor
         super().__init__(
@@ -510,10 +521,16 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.normalize_by_par: bool = normalize_by_par
         self.max_info_weight_ratio: float = max_info_weight_ratio
         self.info_log_file: str = info_log_file
-        self.eps: float = eps
+        self.fd_deltas: Union[List[float], float] = fd_deltas
 
         # parameter keys (for correct order)
         self.par_keys: Union[List[str], None] = None
+
+        if subsetter is None:
+            subsetter = IdSubsetter()
+        self.subsetter: Subsetter = subsetter
+
+        self.all_particles_for_prediction: bool = all_particles_for_prediction
 
     def configure_sampler(self, sampler) -> None:
         """
@@ -587,11 +604,16 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
 
         # create (n_sample, n_feature) matrix of all summary statistics
         sumstats, parameters, weights = read_sample(
-            sample=sample, sumstat=self.sumstat, all_particles=True,
+            sample=sample, sumstat=self.sumstat,
+            all_particles=self.all_particles_for_prediction,
             par_keys=self.par_keys,
         )
         s_0 = self.sumstat(self.x_0)
 
+        # subset sample
+        sumstats, parameters, weights = self.subsetter.select(
+            x=sumstats, y=parameters, w=weights,
+        )
         # remove trivial features
         use_ixs = np.any(sumstats != sumstats[0], axis=0)
         x = sumstats[:, use_ixs]
@@ -613,18 +635,16 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         # learn predictor model
         self.predictor.fit(x=x, y=y, w=weights)
 
-        # sensitivity matrix
+        # calculate all sensitivities of the predictor
+        def fun(x):
+            return self.predictor.predict(x.reshape(1, -1)).flatten()
+        # shape (n_x, n_y)
+        sensis = fd_nabla1_multi_delta(
+            x=x0, fun=fun, test_deltas=self.fd_deltas)
         n_x = x.shape[1]
         n_y = y.shape[1]
-        sensis = np.empty((n_x, n_y))
-
-        # calculate all sensitivities of the predictor
-        eye = np.eye(n_x)
-        eps = self.eps
-        for i_x in range(n_x):
-            vp = self.predictor.predict((x0 + eps * eye[i_x]).reshape(1, -1))
-            vm = self.predictor.predict((x0 - eps * eye[i_x]).reshape(1, -1))
-            sensis[i_x, :] = (vp - vm) / (2 * eps)
+        if sensis.shape != (n_x, n_y):
+            raise AssertionError("Sensitivity shape did not match.")
 
         # we are only interested in absolute values
         sensis = np.abs(sensis)
@@ -650,6 +670,16 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         #  parameters
         info_weights_red = np.sum(sensis, axis=1)
 
+        if np.allclose(info_weights_red, 0):
+            info_weights_red = 1 * np.ones_like(info_weights_red)
+            logger.info("All info weights zeros, thus resetting to ones.")
+        else:
+            # in order to make each sumstat count a little, avoid zero values
+            zero_info = np.isclose(info_weights_red, 0)
+            # minimum non-zero entry
+            min_info = np.min(info_weights_red[~zero_info])
+            info_weights_red[zero_info] = min_info / 10
+
         # project onto full sumstat vector and normalize by scale
         info_weights = np.zeros_like(s_0, dtype=float)
         use_ixs = np.asarray(use_ixs, dtype=bool)
@@ -666,7 +696,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         # logging
         log_weights(
             t=t, weights=self.info_weights, keys=self.sumstat.get_ids(),
-            label="Info", log_file=self.info_log_file, logger=logger)
+            label="Info", log_file=self.info_log_file)
 
     def get_weights(self, t: int) -> np.ndarray:
         info_weights: np.ndarray = \

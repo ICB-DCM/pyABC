@@ -7,7 +7,9 @@ import os
 import tempfile
 
 import pyabc
-from pyabc.sumstat import IdentitySumstat, PredictorSumstat
+from pyabc.sumstat import (
+    IdentitySumstat, PredictorSumstat, IdSubsetter, GMMSubsetter,
+)
 from pyabc.sumstat.util import dict2arr, dict2arrlabels
 from pyabc.predictor import LinearPredictor
 
@@ -122,6 +124,54 @@ def test_predictor_sumstat():
     sumstat = PredictorSumstat(LinearPredictor(), fit_ixs={0, 1})
     sumstat.initialize(t=0, get_sample=lambda: sample, x_0=x)
     assert sumstat(x).shape == (n_p,)
+
+
+def test_subsetter():
+    """Test whether sample cluster subsetting works."""
+    rng = np.random.Generator(np.random.PCG64(0))
+
+    n_sample, n_y, n_p = 900, 5, 2
+    ss = rng.normal(size=(n_sample, n_y))
+    n_sample_half = int(n_sample / 2)
+    # parameter set with two modes
+    par = np.row_stack((
+        np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_half, n_p)),
+        np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_half, n_p)),
+    ))
+    weights = rng.uniform(size=(n_sample, 1))
+
+    # identity mapping
+    subsetter = IdSubsetter()
+    ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
+
+    assert (ss == ss_re).all()
+    assert (par == par_re).all()
+    assert (weights == weights_re).all()
+
+    # Gaussian mixture model
+    min_fraction = 0.3
+    subsetter = GMMSubsetter(min_fraction=min_fraction)
+    ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
+    assert n_sample * 0.6 > len(par_re) > n_sample * 0.4
+    assert (par_re[0] < 0).all() or (par_re[0] > 0).all()
+    assert subsetter.n_components == 2
+
+    # 3 components
+    n_sample_third = int(n_sample / 3)
+    par = np.row_stack((
+        np.array([10, 10]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
+        np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
+        np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_third, n_p)),
+    ))
+    ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
+    assert n_sample * 0.4 > len(par_re) > n_sample * 0.2
+    assert subsetter.n_components == 3
+
+    # one component
+    par = np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample, n_p))
+    ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
+    assert len(par_re) == n_sample
+    assert subsetter.n_components == 1
 
 
 @pytest.fixture()

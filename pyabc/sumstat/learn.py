@@ -11,12 +11,13 @@ except ImportError:
     skl_lm = skl_gp = None
 
 from ..population import Sample
-from .util import io_dict2arr, read_sample
-from .base import Sumstat, IdentitySumstat
 from ..predictor import (
     Predictor,
     SimplePredictor,
 )
+from .util import io_dict2arr, read_sample
+from .base import Sumstat, IdentitySumstat
+from .subset import Subsetter, IdSubsetter
 
 
 logger = logging.getLogger("ABC.Sumstat")
@@ -47,6 +48,7 @@ class PredictorSumstat(Sumstat):
         all_particles: bool = False,
         normalize_labels: bool = True,
         fitted: bool = False,
+        subsetter: Subsetter = None,
         pre: Sumstat = None,
     ):
         """
@@ -76,6 +78,10 @@ class PredictorSumstat(Sumstat):
             externally.
             If False, the `__call__` function will return the
             output of `pre` until the first time index in `fit_ixs`.
+        subsetter:
+            Sample subset/cluster selection method. Defaults to just taking all
+            samples. In the presence of e.g. multi-modalities it may make sense
+            to reduce.
         pre:
             Previously applied summary statistics, enables chaining. Should
             usually not be adaptive.
@@ -102,6 +108,10 @@ class PredictorSumstat(Sumstat):
         # indicate whether the model has ever been fitted
         self.fitted: bool = fitted
 
+        if subsetter is None:
+            subsetter = IdSubsetter()
+        self.subsetter: Subsetter = subsetter
+
     def initialize(
         self,
         t: int,
@@ -127,6 +137,11 @@ class PredictorSumstat(Sumstat):
             par_keys=self.par_keys,
         )
 
+        # subset sample
+        sumstats, parameters, weights = self.subsetter.select(
+            x=sumstats, y=parameters, w=weights,
+        )
+
         # fit model to sample
         self.predictor.fit(x=sumstats, y=parameters, w=weights)
         self.fitted = True
@@ -149,6 +164,11 @@ class PredictorSumstat(Sumstat):
         sumstats, parameters, weights = read_sample(
             sample=sample, sumstat=self.pre, all_particles=self.all_particles,
             par_keys=self.par_keys,
+        )
+
+        # subset sample
+        sumstats, parameters, weights = self.subsetter.select(
+            x=sumstats, y=parameters, w=weights,
         )
 
         # fit model to sample

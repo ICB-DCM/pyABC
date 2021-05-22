@@ -156,7 +156,7 @@ def read_sample(
     # prepare matrices
     sumstats = np.empty((n_sample, n_sumstat))
     parameters = np.empty((n_sample, n_par))
-    weights = np.empty((n_sample,))
+    weights = np.empty((n_sample, 1))
 
     # fill by iteration over all particles
     for i_particle, particle in enumerate(particles):
