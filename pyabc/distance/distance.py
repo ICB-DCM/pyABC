@@ -13,7 +13,7 @@ from ..sumstat import (
     Sumstat, IdentitySumstat, Subsetter, IdSubsetter, dict2arr, read_sample,
 )
 
-from .scale import rmsd, span
+from .scale import std, span
 from .base import Distance, to_distance
 from .util import bound_weights, log_weights, to_fit_ixs, fd_nabla1_multi_delta
 
@@ -316,7 +316,7 @@ class AdaptivePNormDistance(PNormDistance):
         logger.debug(f"Fit scale ixs: {self.fit_scale_ixs}")
 
         if scale_function is None:
-            scale_function = rmsd
+            scale_function = std
         self.scale_function: Callable = scale_function
 
         self.max_scale_weight_ratio: float = max_scale_weight_ratio
