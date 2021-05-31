@@ -239,6 +239,7 @@ class LinearPredictor(SimplePredictor):
         normalize_labels: bool = True,
         joint: bool = True,
         weight_samples: bool = False,
+        **kwargs,
     ):
         # check installation
         if skl_lm is None:
@@ -246,9 +247,11 @@ class LinearPredictor(SimplePredictor):
                 "This predictor requires an installation of scikit-learn. "
                 "Install e.g. via `pip install pyabc[scikit-learn]`")
 
-        predictor = skl_lm.LinearRegression(
-            fit_intercept=False, normalize=False,
-        )
+        default_kwargs = {
+            'fit_intercept': True, 'normalize': True,
+        }
+        default_kwargs.update(kwargs)
+        predictor = skl_lm.LinearRegression(**default_kwargs)
 
         super().__init__(
             predictor=predictor,

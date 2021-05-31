@@ -514,7 +514,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.info_weights: Dict[int, np.ndarray] = {}
 
         if fit_info_ixs is None:
-            fit_info_ixs = {3, 5}
+            fit_info_ixs = {8, 12}
         self.fit_info_ixs: set = to_fit_ixs(fit_info_ixs)
         logger.debug(f"Fit info ixs: {self.fit_info_ixs}")
 
