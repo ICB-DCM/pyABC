@@ -310,6 +310,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                     #  always work.
                     # Until that is fixed, simply do not clear up.
                     # self.clear_generation_t(t=_t)
+                    pass
 
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
