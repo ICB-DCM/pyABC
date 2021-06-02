@@ -71,9 +71,10 @@ def warn_obs_off(off_ixs: np.ndarray, s_ids: List[str]):
     s_ids: List of textual feature labels.
     """
     off_ixs = np.asarray(off_ixs, dtype=int)
-    for ix in off_ixs:
-        logger.warning(
-            f"Feature {ix} ({s_ids[ix]}) has a high bias, down-weighting")
+    if off_ixs:
+        off_ix_ids = [s_ids[ix] for ix in off_ixs]
+        logger.info(
+            f"Features {off_ix_ids} (ixs={off_ixs}) have a high bias.")
 
 
 @check_io
@@ -85,6 +86,9 @@ def median_absolute_deviation(*, samples: np.ndarray, **kwargs) -> np.ndarray:
     """
     mad = np.nanmedian(np.abs(samples - np.nanmedian(samples, axis=0)), axis=0)
     return mad
+
+
+mad = median_absolute_deviation
 
 
 @check_io
@@ -130,7 +134,7 @@ def root_mean_square_deviation(
     rmse = np.sqrt(mse)
 
     # debugging
-    warn_obs_off(off_ixs=np.flatnonzero(bs > std), s_ids=s_ids)
+    warn_obs_off(off_ixs=np.flatnonzero(bs > 2 * std), s_ids=s_ids)
 
     return rmse
 
@@ -139,26 +143,43 @@ rmsd = root_mean_square_deviation
 
 
 @check_io
-def first_std_then_rmsd(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], t: int, **kwargs,
-):
-    if t <= 5:
-        return std(samples=samples)
-    else:
-        return rmsd(samples=samples, s0=s0, s_ids=s_ids)
+def std_or_rmsd(
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+) -> np.ndarray:
+    """Correct std by bias if not too many of the points have bias > std.
+    """
+    bs = bias(samples=samples, s0=s0)
+    std = standard_deviation(samples=samples)
+
+    if sum(bs > 2 * std) >= 0.5 * len(std):
+        logger.info("Too many high-bias values, correcting only for scale.")
+        return std
+
+    mse = bs**2 + std**2
+    rmse = np.sqrt(mse)
+
+    # debugging
+    warn_obs_off(off_ixs=np.flatnonzero(bs > 2 * std), s_ids=s_ids)
+
+    return rmse
 
 
 @check_io
 def median_absolute_deviation_to_observation(
-        *, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
+    *, samples: np.ndarray, s0: np.ndarray, **kwargs,
+) -> np.ndarray:
     """Median absolute deviation of samples w.r.t. the observation s0."""
     mado = np.nanmedian(np.abs(samples - s0), axis=0)
     return mado
 
 
+mado = median_absolute_deviation_to_observation
+
+
 @check_io
 def mean_absolute_deviation_to_observation(
-        *, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
+    *, samples: np.ndarray, s0: np.ndarray, **kwargs,
+) -> np.ndarray:
     """Mean absolute deviation of samples w.r.t. the observation s0."""
     mado = np.nanmean(np.abs(samples - s0), axis=0)
     return mado
@@ -177,7 +198,31 @@ def combined_median_absolute_deviation(
     cmad = mad + mado
 
     # debugging
-    warn_obs_off(off_ixs=np.flatnonzero(mado > mad), s_ids=s_ids)
+    warn_obs_off(off_ixs=np.flatnonzero(mado > 2 * mad), s_ids=s_ids)
+
+    return cmad
+
+
+cmad = combined_median_absolute_deviation
+
+
+@check_io
+def mad_or_cmad(
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+) -> np.ndarray:
+    """Correct mad std by mado if not too many of the points have mado > mad.
+    """
+    mad = median_absolute_deviation(samples=samples)
+    mado = median_absolute_deviation_to_observation(samples=samples, s0=s0)
+
+    if sum(mado > 2 * mad) >= 0.5 * len(mad):
+        logger.info("Too many high-bias values, correcting only for scale.")
+        return mad
+
+    cmad = mad + mado
+
+    # debugging
+    warn_obs_off(off_ixs=np.flatnonzero(mado > 2 * mad), s_ids=s_ids)
 
     return cmad
 
