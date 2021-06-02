@@ -80,7 +80,7 @@ def warn_obs_off(off_ixs: np.ndarray, s_ids: List[str]):
 def median_absolute_deviation(*, samples: np.ndarray, **kwargs) -> np.ndarray:
     """
     Calculate the sample `median absolute deviation (MAD)
-    <https://en.wikipedia.org/wiki/Median_absolute_deviation/>`_
+    <https://en.wikipedia.org/wiki/Median_absolute_deviation>`_
     from the median, defined as median(abs(samples - median(samples)).
     """
     mad = np.nanmedian(np.abs(samples - np.nanmedian(samples, axis=0)), axis=0)
@@ -118,7 +118,7 @@ def bias(*, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
 
 @check_io
 def root_mean_square_deviation(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str],
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
 ) -> np.ndarray:
     """
     Square root of the mean squared error, i.e.
@@ -130,12 +130,22 @@ def root_mean_square_deviation(
     rmse = np.sqrt(mse)
 
     # debugging
-    warn_obs_off(off_ixs=np.flatnonzero(bs > 2 * std), s_ids=s_ids)
+    warn_obs_off(off_ixs=np.flatnonzero(bs > std), s_ids=s_ids)
 
     return rmse
 
 
 rmsd = root_mean_square_deviation
+
+
+@check_io
+def first_std_then_rmsd(
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], t: int, **kwargs,
+):
+    if t <= 5:
+        return std(samples=samples)
+    else:
+        return rmsd(samples=samples, s0=s0, s_ids=s_ids)
 
 
 @check_io
@@ -156,7 +166,7 @@ def mean_absolute_deviation_to_observation(
 
 @check_io
 def combined_median_absolute_deviation(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str],
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
 ) -> np.ndarray:
     """
     Compute the sum of the median absolute deviations to the
@@ -167,14 +177,14 @@ def combined_median_absolute_deviation(
     cmad = mad + mado
 
     # debugging
-    warn_obs_off(off_ixs=np.flatnonzero(mado > 2 * mad), s_ids=s_ids)
+    warn_obs_off(off_ixs=np.flatnonzero(mado > mad), s_ids=s_ids)
 
     return cmad
 
 
 @check_io
 def combined_mean_absolute_deviation(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str],
+    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
 ) -> np.ndarray:
     """
     Compute the sum of the mean absolute deviations to the
@@ -192,7 +202,8 @@ def combined_mean_absolute_deviation(
 
 @check_io
 def standard_deviation_to_observation(
-        *, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
+    *, samples: np.ndarray, s0: np.ndarray, **kwargs,
+) -> np.ndarray:
     """
     Standard deviation of absolute deviations of the samples w.r.t.
     the observation s0.

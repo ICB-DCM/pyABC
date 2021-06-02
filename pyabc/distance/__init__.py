@@ -38,6 +38,7 @@ from .scale import (
     bias,
     root_mean_square_deviation,
     rmsd,
+    first_std_then_rmsd,
     median_absolute_deviation_to_observation,
     mean_absolute_deviation_to_observation,
     combined_median_absolute_deviation,

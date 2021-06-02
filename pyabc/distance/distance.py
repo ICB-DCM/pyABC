@@ -400,7 +400,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         # calculate scales
         scales = self.scale_function(
-            samples=ss, s0=s0, s_ids=self.sumstat.get_ids())
+            samples=ss, s0=s0, s_ids=self.sumstat.get_ids(), t=t)
 
         # weights are the inverse scales
         # a scale close to zero happens e.g. if all simulations are identical
