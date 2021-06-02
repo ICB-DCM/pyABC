@@ -67,34 +67,33 @@ def weighted_mean(points: np.ndarray, weights: np.ndarray):
     return (points * weights).sum(axis=0)
 
 
-@weight_checked
 def weighted_var(points, weights):
     """Compute the weighted variance.
 
     See `weighted_mean` for docs.
     """
     mean = weighted_mean(points, weights)
-    var = ((points - mean)**2 * weights).sum(axis=0)
-    return var
+    return ((points - mean)**2 * weights).sum(axis=0)
 
 
-@weight_checked
 def weighted_std(points, weights):
     """Compute the weighted standard deviation.
 
     See `weighted_mean` for docs.
     """
-    var = weighted_var(points, weights)
-    std = np.sqrt(var)
-    return std
+    return np.sqrt(weighted_var(points, weights))
 
 
-@weight_checked
 def weighted_mse(points, weights, refval):
     """Compute the weighted mean square error."""
     var = weighted_var(points, weights)
     bias = weighted_mean(points, weights) - refval
     return var + bias**2
+
+
+def weighted_rmse(points, weights, refval):
+    """Compute the weighted root mean square error."""
+    return np.sqrt(weighted_mse(points, weights, refval))
 
 
 def effective_sample_size(weights):
