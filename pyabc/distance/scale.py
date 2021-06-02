@@ -35,7 +35,7 @@ import numpy as np
 from typing import List
 import logging
 
-logger = logging.getLogger("Distance")
+logger = logging.getLogger("ABC.Distance")
 
 
 def check_io(fun):
@@ -71,7 +71,7 @@ def warn_obs_off(off_ixs: np.ndarray, s_ids: List[str]):
     s_ids: List of textual feature labels.
     """
     off_ixs = np.asarray(off_ixs, dtype=int)
-    if off_ixs:
+    if len(off_ixs) > 0:
         off_ix_ids = [s_ids[ix] for ix in off_ixs]
         logger.info(
             f"Features {off_ix_ids} (ixs={off_ixs}) have a high bias.")
