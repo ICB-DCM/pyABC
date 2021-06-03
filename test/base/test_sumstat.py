@@ -230,7 +230,7 @@ def test_pipeline(db_file):
 
     # alternative run with info weighting
     distance = pyabc.InfoWeightedPNormDistance(
-        predictor=LinearPredictor(),
+        predictor=LinearPredictor(), fit_info_ixs={1, 3},
     )
     abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
     abc.new("sqlite:///" + db_file, data)

@@ -95,7 +95,7 @@ class PredictorSumstat(Sumstat):
         self.predictor = predictor
 
         if fit_ixs is None:
-            fit_ixs = {8, 12}
+            fit_ixs = {4, 8}
         self.fit_ixs = fit_ixs
         logger.debug(f"Fit model ixs: {self.fit_ixs}")
 
