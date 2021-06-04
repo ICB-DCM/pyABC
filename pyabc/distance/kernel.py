@@ -568,6 +568,8 @@ def _diff_arr(x, x_0, keys):
     """
     diff = []
     for key in keys:
+        if type(x) != type(x_0):
+            return np.inf
         d = x[key] - x_0[key]
         try:
             diff.extend(d)

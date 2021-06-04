@@ -142,7 +142,9 @@ class ExternalHandler:
         if cmd is not None:
             try:
                 status = subprocess.run(
-                        cmd, shell=True, timeout=self.timeout, **stdout, **stderr)  # noqa: S602
+                    cmd,
+                    shell=True,  # noqa: S602
+                    timeout=self.timeout, **stdout, **stderr)  # noqa: S602
             except subprocess.TimeoutExpired:
                 return -15
 
