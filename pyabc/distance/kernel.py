@@ -570,7 +570,7 @@ def _diff_arr(x, x_0, keys):
     for key in keys:
         if type(x) != type(x_0):
             return np.inf
-        if x.size != x_0.size:
+        if len(x) != len(x_0):
             return np.inf
         d = x[key] - x_0[key]
         try:
