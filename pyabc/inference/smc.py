@@ -687,7 +687,7 @@ class ABCSMC:
             profiling_output["ML_get_eps_t"] += \
                 e_main_loop_get_eps_t - s_main_loop_get_eps_t
 
-            # create simulate function
+            # create simulate function`
             simulate_one = self._create_simulate_function(t)
 
             # population size and maximum number of evaluations
