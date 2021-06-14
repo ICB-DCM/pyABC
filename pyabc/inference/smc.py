@@ -25,6 +25,7 @@ from pyabc.util import (
     create_simulate_from_prior_function, create_prior_pdf,
     create_transition_pdf, create_simulate_function,
     termination_criteria_fulfilled, create_analysis_id, AnalysisVars)
+from time import time
 
 
 logger = logging.getLogger("ABC")
@@ -623,7 +624,10 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
+        profiling_output = {}
+
         # handle arguments
+        s_handle_args = time()
         if minimum_epsilon is None:
             if isinstance(self.eps, TemperatureBase):
                 minimum_epsilon = 1.0
@@ -659,16 +663,29 @@ class ABCSMC:
         # configure recording of rejected particles
         self.distance_function.configure_sampler(self.sampler)
         self.eps.configure_sampler(self.sampler)
-
+        e_handle_args = time()
+        profiling_output["handle_args"] = e_handle_args - s_handle_args
+        profiling_output["ML_check_term_cri"] = 0
+        profiling_output["ML_prep_new_pop"] = 0
+        profiling_output["ML_acc_rate_ess"] = 0
+        profiling_output["ML_db_save"] = 0
+        profiling_output["ML_ret_accep_pop"] = 0
+        profiling_output["ML_sampling"] = 0
+        profiling_output["ML_get_eps_t"] = 0
         # run loop over time points
         t = t0
+        s_main_loop = time()
         while True:
             # get epsilon for generation t
+            s_main_loop_get_eps_t = time()
             current_eps = self.eps(t)
             if current_eps is None or np.isnan(current_eps):
                 raise ValueError(
                     f"The epsilon threshold {current_eps} is invalid.")
             logger.info(f"t: {t}, eps: {current_eps:.8e}.")
+            e_main_loop_get_eps_t = time()
+            profiling_output["ML_get_eps_t"] += \
+                e_main_loop_get_eps_t - s_main_loop_get_eps_t
 
             # create simulate function
             simulate_one = self._create_simulate_function(t)
@@ -677,24 +694,31 @@ class ABCSMC:
             pop_size = self.population_size(t)
             max_eval = np.inf if min_acceptance_rate == 0. \
                 else pop_size / min_acceptance_rate
-
+            s_main_loop_sampling = time()
             # perform the sampling
             logger.debug(f"Submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
                 max_eval=max_eval, ana_vars=self._vars(),
             )
+            e_main_loop_sampling = time()
+            profiling_output["ML_sampling"] += \
+                e_main_loop_sampling - s_main_loop_sampling
 
             # check sample health
             if not sample.ok:
                 logger.info("Stopping: sample not ok.")
                 break
-
+            s_main_loop_ret_accep_pop = time()
             # retrieve accepted population
             population = sample.get_accepted_population()
             logger.debug(f"Population {t} done.")
+            e_main_loop_ret_accep_pop = time()
+            profiling_output["ML_ret_accep_pop"] += \
+                e_main_loop_ret_accep_pop - s_main_loop_ret_accep_pop
 
             # save to database
+            s_main_loop_db_save = time()
             n_sim = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
@@ -702,20 +726,33 @@ class ABCSMC:
             logger.debug(
                 f"Total samples up to t = {t}: "
                 f"{self.history.total_nr_simulations}.")
+            e_main_loop_db_save = time()
+            profiling_output["ML_db_save"] += \
+                e_main_loop_db_save - s_main_loop_db_save
 
             # acceptance rate and ess
+            s_main_loop_acc_rate_ess = time()
             pop_size = len(population.get_list())
             acceptance_rate = pop_size / n_sim
             ess = effective_sample_size(
                 population.get_weighted_distances()['w'])
             logger.info(f"Accepted: {pop_size} / {n_sim} = "
                         f"{acceptance_rate:.4e}, ESS: {ess:.4e}.")
+            e_main_loop_acc_rate_ess = time()
+            profiling_output["ML_acc_rate_ess"] += \
+                e_main_loop_acc_rate_ess - s_main_loop_acc_rate_ess
 
             # prepare next iteration
+            s_main_loop_prep_new_pop = time()
+
             self._prepare_next_iteration(
                 t+1, sample, population, acceptance_rate)
+            e_main_loop_prep_new_pop = time()
+            profiling_output["ML_prep_new_pop"] += \
+                e_main_loop_prep_new_pop - s_main_loop_prep_new_pop
 
             # check termination criteria
+            s_main_loop_check_term_cri = time()
             if termination_criteria_fulfilled(
                 current_eps=current_eps, min_eps=minimum_epsilon,
                 stop_if_single_model_alive=  # noqa: E251
@@ -729,13 +766,18 @@ class ABCSMC:
                 max_walltime=self.max_walltime,
                 t=t, max_t=self.max_t,
             ):
+
                 break
+            e_main_loop_check_term_cri = time()
+            profiling_output["main_loop_check_term_cri"] += \
+                e_main_loop_check_term_cri - s_main_loop_check_term_cri
 
             # increment t
             t += 1
-
+        e_main_loop = time()
+        profiling_output["main_loop"] = e_main_loop - s_main_loop
         # return used history object
-        return self.history
+        return self.history, profiling_output
 
     def _prepare_next_iteration(
             self, t: int, sample: Sample, population: Population,
