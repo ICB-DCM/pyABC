@@ -569,10 +569,11 @@ def _diff_arr(x, x_0, keys):
     diff = []
     for key in keys:
         if type(x) != type(x_0):
-            return np.inf
-        if len(x) != len(x_0):
-            return np.inf
-        d = x[key] - x_0[key]
+            d = np.full(len(x_0[key]), np.inf)
+        elif len(x) != len(x_0):
+            d = np.full(len(x_0[key]), np.inf)
+        else:
+            d = x[key] - x_0[key]
         try:
             diff.extend(d)
         except Exception:
