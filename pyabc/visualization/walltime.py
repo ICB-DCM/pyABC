@@ -40,7 +40,7 @@ def plot_total_walltime(
     colors:
         One color for each history.
     group_by_label:
-        Whether to group colors (unless explicitly provided) and legend by
+        Whether to group colors (unless explicitly provided) and legends by
         label.
     unit:
         Time unit to use ('s', 'm', 'h', 'd' as seconds, minutes, hours, days).
@@ -62,20 +62,18 @@ def plot_total_walltime(
     histories = to_lists(histories)
     labels = get_labels(labels, len(histories))
     n_run = len(histories)
+
     if group_by_label:
+        if colors is not None:
+            colors = []
+            color_ix = -1
+            for ix, label in enumerate(labels):
+                if label not in labels[:ix]:
+                    color_ix += 1
+                colors.append(f"C{color_ix}")
+
         labels = [x if x not in labels[:ix] else None
                   for ix, x in enumerate(labels)]
-        if colors is None:
-            colors = []
-            ix = 0
-            for label in labels:
-                if label is not None:
-                    colors.append(f"C{ix}")
-                    ix += 1
-                else:
-                    colors.append(None)
-    elif colors is None:
-        colors = [None] * n_run
 
     # check time unit
     if unit not in TIME_UNITS:
@@ -269,6 +267,8 @@ def plot_walltime_lowlevel(
 def plot_eps_walltime(
         histories: Union[List[History], History],
         labels: Union[List, str] = None,
+        colors: List[Any] = None,
+        group_by_label: bool = True,
         unit: str = 's',
         xscale: str = 'linear',
         yscale: str = 'log',
@@ -285,6 +285,11 @@ def plot_eps_walltime(
     labels:
         Labels corresponding to the histories. If None are provided,
         indices are used as labels.
+    colors:
+        One color for each history.
+    group_by_label:
+        Whether to group colors (unless explicitly provided) and legends by
+        label.
     unit:
         Time unit to use ('s', 'm', 'h', 'd' as seconds, minutes, hours, days).
     xscale:
@@ -314,7 +319,8 @@ def plot_eps_walltime(
         eps.append(h.get_all_populations().epsilon)
 
     return plot_eps_walltime_lowlevel(
-        end_times=end_times, eps=eps, labels=labels, unit=unit,
+        end_times=end_times, eps=eps, labels=labels,
+        colors=colors, group_by_label=group_by_label, unit=unit,
         xscale=xscale, yscale=yscale, title=title, size=size, ax=ax)
 
 
@@ -322,6 +328,8 @@ def plot_eps_walltime_lowlevel(
         end_times: List,
         eps: List,
         labels: Union[List, str] = None,
+        colors: List[Any] = None,
+        group_by_label: bool = True,
         unit: str = 's',
         xscale: str = 'linear',
         yscale: str = 'log',
@@ -339,6 +347,20 @@ def plot_eps_walltime_lowlevel(
     end_times = to_lists(end_times)
     labels = get_labels(labels, len(end_times))
     n_run = len(end_times)
+
+    if group_by_label:
+        if colors is not None:
+            colors = []
+            color_ix = -1
+            for ix, label in enumerate(labels):
+                if label not in labels[:ix]:
+                    color_ix += 1
+                colors.append(f"C{color_ix}")
+
+        labels = [x if x not in labels[:ix] else None
+                  for ix, x in enumerate(labels)]
+    if colors is None:
+        colors = [None] * n_run
 
     # check time unit
     if unit not in TIME_UNITS:
@@ -363,7 +385,7 @@ def plot_eps_walltime_lowlevel(
     # disregard calibration epsilon (inf)
     eps = [ep[1:] for ep in eps]
 
-    for wt, ep, label in zip(walltimes, eps, labels):
+    for wt, ep, label, color in zip(walltimes, eps, labels, colors):
         wt = np.asarray(wt)
         # apply time unit
         if unit == MINUTE:
@@ -373,7 +395,7 @@ def plot_eps_walltime_lowlevel(
         elif unit == DAY:
             wt /= (60 * 60 * 24)
         # plot
-        ax.plot(wt, ep, label=label, marker='o')
+        ax.plot(wt, ep, label=label, marker='o', color=color)
 
     # prettify plot
     if n_run > 1:

@@ -238,8 +238,11 @@ def test_walltime():
 
 def test_eps_walltime():
     """Test `pyabc.visualization.plot_eps_walltime`"""
-    pyabc.visualization.plot_eps_walltime(
-        histories, labels, unit='m', size=(5, 5), yscale='log')
+    for group_by_label in [True, False]:
+        pyabc.visualization.plot_eps_walltime(
+            histories, labels, unit='m', size=(5, 5), yscale='log',
+            group_by_label=group_by_label,
+        )
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_eps_walltime(histories, unit='min')
     plt.close()
