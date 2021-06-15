@@ -25,6 +25,7 @@ The following examples should help to get a better idea of how to use pyABC.
    examples/petab_yaml2sbml.ipynb
    examples/petab_application.ipynb
    examples/discrete_parameters.ipynb
+   examples/look_ahead.ipynb
 
 
 Download the examples as notebooks
@@ -47,6 +48,7 @@ Download the examples as notebooks
 * :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
 * :download:`PEtab application example <examples/petab_application.ipynb>`
 * :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
+* :download:`Look-ahead sampling <examples/look_ahead.ipynb>`
 
 
 .. warning::
