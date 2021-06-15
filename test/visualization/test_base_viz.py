@@ -217,11 +217,9 @@ def test_data_default():
 
 def test_total_walltime():
     """Test `pyabc.visualization.plot_total_walltime`"""
-    for group_by_label in [True, False]:
-        pyabc.visualization.plot_total_walltime(
-            histories, labels, rotation=45, unit='m', size=(5, 5),
-            group_by_label=group_by_label,
-        )
+    pyabc.visualization.plot_total_walltime(
+        histories, labels, rotation=45, unit='m', size=(5, 5),
+    )
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_total_walltime(histories, unit='min')
     plt.close()
