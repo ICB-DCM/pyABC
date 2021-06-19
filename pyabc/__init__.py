@@ -65,6 +65,7 @@ from .epsilon import (
     FrielPettittScheme,
     EssScheme)
 from .sampler import (
+    nr_cores_available,
     SingleCoreSampler,
     MulticoreParticleParallelSampler,
     MappingSampler,
