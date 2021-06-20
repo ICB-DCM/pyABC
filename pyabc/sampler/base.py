@@ -159,6 +159,7 @@ def wrap_sample(f):
         function_profile["eval_process"] = 0
         function_profile["eval_loop"] = 0
         function_profile["eval_join"] = 0
+        function_profile["eval_sort"] = 0
         function_profile["eval_end"] = 0
 
         sample, func_prof = f(self, n, simulate_one, t,
