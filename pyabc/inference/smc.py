@@ -513,10 +513,11 @@ class ABCSMC:
         simulate_one = self._create_simulate_from_prior_function()
 
         logger.info(f"Calibration sample t = {t}.")
-
+        _function_profile = {}
         # call sampler
-        sample = self.sampler.sample_until_n_accepted(
+        sample, _func_prof = self.sampler.sample_until_n_accepted(
             n=self.population_size(-1), simulate_one=simulate_one, t=t,
+            function_profile=_function_profile,
             max_eval=np.inf, all_accepted=self.all_accepted,
             ana_vars=self._vars())
 
@@ -625,7 +626,7 @@ class ABCSMC:
         after sampling was stopped once.
         """
         profiling_output = {}
-
+        function_profile = {}
         # handle arguments
         s_handle_args = time()
         if minimum_epsilon is None:
@@ -672,6 +673,14 @@ class ABCSMC:
         profiling_output["ML_ret_accep_pop"] = 0
         profiling_output["ML_sampling"] = 0
         profiling_output["ML_get_eps_t"] = 0
+        function_profile["eval_def"] = 0
+        function_profile["eval_warp"] = 0
+        function_profile["eval_process"] = 0
+        function_profile["eval_loop"] = 0
+        function_profile["eval_join"] = 0
+        function_profile["eval_sort"] = 0
+        function_profile["eval_end"] = 0
+
         # run loop over time points
         t = t0
         s_main_loop = time()
@@ -697,9 +706,11 @@ class ABCSMC:
             s_main_loop_sampling = time()
             # perform the sampling
             logger.debug(f"Submitting population {t}.")
-            sample = self.sampler.sample_until_n_accepted(
+            sample, function_profile = self.sampler.sample_until_n_accepted(
                 n=pop_size, simulate_one=simulate_one, t=t,
-                max_eval=max_eval, ana_vars=self._vars(),
+                function_profile=function_profile,
+                max_eval=max_eval,
+                ana_vars=self._vars(),
             )
             e_main_loop_sampling = time()
             profiling_output["ML_sampling"] += \
@@ -777,7 +788,7 @@ class ABCSMC:
         e_main_loop = time()
         profiling_output["main_loop"] = e_main_loop - s_main_loop
         # return used history object
-        return self.history, profiling_output
+        return self.history, profiling_output, function_profile
 
     def _prepare_next_iteration(
             self, t: int, sample: Sample, population: Population,

@@ -152,8 +152,17 @@ def wrap_sample(f):
     """Wrapper for Sampler.sample_until_n_accepted.
     Checks whether the sampling output is valid.
     """
-    def sample_until_n_accepted(self, n, simulate_one, t, **kwargs):
-        sample = f(self, n, simulate_one, t, **kwargs)
+    def sample_until_n_accepted(self, n,
+                                simulate_one, t, function_profile, **kwargs):
+        function_profile["eval_def"] = 0
+        function_profile["eval_warp"] = 0
+        function_profile["eval_process"] = 0
+        function_profile["eval_loop"] = 0
+        function_profile["eval_join"] = 0
+        function_profile["eval_end"] = 0
+
+        sample, func_prof = f(self, n, simulate_one, t,
+                              function_profile=function_profile, **kwargs)
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
@@ -161,7 +170,7 @@ def wrap_sample(f):
         if any(particle.preliminary for particle in sample.particles):
             raise AssertionError(
                 "There cannot be non-evaluated particles.")
-        return sample
+        return sample, func_prof
     return sample_until_n_accepted
 
 

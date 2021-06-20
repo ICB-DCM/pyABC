@@ -5,7 +5,7 @@ import numpy as np
 import random
 import cloudpickle as pickle
 from jabbar import jabbar
-
+from time import time
 from .multicorebase import get_if_worker_healthy
 
 DONE = "Done"
@@ -88,8 +88,10 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+            self, n, simulate_one, t, function_profile, *,
+            max_eval=np.inf,
+            all_accepted=False, ana_vars=None):
+        s_def = time()
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -97,14 +99,20 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         n_acc.value = 0
 
         queue = Queue()
+        e_def = time()
 
         # wrap arguments
+        s_wrap = time()
+
         if self.pickle:
             simulate_one = pickle.dumps(simulate_one)
         args = (simulate_one, queue,
                 n_eval, n_acc, n,
                 self.check_max_eval, max_eval, all_accepted,
                 self._create_empty_sample)
+        e_wrap = time()
+
+        s_process = time()
 
         processes = [Process(target=work, args=args, daemon=self.daemon)
                      for _ in range(self.n_procs)]
@@ -117,6 +125,10 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         # make sure all results are collected
         # and the queue is emptied to prevent deadlocks
         n_done = 0
+        e_process = time()
+
+        s_loop = time()
+
         with jabbar(total=n, enable=self.show_progress, keep=False) as bar:
             while n_done < len(processes):
                 val = get_if_worker_healthy(processes, queue)
@@ -125,13 +137,22 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
                 else:
                     id_results.append(val)
                     bar.inc()
+        e_loop = time()
+
+        s_join = time()
 
         for proc in processes:
             proc.join()
+        e_join = time()
 
         # avoid bias toward short running evaluations
+        s_sort = time()
+
         id_results.sort(key=lambda x: x[0])
         id_results = id_results[:min(len(id_results), n)]
+        e_sort = time()
+
+        s_end = time()
 
         self.nr_evaluations_ = n_eval.value
 
@@ -144,5 +165,14 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         if sample.n_accepted < n:
             sample.ok = False
+        e_end = time()
 
-        return sample
+        function_profile["eval_def"] += e_def - s_def
+        function_profile["eval_warp"] += e_wrap - s_wrap
+        function_profile["eval_process"] += e_process - s_process
+        function_profile["eval_loop"] += e_loop - s_loop
+        function_profile["eval_join"] += e_join - s_join
+        function_profile["eval_sort"] += s_sort - e_sort
+        function_profile["eval_end"] += s_end - e_end
+
+        return sample, function_profile
