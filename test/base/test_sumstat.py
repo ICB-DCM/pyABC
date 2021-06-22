@@ -218,7 +218,7 @@ def test_pipeline(db_file):
     prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 1))
 
     distance = pyabc.AdaptivePNormDistance(
-        sumstat=PredictorSumstat(LinearPredictor()),
+        sumstat=PredictorSumstat(LinearPredictor(), fit_ixs={1, 3}),
     )
 
     data = {"s0": np.array([0.1, 0.105]), "s1": 0.5}

@@ -14,7 +14,7 @@ from ..sumstat import (
     EventIxs,
 )
 
-from .scale import std, span
+from .scale import mad, span
 from .base import Distance, to_distance
 from .util import bound_weights, log_weights, fd_nabla1_multi_delta
 
@@ -57,7 +57,7 @@ class PNormDistance(Distance):
 
     def __init__(
         self,
-        p: float = 2,
+        p: float = 1,
         fixed_weights: Union[Dict[str, float],
                              Dict[int, Dict[str, float]]] = None,
         sumstat: Sumstat = None,
@@ -263,7 +263,6 @@ class AdaptivePNormDistance(PNormDistance):
     ----------
     p:
         p for p-norm. Required p >= 1, p = np.inf allowed (infinity-norm).
-        Default: p=2.
     initial_scale_weights:
         Scale weights to be used in the initial iteration. Dictionary with
         observables as keys and weights as values.
@@ -305,7 +304,7 @@ class AdaptivePNormDistance(PNormDistance):
 
     def __init__(
         self,
-        p: float = 2,
+        p: float = 1,
         initial_scale_weights: Dict[str, float] = None,
         fixed_weights: Dict[str, float] = None,
         fit_scale_ixs: Union[EventIxs, Collection[int], int] = np.inf,
@@ -328,7 +327,7 @@ class AdaptivePNormDistance(PNormDistance):
         logger.debug(f"Fit scale ixs: {self.fit_scale_ixs}")
 
         if scale_function is None:
-            scale_function = std
+            scale_function = mad
         self.scale_function: Callable = scale_function
 
         self.max_scale_weight_ratio: float = max_scale_weight_ratio
@@ -474,7 +473,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
     def __init__(
         self,
         predictor: Predictor,
-        p: float = 2,
+        p: float = 1,
         initial_scale_weights: Dict[str, float] = None,
         initial_info_weights: Dict[str, float] = None,
         fixed_weights: Dict[str, float] = None,
@@ -527,11 +526,14 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         """
         # call p-norm constructor
         super().__init__(
-            p=p, initial_scale_weights=initial_scale_weights,
-            fixed_weights=fixed_weights, fit_scale_ixs=fit_scale_ixs,
+            p=p,
+            initial_scale_weights=initial_scale_weights,
+            fixed_weights=fixed_weights,
+            fit_scale_ixs=fit_scale_ixs,
             scale_function=scale_function,
             max_scale_weight_ratio=max_scale_weight_ratio,
-            scale_log_file=scale_log_file, sumstat=sumstat,
+            scale_log_file=scale_log_file,
+            sumstat=sumstat,
         )
 
         self.predictor = predictor
@@ -794,7 +796,7 @@ class AggregatedDistance(Distance):
             If None is passed, a factor of 1 is considered for every summary
             statistic.
             Note that in this class, factors are superfluous as everything can
-            be achieved with weights alone, however in subclsses the factors
+            be achieved with weights alone, however in subclasses the factors
             can remain static while weights adapt over time, allowing for
             greater flexibility.
         """

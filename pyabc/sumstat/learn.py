@@ -60,9 +60,9 @@ class PredictorSumstat(Sumstat):
             The predictor mapping data (inputs) to parameters (targets). See
             :class:`Predictor` for the functionality contract.
         fit_ixs:
-            Generation indices when to (re)fit the model, e.g. `{2, 4}`.
+            Generation indices when to (re)fit the model, e.g. `{9, 15}`.
             See :class:`pyabc.EventIxs` for possible values.
-            In generations before the first fit, the output of `pre`is
+            In generations before the first fit, the output of `pre` is
             returned as-is.
         all_particles:
             Whether to base the predictors on all samples, or only accepted
