@@ -39,8 +39,9 @@ class PetabImporter(abc.ABC):
     """
 
     def __init__(
-            self,
-            petab_problem: petab.Problem):
+        self,
+        petab_problem: petab.Problem,
+    ):
         self.petab_problem = petab_problem
         self.prior_scales, self.scaled_scales = get_scales(
             self.petab_problem.parameter_df)
@@ -97,7 +98,8 @@ class PetabImporter(abc.ABC):
         """
 
     def get_nominal_parameters(
-            self, target_scale: str = 'prior') -> pyabc.Parameter:
+        self, target_scale: str = 'prior',
+    ) -> pyabc.Parameter:
         """Get nominal parameters.
 
         Parameters
@@ -122,7 +124,10 @@ class PetabImporter(abc.ABC):
         )
 
     def get_bounds(
-            self, target_scale: str = 'prior', use_prior: bool = True) -> dict:
+        self,
+        target_scale: str = 'prior',
+        use_prior: bool = True,
+    ) -> dict:
         """Get bounds.
 
         Parameters
@@ -312,10 +317,11 @@ def rescale(val: Number, origin_scale: str, target_scale: str) -> Number:
 
 
 def get_nominal_parameters(
-        parameter_df: pd.DataFrame,
-        target_scale: str,
-        prior_scales: dict,
-        scaled_scales: dict) -> pyabc.Parameter:
+    parameter_df: pd.DataFrame,
+    target_scale: str,
+    prior_scales: dict,
+    scaled_scales: dict,
+) -> pyabc.Parameter:
     """Get nominal parameters.
 
     Parameters
@@ -351,11 +357,12 @@ def get_nominal_parameters(
 
 
 def get_bounds(
-        parameter_df: pd.DataFrame,
-        target_scale: str,
-        prior_scales: dict,
-        scaled_scales: dict,
-        use_prior: bool) -> dict:
+    parameter_df: pd.DataFrame,
+    target_scale: str,
+    prior_scales: dict,
+    scaled_scales: dict,
+    use_prior: bool,
+) -> dict:
     """Get bounds.
 
     Parameters
@@ -415,8 +422,8 @@ def get_bounds(
 
 
 def map_rescale(
-        par: pyabc.Parameter,
-        origin_scales: Union[dict, str], target_scales: Union[dict, str],
+    par: pyabc.Parameter,
+    origin_scales: Union[dict, str], target_scales: Union[dict, str],
 ) -> pyabc.Parameter:
     """Rescale parameter dictionary.
 

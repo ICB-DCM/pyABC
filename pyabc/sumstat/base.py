@@ -52,7 +52,8 @@ class Sumstat(ABC):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ) -> None:
         """Initialize before the first generation.
 
@@ -67,6 +68,8 @@ class Sumstat(ABC):
             Returns on command the initial sample.
         x_0:
             The observed summary statistics.
+        total_sims:
+            The total number of simulations so far.
         """
         # record data keys
         self.x_keys: List[str] = list(x_0.keys())
@@ -74,12 +77,14 @@ class Sumstat(ABC):
         self.x_0: dict = x_0
         # initialize previous statistics
         if self.pre is not None:
-            self.pre.initialize(t=t, get_sample=get_sample, x_0=x_0)
+            self.pre.initialize(
+                t=t, get_sample=get_sample, x_0=x_0, total_sims=total_sims)
 
     def update(
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ) -> bool:
         """Update for the upcoming generation t.
 
@@ -91,6 +96,8 @@ class Sumstat(ABC):
             Time point for which to update the distance.
         get_sample:
             Returns on demand the last generation's complete sample.
+        total_sims:
+            The total number of simulations so far.
 
         Returns
         -------
@@ -101,7 +108,8 @@ class Sumstat(ABC):
             Defaults to False.
         """
         if self.pre is not None:
-            return self.pre.update(t=t, get_sample=get_sample)
+            return self.pre.update(
+                t=t, get_sample=get_sample, total_sims=total_sims)
         return False
 
     def configure_sampler(self, sampler) -> None:

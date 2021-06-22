@@ -123,6 +123,7 @@ from .sumstat import (
     Sumstat,
     IdentitySumstat,
     PredictorSumstat,
+    EventIxs,
 )
 from .weighted_statistics import (
     weighted_quantile,

@@ -8,7 +8,7 @@ import tempfile
 
 import pyabc
 from pyabc.sumstat import (
-    IdentitySumstat, PredictorSumstat, IdSubsetter, GMMSubsetter,
+    IdentitySumstat, PredictorSumstat, IdSubsetter, GMMSubsetter, EventIxs,
 )
 from pyabc.sumstat.util import dict2arr, dict2arrlabels
 from pyabc.predictor import LinearPredictor
@@ -46,7 +46,8 @@ def test_identity_sumstat(trafos):
 
     x0 = {'s0': 1., 's1': 42.}
     sumstat.initialize(
-        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0)
+        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0,
+        total_sims=0)
 
     assert not sumstat.requires_calibration()
     assert not sumstat.is_adaptive()
@@ -58,6 +59,24 @@ def test_identity_sumstat(trafos):
         assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7., 9., 49.]))\
             .all()
         assert len(sumstat.get_ids()) == 4
+
+
+def test_event_ixs():
+    """Test fit index construction."""
+    ixs = EventIxs(ts=1, total_sims=1000)
+    assert not ixs.act(t=0, total_sims=0)
+    assert ixs.act(t=1, total_sims=0)
+    assert ixs.act(t=0, total_sims=2000)
+
+    ixs = EventIxs(ts={np.inf})
+    assert ixs.act(t=0, total_sims=0)
+    assert ixs.act(t=7, total_sims=0)
+
+    ixs = EventIxs(total_sims={1000, 2000})
+    assert not ixs.act(t=0, total_sims=500)
+    assert ixs.act(t=0, total_sims=1500)
+    assert not ixs.act(t=0, total_sims=1600)
+    assert ixs.act(t=0, total_sims=2000)
 
 
 def test_pre():
@@ -72,7 +91,8 @@ def test_pre():
 
     x0 = {'s0': 1., 's1': 42.}
     sumstat.initialize(
-        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0)
+        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0,
+        total_sims=0)
 
     assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7., 9., 49.])**2)\
         .all()
@@ -109,20 +129,20 @@ def test_predictor_sumstat():
     x = particles[0].sum_stat
 
     # nothing should happen in initialize
-    sumstat.initialize(t=0, get_sample=lambda: sample, x_0=x)
+    sumstat.initialize(t=0, get_sample=lambda: sample, x_0=x, total_sims=0)
     assert sumstat(x).shape == (n_y,)
     assert (sumstat(x) == ys[0]).all()
     assert len(sumstat.get_ids()) == n_y
     assert sumstat.get_ids() == [f"s{ix}" for ix in range(n_y)]
 
     # 3 is a fit index --> afterwards the output size should have changed
-    sumstat.update(t=3, get_sample=lambda: sample)
+    sumstat.update(t=3, get_sample=lambda: sample, total_sims=0)
     assert sumstat(x).shape == (n_p,)
     assert len(sumstat.get_ids()) == n_p
 
     # change fit indices
     sumstat = PredictorSumstat(LinearPredictor(), fit_ixs={0, 1})
-    sumstat.initialize(t=0, get_sample=lambda: sample, x_0=x)
+    sumstat.initialize(t=0, get_sample=lambda: sample, x_0=x, total_sims=0)
     assert sumstat(x).shape == (n_p,)
 
 

@@ -11,11 +11,12 @@ from ..population import Sample
 from ..predictor import Predictor
 from ..sumstat import (
     Sumstat, IdentitySumstat, Subsetter, IdSubsetter, dict2arr, read_sample,
+    EventIxs,
 )
 
 from .scale import std, span
 from .base import Distance, to_distance
-from .util import bound_weights, log_weights, to_fit_ixs, fd_nabla1_multi_delta
+from .util import bound_weights, log_weights, fd_nabla1_multi_delta
 
 
 logger = logging.getLogger("ABC.Distance")
@@ -82,10 +83,16 @@ class PNormDistance(Distance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ) -> None:
         # update summary statistics
-        self.sumstat.initialize(t=t, get_sample=get_sample, x_0=x_0)
+        self.sumstat.initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # observed data
         self.x_0 = x_0
@@ -93,7 +100,8 @@ class PNormDistance(Distance):
 
         # initialize weights
         self.fixed_weights = PNormDistance.format_dict(
-            vals=self._arg_fixed_weights, t=t,
+            vals=self._arg_fixed_weights,
+            t=t,
             s_ids=self.sumstat.get_ids(),
         )
 
@@ -101,9 +109,14 @@ class PNormDistance(Distance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ) -> bool:
         # update summary statistics
-        updated = self.sumstat.update(t=t, get_sample=get_sample)
+        updated = self.sumstat.update(
+            t=t,
+            get_sample=get_sample,
+            total_sims=total_sims,
+        )
         if updated:
             self.s_0 = self.sumstat(self.x_0)
         return updated
@@ -141,7 +154,6 @@ class PNormDistance(Distance):
         ----------
         vals: Possibly unformatted weight values.
         t: Current time point.
-        s_0: Observed summary statistics, for reference.
         s_ids: Summary statistic labels for correct conversion to array.
 
         Returns
@@ -261,11 +273,9 @@ class AdaptivePNormDistance(PNormDistance):
         The discrimination of various weight types makes only sense for
         adaptive distances.
     fit_scale_ixs:
-        Generation indices before which to (re)fit the scale weights,
-        or an integer indicating the number of consecutive generations
-        `{0, ..., fit_scale_ixs - 1}`,
-        e.g. 1 means only at the beginning for calibration in `initialize`,
-        and inf means in every generation.
+        Generation indices before which to (re)fit the scale weights.
+        Inf (default) means in every generation. For other values see
+        :class:`pyabc.EventIxs`.
     scale_function:
         (data: list, x_0: float) -> scale: float. Computes the scale (i.e.
         inverse weight s = 1 / w) for a given summary statistic. Here, data
@@ -298,7 +308,7 @@ class AdaptivePNormDistance(PNormDistance):
         p: float = 2,
         initial_scale_weights: Dict[str, float] = None,
         fixed_weights: Dict[str, float] = None,
-        fit_scale_ixs: Union[Collection, int] = np.inf,
+        fit_scale_ixs: Union[EventIxs, Collection[int], int] = np.inf,
         scale_function: Callable = None,
         max_scale_weight_ratio: float = None,
         scale_log_file: str = None,
@@ -312,7 +322,9 @@ class AdaptivePNormDistance(PNormDistance):
         self.scale_weights: Dict[int, np.ndarray] = {}
 
         # extract indices when to fit scales from input
-        self.fit_scale_ixs: set = to_fit_ixs(fit_scale_ixs)
+        if fit_scale_ixs is None:
+            fit_scale_ixs = {np.inf}
+        self.fit_scale_ixs: EventIxs = EventIxs.to_instance(fit_scale_ixs)
         logger.debug(f"Fit scale ixs: {self.fit_scale_ixs}")
 
         if scale_function is None:
@@ -334,17 +346,23 @@ class AdaptivePNormDistance(PNormDistance):
             The sampler employed.
         """
         super().configure_sampler(sampler=sampler)
-        if any(ix > 0 for ix in self.fit_scale_ixs):
+        if self.fit_scale_ixs.probably_has_late_events():
             sampler.sample_factory.record_rejected()
 
     def initialize(
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ) -> None:
         # esp. initialize sumstats
-        super().initialize(t=t, get_sample=get_sample, x_0=x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # are initial weights pre-defined
         if self.initial_scale_weights is not None:
@@ -352,7 +370,7 @@ class AdaptivePNormDistance(PNormDistance):
                 self.initial_scale_weights, keys=self.sumstat.get_ids())
             return
 
-        if t not in self.fit_scale_ixs and np.inf not in self.fit_scale_ixs:
+        if not self.fit_scale_ixs.act(t=t, total_sims=total_sims):
             raise ValueError(
                 f"Initial scale weights (t={t}) must be fitted or provided.")
 
@@ -366,12 +384,17 @@ class AdaptivePNormDistance(PNormDistance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ) -> bool:
         # esp. updates summary statistics
-        updated = super().update(t=t, get_sample=get_sample)
+        updated = super().update(
+            t=t,
+            get_sample=get_sample,
+            total_sims=total_sims,
+        )
 
         # check whether weight fitting is desired
-        if t not in self.fit_scale_ixs and np.inf not in self.fit_scale_ixs:
+        if not self.fit_scale_ixs.act(t=t, total_sims=total_sims):
             if updated:
                 logger.warning(
                     f"t={t}: Updated sumstat but not scale weights.")
@@ -431,14 +454,14 @@ class AdaptivePNormDistance(PNormDistance):
         return self.sumstat.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        if any(ix > 0 for ix in self.fit_scale_ixs):
+        if self.fit_scale_ixs.probably_has_late_events():
             return True
         return self.sumstat.is_adaptive()
 
     def get_config(self) -> dict:
         config = super().get_config()
         config.update({
-            "fit_scale_ixs": list(self.fit_scale_ixs),
+            "fit_scale_ixs": self.fit_scale_ixs.__repr__(),
             "scale_function": self.scale_function.__name__,
             "max_scale_weight_ratio": self.max_scale_weight_ratio,
         })
@@ -480,6 +503,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         fit_info_ixs:
             Generations when to fit the information weights, similar to
             `fit_scale_ixs`.
+            Defaults to {9, 15}, which may not always be the smartest choice.
+            In particular consider mayking it dependent on the total number of
+            simulations.
         normalize_by_par:
             Whether to normalize total sensitivities of each parameter to 1.
         max_info_weight_ratio:
@@ -514,8 +540,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.info_weights: Dict[int, np.ndarray] = {}
 
         if fit_info_ixs is None:
-            fit_info_ixs = {4, 8}
-        self.fit_info_ixs: set = to_fit_ixs(fit_info_ixs)
+            fit_info_ixs = {9, 15}
+        self.fit_info_ixs: EventIxs = EventIxs.to_instance(fit_info_ixs)
         logger.debug(f"Fit info ixs: {self.fit_info_ixs}")
 
         self.normalize_by_par: bool = normalize_by_par
@@ -545,17 +571,23 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             The sampler employed.
         """
         super().configure_sampler(sampler=sampler)
-        if any(ix > 0 for ix in self.fit_info_ixs):
+        if self.fit_info_ixs.probably_has_late_events():
             sampler.sample_factory.record_rejected()
 
     def initialize(
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ) -> None:
         # esp. initialize sumstats, weights
-        super().initialize(t=t, get_sample=get_sample, x_0=x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # are initial weights pre-defined
         if self.initial_info_weights is not None:
@@ -563,7 +595,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
                 self.initial_info_weights, keys=self.sumstat.get_ids())
             return
 
-        if t not in self.fit_info_ixs and np.inf not in self.fit_info_ixs:
+        if not self.fit_info_ixs.act(t=t, total_sims=total_sims):
             return
 
         # execute cached function
@@ -576,12 +608,17 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ) -> bool:
         # esp. updates summary statistics, weights
-        updated = super().update(t=t, get_sample=get_sample)
+        updated = super().update(
+            t=t,
+            get_sample=get_sample,
+            total_sims=total_sims,
+        )
 
         # check whether refitting is desired
-        if t not in self.fit_info_ixs and np.inf not in self.fit_info_ixs:
+        if not self.fit_info_ixs.act(t=t, total_sims=total_sims):
             return updated
 
         # execute cached function
@@ -709,7 +746,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         return self.sumstat.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        if any(ix > 0 for ix in self.fit_info_ixs):
+        if self.fit_info_ixs.probably_has_late_events():
             return True
         return super().is_adaptive()
 
@@ -717,7 +754,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         config = super().get_config()
         config.update({
             "predictor": self.predictor.__str__(),
-            "fit_info_ixs": list(self.fit_info_ixs),
+            "fit_info_ixs": self.fit_info_ixs.__repr__(),
             "scale_function": self.scale_function.__name__,
             "max_info_weight_ratio": self.max_info_weight_ratio,
         })
@@ -765,7 +802,8 @@ class AggregatedDistance(Distance):
 
         if not isinstance(distances, list):
             distances = [distances]
-        self.distances = [to_distance(distance) for distance in distances]
+        self.distances: List[Distance] = \
+            [to_distance(distance) for distance in distances]
 
         self.weights = weights
         self.factors = factors
@@ -780,11 +818,22 @@ class AggregatedDistance(Distance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ):
-        super().initialize(t, get_sample, x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
         for distance in self.distances:
-            distance.initialize(t, get_sample, x_0)
+            distance.initialize(
+                t=t,
+                get_sample=get_sample,
+                x_0=x_0,
+                total_sims=total_sims,
+            )
         self.format_weights_and_factors(t)
 
     def configure_sampler(
@@ -803,6 +852,7 @@ class AggregatedDistance(Distance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ) -> bool:
         """
         The `sum_stats` are passed on to all distance functions, each of
@@ -810,8 +860,11 @@ class AggregatedDistance(Distance):
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.
         """
-        return any(distance.update(t, get_sample)
-                   for distance in self.distances)
+        return any(distance.update(
+            t=t,
+            get_sample=get_sample,
+            total_sims=total_sims,
+        ) for distance in self.distances)
 
     def __call__(
         self,
@@ -938,12 +991,18 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ):
         """
         Initialize weights.
         """
-        super().initialize(t, get_sample, x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
         self.x_0 = x_0
 
         if self.initial_weights is not None:
@@ -960,11 +1019,12 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ):
         """
         Update weights based on all simulations.
         """
-        super().update(t, get_sample)
+        super().update(t=t, get_sample=get_sample, total_sims=total_sims)
 
         if not self.adaptive:
             return False
@@ -1068,7 +1128,8 @@ class DistanceWithMeasureList(Distance, ABC):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ):
         if self.measures_to_use == 'all':
             self.measures_to_use = x_0.keys()
@@ -1141,9 +1202,15 @@ class PCADistance(DistanceWithMeasureList):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ):
-        super().initialize(t, get_sample, x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # execute function
         all_sum_stats = get_sample().all_sum_stats
@@ -1244,9 +1311,15 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ):
-        super().initialize(t, get_sample, x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # execute function
         all_sum_stats = get_sample().all_sum_stats

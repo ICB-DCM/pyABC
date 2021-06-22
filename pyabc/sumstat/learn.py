@@ -15,6 +15,8 @@ from ..predictor import (
     Predictor,
     SimplePredictor,
 )
+from .event_ixs import EventIxs
+
 from .util import io_dict2arr, read_sample
 from .base import Sumstat, IdentitySumstat
 from .subset import Subsetter, IdSubsetter
@@ -44,7 +46,7 @@ class PredictorSumstat(Sumstat):
     def __init__(
         self,
         predictor: Union[Predictor, Callable],
-        fit_ixs: Union[Collection, int] = None,
+        fit_ixs: Union[EventIxs, Collection[int], int] = None,
         all_particles: bool = False,
         normalize_labels: bool = True,
         fitted: bool = False,
@@ -58,12 +60,10 @@ class PredictorSumstat(Sumstat):
             The predictor mapping data (inputs) to parameters (targets). See
             :class:`Predictor` for the functionality contract.
         fit_ixs:
-            Generation indices when to (re)fit the model, e.g. `{2, 4}`. An
-            integer indicates the number of consecutive generations
-            `{0, ..., fit_ixs - 1}`, e.g. 1 means only at the beginning for
-            calibration in `initialize`, and inf means in every generation.
-            In generations before the first fit index, the output of `pre`
-            is returned as-is.
+            Generation indices when to (re)fit the model, e.g. `{2, 4}`.
+            See :class:`pyabc.EventIxs` for possible values.
+            In generations before the first fit, the output of `pre`is
+            returned as-is.
         all_particles:
             Whether to base the predictors on all samples, or only accepted
             ones. Basing it on all samples reflects the sampling process,
@@ -95,8 +95,8 @@ class PredictorSumstat(Sumstat):
         self.predictor = predictor
 
         if fit_ixs is None:
-            fit_ixs = {4, 8}
-        self.fit_ixs = fit_ixs
+            fit_ixs = {9, 15}
+        self.fit_ixs: EventIxs = EventIxs.to_instance(fit_ixs)
         logger.debug(f"Fit model ixs: {self.fit_ixs}")
 
         self.all_particles: bool = all_particles
@@ -116,9 +116,15 @@ class PredictorSumstat(Sumstat):
         self,
         t: int,
         get_sample: Callable[[], Sample],
-        x_0: dict = None,
+        x_0: dict,
+        total_sims: int,
     ) -> None:
-        super().initialize(t=t, get_sample=get_sample, x_0=x_0)
+        super().initialize(
+            t=t,
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # call cached function
         sample = get_sample()
@@ -128,7 +134,7 @@ class PredictorSumstat(Sumstat):
             list(sample.accepted_particles[0].parameter.keys())
 
         # check whether to skip fitting
-        if t not in self.fit_ixs and np.inf not in self.fit_ixs:
+        if not self.fit_ixs.act(t=t, total_sims=total_sims):
             return
 
         # extract information from sample
@@ -150,11 +156,16 @@ class PredictorSumstat(Sumstat):
         self,
         t: int,
         get_sample: Callable[[], Sample],
+        total_sims: int,
     ) -> bool:
-        updated = super().update(t=t, get_sample=get_sample)
+        updated = super().update(
+            t=t,
+            get_sample=get_sample,
+            total_sims=total_sims,
+        )
 
         # check whether to skip fitting
-        if t not in self.fit_ixs and np.inf not in self.fit_ixs:
+        if not self.fit_ixs.act(t=t, total_sims=total_sims):
             return updated
 
         # call cached function
@@ -178,17 +189,18 @@ class PredictorSumstat(Sumstat):
         return True
 
     def configure_sampler(self, sampler) -> None:
-        if self.all_particles and any(t > 0 for t in self.fit_ixs):
+        if self.all_particles and self.fit_ixs.probably_has_late_events():
             # record rejected particles as a more representative of the
             #  sampling process
             sampler.sample_factory.record_rejected()
 
     def requires_calibration(self) -> bool:
-        return 0 in self.fit_ixs or np.inf in self.fit_ixs or \
+        return self.fit_ixs.requires_calibration() or \
             self.pre.requires_calibration()
 
     def is_adaptive(self) -> bool:
-        return any(t > 0 for t in self.fit_ixs) or self.pre.is_adaptive()
+        return self.fit_ixs.probably_has_late_events() or \
+            self.pre.is_adaptive()
 
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]):
