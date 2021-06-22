@@ -19,15 +19,17 @@ class ExternalHandler:
     This is a convenience class for bundling repeated functionality.
     """
 
-    def __init__(self,
-                 executable: str, file: str = None,
-                 fixed_args: List = None,
-                 create_folder: bool = False,
-                 suffix: str = None, prefix: str = None, dir: str = None,
-                 clean_simulation: bool = True,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False):
+    def __init__(
+        self,
+        executable: str, file: str = None,
+        fixed_args: List = None,
+        create_folder: bool = False,
+        suffix: str = None, prefix: str = None, dir: str = None,
+        clean_simulation: bool = True,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+    ):
         """
         Parameters
         ----------
@@ -176,16 +178,18 @@ class ExternalModel(Model):
         by the system e.g. in the /tmp directory upon restart.
     """
 
-    def __init__(self, executable: str, file: str,
-                 fixed_args: List = None,
-                 create_folder: bool = False,
-                 suffix: str = None, prefix: str = "modelsim_",
-                 dir: str = None,
-                 clean_simulation: bool = True,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False,
-                 name: str = "ExternalModel"):
+    def __init__(
+        self, executable: str, file: str,
+        fixed_args: List = None,
+        create_folder: bool = False,
+        suffix: str = None, prefix: str = "modelsim_",
+        dir: str = None,
+        clean_simulation: bool = True,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+        name: str = "ExternalModel",
+    ):
         """
         Initialize the model.
 
@@ -205,7 +209,8 @@ class ExternalModel(Model):
             clean_simulation=clean_simulation,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
-            raise_on_error=raise_on_error)
+            raise_on_error=raise_on_error,
+        )
 
     def __call__(self, pars: Parameter):
         args = []
@@ -230,14 +235,18 @@ class ExternalSumStat:
     {loc} is the destination to write te summary statistics to.
     """
 
-    def __init__(self, executable: str, file: str,
-                 fixed_args: List = None,
-                 create_folder: bool = False,
-                 suffix: str = None, prefix: str = "sumstat_",
-                 dir: str = None,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False):
+    def __init__(
+        self,
+        executable: str,
+        file: str,
+        fixed_args: List = None,
+        create_folder: bool = False,
+        suffix: str = None, prefix: str = "sumstat_",
+        dir: str = None,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+    ):
         self.eh = ExternalHandler(
             executable=executable, file=file,
             fixed_args=fixed_args,
@@ -245,7 +254,8 @@ class ExternalSumStat:
             suffix=suffix, prefix=prefix, dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
-            raise_on_error=raise_on_error)
+            raise_on_error=raise_on_error,
+        )
 
     def __call__(self, model_output):
         """
@@ -268,13 +278,16 @@ class ExternalDistance:
     contain a single float number).
     """
 
-    def __init__(self, executable: str, file: str,
-                 fixed_args: List = None,
-                 suffix: str = None, prefix: str = "dist_",
-                 dir: str = None,
-                 show_stdout: bool = False,
-                 show_stderr: bool = True,
-                 raise_on_error: bool = False):
+    def __init__(
+        self,
+        executable: str, file: str,
+        fixed_args: List = None,
+        suffix: str = None, prefix: str = "dist_",
+        dir: str = None,
+        show_stdout: bool = False,
+        show_stderr: bool = True,
+        raise_on_error: bool = False,
+    ):
         self.eh = ExternalHandler(
             executable=executable, file=file,
             fixed_args=fixed_args,
@@ -282,7 +295,8 @@ class ExternalDistance:
             suffix=suffix, prefix=prefix, dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
-            raise_on_error=raise_on_error)
+            raise_on_error=raise_on_error,
+        )
 
     def __call__(self, sumstat_0, sumstat_1):
         # check if external script failed

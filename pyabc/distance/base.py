@@ -16,10 +16,12 @@ class Distance(ABC):
     """
 
     def initialize(
-            self,
-            t: int,
-            get_sample: Callable[[], Sample],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         """Initialize before the first generation.
 
         Called at the beginning by the inference routine, can be used for
@@ -34,6 +36,8 @@ class Distance(ABC):
             Returns on command the initial sample.
         x_0:
             The observed summary statistics.
+        total_sims:
+            The total number of simulations so far.
         """
 
     def configure_sampler(self, sampler):
@@ -51,9 +55,11 @@ class Distance(ABC):
         """
 
     def update(
-            self,
-            t: int,
-            get_sample: Callable[[], Sample]) -> bool:
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        total_sims: int,
+    ) -> bool:
         """Update for the upcoming generation t.
 
         Similar to `initialize`, however called for every subsequent iteration.
@@ -65,6 +71,8 @@ class Distance(ABC):
             Time point for which to update the distance.
         get_sample:
             Returns on demand the last generation's complete sample.
+        total_sims:
+            The total number of simulations so far.
 
         Returns
         -------
@@ -78,11 +86,12 @@ class Distance(ABC):
 
     @abstractmethod
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         """
         Evaluate at time point t the distance of the summary statistics of
         the data simulated for the tentatively sampled particle to those of
@@ -93,7 +102,6 @@ class Distance(ABC):
 
         Parameters
         ----------
-
         x: dict
             Summary statistics of the data simulated for the tentatively
             sampled parameter.
@@ -109,7 +117,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         distance: float
             Quantifies the distance between the summary statistics of the
             data simulated for the tentatively sampled particle and of the
@@ -136,7 +143,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         config: dict
             Dictionary describing the distance.
         """
@@ -148,7 +154,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         json_str: str:
             JSON encoded string describing the distance.
             The default implementation is to try to convert the dictionary
@@ -174,11 +179,13 @@ class NoDistance(Distance):
     def __init__(self):
         super().__init__()
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         raise AssertionError(
             f"Distance {self.__class__.__name__} should not be called.")
 
@@ -191,11 +198,13 @@ class AcceptAllDistance(Distance):
     Can be used for testing.
     """
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         return -1
 
 
@@ -218,11 +227,13 @@ class SimpleFunctionDistance(Distance):
         super().__init__()
         self.fun = fun
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         return self.fun(x, x_0)
 
     def get_config(self):
@@ -247,10 +258,8 @@ def to_distance(maybe_distance):
 
     Returns
     -------
-
     A Distance instance.
     """
-
     if maybe_distance is None:
         return NoDistance()
 

@@ -426,10 +426,17 @@ class ABCSMC:
 
         # initialize dist, eps, acc (order important)
         self.distance_function.initialize(
-            t, get_initial_sample, self.x_0)
+            t=t,
+            get_sample=get_initial_sample,
+            x_0=self.x_0,
+            total_sims=self.history.total_nr_simulations,
+        )
         self.acceptor.initialize(
-            t, get_initial_weighted_distances, self.distance_function,
-            self.x_0)
+            t=t,
+            get_weighted_distances=get_initial_weighted_distances,
+            distance_function=self.distance_function,
+            x_0=self.x_0,
+        )
 
         def get_initial_records():
             population = _get_initial_population_with_distances()
@@ -445,9 +452,12 @@ class ABCSMC:
             return records
 
         self.eps.initialize(
-            t, get_initial_weighted_distances, get_initial_records,
-            self.max_nr_populations,
-            self.acceptor.get_epsilon_config(t))
+            t=t,
+            get_weighted_distances=get_initial_weighted_distances,
+            get_all_records=get_initial_records,
+            max_nr_populations=self.max_nr_populations,
+            acceptor_config=self.acceptor.get_epsilon_config(t),
+        )
 
     def _get_initial_population(self, t: int) -> (List[float], List[dict]):
         """
@@ -729,8 +739,12 @@ class ABCSMC:
         return self.history
 
     def _prepare_next_iteration(
-            self, t: int, sample: Sample, population: Population,
-            acceptance_rate: float):
+        self,
+        t: int,
+        sample: Sample,
+        population: Population,
+        acceptance_rate: float,
+    ):
         """Update actors for the upcoming iteration.
 
         Be aware: The current (finished) iteration is t-1, the next t.
@@ -759,7 +773,11 @@ class ABCSMC:
             return sample
 
         # update distance
-        df_updated = self.distance_function.update(t, get_sample)
+        df_updated = self.distance_function.update(
+            t=t,
+            get_sample=get_sample,
+            total_sims=self.history.total_nr_simulations,
+        )
 
         # compute distances with the new distance measure
         def get_weighted_distances():
@@ -772,7 +790,11 @@ class ABCSMC:
 
         # update acceptor
         self.acceptor.update(
-            t, get_weighted_distances, self.eps(t-1), acceptance_rate)
+            t=t,
+            get_weighted_distances=get_weighted_distances,
+            prev_temp=self.eps(t-1),
+            acceptance_rate=acceptance_rate,
+        )
 
         def get_all_records():
             recorded_particles = sample.all_particles
@@ -800,8 +822,12 @@ class ABCSMC:
 
         # update epsilon
         self.eps.update(
-            t, get_weighted_distances, get_all_records,
-            acceptance_rate, self.acceptor.get_epsilon_config(t))
+            t=t,
+            get_weighted_distances=get_weighted_distances,
+            get_all_records=get_all_records,
+            acceptance_rate=acceptance_rate,
+            acceptor_config=self.acceptor.get_epsilon_config(t),
+        )
 
     def _adapt_population_size(self, t):
         """
@@ -826,7 +852,8 @@ class ABCSMC:
         copied_transitions = copy.deepcopy(self.transitions)
 
         # update the population size
-        self.population_size.update(copied_transitions, w, t)
+        self.population_size.update(
+            transitions=copied_transitions, model_weights=w, t=t)
 
     def _fit_transitions(self, t):
         """

@@ -35,7 +35,6 @@ from pyabc.distance import (
     median,
     SCALE_LIN,
 )
-from pyabc.distance.util import to_fit_ixs
 from pyabc.population import Particle, Sample
 from pyabc.parameters import Parameter
 from pyabc.storage import load_dict_from_json
@@ -61,7 +60,7 @@ class MockABC:
 def test_single_parameter():
     dist_f = MinMaxDistance(measures_to_use=["a"])
     abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}])
-    dist_f.initialize(0, abc.sample_from_prior)
+    dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1}, {"a": 2})
     assert 1 / 13 == d
 
@@ -69,7 +68,7 @@ def test_single_parameter():
 def test_two_parameters_but_only_one_used():
     dist_f = MinMaxDistance(measures_to_use=["a"])
     abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
-    dist_f.initialize(0, abc.sample_from_prior)
+    dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1, "b": 10}, {"a": 2, "b": 12})
     assert 1 / 13 == d
 
@@ -77,7 +76,7 @@ def test_two_parameters_but_only_one_used():
 def test_two_parameters_and_two_used():
     dist_f = MinMaxDistance(measures_to_use=["a", "b"])
     abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
-    dist_f.initialize(0, abc.sample_from_prior)
+    dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1, "b": 10}, {"a": 2, "b": 12})
     assert 1 / 13 + 2 / 2 == d
 
@@ -85,19 +84,12 @@ def test_two_parameters_and_two_used():
 def test_single_parameter_percentile():
     dist_f = PercentileDistance(measures_to_use=["a"])
     abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}])
-    dist_f.initialize(0, abc.sample_from_prior)
+    dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1}, {"a": 2})
     expected = (
         1 / (np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20))
     )
     assert expected == d
-
-
-def test_to_fit_ixs():
-    """Test fit index construction."""
-    assert to_fit_ixs(3) == {0, 1, 2}
-    assert to_fit_ixs(np.inf) == {0, np.inf}
-    assert to_fit_ixs({3, 5}) == {3, 5}
 
 
 def test_pnormdistance():
@@ -107,7 +99,7 @@ def test_pnormdistance():
 
     # first test that for PNormDistance, the weights stay constant
     dist_f = PNormDistance(p=2)
-    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
 
     # call distance function, also to initialize w
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
@@ -119,7 +111,7 @@ def test_pnormdistance():
 
     # maximum norm
     dist_f = PNormDistance(p=np.inf)
-    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
     assert d == 2
 
@@ -150,7 +142,7 @@ def test_adaptivepnormdistance():
     for scale_function in scale_functions:
         dist_f = AdaptivePNormDistance(
             scale_function=scale_function)
-        dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+        dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
         assert (dist_f.scale_weights[0] != np.ones(3)).any()
 
@@ -159,7 +151,7 @@ def test_adaptivepnormdistance():
         dist_f = AdaptivePNormDistance(
             scale_function=scale_function,
             max_scale_weight_ratio=20)
-        dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+        dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
 
         weights = dist_f.scale_weights[0]
@@ -214,8 +206,8 @@ def test_adaptivepnormdistance_initial_weights():
 
     # first test that for PNormDistance, the weights stay constant
     initial_weights = {'s1': 1, 's2': 2, 's3': 3}
-    dist_f = AdaptivePNormDistance(initial_scale_weights=initial_weights)
-    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0)
+    dist_f = AdaptivePNormDistance(p=2, initial_scale_weights=initial_weights)
+    dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
     assert (dist_f.scale_weights[0] == np.array([1, 2, 3])).all()
 
     # call distance function
@@ -224,7 +216,7 @@ def test_adaptivepnormdistance_initial_weights():
     assert expected == d
 
     # check updating works
-    dist_f.update(1, abc.sample_from_prior)
+    dist_f.update(1, abc.sample_from_prior, total_sims=0)
     assert (dist_f.scale_weights[1] != dist_f.scale_weights[0]).any()
 
 
@@ -241,7 +233,7 @@ def test_aggregateddistance():
 
     distance = AggregatedDistance(
         [distance0, distance1])
-    distance.initialize(0, abc.sample_from_prior, x_0=x_0)
+    distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
     val = distance(
         abc.sumstats[0], abc.sumstats[1], t=0)
     assert isinstance(val, float)
@@ -262,7 +254,7 @@ def test_adaptiveaggregateddistance():
     for scale_function in scale_functions:
         distance = AdaptiveAggregatedDistance(
             [distance0, distance1], scale_function=scale_function)
-        distance.initialize(0, abc.sample_from_prior, x_0=x_0)
+        distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
         assert isinstance(val, float)
         assert (distance.weights[0] != [1, 1]).any()
@@ -285,11 +277,11 @@ def test_adaptiveaggregateddistance_calibration():
         distance = AdaptiveAggregatedDistance(
             [distance0, distance1], scale_function=scale_function,
             initial_weights=initial_weights)
-        distance.initialize(0, abc.sample_from_prior, x_0=x_0)
+        distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
         assert isinstance(val, float)
         assert (distance.weights[0] == initial_weights).all()
-        distance.update(1, abc.sample_from_prior)
+        distance.update(1, abc.sample_from_prior, total_sims=0)
         assert (distance.weights[1] != distance.weights[0]).all()
 
 
@@ -299,7 +291,7 @@ def test_normalkernel():
 
     # use default cov
     kernel = NormalKernel()
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     # expected value
     logterm = 3 * np.log(2 * np.pi * 1)
@@ -310,14 +302,14 @@ def test_normalkernel():
     # define own cov
     cov = np.array([[2, 1, 0], [0, 2, 1], [0, 1, 3]])
     kernel = NormalKernel(cov=cov)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = sp.stats.multivariate_normal(cov=cov).logpdf([1, 2, 1])
     assert np.isclose(ret, expected)
 
     # define own keys, linear output
     kernel = NormalKernel(keys=['y0'], ret_scale=SCALE_LIN)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = sp.stats.multivariate_normal(cov=np.eye(2)).pdf([1, 2])
     assert np.isclose(ret, expected)
@@ -329,7 +321,7 @@ def test_independentnormalkernel():
 
     # use default var
     kernel = IndependentNormalKernel()
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1**2 + 2**2 + 4.5**2)
     sp_expected = np.log(
@@ -340,7 +332,7 @@ def test_independentnormalkernel():
 
     # define own var
     kernel = IndependentNormalKernel([1, 2, 3])
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi) + np.log(1) + np.log(2)
                        + np.log(3) + 1**2 / 1 + 2**2 / 2 + 4.5**2 / 3)
@@ -352,7 +344,7 @@ def test_independentnormalkernel():
 
     # compare to normal kernel
     normal_kernel = NormalKernel(cov=np.diag([1, 2, 3]))
-    normal_kernel.initialize(0, None, x0)
+    normal_kernel.initialize(0, None, x0, total_sims=0)
     normal_ret = normal_kernel(x, x0)
     assert np.isclose(ret, normal_ret)
 
@@ -363,7 +355,7 @@ def test_independentnormalkernel():
         return np.array([p['th0'], p['th1'], 3])
 
     kernel = IndependentNormalKernel(var)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x, total_sims=0)
     ret = kernel(x, x0, par={'th0': 1, 'th1': 2})
     assert np.isclose(ret, expected)
 
@@ -374,7 +366,7 @@ def test_independentlaplacekernel():
 
     # use default var
     kernel = IndependentLaplaceKernel()
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = - (3 * np.log(2 * 1) + 1 + 2 + 4.5)
     sp_expected = np.log(
@@ -385,7 +377,7 @@ def test_independentlaplacekernel():
 
     # define own var
     kernel = IndependentLaplaceKernel([1, 2, 3])
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = - (np.log(2 * 1) + np.log(2 * 2) + np.log(2 * 3)
                   + 1 / 1 + 2 / 2 + 4.5 / 3)
@@ -400,7 +392,7 @@ def test_independentlaplacekernel():
         return np.array([par['th0'], par['th1'], 3])
 
     kernel = IndependentLaplaceKernel(var)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0, par={'th0': 1, 'th1': 2})
     assert np.isclose(ret, expected)
 
@@ -410,7 +402,7 @@ def test_binomialkernel():
     x = {'y0': np.array([7, 7]), 'y1': 7}
 
     kernel = BinomialKernel(p=0.9)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
@@ -421,7 +413,7 @@ def test_binomialkernel():
 
     # linear output
     kernel = BinomialKernel(p=0.9, ret_scale=SCALE_LIN)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.prod(sp.stats.binom.pmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
@@ -430,7 +422,7 @@ def test_binomialkernel():
     def p(par):
         return np.array([0.9, 0.8, 0.7])
     kernel = BinomialKernel(p=p)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.binom.logpmf(
         k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
@@ -442,14 +434,14 @@ def test_poissonkernel():
     x = {'y0': np.array([7, 7]), 'y1': 7}
 
     kernel = PoissonKernel()
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.poisson.logpmf(k=[4, 5, 7], mu=[7, 7, 7]))
     assert np.isclose(ret, expected)
 
     # linear output
     kernel = PoissonKernel(ret_scale=SCALE_LIN)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.prod(sp.stats.poisson.pmf(k=[4, 5, 7], mu=[7, 7, 7]))
     assert np.isclose(ret, expected)
@@ -460,14 +452,14 @@ def test_negativebinomialkernel():
     x = {'y0': np.array([7, 7]), 'y1': 7}
 
     kernel = NegativeBinomialKernel(p=0.9)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
 
     # linear output
     kernel = NegativeBinomialKernel(p=0.9, ret_scale=SCALE_LIN)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.prod(sp.stats.nbinom.pmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
@@ -476,7 +468,7 @@ def test_negativebinomialkernel():
     def p(par):
         return np.array([0.9, 0.8, 0.7])
     kernel = NegativeBinomialKernel(p=p)
-    kernel.initialize(0, None, x0)
+    kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(sp.stats.nbinom.logpmf(
         k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
@@ -502,9 +494,9 @@ def test_store_weights():
                      AdaptiveAggregatedDistance(
                          [distance0, distance1, distance1],
                          log_file=weights_file)]:
-        distance.initialize(0, abc.sample_from_prior, x_0=x_0)
-        distance.update(1, abc.sample_from_prior)
-        distance.update(2, abc.sample_from_prior)
+        distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
+        distance.update(1, abc.sample_from_prior, total_sims=0)
+        distance.update(2, abc.sample_from_prior, total_sims=0)
 
         weights = load_dict_from_json(weights_file)
         assert set(weights.keys()) == {0, 1, 2}

@@ -40,3 +40,4 @@ from .util import (
     dict2arrlabels,
     read_sample,
 )
+from .event_ixs import EventIxs

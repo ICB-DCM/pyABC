@@ -45,10 +45,11 @@ class AmiciPetabImporter(PetabImporter):
     """
 
     def __init__(
-            self,
-            petab_problem: petab.Problem,
-            amici_model: amici.Model = None,
-            amici_solver: amici.Solver = None):
+        self,
+        petab_problem: petab.Problem,
+        amici_model: amici.Model = None,
+        amici_solver: amici.Solver = None,
+    ):
         super().__init__(petab_problem=petab_problem)
 
         if amici_model is None:
@@ -61,9 +62,9 @@ class AmiciPetabImporter(PetabImporter):
         self.amici_solver = amici_solver
 
     def create_model(
-            self,
-            return_simulations: bool = False,
-            return_rdatas: bool = False,
+        self,
+        return_simulations: bool = False,
+        return_rdatas: bool = False,
     ) -> Callable[[Union[Sequence, Mapping]], Mapping]:
         """Create model.
 

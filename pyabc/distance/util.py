@@ -1,7 +1,6 @@
 import numpy as np
 import logging
-from typing import Callable, Collection, Dict, List, Sequence, Union
-import collections.abc
+from typing import Callable, Dict, List, Sequence
 import os
 
 from ..storage import load_dict_from_json, save_dict_to_json
@@ -80,27 +79,6 @@ def log_weights(
         dct[t] = weights
         # save to file
         save_dict_to_json(dct, log_file)
-
-
-def to_fit_ixs(ixs: Union[Collection, int]) -> set:
-    """Input to collection of time indices when to fit.
-
-    Parameters
-    ----------
-    ixs: Various input formats that can be converted to indices.
-
-    Returns
-    -------
-    ixs: An actual index set.
-    """
-    # convert inf or int to range
-    if not isinstance(ixs, collections.abc.Collection):
-        if ixs == np.inf:
-            ixs = {0, np.inf}
-        else:
-            # create set {0, ..., ixs-1}, # = ixs
-            ixs = set(range(0, int(ixs)))
-    return set(ixs)
 
 
 def fd_nabla1_multi_delta(
