@@ -206,7 +206,7 @@ def test_adaptivepnormdistance_initial_weights():
 
     # first test that for PNormDistance, the weights stay constant
     initial_weights = {'s1': 1, 's2': 2, 's3': 3}
-    dist_f = AdaptivePNormDistance(initial_scale_weights=initial_weights)
+    dist_f = AdaptivePNormDistance(p=2, initial_scale_weights=initial_weights)
     dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
     assert (dist_f.scale_weights[0] == np.array([1, 2, 3])).all()
 
