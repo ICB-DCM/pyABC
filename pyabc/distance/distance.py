@@ -503,7 +503,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             Generations when to fit the information weights, similar to
             `fit_scale_ixs`.
             Defaults to {9, 15}, which may not always be the smartest choice.
-            In particular consider mayking it dependent on the total number of
+            In particular consider making it dependent on the total number of
             simulations.
         normalize_by_par:
             Whether to normalize total sensitivities of each parameter to 1.
