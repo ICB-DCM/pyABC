@@ -462,7 +462,7 @@ def test_redis_look_ahead_delayed():
         start_nr_particles=50, mean_cv=0.5, max_population_size=50)
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerLookAheadDelayWrapper(
-            log_file=fh.name)
+            log_file=fh.name, wait_for_all_samples=True)
         try:
             abc = pyabc.ABCSMC(
                 model, prior, distance, sampler=sampler,
