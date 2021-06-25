@@ -20,6 +20,9 @@ from .sample import (
     plot_lookahead_evaluations,
     plot_lookahead_final_acceptance_fractions,
     plot_lookahead_acceptance_rates)
+from .distance import (
+    plot_distance_weights,
+)
 from .epsilon import (
     plot_epsilons)
 from .histogram import (

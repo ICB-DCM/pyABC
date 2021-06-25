@@ -6,7 +6,7 @@ import matplotlib.axes
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 import pandas as pd
-from typing import List, Union
+from typing import List, Tuple, Union
 
 from ..storage import History
 from .util import to_lists, get_labels
@@ -14,29 +14,30 @@ from ..weighted_statistics import effective_sample_size
 
 
 def plot_sample_numbers(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Required samples",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List[History], History],
+    labels: Union[List[str], str] = None,
+    rotation: int = 0,
+    title: str = "Required samples",
+    size: Tuple[float, float] = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Stacked bar plot of required numbers of samples over all iterations.
 
     Parameters
     ----------
 
-    histories: Union[List, History]
+    histories:
         The histories to plot from. History ids must be set correctly.
-    labels: Union[List ,str], optional
+    labels:
         Labels corresponding to the histories. If None are provided,
         indices are used as labels.
-    rotation: int, optional (default = 0)
+    rotation:
         Rotation to apply to the plot's x tick labels. For longer labels,
         a tilting of 45 or even 90 can be preferable.
-    title: str, optional (default = "Total required samples")
+    title:
         Title for the plot.
-    size: tuple of float, optional
+    size:
         The size of the plot in inches.
     ax: matplotlib.axes.Axes, optional
         The axis object to use.
@@ -95,13 +96,14 @@ def plot_sample_numbers(
 
 
 def plot_total_sample_numbers(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Total required samples",
-        yscale: str = 'lin',
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Total required samples",
+    yscale: str = 'lin',
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Bar plot of total required sample number over all iterations, i.e.
     a single-colored bar per history, in contrast to `plot_sample_numbers`,
@@ -180,13 +182,14 @@ def plot_total_sample_numbers(
 
 
 def plot_sample_numbers_trajectory(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Required samples",
-        yscale: str = 'lin',
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Required samples",
+    yscale: str = 'lin',
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Plot of required sample number over all iterations, i.e. one trajectory
     per history.
@@ -264,14 +267,15 @@ def plot_sample_numbers_trajectory(
 
 
 def plot_acceptance_rates_trajectory(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        title: str = "Acceptance rates",
-        yscale: str = 'lin',
-        size: tuple = None,
-        ax: mpl.axes.Axes = None,
-        colors: List[str] = None,
-        normalize_by_ess: bool = False):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    title: str = "Acceptance rates",
+    yscale: str = 'lin',
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+    colors: List[str] = None,
+    normalize_by_ess: bool = False,
+):
     """
     Plot of acceptance rates over all iterations, i.e. one trajectory
     per history.
@@ -292,6 +296,8 @@ def plot_acceptance_rates_trajectory(
         The size of the plot in inches.
     ax:
         The axis object to use.
+    colors:
+        A color per history.
     normalize_by_ess: bool, optional (default = False)
         Indicator to use effective sample size for the acceptance rate in
         place of the population size.
@@ -362,14 +368,15 @@ def plot_acceptance_rates_trajectory(
 
 
 def plot_lookahead_evaluations(
-        sampler_df: Union[pd.DataFrame, str],
-        relative: bool = False,
-        fill: bool = False,
-        alpha: float = None,
-        t_min: int = 0,
-        title: str = "Total evaluations",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    sampler_df: Union[pd.DataFrame, str],
+    relative: bool = False,
+    fill: bool = False,
+    alpha: float = None,
+    t_min: int = 0,
+    title: str = "Total evaluations",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """Plot total vs look-ahead evaluations over the generations.
 
     Parameters
@@ -450,15 +457,16 @@ def plot_lookahead_evaluations(
 
 
 def plot_lookahead_final_acceptance_fractions(
-        sampler_df: Union[pd.DataFrame, str],
-        population_sizes: Union[np.ndarray, History],
-        relative: bool = False,
-        fill: bool = False,
-        alpha: float = None,
-        t_min: int = 0,
-        title: str = "Composition of final acceptances",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    sampler_df: Union[pd.DataFrame, str],
+    population_sizes: Union[np.ndarray, History],
+    relative: bool = False,
+    fill: bool = False,
+    alpha: float = None,
+    t_min: int = 0,
+    title: str = "Composition of final acceptances",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """Plot fraction of look-ahead samples in final acceptances,
     over generations.
 
@@ -558,11 +566,12 @@ def plot_lookahead_final_acceptance_fractions(
 
 
 def plot_lookahead_acceptance_rates(
-        sampler_df: Union[pd.DataFrame, str],
-        t_min: int = 0,
-        title: str = "Acceptance rates",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    sampler_df: Union[pd.DataFrame, str],
+    t_min: int = 0,
+    title: str = "Acceptance rates",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """Plot acceptance rates for look-ahead vs ordinary samples.
     The ratios are relative to all accepted particles, including eventually
     discarded ones.
