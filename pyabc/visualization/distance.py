@@ -17,6 +17,7 @@ def plot_distance_weights(
     labels: Union[List[str], str] = None,
     colors: Union[List[Any], Any] = None,
     keys_as_labels: bool = True,
+    keys: List[str] = None,
     xticklabel_rotation: float = 0,
     normalize: bool = True,
     size: Tuple[float, float] = None,
@@ -40,6 +41,8 @@ def plot_distance_weights(
         A color for each log file.
     keys_as_labels:
         Whether to use the summary statistic keys as x tick labels.
+    keys:
+        Data keys to plot.
     xticklabel_rotation:
         Angle by which to rotate x tick labels.
     normalize:
@@ -63,9 +66,6 @@ def plot_distance_weights(
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-
-    # to remember the keys order
-    keys = None
 
     # add a line per file
     for log_file, t, label, color in zip(log_files, ts, labels, colors):
