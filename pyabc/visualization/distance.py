@@ -3,6 +3,7 @@
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.axes
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 from typing import Any, List, Tuple, Union
 
@@ -83,9 +84,15 @@ def plot_distance_weights(
     # add labels
     if n_run > 1:
         ax.legend()
-    ax.set_xticks(np.arange(len(keys)))
+
+    # x axis ticks
     if keys_as_labels:
+        ax.set_xticks(np.arange(len(keys)))
         ax.set_xticklabels(keys, rotation=xticklabel_rotation)
+    else:
+        # enforce integer labels
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
     ax.set_xlabel("Summary statistic")
     ax.set_ylabel("Weight")
 

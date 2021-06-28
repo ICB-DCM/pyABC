@@ -255,4 +255,6 @@ def test_eps_walltime():
 
 def test_distance_weights():
     """Test `pyabc.visualization.plot_distance_weights`"""
-    pyabc.visualization.plot_distance_weights(log_files)
+    for keys_as_labels in [True, False]:
+        pyabc.visualization.plot_distance_weights(
+            log_files, keys_as_labels=keys_as_labels)
