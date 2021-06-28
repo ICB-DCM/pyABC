@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.axes
 import numpy as np
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from ..storage import load_dict_from_json
 
@@ -15,6 +15,7 @@ def plot_distance_weights(
     log_files: Union[List[str], str],
     ts: Union[List[int], List[str], int, str] = "last",
     labels: Union[List[str], str] = None,
+    colors: Union[List[Any], Any] = None,
     keys_as_labels: bool = True,
     xticklabel_rotation: float = 0,
     normalize: bool = True,
@@ -35,6 +36,8 @@ def plot_distance_weights(
         Time points to plot. Defaults to the last entry in each file.
     labels:
         A label for each log file.
+    colors:
+        A color for each log file.
     keys_as_labels:
         Whether to use the summary statistic keys as x tick labels.
     xticklabel_rotation:
@@ -50,8 +53,10 @@ def plot_distance_weights(
     -------
     The used axis object.
     """
-    log_files, ts = to_lists(log_files, ts)
+    log_files, ts, colors = to_lists(log_files, ts, colors)
     labels = get_labels(labels, len(log_files))
+
+    n_run = len(log_files)
 
     # create figure
     if ax is None:
@@ -59,13 +64,11 @@ def plot_distance_weights(
     else:
         fig = ax.get_figure()
 
-    n_run = len(log_files)
-
     # to remember the keys order
     keys = None
 
     # add a line per file
-    for log_file, t, label in zip(log_files, ts, labels):
+    for log_file, t, label, color in zip(log_files, ts, labels, colors):
         weights = load_dict_from_json(log_file)
         if t == "last":
             t = max(weights.keys())
@@ -75,7 +78,7 @@ def plot_distance_weights(
         weights = np.array([weights[key] for key in keys])
         if normalize:
             weights /= weights.sum()
-        ax.plot(weights, 'x-', label=label)
+        ax.plot(weights, 'x-', label=label, color=color)
 
     # add labels
     if n_run > 1:
