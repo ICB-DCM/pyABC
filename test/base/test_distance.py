@@ -41,19 +41,26 @@ from pyabc.storage import load_dict_from_json
 
 
 class MockABC:
-    def __init__(self, sumstats):
+    def __init__(self, sumstats, accepted=None):
         self.sumstats = sumstats
+        if accepted is None:
+            accepted = [True] * len(sumstats)
+        self.accepted_list = accepted
 
     def sample_from_prior(self) -> Sample:
-        sample = Sample()
-        for sumstat in self.sumstats:
-            sample.append(Particle(
-                m=0,
-                parameter=Parameter({'p1': np.random.randint(10),
-                                     'p2': np.random.randn()}),
-                weight=np.random.uniform(),
-                sum_stat=sumstat,
-                distance=np.random.uniform()))
+        sample = Sample(record_rejected=True)
+        for sumstat, accepted in zip(self.sumstats, self.accepted_list):
+            sample.append(
+                Particle(
+                    m=0,
+                    parameter=Parameter({'p1': np.random.randint(10),
+                                         'p2': np.random.randn()}),
+                    weight=np.random.uniform(),
+                    sum_stat=sumstat,
+                    distance=np.random.uniform(),
+                    accepted=accepted,
+                ),
+            )
         return sample
 
 
@@ -120,6 +127,9 @@ def test_adaptivepnormdistance():
     """
     Only tests basic running.
     """
+    # TODO it could be checked that the scale functions lead to the expected
+    #  values
+
     abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
                    {'s1': -1, 's2': 0, 's3': 1}])
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
@@ -157,6 +167,29 @@ def test_adaptivepnormdistance():
         weights = dist_f.scale_weights[0]
         assert (weights != np.ones(3)).any()
         assert np.max(weights) / np.min(weights[~np.isclose(weights, 0)]) <= 20
+
+
+def test_adaptivepnorm_all_particles():
+    """Test using rejected particles or not for weighting."""
+    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
+                   {'s1': -1, 's2': 0, 's3': 1},
+                   {'s1': -2, 's2': 0.5, 's3': 3}],
+                  accepted=[True, True, False])
+    x_0 = {'s1': 0, 's2': 0, 's3': 1}
+    x_1 = {'s1': 0.5, 's2': 0.4, 's3': -5}
+
+    # check that distance values calculated when using rejected particles
+    #  or not differ
+
+    dist_all = AdaptivePNormDistance(
+        all_particles_for_scale=True)
+    dist_all.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
+
+    dist_acc = AdaptivePNormDistance(
+        all_particles_for_scale=False)
+    dist_acc.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
+
+    assert dist_all(x_1, x_0, t=0) != dist_acc(x_1, x_0, t=0)
 
 
 def test_scales():
