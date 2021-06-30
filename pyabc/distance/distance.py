@@ -292,6 +292,9 @@ class AdaptivePNormDistance(PNormDistance):
         A log file to store scale weights for each time point in. Weights are
         currently not stored in the database. The data are saved in json
         format and can be retrieved via `pyabc.storage.load_dict_from_json`.
+    all_particles_for_scale:
+        Whether to include also rejected particles for scale calculation
+        (True) or only accepted ones (False).
     sumstat:
         Summary statistics. Defaults to an identity mapping.
 
@@ -311,6 +314,7 @@ class AdaptivePNormDistance(PNormDistance):
         scale_function: Callable = None,
         max_scale_weight_ratio: float = None,
         scale_log_file: str = None,
+        all_particles_for_scale: bool = True,
         sumstat: Sumstat = None,
     ):
         # call p-norm constructor
@@ -332,6 +336,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         self.max_scale_weight_ratio: float = max_scale_weight_ratio
         self.scale_log_file: str = scale_log_file
+        self.all_particles_for_scale: bool = all_particles_for_scale
 
     def configure_sampler(self, sampler) -> None:
         """
@@ -345,7 +350,8 @@ class AdaptivePNormDistance(PNormDistance):
             The sampler employed.
         """
         super().configure_sampler(sampler=sampler)
-        if self.fit_scale_ixs.probably_has_late_events():
+        if self.all_particles_for_scale and \
+                self.fit_scale_ixs.probably_has_late_events():
             sampler.sample_factory.record_rejected()
 
     def initialize(
@@ -413,8 +419,12 @@ class AdaptivePNormDistance(PNormDistance):
     ) -> None:
         """Here the real weight update happens."""
         # create (n_sample, n_feature) matrix of all summary statistics
+        if self.all_particles_for_scale:
+            particles = sample.all_particles
+        else:
+            particles = sample.accepted_particles
         ss = np.array(
-            [self.sumstat(p.sum_stat).flatten() for p in sample.all_particles],
+           [self.sumstat(p.sum_stat).flatten() for p in particles],
         )
 
         # observed summary statistics
@@ -463,6 +473,7 @@ class AdaptivePNormDistance(PNormDistance):
             "fit_scale_ixs": self.fit_scale_ixs.__repr__(),
             "scale_function": self.scale_function.__name__,
             "max_scale_weight_ratio": self.max_scale_weight_ratio,
+            "all_particles_for_scale": self.all_particles_for_scale,
         })
         return config
 
@@ -488,6 +499,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         sumstat: Sumstat = None,
         fd_deltas: Union[List[float], float] = None,
         subsetter: Subsetter = None,
+        all_particles_for_scale: bool = True,
         all_particles_for_prediction: bool = False,
     ):
         """
@@ -519,6 +531,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             Sample subset/cluster selection method. Defaults to just taking all
             samples. In the presence of e.g. multi-modalities it may make sense
             to reduce.
+        all_particles_for_scale:
+            Whether to use all particles for scale calculation (True) or only
+            accepted ones (False).
         all_particles_for_prediction:
             Whether to include rejected particles for fitting predictor models.
             The same arguments apply as for `PredictorSumstat.all_particles`,
@@ -533,6 +548,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             scale_function=scale_function,
             max_scale_weight_ratio=max_scale_weight_ratio,
             scale_log_file=scale_log_file,
+            all_particles_for_scale=all_particles_for_scale,
             sumstat=sumstat,
         )
 
@@ -573,7 +589,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             The sampler employed.
         """
         super().configure_sampler(sampler=sampler)
-        if self.fit_info_ixs.probably_has_late_events():
+        if self.all_particles_for_prediction and \
+                self.fit_info_ixs.probably_has_late_events():
             sampler.sample_factory.record_rejected()
 
     def initialize(
