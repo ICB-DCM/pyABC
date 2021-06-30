@@ -424,7 +424,7 @@ class AdaptivePNormDistance(PNormDistance):
         else:
             particles = sample.accepted_particles
         ss = np.array(
-           [self.sumstat(p.sum_stat).flatten() for p in particles],
+            [self.sumstat(p.sum_stat).flatten() for p in particles],
         )
 
         # observed summary statistics
