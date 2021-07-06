@@ -292,6 +292,9 @@ def plot_acceptance_rates_trajectory(
         The size of the plot in inches.
     ax:
         The axis object to use.
+    colors:
+        Colors to use for the trajectories. If None, then the matplotlib
+        default values are used.
     normalize_by_ess: bool, optional (default = False)
         Indicator to use effective sample size for the acceptance rate in
         place of the population size.
