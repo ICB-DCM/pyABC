@@ -523,10 +523,12 @@ class HiddenLayerHandle:
 
     HEURISTIC = "heuristic"
     MEAN = "mean"
+    MAX = "max"
+    METHODS = [HEURISTIC, MEAN, MAX]
 
     def __init__(
         self,
-        method: str = HEURISTIC,
+        method: str = MAX,
         n_layer: int = 1,
         max_size: int = np.inf,
         alpha: float = 2.,
@@ -541,6 +543,7 @@ class HiddenLayerHandle:
               to avoid overfitting. See
               https://stats.stackexchange.com/questions/181.
             * "mean" takes the mean of input and output dimension.
+            * "max" takes the maximum of input and output dimension.
         n_layer:
             Number of layers.
         max_size:
@@ -549,6 +552,9 @@ class HiddenLayerHandle:
             Factor used in "heuristic". The higher, the fewer neurons.
             Recommended is a value in the range 2-10.
         """
+        if method not in HiddenLayerHandle.METHODS:
+            raise ValueError(
+                f"Method {method} must be in {HiddenLayerHandle.METHODS}")
         self.method = method
         self.n_layer = n_layer
         self.max_size = max_size
@@ -575,6 +581,8 @@ class HiddenLayerHandle:
             neurons_per_layer = neurons / self.n_layer
         elif self.method == HiddenLayerHandle.MEAN:
             neurons_per_layer = 0.5 * (n_in + n_out)
+        elif self.method == HiddenLayerHandle.MAX:
+            neurons_per_layer = max(n_in, n_out)
         else:
             raise ValueError(f"Did not recognize method {self.method}.")
 

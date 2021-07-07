@@ -29,6 +29,7 @@ from pyabc.predictor import (
     "GP ard",
     "MLP heuristic",
     "MLP mean",
+    "MLP max",
     "MS",
 ])
 def s_predictor(request) -> str:
@@ -88,6 +89,9 @@ def test_fit(s_model, s_predictor):
     elif s_predictor == "MLP mean":
         predictor = MLPPredictor(
             hidden_layer_sizes=HiddenLayerHandle(method="mean"))
+    elif s_predictor == "MLP max":
+        predictor = MLPPredictor(
+            hidden_layer_sizes=HiddenLayerHandle(method="max"))
     elif s_predictor == "MS":
         predictor = ModelSelectionPredictor(
             predictors=[LinearPredictor(), MLPPredictor()])
