@@ -5,6 +5,7 @@ from typing import Callable, List, Tuple, Union
 import copy
 import logging
 from abc import ABC, abstractmethod
+from time import time
 
 try:
     import sklearn.linear_model as skl_lm
@@ -116,6 +117,8 @@ class SimplePredictor(Predictor):
         y: Targets, shape (n_sample, n_out).
         w: Weights, shape (n_sample,).
         """
+        start_time = time()
+
         # remove trivial features
         self.set_use_ixs(x=x)
         x = x[:, self.use_ixs]
@@ -151,7 +154,7 @@ class SimplePredictor(Predictor):
                 else:
                     predictor.fit(x, y_)
 
-        logger.info(f"Fitted {self}")
+        logger.info(f"Fitted {self} in {time() - start_time:.2f}s")
 
     def predict(self, x: np.ndarray, normalize: bool = False) -> np.ndarray:
         """Predict outputs using the model.
