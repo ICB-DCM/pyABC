@@ -30,7 +30,8 @@ from pyabc.predictor import (
     "MLP heuristic",
     "MLP mean",
     "MLP max",
-    "MS",
+    "MS TTS",
+    "MS CV",
 ])
 def s_predictor(request) -> str:
     return request.param
@@ -92,9 +93,16 @@ def test_fit(s_model, s_predictor):
     elif s_predictor == "MLP max":
         predictor = MLPPredictor(
             hidden_layer_sizes=HiddenLayerHandle(method="max"))
-    elif s_predictor == "MS":
+    elif s_predictor == "MS TTS":
         predictor = ModelSelectionPredictor(
-            predictors=[LinearPredictor(), MLPPredictor()])
+            predictors=[LinearPredictor(), MLPPredictor()],
+            split_method="train_test_split",
+        )
+    elif s_predictor == "MS CV":
+        predictor = ModelSelectionPredictor(
+            predictors=[LinearPredictor(), MLPPredictor()],
+            split_method="cross_validation",
+        )
     else:
         raise ValueError("Invalid argument")
 

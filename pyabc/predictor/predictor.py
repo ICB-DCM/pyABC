@@ -608,10 +608,16 @@ class ModelSelectionPredictor(Predictor):
     full data set.
     """
 
+    CROSS_VALIDATION = "cross_validation"
+    TRAIN_TEST_SPLIT = "train_test_split"
+    SPLIT_METHODS = [CROSS_VALIDATION, TRAIN_TEST_SPLIT]
+
     def __init__(
         self,
         predictors: List[Predictor],
+        split_method: str = TRAIN_TEST_SPLIT,
         n_splits: int = 5,
+        test_size: float = 0.2,
         f_score: Callable = None,
     ):
         """
@@ -619,8 +625,16 @@ class ModelSelectionPredictor(Predictor):
         ----------
         predictors:
             Set of predictors over which to perform model selection.
+        split_method:
+            Method how to split the data set into training and test data,
+            can be "cross_validation" for a full `n_splits` fold cross
+            validation, or "train_test_split" for a single separation of a
+            test set of size `test_size`.
         n_splits:
             Number of splits to use in k-fold cross validation.
+        test_size:
+            Fraction of samples to randomly pick as test set, when using a
+            single training and test set.
         f_score:
             Score function to assess prediction quality. Defaults to
             root mean square error normalized by target standard variation.
@@ -629,7 +643,16 @@ class ModelSelectionPredictor(Predictor):
         """
         super().__init__()
         self.predictors: List[Predictor] = predictors
+
+        if split_method not in ModelSelectionPredictor.SPLIT_METHODS:
+            raise ValueError(
+                f"Split method {split_method} must be in "
+                f"{ModelSelectionPredictor.SPLIT_METHODS}",
+            )
+        self.split_method: str = split_method
+
         self.n_splits: int = n_splits
+        self.test_size: float = test_size
 
         if f_score is None:
             self.f_score = root_mean_square_error
@@ -641,23 +664,33 @@ class ModelSelectionPredictor(Predictor):
         # output normalization
         std_y = np.std(y, axis=0)
 
-        # k-fold cross validation
-        kfold = skl_ms.KFold(n_splits=self.n_splits, shuffle=True)
+        n_sample = x.shape[0]
+        if self.split_method == ModelSelectionPredictor.CROSS_VALIDATION:
+            # k-fold cross validation
+            kfold = skl_ms.KFold(n_splits=self.n_splits, shuffle=True)
+            splits = kfold.split(np.arange(n_sample))
+            n_splits = self.n_splits
+        else:
+            # a single training and test set
+            splits = skl_ms.train_test_split(
+                np.arange(n_sample), test_size=self.test_size)
+            # as iterable
+            splits = [splits]
+            n_splits = 1
 
         # scores on training and test set
-        scores_test = np.empty((len(self.predictors), self.n_splits))
+        scores_test = np.empty((len(self.predictors), n_splits))
         #  for debugging
-        scores_train = np.empty((len(self.predictors), self.n_splits))
+        scores_train = np.empty((len(self.predictors), n_splits))
 
-        # iterate over cross validation sets
-        for i_split, (train_ix, test_ix) in enumerate(
-                kfold.split(np.arange(x.shape[0]))):
+        # iterate over training and test sets
+        for i_split, (train_ixs, test_ixs) in enumerate(splits):
             # training and test sets
-            x_train, y_train = x[train_ix], y[train_ix]
+            x_train, y_train = x[train_ixs], y[train_ixs]
             w_train = w
             if w is not None:
-                w_train = w[train_ix]
-            x_test, y_test = x[test_ix], y[test_ix]
+                w_train = w[train_ixs]
+            x_test, y_test = x[test_ixs], y[test_ixs]
 
             # iterate over predictors
             for i_pred, predictor in enumerate(self.predictors):
@@ -676,9 +709,9 @@ class ModelSelectionPredictor(Predictor):
                     y1=y_train_pred, y2=y_train, sigma=std_y,
                 )
 
-        # the score of a predictor is the sum over all folds
-        scores_test = np.sum(scores_test, axis=1)
-        scores_train = np.sum(scores_train, axis=1)
+        # the score of a predictor is the mean over all folds
+        scores_test = np.mean(scores_test, axis=1)
+        scores_train = np.mean(scores_train, axis=1)
 
         # logging
         for predictor, score_train, score_test in zip(
