@@ -10,6 +10,7 @@ from pyabc.distance import (
     MinMaxDistance,
     PNormDistance,
     AdaptivePNormDistance,
+    InfoWeightedPNormDistance,
     AggregatedDistance,
     AdaptiveAggregatedDistance,
     NormalKernel,
@@ -38,6 +39,10 @@ from pyabc.distance import (
 from pyabc.population import Particle, Sample
 from pyabc.parameters import Parameter
 from pyabc.storage import load_dict_from_json
+from pyabc.predictor import LinearPredictor
+from pyabc.random_variables import Distribution, RV
+from pyabc.storage import create_sqlite_db_id
+from pyabc.inference import ABCSMC
 
 
 class MockABC:
@@ -251,6 +256,31 @@ def test_adaptivepnormdistance_initial_weights():
     # check updating works
     dist_f.update(1, abc.sample_from_prior, total_sims=0)
     assert (dist_f.scale_weights[1] != dist_f.scale_weights[0]).any()
+
+
+def test_info_weighted_pnorm_distance():
+    """Just test the info weighted distance pipeline."""
+    db_file = create_sqlite_db_id()[len("sqlite:///"):]
+    try:
+        def model(p):
+            return {
+                "s0": p["p0"] + np.random.normal(),
+                "s1": p["p1"] + np.random.normal(size=2),
+            }
+        prior = Distribution(p0=RV("uniform", 0, 1), p1=RV("uniform", 0, 10))
+        data = {"s0": 0.5, "s1": np.array([5, 5])}
+
+        for feature_normalization in ["mad", "std", "weights", "none"]:
+            distance = InfoWeightedPNormDistance(
+                predictor=LinearPredictor(), fit_info_ixs={1, 3},
+                feature_normalization=feature_normalization,
+            )
+            abc = ABCSMC(model, prior, distance, population_size=100)
+            abc.new("sqlite:///" + db_file, data)
+            abc.run(max_nr_populations=3)
+    finally:
+        if os.path.exists(db_file):
+            os.remove(db_file)
 
 
 def test_aggregateddistance():

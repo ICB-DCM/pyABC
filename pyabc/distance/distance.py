@@ -481,6 +481,12 @@ class AdaptivePNormDistance(PNormDistance):
 class InfoWeightedPNormDistance(AdaptivePNormDistance):
     """Weight summary statistics by sensitivity of a predictor `y -> theta`."""
 
+    WEIGHTS = "weights"
+    STD = "std"
+    MAD = "mad"
+    NONE = "none"
+    FEATURE_NORMALIZATIONS = [WEIGHTS, STD, MAD, NONE]
+
     def __init__(
         self,
         predictor: Predictor,
@@ -501,6 +507,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         subsetter: Subsetter = None,
         all_particles_for_scale: bool = True,
         all_particles_for_prediction: bool = False,
+        feature_normalization: str = STD,
     ):
         """
         Parameters
@@ -527,7 +534,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         fd_deltas:
             Finite difference step sizes. Can be a float, or a List of floats,
             in which case component-wise step size selection is employed.
-         subsetter:
+        subsetter:
             Sample subset/cluster selection method. Defaults to just taking all
             samples. In the presence of e.g. multi-modalities it may make sense
             to reduce.
@@ -538,6 +545,16 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             Whether to include rejected particles for fitting predictor models.
             The same arguments apply as for `PredictorSumstat.all_particles`,
             i.e. not using all may yield a better local approximation.
+        feature_normalization:
+            What normalization to apply to the parameters before predictor
+            model fitting. Can be any of "std" (standard deviation), "mad"
+            (median absolute deviation), "weights" (use the inverse scale
+            weights), or "none" (no normalization). It is recommended to
+            match this with the `scale_function`, e.g. std or mad. Allowing
+            to specify different normalizations (and not "weights") allows
+            to e.g. employ outlier down-weighting in the scale function,
+            and just normalize differently here, in order to not counteract
+            that.
         """
         # call p-norm constructor
         super().__init__(
@@ -575,6 +592,14 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.subsetter: Subsetter = subsetter
 
         self.all_particles_for_prediction: bool = all_particles_for_prediction
+
+        if feature_normalization not in \
+                InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS:
+            raise ValueError(
+                f"Feature normalization {feature_normalization} must be in "
+                f"{InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
+            )
+        self.feature_normalization: str = feature_normalization
 
     def configure_sampler(self, sampler) -> None:
         """
@@ -670,17 +695,43 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         sumstats, parameters, weights = self.subsetter.select(
             x=sumstats, y=parameters, w=weights,
         )
+
+        # define features
+        x = sumstats
+
+        # define feature scaling
+        if self.feature_normalization == InfoWeightedPNormDistance.WEIGHTS:
+            weights = self.scale_weights[t]
+            offset_x = np.zeros_like(weights)
+            scale_x = np.zeros_like(weights)
+            use_ixs = ~np.isclose(weights, 0.)
+            scale_x[use_ixs] = 1. / weights[use_ixs]
+        elif self.feature_normalization == InfoWeightedPNormDistance.STD:
+            # std
+            offset_x = np.nanmean(x, axis=0)
+            scale_x = np.nanstd(x, axis=0)
+        elif self.feature_normalization == InfoWeightedPNormDistance.MAD:
+            offset_x = np.nanmedian(x, axis=0)
+            scale_x = np.nanmedian(np.abs(x - offset_x), axis=0)
+        elif self.feature_normalization == InfoWeightedPNormDistance.NONE:
+            offset_x = np.zeros(shape=x.shape[1])
+            scale_x = np.ones(shape=x.shape[1])
+        else:
+            raise ValueError(
+                f"Feature normalization {self.feature_normalization} must be "
+                f"in {InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
+            )
+
         # remove trivial features
-        use_ixs = np.any(sumstats != sumstats[0], axis=0)
-        x = sumstats[:, use_ixs]
+        use_ixs = ~np.isclose(scale_x, 0.)
+        x, offset_x, scale_x = \
+            x[:, use_ixs], offset_x[use_ixs], scale_x[use_ixs]
 
         # normalize features
-        mean_x = np.mean(x, axis=0)
-        std_x = np.std(x, axis=0)
-        x = (x - mean_x) / std_x
+        x = (x - offset_x) / scale_x
 
         # normalize observed features
-        x0 = (s_0[use_ixs] - mean_x) / std_x
+        x0 = (s_0[use_ixs] - offset_x) / scale_x
 
         # normalize labels
         y = parameters
@@ -692,9 +743,13 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.predictor.fit(x=x, y=y, w=weights)
 
         # calculate all sensitivities of the predictor
-        def fun(x):
-            return self.predictor.predict(x.reshape(1, -1)).flatten()
-        # shape (n_x, n_y)
+
+        def fun(_x):
+            """Predictor function."""
+            return self.predictor.predict(_x.reshape(1, -1)).flatten()
+
+        # calculate sensitivities
+        #  shape (n_x, n_y)
         sensis = fd_nabla1_multi_delta(
             x=x0, fun=fun, test_deltas=self.fd_deltas)
         n_x = x.shape[1]
@@ -709,7 +764,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         sensi_per_y = np.sum(sensis, axis=0)
 
         # identify parameters that have mostly zero gradients throughout
-        y_has_sensi = ~np.isclose(sensi_per_y, 0)
+        y_has_sensi = ~np.isclose(sensi_per_y, 0.)
         # set values of near-zero contribution to zero
         sensis[:, ~y_has_sensi] = 0
         # log
