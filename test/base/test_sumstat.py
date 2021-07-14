@@ -63,20 +63,28 @@ def test_identity_sumstat(trafos):
 
 def test_event_ixs():
     """Test fit index construction."""
-    ixs = EventIxs(ts=1, total_sims=1000)
+    ixs = EventIxs(ts=1, sims=10)
     assert not ixs.act(t=0, total_sims=0)
     assert ixs.act(t=1, total_sims=0)
-    assert ixs.act(t=0, total_sims=2000)
+    assert ixs.act(t=0, total_sims=20)
 
     ixs = EventIxs(ts={np.inf})
     assert ixs.act(t=0, total_sims=0)
     assert ixs.act(t=7, total_sims=0)
 
-    ixs = EventIxs(total_sims={1000, 2000})
-    assert not ixs.act(t=0, total_sims=500)
-    assert ixs.act(t=0, total_sims=1500)
-    assert not ixs.act(t=0, total_sims=1600)
-    assert ixs.act(t=0, total_sims=2000)
+    ixs = EventIxs(sims={10, 20})
+    assert not ixs.act(t=0, total_sims=5)
+    assert ixs.act(t=0, total_sims=15)
+    assert not ixs.act(t=0, total_sims=16)
+    assert ixs.act(t=0, total_sims=20)
+
+    ixs = EventIxs(from_t=5)
+    assert not ixs.act(t=4, total_sims=50) and ixs.act(t=5, total_sims=50) \
+        and ixs.act(t=20, total_sims=50)
+
+    ixs = EventIxs(from_sims=10)
+    assert not ixs.act(t=4, total_sims=9) and ixs.act(t=4, total_sims=10) \
+        and ixs.act(t=4, total_sims=20)
 
 
 def test_pre():

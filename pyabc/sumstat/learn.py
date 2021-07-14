@@ -52,6 +52,7 @@ class PredictorSumstat(Sumstat):
         fitted: bool = False,
         subsetter: Subsetter = None,
         pre: Sumstat = None,
+        pre_before_fit: bool = False,
     ):
         """
         Parameters
@@ -85,6 +86,10 @@ class PredictorSumstat(Sumstat):
         pre:
             Previously applied summary statistics, enables chaining. Should
             usually not be adaptive.
+        pre_before_fit:
+            Apply previous summary statistics also before any fit is performed,
+            or just return the input then and only apply pre when
+            regression-based summary statistics are calculated.
         """
         if pre is None:
             pre = IdentitySumstat()
@@ -111,6 +116,8 @@ class PredictorSumstat(Sumstat):
         if subsetter is None:
             subsetter = IdSubsetter()
         self.subsetter: Subsetter = subsetter
+
+        self.pre_before_fit: bool = pre_before_fit
 
     def initialize(
         self,
@@ -204,9 +211,13 @@ class PredictorSumstat(Sumstat):
 
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]):
+        # check whether to return data directly
+        if not self.fitted and not self.pre_before_fit:
+            return data
+
         data = self.pre(data)
 
-        # check whether to return data directly
+        # check whether to return pre-sumstat data directly
         if not self.fitted:
             return data
 

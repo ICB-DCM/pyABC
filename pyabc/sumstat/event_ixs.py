@@ -12,7 +12,9 @@ class EventIxs:
     def __init__(
         self,
         ts: Union[Collection[int], int] = None,
-        total_sims: Union[Collection[int], int] = None,
+        sims: Union[Collection[int], int] = None,
+        from_t: int = None,
+        from_sims: int = None,
     ):
         """
         Parameters
@@ -21,10 +23,15 @@ class EventIxs:
             Time points at which something should happen. This can be either
             a collection of time points, or a single time point. A value of
             inf is interpreted as all time points.
-        total_sims:
+        sims:
             Numbers of total simulations after which something should happen.
             This can be either a collection of total simulation numbers, or
             a single total simulation number.
+        from_t:
+            Always do something starting with generation `from_t`.
+        from_sims:
+            Always do something as soon as `from_sims` simulations have been
+            hit.
         """
         if ts is None:
             ts = []
@@ -38,20 +45,23 @@ class EventIxs:
                     f"Index {ix} must be either inf or an int")
         self.ts: Collection[int] = set(ts)
 
-        if total_sims is None:
-            total_sims = []
+        if sims is None:
+            sims = []
         # convert single values to collection
-        if not isinstance(total_sims, collections.abc.Collection):
-            total_sims: Collection[int] = {total_sims}
+        if not isinstance(sims, collections.abc.Collection):
+            sims: Collection[int] = {sims}
         # check conversion to index
-        for total_sim in total_sims:
-            if int(total_sim) != total_sim:
+        for sim in sims:
+            if int(sim) != sim:
                 raise AssertionError(
-                    f"Simulation number {total_sims} must be an int")
-        self.total_sims: List[int] = list(total_sims)
+                    f"Simulation number {sim} must be an int")
+        self.sims: List[int] = list(sims)
 
         # track which simulation numbers have been hit
-        self.total_sims_hit: List[bool] = [False] * len(self.total_sims)
+        self.sims_hit: List[bool] = [False] * len(self.sims)
+
+        self.from_t: int = from_t
+        self.from_sims: int = from_sims
 
     def act(
         self,
@@ -80,14 +90,22 @@ class EventIxs:
             act = True
 
         # check simulations
-        for i_total_sim, (total_sim, hit) in enumerate(
-                zip(self.total_sims, self.total_sims_hit)):
+        for i_check_sims, (check_sims, hit) in enumerate(
+                zip(self.sims, self.sims_hit)):
             if hit:
                 continue
-            if total_sims >= total_sim:
+            if total_sims >= check_sims:
                 act = True
                 # record criterion to have been hit
-                self.total_sims_hit[i_total_sim] = True
+                self.sims_hit[i_check_sims] = True
+
+        # check initial time point
+        if self.from_t is not None and t >= self.from_t:
+            act = True
+
+        # check initial number of simulations
+        if self.from_sims is not None and total_sims >= self.from_sims:
+            act = True
 
         return act
 
@@ -101,22 +119,36 @@ class EventIxs:
         -------
         True if indices > 0 are likely to evaluate to True, False otherwise.
         """
-        return any(t > 0 for t in self.ts) or len(self.total_sims) > 0
+        return (
+            any(t > 0 for t in self.ts) or len(self.sims) > 0
+            or self.from_t is not None or self.from_sims is not None
+        )
 
     def requires_calibration(self) -> bool:
-        """Whether at time 0 an event is likely to happend.
+        """Whether at time 0 an event is likely to happen.
 
         Returns
         -------
         Whether there will be a time-point event at time 0 (total simulations
         should typically noly occur later).
         """
-        return 0 in self.ts or np.inf in self.ts
+        return (
+            0 in self.ts or np.inf in self.ts
+            or (self.from_t is not None and self.from_t == 0)
+        )
 
     def __repr__(self) -> str:
-        return \
-            f"<{self.__class__.__name__} ts={self.ts}, " \
-            f"total_sims={self.total_sims}>"
+        repr = f"<{self.__class__.__name__}"
+        if self.ts:
+            repr += f", ts={self.ts}"
+        if self.sims:
+            repr += f", sims={self.sims}"
+        if self.from_t is not None:
+            repr += f", from_t={self.from_t}"
+        if self.from_sims is not None:
+            repr += f", from_sims={self.from_sims}"
+        repr += ">"
+        return repr
 
     @staticmethod
     def to_instance(
