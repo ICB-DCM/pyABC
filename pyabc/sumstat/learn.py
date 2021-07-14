@@ -17,7 +17,7 @@ from ..predictor import (
 )
 from .event_ixs import EventIxs
 
-from .util import io_dict2arr, read_sample
+from .util import io_dict2arr, read_sample, dict2arrlabels
 from .base import Sumstat, IdentitySumstat
 from .subset import Subsetter, IdSubsetter
 
@@ -238,4 +238,6 @@ class PredictorSumstat(Sumstat):
         # label by parameter keys
         if self.fitted:
             return [f"s_{par_key}" for par_key in self.par_keys]
+        if not self.pre_before_fit:
+            return dict2arrlabels(self.x_0, keys=self.x_keys)
         return self.pre.get_ids()
