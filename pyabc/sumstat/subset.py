@@ -81,6 +81,9 @@ class GMMSubsetter(Subsetter):
     min_fraction:
         Minimum fraction of samples in the result. If the obtained cluster has
         less samples, it is augmented by nearby samples.
+    normalize_labels:
+        Whether to z-score normalize labels internally prior to cluster
+        analysis.
     gmm_args:
         Keyword arguments that are passed on to the sklearn `GaussianMixture`,
         see
@@ -98,6 +101,7 @@ class GMMSubsetter(Subsetter):
         n_components_min: int = 1,
         n_components_max: int = 5,
         min_fraction: float = 0.3,
+        normalize_labels: bool = True,
         gmm_args: dict = None,
     ):
         if skl_mx is None:
@@ -108,6 +112,7 @@ class GMMSubsetter(Subsetter):
         self.n_components_min: int = n_components_min
         self.n_components_max: int = n_components_max
         self.min_fraction: float = min_fraction
+        self.normalize_labels: bool = normalize_labels
 
         if gmm_args is None:
             gmm_args = {}
@@ -127,24 +132,34 @@ class GMMSubsetter(Subsetter):
         w: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Select based on GMM clusters."""
+        # normalize
+        if self.normalize_labels:
+            y_norm = (y - np.mean(y, axis=0)) / np.std(y, axis=0)
+        else:
+            y_norm = y
+
         # find most suitable number of clusters
-        gmm, n_components, bics = self._find_optimal_model(y=y)
+        gmm, n_components, bics = self._find_optimal_model(y=y_norm)
         self.gmm = gmm
         self.n_components = n_components
         self.bics = bics
 
         # identify cluster of posterior mean
-        mean: np.ndarray = weighted_mean(y, w / w.sum()).reshape(1, -1)
+        mean: np.ndarray = weighted_mean(y_norm, w / w.sum()).reshape(1, -1)
         cluster_id: np.ndarray = gmm.predict(mean)
 
         # find cluster associations of data points
-        cluster_ids: np.ndarray = gmm.predict(y)
+        cluster_ids: np.ndarray = gmm.predict(y_norm)
         in_cluster: np.ndarray = cluster_ids == cluster_id
 
-        x_new, y_new, w_new = get_augmented_subset(
-            x=x, y=y, w=w, ref=mean, in_cluster=in_cluster,
+        # augment subset
+        selected = get_augmented_subset(
+            y=y_norm, ref=mean, in_cluster=in_cluster,
             min_fraction=self.min_fraction,
         )
+
+        # reduce sample set
+        x_new, y_new, w_new = x[selected], y[selected], w[selected]
 
         logger.info(
             f"Subsetting: #clusters: {n_components}, "
@@ -189,43 +204,46 @@ class GMMSubsetter(Subsetter):
 
 
 def get_augmented_subset(
-    x: np.ndarray, y: np.ndarray, w: np.ndarray, ref: np.ndarray,
-    in_cluster: np.ndarray, min_fraction: float,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    y: np.ndarray,
+    ref: np.ndarray,
+    in_cluster: np.ndarray,
+    min_fraction: float,
+) -> np.ndarray:
     """Select indices from clustering and potential augment to match minimum.
 
     Parameters
     ----------
-    x, y, w: The original x, y, w.
+    y: The original y.
     ref: Reference value (e.g. posterior mean).
     in_cluster: Boolean indicators whether an entry is in the cluster.
     min_fraction: Minimum required fraction of particles, in [0, 1].
 
     Returns
     -------
-    x_new, y_new, w_new: The subset entries.
+    in_cluster:
+        Boolean indicators whether an entry is in the augmented cluster.
     """
-    x_new, y_new, w_new = x[in_cluster], y[in_cluster], w[in_cluster]
+    # copy as we modify
+    in_cluster = in_cluster.copy()
 
+    # calculate how many are required
     desired: int = int(min_fraction * len(y))
     ixs_in_cluster: np.ndarray = np.flatnonzero(in_cluster)
     required: int = desired - len(ixs_in_cluster)
 
     if required <= 0:
-        return x_new, y_new, w_new
+        return in_cluster
 
     # sort remaining values by distance to reference point
-    x_left, y_left, w_left = x[~in_cluster], y[~in_cluster], w[~in_cluster]
+    y_left = y[~in_cluster]
     distances: np.ndarray = np.linalg.norm(y_left - ref, ord=2, axis=1)
     # indices of the required closest parameters
     ixs_nearest: np.ndarray = np.argpartition(distances, required)[:required]
 
-    # select both clustering and smallest distance entries
-    x_new = np.row_stack((x_new, x_left[ixs_nearest]))
-    y_new = np.row_stack((y_new, y_left[ixs_nearest]))
-    w_new = np.row_stack((w_new, w_left[ixs_nearest]))
+    ixs_not_in_cluster: np.ndarray = np.flatnonzero(~in_cluster)
+    in_cluster[ixs_not_in_cluster[ixs_nearest]] = True
 
-    if any(len(val) != desired for val in [x_new, y_new, w_new]):
+    if sum(in_cluster) != desired:
         raise AssertionError("Unexpected number of entries.")
 
-    return x_new, y_new, w_new
+    return in_cluster
