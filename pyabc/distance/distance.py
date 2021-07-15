@@ -507,7 +507,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         subsetter: Subsetter = None,
         all_particles_for_scale: bool = True,
         all_particles_for_prediction: bool = False,
-        feature_normalization: str = STD,
+        feature_normalization: str = WEIGHTS,
     ):
         """
         Parameters
