@@ -18,6 +18,7 @@ def plot_data_callback(
         f_plot: Callable = None,
         f_plot_aggregated: Callable = None,
         t: int = None,
+        n_sample: int = None,
         ax: matplotlib.axes.Axes = None,
         **kwargs):
     """
@@ -26,17 +27,19 @@ def plot_data_callback(
 
     Parameters
     ----------
-    history: History
+    history:
         The history object to use.
-    f_plot: Callable, optional
+    f_plot:
         Function to plot a single summary statistic. Takes the parameters
         ``(sum_stat, weight, ax, **kwargs)``.
-    f_plot_aggregated: Callable
+    f_plot_aggregated:
         Function to plot aggregated values on summary statistics. Takes
         the parameters ``(sum_stats, weights, ax, **kwargs)``.
-    t: int, optional
+    t:
         Time point to extract data from the history for.
-    ax: maplotlib.axes.Axes
+    n_sample:
+        Number of samples to plot. Defaults to all.
+    ax:
         Axis object for the plot. This object is not touched directly and
         can thus be also e.g. a list of axis objects.
 
@@ -47,6 +50,8 @@ def plot_data_callback(
     ax: Axis of the generated plot.
     """
     weights, sum_stats = history.get_weighted_sum_stats(t=t)
+    if n_sample is not None:
+        weights, sum_stats = weights[:n_sample], sum_stats[:n_sample]
     return plot_data_callback_lowlevel(
         sum_stats, weights, f_plot, f_plot_aggregated, ax, **kwargs)
 
