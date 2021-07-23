@@ -50,18 +50,26 @@ def plot_data_callback(
     ax: Axis of the generated plot.
     """
     weights, sum_stats = history.get_weighted_sum_stats(t=t)
-    if n_sample is not None:
-        weights, sum_stats = weights[:n_sample], sum_stats[:n_sample]
     return plot_data_callback_lowlevel(
-        sum_stats, weights, f_plot, f_plot_aggregated, ax, **kwargs)
+        sum_stats=sum_stats,
+        weights=weights,
+        f_plot=f_plot,
+        f_plot_aggregated=f_plot_aggregated,
+        n_sample=n_sample,
+        ax=ax,
+        **kwargs,
+    )
 
 
 def plot_data_callback_lowlevel(
-        sum_stats: List,
-        weights: List,
-        f_plot: Callable,
-        f_plot_aggregated: Callable = None,
-        ax=None, **kwargs):
+    sum_stats: List,
+    weights: List,
+    f_plot: Callable,
+    f_plot_aggregated: Callable = None,
+    n_sample: int = None,
+    ax=None,
+    **kwargs,
+):
     """
     Lowlevel interface for plot_data_callback (see there for the remaining
     parameters).
@@ -78,7 +86,10 @@ def plot_data_callback_lowlevel(
         _, ax = plt.subplots()
 
     if f_plot is not None:
-        for sum_stat, weight in zip(sum_stats, weights):
+        if n_sample is None:
+            n_sample = len(weights)
+        _sum_stats, _weights = sum_stats[:n_sample], weights[:n_sample]
+        for sum_stat, weight in zip(_sum_stats, _weights):
             f_plot(sum_stat, weight, ax, **kwargs)
 
     if f_plot_aggregated is not None:
