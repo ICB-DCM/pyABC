@@ -302,7 +302,11 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         for _t in range(-1, t+1):
             n_worker_b = self.redis.get(idfy(N_WORKER, ana_id, _t))
             if n_worker_b is not None and int(n_worker_b.decode()) == 0:
-                self.clear_generation_t(t=_t)
+                # TODO For fast-running models, communication does not
+                #  always work.
+                # Until that is fixed, simply do not clear up.
+                if self.wait_for_all_samples:
+                    self.clear_generation_t(t=_t)
 
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
