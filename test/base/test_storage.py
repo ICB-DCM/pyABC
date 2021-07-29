@@ -5,6 +5,7 @@ import pandas as pd
 import datetime
 import tempfile
 import pickle
+import pyarrow
 from rpy2.robjects import r
 from rpy2.robjects import pandas2ri
 from rpy2.robjects.conversion import localconverter
@@ -511,5 +512,5 @@ def test_dataframe_formats():
         df_from_bytes_csv(df_parquet)
 
     # will interpret as mspack, but late pandas version dropped that method
-    with pytest.raises(AttributeError):
+    with pytest.raises(pyarrow.lib.ArrowInvalid):
         df_from_bytes_parquet(df_csv)
