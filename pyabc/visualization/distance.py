@@ -23,6 +23,7 @@ def plot_distance_weights(
     normalize: bool = True,
     size: Tuple[float, float] = None,
     ax: mpl.axes.Axes = None,
+    **kwargs,
 ) -> mpl.axes.Axes:
     """Plot distance weights, one curve per argument.
 
@@ -52,6 +53,9 @@ def plot_distance_weights(
         Figure size in inches, (width, height).
     ax:
         Axis object to use.
+    **kwargs:
+        Additional keyword arguments are passed on to `plt.plot()`
+        when plotting lines.
 
     Returns
     -------
@@ -59,6 +63,12 @@ def plot_distance_weights(
     """
     log_files, ts, colors = to_lists(log_files, ts, colors)
     labels = get_labels(labels, len(log_files))
+
+    # default keyword arguments
+    if "marker" not in kwargs:
+        kwargs["marker"] = "x"
+    if "linestyle" not in kwargs:
+        kwargs["linestyle"] = "-"
 
     n_run = len(log_files)
 
@@ -79,7 +89,7 @@ def plot_distance_weights(
         weights = np.array([weights[key] for key in keys])
         if normalize:
             weights /= weights.sum()
-        ax.plot(weights, 'x-', label=label, color=color)
+        ax.plot(weights, label=label, color=color, **kwargs)
 
     # add labels
     if n_run > 1:
