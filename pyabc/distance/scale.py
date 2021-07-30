@@ -227,6 +227,9 @@ def mad_or_cmad(
     return cmad
 
 
+pcmad = mad_or_cmad
+
+
 @check_io
 def combined_mean_absolute_deviation(
     *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,

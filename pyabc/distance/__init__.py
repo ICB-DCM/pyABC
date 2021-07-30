@@ -43,6 +43,7 @@ from .scale import (
     median_absolute_deviation_to_observation,
     mado,
     mad_or_cmad,
+    pcmad,
     mean_absolute_deviation_to_observation,
     combined_median_absolute_deviation,
     cmad,
