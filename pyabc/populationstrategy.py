@@ -34,12 +34,15 @@ class PopulationStrategy(ABC):
         Number of calibration particles.
     """
 
-    def __init__(self,
-                 nr_calibration_particles: int = None):
+    def __init__(self, nr_calibration_particles: int = None):
         self.nr_calibration_particles = nr_calibration_particles
 
-    def update(self, transitions: List[Transition],
-               model_weights: np.ndarray, t: int = None):
+    def update(
+        self,
+        transitions: List[Transition],
+        model_weights: np.ndarray,
+        t: int = None,
+    ):
         """
         Select the population size for the next population.
 
@@ -66,8 +69,10 @@ class PopulationStrategy(ABC):
         config:
             Configuration of the class as dictionary
         """
-        return {"name": self.__class__.__name__,
-                "nr_calibration_particles": self.nr_calibration_particles}
+        return {
+            "name": self.__class__.__name__,
+            "nr_calibration_particles": self.nr_calibration_particles,
+        }
 
     def to_json(self) -> str:
         """
@@ -95,9 +100,11 @@ class ConstantPopulationSize(PopulationStrategy):
         Number of calibration particles.
     """
 
-    def __init__(self,
-                 nr_particles: int,
-                 nr_calibration_particles: int = None):
+    def __init__(
+        self,
+        nr_particles: int,
+        nr_calibration_particles: int = None,
+    ):
         super().__init__(
             nr_calibration_particles=nr_calibration_particles)
         self.nr_particles = nr_particles
@@ -161,7 +168,8 @@ class AdaptivePopulationSize(PopulationStrategy):
                  n_bootstrap: int = 10,
                  nr_calibration_particles: int = None):
         super().__init__(
-            nr_calibration_particles=nr_calibration_particles)
+            nr_calibration_particles=nr_calibration_particles,
+        )
         self.start_nr_particles = start_nr_particles
         self.max_population_size = max_population_size
         self.min_population_size = min_population_size
@@ -189,9 +197,10 @@ class AdaptivePopulationSize(PopulationStrategy):
         target_cv = self.mean_cv
         cv_estimate = predict_population_size(
             reference_nr_part, target_cv,
-            lambda nr_particles: calc_cv(nr_particles, model_weights,
-                                         self.n_bootstrap, test_w, transitions,
-                                         test_X)[0])
+            lambda nr_particles: calc_cv(
+                nr_particles, model_weights, self.n_bootstrap, test_w,
+                transitions, test_X)[0],
+        )
 
         if not np.isnan(cv_estimate.n_estimated):
             self.nr_particles = max(min(int(cv_estimate.n_estimated),

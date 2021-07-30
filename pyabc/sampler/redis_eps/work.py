@@ -54,6 +54,10 @@ def work_on_population_dynamic(
     # if the ssa object does not exist, something went wrong, return
     if ssa_b is None:
         return
+    # notify sign up as worker
+    n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
+    logger.info(
+        f"Begin generation {t}, I am worker {n_worker}")
 
     # only allow stopping the worker at particular points
     kill_handler.exit = False
@@ -64,12 +68,6 @@ def work_on_population_dynamic(
     all_accepted = bool(int(all_accepted_b.decode()))
     is_look_ahead = bool(int(is_look_ahead_b.decode()))
     max_n_eval_look_ahead = float(max_eval_look_ahead_b.decode())
-
-    # notify sign up as worker
-    n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
-    logger.info(
-        f"Begin generation {t}, batch size {batch_size}. "
-        f"I am worker {n_worker}")
 
     # counter for number of simulations
     internal_counter = 0

@@ -7,7 +7,7 @@ import cloudpickle as pickle
 import copy
 import logging
 from redis import StrictRedis
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Tuple
 from jabbar import jabbar
 
 from ...util import (
@@ -16,8 +16,9 @@ from ...util import (
 from ...distance import Distance
 from ...epsilon import Epsilon
 from ...acceptor import Acceptor
-from ...sampler import Sampler, Sample
+from ...sampler import Sampler
 from ...weighted_statistics import effective_sample_size
+from ...population import Sample
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
@@ -199,7 +200,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
     def sample_until_n_accepted(
             self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+            max_eval=np.inf, all_accepted=False, ana_vars=None) -> Sample:
         # get the analysis id
         ana_id = self.analysis_id
 
@@ -299,14 +300,17 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
         # remove all time-specific variables if no more active workers,
         #  also for previous generations
-        for _t in range(-1, t+1):
-            n_worker_b = self.redis.get(idfy(N_WORKER, ana_id, _t))
-            if n_worker_b is not None and int(n_worker_b.decode()) == 0:
-                # TODO For fast-running models, communication does not
-                #  always work.
-                # Until that is fixed, simply do not clear up.
-                if self.wait_for_all_samples:
-                    self.clear_generation_t(t=_t)
+        if self.wait_for_all_samples:
+            self.clear_generation_t(t=t)
+        else:
+            for _t in range(-1, t+1):
+                n_worker_b = self.redis.get(idfy(N_WORKER, ana_id, _t))
+                if n_worker_b is not None and int(n_worker_b.decode()) == 0:
+                    # TODO For fast-running models, communication does not
+                    #  always work.
+                    # Until that is fixed, simply do not clear up.
+                    # self.clear_generation_t(t=_t)
+                    pass
 
         # create a single sample result, with start time correction
         sample = self.create_sample(id_results, n)
@@ -317,7 +321,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             n_lookahead=n_lookahead_eval)
         self.logger.write()
 
-        # weight samples correctly
+        # weight sub-populations suitably
         sample = self_normalize_within_subpopulations(sample, n)
 
         return sample
@@ -428,6 +432,12 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         sample = self.create_sample(id_results, n)
         # copy as we modify the particles
         sample = copy.deepcopy(sample)
+
+        # weight sub-populations suitably
+        sample = self_normalize_within_subpopulations(sample, n)
+
+        # normalize accepted population weight to 1
+        sample.normalize_weights()
 
         # extract population
         population = sample.get_accepted_population()
@@ -593,11 +603,11 @@ def post_check_acceptance(
         kept.
     """
     # 0 is relative start time, 1 is the actual sample
-    sample = sample_with_id[1]
+    sample: Sample = sample_with_id[1]
 
     # check whether there are preliminary particles
-    if not any(particle.preliminary for particle in sample.particles):
-        n_accepted = sum(particle.accepted for particle in sample.particles)
+    if not any(particle.preliminary for particle in sample.all_particles):
+        n_accepted = len(sample.accepted_particles)
         if n_accepted != 1:
             # this should never happen
             raise AssertionError(
@@ -614,30 +624,37 @@ def post_check_acceptance(
         return sample_with_id, True
 
     # in preliminary mode, there should only be one particle per sample
-    if len(sample.particles) != 1:
+    if len(sample.all_particles) != 1:
         # this should never happen
         raise AssertionError(
             "Expected number of particles in sample: 1. "
-            f"Got: {len(sample.particles)}")
+            f"Got: {len(sample.all_particles)}")
 
     # from here on, we may assume that all particles (#=1) are yet to be judged
     logger.n_preliminary += 1
 
     # iterate over the 1 particle
-    for i_particle, particle in enumerate(sample.particles):
-        sample.particles[i_particle] = \
+    for particle in sample.all_particles:
+        particle = \
             evaluate_preliminary_particle(particle, t, ana_vars)
 
         # react to acceptance
-        if sample.particles[i_particle].accepted:
+        if particle.accepted:
+            sample.accepted_particles = [particle]
+            sample.rejected_particles = []
             # increase redis shared counter
             redis.incr(idfy(N_ACC, ana_id, t), 1)
             # increase general and lookahead counter
             logger.n_accepted += 1
             logger.n_lookahead_accepted += 1
+        else:
+            sample.accepted_particles = []
+            if sample.record_rejected:
+                sample.rejected_particles = [particle]
+            else:
+                sample.rejected_particles = []
 
-    return (sample_with_id,
-            any(particle.accepted for particle in sample.particles))
+    return sample_with_id, len(sample.accepted_particles) > 0
 
 
 def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
@@ -652,27 +669,26 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
     -------
     sample: The same, weight-adjusted sample.
     """
-    prop_ids = {particle.proposal_id for particle in sample.particles}
+    prop_ids = {particle.proposal_id for particle in sample.accepted_particles}
 
     if len(prop_ids) == 1:
         # Nothing to be done, as we only have one proposal, and normalization
         #  is applied later when the population is created
         return sample
 
-    accepted_particles = sample.accepted_particles
-    if len(accepted_particles) != n:
+    if len(sample.accepted_particles) != n:
         # this should not happen
         raise AssertionError("Unexpected number of acceptances")
 
     # get particles per proposal
     particles_per_prop = {
-        prop_id: [particle for particle in accepted_particles
+        prop_id: [particle for particle in sample.accepted_particles
                   if particle.proposal_id == prop_id]
         for prop_id in prop_ids}
 
-    # normalize weights by ESS_l / sum_l[w_l] for proposal id l
-    # this is s.t. sum_i w_{l,i} \propto ESS_l
-    normalizations = {}
+    # normalize weights by $ESS_l / sum_{i<=N_l} w^l_i$ for proposal id l
+    # this is s.t. $sum_{i<=N_l} w^l_i \propto ESS_l$
+    normalizations: Dict[int, float] = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
         weights = np.array(
             [particle.weight for particle in particles_for_prop])
@@ -680,10 +696,14 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         total_weight = weights.sum()
         normalizations[prop_id] = ess / total_weight
 
-    # normalize every particle (this includes rejected ones, which should not
-    #  be necessary, but does not hurt)
-    for particle in sample.particles:
-        particle.weight *= normalizations[particle.proposal_id]
+    # normalize all particles
+    for particle in sample.all_particles:
+        if particle.proposal_id in normalizations:
+            particle.weight *= normalizations[particle.proposal_id]
+        else:
+            # set weight of particles from populations None of which was
+            #  accepted to 0 (until we start caring about those for real)
+            particle.weight = 0.
 
     return sample
 

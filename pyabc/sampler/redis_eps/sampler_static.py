@@ -8,7 +8,7 @@ import logging
 from typing import Callable, List
 from jabbar import jabbar
 
-from ...sampler import Sample
+from ...population import Sample
 from .cmd import (SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_JOB, N_WORKER,
                   SLEEP_TIME, MODE, STATIC, QUEUE, MSG, START, GENERATION,
                   idfy)
@@ -35,8 +35,7 @@ class RedisStaticSampler(RedisSamplerBase):
             while len(samples) < n:
                 dump = self.redis.blpop(idfy(QUEUE, ana_id, t))[1]
                 sample = pickle.loads(dump)
-                if sum(particle.accepted
-                       for particle in sample.particles) != 1:
+                if len(sample.accepted_particles) != 1:
                     # this should never happen
                     raise AssertionError(
                         "Expected exactly one accepted particle in sample.")

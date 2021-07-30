@@ -8,12 +8,12 @@ The choice of the sampler determines in which way parallelization is performed.
 See also the `explanation of the samplers <sampler.html>`_.
 """
 
+from .base import Sampler
 from .singlecore import SingleCoreSampler
 from .mapping import MappingSampler
 from .multicorebase import nr_cores_available
 from .multicore import MulticoreParticleParallelSampler
 from .multicore_evaluation_parallel import MulticoreEvalParallelSampler
-from .base import Sample, Sampler
 from .dask_sampler import DaskDistributedSampler
 from .redis_eps import (
     RedisEvalParallelSampler,

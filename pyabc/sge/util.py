@@ -6,9 +6,8 @@ def sge_available():
     """
     Makes a simple heuristic test to check if the SGE is available on
     the machine.
-    It tries to exectute the ``qstat`` command. In case it is found,
-    it is assumed
-    that the SGE is available.
+    It tries to execute the ``qstat`` command. In case it is found,
+    it is assumed that the SGE is available.
 
     Returns
     -------
