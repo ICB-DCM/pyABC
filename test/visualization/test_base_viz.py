@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 
 db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
+log_files = []
 histories = []
 labels = []
 
@@ -31,11 +32,15 @@ def setup_module():
                       limits[key][1] - limits[key][0])
         for key in p_true.keys()})
 
-    distance = pyabc.PNormDistance(p=2)
     n_history = 2
     sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
 
     for _ in range(n_history):
+        log_file = tempfile.mkstemp(suffix=".json")[1]
+        log_files.append(log_file)
+        distance = pyabc.AdaptivePNormDistance(
+            p=2, scale_log_file=log_file)
+
         abc = pyabc.ABCSMC(model, prior, distance, population_size=100,
                            sampler=sampler)
         abc.new(db_path, observation)
@@ -51,6 +56,8 @@ def setup_module():
 def teardown_module():
     """Tear down module. Called after all tests here."""
     os.remove(db_path[len("sqlite:///"):])
+    for log_file in log_files:
+        os.remove(log_file)
 
 
 def test_set_figure_params():
@@ -244,3 +251,10 @@ def test_eps_walltime():
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_eps_walltime(histories, unit='min')
     plt.close()
+
+
+def test_distance_weights():
+    """Test `pyabc.visualization.plot_distance_weights`"""
+    for keys_as_labels in [True, False]:
+        pyabc.visualization.plot_distance_weights(
+            log_files, keys_as_labels=keys_as_labels)

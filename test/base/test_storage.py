@@ -73,20 +73,22 @@ def history_uninitialized():
         pass
 
 
-def rand_pop_list(m: int):
+def rand_pop_list(m: int = 0, normalized: bool = True, n_sample: int = None):
     """
     Create a population for model m, of random size >= 3.
 
     Parameters
     ----------
-    m: int
-
-        the model number
+    m: The model index
+    normalized: Whether to normalize the population weight to 1.
+    n_sample: Number of samples.
 
     Returns
     -------
-
+    List[Particle]: A list of particles
     """
+    if n_sample is None:
+        n_sample = np.random.randint(10) + 3
     pop = [
         Particle(m=m,
                  parameter=Parameter({"a": np.random.randint(10),
@@ -97,8 +99,16 @@ def rand_pop_list(m: int):
                            "ss_str": "foo bar string",
                            "ss_np": np.random.rand(13, 42),
                            "ss_df": example_df()},
+                 accepted=True,
                  distance=np.random.rand())
-        for _ in range(np.random.randint(10) + 3)]
+        for _ in range(n_sample)
+    ]
+
+    if normalized:
+        total_weight = sum(p.weight for p in pop)
+        for p in pop:
+            p.weight /= total_weight
+
     return pop
 
 
@@ -106,7 +116,7 @@ def test_single_particle_save_load(history: History):
     particle_list = [
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
+                 weight=1.,
                  sum_stat={"ss": .1},
                  distance=.1),
     ]
@@ -128,7 +138,7 @@ def test_save_no_sum_stats(history: History):
         particle = Particle(
             m=0,
             parameter=Parameter({"th0": np.random.random()}),
-            weight=.2,
+            weight=1./6,
             sum_stat={"ss0": np.random.random(), "ss1": np.random.random()},
             distance=np.random.random())
         particle_list.append(particle)
@@ -152,11 +162,12 @@ def test_save_no_sum_stats(history: History):
     # test whether weights and distances returned correctly
     weighted_distances_h = history.get_weighted_distances()
     weighted_distances = population.get_weighted_distances()
-    assert (weighted_distances_h[['distance', 'w']]
-            == weighted_distances[['distance', 'w']]).all().all()
+
+    assert np.allclose(weighted_distances_h[['distance', 'w']],
+                       weighted_distances[['distance', 'w']])
 
     weights, sum_stats = history.get_weighted_sum_stats(t=0)
-    # all particles should be contained nontheless
+    # all particles should be contained nonetheless
     assert len(weights) == len(particle_list)
     for sum_stat in sum_stats:
         # should be empty
@@ -177,14 +188,14 @@ def test_get_population(history: History):
     assert len(population) == len(population_h)
 
     # distances
-    distances = [p.distance for p in population.get_list()]
-    distances_h = [p.distance for p in population_h.get_list()]
+    distances = [p.distance for p in population.particles]
+    distances_h = [p.distance for p in population_h.particles]
     for d0, d1 in zip(distances, distances_h):
         assert np.isclose(d0, d1)
 
     # weights
-    weights = [p.weight for p in population.get_list()]
-    weights_h = [p.weight for p in population_h.get_list()]
+    weights = [p.weight for p in population.particles]
+    weights_h = [p.weight for p in population_h.particles]
     for w0, w1 in zip(weights, weights_h):
         assert np.isclose(w0, w1)
 
@@ -197,7 +208,7 @@ def test_single_particle_save_load_np_int64(history: History):
     particle_list = [Particle(
         m=0,
         parameter=Parameter({"a": 23, "b": 12}),
-        weight=.2,
+        weight=1.,
         sum_stat={"ss": .1},
         distance=.1)]
     history.append_population(0, 42, Population(particle_list), 2, [""])
@@ -223,15 +234,15 @@ def test_sum_stats_save_load(history: History):
                  distance=.1),
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
+                 weight=.8,
                  sum_stat={"ss12": .11, "ss22": arr, "ss33": example_df(),
                            "rdf": r["mtcars"]},
                  distance=.1)]
 
-    history.append_population(0, 42,
-                              Population(particle_list), 2, ["m1", "m2"])
+    history.append_population(
+        0, 42, Population(particle_list), 2, ["m1", "m2"])
     weights, sum_stats = history.get_weighted_sum_stats_for_model(0, 0)
-    assert (weights == 0.5).all()
+    assert (weights == np.array([.2, .8])).all()
     assert sum_stats[0]["ss1"] == .1
     assert (sum_stats[0]["ss2"] == arr2).all()
     assert (sum_stats[0]["ss3"] == example_df()).all().all()
@@ -248,7 +259,7 @@ def test_total_nr_samples(history: History):
     particle_list = [
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
+                 weight=1.,
                  sum_stat={"ss": .1},
                  distance=.1)]
     population = Population(particle_list)
@@ -262,11 +273,12 @@ def test_t_count(history: History):
     particle_list = [
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
+                 weight=1.,
                  sum_stat={"ss": .1},
                  distance=.1)]
     for t in range(1, 10):
-        history.append_population(t, 42, Population(particle_list), 2, ["m1"])
+        history.append_population(
+            t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
 
 
@@ -285,9 +297,12 @@ def test_dataframe_storage_readout():
         for t in range(4):
             particle_list = []
             for m in range(5):
-                pops[(h, m, t)] = rand_pop_list(m)
+                pops[(h, m, t)] = rand_pop_list(m, normalized=False)
                 for particle in pops[(h, m, t)]:
                     particle_list.append(particle)
+            total_weight = sum(p.weight for p in particle_list)
+            for p in particle_list:
+                p.weight /= total_weight
             h.append_population(t, .1, Population(particle_list), 2,
                                 model_names)
 
@@ -411,7 +426,7 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
     particle_list = [
         Particle(m=0,
                  parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
+                 weight=1.,
                  sum_stat={"ss": .1},
                  distance=.1)]
     h.append_population(0, 42, Population(particle_list), 2, model_names)

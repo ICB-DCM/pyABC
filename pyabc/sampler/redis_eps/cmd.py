@@ -24,7 +24,7 @@ ACTIVE_SET_LOCK = "active_set_lock"
 SLEEP_TIME = .1
 
 # message channel
-MSG = "msg_pubsub"
+MSG = "abc_msg_pubsub"
 # start and stop messages
 START = "start"
 STOP = "stop"

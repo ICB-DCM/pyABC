@@ -266,10 +266,11 @@ def test_in_memory(redis_starter_sampler):
 
 
 def test_wrong_output_sampler():
+    """Test when the sampler returns not the correct number of samples."""
     sampler = WrongOutputSampler()
 
     def simulate_one():
-        return pyabc.Particle(m=0, parameter={}, weight=0,
+        return pyabc.Particle(m=0, parameter={}, weight=0.1,
                               sum_stat={}, distance=42,
                               accepted=True)
     with pytest.raises(AssertionError):
@@ -421,7 +422,7 @@ def test_redis_look_ahead():
             pop = h.get_population(t=t)
             pop_size = len(pop)
             n_lookahead_pop = len(
-                [p for p in pop.get_list() if p.proposal_id == -1])
+                [p for p in pop.particles if p.proposal_id == -1])
             assert min(
                 pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
                 == n_lookahead_pop
@@ -461,7 +462,7 @@ def test_redis_look_ahead_delayed():
         start_nr_particles=50, mean_cv=0.5, max_population_size=50)
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerLookAheadDelayWrapper(
-            log_file=fh.name)
+            log_file=fh.name, wait_for_all_samples=True)
         try:
             abc = pyabc.ABCSMC(
                 model, prior, distance, sampler=sampler,
@@ -483,7 +484,7 @@ def test_redis_look_ahead_delayed():
             pop = h.get_population(t=t)
             pop_size = len(pop)
             n_lookahead_pop = len(
-                [p for p in pop.get_list() if p.proposal_id == -1])
+                [p for p in pop.particles if p.proposal_id == -1])
             assert min(
                 pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
                 == n_lookahead_pop

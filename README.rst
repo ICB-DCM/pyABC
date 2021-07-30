@@ -39,7 +39,7 @@ and also for download and for online inspection in the
    :target: https://www.codacy.com/app/yannikschaelte/pyABC?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ICB-DCM/pyABC&amp;utm_campaign=Badge_Grade
    :alt: codacy
 
-.. |codecov| image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/ICB-DCM/pyABC
    :alt: codecov
 

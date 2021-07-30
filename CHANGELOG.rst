@@ -96,6 +96,7 @@ Database:
 * Make sure `ABCSMC.run()` is always properly finished (sampler, history)
   by a wrapper (all #401).
 * Redis sampler with look-ahead mode:
+
   * Fix insufficient logging of look-ahead samples.
   * Log all accepted particles.
 * Add `plot_lookahead_...` plots for look-ahead mode diagnostics.

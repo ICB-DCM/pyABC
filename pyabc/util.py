@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import logging
 from datetime import datetime, timedelta
-from typing import List, Callable
+from typing import Callable, List
 import uuid
 
 from pyabc.acceptor import Acceptor

@@ -30,6 +30,7 @@ from .distance import (
     SimpleFunctionDistance,
     PNormDistance,
     AdaptivePNormDistance,
+    InfoWeightedPNormDistance,
     AggregatedDistance,
     AdaptiveAggregatedDistance,
     ZScoreDistance,
@@ -102,10 +103,40 @@ from .transition import (
     ModelPerturbationKernel)
 from .population import (
     Particle,
-    Population)
+    Population,
+    Sample,
+)
 from .populationstrategy import (
     AdaptivePopulationSize,
     ConstantPopulationSize)
+from .predictor import (
+    Predictor,
+    LinearPredictor,
+    LassoPredictor,
+    GPPredictor,
+    GPKernelHandle,
+    MLPPredictor,
+    HiddenLayerHandle,
+    ModelSelectionPredictor,
+)
+from .sumstat import (
+    Sumstat,
+    IdentitySumstat,
+    PredictorSumstat,
+    EventIxs,
+)
+from .weighted_statistics import (
+    weighted_quantile,
+    weighted_median,
+    weighted_mean,
+    weighted_var,
+    weighted_std,
+    weighted_mse,
+    weighted_rmse,
+    effective_sample_size,
+    resample,
+    resample_deterministic,
+)
 from . import visualization
 from . import settings
 
