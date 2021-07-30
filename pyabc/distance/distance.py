@@ -35,7 +35,7 @@ class PNormDistance(Distance):
     E.g.
     * p=1 for a Euclidean or L1 metric,
     * p=2 for a Manhattan or L2 metric,
-    * p=np.inf for a Chebyshev, maximum or Linf metric.
+    * p=np.inf for a Chebyshev, maximum or inf metric.
 
     Parameters
     ----------

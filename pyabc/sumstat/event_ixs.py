@@ -67,6 +67,7 @@ class EventIxs:
         self,
         t: int,
         total_sims: int,
+        modify: bool = True,
     ) -> bool:
         """Inform whether to do something at a given time index `t`.
 
@@ -78,6 +79,7 @@ class EventIxs:
         ----------
         t: Time point
         total_sims: Total number of simulations so far.
+        modify: Whether to remember actions. If False, can be safely re-called.
 
         Returns
         -------
@@ -97,7 +99,8 @@ class EventIxs:
             if total_sims >= check_sims:
                 act = True
                 # record criterion to have been hit
-                self.sims_hit[i_check_sims] = True
+                if modify:
+                    self.sims_hit[i_check_sims] = True
 
         # check initial time point
         if self.from_t is not None and t >= self.from_t:
