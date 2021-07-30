@@ -300,8 +300,8 @@ class LassoPredictor(SimplePredictor):
 
         # translate arguments
         all_args = {
-            'fit_intercept': False,
-            'normalize': False,
+            'fit_intercept': True,
+            'normalize': True,
         }
         all_args.update(kwargs)
         predictor = skl_lm.Lasso(**all_args)
@@ -481,8 +481,7 @@ class MLPPredictor(SimplePredictor):
                 "Install e.g. via `pip install pyabc[scikit-learn]`")
 
         if hidden_layer_sizes is None:
-            hidden_layer_sizes = HiddenLayerHandle(
-                method=HiddenLayerHandle.HEURISTIC)
+            hidden_layer_sizes = HiddenLayerHandle()
         self.hidden_layer_sizes = hidden_layer_sizes
 
         self.kwargs = {
@@ -539,7 +538,7 @@ class HiddenLayerHandle:
         """
         Parameters
         ----------
-        method: {"heuristic", "mean"}
+        method:
             Method to use.
 
             * "heuristic" bases the number of neurons on the number of samples
