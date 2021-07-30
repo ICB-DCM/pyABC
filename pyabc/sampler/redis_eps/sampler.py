@@ -697,7 +697,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
         normalizations[prop_id] = ess / total_weight
 
     # normalize all particles
-    for particle in sample.accepted_particles:
+    for particle in sample.all_particles:
         if particle.proposal_id in normalizations:
             particle.weight *= normalizations[particle.proposal_id]
         else:
