@@ -151,7 +151,7 @@ def std_or_rmsd(
     bs = bias(samples=samples, s0=s0)
     std = standard_deviation(samples=samples)
 
-    if sum(bs > 2 * std) > 0.33 * len(std):
+    if sum(bs > 2 * std) > 1 / 3 * len(std):
         logger.info("Too many high-bias values, correcting only for scale.")
         return std
 
@@ -215,7 +215,7 @@ def mad_or_cmad(
     mad = median_absolute_deviation(samples=samples)
     mado = median_absolute_deviation_to_observation(samples=samples, s0=s0)
 
-    if sum(mado > 2 * mad) > 0.33 * len(mad):
+    if sum(mado > 2 * mad) > 1 / 3 * len(mad):
         logger.info("Too many high-bias values, correcting only for scale.")
         return mad
 
