@@ -44,7 +44,7 @@ Download the examples as notebooks
 * :download:`Aggregated Distances <examples/aggregated_distances.ipynb>`
 * :download:`External Simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
-* :download:`Measurement noise assessment <examples/noise.ipynb>`
+* :download:`Measurement noise and exact inference <examples/noise.ipynb>`
 * :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
 * :download:`PEtab application example <examples/petab_application.ipynb>`
 * :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
