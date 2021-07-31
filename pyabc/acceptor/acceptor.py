@@ -263,6 +263,10 @@ def accept_use_complete_history(
     intercepted and the respective time not used for evaluation. This situation
     can frequently occur when continuing a stopped run. A different behavior
     is easy to implement.
+
+    .. note::
+        This may not work as intended or at all when using adaptive summary
+        statistics.
     """
     # first test current criterion, which is most likely to fail
     d = distance_function(x, x_0, t, par)

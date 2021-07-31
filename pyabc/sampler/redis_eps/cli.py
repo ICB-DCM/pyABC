@@ -98,6 +98,8 @@ def _work(host="localhost", port=6379, runtime="2h", password=None,
     p = redis.pubsub()
     p.subscribe(MSG)
 
+    logger.info(f"Subscribed to host {host} port {port}")
+
     # Block-wait for publications. Every message on the channel that has not
     #  been overridden yet is processed by all workers exactly once via
     #  listen(), even if the workers were started after publication.

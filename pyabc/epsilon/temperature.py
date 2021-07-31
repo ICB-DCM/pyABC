@@ -80,12 +80,13 @@ class Temperature(TemperatureBase):
     """
 
     def __init__(
-            self,
-            schemes: Union[Callable, List[Callable]] = None,
-            aggregate_fun: Callable[[List[float]], float] = None,
-            initial_temperature: float = None,
-            enforce_exact_final_temperature: bool = True,
-            log_file: str = None):
+        self,
+        schemes: Union[Callable, List[Callable]] = None,
+        aggregate_fun: Callable[[List[float]], float] = None,
+        initial_temperature: float = None,
+        enforce_exact_final_temperature: bool = True,
+        log_file: str = None,
+    ):
         super().__init__()
         self.schemes = schemes
 
@@ -116,12 +117,14 @@ class Temperature(TemperatureBase):
         return (self.schemes is not None
                 and any(s.requires_distances() for s in self.schemes))
 
-    def initialize(self,
-                   t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_all_records: Callable[[], List[dict]],
-                   max_nr_populations: int,
-                   acceptor_config: dict):
+    def initialize(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        acceptor_config: dict,
+    ):
         self.max_nr_populations = max_nr_populations
 
         # set default schemes
@@ -134,8 +137,13 @@ class Temperature(TemperatureBase):
             self.schemes = [acc_rate_scheme, decay_scheme]
 
         # set initial temperature for time t
-        self._update(t, get_weighted_distances, get_all_records,
-                     1.0, acceptor_config)
+        self._update(
+            t=t,
+            get_weighted_distances=get_weighted_distances,
+            get_all_records=get_all_records,
+            acceptance_rate=1.0,
+            acceptor_config=acceptor_config,
+        )
 
     def configure_sampler(self, sampler):
         if isinstance(self.initial_temperature, TemperatureScheme):
@@ -143,23 +151,27 @@ class Temperature(TemperatureBase):
         for scheme in self.schemes:
             scheme.configure_sampler(sampler)
 
-    def update(self,
-               t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame],
-               get_all_records: Callable[[], List[dict]],
-               acceptance_rate: float,
-               acceptor_config: dict):
+    def update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        acceptance_rate: float,
+        acceptor_config: dict,
+    ):
         # set temperature for time t
         self._update(t, get_weighted_distances,
                      get_all_records, acceptance_rate,
                      acceptor_config)
 
-    def _update(self,
-                t: int,
-                get_weighted_distances: Callable[[], pd.DataFrame],
-                get_all_records: Callable[[], List[dict]],
-                acceptance_rate: float,
-                acceptor_config):
+    def _update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        acceptance_rate: float,
+        acceptor_config,
+    ):
         """
         Compute the temperature for time `t`.
         """
@@ -232,15 +244,17 @@ class TemperatureScheme:
         :func:`pyabc.epsilon.Temperature.configure_sampler`.
         """
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         """
         Suggest a temperature.
 
@@ -302,17 +316,19 @@ class AcceptanceRateScheme(TemperatureScheme):
         self.min_rate = min_rate
 
     def configure_sampler(self, sampler):
-        sampler.sample_factory.record_rejected = True
+        sampler.sample_factory.record_rejected()
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         # check minimum rate
         if self.min_rate is not None and acceptance_rate < self.min_rate:
             return np.inf
@@ -420,15 +436,17 @@ class ExpDecayFixedIterScheme(TemperatureScheme):
     def __init__(self):
         pass
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         # needs a finite number of iterations
         if max_nr_populations == np.inf:
             raise ValueError(
@@ -480,22 +498,28 @@ class ExpDecayFixedRatioScheme(TemperatureScheme):
         Maximum rate to not be exceeded, otherwise the alpha value is
         decreased.
     """
-    def __init__(self, alpha: float = 0.5,
-                 min_rate: float = 1e-4, max_rate: float = 0.5):
+    def __init__(
+        self,
+        alpha: float = 0.5,
+        min_rate: float = 1e-4,
+        max_rate: float = 0.5,
+    ):
         self.alpha = alpha
         self.min_rate = min_rate
         self.max_rate = max_rate
         self.alphas = {}
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         if prev_temperature is None:
             return np.inf
 
@@ -548,15 +572,17 @@ class PolynomialDecayFixedIterScheme(TemperatureScheme):
     def __init__(self, exponent: float = 3):
         self.exponent = exponent
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         # needs a starting temperature
         # if not available, return infinite temperature
         if prev_temperature is None:
@@ -615,15 +641,17 @@ class DalyScheme(TemperatureScheme):
         self.min_rate = min_rate
         self.k = {}
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         # needs a starting temperature
         # if not available, return infinite temperature
         if prev_temperature is None:
@@ -662,15 +690,17 @@ class FrielPettittScheme(TemperatureScheme):
         Bioinformatics 24.6 (2007): 833-839.
     """
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         # needs a starting temperature
         # if not available, return infinite temperature
         if prev_temperature is None:
@@ -707,15 +737,17 @@ class EssScheme(TemperatureScheme):
     def __init__(self, target_relative_ess: float = 0.8):
         self.target_relative_ess = target_relative_ess
 
-    def __call__(self,
-                 t: int,
-                 get_weighted_distances: Callable[[], pd.DataFrame],
-                 get_all_records: Callable[[], List[dict]],
-                 max_nr_populations: int,
-                 pdf_norm: float,
-                 kernel_scale: str,
-                 prev_temperature: float,
-                 acceptance_rate: float):
+    def __call__(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        pdf_norm: float,
+        kernel_scale: str,
+        prev_temperature: float,
+        acceptance_rate: float,
+    ):
         # execute function (expensive if in calibration)
         df = get_weighted_distances()
 

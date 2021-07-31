@@ -4,6 +4,71 @@ Release Notes
 =============
 
 
+0.11 series
+...........
+
+0.11.0 (2021-07-31)
+-------------------
+
+Diverse:
+
+* Shorten date-time log (#456)
+* Add look-ahead example notebook (#461)
+* Fix decoration of `plot_acceptance_rates_trajectory` (#465)
+* Hot-fix redis clean-up (#475)
+
+Semi-automatic summary statistics and robust sample weighting (#429)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Breaking changes:
+
+* API of the `(Adaptive)PNormDistance` was altered substantially to allow
+  cutom definition of update indices.
+* Internal weighting of samples (should not affect users).
+
+Semi-automatic summary statistics:
+
+* Implement (Adaptive)PNormDistance with the ability to learn summary
+  statistics from simulations.
+* Add `sumstat` submodule for generic mappings (id, trafos), and especially a
+  `PredictorSumstat` summary statistic that can make use of `Predictor` objects.
+* Add subsetting routines that allow restricting predictor model training
+  samples.
+* Add `predictor` submodule with generic `Predictor` class and concrete
+  implementations including linear regression, Lasso, Gaussian Process,
+  Neural Network.
+* Add `InfoWeightedPNormDistance` that allows using predictor models to weight
+  data not only by scale, but also by information content.
+
+Outlier-robust adaptive distances:
+
+* Update documentation towards robust distances.
+* Add section in the corresponding notebook.
+* Implement PCMAD outlier correction scheme.
+
+Changes to internal sample weighting:
+
+* Do not normalize weights of in-memory particles by model; this allows to
+  more easily use the sampling weights and the list of particles for
+  adaptive components (e.g. distance functions)
+* Normalization of population to 1 is applied on sample level in the
+  sampler wrapper function
+* In the database, normalization is still by sample to not break old db
+  support; would be nicer to also there only normalize by total sum
+  -- requires a db update though.
+
+Changes to internal object instruction from samples:
+
+* Pass sample instead of weighted_sum_stats to distance function.
+  This is because thus the distance can choose on its own what it wants
+  -- all or only accepted particles; distances; weights; parameters;
+  summary statistics.
+
+Visualization:
+
+* Function to plot adaptive distance weights from log file.
+
+
 0.10 series
 ...........
 
@@ -96,6 +161,7 @@ Database:
 * Make sure `ABCSMC.run()` is always properly finished (sampler, history)
   by a wrapper (all #401).
 * Redis sampler with look-ahead mode:
+
   * Fix insufficient logging of look-ahead samples.
   * Log all accepted particles.
 * Add `plot_lookahead_...` plots for look-ahead mode diagnostics.
