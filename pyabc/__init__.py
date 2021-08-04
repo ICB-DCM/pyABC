@@ -123,6 +123,8 @@ from .sumstat import (
     Sumstat,
     IdentitySumstat,
     PredictorSumstat,
+)
+from .util import (
     EventIxs,
 )
 from .weighted_statistics import (

@@ -10,9 +10,12 @@ from redis import StrictRedis
 from typing import Callable, Dict, List, Tuple
 from jabbar import jabbar
 
-from ...util import (
-    AnalysisVars, create_simulate_function, evaluate_preliminary_particle,
-    termination_criteria_fulfilled)
+from ...inference_util import (
+    AnalysisVars,
+    create_simulate_function,
+    evaluate_preliminary_particle,
+    termination_criteria_fulfilled,
+)
 from ...distance import Distance
 from ...epsilon import Epsilon
 from ...acceptor import Acceptor
@@ -23,7 +26,8 @@ from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
     IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, ACTIVE_SET,
-    idfy)
+    idfy,
+)
 from .util import get_active_set
 from .redis_logging import RedisSamplerLogger
 

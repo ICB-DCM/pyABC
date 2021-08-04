@@ -7,9 +7,17 @@ import copy
 from datetime import datetime, timedelta
 
 from pyabc.acceptor import (
-    Acceptor, UniformAcceptor, SimpleFunctionAcceptor, StochasticAcceptor)
+    Acceptor,
+    UniformAcceptor,
+    SimpleFunctionAcceptor,
+    StochasticAcceptor,
+)
 from pyabc.distance import (
-    Distance, PNormDistance, to_distance, StochasticKernel)
+    Distance,
+    PNormDistance,
+    to_distance,
+    StochasticKernel,
+)
 from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from pyabc.model import Model, SimpleModel
 from pyabc.platform_factory import DefaultSampler
@@ -19,12 +27,20 @@ from pyabc.random_variables import RV, Distribution
 from pyabc.sampler import Sampler
 from pyabc.storage import History
 from pyabc.transition import (
-    Transition, MultivariateNormalTransition, ModelPerturbationKernel)
+    Transition,
+    MultivariateNormalTransition,
+    ModelPerturbationKernel,
+)
 from pyabc.weighted_statistics import effective_sample_size
-from pyabc.util import (
-    create_simulate_from_prior_function, create_prior_pdf,
-    create_transition_pdf, create_simulate_function,
-    termination_criteria_fulfilled, create_analysis_id, AnalysisVars)
+from pyabc.inference_util import (
+    create_simulate_from_prior_function,
+    create_prior_pdf,
+    create_transition_pdf,
+    create_simulate_function,
+    termination_criteria_fulfilled,
+    create_analysis_id,
+    AnalysisVars,
+)
 
 
 logger = logging.getLogger("ABC")
