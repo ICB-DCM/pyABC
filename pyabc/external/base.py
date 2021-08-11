@@ -4,7 +4,6 @@ import subprocess  # noqa: S404
 import os
 from typing import List
 import logging
-import shutil
 from ..model import Model
 from ..parameters import Parameter
 
@@ -88,19 +87,6 @@ class ExternalHandler:
         else:
             return tempfile.mkstemp(
                 suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
-
-    def clean_simulation_output(loc):
-        """
-        Remove the simulation output directory after calculating the
-        summary statistics.
-
-        Parameters
-        ----------
-        loc: str
-            Location of the simulation directory.
-        """
-
-        shutil.rmtree(loc, ignore_errors=True)
 
     def create_executable(self, loc):
         """
