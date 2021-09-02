@@ -12,7 +12,7 @@ STATIC = "static"
 DYNAMIC = "dynamic"
 # the queue to return results through
 QUEUE = "queue"
-# collection of active indices
+# list of done indices
 DONE_IXS = "done_ixs"
 
 # default sleep time
