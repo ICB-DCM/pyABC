@@ -13,12 +13,7 @@ DYNAMIC = "dynamic"
 # the queue to return results through
 QUEUE = "queue"
 # collection of active indices
-ACTIVE_SET = "active_set"
-
-# lock for evaluation counters
-EVAL_LOCK = "eval_lock"
-# lock for accessing the active set data structure
-ACTIVE_SET_LOCK = "active_set_lock"
+DONE_IXS = "done_ixs"
 
 # default sleep time
 SLEEP_TIME = .1
