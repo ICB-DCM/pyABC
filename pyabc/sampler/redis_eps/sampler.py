@@ -273,12 +273,13 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                 # also stop if no worker is active, useful for server resets
                 and get_int(N_WORKER) > 0
             ):
-                while self.redis.llen(idfy(DONE_IXS, ana_id, t)) > 0:
+                n_done_ixs = self.redis.llen(idfy(DONE_IXS, ana_id, t))
+                for _ in range(n_done_ixs):
                     # read done ix
                     done_ix = int(
-                        self.redis.blpop(
+                        self.redis.lpop(
                             idfy(DONE_IXS, ana_id, t),
-                        )[1].decode(),
+                        ).decode(),
                     )
                     # remove done ix from missing ix list
                     if done_ix in missing_ixs:
