@@ -10,9 +10,9 @@ from ..storage import save_dict_to_json
 from ..population import Sample
 from ..predictor import Predictor
 from ..sumstat import (
-    Sumstat, IdentitySumstat, Subsetter, IdSubsetter, dict2arr, read_sample,
-    EventIxs,
+    Sumstat, IdentitySumstat, Subsetter, IdSubsetter,
 )
+from ..util import dict2arr, read_sample, ParTrafoBase, ParTrafo, EventIxs
 
 from .scale import mad, span
 from .base import Distance, to_distance
@@ -508,6 +508,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         all_particles_for_scale: bool = True,
         all_particles_for_prediction: bool = False,
         feature_normalization: str = WEIGHTS,
+        par_trafo: ParTrafoBase = None,
     ):
         """
         Parameters
@@ -555,6 +556,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             to e.g. employ outlier down-weighting in the scale function,
             and just normalize differently here, in order to not counteract
             that.
+        par_trafo:
+            Parameter transformations to use as targets. Defaults to identity.
         """
         # call p-norm constructor
         super().__init__(
@@ -584,9 +587,6 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.info_log_file: str = info_log_file
         self.fd_deltas: Union[List[float], float] = fd_deltas
 
-        # parameter keys (for correct order)
-        self.par_keys: Union[List[str], None] = None
-
         if subsetter is None:
             subsetter = IdSubsetter()
         self.subsetter: Subsetter = subsetter
@@ -600,6 +600,10 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
                 f"{InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
             )
         self.feature_normalization: str = feature_normalization
+
+        if par_trafo is None:
+            par_trafo = ParTrafo()
+        self.par_trafo: ParTrafoBase = par_trafo
 
     def configure_sampler(self, sampler) -> None:
         """
@@ -645,6 +649,11 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         # execute cached function
         sample = get_sample()
 
+        # initialize parameter transformations
+        self.par_trafo.initialize(
+            list(sample.accepted_particles[0].parameter.keys()),
+        )
+
         # update weights from samples
         self.fit_info(t=t, sample=sample)
 
@@ -678,16 +687,11 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         sample: Sample,
     ) -> None:
         """Update information weights from model fits."""
-        # make sure parameter key order is defined
-        if self.par_keys is None:
-            self.par_keys: List[str] = \
-                list(sample.accepted_particles[0].parameter.keys())
-
         # create (n_sample, n_feature) matrix of all summary statistics
         sumstats, parameters, weights = read_sample(
             sample=sample, sumstat=self.sumstat,
             all_particles=self.all_particles_for_prediction,
-            par_keys=self.par_keys,
+            par_trafo=self.par_trafo,
         )
         s_0 = self.sumstat(self.x_0)
 
@@ -769,8 +773,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         sensis[:, ~y_has_sensi] = 0
         # log
         if not y_has_sensi.all():
+            par_trafo_ids = self.par_trafo.get_ids()
             insensi_par_keys = [
-                self.par_keys[ix] for ix in np.flatnonzero(~y_has_sensi)]
+                par_trafo_ids[ix] for ix in np.flatnonzero(~y_has_sensi)]
             logger.info(f"Zero info for parameters {insensi_par_keys}")
 
         if self.normalize_by_par:

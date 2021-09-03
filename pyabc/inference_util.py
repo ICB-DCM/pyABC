@@ -1,5 +1,7 @@
 """Inference utilities."""
 
+# Note: Due to cyclic imports, these need to be separated from other modules
+
 import numpy as np
 import pandas as pd
 import logging

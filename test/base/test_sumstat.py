@@ -8,9 +8,11 @@ import tempfile
 
 import pyabc
 from pyabc.sumstat import (
-    IdentitySumstat, PredictorSumstat, IdSubsetter, GMMSubsetter, EventIxs,
+    IdentitySumstat, PredictorSumstat, IdSubsetter, GMMSubsetter,
 )
-from pyabc.sumstat.util import dict2arr, dict2arrlabels
+from pyabc.util import (
+    EventIxs, dict2arr, dict2arrlabels,
+)
 from pyabc.predictor import LinearPredictor
 
 

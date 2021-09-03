@@ -15,9 +15,10 @@ from ..predictor import (
     Predictor,
     SimplePredictor,
 )
-from .event_ixs import EventIxs
+from ..util import (
+    io_dict2arr, read_sample, dict2arrlabels, ParTrafo, ParTrafoBase, EventIxs,
+)
 
-from .util import io_dict2arr, read_sample, dict2arrlabels
 from .base import Sumstat, IdentitySumstat
 from .subset import Subsetter, IdSubsetter
 
@@ -53,6 +54,7 @@ class PredictorSumstat(Sumstat):
         subsetter: Subsetter = None,
         pre: Sumstat = None,
         pre_before_fit: bool = False,
+        par_trafo: ParTrafoBase = None,
     ):
         """
         Parameters
@@ -90,6 +92,8 @@ class PredictorSumstat(Sumstat):
             Apply previous summary statistics also before any fit is performed,
             or just return the input then and only apply pre when
             regression-based summary statistics are calculated.
+        par_trafo:
+            Parameter transformations to use as targets. Defaults to identity.
         """
         if pre is None:
             pre = IdentitySumstat()
@@ -107,9 +111,6 @@ class PredictorSumstat(Sumstat):
         self.all_particles: bool = all_particles
         self.normalize_labels: bool = normalize_labels
 
-        # parameter keys (for correct order)
-        self.par_keys: Union[List[str], None] = None
-
         # indicate whether the model has ever been fitted
         self.fitted: bool = fitted
 
@@ -118,6 +119,10 @@ class PredictorSumstat(Sumstat):
         self.subsetter: Subsetter = subsetter
 
         self.pre_before_fit: bool = pre_before_fit
+
+        if par_trafo is None:
+            par_trafo = ParTrafo()
+        self.par_trafo: ParTrafoBase = par_trafo
 
     def initialize(
         self,
@@ -137,8 +142,9 @@ class PredictorSumstat(Sumstat):
         sample = get_sample()
 
         # fix parameter key order
-        self.par_keys: List[str] = \
-            list(sample.accepted_particles[0].parameter.keys())
+        self.par_trafo.initialize(
+            keys=list(sample.accepted_particles[0].parameter.keys()),
+        )
 
         # check whether to skip fitting
         if not self.fit_ixs.act(t=t, total_sims=total_sims):
@@ -147,7 +153,7 @@ class PredictorSumstat(Sumstat):
         # extract information from sample
         sumstats, parameters, weights = read_sample(
             sample=sample, sumstat=self.pre, all_particles=self.all_particles,
-            par_keys=self.par_keys,
+            par_trafo=self.par_trafo,
         )
 
         # subset sample
@@ -181,7 +187,7 @@ class PredictorSumstat(Sumstat):
         # extract information from sample
         sumstats, parameters, weights = read_sample(
             sample=sample, sumstat=self.pre, all_particles=self.all_particles,
-            par_keys=self.par_keys,
+            par_trafo=self.par_trafo,
         )
 
         # subset sample
@@ -225,7 +231,7 @@ class PredictorSumstat(Sumstat):
         sumstat = self.predictor.predict(
             data, normalize=self.normalize_labels).flatten()
 
-        if sumstat.size != len(self.par_keys):
+        if sumstat.size != len(self.par_trafo):
             raise AssertionError("Predictor should return #parameters values")
 
         return sumstat
@@ -237,7 +243,7 @@ class PredictorSumstat(Sumstat):
     def get_ids(self) -> List[str]:
         # label by parameter keys
         if self.fitted:
-            return [f"s_{par_key}" for par_key in self.par_keys]
+            return [f"s_{key}" for key in self.par_trafo.get_ids()]
         if not self.pre_before_fit:
             return dict2arrlabels(self.x_0, keys=self.x_keys)
         return self.pre.get_ids()
