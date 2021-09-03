@@ -7,6 +7,15 @@ Release Notes
 0.11 series
 ...........
 
+
+0.11.1 (2021-09-03)
+-------------------
+
+Sampler:
+
+* Speed up redis done-list checking by atomic operations (#482)
+
+
 0.11.0 (2021-07-31)
 -------------------
 
