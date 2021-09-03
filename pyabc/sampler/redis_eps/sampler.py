@@ -273,17 +273,21 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                 # also stop if no worker is active, useful for server resets
                 and get_int(N_WORKER) > 0
             ):
-                n_done_ixs = self.redis.llen(idfy(DONE_IXS, ana_id, t))
-                for _ in range(n_done_ixs):
-                    # read done ix
-                    done_ix = int(
-                        self.redis.lpop(
-                            idfy(DONE_IXS, ana_id, t),
-                        ).decode(),
-                    )
+                # extract done indices
+                # use a pipeline for efficient retrieval
+                # transactions are atomic
+                _var = idfy(DONE_IXS, ana_id, t)
+                with self.redis.pipeline(transaction=True) as p:
+                    p.lrange(_var, 0, -1).delete(_var)
+                    vals = p.execute()[0]
+
+                # check if missing list can be reduced
+                for val in vals:
+                    done_ix = int(val.decode())
                     # remove done ix from missing ix list
                     if done_ix in missing_ixs:
                         missing_ixs.discard(done_ix)
+
                 sleep(SLEEP_TIME)
 
         # collect all remaining results in queue at this point
