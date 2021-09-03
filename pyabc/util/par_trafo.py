@@ -43,8 +43,8 @@ class ParTrafo(ParTrafoBase):
     """
 
     def __init__(
-            self,
-            trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
+        self,
+        trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
     ):
         self.trafos = trafos
 

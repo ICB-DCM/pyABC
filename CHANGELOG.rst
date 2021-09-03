@@ -11,6 +11,10 @@ Release Notes
 0.11.1 (2021-09-03)
 -------------------
 
+Summary statistics:
+
+* Allow transformed parameters as regression targets via `ParTrafo` (#478)
+
 Sampler:
 
 * Speed up redis done-list checking by atomic operations (#482)
