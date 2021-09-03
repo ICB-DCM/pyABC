@@ -4,7 +4,7 @@ from numbers import Real
 from typing import Callable, Union
 
 from ..population import Sample, SampleFactory
-from ..util import AnalysisVars
+from ..inference_util import AnalysisVars
 from ..distance import Distance
 from ..epsilon import Epsilon
 from ..acceptor import Acceptor

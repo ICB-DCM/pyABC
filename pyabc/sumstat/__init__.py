@@ -35,9 +35,3 @@ from .subset import (
     IdSubsetter,
     GMMSubsetter,
 )
-from .util import (
-    dict2arr,
-    dict2arrlabels,
-    read_sample,
-)
-from .event_ixs import EventIxs

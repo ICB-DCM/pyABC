@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Union
 from abc import ABC, abstractmethod
 
 from ..population import Sample
-from .util import io_dict2arr, dict2arrlabels
+from ..util import io_dict2arr, dict2arrlabels
 
 
 class Sumstat(ABC):
