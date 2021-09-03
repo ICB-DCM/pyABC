@@ -22,9 +22,8 @@ from ...population import Sample
 from .cmd import (
     SSA, N_EVAL, N_ACC, N_REQ, N_FAIL, N_LOOKAHEAD_EVAL, ALL_ACCEPTED,
     N_WORKER, QUEUE, MSG, START, MODE, DYNAMIC, SLEEP_TIME, BATCH_SIZE,
-    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, ACTIVE_SET,
+    IS_LOOK_AHEAD, ANALYSIS_ID, GENERATION, MAX_N_EVAL_LOOK_AHEAD, DONE_IXS,
     idfy)
-from .util import get_active_set
 from .redis_logging import RedisSamplerLogger
 
 logger = logging.getLogger("ABC.Sampler")
@@ -252,11 +251,6 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                     id_results.append(sample_with_id)
                     bar.update(len(id_results))
 
-        # log active set
-        _log_active_set(
-            redis=self.redis, ana_id=ana_id, t=t, id_results=id_results,
-            batch_size=self.batch_size)
-
         # maybe head-start the next generation already
         self.maybe_start_next_generation(
             t=t, n=n, id_results=id_results, all_accepted=all_accepted,
@@ -267,14 +261,33 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             while get_int(N_WORKER) > 0:
                 sleep(SLEEP_TIME)
         else:
-            max_ix = max(id_result[0] for id_result in id_results)
+            # we only need to wait for simulations that were started
+            #  before the last started one among the first n accepted ones
+            #  as later once would be discarded anyway
+            max_ix = sorted(id_result[0] for id_result in id_results)[n-1]
+            # first time index is 1
+            missing_ixs = set(range(1, max_ix+1))
             while (
                 # check whether any active evaluation was started earlier
-                any(ix <= max_ix for ix in get_active_set(
-                    redis=self.redis, ana_id=ana_id, t=t))
+                missing_ixs
                 # also stop if no worker is active, useful for server resets
                 and get_int(N_WORKER) > 0
             ):
+                # extract done indices
+                # use a pipeline for efficient retrieval
+                # transactions are atomic
+                _var = idfy(DONE_IXS, ana_id, t)
+                with self.redis.pipeline(transaction=True) as p:
+                    p.lrange(_var, 0, -1).delete(_var)
+                    vals = p.execute()[0]
+
+                # check if missing list can be reduced
+                for val in vals:
+                    done_ix = int(val.decode())
+                    # remove done ix from missing ix list
+                    if done_ix in missing_ixs:
+                        missing_ixs.discard(done_ix)
+
                 sleep(SLEEP_TIME)
 
         # collect all remaining results in queue at this point
@@ -356,7 +369,6 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .set(idfy(IS_LOOK_AHEAD, ana_id, t), int(is_look_ahead))
          .set(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t), max_n_eval_look_ahead)
          .set(idfy(MODE, ana_id, t), DYNAMIC)
-         .set(idfy(ACTIVE_SET, ana_id, t), pickle.dumps(set()))
          # update the current-generation variable
          .set(idfy(GENERATION, ana_id), t)
          # execute all commands
@@ -397,7 +409,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
          .delete(idfy(IS_LOOK_AHEAD, ana_id, t))
          .delete(idfy(MAX_N_EVAL_LOOK_AHEAD, ana_id, t))
          .delete(idfy(MODE, ana_id, t))
-         .delete(idfy(ACTIVE_SET, ana_id, t))
+         .delete(idfy(DONE_IXS, ana_id, t))
          .delete(idfy(QUEUE, ana_id, t))
          .execute())
 
@@ -706,22 +718,3 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
             particle.weight = 0.
 
     return sample
-
-
-def _log_active_set(
-    redis: StrictRedis,
-    ana_id: str,
-    t: int,
-    id_results: List[Tuple],
-    batch_size: int,
-) -> None:
-    """Log the status of active simulations after the first n acceptances."""
-    accepted_ids = [id_result[0] for id_result in id_results]
-    active_set = get_active_set(redis=redis, ana_id=ana_id, t=t)
-    # remove entries that are already accepted (runtime conditions)
-    active_set = active_set.difference(accepted_ids)
-    earlier = {ix for ix in active_set if max(accepted_ids) > ix}
-    logger.debug(
-        f"After {len(accepted_ids)} acceptances, "
-        f"{len(active_set) * batch_size} simulations busy, "
-        f"thereof {len(earlier) * batch_size} earlier.")
