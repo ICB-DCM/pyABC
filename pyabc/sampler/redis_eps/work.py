@@ -10,8 +10,7 @@ from ..util import any_particle_preliminary
 from .cmd import (
     N_EVAL, N_ACC, N_REQ, N_FAIL, ALL_ACCEPTED, N_WORKER, N_LOOKAHEAD_EVAL,
     SSA, QUEUE, BATCH_SIZE, IS_LOOK_AHEAD, ANALYSIS_ID, MAX_N_EVAL_LOOK_AHEAD,
-    EVAL_LOCK, SLEEP_TIME, idfy)
-from .util import add_ix_to_active_set, discard_ix_from_active_set
+    SLEEP_TIME, DONE_IXS, idfy)
 from .cli import KillHandler
 
 logger = logging.getLogger("ABC.Sampler")
@@ -131,19 +130,13 @@ def work_on_population_dynamic(
             sleep(SLEEP_TIME)
             continue
 
-        # all synchronized operations should be in a lock
-        with redis.lock(EVAL_LOCK):
-            # increase global evaluation counter (before simulation!)
-            particle_max_id: int = redis.incr(
-                idfy(N_EVAL, ana_id, t), batch_size)
+        # increase global evaluation counter (before simulation!)
+        particle_max_id: int = redis.incr(
+            idfy(N_EVAL, ana_id, t), batch_size)
 
-            # update collection of active indices
-            add_ix_to_active_set(
-                redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
-
-            if is_look_ahead:
-                # increment look-ahead evaluation counter
-                redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
+        if is_look_ahead:
+            # increment look-ahead evaluation counter
+            redis.incr(idfy(N_LOOKAHEAD_EVAL, ana_id, t), batch_size)
 
         # timer for current simulation until batch_size acceptances
         this_sim_start = time()
@@ -186,22 +179,23 @@ def work_on_population_dynamic(
         # update total simulation-specific time
         cumulative_simulation_time += time() - this_sim_start
 
+        # new pipeline
+        pipeline = redis.pipeline()
         # push to pipeline if at least one sample got accepted
         if len(accepted_samples) > 0:
-            # new pipeline
-            pipeline = redis.pipeline()
             # update particles counter if nothing is preliminary,
             #  otherwise final acceptance is done by the sampler
             if not any_prel:
                 pipeline.incr(idfy(N_ACC, ana_id, t), len(accepted_samples))
             # note: samples are appended 1-by-1
             pipeline.rpush(idfy(QUEUE, ana_id, t), *accepted_samples)
-            # execute all commands
-            pipeline.execute()
-
-        # update collection of active indices
-        discard_ix_from_active_set(
-            redis=redis, ana_id=ana_id, t=t, ix=particle_max_id)
+        # append to list of done simulations
+        pipeline.rpush(
+            idfy(DONE_IXS, ana_id, t),
+            *range(particle_max_id - batch_size + 1, particle_max_id + 1),
+        )
+        # execute all commands
+        pipeline.execute()
 
     # end of sampling loop
 
