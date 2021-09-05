@@ -530,7 +530,7 @@ class HiddenLayerHandle:
 
     def __init__(
         self,
-        method: str = MAX,
+        method: Union[str, List[str]] = MAX,
         n_layer: int = 1,
         max_size: int = np.inf,
         alpha: float = 2.,
@@ -539,13 +539,16 @@ class HiddenLayerHandle:
         Parameters
         ----------
         method:
-            Method to use.
+            Method to use. Can be any of:
 
             * "heuristic" bases the number of neurons on the number of samples
               to avoid overfitting. See
               https://stats.stackexchange.com/questions/181.
             * "mean" takes the mean of input and output dimension.
             * "max" takes the maximum of input and output dimension.
+
+            Additionally, a list of methods can be passed, in which case
+            the minimum over all is used.
         n_layer:
             Number of layers.
         max_size:
@@ -554,9 +557,12 @@ class HiddenLayerHandle:
             Factor used in "heuristic". The higher, the fewer neurons.
             Recommended is a value in the range 2-10.
         """
-        if method not in HiddenLayerHandle.METHODS:
-            raise ValueError(
-                f"Method {method} must be in {HiddenLayerHandle.METHODS}")
+        if isinstance(method, str):
+            method = [method]
+        for m in method:
+            if m not in HiddenLayerHandle.METHODS:
+                raise ValueError(
+                    f"Method {m} must be in {HiddenLayerHandle.METHODS}")
         self.method = method
         self.n_layer = n_layer
         self.max_size = max_size
@@ -576,17 +582,23 @@ class HiddenLayerHandle:
         -------
         hidden_layer_sizes: Tuple of hidden layer sizes.
         """
-        if self.method == HiddenLayerHandle.HEURISTIC:
-            # number of neurons
-            neurons = n_sample / (self.alpha * (n_in + n_out))
-            # divide by number of layers
-            neurons_per_layer = neurons / self.n_layer
-        elif self.method == HiddenLayerHandle.MEAN:
-            neurons_per_layer = 0.5 * (n_in + n_out)
-        elif self.method == HiddenLayerHandle.MAX:
-            neurons_per_layer = max(n_in, n_out)
-        else:
-            raise ValueError(f"Did not recognize method {self.method}.")
+        neurons_arr = []
+        for method in self.method:
+            if method == HiddenLayerHandle.HEURISTIC:
+                # number of neurons
+                neurons = n_sample / (self.alpha * (n_in + n_out))
+                # divide by number of layers
+                neurons /= self.n_layer
+            elif method == HiddenLayerHandle.MEAN:
+                neurons = 0.5 * (n_in + n_out)
+            elif method == HiddenLayerHandle.MAX:
+                neurons = max(n_in, n_out)
+            else:
+                raise ValueError(f"Did not recognize method {self.method}.")
+            neurons_arr.append(neurons)
+
+        # take minimum over proposed values
+        neurons_per_layer = min(neurons_arr)
 
         # cap
         neurons_per_layer = min(neurons_per_layer, self.max_size)
