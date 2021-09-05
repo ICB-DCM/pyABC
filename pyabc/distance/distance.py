@@ -705,11 +705,11 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
 
         # define feature scaling
         if self.feature_normalization == InfoWeightedPNormDistance.WEIGHTS:
-            weights = self.scale_weights[t]
-            offset_x = np.zeros_like(weights)
-            scale_x = np.zeros_like(weights)
-            use_ixs = ~np.isclose(weights, 0.)
-            scale_x[use_ixs] = 1. / weights[use_ixs]
+            scale_weights = self.scale_weights[t]
+            offset_x = np.zeros_like(scale_weights)
+            scale_x = np.zeros_like(scale_weights)
+            use_ixs = ~np.isclose(scale_weights, 0.)
+            scale_x[use_ixs] = 1. / scale_weights[use_ixs]
         elif self.feature_normalization == InfoWeightedPNormDistance.STD:
             # std
             offset_x = np.nanmean(x, axis=0)
