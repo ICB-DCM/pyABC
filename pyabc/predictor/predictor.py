@@ -1,6 +1,7 @@
 """Predictor implementations."""
 
 import numpy as np
+from scipy.stats import pearsonr
 from typing import Callable, List, Tuple, Union
 import copy
 import logging
@@ -62,6 +63,30 @@ class Predictor(ABC):
         """
 
 
+def wrap_fit_log(fit):
+    """Wrapper for fit logging."""
+    def wrapped_fun(self, x: np.ndarray, y: np.ndarray, w: np.ndarray):
+        start_time = time()
+
+        # actual fitting
+        ret = fit(self, x, y, w)
+
+        logger.info(f"Fitted {self} in {time() - start_time:.2f}s")
+        if self.log_pearson:
+            y_pred = self.predict(x)
+            coeffs = [
+                pearsonr(y[:, i], y_pred[:, i])[0]
+                for i in range(y_pred.shape[1])
+            ]
+            logger.info(" ".join([
+                "Pearson correlations:",
+                *[f"{coeff:.3f}" for coeff in coeffs]]),
+            )
+
+        return ret
+    return wrapped_fun
+
+
 class SimplePredictor(Predictor):
     """Wrapper around generic predictor routines."""
 
@@ -72,6 +97,7 @@ class SimplePredictor(Predictor):
         normalize_labels: bool = True,
         joint: bool = True,
         weight_samples: bool = False,
+        log_pearson: bool = True,
     ):
         """
         Parameters
@@ -88,6 +114,8 @@ class SimplePredictor(Predictor):
         weight_samples:
             Whether to use importance sampling weights. Not that not all
             predictors may support weighted samples.
+        log_pearson:
+            Whether to log Pearson correlation coefficients after fitting.
         """
         self.predictor = predictor
         # only used if not joint
@@ -99,6 +127,8 @@ class SimplePredictor(Predictor):
         self.joint: bool = joint
         self.weight_samples: bool = weight_samples
 
+        self.log_pearson: bool = log_pearson
+
         # indices to use
         self.use_ixs: Union[np.ndarray, None] = None
 
@@ -108,6 +138,7 @@ class SimplePredictor(Predictor):
         self.mean_y: Union[np.ndarray, None] = None
         self.std_y: Union[np.ndarray, None] = None
 
+    @wrap_fit_log
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
         """Fit the predictor to labeled data.
 
@@ -117,8 +148,6 @@ class SimplePredictor(Predictor):
         y: Targets, shape (n_sample, n_out).
         w: Weights, shape (n_sample,).
         """
-        start_time = time()
-
         # remove trivial features
         self.set_use_ixs(x=x)
         x = x[:, self.use_ixs]
@@ -153,8 +182,6 @@ class SimplePredictor(Predictor):
                     predictor.fit(x, y_, w)
                 else:
                     predictor.fit(x, y_)
-
-        logger.info(f"Fitted {self} in {time() - start_time:.2f}s")
 
     def predict(self, x: np.ndarray, normalize: bool = False) -> np.ndarray:
         """Predict outputs using the model.
@@ -242,6 +269,7 @@ class LinearPredictor(SimplePredictor):
         normalize_labels: bool = True,
         joint: bool = True,
         weight_samples: bool = False,
+        log_pearson: bool = True,
         **kwargs,
     ):
         # check installation
@@ -262,6 +290,7 @@ class LinearPredictor(SimplePredictor):
             normalize_labels=normalize_labels,
             joint=joint,
             weight_samples=weight_samples,
+            log_pearson=log_pearson,
         )
 
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
@@ -289,6 +318,7 @@ class LassoPredictor(SimplePredictor):
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
+        log_pearson: bool = True,
         **kwargs,
     ):
         """Additional keyword arguments are passed on to the model."""
@@ -312,6 +342,7 @@ class LassoPredictor(SimplePredictor):
             normalize_labels=normalize_labels,
             joint=joint,
             weight_samples=False,
+            log_pearson=log_pearson,
         )
 
 
@@ -334,6 +365,7 @@ class GPPredictor(SimplePredictor):
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
+        log_pearson: bool = True,
         **kwargs,
     ):
         """
@@ -361,6 +393,7 @@ class GPPredictor(SimplePredictor):
             normalize_labels=normalize_labels,
             joint=joint,
             weight_samples=False,
+            log_pearson=log_pearson,
         )
 
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
@@ -457,12 +490,13 @@ class MLPPredictor(SimplePredictor):
     """
 
     def __init__(
-            self,
-            normalize_features: bool = True,
-            normalize_labels: bool = True,
-            joint: bool = True,
-            hidden_layer_sizes: Union[Tuple[int, ...], Callable] = None,
-            **kwargs,
+        self,
+        normalize_features: bool = True,
+        normalize_labels: bool = True,
+        joint: bool = True,
+        hidden_layer_sizes: Union[Tuple[int, ...], Callable] = None,
+        log_pearson: bool = True,
+        **kwargs,
     ):
         """Additional keyword arguments are passed on to the model.
 
@@ -497,6 +531,7 @@ class MLPPredictor(SimplePredictor):
             normalize_labels=normalize_labels,
             joint=joint,
             weight_samples=False,
+            log_pearson=log_pearson,
         )
 
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
