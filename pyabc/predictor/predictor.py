@@ -73,6 +73,7 @@ def wrap_fit_log(fit):
 
         logger.info(f"Fitted {self} in {time() - start_time:.2f}s")
         if self.log_pearson:
+            # shape: n_sample, n_out
             y_pred = self.predict(x)
             coeffs = [
                 pearsonr(y[:, i], y_pred[:, i])[0]
@@ -211,11 +212,16 @@ class SimplePredictor(Predictor):
         if self.joint:
             y = self.predictor.predict(x)
         else:
-            y = [predictor.predict(x) for predictor in self.single_predictors]
+            y = [predictor.predict(x).flatten()
+                 for predictor in self.single_predictors]
             y = np.array(y).T
 
         if not normalize and self.normalize_labels:
             y = y * self.std_y + self.mean_y
+
+        # some predictors may return flat arrays if n_out == 1
+        if y.ndim == 1:
+            y = y.reshape(-1, 1)
 
         return y
 
