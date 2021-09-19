@@ -281,7 +281,7 @@ def test_info_weighted_pnorm_distance():
                 feature_normalization=feature_normalization,
                 scale_log_file=scale_log_file,
                 info_log_file=info_log_file,
-                info_sample_log_file=info_sample_log_file
+                info_sample_log_file=info_sample_log_file,
             )
             abc = ABCSMC(model, prior, distance, population_size=100)
             abc.new("sqlite:///" + db_file, data)
