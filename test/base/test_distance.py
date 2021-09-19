@@ -261,6 +261,10 @@ def test_adaptivepnormdistance_initial_weights():
 def test_info_weighted_pnorm_distance():
     """Just test the info weighted distance pipeline."""
     db_file = create_sqlite_db_id()[len("sqlite:///"):]
+    scale_log_file = tempfile.mkstemp()[1]
+    info_log_file = tempfile.mkstemp()[1]
+    info_sample_log_file = tempfile.mkstemp()[1]
+
     try:
         def model(p):
             return {
@@ -272,8 +276,12 @@ def test_info_weighted_pnorm_distance():
 
         for feature_normalization in ["mad", "std", "weights", "none"]:
             distance = InfoWeightedPNormDistance(
-                predictor=LinearPredictor(), fit_info_ixs={1, 3},
+                predictor=LinearPredictor(),
+                fit_info_ixs={1, 3},
                 feature_normalization=feature_normalization,
+                scale_log_file=scale_log_file,
+                info_log_file=info_log_file,
+                info_sample_log_file=info_sample_log_file
             )
             abc = ABCSMC(model, prior, distance, population_size=100)
             abc.new("sqlite:///" + db_file, data)
@@ -281,6 +289,11 @@ def test_info_weighted_pnorm_distance():
     finally:
         if os.path.exists(db_file):
             os.remove(db_file)
+        if os.path.exists(scale_log_file):
+            os.remove(scale_log_file)
+        if os.path.exists(info_log_file):
+            os.remove(info_log_file)
+        # TODO remove info samples log files
 
 
 def test_aggregateddistance():

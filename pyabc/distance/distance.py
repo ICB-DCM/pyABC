@@ -12,7 +12,9 @@ from ..predictor import Predictor
 from ..sumstat import (
     Sumstat, IdentitySumstat, Subsetter, IdSubsetter,
 )
-from ..util import dict2arr, read_sample, ParTrafoBase, ParTrafo, EventIxs
+from ..util import (
+    dict2arr, read_sample, ParTrafoBase, ParTrafo, EventIxs, log_samples,
+)
 
 from .scale import mad, span
 from .base import Distance, to_distance
@@ -502,6 +504,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         max_info_weight_ratio: float = None,
         scale_log_file: str = None,
         info_log_file: str = None,
+        info_sample_log_file: str = None,
         sumstat: Sumstat = None,
         fd_deltas: Union[List[float], float] = None,
         subsetter: Subsetter = None,
@@ -532,6 +535,11 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             `max_scale_weight_ratio`.
         info_log_file:
             Log file for the information weights.
+        info_sample_log_file:
+            Log file for samples used to train the regression model underlying
+            the information weights, in npy format.
+            Should be only a base file name, will be automatically postfixed
+            by "{t}_{var}.npy", with var in samples, parameters, weights.
         fd_deltas:
             Finite difference step sizes. Can be a float, or a List of floats,
             in which case component-wise step size selection is employed.
@@ -585,6 +593,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.normalize_by_par: bool = normalize_by_par
         self.max_info_weight_ratio: float = max_info_weight_ratio
         self.info_log_file: str = info_log_file
+        self.info_sample_log_file: str = info_sample_log_file
         self.fd_deltas: Union[List[float], float] = fd_deltas
 
         if subsetter is None:
@@ -813,6 +822,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         log_weights(
             t=t, weights=self.info_weights, keys=self.sumstat.get_ids(),
             label="Info", log_file=self.info_log_file)
+        log_samples(
+            t=t, sumstats=sumstats, parameters=parameters, weights=weights,
+            log_file=self.info_sample_log_file)
 
     def get_weights(self, t: int) -> np.ndarray:
         info_weights: np.ndarray = \

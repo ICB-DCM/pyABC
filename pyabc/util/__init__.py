@@ -18,3 +18,7 @@ from .par_trafo import (
     ParTrafoBase,
     ParTrafo,
 )
+
+from .log import (
+    log_samples,
+)
