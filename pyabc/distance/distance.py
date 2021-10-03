@@ -509,7 +509,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         fd_deltas: Union[List[float], float] = None,
         subsetter: Subsetter = None,
         all_particles_for_scale: bool = True,
-        all_particles_for_prediction: bool = False,
+        all_particles_for_prediction: bool = True,
         feature_normalization: str = WEIGHTS,
         par_trafo: ParTrafoBase = None,
     ):
