@@ -22,6 +22,9 @@ def plot_distance_weights(
     xticklabel_rotation: float = 0,
     normalize: bool = True,
     size: Tuple[float, float] = None,
+    xlabel: str = "Summary statistic",
+    ylabel: str = "Weight",
+    title: str = None,
     ax: mpl.axes.Axes = None,
     **kwargs,
 ) -> mpl.axes.Axes:
@@ -51,6 +54,12 @@ def plot_distance_weights(
         Whether to normalize the weights to sum 1.
     size:
         Figure size in inches, (width, height).
+    xlabel:
+        x-axis label.
+    ylabel:
+        y-axis label.
+    title:
+        Plot title.
     ax:
         Axis object to use.
     **kwargs:
@@ -103,8 +112,9 @@ def plot_distance_weights(
         # enforce integer labels
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    ax.set_xlabel("Summary statistic")
-    ax.set_ylabel("Weight")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
 
     if size is not None:
         fig.set_size_inches(size)

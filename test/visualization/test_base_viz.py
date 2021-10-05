@@ -258,3 +258,54 @@ def test_distance_weights():
     for keys_as_labels in [True, False]:
         pyabc.visualization.plot_distance_weights(
             log_files, keys_as_labels=keys_as_labels)
+
+
+def test_sensitivity_sankey():
+    """Test pyabc.visualization.plot_sensitivity_sankey`"""
+    sigmas = {"p1": 0.1}
+
+    def model(p):
+        return {"y1": p["p1"] + 1 + sigmas["p1"] * np.random.normal(),
+                "y2": 2 + 0.1 * np.random.normal(size=3)}
+
+    gt_par = {"p1": 3}
+
+    data = {"y1": gt_par["p1"] + 1, "y2": 2 * np.ones(shape=3)}
+
+    prior_bounds = {"p1": (0, 10)}
+
+    prior = pyabc.Distribution(
+        **{
+            key: pyabc.RV("uniform", lb, ub - lb)
+            for key, (lb, ub) in prior_bounds.items()
+        },
+    )
+
+    total_sims = 1000
+
+    # tmp files
+    db_file = tempfile.mkstemp(suffix=".db")[1]
+    scale_log_file = tempfile.mkstemp(suffix=".json")[1]
+    info_log_file = tempfile.mkstemp(suffix=".json")[1]
+    info_sample_log_file = tempfile.mkstemp()[1]
+
+    distance = pyabc.InfoWeightedPNormDistance(
+        p=1,
+        scale_function=pyabc.distance.mad,
+        predictor=pyabc.predictor.LinearPredictor(),
+        fit_info_ixs=pyabc.util.EventIxs(sims=int(0.4 * total_sims)),
+        scale_log_file=scale_log_file,
+        info_log_file=info_log_file,
+        info_sample_log_file=info_sample_log_file,
+    )
+
+    abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
+    h = abc.new(db="sqlite:///" + db_file, observed_sum_stat=data)
+    abc.run(max_total_nr_simulations=total_sims)
+
+    pyabc.visualization.plot_sensitivity_sankey(
+        info_sample_log_file=info_sample_log_file,
+        t=info_log_file,
+        h=h,
+        predictor=pyabc.predictor.LinearPredictor(),
+    )

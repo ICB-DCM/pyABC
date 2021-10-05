@@ -571,10 +571,10 @@ class HiddenLayerHandle:
 
     def __init__(
         self,
-        method: Union[str, List[str]] = MAX,
+        method: Union[str, List[str]] = MEAN,
         n_layer: int = 1,
         max_size: int = np.inf,
-        alpha: float = 2.,
+        alpha: float = 1.,
     ):
         """
         Parameters
