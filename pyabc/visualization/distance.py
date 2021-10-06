@@ -17,11 +17,15 @@ def plot_distance_weights(
     ts: Union[List[int], List[str], int, str] = "last",
     labels: Union[List[str], str] = None,
     colors: Union[List[Any], Any] = None,
+    linestyles: Union[List[str], str] = None,
     keys_as_labels: bool = True,
     keys: List[str] = None,
     xticklabel_rotation: float = 0,
     normalize: bool = True,
     size: Tuple[float, float] = None,
+    xlabel: str = "Summary statistic",
+    ylabel: str = "Weight",
+    title: str = None,
     ax: mpl.axes.Axes = None,
     **kwargs,
 ) -> mpl.axes.Axes:
@@ -41,6 +45,8 @@ def plot_distance_weights(
         A label for each log file.
     colors:
         A color for each log file.
+    linestyles:
+        Linestyles to apply.
     keys_as_labels:
         Whether to use the summary statistic keys as x tick labels.
     keys:
@@ -51,6 +57,12 @@ def plot_distance_weights(
         Whether to normalize the weights to sum 1.
     size:
         Figure size in inches, (width, height).
+    xlabel:
+        x-axis label.
+    ylabel:
+        y-axis label.
+    title:
+        Plot title.
     ax:
         Axis object to use.
     **kwargs:
@@ -61,14 +73,13 @@ def plot_distance_weights(
     -------
     The used axis object.
     """
-    log_files, ts, colors = to_lists(log_files, ts, colors)
+    log_files, ts, colors, linestyles = \
+        to_lists(log_files, ts, colors, linestyles)
     labels = get_labels(labels, len(log_files))
 
     # default keyword arguments
     if "marker" not in kwargs:
         kwargs["marker"] = "x"
-    if "linestyle" not in kwargs:
-        kwargs["linestyle"] = "-"
 
     n_run = len(log_files)
 
@@ -79,7 +90,8 @@ def plot_distance_weights(
         fig = ax.get_figure()
 
     # add a line per file
-    for log_file, t, label, color in zip(log_files, ts, labels, colors):
+    for log_file, t, label, color, linestyle in \
+            zip(log_files, ts, labels, colors, linestyles):
         weights = load_dict_from_json(log_file)
         if t == "last":
             t = max(weights.keys())
@@ -89,7 +101,9 @@ def plot_distance_weights(
         weights = np.array([weights[key] for key in keys])
         if normalize:
             weights /= weights.sum()
-        ax.plot(weights, label=label, color=color, **kwargs)
+        ax.plot(
+            weights, label=label, color=color, linestyle=linestyle, **kwargs,
+        )
 
     # add labels
     if n_run > 1:
@@ -103,8 +117,9 @@ def plot_distance_weights(
         # enforce integer labels
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-    ax.set_xlabel("Summary statistic")
-    ax.set_ylabel("Weight")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
 
     if size is not None:
         fig.set_size_inches(size)

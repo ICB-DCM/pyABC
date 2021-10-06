@@ -48,3 +48,6 @@ from .walltime import (
     plot_walltime_lowlevel,
     plot_eps_walltime,
     plot_eps_walltime_lowlevel)
+from .sankey import (
+    plot_sensitivity_sankey,
+)

@@ -7,6 +7,22 @@ Release Notes
 0.11 series
 ...........
 
+
+0.11.1 (2021-10-06)
+-------------------
+
+Summary statistics:
+
+* Allow transformed parameters as regression targets via `ParTrafo` (#478)
+* Add Sankey flow plot (#484)
+* Add "informative" notebook to document regression-based summary statistics
+  and weights (#484)
+
+Sampler:
+
+* Speed up redis done-list checking by atomic operations (#482)
+
+
 0.11.0 (2021-07-31)
 -------------------
 
