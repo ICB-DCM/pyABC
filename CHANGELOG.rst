@@ -8,12 +8,15 @@ Release Notes
 ...........
 
 
-0.11.1 (2021-09-03)
+0.11.1 (2021-10-06)
 -------------------
 
 Summary statistics:
 
 * Allow transformed parameters as regression targets via `ParTrafo` (#478)
+* Add Sankey flow plot (#484)
+* Add "informative" notebook to document regression-based summary statistics
+  and weights (#484)
 
 Sampler:
 
