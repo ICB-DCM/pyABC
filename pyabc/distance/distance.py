@@ -12,7 +12,9 @@ from ..predictor import Predictor
 from ..sumstat import (
     Sumstat, IdentitySumstat, Subsetter, IdSubsetter,
 )
-from ..util import dict2arr, read_sample, ParTrafoBase, ParTrafo, EventIxs
+from ..util import (
+    dict2arr, read_sample, ParTrafoBase, ParTrafo, EventIxs, log_samples,
+)
 
 from .scale import mad, span
 from .base import Distance, to_distance
@@ -494,19 +496,20 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         initial_scale_weights: Dict[str, float] = None,
         initial_info_weights: Dict[str, float] = None,
         fixed_weights: Dict[str, float] = None,
-        fit_scale_ixs: Union[Collection, int] = np.inf,
-        fit_info_ixs: Union[Collection, int] = None,
+        fit_scale_ixs: Union[EventIxs, Collection, int] = np.inf,
+        fit_info_ixs: Union[EventIxs, Collection, int] = None,
         normalize_by_par: bool = True,
         scale_function: Callable = None,
         max_scale_weight_ratio: float = None,
         max_info_weight_ratio: float = None,
         scale_log_file: str = None,
         info_log_file: str = None,
+        info_sample_log_file: str = None,
         sumstat: Sumstat = None,
         fd_deltas: Union[List[float], float] = None,
         subsetter: Subsetter = None,
         all_particles_for_scale: bool = True,
-        all_particles_for_prediction: bool = False,
+        all_particles_for_prediction: bool = True,
         feature_normalization: str = WEIGHTS,
         par_trafo: ParTrafoBase = None,
     ):
@@ -532,6 +535,11 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             `max_scale_weight_ratio`.
         info_log_file:
             Log file for the information weights.
+        info_sample_log_file:
+            Log file for samples used to train the regression model underlying
+            the information weights, in npy format.
+            Should be only a base file name, will be automatically postfixed
+            by "{t}_{var}.npy", with var in samples, parameters, weights.
         fd_deltas:
             Finite difference step sizes. Can be a float, or a List of floats,
             in which case component-wise step size selection is employed.
@@ -585,6 +593,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self.normalize_by_par: bool = normalize_by_par
         self.max_info_weight_ratio: float = max_info_weight_ratio
         self.info_log_file: str = info_log_file
+        self.info_sample_log_file: str = info_sample_log_file
         self.fd_deltas: Union[List[float], float] = fd_deltas
 
         if subsetter is None:
@@ -693,94 +702,40 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             all_particles=self.all_particles_for_prediction,
             par_trafo=self.par_trafo,
         )
+        # log samples used for training
+        log_samples(
+            t=t, sumstats=sumstats, parameters=parameters, weights=weights,
+            log_file=self.info_sample_log_file)
+
         s_0 = self.sumstat(self.x_0)
 
-        # subset sample
-        sumstats, parameters, weights = self.subsetter.select(
-            x=sumstats, y=parameters, w=weights,
+        # normalize features and labels
+        ret = InfoWeightedPNormDistance.normalize_sample(
+            sumstats=sumstats,
+            parameters=parameters,
+            weights=weights,
+            s_0=s_0,
+            t=t,
+            subsetter=self.subsetter,
+            feature_normalization=self.feature_normalization,
+            scale_weights=self.scale_weights,
         )
-
-        # define features
-        x = sumstats
-
-        # define feature scaling
-        if self.feature_normalization == InfoWeightedPNormDistance.WEIGHTS:
-            scale_weights = self.scale_weights[t]
-            offset_x = np.zeros_like(scale_weights)
-            scale_x = np.zeros_like(scale_weights)
-            use_ixs = ~np.isclose(scale_weights, 0.)
-            scale_x[use_ixs] = 1. / scale_weights[use_ixs]
-        elif self.feature_normalization == InfoWeightedPNormDistance.STD:
-            # std
-            offset_x = np.nanmean(x, axis=0)
-            scale_x = np.nanstd(x, axis=0)
-        elif self.feature_normalization == InfoWeightedPNormDistance.MAD:
-            offset_x = np.nanmedian(x, axis=0)
-            scale_x = np.nanmedian(np.abs(x - offset_x), axis=0)
-        elif self.feature_normalization == InfoWeightedPNormDistance.NONE:
-            offset_x = np.zeros(shape=x.shape[1])
-            scale_x = np.ones(shape=x.shape[1])
-        else:
-            raise ValueError(
-                f"Feature normalization {self.feature_normalization} must be "
-                f"in {InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
-            )
-
-        # remove trivial features
-        use_ixs = ~np.isclose(scale_x, 0.)
-        x, offset_x, scale_x = \
-            x[:, use_ixs], offset_x[use_ixs], scale_x[use_ixs]
-
-        # normalize features
-        x = (x - offset_x) / scale_x
-
-        # normalize observed features
-        x0 = (s_0[use_ixs] - offset_x) / scale_x
-
-        # normalize labels
-        y = parameters
-        mean_y = np.mean(y, axis=0)
-        std_y = np.std(y, axis=0)
-        y = (y - mean_y) / std_y
+        x, y, weights, use_ixs, x0 = \
+            (ret[key] for key in ("x", "y", "weights", "use_ixs", "x0"))
 
         # learn predictor model
         self.predictor.fit(x=x, y=y, w=weights)
 
-        # calculate all sensitivities of the predictor
-
-        def fun(_x):
-            """Predictor function."""
-            return self.predictor.predict(_x.reshape(1, -1)).flatten()
-
-        # calculate sensitivities
-        #  shape (n_x, n_y)
-        sensis = fd_nabla1_multi_delta(
-            x=x0, fun=fun, test_deltas=self.fd_deltas)
-        n_x = x.shape[1]
-        n_y = y.shape[1]
-        if sensis.shape != (n_x, n_y):
-            raise AssertionError("Sensitivity shape did not match.")
-
-        # we are only interested in absolute values
-        sensis = np.abs(sensis)
-
-        # total sensitivities per parameter
-        sensi_per_y = np.sum(sensis, axis=0)
-
-        # identify parameters that have mostly zero gradients throughout
-        y_has_sensi = ~np.isclose(sensi_per_y, 0.)
-        # set values of near-zero contribution to zero
-        sensis[:, ~y_has_sensi] = 0
-        # log
-        if not y_has_sensi.all():
-            par_trafo_ids = self.par_trafo.get_ids()
-            insensi_par_keys = [
-                par_trafo_ids[ix] for ix in np.flatnonzero(~y_has_sensi)]
-            logger.info(f"Zero info for parameters {insensi_par_keys}")
-
-        if self.normalize_by_par:
-            # normalize sums over sumstats to 1
-            sensis[:, y_has_sensi] /= sensi_per_y[y_has_sensi]
+        # calculate all sensitivities of the predictor at the observed data
+        sensis = InfoWeightedPNormDistance.calculate_sensis(
+            predictor=self.predictor,
+            fd_deltas=self.fd_deltas,
+            x0=x0,
+            n_x=x.shape[1],
+            n_y=y.shape[1],
+            par_trafo=self.par_trafo,
+            normalize_by_par=self.normalize_by_par,
+        )
 
         # the weight of a sumstat is the sum of the sensitivities over all
         #  parameters
@@ -813,6 +768,151 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         log_weights(
             t=t, weights=self.info_weights, keys=self.sumstat.get_ids(),
             label="Info", log_file=self.info_log_file)
+
+    @staticmethod
+    def normalize_sample(
+        sumstats: np.ndarray,
+        parameters: np.ndarray,
+        weights: np.ndarray,
+        s_0: np.ndarray,
+        t: int,
+        subsetter: Subsetter,
+        feature_normalization: str,
+        scale_weights: Dict[int, np.ndarray],
+    ) -> Dict:
+        """Normalize samples prior to regression model training.
+
+        Parameters
+        ----------
+        sumstats: Model outputs or summary statistics, shape (n_sample, n_x).
+        parameters: Parameter values, shape (n_sample, n_y).
+        weights: Importance sampling weights, shape (n_sample,).
+        s_0: Observed data, shape (n_x,).
+        t: Time point, only needed together with scale_weights.
+        subsetter: Subset creator.
+        feature_normalization: Method of feature normalization.
+        scale_weights:
+            Dictionary of scale weights, only used if
+            feature_normalization=="weights".
+
+        Returns
+        -------
+        ret:
+            Dictionary with keys x, y, weights, use_ixs, x0.
+        """
+        # subset sample
+        sumstats, parameters, weights = subsetter.select(
+            x=sumstats, y=parameters, w=weights,
+        )
+
+        # define features
+        x = sumstats
+
+        # define feature scaling
+        if feature_normalization == InfoWeightedPNormDistance.WEIGHTS:
+            if scale_weights is None:
+                raise ValueError("Requiested scale weights but None passed")
+            scale_weights = scale_weights[t]
+            offset_x = np.zeros_like(scale_weights)
+            scale_x = np.zeros_like(scale_weights)
+            use_ixs = ~np.isclose(scale_weights, 0.)
+            scale_x[use_ixs] = 1. / scale_weights[use_ixs]
+        elif feature_normalization == InfoWeightedPNormDistance.STD:
+            # std
+            offset_x = np.nanmean(x, axis=0)
+            scale_x = np.nanstd(x, axis=0)
+        elif feature_normalization == InfoWeightedPNormDistance.MAD:
+            offset_x = np.nanmedian(x, axis=0)
+            scale_x = np.nanmedian(np.abs(x - offset_x), axis=0)
+        elif feature_normalization == InfoWeightedPNormDistance.NONE:
+            offset_x = np.zeros(shape=x.shape[1])
+            scale_x = np.ones(shape=x.shape[1])
+        else:
+            raise ValueError(
+                f"Feature normalization {feature_normalization} must be "
+                f"in {InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
+            )
+
+        # remove trivial features
+        use_ixs = ~np.isclose(scale_x, 0.)
+        x, offset_x, scale_x = \
+            x[:, use_ixs], offset_x[use_ixs], scale_x[use_ixs]
+
+        # normalize features
+        x = (x - offset_x) / scale_x
+
+        # normalize observed features
+        x0 = (s_0[use_ixs] - offset_x) / scale_x
+
+        # normalize labels
+        y = parameters
+        mean_y = np.mean(y, axis=0)
+        std_y = np.std(y, axis=0)
+        y = (y - mean_y) / std_y
+
+        return {
+            "x": x, "y": y, "weights": weights, "use_ixs": use_ixs, "x0": x0,
+        }
+
+    @staticmethod
+    def calculate_sensis(
+        predictor: Predictor,
+        fd_deltas: Union[List[float], float],
+        x0: np.ndarray,
+        n_x: int,
+        n_y: int,
+        par_trafo: ParTrafoBase,
+        normalize_by_par: bool,
+    ):
+        """Calculate normalized predictor sensitivities.
+
+        Parameters
+        ----------
+        predictor: Fitted predictor model.
+        fd_deltas: Finite difference step sizes.
+        x0: Observed data, shape (n_x).
+        n_x: Data dimension.
+        n_y: Transformed parameter dimension.
+        par_trafo: Parameter transformations, shape (n_y).
+        normalize_by_par: Whether to normalize sensitivities by parameters.
+
+        Returns
+        -------
+        sensis: Sensitivities, shape (n_x, n_y).
+        """
+        def fun(_x):
+            """Predictor function."""
+            return predictor.predict(_x.reshape(1, -1)).flatten()
+
+        # calculate sensitivities
+        #  shape (n_x, n_y)
+        sensis = fd_nabla1_multi_delta(
+            x=x0, fun=fun, test_deltas=fd_deltas)
+        if sensis.shape != (n_x, n_y):
+            raise AssertionError("Sensitivity shape did not match.")
+
+        # we are only interested in absolute values
+        sensis = np.abs(sensis)
+
+        # total sensitivities per parameter
+        sensi_per_y = np.sum(sensis, axis=0)
+
+        # identify parameters that have mostly zero gradients throughout
+        y_has_sensi = ~np.isclose(sensi_per_y, 0.)
+        # set values of near-zero contribution to zero
+        sensis[:, ~y_has_sensi] = 0
+        # log
+        if not y_has_sensi.all():
+            par_trafo_ids = par_trafo.get_ids()
+            insensi_par_keys = [
+                par_trafo_ids[ix] for ix in np.flatnonzero(~y_has_sensi)]
+            logger.info(f"Zero info for parameters {insensi_par_keys}")
+
+        if normalize_by_par:
+            # normalize sums over sumstats to 1
+            sensis[:, y_has_sensi] /= sensi_per_y[y_has_sensi]
+
+        return sensis
 
     def get_weights(self, t: int) -> np.ndarray:
         info_weights: np.ndarray = \

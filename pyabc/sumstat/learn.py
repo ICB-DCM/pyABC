@@ -48,7 +48,7 @@ class PredictorSumstat(Sumstat):
         self,
         predictor: Union[Predictor, Callable],
         fit_ixs: Union[EventIxs, Collection[int], int] = None,
-        all_particles: bool = False,
+        all_particles: bool = True,
         normalize_labels: bool = True,
         fitted: bool = False,
         subsetter: Subsetter = None,
