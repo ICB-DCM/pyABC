@@ -8,6 +8,12 @@ Release Notes
 ...........
 
 
+0.11.2 (2021-10-07)
+-------------------
+
+* Remove codacy due to excessive permission requests
+* Tidy up example titles
+
 0.11.1 (2021-10-06)
 -------------------
 
