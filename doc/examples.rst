@@ -37,14 +37,14 @@ Download the examples as notebooks
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
-* :download:`Ordinary Differential Equations: Conversion Reaction <examples/conversion_reaction.ipynb>`
-* :download:`Markov Jump Process: Reaction Network <examples/chemical_reaction.ipynb>`
+* :download:`Ordinary differential equations: Conversion reaction <examples/conversion_reaction.ipynb>`
+* :download:`Markov jump process: Reaction network <examples/chemical_reaction.ipynb>`
 * :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
 * :download:`Stochastic Differential Equation: Ion channel noise in Hodgkin-Huxley neurons <examples/sde_ion_channels.ipynb>`
-* :download:`Adaptive Distances <examples/adaptive_distances.ipynb>`
-* :download:`Informative Distances and Summary Statistics <examples/informative.ipynb>`
-* :download:`Aggregated Distances <examples/aggregated_distances.ipynb>`
-* :download:`External Simulators <examples/external_simulators.ipynb>`
+* :download:`Adaptive distances <examples/adaptive_distances.ipynb>`
+* :download:`Informative distances and summary statistics <examples/informative.ipynb>`
+* :download:`Aggregated distances <examples/aggregated_distances.ipynb>`
+* :download:`External simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise and exact inference <examples/noise.ipynb>`
 * :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
