@@ -3,7 +3,21 @@
 Examples
 ========
 
-The following examples should help to get a better idea of how to use pyABC.
+We provide a collection of example notebooks to get a better idea of how to
+use pyABC, and illustrate core features.
+
+The notebooks can be run locally with an installation of jupyter
+(``pip install jupyter``), or online on Google Colab or nbviewer, following the
+links at the top of each notebook.
+To run the notebooks online, at least an installation of pyABC is required,
+which can be performed by inserting a cell
+
+.. code:: sh
+
+   # install if not done yet
+   !pip install pyabc --quiet
+
+at the top of a notebook. Potentially, further dependencies may be required.
 
 .. toctree::
    :maxdepth: 1
