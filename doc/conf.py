@@ -146,9 +146,9 @@ nbsphinx_prolog = r"""
 .. raw:: html
 
     <div class="note">
-      <a href="https://colab.research.google.com/{{ docname|e }}" target="_parent">
+      <a href="https://colab.research.google.com/{{ docname|e }}" target="_blank">
       <img src="../_static/colab-badge.svg" alt="Open in Colab"/></a>
-      <a href="https://nbviewer.jupyter.org/{{ docname|e }}" target="_parent">
+      <a href="https://nbviewer.jupyter.org/{{ docname|e }}" target="_blank">
       <img src="../_static/nbviewer-badge.svg" alt="Open in nbviewer"/></a>
     </div>
 
