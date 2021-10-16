@@ -10,14 +10,14 @@ The notebooks can be run locally with an installation of jupyter
 (``pip install jupyter``), or online on Google Colab or nbviewer, following the
 links at the top of each notebook.
 To run the notebooks online, at least an installation of pyABC is required,
-which can be performed by inserting a cell
+which can be performed by
 
 .. code:: sh
 
    # install if not done yet
    !pip install pyabc --quiet
 
-at the top of a notebook. Potentially, further dependencies may be required.
+Potentially, further dependencies may be required.
 
 .. toctree::
    :maxdepth: 1
