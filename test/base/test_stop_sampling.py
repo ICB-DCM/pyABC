@@ -67,8 +67,11 @@ def test_stop_early(db_path, max_eval_checked_sampler):
     n_procs = sampler.n_procs if hasattr(sampler, 'n_procs') else 1
     df["corrected_acceptance_rate"] = \
         df["particles"] / (df["samples"] - (n_procs-1))
+    print(df, n_procs)
 
-    assert df["corrected_acceptance_rate"].iloc[-1] >= set_acc_rate
+    # if already the first generation fails, the quotient is not meaningful
+    assert max(df.t) == -1 or \
+        df["corrected_acceptance_rate"].iloc[-1] >= set_acc_rate
 
 
 def test_total_nr_simulations(db_path):
