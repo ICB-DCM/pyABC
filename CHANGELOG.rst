@@ -14,7 +14,7 @@ Release Notes
 * Update to amici 0.11.19 for scaled residual support (#491)
 * Add links for online execution of notebooks on Google Colab and nbviewer
   (#492)
-* Tests: Fix early stopping test for first generation
+* Tests: Fix early stopping test for first generation (#494)
 
 
 0.11.2 (2021-10-07)
