@@ -14,7 +14,8 @@ which can be performed by
 
 .. code:: sh
 
-   !pip install pyabc --quiet``
+   # install if not done yet
+   !pip install pyabc --quiet
 
 Potentially, further dependencies may be required.
 
