@@ -18,17 +18,21 @@ from .base import (
     to_distance,
 )
 from .distance import (
-    PNormDistance,
-    AdaptivePNormDistance,
-    InfoWeightedPNormDistance,
-    AggregatedDistance,
-    AdaptiveAggregatedDistance,
     ZScoreDistance,
     PCADistance,
     MinMaxDistance,
     PercentileDistance,
     RangeEstimatorDistance,
     DistanceWithMeasureList,
+)
+from .pnorm import (
+    PNormDistance,
+    AdaptivePNormDistance,
+    InfoWeightedPNormDistance,
+)
+from .aggregate import (
+    AggregatedDistance,
+    AdaptiveAggregatedDistance,
 )
 from .scale import (
     median_absolute_deviation,
