@@ -3,11 +3,19 @@
 from abc import ABC
 import numpy as np
 from scipy import linalg as la
-from typing import Callable, List
+from typing import Callable, List, Union
 import logging
+from functools import partial
 
 from ..population import Sample
+from ..sumstat import Sumstat, IdentitySumstat
+
 from .base import Distance
+
+try:
+    import ot
+except ImportError:
+    ot = None
 
 
 logger = logging.getLogger("ABC.Distance")
@@ -286,3 +294,51 @@ class PercentileDistance(RangeEstimatorDistance):
         config = super().get_config()
         config["PERCENTILE"] = self.PERCENTILE
         return config
+
+
+class OTDistance(Distance):
+    """Optimal transport distance between empirical distributions.
+
+    As in [#bernton2019]_.
+
+    .. [#bernton2019] Bernton, E., Jacob, P.E., Gerber, M. and Robert, C.P.,
+        2019.
+        Approximate Bayesian computation with the Wasserstein distance.
+        arXiv preprint arXiv:1905.03747.
+    """
+
+    def __init__(
+        self,
+        sumstat: Sumstat = None,
+        p: float = 1,
+        dist: Union[str, Callable] = "sqeuclidean",
+    ):
+        """
+        Parameters
+        ----------
+        :param sumstat:
+        :param p:
+        :param dist:
+        """
+        super().__init__()
+
+        if sumstat is None:
+            sumstat = IdentitySumstat()
+        self.sumstat: Sumstat = sumstat
+
+        self.p: float = p
+
+        if isinstance(dist, str):
+            dist = partial(ot.dist, metric=dist)
+        self.dist: Callable = dist
+
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
+        # compte summary statistics
+        s, s0 = self.sumstat(x), self.sumstat(x_0)
+        return s - s0
