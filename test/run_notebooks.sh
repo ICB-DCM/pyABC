@@ -3,7 +3,7 @@
 # Run selected notebooks, on error show output and return with error code.
 
 # set environment
-export PYABC_MAX_POP_SIZE=10
+export PYABC_MAX_POP_SIZE=20
 
 # Notebooks to run
 nbs_1=(
@@ -11,7 +11,9 @@ nbs_1=(
   "early_stopping" "model_selection" "noise"
   "parameter_inference" "resuming")
 nbs_2=(
-  "external_simulators" "using_R")
+  "external_simulators" "using_R" "informative"
+  "aggregated_distances" "chemical_reaction"
+  "data_plots" "discrete_parameters")
 
 # All notebooks
 nbs_all=("${nbs_1[@]}" "${nbs_2[@]}")
