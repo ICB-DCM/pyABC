@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+import scipy.spatial.distance as sp_dist
 import scipy.stats
 import os
 import tempfile
@@ -13,6 +14,8 @@ from pyabc.distance import (
     InfoWeightedPNormDistance,
     AggregatedDistance,
     AdaptiveAggregatedDistance,
+    WassersteinDistance,
+    SlicedWassersteinDistance,
     NormalKernel,
     IndependentNormalKernel,
     IndependentLaplaceKernel,
@@ -42,6 +45,7 @@ from pyabc.storage import load_dict_from_json
 from pyabc.predictor import LinearPredictor
 from pyabc.random_variables import Distribution, RV
 from pyabc.storage import create_sqlite_db_id
+from pyabc.sumstat import Sumstat
 from pyabc.inference import ABCSMC
 
 
@@ -591,3 +595,64 @@ def test_store_weights():
         assert weights == expected
 
         os.remove(weights_file)
+
+
+def test_wasserstein_distance():
+    """Test Wasserstein and Sliced Wasserstein distances."""
+    n_sample = 11
+
+    def model_1d(p):
+        return {"y": np.random.normal(p["p0"], 1., size=n_sample)}
+
+    p_true = {"p0": -0.5}
+    y0 = model_1d(p_true)
+
+    p1 = {"p0": -0.55}
+    y1 = model_1d(p1)
+
+    p2 = {"p0": 0.55}
+    y2 = model_1d(p2)
+
+    class IdSumstat(Sumstat):
+        """Identity summary statistic."""
+
+        def __call__(self, data: dict) -> np.ndarray:
+            # shape (n, dim)
+            return data["y"].reshape((-1, 1))
+
+    for p in [1, 2]:
+        for distance in [
+            WassersteinDistance(
+                sumstat=IdSumstat(),
+                p=p,
+            ),
+            SlicedWassersteinDistance(
+                sumstat=IdSumstat(),
+                p=p,
+            ),
+        ]:
+            distance.initialize(x_0=y0)
+
+            # evaluate distance
+            dist = distance(y1, y0)
+
+            assert dist > 0
+
+            # sample from somewhere else
+            assert dist < distance(y2, y0)
+
+            # compare to ground truth
+            if isinstance(distance, SlicedWassersteinDistance):
+                continue
+
+            # weights
+            w = np.ones(shape=n_sample) / n_sample
+
+            dist_exp = sp_dist.minkowski(
+                np.sort(y1["y"].flatten()),
+                np.sort(y0["y"]).flatten(),
+                w=w,
+                p=p,
+            )
+
+            assert np.isclose(dist, dist_exp)

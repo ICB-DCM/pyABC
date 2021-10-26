@@ -1,7 +1,7 @@
 """Basic summary statistics."""
 
 import numpy as np
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Tuple, Union
 from abc import ABC, abstractmethod
 
 from ..population import Sample
@@ -165,6 +165,7 @@ class IdentitySumstat(Sumstat):
         self,
         trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
         pre: Sumstat = None,
+        shape_out: Tuple[int, ...] = (-1,),
     ):
         """
         Parameters
@@ -175,12 +176,25 @@ class IdentitySumstat(Sumstat):
             Optional transformations to apply, should be vectorized.
             Note that if the original data should be contained, a
             transformation s.a. `lambda x: x` must be added.
+        shape_out:
+            Shape the (otherwise flat) output is converted to, via
+            :py:func:`numpy.reshape`.
+            Defaults to (-1,) and thus a flat array. Sometimes a row vector
+            (1, -1) may be preferable, e.g. to treat simulations as replicates.
+            For more complex shapes, tailored mappings may be preferable by
+            deriving from Sumstat or IdentitySumstat.
         """
         super().__init__(pre=pre)
-        self.trafos = trafos
+        self.trafos: List[Callable[[np.ndarray], np.ndarray]] = trafos
+        self.shape_out: Tuple[int, ...] = shape_out
 
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]) -> np.ndarray:
+        """
+        Returns
+        -------
+        sumstat: Concatenated summary statistics array of shape (n,1) or (1,n).
+        """
         # apply previous statistics
         if self.pre is not None:
             data = self.pre(data)
@@ -190,6 +204,10 @@ class IdentitySumstat(Sumstat):
             # also allows trafos to yield differing dimensions
             data = np.concatenate(
                 [trafo(data).flatten() for trafo in self.trafos])
+
+        # reshape
+        data = data.reshape(self.shape_out)
+
         return data
 
     def get_ids(self):

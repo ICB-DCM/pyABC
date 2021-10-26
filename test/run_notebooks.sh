@@ -5,8 +5,8 @@
 
 # Notebooks to run
 nbs_1=(
-  "adaptive_distances" "conversion_reaction" "early_stopping"
-  "model_selection" "noise"
+  "adaptive_distances" "wasserstein" "conversion_reaction"
+  "early_stopping" "model_selection" "noise"
   "parameter_inference" "resuming")
 nbs_2=(
   "external_simulators" "using_R")

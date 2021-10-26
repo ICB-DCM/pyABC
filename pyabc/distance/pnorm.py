@@ -86,7 +86,7 @@ class PNormDistance(Distance):
         x_0: dict,
         total_sims: int,
     ) -> None:
-        # update summary statistics
+        # initialize summary statistics
         self.sumstat.initialize(
             t=t,
             get_sample=get_sample,
@@ -206,7 +206,7 @@ class PNormDistance(Distance):
         weights = self.get_weights(t=t)
 
         # compute summary statistics
-        s, s0 = self.sumstat(x), self.sumstat(x_0)
+        s, s0 = self.sumstat(x).flatten(), self.sumstat(x_0).flatten()
 
         # assert shapes match
         if s.shape != weights.shape and weights.shape or s.shape != s0.shape:
@@ -428,7 +428,7 @@ class AdaptivePNormDistance(PNormDistance):
         )
 
         # observed summary statistics
-        s0 = self.s_0
+        s0 = self.s_0.flatten()
 
         # calculate scales
         scales = self.scale_function(
@@ -523,8 +523,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         fit_info_ixs:
             Generations when to fit the information weights, similar to
             `fit_scale_ixs`.
-            Defaults to {9, 15}, which may not always be the smartest choice.
-            In particular consider making it dependent on the total number of
+            Defaults to {9, 15}, which may not always be the smartest choice
+            and may change in the future.
+            In particular, consider making it dependent on the total number of
             simulations.
         normalize_by_par:
             Whether to normalize total sensitivities of each parameter to 1.
@@ -705,7 +706,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             t=t, sumstats=sumstats, parameters=parameters, weights=weights,
             log_file=self.info_sample_log_file)
 
-        s_0 = self.sumstat(self.x_0)
+        s_0 = self.s_0.flatten()
 
         # normalize features and labels
         ret = InfoWeightedPNormDistance.normalize_sample(
