@@ -150,8 +150,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9]
-    env:
-      PYABC_MAX_POP_SIZE: bob
 
     steps:
     - name: Check out repository
@@ -174,14 +172,14 @@ jobs:
     - name: Run notebooks
       timeout-minutes: 10
       run: tox -e notebooks1
+      env:
+        PYABC_MAX_POP_SIZE: 10
 
   notebooks2:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: [3.9]
-    env:
-      PYABC_MAX_POP_SIZE: bob
 
     steps:
     - name: Check out repository
@@ -204,6 +202,8 @@ jobs:
     - name: Run notebooks
       timeout-minutes: 10
       run: tox -e notebooks2
+      env:
+        PYABC_MAX_POP_SIZE: 10
 
   quality:
     runs-on: ubuntu-latest
