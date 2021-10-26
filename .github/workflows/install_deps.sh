@@ -6,6 +6,9 @@ python -m pip install --upgrade pip
 # wheel
 pip install wheel
 
+# cython (needed for ot)
+pip install cython
+
 # tox
 pip install tox
 
