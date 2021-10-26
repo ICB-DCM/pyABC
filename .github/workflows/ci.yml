@@ -172,7 +172,7 @@ jobs:
     - name: Run notebooks
       timeout-minutes: 10
       run: |
-        export PYABC_MAX_POP_SIZE=10
+        export PYABC_MAX_POP_SIZE=bob
         tox -e notebooks1
 
   notebooks2:
