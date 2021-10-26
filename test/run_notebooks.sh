@@ -12,7 +12,7 @@ nbs_1=(
   "parameter_inference" "resuming")
 nbs_2=(
   "external_simulators" "using_R"
-  "aggregated_distances" "chemical_reaction"
+  "aggregated_distances"
   "data_plots" "discrete_parameters")
 
 # All notebooks
