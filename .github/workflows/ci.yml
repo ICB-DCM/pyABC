@@ -171,9 +171,9 @@ jobs:
 
     - name: Run notebooks
       timeout-minutes: 10
-      run: tox -e notebooks1
-      env:
-        PYABC_MAX_POP_SIZE: 10
+      run: |
+        export PYABC_MAX_POP_SIZE=10
+        tox -e notebooks1
 
   notebooks2:
     runs-on: ubuntu-latest
@@ -202,12 +202,8 @@ jobs:
     - name: Run notebooks
       timeout-minutes: 10
       run: |
-        echo ${{ env.PYABC_MAX_POP_SIZE }}
         export PYABC_MAX_POP_SIZE=10
-        echo ${{ PYABC_MAX_POP_SIZE }}
         tox -e notebooks2
-      env:
-        PYABC_MAX_POP_SIZE: 10
 
   quality:
     runs-on: ubuntu-latest
