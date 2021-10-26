@@ -1,10 +1,10 @@
 """
-Distance functions
-==================
+Distances
+=========
 
-Distance functions measure closeness of observed and sampled data. This
-module implements various commonly used distance functions for ABC, featuring
-a few advanced concepts.
+Distance functions or metrics measure closeness of observed and sampled data.
+This module implements various commonly used distance functions for ABC,
+featuring a few advanced concepts.
 
 For custom distance functions, either pass a plain function to ABCSMC, or
 subclass the pyabc.Distance class.
@@ -33,6 +33,10 @@ from .pnorm import (
 from .aggregate import (
     AggregatedDistance,
     AdaptiveAggregatedDistance,
+)
+from .ot import (
+    WassersteinDistance,
+    SlicedWassersteinDistance,
 )
 from .scale import (
     median_absolute_deviation,

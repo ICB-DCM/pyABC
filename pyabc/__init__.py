@@ -39,6 +39,8 @@ from .distance import (
     PercentileDistance,
     RangeEstimatorDistance,
     DistanceWithMeasureList,
+    WassersteinDistance,
+    SlicedWassersteinDistance,
     StochasticKernel,
     NormalKernel,
     IndependentNormalKernel,

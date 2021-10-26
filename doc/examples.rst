@@ -34,6 +34,7 @@ Potentially, further dependencies may be required.
    examples/adaptive_distances.ipynb
    examples/informative.ipynb
    examples/aggregated_distances.ipynb
+   examples/wasserstein.ipynb
    examples/external_simulators.ipynb
    examples/data_plots.ipynb
    examples/noise.ipynb
@@ -58,6 +59,7 @@ Download the examples as notebooks
 * :download:`Adaptive distances <examples/adaptive_distances.ipynb>`
 * :download:`Informative distances and summary statistics <examples/informative.ipynb>`
 * :download:`Aggregated distances <examples/aggregated_distances.ipynb>`
+* :download:`Wasserstein distances <examples/wasserstein.ipynb>`
 * :download:`External simulators <examples/external_simulators.ipynb>`
 * :download:`Data plots <examples/data_plots.ipynb>`
 * :download:`Measurement noise and exact inference <examples/noise.ipynb>`

@@ -70,7 +70,7 @@ If you use it in your work, you can cite the paper:
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: API reference
 
    api
