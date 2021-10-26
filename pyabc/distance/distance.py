@@ -7,6 +7,7 @@ from typing import Callable, List
 import logging
 
 from ..population import Sample
+
 from .base import Distance
 
 
@@ -20,7 +21,6 @@ class DistanceWithMeasureList(Distance, ABC):
 
     Parameters
     ----------
-
     measures_to_use: Union[str, List[str]].
         * If set to "all", all measures are used. This is the default.
         * If a list is provided, the measures in the list are used.
@@ -167,13 +167,11 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
         Parameters
         ----------
-
         parameter_list: List[float]
             List of values of a parameter.
 
         Returns
         -------
-
         lower_margin: float
             The lower margin of the range calculated from these parameters
         """
@@ -185,13 +183,11 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
         Parameters
         ----------
-
         parameter_list: List[float]
             List of values of a parameter.
 
         Returns
         -------
-
         upper_margin: float
             The upper margin of the range calculated from these parameters
         """
