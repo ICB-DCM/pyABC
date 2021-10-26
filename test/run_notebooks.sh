@@ -2,6 +2,8 @@
 
 # Run selected notebooks, on error show output and return with error code.
 
+# set environment
+export PYABC_MAX_POP_SIZE=10
 
 # Notebooks to run
 nbs_1=(
