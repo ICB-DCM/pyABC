@@ -7,7 +7,7 @@ import logging
 from functools import partial
 
 from ..population import Sample
-from ..sumstat import Sumstat, IdentitySumstat
+from ..sumstat import Sumstat
 
 from .base import Distance
 
@@ -65,7 +65,7 @@ class WassersteinDistance(Distance):
 
     def __init__(
         self,
-        sumstat: Sumstat = None,
+        sumstat: Sumstat,
         p: float = 2.,
         dist: Union[str, Callable] = None,
         emd_args: dict = None,
@@ -92,10 +92,7 @@ class WassersteinDistance(Distance):
             )
         super().__init__()
 
-        if sumstat is None:
-            sumstat = IdentitySumstat()
         self.sumstat: Sumstat = sumstat
-
         self.p: float = p
 
         # distance function
@@ -223,7 +220,7 @@ class SlicedWassersteinDistance(Distance):
 
     def __init__(
         self,
-        sumstat: Sumstat = None,
+        sumstat: Sumstat,
         metric: str = "sqeuclidean",
         p: float = 2.,
         n_proj: int = 50,
@@ -256,10 +253,7 @@ class SlicedWassersteinDistance(Distance):
             )
         super().__init__()
 
-        if sumstat is None:
-            sumstat = IdentitySumstat()
         self.sumstat: Sumstat = sumstat
-
         self.metric: str = metric
         self.p: float = p
         self.n_proj: int = n_proj

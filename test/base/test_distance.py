@@ -656,3 +656,24 @@ def test_wasserstein_distance():
             )
 
             assert np.isclose(dist, dist_exp)
+
+    with pytest.raises(ValueError):
+        WassersteinDistance(sumstat=IdSumstat(), p=3)
+
+    # test integrated
+    prior = Distribution(p0=RV("norm", 0, 2))
+    db_file = tempfile.mkstemp(suffix=".db")[1]
+    try:
+        for distance in [
+            WassersteinDistance(
+                sumstat=IdSumstat(),
+                ),
+            SlicedWassersteinDistance(
+                sumstat=IdSumstat(),
+            ),
+        ]:
+            abc = ABCSMC(model_1d, prior, distance, population_size=10)
+            abc.new("sqlite:///" + db_file, y0)
+            abc.run(max_nr_populations=3)
+    finally:
+        os.remove(db_file)
