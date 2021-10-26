@@ -41,6 +41,7 @@ from pyabc.inference_util import (
     create_analysis_id,
     AnalysisVars,
 )
+from pyabc.util import bound_pop_size_from_environment
 
 
 logger = logging.getLogger("ABC")
@@ -167,21 +168,21 @@ class ABCSMC:
         https://doi.org/10.1093/bioinformatics/btp619
     """
     def __init__(
-            self,
-            models: Union[List[Model], Model, Callable],
-            parameter_priors: Union[List[Distribution],
-                                    Distribution, Callable],
-            distance_function: Union[Distance, Callable] = None,
-            population_size: Union[PopulationStrategy, int] = 100,
-            summary_statistics: Callable[[model_output], dict] = identity,
-            model_prior: RV = None,
-            model_perturbation_kernel: ModelPerturbationKernel = None,
-            transitions: Union[List[Transition], Transition] = None,
-            eps: Epsilon = None,
-            sampler: Sampler = None,
-            acceptor: Acceptor = None,
-            stop_if_only_single_model_alive: bool = False,
-            max_nr_recorded_particles: int = np.inf):
+        self,
+        models: Union[List[Model], Model, Callable],
+        parameter_priors: Union[List[Distribution], Distribution, Callable],
+        distance_function: Union[Distance, Callable] = None,
+        population_size: Union[PopulationStrategy, int] = 100,
+        summary_statistics: Callable[[model_output], dict] = identity,
+        model_prior: RV = None,
+        model_perturbation_kernel: ModelPerturbationKernel = None,
+        transitions: Union[List[Transition], Transition] = None,
+        eps: Epsilon = None,
+        sampler: Sampler = None,
+        acceptor: Acceptor = None,
+        stop_if_only_single_model_alive: bool = False,
+        max_nr_recorded_particles: int = np.inf,
+    ):
         if not isinstance(models, list):
             models = [models]
         models = list(map(SimpleModel.assert_model, models))
@@ -216,13 +217,15 @@ class ABCSMC:
                            for _ in self.models]
         if not isinstance(transitions, list):
             transitions = [transitions]
-        self.transitions = transitions  # type: List[Transition]
+        self.transitions: List[Transition] = transitions
 
         if eps is None:
             eps = MedianEpsilon(median_multiplier=1)
         self.eps = eps
 
         if isinstance(population_size, int):
+            # bound population size potentially by environment variable
+            population_size = bound_pop_size_from_environment(population_size)
             population_size = ConstantPopulationSize(
                 population_size)
         self.population_size = population_size
@@ -255,9 +258,11 @@ class ABCSMC:
 
     def _sanity_check(self):
         # check stochastic setting
-        stochastics = [isinstance(self.acceptor, StochasticAcceptor),
-                       isinstance(self.eps, TemperatureBase),
-                       isinstance(self.distance_function, StochasticKernel)]
+        stochastics = [
+            isinstance(self.acceptor, StochasticAcceptor),
+            isinstance(self.eps, TemperatureBase),
+            isinstance(self.distance_function, StochasticKernel),
+        ]
         # check if usage is consistent
         if not all(stochastics) and any(stochastics):
             raise ValueError(
@@ -275,12 +280,15 @@ class ABCSMC:
         del state_red_dict['sampler']
         return state_red_dict
 
-    def new(self, db: str,
-            observed_sum_stat: dict = None,
-            *,
-            gt_model: int = None,
-            gt_par: dict = None,
-            meta_info=None) -> History:
+    def new(
+        self,
+        db: str,
+        observed_sum_stat: dict = None,
+        *,
+        gt_model: int = None,
+        gt_par: dict = None,
+        meta_info=None,
+    ) -> History:
         """
         Make a new ABCSMC run.
 
@@ -372,9 +380,12 @@ class ABCSMC:
         # contains id generated in store_initial_data
         return self.history
 
-    def load(self, db: str,
-             abc_id: int = 1,
-             observed_sum_stat: dict = None) -> History:
+    def load(
+        self,
+        db: str,
+        abc_id: int = 1,
+        observed_sum_stat: dict = None,
+    ) -> History:
         """
         Load an ABC-SMC run for continuation.
 
@@ -587,12 +598,14 @@ class ABCSMC:
             model_perturbation_kernel=self.model_perturbation_kernel)
 
     @run_cleanup
-    def run(self,
-            minimum_epsilon: float = None,
-            max_nr_populations: int = np.inf,
-            min_acceptance_rate: float = 0.,
-            max_total_nr_simulations: int = np.inf,
-            max_walltime: timedelta = None) -> History:
+    def run(
+        self,
+        minimum_epsilon: float = None,
+        max_nr_populations: int = np.inf,
+        min_acceptance_rate: float = 0.,
+        max_total_nr_simulations: int = np.inf,
+        max_walltime: timedelta = None,
+    ) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
         criteria is met.

@@ -19,6 +19,10 @@ from .par_trafo import (
     ParTrafo,
 )
 
+from .test import (
+    bound_pop_size_from_environment,
+)
+
 from .log import (
     log_samples,
 )

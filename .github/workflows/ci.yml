@@ -150,6 +150,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9]
+    env:
+      PYABC_MAX_POP_SIZE: 10
 
     steps:
     - name: Check out repository
@@ -178,6 +180,8 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9]
+    env:
+      PYABC_MAX_POP_SIZE: 10
 
     steps:
     - name: Check out repository
