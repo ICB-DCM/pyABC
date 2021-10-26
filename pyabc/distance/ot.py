@@ -355,16 +355,15 @@ def uniform_unit_sphere_samples(
     dim: int,
     seed: Union[int, np.random.RandomState] = None,
 ) -> np.ndarray:
-    """
-    Generate ``n_proj`` uniformly distributed samples from the ``dim-1``-dim.
-    unit sphere in ``R^dim``.
+    r"""
+    Generate uniformly distributed samples from the :math:`d-1`-dim.
+    unit sphere in :math:`\mathbb{R}^d`.
 
     Parameters
     ----------
     n_proj: Number of samples.
     dim: Space dimension.
-    seed: int or RandomState, optional
-        Seed used for numpy random number generator
+    seed: Seed used for numpy random number generator
 
     Returns
     -------
@@ -381,7 +380,7 @@ def uniform_unit_sphere_samples(
     projections = random_state.normal(0, 1, size=(n_proj, dim))
 
     # project onto sphere
-    norm = la.norm(projections, ord=2, axis=1, keepdims=True)
-    projections = projections / norm
+    norms = la.norm(projections, ord=2, axis=1, keepdims=True)
+    projections = projections / norms
 
     return projections
