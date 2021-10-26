@@ -151,7 +151,7 @@ jobs:
       matrix:
         python-version: [3.9]
     env:
-      PYABC_MAX_POP_SIZE: 10
+      PYABC_MAX_POP_SIZE: bob
 
     steps:
     - name: Check out repository
@@ -181,7 +181,7 @@ jobs:
       matrix:
         python-version: [3.9]
     env:
-      PYABC_MAX_POP_SIZE: 10
+      PYABC_MAX_POP_SIZE: bob
 
     steps:
     - name: Check out repository
