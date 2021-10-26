@@ -11,7 +11,7 @@ nbs_1=(
   "early_stopping" "model_selection" "noise"
   "parameter_inference" "resuming")
 nbs_2=(
-  "external_simulators" "using_R" "informative"
+  "external_simulators" "using_R"
   "aggregated_distances" "chemical_reaction"
   "data_plots" "discrete_parameters")
 
