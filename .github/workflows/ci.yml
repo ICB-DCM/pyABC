@@ -201,7 +201,9 @@ jobs:
 
     - name: Run notebooks
       timeout-minutes: 10
-      run: tox -e notebooks2
+      run: |
+        echo ${{ env.PYABC_MAX_POP_SIZE }}$
+        tox -e notebooks2
       env:
         PYABC_MAX_POP_SIZE: 10
 
