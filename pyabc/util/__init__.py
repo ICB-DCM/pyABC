@@ -20,7 +20,7 @@ from .par_trafo import (
 )
 
 from .test import (
-    bound_pop_size_from_environment,
+    bound_pop_size_from_env,
 )
 
 from .log import (
