@@ -17,8 +17,21 @@ from typing import Dict, List, Union
 from pyabc.cv.bootstrap import calc_cv
 from .transition import Transition
 from .transition.predict_population_size import predict_population_size
+from .util import bound_pop_size_from_env
 
 logger = logging.getLogger("ABC.Adaptation")
+
+
+def dec_bound_pop_size_from_env(fun):
+    """Bound population size"""
+
+    def bounded_fun(*args, **kwargs):
+        pop_size: int = fun(*args, **kwargs)
+        # bound population size potentially by environment variable
+        pop_size = bound_pop_size_from_env(pop_size)
+        return pop_size
+
+    return bounded_fun
 
 
 class PopulationStrategy(ABC):
@@ -109,6 +122,7 @@ class ConstantPopulationSize(PopulationStrategy):
             nr_calibration_particles=nr_calibration_particles)
         self.nr_particles = nr_particles
 
+    @dec_bound_pop_size_from_env
     def __call__(self, t: int = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
             return self.nr_calibration_particles
@@ -151,13 +165,14 @@ class AdaptivePopulationSize(PopulationStrategy):
         Number of calibration particles.
 
 
-    .. [#klingerhasenaueradaptive] Klinger, Emmanuel, and Jan Hasenauer.
-            “A Scheme for Adaptive Selection of Population Sizes in "
-            Approximate Bayesian Computation - Sequential Monte Carlo."
-            Computational Methods in Systems Biology, 128-44.
-            Lecture Notes in Computer Science.
-            Springer, Cham, 2017.
-            https://doi.org/10.1007/978-3-319-67471-1_8.
+    .. [#klingerhasenaueradaptive]
+        Klinger, Emmanuel, and Jan Hasenauer.
+        “A Scheme for Adaptive Selection of Population Sizes in "
+        Approximate Bayesian Computation - Sequential Monte Carlo."
+        Computational Methods in Systems Biology, 128-44.
+        Lecture Notes in Computer Science.
+        Springer, Cham, 2017.
+        https://doi.org/10.1007/978-3-319-67471-1_8.
     """
 
     def __init__(self,
@@ -210,6 +225,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         logger.info("Change nr particles {} -> {}"
                     .format(reference_nr_part, self.nr_particles))
 
+    @dec_bound_pop_size_from_env
     def __call__(self, t: int = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
             return self.nr_calibration_particles
@@ -223,25 +239,28 @@ class ListPopulationSize(PopulationStrategy):
 
     Parameters
     ----------
-    values: List[float]
+    values:
         List of population size values.
         ``values[t]`` is the value for population t.
     nr_calibration_particles:
         Number of calibration particles.
     """
 
-    def __init__(self,
-                 values: Union[List[int], Dict[int, int]],
-                 nr_calibration_particles: int = None):
+    def __init__(
+        self,
+        values: Union[List[int], Dict[int, int]],
+        nr_calibration_particles: int = None,
+    ):
         super().__init__(
             nr_calibration_particles=nr_calibration_particles)
         self.values = values
 
     def get_config(self) -> dict:
         config = super().get_config()
-        config["population_values"] = self.population_values
+        config["values"] = self.values
         return config
 
+    @dec_bound_pop_size_from_env
     def __call__(self, t: int = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
             return self.nr_calibration_particles

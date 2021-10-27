@@ -41,7 +41,6 @@ from pyabc.inference_util import (
     create_analysis_id,
     AnalysisVars,
 )
-from pyabc.util import bound_pop_size_from_environment
 
 
 logger = logging.getLogger("ABC")
@@ -224,8 +223,6 @@ class ABCSMC:
         self.eps = eps
 
         if isinstance(population_size, int):
-            # bound population size potentially by environment variable
-            population_size = bound_pop_size_from_environment(population_size)
             population_size = ConstantPopulationSize(
                 population_size)
         self.population_size = population_size

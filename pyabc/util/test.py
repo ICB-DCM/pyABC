@@ -9,7 +9,7 @@ PYABC_MAX_POP_SIZE = "PYABC_MAX_POP_SIZE"
 logger = logging.getLogger("ABC.Util")
 
 
-def bound_pop_size_from_environment(pop_size: int):
+def bound_pop_size_from_env(pop_size: int):
     """Bound population size if corresponding environment variable set.
 
     Parameters
