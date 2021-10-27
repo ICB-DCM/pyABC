@@ -5,7 +5,7 @@ API reference
 .. automodule:: pyabc
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    api_inference
    api_distance

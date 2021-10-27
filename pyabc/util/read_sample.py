@@ -61,7 +61,7 @@ def read_sample(
 
     # dimensions of sample, summary statistics, and parameters
     n_sample = len(particles)
-    n_sumstat = len(sumstat(particles[0].sum_stat))
+    n_sumstat = len(sumstat(particles[0].sum_stat).flatten())
     n_par = len(par_trafo(particles[0].parameter))
 
     # prepare matrices
@@ -71,7 +71,7 @@ def read_sample(
 
     # fill by iteration over all particles
     for i_particle, particle in enumerate(particles):
-        sumstats[i_particle, :] = sumstat(particle.sum_stat)
+        sumstats[i_particle, :] = sumstat(particle.sum_stat).flatten()
         parameters[i_particle, :] = par_trafo(particle.parameter)
         weights[i_particle] = particle.weight
 

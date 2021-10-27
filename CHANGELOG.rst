@@ -8,6 +8,13 @@ Release Notes
 ...........
 
 
+0.11.4 (2021-10-27)
+-------------------
+
+* Implement Wasserstein and Sliced Wasserstein distances (#500)
+* Add env variable to bound population size in tests (#501)
+
+
 0.11.3 (2021-10-16)
 -------------------
 
