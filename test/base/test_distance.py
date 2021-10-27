@@ -610,7 +610,7 @@ def test_wasserstein_distance():
     p1 = {"p0": -0.55}
     y1 = model_1d(p1)
 
-    p2 = {"p0": 0.55}
+    p2 = {"p0": 3.55}
     y2 = model_1d(p2)
 
     class IdSumstat(Sumstat):
