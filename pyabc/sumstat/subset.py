@@ -107,7 +107,8 @@ class GMMSubsetter(Subsetter):
         if skl_mx is None:
             raise ImportError(
                 "This class requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`")
+                "Install e.g. via `pip install pyabc[scikit-learn]`"
+            )
 
         self.n_components_min: int = n_components_min
         self.n_components_max: int = n_components_max
@@ -154,7 +155,9 @@ class GMMSubsetter(Subsetter):
 
         # augment subset
         selected = get_augmented_subset(
-            y=y_norm, ref=mean, in_cluster=in_cluster,
+            y=y_norm,
+            ref=mean,
+            in_cluster=in_cluster,
             min_fraction=self.min_fraction,
         )
 
@@ -187,10 +190,12 @@ class GMMSubsetter(Subsetter):
         best_gmm = None
         best_n_components = None
         for n_components in range(
-                self.n_components_min, self.n_components_max+1):
+            self.n_components_min, self.n_components_max + 1
+        ):
             # fit a Gaussian mixture model
             gmm = skl_mx.GaussianMixture(
-                n_components=n_components, **self.gmm_args)
+                n_components=n_components, **self.gmm_args
+            )
             gmm.fit(y)
 
             # evaluate BIC as model selection criterion

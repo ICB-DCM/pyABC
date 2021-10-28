@@ -8,9 +8,13 @@ logger = logging.getLogger("ABC.Transition")
 CVEstimate = namedtuple("CVEstimate", "n_estimated n_samples_list cvs f popt")
 
 
-def predict_population_size(current_pop_size: int,
-                            target_cv: float, calc_cv,
-                            n_steps=10, first_step_factor=3) -> CVEstimate:
+def predict_population_size(
+    current_pop_size: int,
+    target_cv: float,
+    calc_cv,
+    n_steps=10,
+    first_step_factor=3,
+) -> CVEstimate:
     """
     Estimate the required nr of particles for a target coefficient of
     variation.
@@ -54,7 +58,8 @@ def predict_population_size(current_pop_size: int,
         suggested_pop_size = finv(target_cv)
         return CVEstimate(suggested_pop_size, n_samples_list, cvs, f, popt)
     except RuntimeError:
-        logger.warning("Power law fit failed. "
-                       "Falling back to current nr particles {}"
-                       .format(current_pop_size))
+        logger.warning(
+            "Power law fit failed. "
+            "Falling back to current nr particles {}".format(current_pop_size)
+        )
         return CVEstimate(current_pop_size, n_samples_list, cvs, None, None)

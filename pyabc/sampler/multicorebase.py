@@ -29,11 +29,13 @@ class MultiCoreSampler(Sampler):
         Whether to check the maximum number of evaluations on the fly.
     """
 
-    def __init__(self,
-                 n_procs: int = None,
-                 daemon: bool = True,
-                 pickle: bool = None,
-                 check_max_eval: bool = False):
+    def __init__(
+        self,
+        n_procs: int = None,
+        daemon: bool = True,
+        pickle: bool = None,
+        check_max_eval: bool = False,
+    ):
         super().__init__()
         self._n_procs = n_procs
         self.daemon = daemon

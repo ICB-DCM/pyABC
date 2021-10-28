@@ -73,8 +73,9 @@ def plot_distance_weights(
     -------
     The used axis object.
     """
-    log_files, ts, colors, linestyles = \
-        to_lists(log_files, ts, colors, linestyles)
+    log_files, ts, colors, linestyles = to_lists(
+        log_files, ts, colors, linestyles
+    )
     labels = get_labels(labels, len(log_files))
 
     # default keyword arguments
@@ -90,8 +91,9 @@ def plot_distance_weights(
         fig = ax.get_figure()
 
     # add a line per file
-    for log_file, t, label, color, linestyle in \
-            zip(log_files, ts, labels, colors, linestyles):
+    for log_file, t, label, color, linestyle in zip(
+        log_files, ts, labels, colors, linestyles
+    ):
         weights = load_dict_from_json(log_file)
         if t == "last":
             t = max(weights.keys())
@@ -102,7 +104,11 @@ def plot_distance_weights(
         if normalize:
             weights /= weights.sum()
         ax.plot(
-            weights, label=label, color=color, linestyle=linestyle, **kwargs,
+            weights,
+            label=label,
+            color=color,
+            linestyle=linestyle,
+            **kwargs,
         )
 
     # add labels

@@ -12,4 +12,4 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 79
 target-version = ['py37', 'py38', 'py39']
-skip-string-normalization = True
+skip-string-normalization = true

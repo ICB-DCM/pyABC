@@ -16,7 +16,7 @@ QUEUE = "queue"
 DONE_IXS = "done_ixs"
 
 # default sleep time
-SLEEP_TIME = .1
+SLEEP_TIME = 0.1
 
 # message channel
 MSG = "abc_msg_pubsub"

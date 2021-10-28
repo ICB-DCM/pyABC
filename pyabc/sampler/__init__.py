@@ -19,5 +19,6 @@ from .redis_eps import (
     RedisEvalParallelSampler,
     RedisStaticSampler,
     RedisEvalParallelSamplerServerStarter,
-    RedisStaticSamplerServerStarter)
+    RedisStaticSamplerServerStarter,
+)
 from .concurrent_future import ConcurrentFutureSampler

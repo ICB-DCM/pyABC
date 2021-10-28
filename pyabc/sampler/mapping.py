@@ -59,17 +59,27 @@ latest/task.html#quick-and-easy-parallelism)
     def __init__(self, map_=map, mapper_pickles: bool = False):
         super().__init__()
         self.map_ = map_
-        self.pickle, self.unpickle = ((identity, identity)
-                                      if mapper_pickles
-                                      else (pickle.dumps, pickle.loads))
+        self.pickle, self.unpickle = (
+            (identity, identity)
+            if mapper_pickles
+            else (pickle.dumps, pickle.loads)
+        )
 
     def __getstate__(self):
-        return (self.pickle, self.unpickle,
-                self.nr_evaluations_, self.sample_factory)
+        return (
+            self.pickle,
+            self.unpickle,
+            self.nr_evaluations_,
+            self.sample_factory,
+        )
 
     def __setstate__(self, state):
-        (self.pickle, self.unpickle, self.nr_evaluations_,
-         self.sample_factory) = state
+        (
+            self.pickle,
+            self.unpickle,
+            self.nr_evaluations_,
+            self.sample_factory,
+        ) = state
 
     def map_function(self, simulate_one, _):
         simulate_one = self.unpickle(simulate_one)
@@ -89,8 +99,15 @@ latest/task.html#quick-and-easy-parallelism)
         return sample, nr_simulations
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+        self,
+        n,
+        simulate_one,
+        t,
+        *,
+        max_eval=np.inf,
+        all_accepted=False,
+        ana_vars=None,
+    ):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of
         # shared references.
@@ -98,12 +115,14 @@ latest/task.html#quick-and-easy-parallelism)
         # to ensure correct working, depending on the details of the
         # model implementations.
         sample_simulate_accept = self.pickle(simulate_one)
-        map_function = functools.partial(self.map_function,
-                                         sample_simulate_accept)
+        map_function = functools.partial(
+            self.map_function, sample_simulate_accept
+        )
 
         counted_results = list(self.map_(map_function, [None] * n))
-        counted_results = filter(lambda x: not isinstance(x, Exception),
-                                 counted_results)
+        counted_results = filter(
+            lambda x: not isinstance(x, Exception), counted_results
+        )
         results, evals = zip(*counted_results)
 
         # count all evaluations

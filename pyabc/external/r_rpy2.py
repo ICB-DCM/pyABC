@@ -25,25 +25,33 @@ import logging
 logger = logging.getLogger("ABC.External")
 
 try:
-    from rpy2.robjects import (ListVector, r, default_converter, conversion,
-                               pandas2ri, numpy2ri)
+    from rpy2.robjects import (
+        ListVector,
+        r,
+        default_converter,
+        conversion,
+        pandas2ri,
+        numpy2ri,
+    )
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
-    logger.error(
-        "Install rpy2 to enable simple support for the R language.")
+    logger.error("Install rpy2 to enable simple support for the R language.")
 
 
 __all__ = ["R"]
 
 
 def dict_to_named_list(dct):
-    if (isinstance(dct, dict)
-            or isinstance(dct, Parameter)
-            or isinstance(dct, pd.core.series.Series)):
+    if (
+        isinstance(dct, dict)
+        or isinstance(dct, Parameter)
+        or isinstance(dct, pd.core.series.Series)
+    ):
         dct = {key: val for key, val in dct.items()}
         # convert numbers, numpy arrays and pandas dataframes to builtin
         # types before conversion (see rpy2 #548)
         with conversion.localconverter(
-                default_converter + pandas2ri.converter + numpy2ri.converter):
+            default_converter + pandas2ri.converter + numpy2ri.converter
+        ):
             for key, val in dct.items():
                 dct[key] = conversion.py2rpy(val)
         r_list = ListVector(dct)
@@ -72,6 +80,7 @@ class R:
         the model, the summary statistics and the distance function as
         well as the observed data.
     """
+
     def __init__(self, source_file: str):
         warnings.warn("The support of R via rpy2 is considered experimental.")
         self.source_file = source_file
@@ -102,9 +111,12 @@ class R:
             code = f.read()
 
         formatter = HtmlFormatter()
-        return display.HTML('<style type="text/css">{}</style>{}'.format(
-            formatter.get_style_defs('.highlight'),
-            highlight(code, SLexer(), formatter)))
+        return display.HTML(
+            '<style type="text/css">{}</style>{}'.format(
+                formatter.get_style_defs('.highlight'),
+                highlight(code, SLexer(), formatter),
+            )
+        )
 
     def model(self, function_name: str):
         """
@@ -160,9 +172,9 @@ class R:
         distance_py._R = self
         return distance_py
 
-    def summary_statistics(self,
-                           function_name: str,
-                           is_py_model: bool = False):
+    def summary_statistics(
+        self, function_name: str, is_py_model: bool = False
+    ):
         """
         The R-summary statistics.
 
@@ -188,9 +200,10 @@ class R:
         summary_statistics._R = self
 
         if is_py_model:
+
             def summary_statistics_py(model_output):
-                return summary_statistics(
-                    dict_to_named_list(model_output))
+                return summary_statistics(dict_to_named_list(model_output))
+
             return summary_statistics_py
 
         return summary_statistics

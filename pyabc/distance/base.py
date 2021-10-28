@@ -187,7 +187,8 @@ class NoDistance(Distance):
         par: dict = None,
     ) -> float:
         raise AssertionError(
-            f"Distance {self.__class__.__name__} should not be called.")
+            f"Distance {self.__class__.__name__} should not be called."
+        )
 
 
 class AcceptAllDistance(Distance):

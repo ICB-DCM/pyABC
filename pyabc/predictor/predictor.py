@@ -65,6 +65,7 @@ class Predictor(ABC):
 
 def wrap_fit_log(fit):
     """Wrapper for fit logging."""
+
     def wrapped_fun(self, x: np.ndarray, y: np.ndarray, w: np.ndarray):
         start_time = time()
 
@@ -79,12 +80,17 @@ def wrap_fit_log(fit):
                 pearsonr(y[:, i], y_pred[:, i])[0]
                 for i in range(y_pred.shape[1])
             ]
-            logger.info(" ".join([
-                "Pearson correlations:",
-                *[f"{coeff:.3f}" for coeff in coeffs]]),
+            logger.info(
+                " ".join(
+                    [
+                        "Pearson correlations:",
+                        *[f"{coeff:.3f}" for coeff in coeffs],
+                    ]
+                ),
             )
 
         return ret
+
     return wrapped_fun
 
 
@@ -176,7 +182,8 @@ class SimplePredictor(Predictor):
             if self.single_predictors is None:
                 n_par = y.shape[1]
                 self.single_predictors: List = [
-                    copy.deepcopy(self.predictor) for _ in range(n_par)]
+                    copy.deepcopy(self.predictor) for _ in range(n_par)
+                ]
             # fit a model for each parameter separately
             for predictor, y_ in zip(self.single_predictors, y.T):
                 if self.weight_samples:
@@ -212,8 +219,10 @@ class SimplePredictor(Predictor):
         if self.joint:
             y = self.predictor.predict(x)
         else:
-            y = [predictor.predict(x).flatten()
-                 for predictor in self.single_predictors]
+            y = [
+                predictor.predict(x).flatten()
+                for predictor in self.single_predictors
+            ]
             y = np.array(y).T
 
         if not normalize and self.normalize_labels:
@@ -240,7 +249,8 @@ class SimplePredictor(Predictor):
         if log and not self.use_ixs.all():
             logger.info(
                 "Ignore trivial features "
-                f"{list(np.flatnonzero(~self.use_ixs))}")
+                f"{list(np.flatnonzero(~self.use_ixs))}"
+            )
 
     def __repr__(self) -> str:
         rep = f"<{self.__class__.__name__} predictor={self.predictor}"
@@ -282,10 +292,12 @@ class LinearPredictor(SimplePredictor):
         if skl_lm is None:
             raise ImportError(
                 "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`")
+                "Install e.g. via `pip install pyabc[scikit-learn]`"
+            )
 
         default_kwargs = {
-            'fit_intercept': True, 'normalize': True,
+            'fit_intercept': True,
+            'normalize': True,
         }
         default_kwargs.update(kwargs)
         predictor = skl_lm.LinearRegression(**default_kwargs)
@@ -305,12 +317,14 @@ class LinearPredictor(SimplePredictor):
         if self.joint:
             logger.debug(
                 "Linear regression coefficients (n_target, n_feature):\n"
-                f"{self.predictor.coef_}")
+                f"{self.predictor.coef_}"
+            )
         else:
             for i_pred, predictor in enumerate(self.single_predictors):
                 logger.debug(
                     "Linear regression coefficients (n_target, n_feature):\n"
-                    f"for predictor {i_pred}: {predictor.coef_}")
+                    f"for predictor {i_pred}: {predictor.coef_}"
+                )
 
 
 class LassoPredictor(SimplePredictor):
@@ -332,7 +346,8 @@ class LassoPredictor(SimplePredictor):
         if skl_lm is None:
             raise ImportError(
                 "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`")
+                "Install e.g. via `pip install pyabc[scikit-learn]`"
+            )
 
         # translate arguments
         all_args = {
@@ -384,7 +399,8 @@ class GPPredictor(SimplePredictor):
         if skl_gp is None:
             raise ImportError(
                 "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`")
+                "Install e.g. via `pip install pyabc[scikit-learn]`"
+            )
 
         # default kernel
         if kernel is None:
@@ -415,7 +431,8 @@ class GPPredictor(SimplePredictor):
             kernel = kernel(n_in)
 
         self.predictor = skl_gp.GaussianProcessRegressor(
-            kernel=kernel, **self.kwargs)
+            kernel=kernel, **self.kwargs
+        )
 
         super().fit(x=x, y=y, w=w)
 
@@ -475,7 +492,8 @@ class GPKernelHandle:
         """
         kernels = [
             getattr(skl_gp.kernels, kernel)(
-                length_scale=np.ones(n_in), **kernel_kwargs)
+                length_scale=np.ones(n_in), **kernel_kwargs
+            )
             if self.ard and kernel in GPKernelHandle.ARD_KERNELS
             else getattr(skl_gp.kernels, kernel)(**kernel_kwargs)
             for kernel, kernel_kwargs in zip(self.kernels, self.kernel_kwargs)
@@ -518,7 +536,8 @@ class MLPPredictor(SimplePredictor):
         if skl_nn is None:
             raise ImportError(
                 "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`")
+                "Install e.g. via `pip install pyabc[scikit-learn]`"
+            )
 
         if hidden_layer_sizes is None:
             hidden_layer_sizes = HiddenLayerHandle()
@@ -553,7 +572,8 @@ class MLPPredictor(SimplePredictor):
             hidden_layer_sizes = hidden_layer_sizes(n_in, n_out, n_sample)
 
         self.predictor = skl_nn.MLPRegressor(
-            hidden_layer_sizes=hidden_layer_sizes, **self.kwargs)
+            hidden_layer_sizes=hidden_layer_sizes, **self.kwargs
+        )
 
         super().fit(x=x, y=y, w=w)
 
@@ -574,7 +594,7 @@ class HiddenLayerHandle:
         method: Union[str, List[str]] = MEAN,
         n_layer: int = 1,
         max_size: int = np.inf,
-        alpha: float = 1.,
+        alpha: float = 1.0,
     ):
         """
         Parameters
@@ -603,14 +623,18 @@ class HiddenLayerHandle:
         for m in method:
             if m not in HiddenLayerHandle.METHODS:
                 raise ValueError(
-                    f"Method {m} must be in {HiddenLayerHandle.METHODS}")
+                    f"Method {m} must be in {HiddenLayerHandle.METHODS}"
+                )
         self.method = method
         self.n_layer = n_layer
         self.max_size = max_size
         self.alpha = alpha
 
     def __call__(
-        self, n_in: int, n_out: int, n_sample: int,
+        self,
+        n_in: int,
+        n_out: int,
+        n_sample: int,
     ) -> Tuple[int, ...]:
         """
         Parameters
@@ -645,7 +669,7 @@ class HiddenLayerHandle:
         neurons_per_layer = min(neurons_per_layer, self.max_size)
 
         # only >=2 dim makes sense, round
-        neurons_per_layer = int(max(2., neurons_per_layer))
+        neurons_per_layer = int(max(2.0, neurons_per_layer))
 
         layer_sizes = tuple(neurons_per_layer for _ in range(self.n_layer))
         logger.info(f"Layer sizes: {layer_sizes}")
@@ -725,7 +749,8 @@ class ModelSelectionPredictor(Predictor):
         else:
             # a single training and test set
             splits = skl_ms.train_test_split(
-                np.arange(n_sample), test_size=self.test_size)
+                np.arange(n_sample), test_size=self.test_size
+            )
             # as iterable
             splits = [splits]
             n_splits = 1
@@ -752,13 +777,17 @@ class ModelSelectionPredictor(Predictor):
                 # test score of z-score normalized variables
                 y_test_pred = predictor.predict(x=x_test)
                 scores_test[i_pred, i_split] = self.f_score(
-                    y1=y_test_pred, y2=y_test, sigma=std_y,
+                    y1=y_test_pred,
+                    y2=y_test,
+                    sigma=std_y,
                 )
 
                 # for debugging, log training scores
                 y_train_pred = predictor.predict(x=x_train)
                 scores_train[i_pred, i_split] = self.f_score(
-                    y1=y_train_pred, y2=y_train, sigma=std_y,
+                    y1=y_train_pred,
+                    y2=y_train,
+                    sigma=std_y,
                 )
 
         # the score of a predictor is the mean over all folds
@@ -767,10 +796,12 @@ class ModelSelectionPredictor(Predictor):
 
         # logging
         for predictor, score_train, score_test in zip(
-                self.predictors, scores_train, scores_test):
+            self.predictors, scores_train, scores_test
+        ):
             logger.info(
                 f"Test score {score_test:.3e} (train {score_train:.3e}) for "
-                f"{predictor}")
+                f"{predictor}"
+            )
 
         # best predictor has minimum score
         self.chosen_one = self.predictors[np.argmin(scores_test)]
@@ -802,8 +833,9 @@ def root_mean_square_error(
     """
     return np.sqrt(
         np.sum(
-            ((y1 - y2) / sigma)**2,
-        ) / y1.size,
+            ((y1 - y2) / sigma) ** 2,
+        )
+        / y1.size,
     )
 
 
@@ -826,6 +858,7 @@ def root_mean_square_relative_error(
     """
     return np.sqrt(
         np.sum(
-            ((y1 - y2) / y2)**2,
-        ) / y1.size,
+            ((y1 - y2) / y2) ** 2,
+        )
+        / y1.size,
     )

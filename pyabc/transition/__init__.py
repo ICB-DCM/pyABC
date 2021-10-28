@@ -13,9 +13,11 @@ keyword argument.
 """
 
 from .base import Transition, DiscreteTransition, AggregatedTransition
-from .multivariatenormal import (MultivariateNormalTransition,
-                                 silverman_rule_of_thumb,
-                                 scott_rule_of_thumb)
+from .multivariatenormal import (
+    MultivariateNormalTransition,
+    silverman_rule_of_thumb,
+    scott_rule_of_thumb,
+)
 from .exceptions import NotEnoughParticles
 from .grid_search import GridSearchCV
 from .local_transition import LocalTransition

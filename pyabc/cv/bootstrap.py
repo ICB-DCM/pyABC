@@ -32,16 +32,18 @@ def weights(n_per_model, transitions, test_transitions, test_X):
         Weights for each model at the test points
     """
     bootstr_w_at_test_X = []
-    for trans, test_trans, n, X in zip(transitions, test_transitions,
-                                       n_per_model, test_X):
+    for trans, test_trans, n, X in zip(
+        transitions, test_transitions, n_per_model, test_X
+    ):
         bootstr_X = trans.rvs(size=n)
         test_trans.fit(bootstr_X, np.ones(len(bootstr_X)) / len(bootstr_X))
         bootstr_w_at_test_X.append(test_trans.pdf(X))
     return bootstr_w_at_test_X
 
 
-def calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w,
-            transitions, test_X):
+def calc_cv(
+    nr_particles, model_weights, N_BOOTSTR, test_w, transitions, test_X
+):
     """
     Calculate the Coefficient of Variation.
 
@@ -82,9 +84,10 @@ def calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w,
 
     # N_BOOTSTR times, train test_transitions on n_per_model points, and
     # calculate the weights associated with test_X, for each model
-    bootstr_w_at_test_X = [weights(n_per_model, transitions, test_transitions,
-                                   test_X)
-                           for _ in range(N_BOOTSTR)]
+    bootstr_w_at_test_X = [
+        weights(n_per_model, transitions, test_transitions, test_X)
+        for _ in range(N_BOOTSTR)
+    ]
 
     # sort by model
     per_model_w = [np.array(arr) for arr in zip(*bootstr_w_at_test_X)]
@@ -94,13 +97,14 @@ def calc_cv(nr_particles, model_weights, N_BOOTSTR, test_w,
 
     # normalize by number of samples per model
     model_weighted_variations_at_X = [
-        var * n / n_per_model.sum() for
-        var, n in zip(variations_at_X, n_per_model)
+        var * n / n_per_model.sum()
+        for var, n in zip(variations_at_X, n_per_model)
     ]
 
     # weight cvs by the point weights
-    point_weighted_var_at_X = [var * w for var, w in
-                               zip(model_weighted_variations_at_X, test_w)]
+    point_weighted_var_at_X = [
+        var * w for var, w in zip(model_weighted_variations_at_X, test_w)
+    ]
 
     # compute an "average coefficient of variation":
     # for each model, sum up the weighted cvs over the test points

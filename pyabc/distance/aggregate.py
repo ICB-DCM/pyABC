@@ -55,8 +55,9 @@ class AggregatedDistance(Distance):
 
         if not isinstance(distances, list):
             distances = [distances]
-        self.distances: List[Distance] = \
-            [to_distance(distance) for distance in distances]
+        self.distances: List[Distance] = [
+            to_distance(distance) for distance in distances
+        ]
 
         self.weights = weights
         self.factors = factors
@@ -113,11 +114,14 @@ class AggregatedDistance(Distance):
         of True is returned indicating that e.g. the distance may need to
         be recalculated since the underlying distances changed.
         """
-        return any(distance.update(
-            t=t,
-            get_sample=get_sample,
-            total_sims=total_sims,
-        ) for distance in self.distances)
+        return any(
+            distance.update(
+                t=t,
+                get_sample=get_sample,
+                total_sims=total_sims,
+            )
+            for distance in self.distances
+        )
 
     def __call__(
         self,
@@ -130,9 +134,9 @@ class AggregatedDistance(Distance):
         Applies all distance functions and computes the weighted sum of all
         obtained values.
         """
-        values = np.array([
-            distance(x, x_0, t, par) for distance in self.distances
-        ])
+        values = np.array(
+            [distance(x, x_0, t, par) for distance in self.distances]
+        )
         self.format_weights_and_factors(t)
         weights = AggregatedDistance.get_for_t_or_latest(self.weights, t)
         factors = AggregatedDistance.get_for_t_or_latest(self.factors, t)
@@ -155,12 +159,14 @@ class AggregatedDistance(Distance):
 
     def format_weights_and_factors(self, t):
         self.weights = AggregatedDistance.format_dict(
-            self.weights, t, len(self.distances))
+            self.weights, t, len(self.distances)
+        )
         self.factors = AggregatedDistance.format_dict(
-            self.factors, t, len(self.distances))
+            self.factors, t, len(self.distances)
+        )
 
     @staticmethod
-    def format_dict(w, t, n_distances, default_val=1.):
+    def format_dict(w, t, n_distances, default_val=1.0):
         """
         Normalize weight or factor dictionary to the employed format.
         """
@@ -233,12 +239,12 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         self.log_file: str = log_file
 
     def requires_calibration(self) -> bool:
-        return (self.initial_weights is None
-                or any(d.requires_calibration() for d in self.distances))
+        return self.initial_weights is None or any(
+            d.requires_calibration() for d in self.distances
+        )
 
     def is_adaptive(self) -> bool:
-        return (self.adaptive
-                or any(d.is_adaptive() for d in self.distances))
+        return self.adaptive or any(d.is_adaptive() for d in self.distances)
 
     def initialize(
         self,
@@ -304,10 +310,9 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
         for distance in self.distances:
             # apply distance to all samples
-            current_list = np.array([
-                distance(sum_stat, self.x_0)
-                for sum_stat in sum_stats
-            ])
+            current_list = np.array(
+                [distance(sum_stat, self.x_0) for sum_stat in sum_stats]
+            )
             # compute scaling
             scale = self.scale_function(samples=current_list)
 
@@ -324,7 +329,8 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         if w.size != len(self.distances):
             raise AssertionError(
                 f"weights.size={w.size} != "
-                f"len(distances)={len(self.distances)}")
+                f"len(distances)={len(self.distances)}"
+            )
 
         # add to w attribute, at time t
         self.weights[t] = np.array(w)

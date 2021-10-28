@@ -6,11 +6,14 @@ import numpy as np
 import pyabc
 
 
-@pytest.fixture(params=[lambda: None,
-                        pyabc.SingleCoreSampler,
-                        pyabc.MulticoreEvalParallelSampler,
-                        pyabc.MulticoreParticleParallelSampler,
-                        ])
+@pytest.fixture(
+    params=[
+        lambda: None,
+        pyabc.SingleCoreSampler,
+        pyabc.MulticoreEvalParallelSampler,
+        pyabc.MulticoreParticleParallelSampler,
+    ]
+)
 def sampler(request):
     s = request.param()
     try:
@@ -25,6 +28,7 @@ def sampler(request):
 
 def test_basic(sampler: pyabc.sampler.Sampler):
     """Some basic tests."""
+
     def model(par):
         return {'s0': par['p0'] + np.random.randn(4)}
 
@@ -35,6 +39,7 @@ def test_basic(sampler: pyabc.sampler.Sampler):
     prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 10))
 
     abc = pyabc.ABCSMC(
-        model, prior, distance, sampler=sampler, population_size=50)
+        model, prior, distance, sampler=sampler, population_size=50
+    )
     abc.new(pyabc.create_sqlite_db_id(), x0)
     abc.run(max_nr_populations=4)

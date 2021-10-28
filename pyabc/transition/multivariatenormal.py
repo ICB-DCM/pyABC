@@ -23,7 +23,7 @@ def scott_rule_of_thumb(n_samples, dimension):
 
     (see also scipy.stats.kde.gaussian_kde.scotts_factor)
     """
-    return n_samples ** (-1. / (dimension + 4))
+    return n_samples ** (-1.0 / (dimension + 4))
 
 
 def silverman_rule_of_thumb(n_samples, dimension):
@@ -59,9 +59,12 @@ class MultivariateNormalTransition(Transition):
         a float and dimension is the parameter dimension.
 
     """
+
     def __init__(
-            self, scaling: float = 1,
-            bandwidth_selector: BandwidthSelector = silverman_rule_of_thumb):
+        self,
+        scaling: float = 1,
+        bandwidth_selector: BandwidthSelector = silverman_rule_of_thumb,
+    ):
         self.scaling: float = scaling
         self.bandwidth_selector: BandwidthSelector = bandwidth_selector
         # base population as an array
@@ -80,10 +83,10 @@ class MultivariateNormalTransition(Transition):
 
         sample_cov = smart_cov(self._X_arr, w)
         dim = sample_cov.shape[0]
-        eff_sample_size = 1 / (w**2).sum()
+        eff_sample_size = 1 / (w ** 2).sum()
         bw_factor = self.bandwidth_selector(eff_sample_size, dim)
 
-        self.cov = sample_cov * bw_factor**2 * self.scaling
+        self.cov = sample_cov * bw_factor ** 2 * self.scaling
         self.normal = st.multivariate_normal(cov=self.cov, allow_singular=True)
 
         # cache range array
@@ -93,21 +96,26 @@ class MultivariateNormalTransition(Transition):
         if size is None:
             return self.rvs_single()
         sample_ind = np.random.choice(
-            self._range, size=size, p=self.w, replace=True)
+            self._range, size=size, p=self.w, replace=True
+        )
         sample = self.X.iloc[sample_ind]
-        perturbed = (sample + np.random.multivariate_normal(
-            np.zeros(self.cov.shape[0]), self.cov, size=size))
+        perturbed = sample + np.random.multivariate_normal(
+            np.zeros(self.cov.shape[0]), self.cov, size=size
+        )
         return perturbed
 
     def rvs_single(self) -> Parameter:
         sample_ind = np.random.choice(self._range, p=self.w, replace=True)
         sample = self.X.iloc[sample_ind]
-        perturbed = (sample + np.random.multivariate_normal(
-            np.zeros(self.cov.shape[0]), self.cov))
+        perturbed = sample + np.random.multivariate_normal(
+            np.zeros(self.cov.shape[0]), self.cov
+        )
         return Parameter(perturbed)
 
-    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame],
-            ) -> Union[float, np.ndarray]:
+    def pdf(
+        self,
+        x: Union[Parameter, pd.Series, pd.DataFrame],
+    ) -> Union[float, np.ndarray]:
         # convert to numpy array in correct order
         if isinstance(x, (Parameter, pd.Series)):
             x = np.array([x[key] for key in self.X.columns])

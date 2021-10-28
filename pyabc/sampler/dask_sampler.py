@@ -37,8 +37,13 @@ class DaskDistributedSampler(EPSMixin, Sampler):
         batching is done.
     """
 
-    def __init__(self, dask_client=None, client_max_jobs=np.inf,
-                 default_pickle=False, batch_size=1):
+    def __init__(
+        self,
+        dask_client=None,
+        client_max_jobs=np.inf,
+        default_pickle=False,
+        batch_size=1,
+    ):
         super().__init__()
 
         # Assign Client
