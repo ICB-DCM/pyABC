@@ -101,23 +101,26 @@ def PicklingMulticoreEvalParallelSampler():
     return MulticoreEvalParallelSampler(pickle=True)
 
 
-@pytest.fixture(params=[SingleCoreSampler,
-                        RedisEvalParallelSamplerWrapper,
-                        RedisEvalParallelSamplerWaitForAllWrapper,
-                        RedisEvalParallelSamplerLookAheadDelayWrapper,
-                        RedisStaticSamplerWrapper,
-                        MulticoreEvalParallelSampler,
-                        MultiProcessingMappingSampler,
-                        MulticoreParticleParallelSampler,
-                        PicklingMulticoreParticleParallelSampler,
-                        PicklingMulticoreEvalParallelSampler,
-                        MappingSampler,
-                        DaskDistributedSampler,
-                        DaskDistributedSamplerBatch,
-                        GenericFutureWithThreadPool,
-                        GenericFutureWithProcessPool,
-                        GenericFutureWithProcessPoolBatch,
-                        ])
+@pytest.fixture(
+    params=[
+        SingleCoreSampler,
+        RedisEvalParallelSamplerWrapper,
+        RedisEvalParallelSamplerWaitForAllWrapper,
+        RedisEvalParallelSamplerLookAheadDelayWrapper,
+        RedisStaticSamplerWrapper,
+        MulticoreEvalParallelSampler,
+        MultiProcessingMappingSampler,
+        MulticoreParticleParallelSampler,
+        PicklingMulticoreParticleParallelSampler,
+        PicklingMulticoreEvalParallelSampler,
+        MappingSampler,
+        DaskDistributedSampler,
+        DaskDistributedSamplerBatch,
+        GenericFutureWithThreadPool,
+        GenericFutureWithProcessPool,
+        GenericFutureWithProcessPoolBatch,
+    ],
+)
 def sampler(request):
     s = request.param()
     try:
@@ -186,11 +189,14 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     # We plug all the ABC setups together
     nr_populations = 2
     pop_size = pyabc.ConstantPopulationSize(23)
-    abc = pyabc.ABCSMC(models, parameter_given_model_prior_distribution,
-                       pyabc.PercentileDistance(measures_to_use=["y"]),
-                       pop_size,
-                       eps=pyabc.MedianEpsilon(),
-                       sampler=sampler)
+    abc = pyabc.ABCSMC(
+        models,
+        parameter_given_model_prior_distribution,
+        pyabc.PercentileDistance(measures_to_use=["y"]),
+        pop_size,
+        eps=pyabc.MedianEpsilon(),
+        sampler=sampler,
+    )
 
     # Finally we add meta data such as model names and
     # define where to store the results
