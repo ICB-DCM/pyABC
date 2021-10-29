@@ -14,7 +14,10 @@ try:
                 py_object_ = robjects.conversion.rpy2py(object_)
             return py_object_
         return object_
+
+
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
+
     def r_to_py(object_):
         return object_
 

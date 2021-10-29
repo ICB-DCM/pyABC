@@ -19,8 +19,8 @@ depends_on = None
 def upgrade():
     op.add_column(
         table_name='particles',
-        column=sa.Column(
-            'proposal_id', sa.INTEGER, server_default='0'))
+        column=sa.Column('proposal_id', sa.INTEGER, server_default='0'),
+    )
 
 
 def downgrade():

@@ -39,8 +39,13 @@ class ConcurrentFutureSampler(EPSMixin, Sampler):
 
     """
 
-    def __init__(self, cfuture_executor=None, client_max_jobs=200,
-                 default_pickle=True, batch_size=1):
+    def __init__(
+        self,
+        cfuture_executor=None,
+        client_max_jobs=200,
+        default_pickle=True,
+        batch_size=1,
+    ):
         super().__init__()
 
         # Assign Client

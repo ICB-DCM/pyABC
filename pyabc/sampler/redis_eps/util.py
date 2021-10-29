@@ -4,6 +4,7 @@ import sys
 
 class KillHandler:
     """Handle killing workers during delicate processes."""
+
     def __init__(self):
         self.killed = False
         self.exit = True

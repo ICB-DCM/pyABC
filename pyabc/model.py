@@ -19,11 +19,13 @@ class ModelResult:
     distances and accepted/rejected.
     """
 
-    def __init__(self,
-                 sum_stat: dict = None,
-                 distance: float = None,
-                 accepted: bool = None,
-                 weight: float = 1.0):
+    def __init__(
+        self,
+        sum_stat: dict = None,
+        distance: float = None,
+        accepted: bool = None,
+        weight: float = 1.0,
+    ):
         self.sum_stat = sum_stat if sum_stat is not None else {}
         self.distance = distance
         self.accepted = accepted
@@ -86,10 +88,9 @@ class Model:
         """
         raise NotImplementedError()
 
-    def summary_statistics(self,
-                           t: int,
-                           pars: Parameter,
-                           sum_stat_calculator: Callable) -> ModelResult:
+    def summary_statistics(
+        self, t: int, pars: Parameter, sum_stat_calculator: Callable
+    ) -> ModelResult:
         """
         Sample, and then calculate the summary statistics.
 
@@ -115,12 +116,14 @@ class Model:
         sum_stat = sum_stat_calculator(raw_data)
         return ModelResult(sum_stat=sum_stat)
 
-    def distance(self,
-                 t: int,
-                 pars: Parameter,
-                 sum_stat_calculator: Callable,
-                 distance_calculator: Distance,
-                 x_0: dict) -> ModelResult:
+    def distance(
+        self,
+        t: int,
+        pars: Parameter,
+        sum_stat_calculator: Callable,
+        distance_calculator: Distance,
+        x_0: dict,
+    ) -> ModelResult:
         """
         Sample, calculate summary statistics, and then calculate the distance.
 
@@ -149,25 +152,22 @@ class Model:
             The result with filled distance.
         """
 
-        sum_stat_result = self.summary_statistics(t,
-                                                  pars,
-                                                  sum_stat_calculator)
-        distance = distance_calculator(sum_stat_result.sum_stat,
-                                       x_0,
-                                       t,
-                                       pars)
+        sum_stat_result = self.summary_statistics(t, pars, sum_stat_calculator)
+        distance = distance_calculator(sum_stat_result.sum_stat, x_0, t, pars)
         sum_stat_result.distance = distance
 
         return sum_stat_result
 
-    def accept(self,
-               t: int,
-               pars: Parameter,
-               sum_stat_calculator: Callable,
-               distance_calculator: Distance,
-               eps_calculator: Epsilon,
-               acceptor: Acceptor,
-               x_0: dict):
+    def accept(
+        self,
+        t: int,
+        pars: Parameter,
+        sum_stat_calculator: Callable,
+        distance_calculator: Distance,
+        eps_calculator: Epsilon,
+        acceptor: Acceptor,
+        x_0: dict,
+    ):
         """
         Sample, calculate summary statistics, calculate distance, and then
         accept or not accept a parameter.
@@ -201,16 +201,15 @@ class Model:
             The result with filled accepted field.
 
         """
-        result = self.summary_statistics(t,
-                                         pars,
-                                         sum_stat_calculator)
+        result = self.summary_statistics(t, pars, sum_stat_calculator)
         acc_res = acceptor(
             distance_function=distance_calculator,
             eps=eps_calculator,
             x=result.sum_stat,
             x_0=x_0,
             t=t,
-            par=pars)
+            par=pars,
+        )
         result.distance = acc_res.distance
         result.accepted = acc_res.accept
         result.weight = acc_res.weight
@@ -235,9 +234,9 @@ class SimpleModel(Model):
         the function name of `sample_function`.
     """
 
-    def __init__(self,
-                 sample_function: Callable[[Parameter], Any],
-                 name: str = None):
+    def __init__(
+        self, sample_function: Callable[[Parameter], Any], name: str = None
+    ):
         if name is None:
             name = sample_function.__name__
         super().__init__(name)
@@ -284,9 +283,7 @@ class IntegratedModel(Model):
     your own integrated model..
     """
 
-    def integrated_simulate(self,
-                            pars: Parameter,
-                            eps: float) -> ModelResult:
+    def integrated_simulate(self, pars: Parameter, eps: float) -> ModelResult:
         """
         Method which integrates simulation and acceptance/rejection
         in a single method.
@@ -317,12 +314,14 @@ class IntegratedModel(Model):
         """
         raise NotImplementedError()
 
-    def accept(self,
-               t: int,
-               pars: Parameter,
-               sum_stat_calculator: Callable,
-               distance_calculator: Distance,
-               eps_calculator: Epsilon,
-               acceptor: Acceptor,
-               x_0: dict):
+    def accept(
+        self,
+        t: int,
+        pars: Parameter,
+        sum_stat_calculator: Callable,
+        distance_calculator: Distance,
+        eps_calculator: Epsilon,
+        acceptor: Acceptor,
+        x_0: dict,
+    ):
         return self.integrated_simulate(pars, eps_calculator(t))

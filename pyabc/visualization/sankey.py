@@ -2,6 +2,7 @@
 
 import numpy as np
 from typing import Dict, List, Union
+
 try:
     import plotly.graph_objects as go
 except ImportError:
@@ -101,7 +102,7 @@ def plot_sensitivity_sankey(
         t = max(info_dict.keys())
 
     # initialize objects
-    sample = pyabc.Sample.from_population(h.get_population(t=max(0, t-1)))
+    sample = pyabc.Sample.from_population(h.get_population(t=max(0, t - 1)))
     data = h.observed_sum_stat()
     sumstat.initialize(t=0, get_sample=lambda: sample, x_0=data, total_sims=0)
     par_keys = list(h.get_distribution()[0].columns)
@@ -126,8 +127,9 @@ def plot_sensitivity_sankey(
         feature_normalization=feature_normalization,
         scale_weights=scale_weights,
     )
-    x, y, weights, use_ixs, x0 = \
-        (ret[key] for key in ("x", "y", "weights", "use_ixs", "x0"))
+    x, y, weights, use_ixs, x0 = (
+        ret[key] for key in ("x", "y", "weights", "use_ixs", "x0")
+    )
 
     # learn predictor model
     predictor.fit(x=x, y=y, w=weights)

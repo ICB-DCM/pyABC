@@ -104,7 +104,7 @@ def fd_nabla1_multi_delta(
         Shape (n_par, ...) with ndim > 1 if `f_fval` is not scalar-valued.
     """
     if test_deltas is None:
-        test_deltas = [10**(-i) for i in range(1, 9)]
+        test_deltas = [10 ** (-i) for i in range(1, 9)]
 
     if len(test_deltas) == 1:
         test_deltas = test_deltas[0]
@@ -133,10 +133,12 @@ def fd_nabla1_multi_delta(
     #  with the minimal entry and thus the most stable behavior
     #  is selected.
     stab_vec = np.full(shape=nablas.shape, fill_value=np.nan)
-    stab_vec[1:-1] = np.mean(np.abs(
-        [nablas[2:] - nablas[1:-1],
-         nablas[1:-1] - nablas[:-2]],
-    ), axis=0)
+    stab_vec[1:-1] = np.mean(
+        np.abs(
+            [nablas[2:] - nablas[1:-1], nablas[1:-1] - nablas[:-2]],
+        ),
+        axis=0,
+    )
     # on the edge, just take the single neighbor
     stab_vec[0] = np.abs(nablas[1] - nablas[0])
     stab_vec[-1] = np.abs(nablas[-1] - nablas[-2])
@@ -146,7 +148,8 @@ def fd_nabla1_multi_delta(
     if stab_vec.ndim > 2:
         # flatten all dimensions > 1
         stab_vec = stab_vec.reshape(
-            stab_vec.shape[0], stab_vec.shape[1], -1).max(axis=2)
+            stab_vec.shape[0], stab_vec.shape[1], -1
+        ).max(axis=2)
 
     # minimum delta index for each parameter
     min_ixs = np.argmin(stab_vec, axis=0)

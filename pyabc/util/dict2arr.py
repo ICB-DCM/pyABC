@@ -34,7 +34,8 @@ def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
         else:
             raise TypeError(
                 f"Cannot parse variable {key}={val} of type {type(val)} "
-                "to numeric.")
+                "to numeric."
+            )
 
     # for efficiency, directly parse single entries
     if len(arr) == 1:
@@ -75,7 +76,8 @@ def dict2arrlabels(dct: dict, keys: List) -> List[str]:
         else:
             raise TypeError(
                 f"Cannot parse variable {key}={val} of type {type(val)} "
-                "to numeric.")
+                "to numeric."
+            )
     return labels
 
 
@@ -85,6 +87,7 @@ def io_dict2arr(fun):
     Assumes the array is the first argument, and `self` holds a `keys`
     variable.
     """
+
     def wrapped_fun(self, data: Union[dict, np.ndarray], *args, **kwargs):
         # convert input to array
         data = dict2arr(data, self.x_keys)
@@ -92,4 +95,5 @@ def io_dict2arr(fun):
         ret: np.ndarray = fun(self, data, *args, **kwargs)
         # flatten output
         return ret.flatten()
+
     return wrapped_fun

@@ -15,4 +15,5 @@ from .base import (
     ExternalModel,
     ExternalSumStat,
     ExternalDistance,
-    create_sum_stat)
+    create_sum_stat,
+)

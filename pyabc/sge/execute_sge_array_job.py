@@ -36,13 +36,19 @@ with open(os.path.join(tmp_path, 'ExecutionContext.pickle'), 'rb') as my_file:
 results_array = []
 for element in array:
     try:
-        with NamedPrinter(tmp_path, job_nr), \
-             ExecutionContext(tmp_path, job_nr):
+        with NamedPrinter(tmp_path, job_nr), ExecutionContext(
+            tmp_path, job_nr
+        ):
             single_result = function(element)
     except Exception as e:
         logger.error(
             "execute_sge_array_job: Exception in sge-worker path=",
-            tmp_path, 'jobnr=', job_nr, "exception", e)
+            tmp_path,
+            'jobnr=',
+            job_nr,
+            "exception",
+            e,
+        )
         single_result = e
     else:
         pass
@@ -50,6 +56,7 @@ for element in array:
         results_array.append(single_result)
 
 # store result
-with open(os.path.join(tmp_path, 'results',
-                       job_nr + '.result'), 'wb') as my_file:
+with open(
+    os.path.join(tmp_path, 'results', job_nr + '.result'), 'wb'
+) as my_file:
     cloudpickle.dump(results_array, my_file)

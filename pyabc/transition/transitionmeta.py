@@ -18,6 +18,7 @@ def wrap_fit(f):
             if not np.isclose(w.sum(), 1):
                 w /= w.sum()
         f(self, X, w)
+
     return fit
 
 
@@ -27,6 +28,7 @@ def wrap_pdf(f):
         if self.no_parameters:
             return 1
         return f(self, x)
+
     return pdf
 
 
@@ -36,6 +38,7 @@ def wrap_rvs(f):
         if self.no_parameters:
             return pd.DataFrame(dtype=float)
         return f(self, size)
+
     return rvs
 
 
@@ -45,6 +48,7 @@ def wrap_rvs_single(f):
         if self.no_parameters:
             return pd.Series(dtype=float)
         return f(self)
+
     return rvs_single
 
 
