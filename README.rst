@@ -43,8 +43,8 @@ and also for download and for online inspection in the
    :target: https://badge.fury.io/py/pyabc
    :alt: PyPI
 
-.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3364560.svg
-   :target: https://doi.org/10.5281/zenodo.3364560
+.. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3257587.svg
+   :target: https://doi.org/10.5281/zenodo.3257587
    :alt: DOI
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
