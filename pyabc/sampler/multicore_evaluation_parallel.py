@@ -11,15 +11,17 @@ from .multicorebase import get_if_worker_healthy
 DONE = "Done"
 
 
-def work(simulate_one,
-         queue,
-         n_eval: Value,
-         n_acc: Value,
-         n: int,
-         check_max_eval: bool,
-         max_eval: int,
-         all_accepted: bool,
-         sample_factory):
+def work(
+    simulate_one,
+    queue,
+    n_eval: Value,
+    n_acc: Value,
+    n: int,
+    check_max_eval: bool,
+    max_eval: int,
+    all_accepted: bool,
+    sample_factory,
+):
     # unwrap arguments
     if isinstance(simulate_one, bytes):
         simulate_one = pickle.loads(simulate_one)
@@ -28,9 +30,11 @@ def work(simulate_one,
     np.random.seed()
 
     sample = sample_factory()
-    while (n_acc.value < n and
-           (not all_accepted or n_eval.value < n) and
-           (not check_max_eval or n_eval.value < max_eval)):
+    while (
+        n_acc.value < n
+        and (not all_accepted or n_eval.value < n)
+        and (not check_max_eval or n_eval.value < max_eval)
+    ):
         with n_eval.get_lock():
             particle_id = n_eval.value
             n_eval.value += 1
@@ -88,8 +92,15 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+        self,
+        n,
+        simulate_one,
+        t,
+        *,
+        max_eval=np.inf,
+        all_accepted=False,
+        ana_vars=None,
+    ):
         n_eval = Value(c_longlong)
         n_eval.value = 0
 
@@ -101,13 +112,22 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         # wrap arguments
         if self.pickle:
             simulate_one = pickle.dumps(simulate_one)
-        args = (simulate_one, queue,
-                n_eval, n_acc, n,
-                self.check_max_eval, max_eval, all_accepted,
-                self._create_empty_sample)
+        args = (
+            simulate_one,
+            queue,
+            n_eval,
+            n_acc,
+            n,
+            self.check_max_eval,
+            max_eval,
+            all_accepted,
+            self._create_empty_sample,
+        )
 
-        processes = [Process(target=work, args=args, daemon=self.daemon)
-                     for _ in range(self.n_procs)]
+        processes = [
+            Process(target=work, args=args, daemon=self.daemon)
+            for _ in range(self.n_procs)
+        ]
 
         for proc in processes:
             proc.start()
@@ -131,7 +151,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
 
         # avoid bias toward short running evaluations
         id_results.sort(key=lambda x: x[0])
-        id_results = id_results[:min(len(id_results), n)]
+        id_results = id_results[: min(len(id_results), n)]
 
         self.nr_evaluations_ = n_eval.value
 

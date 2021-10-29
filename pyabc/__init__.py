@@ -22,7 +22,8 @@ from .random_variables import (
     RV,
     RVBase,
     RVDecorator,
-    LowerBoundDecorator)
+    LowerBoundDecorator,
+)
 from .distance import (
     Distance,
     NoDistance,
@@ -47,7 +48,8 @@ from .distance import (
     IndependentLaplaceKernel,
     BinomialKernel,
     PoissonKernel,
-    NegativeBinomialKernel)
+    NegativeBinomialKernel,
+)
 from .epsilon import (
     Epsilon,
     NoEpsilon,
@@ -65,7 +67,8 @@ from .epsilon import (
     PolynomialDecayFixedIterScheme,
     DalyScheme,
     FrielPettittScheme,
-    EssScheme)
+    EssScheme,
+)
 from .sampler import (
     nr_cores_available,
     SingleCoreSampler,
@@ -77,11 +80,10 @@ from .sampler import (
     RedisEvalParallelSamplerServerStarter,
     RedisStaticSamplerServerStarter,
     MulticoreEvalParallelSampler,
-    ConcurrentFutureSampler)
+    ConcurrentFutureSampler,
+)
 from .inference import ABCSMC
-from .storage import (
-    History,
-    create_sqlite_db_id)
+from .storage import History, create_sqlite_db_id
 from .acceptor import (
     Acceptor,
     SimpleFunctionAcceptor,
@@ -89,12 +91,9 @@ from .acceptor import (
     StochasticAcceptor,
     pdf_norm_from_kernel,
     pdf_norm_max_found,
-    ScaledPDFNorm)
-from .model import (
-    Model,
-    SimpleModel,
-    ModelResult,
-    IntegratedModel)
+    ScaledPDFNorm,
+)
+from .model import Model, SimpleModel, ModelResult, IntegratedModel
 from .transition import (
     MultivariateNormalTransition,
     LocalTransition,
@@ -102,15 +101,14 @@ from .transition import (
     GridSearchCV,
     AggregatedTransition,
     DiscreteJumpTransition,
-    ModelPerturbationKernel)
+    ModelPerturbationKernel,
+)
 from .population import (
     Particle,
     Population,
     Sample,
 )
-from .populationstrategy import (
-    AdaptivePopulationSize,
-    ConstantPopulationSize)
+from .populationstrategy import AdaptivePopulationSize, ConstantPopulationSize
 from .predictor import (
     Predictor,
     LinearPredictor,
@@ -156,8 +154,7 @@ except KeyError:
 logger = logging.getLogger("ABC")
 logger.setLevel(loglevel)
 sh = logging.StreamHandler()
-sh.setFormatter(logging.Formatter(
-    '%(name)s %(levelname)s: %(message)s'))
+sh.setFormatter(logging.Formatter('%(name)s %(levelname)s: %(message)s'))
 logger.addHandler(sh)
 
 # Set number of threads e.g. for numpy. as pyabc uses parallelization on its

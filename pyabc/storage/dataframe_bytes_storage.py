@@ -29,8 +29,12 @@ def df_from_bytes_csv(bytes_: bytes) -> pd.DataFrame:
         s = StringIO(bytes_.decode())
         s.seek(0)
         return pd.read_csv(
-            s, index_col=0, header=0, float_precision="round_trip",
-            quotechar='"')
+            s,
+            index_col=0,
+            header=0,
+            float_precision="round_trip",
+            quotechar='"',
+        )
     except UnicodeDecodeError:
         raise DataFrameLoadException("Not a DataFrame")
 

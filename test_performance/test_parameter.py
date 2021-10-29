@@ -16,7 +16,7 @@ def test_parameter_dict_numpy_conversion():
     # number of parameter keys
     nkey = 500
     # the parameter keys
-    keys = ['key_' + str(i) for i in range(int(nkey/2))]
+    keys = ['key_' + str(i) for i in range(int(nkey / 2))]
     # the indices
     ixs = list(range(len(keys)))
 
@@ -53,8 +53,10 @@ def test_parameter_dict_numpy_conversion():
     start = time()
     pars_np_3 = [par.to_numpy()[ixs] for par in pars_pd]
     time_np_3 = time() - start
-    print(f"Time to extract to numpy via cached indices and to_numpy(): "
-          f"{time_np_3}")
+    print(
+        f"Time to extract to numpy via cached indices and to_numpy(): "
+        f"{time_np_3}"
+    )
     # This is a little faster than mode 2 (probably just by avoiding copying)
 
     # mode 4: directly from dict
@@ -74,7 +76,8 @@ def test_parameter_dict_numpy_conversion():
 
     # check that we always got the same results
     for par1, par2, par3, par4 in zip(
-            pars_np_1, pars_np_2, pars_np_3, pars_np_4):
+        pars_np_1, pars_np_2, pars_np_3, pars_np_4
+    ):
         assert (par1 == par2).all()
         assert (par1 == par3).all()
         assert (par1 == par4).all()

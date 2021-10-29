@@ -59,15 +59,17 @@ class Particle:
         multiplying the weights with the model probabilities.
     """
 
-    def __init__(self,
-                 m: int,
-                 parameter: Parameter,
-                 weight: float,
-                 sum_stat: dict,
-                 distance: float,
-                 accepted: bool = True,
-                 proposal_id: int = 0,
-                 preliminary: bool = False):
+    def __init__(
+        self,
+        m: int,
+        parameter: Parameter,
+        weight: float,
+        sum_stat: dict,
+        distance: float,
+        accepted: bool = True,
+        proposal_id: int = 0,
+        preliminary: bool = False,
+    ):
 
         self.m = m
         self.parameter = parameter
@@ -98,10 +100,12 @@ class Population:
         # checks
         if any(not p.accepted for p in particles):
             raise AssertionError(
-                "A population should only consist of accepted particles")
+                "A population should only consist of accepted particles"
+            )
         if not np.isclose(sum(p.weight for p in particles), 1):
             raise AssertionError(
-                "The population total weight is not normalized.")
+                "The population total weight is not normalized."
+            )
 
         self.calculate_model_probabilities()
 
@@ -120,22 +124,26 @@ class Population:
         store = self.get_particles_by_model()
 
         # calculate weight per model
-        model_total_weights = {m: sum(particle.weight for particle in plist)
-                               for m, plist in store.items()}
+        model_total_weights = {
+            m: sum(particle.weight for particle in plist)
+            for m, plist in store.items()
+        }
 
         # calculate total weight
         population_total_weight = sum(model_total_weights.values())  # 1
 
         # model probabilities are weights per model divided by total weight
-        model_probabilities = {m: w / population_total_weight
-                               for m, w in model_total_weights.items()}
+        model_probabilities = {
+            m: w / population_total_weight
+            for m, w in model_total_weights.items()
+        }
 
         # cache model probabilities
         self._model_probabilities = model_probabilities
 
     def update_distances(
-            self,
-            distance_to_ground_truth: Callable[[dict, Parameter], float],
+        self,
+        distance_to_ground_truth: Callable[[dict, Parameter], float],
     ) -> None:
         """
         Update the distances of all summary statistics of all particles
@@ -149,7 +157,8 @@ class Population:
 
         for particle in self.particles:
             particle.distance = distance_to_ground_truth(
-                particle.sum_stat, particle.parameter)
+                particle.sum_stat, particle.parameter
+            )
 
     def get_model_probabilities(self) -> pd.DataFrame:
         """Get probabilities of the individual models.
@@ -285,11 +294,13 @@ class Sample:
         requested number of particles).
     """
 
-    def __init__(self,
-                 record_rejected: bool = False,
-                 max_nr_rejected: int = np.inf,
-                 is_look_ahead: bool = False,
-                 ok: bool = True):
+    def __init__(
+        self,
+        record_rejected: bool = False,
+        max_nr_rejected: int = np.inf,
+        is_look_ahead: bool = False,
+        ok: bool = True,
+    ):
         self.accepted_particles: List[Particle] = []
         self.rejected_particles: List[Particle] = []
         self.record_rejected: bool = record_rejected
@@ -315,7 +326,8 @@ class Sample:
         for particle in population.particles:
             if not particle.accepted:
                 raise AssertionError(
-                    "A population should only consist of accepted particles")
+                    "A population should only consist of accepted particles"
+                )
             sample.append(particle)
         return sample
 
@@ -346,23 +358,29 @@ class Sample:
         # add to population if accepted, else maybe add to rejected
         if particle.accepted:
             self.accepted_particles.append(particle)
-        elif self.record_rejected and \
-                len(self.rejected_particles) < self.max_nr_rejected:
+        elif (
+            self.record_rejected
+            and len(self.rejected_particles) < self.max_nr_rejected
+        ):
             self.rejected_particles.append(particle)
 
     def __add__(self, other: "Sample"):
         sample = Sample(
             record_rejected=self.record_rejected,
-            max_nr_rejected=self.max_nr_rejected)
+            max_nr_rejected=self.max_nr_rejected,
+        )
 
-        sample.accepted_particles = \
+        sample.accepted_particles = (
             self.accepted_particles + other.accepted_particles
-        sample.rejected_particles = \
+        )
+        sample.rejected_particles = (
             self.rejected_particles + other.rejected_particles
+        )
         # restrict to max nr rejected
         if len(sample.rejected_particles) > sample.max_nr_rejected:
-            sample.rejected_particles = \
-                sample.rejected_particles[:sample.max_nr_rejected]
+            sample.rejected_particles = sample.rejected_particles[
+                : sample.max_nr_rejected
+            ]
 
         # the other attributes may keep their defaults
         return sample
@@ -414,9 +432,8 @@ class SampleFactory:
     """
 
     def __init__(
-            self,
-            record_rejected: bool = False,
-            max_nr_rejected: int = np.inf):
+        self, record_rejected: bool = False, max_nr_rejected: int = np.inf
+    ):
         self._record_rejected = record_rejected
         self._max_nr_rejected = max_nr_rejected
 
@@ -430,4 +447,5 @@ class SampleFactory:
         return Sample(
             record_rejected=self._record_rejected,
             max_nr_rejected=self._max_nr_rejected,
-            is_look_ahead=is_look_ahead)
+            is_look_ahead=is_look_ahead,
+        )

@@ -4,14 +4,16 @@ import numpy as np
 import scipy.stats as st
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from pyabc.sampler import (SingleCoreSampler,
-                           MappingSampler,
-                           MulticoreParticleParallelSampler,
-                           DaskDistributedSampler,
-                           ConcurrentFutureSampler,
-                           MulticoreEvalParallelSampler,
-                           RedisEvalParallelSamplerServerStarter,
-                           RedisStaticSamplerServerStarter)
+from pyabc.sampler import (
+    SingleCoreSampler,
+    MappingSampler,
+    MulticoreParticleParallelSampler,
+    DaskDistributedSampler,
+    ConcurrentFutureSampler,
+    MulticoreEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter,
+)
 import pyabc
 import logging
 import os
@@ -38,8 +40,9 @@ class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
         batch_size = 15
-        super().__init__(cfuture_executor, client_max_jobs,
-                         batch_size=batch_size)
+        super().__init__(
+            cfuture_executor, client_max_jobs, batch_size=batch_size
+        )
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
@@ -62,11 +65,23 @@ class DaskDistributedSamplerBatch(DaskDistributedSampler):
 
 class WrongOutputSampler(SingleCoreSampler):
     def sample_until_n_accepted(
-            self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+        self,
+        n,
+        simulate_one,
+        t,
+        *,
+        max_eval=np.inf,
+        all_accepted=False,
+        ana_vars=None,
+    ):
         return super().sample_until_n_accepted(
-            n+1, simulate_one, t, max_eval=max_eval,
-            all_accepted=all_accepted, ana_vars=ana_vars)
+            n + 1,
+            simulate_one,
+            t,
+            max_eval=max_eval,
+            all_accepted=all_accepted,
+            ana_vars=ana_vars,
+        )
 
 
 def RedisEvalParallelSamplerWrapper(**kwargs):
@@ -79,13 +94,15 @@ def RedisEvalParallelSamplerWaitForAllWrapper(**kwargs):
     kwargs.setdefault('batch_size', 5)
     kwargs.setdefault('catch', False)
     return RedisEvalParallelSamplerServerStarter(
-        wait_for_all_samples=True, **kwargs)
+        wait_for_all_samples=True, **kwargs
+    )
 
 
 def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
     kwargs.setdefault('catch', False)
     return RedisEvalParallelSamplerServerStarter(
-        look_ahead=True, look_ahead_delay_evaluation=True, **kwargs)
+        look_ahead=True, look_ahead_delay_evaluation=True, **kwargs
+    )
 
 
 def RedisStaticSamplerWrapper(**kwargs):
@@ -145,11 +162,13 @@ def redis_starter_sampler(request):
 
 def basic_testcase():
     """A simple test model."""
+
     def model(p):
         return {"y": p['p0'] + 0.1 * np.random.randn(10)}
 
     prior = pyabc.Distribution(
-        p0=pyabc.RV('uniform', -5, 10), p1=pyabc.RV('uniform', -2, 2))
+        p0=pyabc.RV('uniform', -5, 10), p1=pyabc.RV('uniform', -2, 2)
+    )
 
     def distance(y1, y2):
         return np.abs(y1['y'] - y2['y']).sum()
@@ -159,18 +178,18 @@ def basic_testcase():
 
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
-    two_competing_gaussians_multiple_population(
-        db_path, sampler, 1)
+    two_competing_gaussians_multiple_population(db_path, sampler, 1)
 
 
 def test_two_competing_gaussians_multiple_population_2_evaluations(
-        db_path, sampler):
+    db_path, sampler
+):
     two_competing_gaussians_multiple_population(db_path, sampler, 2)
 
 
 def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     # Define a gaussian model
-    sigma = .5
+    sigma = 0.5
 
     def model(args):
         return {"y": st.norm(args['x'], sigma).rvs()}
@@ -205,23 +224,27 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     abc.new(db_path, {"y": y_observed})
 
     # We run the ABC with 3 populations max
-    minimum_epsilon = .05
+    minimum_epsilon = 0.05
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
 
     # Evaluate the model probabilities
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
+        res = st.norm(mu_x_model, np.sqrt(sigma ** 2 + sigma ** 2)).pdf(
+            y_observed
+        )
         return res
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
     p2_expected_unnormalized = p_y_given_model(mu_x_2)
-    p1_expected = p1_expected_unnormalized / (p1_expected_unnormalized
-                                              + p2_expected_unnormalized)
-    p2_expected = p2_expected_unnormalized / (p1_expected_unnormalized
-                                              + p2_expected_unnormalized)
-    assert history.max_t == nr_populations-1
+    p1_expected = p1_expected_unnormalized / (
+        p1_expected_unnormalized + p2_expected_unnormalized
+    )
+    p2_expected = p2_expected_unnormalized / (
+        p1_expected_unnormalized + p2_expected_unnormalized
+    )
+    assert history.max_t == nr_populations - 1
     # the next line only tests if we obtain correct numerical types
     try:
         mp0 = mp.p[0]
@@ -252,7 +275,8 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
         logger.warning(
             f"Had {pre_evals} simulations in the calibration iteration, "
             f"but a maximum of {max_expected} would have been sufficient for "
-            f"the population size of {pop_size.nr_particles}.")
+            f"the population size of {pop_size.nr_particles}."
+        )
 
 
 def test_progressbar(sampler):
@@ -260,15 +284,17 @@ def test_progressbar(sampler):
     model, prior, distance, obs = basic_testcase()
 
     abc = pyabc.ABCSMC(
-        model, prior, distance, sampler=sampler, population_size=20)
+        model, prior, distance, sampler=sampler, population_size=20
+    )
     abc.new(db=pyabc.create_sqlite_db_id(), observed_sum_stat=obs)
     abc.run(max_nr_populations=3)
 
 
 def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
-    two_competing_gaussians_multiple_population(db_path,
-                                                redis_starter_sampler, 1)
+    two_competing_gaussians_multiple_population(
+        db_path, redis_starter_sampler, 1
+    )
 
 
 def test_wrong_output_sampler():
@@ -276,9 +302,15 @@ def test_wrong_output_sampler():
     sampler = WrongOutputSampler()
 
     def simulate_one():
-        return pyabc.Particle(m=0, parameter={}, weight=0.1,
-                              sum_stat={}, distance=42,
-                              accepted=True)
+        return pyabc.Particle(
+            m=0,
+            parameter={},
+            weight=0.1,
+            sum_stat={},
+            distance=42,
+            accepted=True,
+        )
+
     with pytest.raises(AssertionError):
         sampler.sample_until_n_accepted(5, simulate_one, 0)
 
@@ -289,7 +321,8 @@ def test_redis_multiprocess():
         return pyabc.Particle(0, {}, 0.1, {}, 0, accepted)
 
     sampler = RedisEvalParallelSamplerServerStarter(
-        batch_size=3, workers=1, processes_per_worker=2)
+        batch_size=3, workers=1, processes_per_worker=2
+    )
     try:
         # id needs to be set
         sampler.set_analysis_id("ana_id")
@@ -311,15 +344,17 @@ def test_redis_catch_error():
 
     prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 10))
     sampler = RedisEvalParallelSamplerServerStarter(
-        batch_size=3, workers=1, processes_per_worker=1)
+        batch_size=3, workers=1, processes_per_worker=1
+    )
     try:
         abc = pyabc.ABCSMC(
-            model, prior, distance, sampler=sampler, population_size=10)
+            model, prior, distance, sampler=sampler, population_size=10
+        )
 
         db_file = "sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db")
         data = {'s0': 2.8}
         abc.new(db_file, data)
-        abc.run(minimum_epsilon=.1, max_nr_populations=3)
+        abc.run(minimum_epsilon=0.1, max_nr_populations=3)
     finally:
         sampler.shutdown()
 
@@ -330,7 +365,8 @@ def test_redis_pw_protection():
         return pyabc.Particle(0, {}, 0.1, {}, 0, accepted)
 
     sampler = RedisEvalParallelSamplerServerStarter(  # noqa: S106
-        password="daenerys")
+        password="daenerys"
+    )
     try:
         # needs to be always set
         sampler.set_analysis_id("ana_id")
@@ -375,7 +411,8 @@ def test_redis_subprocess():
         return res
 
     prior = pyabc.Distribution(
-        p0=pyabc.RV('uniform', -5, 10), p1=pyabc.RV('uniform', -2, 2))
+        p0=pyabc.RV('uniform', -5, 10), p1=pyabc.RV('uniform', -2, 2)
+    )
 
     def distance(y1, y2):
         return np.abs(y1['y'] - y2['y']).sum()
@@ -383,11 +420,12 @@ def test_redis_subprocess():
     obs = {'y': 1}
     # False as daemon argument is ok, True and None are not allowed
     sampler = RedisEvalParallelSamplerServerStarter(
-        workers=1, processes_per_worker=2, daemon=False)
+        workers=1, processes_per_worker=2, daemon=False
+    )
     try:
         abc = pyabc.ABCSMC(
-            model, prior, distance, sampler=sampler,
-            population_size=10)
+            model, prior, distance, sampler=sampler, population_size=10
+        )
         abc.new(pyabc.create_sqlite_db_id(), obs)
         # would just never return if model evaluation fails
         abc.run(max_nr_populations=3)
@@ -401,15 +439,23 @@ def test_redis_look_ahead():
     eps = pyabc.ListEpsilon([20, 10, 5])
     # spice things up with an adaptive population size
     pop_size = pyabc.AdaptivePopulationSize(
-        start_nr_particles=50, mean_cv=0.5, max_population_size=50)
+        start_nr_particles=50, mean_cv=0.5, max_population_size=50
+    )
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerServerStarter(
-            look_ahead=True, look_ahead_delay_evaluation=False,
-            log_file=fh.name)
+            look_ahead=True,
+            look_ahead_delay_evaluation=False,
+            log_file=fh.name,
+        )
         try:
             abc = pyabc.ABCSMC(
-                model, prior, distance, sampler=sampler,
-                population_size=pop_size, eps=eps)
+                model,
+                prior,
+                distance,
+                sampler=sampler,
+                population_size=pop_size,
+                eps=eps,
+            )
             abc.new(pyabc.create_sqlite_db_id(), obs)
             h = abc.run(max_nr_populations=3)
         finally:
@@ -428,10 +474,12 @@ def test_redis_look_ahead():
             pop = h.get_population(t=t)
             pop_size = len(pop)
             n_lookahead_pop = len(
-                [p for p in pop.particles if p.proposal_id == -1])
-            assert min(
-                pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
+                [p for p in pop.particles if p.proposal_id == -1]
+            )
+            assert (
+                min(pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted']))
                 == n_lookahead_pop
+            )
 
 
 def test_redis_look_ahead_error():
@@ -439,19 +487,26 @@ def test_redis_look_ahead_error():
     model, prior, distance, obs = basic_testcase()
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerServerStarter(
-            look_ahead=True, look_ahead_delay_evaluation=False,
-            log_file=fh.name)
+            look_ahead=True,
+            look_ahead_delay_evaluation=False,
+            log_file=fh.name,
+        )
         args_list = [
             {'eps': pyabc.MedianEpsilon()},
-            {'distance_function': pyabc.AdaptivePNormDistance()}]
+            {'distance_function': pyabc.AdaptivePNormDistance()},
+        ]
         for args in args_list:
             if 'distance_function' not in args:
                 args['distance_function'] = distance
             try:
                 with pytest.raises(AssertionError) as e:
                     abc = pyabc.ABCSMC(
-                        model, prior, sampler=sampler,
-                        population_size=10, **args)
+                        model,
+                        prior,
+                        sampler=sampler,
+                        population_size=10,
+                        **args,
+                    )
                     abc.new(pyabc.create_sqlite_db_id(), obs)
                     abc.run(max_nr_populations=3)
                 assert "cannot be used in look-ahead mode" in str(e.value)
@@ -465,14 +520,20 @@ def test_redis_look_ahead_delayed():
     model, prior, distance, obs = basic_testcase()
     # spice things up with an adaptive population size
     pop_size = pyabc.AdaptivePopulationSize(
-        start_nr_particles=50, mean_cv=0.5, max_population_size=50)
+        start_nr_particles=50, mean_cv=0.5, max_population_size=50
+    )
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerLookAheadDelayWrapper(
-            log_file=fh.name, wait_for_all_samples=True)
+            log_file=fh.name, wait_for_all_samples=True
+        )
         try:
             abc = pyabc.ABCSMC(
-                model, prior, distance, sampler=sampler,
-                population_size=pop_size)
+                model,
+                prior,
+                distance,
+                sampler=sampler,
+                population_size=pop_size,
+            )
             abc.new(pyabc.create_sqlite_db_id(), obs)
             h = abc.run(max_nr_populations=3)
         finally:
@@ -490,7 +551,9 @@ def test_redis_look_ahead_delayed():
             pop = h.get_population(t=t)
             pop_size = len(pop)
             n_lookahead_pop = len(
-                [p for p in pop.particles if p.proposal_id == -1])
-            assert min(
-                pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted'])) \
+                [p for p in pop.particles if p.proposal_id == -1]
+            )
+            assert (
+                min(pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted']))
                 == n_lookahead_pop
+            )

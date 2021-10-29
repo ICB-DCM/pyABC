@@ -14,8 +14,9 @@ class ModelPerturbationKernel:
         Otherwise, the supplied value is used.
     """
 
-    def __init__(self, nr_of_models: int,
-                 probability_to_stay: Union[float, None] = None):
+    def __init__(
+        self, nr_of_models: int, probability_to_stay: Union[float, None] = None
+    ):
         self.nr_of_models = nr_of_models
         if nr_of_models == 1:
             self.probability_to_stay = 1
@@ -23,16 +24,17 @@ class ModelPerturbationKernel:
             if probability_to_stay is None:
                 self.probability_to_stay = 1 / nr_of_models
             else:
-                self.probability_to_stay = min(
-                    max(probability_to_stay, 0), 1)
+                self.probability_to_stay = min(max(probability_to_stay, 0), 1)
 
     def _get_discrete_rv(self, m):
         p_stay = self.probability_to_stay
         p_move = (1 - p_stay) / (self.nr_of_models - 1)
-        probabilities = [p_stay if n == m else p_move
-                         for n in range(self.nr_of_models)]
-        return RV('rv_discrete',
-                  values=(range(len(probabilities)), probabilities))
+        probabilities = [
+            p_stay if n == m else p_move for n in range(self.nr_of_models)
+        ]
+        return RV(
+            'rv_discrete', values=(range(len(probabilities)), probabilities)
+        )
 
     def rvs(self, m: int) -> int:
         """Sample a Kernel jump from model ``m`` to another model.
@@ -71,10 +73,12 @@ class ModelPerturbationKernel:
             Probability with which to jump from ``m`` to ``n``.
         """
 
-        if not (0 <= n <= self.nr_of_models
-                and 0 <= m <= self.nr_of_models - 1):
+        if not (
+            0 <= n <= self.nr_of_models and 0 <= m <= self.nr_of_models - 1
+        ):
             raise Exception(
-                'n and m have to be between 0 and nr_of_models - 1')
+                'n and m have to be between 0 and nr_of_models - 1'
+            )
         if self.nr_of_models == 1:
             return 1 if n == m else 0
         else:

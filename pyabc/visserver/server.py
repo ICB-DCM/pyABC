@@ -26,14 +26,16 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 # default color palette
-DEFAULT_PALETTE = ['#000000',  # Wong nature colorblind palette
-                   '#e69f00',
-                   '#56b4e9',
-                   '#009e73',
-                   '#f0e442',
-                   '#0072b2',
-                   '#d55e00',
-                   '#cc79a7']
+DEFAULT_PALETTE = [
+    '#000000',  # Wong nature colorblind palette
+    '#e69f00',
+    '#56b4e9',
+    '#009e73',
+    '#f0e442',
+    '#0072b2',
+    '#d55e00',
+    '#cc79a7',
+]
 
 BOKEH = INLINE
 
@@ -79,18 +81,23 @@ def abc_detail(abc_id):
     abc = ABCInfo(history.get_abc())
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
-    model_probabilities.columns = list(map("{}".format,
-                                           model_probabilities.columns))
+    model_probabilities.columns = list(
+        map("{}".format, model_probabilities.columns)
+    )
     model_probabilities = model_probabilities.reset_index()
     if len(model_probabilities) > 0:
         populations = history.get_all_populations()
         populations = populations[populations.t >= 0]
-        particles = (history.get_nr_particles_per_population().reset_index()
-                     .rename(columns={"index": "t", "t": "particles"})
-                     .query("t >= 0"))
+        particles = (
+            history.get_nr_particles_per_population()
+            .reset_index()
+            .rename(columns={"index": "t", "t": "particles"})
+            .query("t >= 0")
+        )
 
-        melted = pd.melt(model_probabilities, id_vars="t", var_name="m",
-                         value_name="p")
+        melted = pd.melt(
+            model_probabilities, id_vars="t", var_name="m", value_name="p"
+        )
         melted["m"] = pd.to_numeric(melted["m"])
 
         # although it might seem cumbersome, not using the bkcharts
@@ -100,46 +107,58 @@ def abc_detail(abc_id):
         prob_plot.xaxis.axis_label = 'Generation t'
         prob_plot.yaxis.axis_label = 'Probability'
         for c, (m, data) in zip(DEFAULT_PALETTE, melted.groupby("m")):
-            prob_plot.line(data["t"], data["p"],
-                           legend_label="Model " + str(m), color=c,
-                           line_width=2)
+            prob_plot.line(
+                data["t"],
+                data["p"],
+                legend_label="Model " + str(m),
+                color=c,
+                line_width=2,
+            )
 
         particles_fig = figure()
         particles_fig.xaxis.axis_label = 'Generation t'
         particles_fig.yaxis.axis_label = 'Particles'
-        particles_fig.line(particles["t"], particles["particles"],
-                           line_width=2)
+        particles_fig.line(
+            particles["t"], particles["particles"], line_width=2
+        )
 
         samples_fig = figure()
         samples_fig.xaxis.axis_label = 'Generation t'
         samples_fig.yaxis.axis_label = 'Samples'
-        samples_fig.line(populations["t"], populations["samples"],
-                         line_width=2)
+        samples_fig.line(
+            populations["t"], populations["samples"], line_width=2
+        )
 
         eps_fig = figure()
         eps_fig.xaxis.axis_label = 'Generation t'
         eps_fig.yaxis.axis_label = 'Epsilon'
-        eps_fig.line(populations["t"], populations["epsilon"],
-                     line_width=2)
+        eps_fig.line(populations["t"], populations["epsilon"], line_width=2)
 
-        plot = Tabs(tabs=[
-            Panel(child=prob_plot, title="Probability"),
-            Panel(child=samples_fig, title="Samples"),
-            Panel(child=particles_fig, title="Particles"),
-            Panel(child=eps_fig, title="Epsilon")])
+        plot = Tabs(
+            tabs=[
+                Panel(child=prob_plot, title="Probability"),
+                Panel(child=samples_fig, title="Samples"),
+                Panel(child=particles_fig, title="Particles"),
+                Panel(child=eps_fig, title="Epsilon"),
+            ]
+        )
         plot = PlotScriptDiv(*components(plot))
 
-        return render_template("abc_detail.html",
-                               abc_id=abc_id,
-                               plot=plot,
-                               BOKEH=BOKEH,
-                               model_ids=model_ids,
-                               abc=abc)
-    return render_template("abc_detail.html",
-                           abc_id=abc_id,
-                           plot=PlotScriptDiv("", "Exception: No data found."),
-                           BOKEH=BOKEH,
-                           abc=abc)
+        return render_template(
+            "abc_detail.html",
+            abc_id=abc_id,
+            plot=plot,
+            BOKEH=BOKEH,
+            model_ids=model_ids,
+            abc=abc,
+        )
+    return render_template(
+        "abc_detail.html",
+        abc_id=abc_id,
+        plot=PlotScriptDiv("", "Exception: No data found."),
+        BOKEH=BOKEH,
+        abc=abc,
+    )
 
 
 @app.route("/abc/<int:abc_id>/model/<int:model_id>/t/<t>")
@@ -167,21 +186,26 @@ def abc_model(abc_id, model_id, t):
         plot = PlotScriptDiv("", "This model has no Parameters")
     else:
         plot = PlotScriptDiv(*components(Tabs(tabs=tabs)))
-    return render_template("model.html",
-                           abc_id=abc_id,
-                           model_id=model_id,
-                           plot=plot,
-                           BOKEH=BOKEH,
-                           model_ids=model_ids,
-                           t=t,
-                           available_t=list(range(history.max_t + 1)))
+    return render_template(
+        "model.html",
+        abc_id=abc_id,
+        model_id=model_id,
+        plot=plot,
+        BOKEH=BOKEH,
+        model_ids=model_ids,
+        t=t,
+        available_t=list(range(history.max_t + 1)),
+    )
 
 
 @app.route("/info")
 def server_info():
     history = app.config["HISTORY"]
-    return render_template("server_info.html", db_path=history.db_file(),
-                           db_size=round(history.db_size, 2))
+    return render_template(
+        "server_info.html",
+        db_path=history.db_file(),
+        db_size=round(history.db_size, 2),
+    )
 
 
 @app.errorhandler(404)

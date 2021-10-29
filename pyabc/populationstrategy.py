@@ -118,8 +118,7 @@ class ConstantPopulationSize(PopulationStrategy):
         nr_particles: int,
         nr_calibration_particles: int = None,
     ):
-        super().__init__(
-            nr_calibration_particles=nr_calibration_particles)
+        super().__init__(nr_calibration_particles=nr_calibration_particles)
         self.nr_particles = nr_particles
 
     @dec_bound_pop_size_from_env
@@ -175,13 +174,15 @@ class AdaptivePopulationSize(PopulationStrategy):
         https://doi.org/10.1007/978-3-319-67471-1_8.
     """
 
-    def __init__(self,
-                 start_nr_particles,
-                 mean_cv: float = 0.05,
-                 max_population_size: int = np.inf,
-                 min_population_size: int = 10,
-                 n_bootstrap: int = 10,
-                 nr_calibration_particles: int = None):
+    def __init__(
+        self,
+        start_nr_particles,
+        mean_cv: float = 0.05,
+        max_population_size: int = np.inf,
+        min_population_size: int = 10,
+        n_bootstrap: int = 10,
+        nr_calibration_particles: int = None,
+    ):
         super().__init__(
             nr_calibration_particles=nr_calibration_particles,
         )
@@ -203,27 +204,41 @@ class AdaptivePopulationSize(PopulationStrategy):
         config["n_bootstrap"] = self.n_bootstrap
         return config
 
-    def update(self, transitions: List[Transition],
-               model_weights: np.ndarray, t: int = None):
+    def update(
+        self,
+        transitions: List[Transition],
+        model_weights: np.ndarray,
+        t: int = None,
+    ):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
 
         reference_nr_part = self.nr_particles
         target_cv = self.mean_cv
         cv_estimate = predict_population_size(
-            reference_nr_part, target_cv,
+            reference_nr_part,
+            target_cv,
             lambda nr_particles: calc_cv(
-                nr_particles, model_weights, self.n_bootstrap, test_w,
-                transitions, test_X)[0],
+                nr_particles,
+                model_weights,
+                self.n_bootstrap,
+                test_w,
+                transitions,
+                test_X,
+            )[0],
         )
 
         if not np.isnan(cv_estimate.n_estimated):
-            self.nr_particles = max(min(int(cv_estimate.n_estimated),
-                                        self.max_population_size),
-                                    self.min_population_size)
+            self.nr_particles = max(
+                min(int(cv_estimate.n_estimated), self.max_population_size),
+                self.min_population_size,
+            )
 
-        logger.info("Change nr particles {} -> {}"
-                    .format(reference_nr_part, self.nr_particles))
+        logger.info(
+            "Change nr particles {} -> {}".format(
+                reference_nr_part, self.nr_particles
+            )
+        )
 
     @dec_bound_pop_size_from_env
     def __call__(self, t: int = None) -> int:
@@ -251,8 +266,7 @@ class ListPopulationSize(PopulationStrategy):
         values: Union[List[int], Dict[int, int]],
         nr_calibration_particles: int = None,
     ):
-        super().__init__(
-            nr_calibration_particles=nr_calibration_particles)
+        super().__init__(nr_calibration_particles=nr_calibration_particles)
         self.values = values
 
     def get_config(self) -> dict:

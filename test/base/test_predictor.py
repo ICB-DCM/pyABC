@@ -17,22 +17,24 @@ from pyabc.predictor import (
 )
 
 
-@pytest.fixture(params=[
-    "linear",
-    "linear not joint",
-    "linear not normalized",
-    "linear weighted",
-    "linear not joint weighted",
-    "lasso",
-    "GP no ard",
-    "GP no ard not joint",
-    "GP ard",
-    "MLP heuristic",
-    "MLP mean",
-    "MLP max",
-    "MS TTS",
-    "MS CV",
-])
+@pytest.fixture(
+    params=[
+        "linear",
+        "linear not joint",
+        "linear not normalized",
+        "linear weighted",
+        "linear not joint weighted",
+        "lasso",
+        "GP no ard",
+        "GP no ard not joint",
+        "GP ard",
+        "MLP heuristic",
+        "MLP mean",
+        "MLP max",
+        "MS TTS",
+        "MS CV",
+    ]
+)
 def s_predictor(request) -> str:
     return request.param
 
@@ -57,11 +59,15 @@ def test_fit(s_model, s_predictor):
     b = 1 + rng.normal(size=(1, n_p))
 
     if s_model == "linear":
+
         def model(y: np.ndarray) -> np.ndarray:
             return np.dot(y, m) + b
+
     elif s_model == "quadratic":
+
         def model(y: np.ndarray) -> np.ndarray:
-            return np.dot(y, m)**2 + b
+            return np.dot(y, m) ** 2 + b
+
     else:
         raise ValueError("Invalid argument")
 
@@ -71,11 +77,12 @@ def test_fit(s_model, s_predictor):
         predictor = LinearPredictor(joint=False)
     elif s_predictor == "linear not normalized":
         predictor = LinearPredictor(
-            normalize_features=False, normalize_labels=False)
+            normalize_features=False, normalize_labels=False
+        )
     elif s_predictor == "linear weighted":
         predictor = LinearPredictor(weight_samples=True)
     elif s_predictor == "linear not joint weighted":
-        predictor = LinearPredictor(joint=False,    weight_samples=True)
+        predictor = LinearPredictor(joint=False, weight_samples=True)
     elif s_predictor == "lasso":
         predictor = LassoPredictor()
     elif s_predictor == "GP no ard":
@@ -86,13 +93,16 @@ def test_fit(s_model, s_predictor):
         predictor = GPPredictor()
     elif s_predictor == "MLP heuristic":
         predictor = MLPPredictor(
-            hidden_layer_sizes=HiddenLayerHandle(method="heuristic"))
+            hidden_layer_sizes=HiddenLayerHandle(method="heuristic")
+        )
     elif s_predictor == "MLP mean":
         predictor = MLPPredictor(
-            hidden_layer_sizes=HiddenLayerHandle(method="mean"))
+            hidden_layer_sizes=HiddenLayerHandle(method="mean")
+        )
     elif s_predictor == "MLP max":
         predictor = MLPPredictor(
-            hidden_layer_sizes=HiddenLayerHandle(method="max"))
+            hidden_layer_sizes=HiddenLayerHandle(method="max")
+        )
     elif s_predictor == "MS TTS":
         predictor = ModelSelectionPredictor(
             predictors=[LinearPredictor(), MLPPredictor()],
@@ -122,13 +132,14 @@ def test_fit(s_model, s_predictor):
     assert ps_pred.shape == ps_test.shape == (n_sample_test, n_p)
 
     # measure discrepancy
-    rmse = root_mean_square_error(ps_test, ps_pred, 1.)
+    rmse = root_mean_square_error(ps_test, ps_pred, 1.0)
     print(f"rmse {s_predictor} {s_model}:", rmse)
 
     # ignore lasso
     if isinstance(
-            predictor, (LinearPredictor, GPPredictor, MLPPredictor,
-                        ModelSelectionPredictor)):
+        predictor,
+        (LinearPredictor, GPPredictor, MLPPredictor, ModelSelectionPredictor),
+    ):
         if s_model == "linear":
             if s_predictor not in ["linear not normalized"]:
                 # all should work well on linear
@@ -153,10 +164,10 @@ def test_error_functions():
     """Test error functions used in model selection."""
     rng = np.random.Generator(np.random.PCG64(0))
     ys = rng.normal(size=(10, 100))
-    assert root_mean_square_error(ys, ys, 1.) == 0.
-    assert root_mean_square_error(ys, ys-1, 1.) == 1.
-    assert root_mean_square_relative_error(ys, ys) == 0.
-    assert root_mean_square_relative_error(ys, ys-1) > 0.
+    assert root_mean_square_error(ys, ys, 1.0) == 0.0
+    assert root_mean_square_error(ys, ys - 1, 1.0) == 1.0
+    assert root_mean_square_relative_error(ys, ys) == 0.0
+    assert root_mean_square_relative_error(ys, ys - 1) > 0.0
 
 
 def test_wrong_input():

@@ -11,14 +11,15 @@ from .util import to_lists, get_labels
 
 
 def plot_effective_sample_sizes(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        rotation: int = 0,
-        title: str = "Effective sample size",
-        relative: bool = False,
-        colors: List = None,
-        size: tuple = None,
-        ax: mpl.axes.Axes = None):
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Effective sample size",
+    relative: bool = False,
+    colors: List = None,
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+):
     """
     Plot effective sample sizes over all iterations.
 

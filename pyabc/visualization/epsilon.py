@@ -12,13 +12,14 @@ from .util import to_lists, get_labels
 
 
 def plot_epsilons(
-        histories: Union[List, History],
-        labels: Union[List, str] = None,
-        colors: List = None,
-        yscale: str = 'log',
-        title: str = "Epsilon values",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    colors: List = None,
+    yscale: str = 'log',
+    title: str = "Epsilon values",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
     """
     Plot epsilon trajectory.
 

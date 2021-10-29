@@ -13,8 +13,10 @@ try:
     import petab.C as C
 except ImportError:
     petab = C = None
-    logger.error("Install petab (see https://github.com/icb-dcm/petab) to use "
-                 "the petab functionality.")
+    logger.error(
+        "Install petab (see https://github.com/icb-dcm/petab) to use "
+        "the petab functionality."
+    )
 
 try:
     import amici
@@ -22,8 +24,10 @@ try:
     from amici.petab_objective import simulate_petab, LLH, RDATAS
 except ImportError:
     amici = amici.petab_import = simulate_petab = LLH = RDATAS = None
-    logger.error("Install amici (see https://github.com/icb-dcm/amici) to use "
-                 "the amici functionality.")
+    logger.error(
+        "Install amici (see https://github.com/icb-dcm/amici) to use "
+        "the amici functionality."
+    )
 
 
 class AmiciPetabImporter(PetabImporter):
@@ -54,7 +58,8 @@ class AmiciPetabImporter(PetabImporter):
 
         if amici_model is None:
             amici_model = amici.petab_import.import_petab_problem(
-                petab_problem)
+                petab_problem
+            )
         self.amici_model = amici_model
 
         if amici_solver is None:
@@ -91,10 +96,10 @@ class AmiciPetabImporter(PetabImporter):
         x_free_ids = self.petab_problem.get_x_ids(free=True, fixed=False)
 
         # fixed parameters
-        x_fixed_ids = self.petab_problem.get_x_ids(
-            free=False, fixed=True)
+        x_fixed_ids = self.petab_problem.get_x_ids(free=False, fixed=True)
         x_fixed_vals = self.petab_problem.get_x_nominal(
-            scaled=True, free=False, fixed=True)
+            scaled=True, free=False, fixed=True
+        )
 
         # extract variables for improved pickling
         petab_problem = self.petab_problem
@@ -140,7 +145,8 @@ class AmiciPetabImporter(PetabImporter):
                 amici_model=amici_model,
                 solver=amici_solver,
                 problem_parameters=par,
-                scaled_parameters=True)
+                scaled_parameters=True,
+            )
 
             # return values of interest
             ret = {'llh': sim[LLH]}
@@ -165,6 +171,7 @@ class AmiciPetabImporter(PetabImporter):
         kernel:
             A pyabc distribution encoding the kernel function.
         """
+
         def kernel_fun(x, x_0, t, par) -> float:
             """The kernel function."""
             # the kernel value is computed by amici already
@@ -172,6 +179,7 @@ class AmiciPetabImporter(PetabImporter):
 
         # create a kernel from function, returning log-scaled values
         kernel = pyabc.distance.SimpleFunctionKernel(
-            kernel_fun, ret_scale=pyabc.distance.SCALE_LOG)
+            kernel_fun, ret_scale=pyabc.distance.SCALE_LOG
+        )
 
         return kernel

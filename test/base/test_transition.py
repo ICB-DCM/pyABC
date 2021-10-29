@@ -4,17 +4,27 @@ import pytest
 
 from pyabc.transition import NotEnoughParticles, Transition
 from pyabc import (
-    ABCSMC, Distribution, GridSearchCV, MultivariateNormalTransition,
-    LocalTransition, AggregatedTransition, DiscreteJumpTransition,
-    Parameter, RV, create_sqlite_db_id)
+    ABCSMC,
+    Distribution,
+    GridSearchCV,
+    MultivariateNormalTransition,
+    LocalTransition,
+    AggregatedTransition,
+    DiscreteJumpTransition,
+    Parameter,
+    RV,
+    create_sqlite_db_id,
+)
 
 
 class SimpleAggregatedTransition(AggregatedTransition):
     """Two different transitions for the keys."""
 
     def __init__(self):
-        mapping = {'a': LocalTransition(),
-                   ('b',): MultivariateNormalTransition()}
+        mapping = {
+            'a': LocalTransition(),
+            ('b',): MultivariateNormalTransition(),
+        }
         super().__init__(mapping=mapping)
 
 
@@ -34,17 +44,25 @@ class SimpleAggregatedTransitionSingle(AggregatedTransition):
         super().__init__(mapping=mapping)
 
 
-@pytest.fixture(params=[LocalTransition,
-                        MultivariateNormalTransition,
-                        SimpleAggregatedTransition,
-                        SimpleAggregatedTransition2])
+@pytest.fixture(
+    params=[
+        LocalTransition,
+        MultivariateNormalTransition,
+        SimpleAggregatedTransition,
+        SimpleAggregatedTransition2,
+    ]
+)
 def transition(request):
     return request.param()
 
 
-@pytest.fixture(params=[LocalTransition,
-                        MultivariateNormalTransition,
-                        SimpleAggregatedTransitionSingle])
+@pytest.fixture(
+    params=[
+        LocalTransition,
+        MultivariateNormalTransition,
+        SimpleAggregatedTransitionSingle,
+    ]
+)
 def transition_single(request):
     return request.param()
 
@@ -81,7 +99,7 @@ def test_pdf_return_types(transition: Transition):
 def test_many_particles_single_par(transition_single: Transition):
     df, w = data_single(20)
     transition_single.fit(df, w)
-    transition_single.required_nr_samples(.1)
+    transition_single.required_nr_samples(0.1)
 
 
 def test_variance_estimate(transition: Transition):
@@ -101,7 +119,7 @@ def test_variance_estimate_higher_n_than_sample(transition: Transition):
     transition.fit(df, w)
 
     var_list = []
-    for n_test in [n, n*4, n*10]:
+    for n_test in [n, n * 4, n * 10]:
         var = transition.mean_cv(n_test)
         var_list.append(var)
 
@@ -125,7 +143,7 @@ def test_particles_no_parameters(transition: Transition):
     w = np.array([1, 1, 1, 1]) / 4
     transition.fit(df, w)
     with pytest.raises(NotEnoughParticles):
-        transition.required_nr_samples(.1)
+        transition.required_nr_samples(0.1)
 
 
 def test_empty(transition):
@@ -134,7 +152,7 @@ def test_empty(transition):
     w = np.array([])
     transition.fit(df, w)
     with pytest.raises(NotEnoughParticles):
-        transition.required_nr_samples(.1)
+        transition.required_nr_samples(0.1)
 
 
 def test_0_particles_fit(transition: Transition):
@@ -154,7 +172,7 @@ def test_single_particle_required_nr_samples(transition: Transition):
     # TODO define proper behavior
     df, w = data(1)
     transition.fit(df, w)
-    transition.required_nr_samples(.1)
+    transition.required_nr_samples(0.1)
 
 
 def test_two_particles_fit(transition: Transition):
@@ -167,13 +185,13 @@ def test_two_particles_required_nr_samples(transition: Transition):
     # TODO define proper behavior
     df, w = data(2)
     transition.fit(df, w)
-    transition.required_nr_samples(.1)
+    transition.required_nr_samples(0.1)
 
 
 def test_many_particles(transition: Transition):
     df, w = data(20)
     transition.fit(df, w)
-    transition.required_nr_samples(.1)
+    transition.required_nr_samples(0.1)
 
 
 def test_argument_order(transition: Transition):
@@ -210,8 +228,9 @@ def test_grid_search_two_samples_multivariate_normal():
     """
     cv = 5
     m = MultivariateNormalTransition()
-    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv,
-                          n_jobs=1)
+    m_grid = GridSearchCV(
+        m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv, n_jobs=1
+    )
     df, w = data(2)
     m_grid.fit(df, w)
     assert m_grid.cv == cv
@@ -223,21 +242,22 @@ def test_grid_search_single_sample_multivariate_normal():
     """
     cv = 5
     m = MultivariateNormalTransition()
-    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv,
-                          n_jobs=1)
+    m_grid = GridSearchCV(
+        m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv, n_jobs=1
+    )
     df, w = data(1)
     m_grid.fit(df, w)
     assert m_grid.cv == cv
 
 
 def test_mean_coefficient_of_variation_sample_not_full_rank(
-        transition: Transition):
+    transition: Transition,
+):
     """
     This is a test created after I encountered this kind of bug
     """
     n = 13
-    df = pd.DataFrame({"a": np.ones(n) * 2,
-                       "b": np.ones(n)})
+    df = pd.DataFrame({"a": np.ones(n) * 2, "b": np.ones(n)})
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)
     transition.mean_cv()
@@ -272,7 +292,7 @@ def test_discrete_jump_transition():
     assert freq(0.2) < sum(res.a == 0.5) / n_sample < freq(0.4)
 
     # test density calculation
-    assert abs(trans.pdf(Parameter({'a': 5})) - freq(0.)) < 1e-3
+    assert abs(trans.pdf(Parameter({'a': 5})) - freq(0.0)) < 1e-3
     assert abs(trans.pdf(Parameter({'a': 4})) - freq(0.5)) < 1e-3
     assert abs(trans.pdf(Parameter({'a': 2.5})) - freq(0.2)) < 1e-3
     assert abs(trans.pdf(Parameter({'a': 0.5})) - freq(0.3)) < 1e-3
@@ -289,8 +309,10 @@ def test_discrete_jump_transition_errors():
     # fitting
     trans = DiscreteJumpTransition(np.array([1, 2, 3]))
     with pytest.raises(ValueError):
-        trans.fit(pd.DataFrame({'a': [1, 1, 2], 'b': [2, 2, 3]}),
-                  np.array([1., 1., 1.]))
+        trans.fit(
+            pd.DataFrame({'a': [1, 1, 2], 'b': [2, 2, 3]}),
+            np.array([1.0, 1.0, 1.0]),
+        )
 
     # density calculation
     trans.fit(pd.DataFrame({'a': [42, 42, 43]}), np.ones(3))
@@ -304,24 +326,28 @@ def test_model_gets_parameter(transition_single: Transition):
     This should be the case both when the parameter is created from the prior,
     and from the transition.
     """
+
     def model(p):
         assert isinstance(p, Parameter)
         return {'s0': p['a'] + 0.1 * np.random.normal()}
+
     prior = Distribution(a=RV('uniform', -5, 10))
 
     abc = ABCSMC(
-        model, prior, transitions=transition_single, population_size=10)
+        model, prior, transitions=transition_single, population_size=10
+    )
     abc.new(create_sqlite_db_id(), {'s0': 3.5})
     abc.run(max_nr_populations=3)
 
 
 def test_pipeline(transition: Transition):
     """Test the various transitions in a full pipeline."""
+
     def model(p):
         return {'s0': p['a'] + p['b'] * np.random.normal()}
+
     prior = Distribution(a=RV('uniform', -5, 10), b=RV('uniform', 0.01, 0.09))
 
-    abc = ABCSMC(
-        model, prior, transitions=transition, population_size=10)
+    abc = ABCSMC(model, prior, transitions=transition, population_size=10)
     abc.new(create_sqlite_db_id(), {'s0': 3.5})
     abc.run(max_nr_populations=3)

@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 
 def plot_model_probabilities(
-        history: History,
-        rotation: int = 0,
-        title: str = "Model probabilities",
-        ax: mpl.axes.Axes = None):
+    history: History,
+    rotation: int = 0,
+    title: str = "Model probabilities",
+    ax: mpl.axes.Axes = None,
+):
     """
     Plot the probabilities of models over time.
 
