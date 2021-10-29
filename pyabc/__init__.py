@@ -15,12 +15,14 @@ selection.
     determine on how many jobs to parallelize the sampling.
 """
 
-# isort: off
-
 import logging
 import os
 
-from .version import __version__  # noqa: F401
+# isort: off
+
+from .version import __version__
+
+# isort: on
 
 from . import settings, visualization
 from .acceptor import (
