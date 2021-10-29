@@ -1,29 +1,30 @@
 """Redis based static scheduling sampler."""
 
-import numpy as np
-import pickle
-import cloudpickle
-from time import sleep
 import logging
+import pickle
+from time import sleep
 from typing import Callable, List
+
+import cloudpickle
+import numpy as np
 from jabbar import jabbar
 
 from ...population import Sample
 from .cmd import (
-    SSA,
-    N_EVAL,
+    GENERATION,
+    MODE,
+    MSG,
     N_ACC,
-    N_REQ,
+    N_EVAL,
     N_FAIL,
     N_JOB,
+    N_REQ,
     N_WORKER,
-    SLEEP_TIME,
-    MODE,
-    STATIC,
     QUEUE,
-    MSG,
+    SLEEP_TIME,
+    SSA,
     START,
-    GENERATION,
+    STATIC,
     idfy,
 )
 from .sampler import RedisSamplerBase

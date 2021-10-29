@@ -23,15 +23,6 @@ It is directly integrated in distance functions such as the
    to calculate distances.
 """
 
-from .base import (
-    Sumstat,
-    IdentitySumstat,
-)
-from .learn import (
-    PredictorSumstat,
-)
-from .subset import (
-    Subsetter,
-    IdSubsetter,
-    GMMSubsetter,
-)
+from .base import IdentitySumstat, Sumstat
+from .learn import PredictorSumstat
+from .subset import GMMSubsetter, IdSubsetter, Subsetter

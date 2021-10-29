@@ -6,8 +6,9 @@ Functions performing statistical operations on weighted points
 generated via importance sampling.
 """
 
-import numpy as np
 from functools import wraps
+
+import numpy as np
 
 
 def weight_checked(function):

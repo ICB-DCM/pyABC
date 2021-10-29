@@ -1,18 +1,19 @@
 """Sensitivity sankey flow plot."""
 
-import numpy as np
 from typing import Dict, List, Union
+
+import numpy as np
 
 try:
     import plotly.graph_objects as go
 except ImportError:
     pass
 
-import pyabc.predictor
-import pyabc.sumstat
-import pyabc.storage
-import pyabc.util
 import pyabc.distance
+import pyabc.predictor
+import pyabc.storage
+import pyabc.sumstat
+import pyabc.util
 
 
 def plot_sensitivity_sankey(

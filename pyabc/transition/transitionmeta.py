@@ -1,8 +1,9 @@
+import functools
 from abc import ABCMeta
+from typing import Union
+
 import numpy as np
 import pandas as pd
-import functools
-from typing import Union
 
 
 def wrap_fit(f):

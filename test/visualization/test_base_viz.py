@@ -1,11 +1,12 @@
-import pyabc
-import tempfile
 import os
-import pytest
+import tempfile
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import pytest
 
+import pyabc
 
 db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
 log_files = []

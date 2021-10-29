@@ -1,20 +1,20 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
-from pyabc.transition import NotEnoughParticles, Transition
 from pyabc import (
     ABCSMC,
-    Distribution,
-    GridSearchCV,
-    MultivariateNormalTransition,
-    LocalTransition,
+    RV,
     AggregatedTransition,
     DiscreteJumpTransition,
+    Distribution,
+    GridSearchCV,
+    LocalTransition,
+    MultivariateNormalTransition,
     Parameter,
-    RV,
     create_sqlite_db_id,
 )
+from pyabc.transition import NotEnoughParticles, Transition
 
 
 class SimpleAggregatedTransition(AggregatedTransition):

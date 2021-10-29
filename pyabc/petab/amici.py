@@ -1,9 +1,10 @@
-import logging
-from collections.abc import Sequence, Mapping
-from typing import Callable, Union
 import copy
+import logging
+from collections.abc import Mapping, Sequence
+from typing import Callable, Union
 
 import pyabc
+
 from .base import PetabImporter, rescale
 
 logger = logging.getLogger("ABC.PEtab")
@@ -21,7 +22,7 @@ except ImportError:
 try:
     import amici
     import amici.petab_import
-    from amici.petab_objective import simulate_petab, LLH, RDATAS
+    from amici.petab_objective import LLH, RDATAS, simulate_petab
 except ImportError:
     amici = amici.petab_import = simulate_petab = LLH = RDATAS = None
     logger.error(

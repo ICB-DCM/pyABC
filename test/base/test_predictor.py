@@ -1,16 +1,15 @@
 """Tests for the `pyabc.predictor` module."""
 
-import pytest
 import numpy as np
-
+import pytest
 
 from pyabc.predictor import (
-    LinearPredictor,
-    LassoPredictor,
-    GPPredictor,
     GPKernelHandle,
-    MLPPredictor,
+    GPPredictor,
     HiddenLayerHandle,
+    LassoPredictor,
+    LinearPredictor,
+    MLPPredictor,
     ModelSelectionPredictor,
     root_mean_square_error,
     root_mean_square_relative_error,

@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import ks_2samp
-import pyabc.weighted_statistics as ws
 
+import pyabc.weighted_statistics as ws
 
 points = np.array([1, 5, 2.5])
 weights = np.array([0.5, 0.2, 0.3])

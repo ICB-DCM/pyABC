@@ -1,7 +1,8 @@
-import pytest
-from pyabc.storage.dataframe_bytes_storage import df_to_bytes, df_from_bytes
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
+from pyabc.storage.dataframe_bytes_storage import df_from_bytes, df_to_bytes
 
 
 @pytest.fixture(

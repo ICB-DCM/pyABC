@@ -1,24 +1,25 @@
 """Function to work on a population in static mode."""
 
-import sys
-from redis import StrictRedis
-import pickle
-import cloudpickle
-from time import time
 import logging
+import pickle
+import sys
+from time import time
 
+import cloudpickle
+from redis import StrictRedis
+
+from .cli import KillHandler
 from .cmd import (
-    N_EVAL,
+    ANALYSIS_ID,
     N_ACC,
+    N_EVAL,
     N_FAIL,
     N_JOB,
     N_WORKER,
-    SSA,
     QUEUE,
-    ANALYSIS_ID,
+    SSA,
     idfy,
 )
-from .cli import KillHandler
 
 logger = logging.getLogger("ABC.Sampler")
 

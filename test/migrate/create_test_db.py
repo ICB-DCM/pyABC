@@ -1,8 +1,9 @@
 """Create a small test database to be used in migration tests."""
 
-import numpy as np
 import os
 import tempfile
+
+import numpy as np
 
 import pyabc
 

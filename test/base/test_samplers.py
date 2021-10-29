@@ -1,23 +1,25 @@
-import multiprocessing
-import pytest
-import numpy as np
-import scipy.stats as st
-import pandas as pd
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from pyabc.sampler import (
-    SingleCoreSampler,
-    MappingSampler,
-    MulticoreParticleParallelSampler,
-    DaskDistributedSampler,
-    ConcurrentFutureSampler,
-    MulticoreEvalParallelSampler,
-    RedisEvalParallelSamplerServerStarter,
-    RedisStaticSamplerServerStarter,
-)
-import pyabc
 import logging
+import multiprocessing
 import os
 import tempfile
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
+import numpy as np
+import pandas as pd
+import pytest
+import scipy.stats as st
+
+import pyabc
+from pyabc.sampler import (
+    ConcurrentFutureSampler,
+    DaskDistributedSampler,
+    MappingSampler,
+    MulticoreEvalParallelSampler,
+    MulticoreParticleParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSamplerServerStarter,
+    SingleCoreSampler,
+)
 
 logger = logging.getLogger(__name__)
 

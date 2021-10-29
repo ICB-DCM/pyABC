@@ -1,6 +1,7 @@
+import tempfile
+
 import numpy as np
 import pandas as pd
-import tempfile
 
 import pyabc
 from pyabc.acceptor import AcceptorResult

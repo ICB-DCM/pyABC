@@ -6,26 +6,27 @@ TODO: This test could be improved.
 import multiprocessing
 import os
 import tempfile
-import pytest
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+
 import numpy as np
+import pytest
 import scipy.stats as st
 
 from pyabc import (
     ABCSMC,
+    ConstantPopulationSize,
     Distribution,
     MedianEpsilon,
     PercentileDistance,
     SimpleModel,
-    ConstantPopulationSize,
 )
 from pyabc.sampler import (
-    SingleCoreSampler,
+    ConcurrentFutureSampler,
+    DaskDistributedSampler,
     MappingSampler,
     MulticoreEvalParallelSampler,
-    DaskDistributedSampler,
-    ConcurrentFutureSampler,
+    SingleCoreSampler,
 )
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 
 REMOVE_DB = False
 

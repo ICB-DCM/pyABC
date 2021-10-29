@@ -1,12 +1,12 @@
-from multiprocessing import Process, Queue, Value
-from ctypes import c_longlong
-from .multicorebase import MultiCoreSampler
-import numpy as np
 import random
+from ctypes import c_longlong
+from multiprocessing import Process, Queue, Value
+
 import cloudpickle as pickle
+import numpy as np
 from jabbar import jabbar
 
-from .multicorebase import get_if_worker_healthy
+from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 
 DONE = "Done"
 

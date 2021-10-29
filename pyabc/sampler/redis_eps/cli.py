@@ -1,26 +1,27 @@
-import socket
-from redis import StrictRedis
-import os
-from time import time
-import click
-from multiprocessing import Process
-import numpy as np
-import random
 import logging
+import os
+import random
+import socket
+from multiprocessing import Process
+from time import time
+
+import click
+import numpy as np
+from redis import StrictRedis
 
 from .cmd import (
-    N_EVAL,
+    ANALYSIS_ID,
+    DYNAMIC,
+    GENERATION,
+    MODE,
+    MSG,
     N_ACC,
+    N_EVAL,
     N_REQ,
     N_WORKER,
     START,
-    STOP,
-    MSG,
-    ANALYSIS_ID,
-    GENERATION,
-    MODE,
-    DYNAMIC,
     STATIC,
+    STOP,
     idfy,
 )
 from .util import KillHandler

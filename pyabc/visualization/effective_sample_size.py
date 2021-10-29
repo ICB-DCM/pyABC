@@ -1,13 +1,14 @@
 """Effective sample size plots"""
 
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 from typing import List, Union
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from ..weighted_statistics import effective_sample_size
 from ..storage import History
-from .util import to_lists, get_labels
+from ..weighted_statistics import effective_sample_size
+from .util import get_labels, to_lists
 
 
 def plot_effective_sample_sizes(

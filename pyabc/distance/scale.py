@@ -31,9 +31,10 @@ values, but distance values, instead use either of
 * mean
 * median
 """
-import numpy as np
-from typing import List
 import logging
+from typing import List
+
+import numpy as np
 
 logger = logging.getLogger("ABC.Distance")
 

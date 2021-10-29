@@ -1,12 +1,13 @@
+import logging
 from abc import abstractmethod
 from typing import Dict, Tuple, Union
-import logging
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from ..parameters import Parameter
 from ..cv.bootstrap import calc_cv
+from ..parameters import Parameter
 from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
 from .transitionmeta import TransitionMeta

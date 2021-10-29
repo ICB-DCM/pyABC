@@ -1,7 +1,8 @@
-import numpy as np
-import scipy.stats as stats
-import pandas as pd
 from typing import Union
+
+import numpy as np
+import pandas as pd
+import scipy.stats as stats
 
 from ..parameters import Parameter
 from .base import DiscreteTransition

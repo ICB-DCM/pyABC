@@ -1,19 +1,21 @@
 """Execute petab test suite."""
 
-import petabtests
+import logging
 import os
 import sys
+
+import petabtests
 import pytest
 from _pytest.outcomes import Skipped
-import logging
 
 import pyabc
 
 try:
-    import petab
-    import pyabc.petab
     import amici.petab_import
     import amici.petab_objective
+    import petab
+
+    import pyabc.petab
 except ImportError:
     pass
 

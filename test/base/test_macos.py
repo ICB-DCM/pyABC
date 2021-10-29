@@ -1,7 +1,7 @@
 """Test some basic functionality of pyabc on mac."""
 
-import pytest
 import numpy as np
+import pytest
 
 import pyabc
 

@@ -1,12 +1,13 @@
-from multiprocessing import Process, Queue
-from .singlecore import SingleCoreSampler
-import numpy as np
-import random
 import logging
-import cloudpickle as pickle
-from jabbar import jabbar
-from .multicorebase import MultiCoreSampler, get_if_worker_healthy
+import random
+from multiprocessing import Process, Queue
 
+import cloudpickle as pickle
+import numpy as np
+from jabbar import jabbar
+
+from .multicorebase import MultiCoreSampler, get_if_worker_healthy
+from .singlecore import SingleCoreSampler
 
 logger = logging.getLogger("ABC.Sampler")
 

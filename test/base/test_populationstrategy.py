@@ -1,13 +1,14 @@
+import numpy as np
+import pandas as pd
 import pytest
+
 from pyabc.populationstrategy import (
-    ListPopulationSize,
     AdaptivePopulationSize,
     ConstantPopulationSize,
+    ListPopulationSize,
     PopulationStrategy,
 )
 from pyabc.transition import MultivariateNormalTransition
-import pandas as pd
-import numpy as np
 
 
 def Adaptive(nr_calibration_particles: int = None):

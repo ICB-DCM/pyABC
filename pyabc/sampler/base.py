@@ -1,13 +1,14 @@
 from abc import ABC, ABCMeta, abstractmethod
-import numpy as np
 from numbers import Real
 from typing import Callable, Union
 
-from ..population import Sample, SampleFactory
-from ..inference_util import AnalysisVars
+import numpy as np
+
+from ..acceptor import Acceptor
 from ..distance import Distance
 from ..epsilon import Epsilon
-from ..acceptor import Acceptor
+from ..inference_util import AnalysisVars
+from ..population import Sample, SampleFactory
 
 
 def wrap_sample(f):

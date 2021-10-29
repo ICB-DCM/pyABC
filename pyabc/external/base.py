@@ -1,13 +1,14 @@
-import numpy as np
-import tempfile
-import subprocess  # noqa: S404
-import os
-from typing import List
 import logging
+import os
 import shutil
+import subprocess  # noqa: S404
+import tempfile
+from typing import List
+
+import numpy as np
+
 from ..model import Model
 from ..parameters import Parameter
-
 
 logger = logging.getLogger("ABC.External")
 

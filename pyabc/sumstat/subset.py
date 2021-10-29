@@ -1,9 +1,10 @@
 """Identification of sample subsets for model training."""
 
-import numpy as np
-from typing import Tuple
 import logging
 from abc import ABC, abstractmethod
+from typing import Tuple
+
+import numpy as np
 
 from ..weighted_statistics import weighted_mean
 

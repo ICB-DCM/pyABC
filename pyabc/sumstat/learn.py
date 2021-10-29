@@ -1,32 +1,28 @@
 """Summary statistics learning."""
 
-import numpy as np
-from typing import Callable, Collection, List, Union
 import logging
+from typing import Callable, Collection, List, Union
+
+import numpy as np
 
 try:
-    import sklearn.linear_model as skl_lm
     import sklearn.gaussian_process as skl_gp
+    import sklearn.linear_model as skl_lm
 except ImportError:
     skl_lm = skl_gp = None
 
 from ..population import Sample
-from ..predictor import (
-    Predictor,
-    SimplePredictor,
-)
+from ..predictor import Predictor, SimplePredictor
 from ..util import (
-    io_dict2arr,
-    read_sample,
-    dict2arrlabels,
+    EventIxs,
     ParTrafo,
     ParTrafoBase,
-    EventIxs,
+    dict2arrlabels,
+    io_dict2arr,
+    read_sample,
 )
-
-from .base import Sumstat, IdentitySumstat
-from .subset import Subsetter, IdSubsetter
-
+from .base import IdentitySumstat, Sumstat
+from .subset import IdSubsetter, Subsetter
 
 logger = logging.getLogger("ABC.Sumstat")
 

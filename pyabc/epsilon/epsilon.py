@@ -1,10 +1,11 @@
-import numpy as np
-import pandas as pd
 import logging
 from typing import Callable, List, Union
-from .base import Epsilon
-from ..weighted_statistics import weighted_quantile
 
+import numpy as np
+import pandas as pd
+
+from ..weighted_statistics import weighted_quantile
+from .base import Epsilon
 
 logger = logging.getLogger("ABC.Epsilon")
 

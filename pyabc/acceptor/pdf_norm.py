@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Callable, Union
+
+import numpy as np
 import pandas as pd
 
 

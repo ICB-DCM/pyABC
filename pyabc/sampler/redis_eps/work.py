@@ -1,31 +1,32 @@
 """Function to work on a population in dynamic mode."""
 
-import sys
-from redis import StrictRedis
-import cloudpickle as pickle
-from time import sleep, time
 import logging
+import sys
+from time import sleep, time
+
+import cloudpickle as pickle
+from redis import StrictRedis
 
 from ..util import any_particle_preliminary
+from .cli import KillHandler
 from .cmd import (
-    N_EVAL,
-    N_ACC,
-    N_REQ,
-    N_FAIL,
     ALL_ACCEPTED,
-    N_WORKER,
-    N_LOOKAHEAD_EVAL,
-    SSA,
-    QUEUE,
-    BATCH_SIZE,
-    IS_LOOK_AHEAD,
     ANALYSIS_ID,
-    MAX_N_EVAL_LOOK_AHEAD,
-    SLEEP_TIME,
+    BATCH_SIZE,
     DONE_IXS,
+    IS_LOOK_AHEAD,
+    MAX_N_EVAL_LOOK_AHEAD,
+    N_ACC,
+    N_EVAL,
+    N_FAIL,
+    N_LOOKAHEAD_EVAL,
+    N_REQ,
+    N_WORKER,
+    QUEUE,
+    SLEEP_TIME,
+    SSA,
     idfy,
 )
-from .cli import KillHandler
 
 logger = logging.getLogger("ABC.Sampler")
 

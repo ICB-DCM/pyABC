@@ -2,12 +2,12 @@
 
 import os
 import tempfile
-import pytest
+
 import numpy as np
+import pytest
 
 import pyabc
 import pyabc.visserver.server as server
-
 
 db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
 

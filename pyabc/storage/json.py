@@ -1,6 +1,7 @@
-import json
-import numpy as np
 import copy
+import json
+
+import numpy as np
 
 
 def save_dict_to_json(dct: dict, file_: str):

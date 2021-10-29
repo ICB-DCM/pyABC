@@ -8,13 +8,15 @@ The population size can be constant or can change over the course
 of the generations.
 """
 
-from abc import ABC, abstractmethod
 import json
 import logging
-import numpy as np
+from abc import ABC, abstractmethod
 from typing import Dict, List, Union
 
+import numpy as np
+
 from pyabc.cv.bootstrap import calc_cv
+
 from .transition import Transition
 from .transition.predict_population_size import predict_population_size
 from .util import bound_pop_size_from_env

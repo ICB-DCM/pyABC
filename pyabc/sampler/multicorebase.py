@@ -1,10 +1,11 @@
-from .base import Sampler
-from multiprocessing import ProcessError, Process, Queue
-from queue import Empty
-from typing import List
+import logging
 import os
 import platform
-import logging
+from multiprocessing import Process, ProcessError, Queue
+from queue import Empty
+from typing import List
+
+from .base import Sampler
 
 logger = logging.getLogger("ABC.Sampler")
 

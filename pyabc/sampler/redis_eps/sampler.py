@@ -1,48 +1,49 @@
 """Redis based sampler base class and dynamic scheduling samplers."""
 
-import numpy as np
-from time import sleep
-from datetime import datetime
-import cloudpickle as pickle
 import copy
 import logging
-from redis import StrictRedis
+from datetime import datetime
+from time import sleep
 from typing import Callable, Dict, List, Tuple
-from jabbar import jabbar
 
+import cloudpickle as pickle
+import numpy as np
+from jabbar import jabbar
+from redis import StrictRedis
+
+from ...acceptor import Acceptor
+from ...distance import Distance
+from ...epsilon import Epsilon
 from ...inference_util import (
     AnalysisVars,
     create_simulate_function,
     evaluate_preliminary_particle,
     termination_criteria_fulfilled,
 )
-from ...distance import Distance
-from ...epsilon import Epsilon
-from ...acceptor import Acceptor
+from ...population import Sample
 from ...sampler import Sampler
 from ...weighted_statistics import effective_sample_size
-from ...population import Sample
 from .cmd import (
-    SSA,
-    N_EVAL,
+    ALL_ACCEPTED,
+    ANALYSIS_ID,
+    BATCH_SIZE,
+    DONE_IXS,
+    DYNAMIC,
+    GENERATION,
+    IS_LOOK_AHEAD,
+    MAX_N_EVAL_LOOK_AHEAD,
+    MODE,
+    MSG,
     N_ACC,
-    N_REQ,
+    N_EVAL,
     N_FAIL,
     N_LOOKAHEAD_EVAL,
-    ALL_ACCEPTED,
+    N_REQ,
     N_WORKER,
     QUEUE,
-    MSG,
-    START,
-    MODE,
-    DYNAMIC,
     SLEEP_TIME,
-    BATCH_SIZE,
-    IS_LOOK_AHEAD,
-    ANALYSIS_ID,
-    GENERATION,
-    MAX_N_EVAL_LOOK_AHEAD,
-    DONE_IXS,
+    SSA,
+    START,
     idfy,
 )
 from .redis_logging import RedisSamplerLogger

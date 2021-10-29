@@ -15,7 +15,6 @@ two purposes:
 
 """
 
-from .util import nr_cores_available
-from .execution_contexts import DefaultContext, ProfilingContext, NamedPrinter
+from .execution_contexts import DefaultContext, NamedPrinter, ProfilingContext
 from .sge import SGE
-from .util import sge_available
+from .util import nr_cores_available, sge_available

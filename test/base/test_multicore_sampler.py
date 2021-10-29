@@ -1,10 +1,12 @@
-from pyabc.sampler import (
-    MulticoreParticleParallelSampler,
-    MulticoreEvalParallelSampler,
-)
-from pyabc.population import Particle
-import pytest
 from multiprocessing import ProcessError
+
+import pytest
+
+from pyabc.population import Particle
+from pyabc.sampler import (
+    MulticoreEvalParallelSampler,
+    MulticoreParticleParallelSampler,
+)
 
 
 class UnpickleAble:

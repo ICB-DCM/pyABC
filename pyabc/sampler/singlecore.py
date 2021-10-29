@@ -1,6 +1,7 @@
-from .base import Sampler
 import numpy as np
 from jabbar import jabbar
+
+from .base import Sampler
 
 
 class SingleCoreSampler(Sampler):
