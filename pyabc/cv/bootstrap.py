@@ -1,6 +1,7 @@
+import copy
+
 import numpy as np
 from scipy import stats as st
-import copy
 
 
 def weights(n_per_model, transitions, test_transitions, test_X):

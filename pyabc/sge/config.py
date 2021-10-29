@@ -1,7 +1,6 @@
 import configparser
 import os
 
-
 DEFAULT_CONFIG = """#~/.parallel
 [DIRECTORIES]
 TMP=/tmp

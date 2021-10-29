@@ -1,31 +1,31 @@
-import pytest
+import datetime
 import os
+import pickle
+import tempfile
+
 import numpy as np
 import pandas as pd
-import datetime
-import tempfile
-import pickle
 import pyarrow
-from rpy2.robjects import r
-from rpy2.robjects import pandas2ri
+import pytest
+from rpy2.robjects import pandas2ri, r
 from rpy2.robjects.conversion import localconverter
 
 import pyabc
+from pyabc import History
 from pyabc.parameters import Parameter
 from pyabc.population import Particle, Population
-from pyabc import History
-from pyabc.storage.df_to_file import sumstat_to_json
 from pyabc.storage.dataframe_bytes_storage import (
-    df_to_bytes_parquet,
+    DataFrameLoadException,
+    df_from_bytes_csv,
+    df_from_bytes_json,
+    df_from_bytes_np_records,
     df_from_bytes_parquet,
     df_to_bytes_csv,
-    df_from_bytes_csv,
     df_to_bytes_json,
-    df_from_bytes_json,
     df_to_bytes_np_records,
-    df_from_bytes_np_records,
-    DataFrameLoadException,
+    df_to_bytes_parquet,
 )
+from pyabc.storage.df_to_file import sumstat_to_json
 
 
 def example_df():

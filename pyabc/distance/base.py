@@ -1,8 +1,8 @@
 """Distance base classes."""
 
+import json
 from abc import ABC, abstractmethod
 from typing import Callable
-import json
 
 from ..population import Sample
 

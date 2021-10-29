@@ -10,26 +10,23 @@ a user-defined implementation.
 """
 
 
-from .base import (
-    Epsilon,
-    NoEpsilon,
-)
+from .base import Epsilon, NoEpsilon
 from .epsilon import (
     ConstantEpsilon,
     ListEpsilon,
-    QuantileEpsilon,
     MedianEpsilon,
+    QuantileEpsilon,
 )
 from .temperature import (
-    TemperatureBase,
-    ListTemperature,
-    Temperature,
-    TemperatureScheme,
     AcceptanceRateScheme,
+    DalyScheme,
+    EssScheme,
     ExpDecayFixedIterScheme,
     ExpDecayFixedRatioScheme,
-    PolynomialDecayFixedIterScheme,
-    DalyScheme,
     FrielPettittScheme,
-    EssScheme,
+    ListTemperature,
+    PolynomialDecayFixedIterScheme,
+    Temperature,
+    TemperatureBase,
+    TemperatureScheme,
 )

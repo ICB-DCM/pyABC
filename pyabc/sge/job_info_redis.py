@@ -2,6 +2,7 @@
 Show info about the redis job queue
 """
 import argparse
+
 from redis import Redis
 
 

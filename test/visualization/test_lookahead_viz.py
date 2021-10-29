@@ -1,11 +1,12 @@
-import pyabc
-import tempfile
-import os
 import itertools
+import os
+import tempfile
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
+import pyabc
 
 # create and run some model
 

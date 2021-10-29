@@ -1,17 +1,19 @@
 import inspect
+import logging
 import os
 import pickle
 import shutil
 import subprocess  # noqa: S404
+import sys
 import tempfile
 import time
-import sys
-import cloudpickle
 import warnings
-import logging
+
+import cloudpickle
+
 from .config import get_config
-from .execution_contexts import DefaultContext
 from .db import job_db_factory
+from .execution_contexts import DefaultContext
 from .util import sge_available
 
 logger = logging.getLogger("ABC.SGE")

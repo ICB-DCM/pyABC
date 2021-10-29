@@ -1,8 +1,9 @@
 """Test creation and use of parameters."""
 
+from time import time
+
 import numpy as np
 import pandas as pd
-from time import time
 import pytest
 
 

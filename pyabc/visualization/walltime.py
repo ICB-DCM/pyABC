@@ -1,15 +1,16 @@
 """Walltime plots"""
 
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import matplotlib.axes
-from matplotlib.ticker import MaxNLocator
 import datetime
 from typing import Any, List, Union
 
+import matplotlib as mpl
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import MaxNLocator
+
 from ..storage import History
-from .util import to_lists, get_labels
+from .util import get_labels, to_lists
 
 SECOND = 's'
 MINUTE = 'm'

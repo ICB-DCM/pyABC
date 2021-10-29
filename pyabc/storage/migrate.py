@@ -1,12 +1,13 @@
 """Migrate database."""
 
-import click
 import os
 import shutil
 
+import click
+
 try:
-    from alembic.config import Config
     from alembic import command
+    from alembic.config import Config
 except ImportError:
     Config = command = None
 

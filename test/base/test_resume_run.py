@@ -1,12 +1,12 @@
-import pytest
 import numpy as np
+import pytest
 
 from pyabc import (
     ABCSMC,
-    Distribution,
     RV,
-    RedisEvalParallelSamplerServerStarter,
+    Distribution,
     MulticoreEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
 )
 
 

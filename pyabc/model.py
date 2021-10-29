@@ -5,11 +5,12 @@ Models
 A model defines how input parameters relate to output simulated data.
 """
 
-from .parameters import Parameter
-from typing import Callable, Any
-from .epsilon import Epsilon
-from .distance import Distance
+from typing import Any, Callable
+
 from .acceptor import Acceptor
+from .distance import Distance
+from .epsilon import Epsilon
+from .parameters import Parameter
 
 
 class ModelResult:

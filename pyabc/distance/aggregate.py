@@ -1,15 +1,14 @@
 """Aggregated distances."""
 
-import numpy as np
-from typing import Callable, List, Union
 import logging
+from typing import Callable, List, Union
 
-from ..storage import save_dict_to_json
+import numpy as np
+
 from ..population import Sample
-
-from .scale import span
+from ..storage import save_dict_to_json
 from .base import Distance, to_distance
-
+from .scale import span
 
 logger = logging.getLogger("ABC.Distance")
 

@@ -8,12 +8,12 @@ MultivariateNormalTransition(), or to replace it by a GridSearchCV() to
 automatically find a visually good level of smoothness.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
-from ..transition import MultivariateNormalTransition
 from ..storage import History
+from ..transition import MultivariateNormalTransition
 from .util import format_plot_matrix
 
 

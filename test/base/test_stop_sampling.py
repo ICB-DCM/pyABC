@@ -1,11 +1,11 @@
-import scipy.stats as st
-import numpy as np
 from datetime import datetime, timedelta
+
+import numpy as np
 import pytest
+import scipy.stats as st
 
 from pyabc import ABCSMC, Distribution
 from pyabc.sampler import MulticoreEvalParallelSampler, SingleCoreSampler
-
 
 set_acc_rate = 0.2
 pop_size = 10

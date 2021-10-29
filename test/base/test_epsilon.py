@@ -1,9 +1,11 @@
-import pyabc
+import copy
+import tempfile
+
 import numpy as np
 import pandas as pd
 import pytest
-import copy
-import tempfile
+
+import pyabc
 
 
 def test_noepsilon():

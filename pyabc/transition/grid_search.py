@@ -1,6 +1,8 @@
-from sklearn.model_selection import GridSearchCV as GridSearchCVSKL
 import logging
+
 import numpy as np
+from sklearn.model_selection import GridSearchCV as GridSearchCVSKL
+
 from .multivariatenormal import MultivariateNormalTransition
 
 logger = logging.getLogger("ABC.Transition")

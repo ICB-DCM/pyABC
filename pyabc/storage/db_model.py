@@ -12,19 +12,21 @@ For further information see also http://docs.sqlalchemy.org.
 """
 
 import datetime
+
 import sqlalchemy.types as types
 from sqlalchemy import (
-    Column,
-    Integer,
-    DateTime,
-    String,
     VARCHAR,
-    ForeignKey,
+    Column,
+    DateTime,
     Float,
+    ForeignKey,
+    Integer,
     LargeBinary,
+    String,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
 from .bytes_storage import from_bytes, to_bytes
 from .version import __db_version__
 

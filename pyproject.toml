@@ -16,5 +16,5 @@ skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
-line-length = 79
+line_length = 79
 multi_line_output = 3

@@ -1,16 +1,17 @@
-import os
 import json
-from flask import Flask, render_template
-from flask_bootstrap import Bootstrap
-import click
-import pandas as pd
 import logging
-from bokeh.plotting import figure
-from bokeh.embed import components  # noqa: E402
-from bokeh.resources import INLINE  # noqa: E402
-from bokeh.models.widgets import Panel, Tabs  # noqa: E402
+import os
 import signal
 import sys
+
+import click
+import pandas as pd
+from bokeh.embed import components  # noqa: E402
+from bokeh.models.widgets import Panel, Tabs  # noqa: E402
+from bokeh.plotting import figure
+from bokeh.resources import INLINE  # noqa: E402
+from flask import Flask, render_template
+from flask_bootstrap import Bootstrap
 
 from pyabc import History
 

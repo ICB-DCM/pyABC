@@ -1,10 +1,10 @@
 """Read sample to array."""
 
-import numpy as np
 from typing import Tuple
 
-from ..population import Sample
+import numpy as np
 
+from ..population import Sample
 from .par_trafo import ParTrafoBase
 
 

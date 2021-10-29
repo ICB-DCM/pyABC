@@ -1,16 +1,17 @@
 import os
 import tempfile
-import pytest
+
 import numpy as np
 import pandas as pd
+import pytest
 
 import pyabc
+import pyabc.external
 from pyabc.sampler import (
-    SingleCoreSampler,
     MulticoreEvalParallelSampler,
     RedisEvalParallelSamplerServerStarter,
+    SingleCoreSampler,
 )
-import pyabc.external
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():

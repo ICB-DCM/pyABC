@@ -1,29 +1,31 @@
 import datetime
-import os
-from typing import List, Union
 import json
+import logging
+import os
+import tempfile
+from functools import wraps
+from typing import List, Union
+
 import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 from sqlalchemy.orm import subqueryload
-from functools import wraps
-import tempfile
-import logging
 
+from ..parameters import Parameter as PyParameter
+from ..population import Particle as PyParticle
+from ..population import Population as PyPopulation
 from .db_model import (
-    Version,
     ABCSMC,
-    Population,
+    Base,
     Model,
-    Particle,
     Parameter,
+    Particle,
+    Population,
     Sample,
     SummaryStatistic,
-    Base,
+    Version,
 )
 from .version import __db_version__
-from ..population import Particle as PyParticle, Population as PyPopulation
-from ..parameters import Parameter as PyParameter
 
 logger = logging.getLogger("ABC.History")
 

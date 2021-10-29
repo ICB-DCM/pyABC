@@ -1,6 +1,6 @@
 import platform
-from .sampler import MulticoreEvalParallelSampler, SingleCoreSampler
 
+from .sampler import MulticoreEvalParallelSampler, SingleCoreSampler
 
 _linux = {"sampler": MulticoreEvalParallelSampler}
 _macos = {"sampler": MulticoreEvalParallelSampler}

@@ -1,15 +1,15 @@
 """Visualization of distance functions."""
 
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import matplotlib.axes
-from matplotlib.ticker import MaxNLocator
-import numpy as np
 from typing import Any, List, Tuple, Union
 
-from ..storage import load_dict_from_json
+import matplotlib as mpl
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import MaxNLocator
 
-from .util import to_lists, get_labels
+from ..storage import load_dict_from_json
+from .util import get_labels, to_lists
 
 
 def plot_distance_weights(

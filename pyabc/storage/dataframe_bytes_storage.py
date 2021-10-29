@@ -1,8 +1,9 @@
-import pandas as pd
-from io import StringIO, BytesIO
 import csv
-import numpy as np
 import logging
+from io import BytesIO, StringIO
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger("ABC.History")
 

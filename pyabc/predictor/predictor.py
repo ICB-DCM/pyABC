@@ -1,18 +1,19 @@
 """Predictor implementations."""
 
-import numpy as np
-from scipy.stats import pearsonr
-from typing import Callable, List, Tuple, Union
 import copy
 import logging
 from abc import ABC, abstractmethod
 from time import time
+from typing import Callable, List, Tuple, Union
+
+import numpy as np
+from scipy.stats import pearsonr
 
 try:
-    import sklearn.linear_model as skl_lm
     import sklearn.gaussian_process as skl_gp
-    import sklearn.neural_network as skl_nn
+    import sklearn.linear_model as skl_lm
     import sklearn.model_selection as skl_ms
+    import sklearn.neural_network as skl_nn
 except ImportError:
     skl_lm = skl_gp = skl_nn = skl_ms = None
 

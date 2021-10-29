@@ -1,9 +1,10 @@
 """Model probability plots"""
 
-from ..storage import History
 import matplotlib as mpl
 import matplotlib.axes
 import matplotlib.pyplot as plt
+
+from ..storage import History
 
 
 def plot_model_probabilities(

@@ -1,15 +1,14 @@
 """Various basic distances."""
 
+import logging
 from abc import ABC
+from typing import Callable, List
+
 import numpy as np
 from scipy import linalg as la
-from typing import Callable, List
-import logging
 
 from ..population import Sample
-
 from .base import Distance
-
 
 logger = logging.getLogger("ABC.Distance")
 

@@ -1,10 +1,10 @@
-import numpy as np
 import logging
-from typing import Callable, Dict, List, Sequence
 import os
+from typing import Callable, Dict, List, Sequence
+
+import numpy as np
 
 from ..storage import load_dict_from_json, save_dict_to_json
-
 
 logger = logging.getLogger("ABC.Distance")
 

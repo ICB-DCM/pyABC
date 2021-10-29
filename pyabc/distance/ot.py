@@ -1,14 +1,14 @@
 """Optimal transport distances."""
 
-import numpy as np
-import scipy.linalg as la
-from typing import Callable, Union
 import logging
 from functools import partial
+from typing import Callable, Union
+
+import numpy as np
+import scipy.linalg as la
 
 from ..population import Sample
 from ..sumstat import Sumstat
-
 from .base import Distance
 
 try:

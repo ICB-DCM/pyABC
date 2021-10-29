@@ -16,22 +16,24 @@ Currently, the R language is supported.
     Should this not work on your system, consider accessing R script-based.
 """
 
-from ..random_variables import Parameter
+import logging
+import warnings
+
 import numpy as np
 import pandas as pd
-import warnings
-import logging
+
+from ..random_variables import Parameter
 
 logger = logging.getLogger("ABC.External")
 
 try:
     from rpy2.robjects import (
         ListVector,
-        r,
-        default_converter,
         conversion,
-        pandas2ri,
+        default_converter,
         numpy2ri,
+        pandas2ri,
+        r,
     )
 except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
     logger.error("Install rpy2 to enable simple support for the R language.")
@@ -101,11 +103,10 @@ class R:
         Convenience method to print the loaded source file
         as syntax highlighted HTML within IPython.
         """
-        from pygments import highlight
-        from pygments.lexers import SLexer
-
-        from pygments.formatters import HtmlFormatter
         import IPython.display as display
+        from pygments import highlight
+        from pygments.formatters import HtmlFormatter
+        from pygments.lexers import SLexer
 
         with open(self.source_file) as f:
             code = f.read()

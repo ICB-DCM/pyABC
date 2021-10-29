@@ -1,14 +1,15 @@
-import numpy as np
-import scipy as sp
-from scipy import optimize
-import pandas as pd
+import logging
 import numbers
 from typing import Callable, List, Union
-import logging
 
-from .base import Epsilon
+import numpy as np
+import pandas as pd
+import scipy as sp
+from scipy import optimize
+
 from ..distance import SCALE_LIN
 from ..storage import save_dict_to_json
+from .base import Epsilon
 
 logger = logging.getLogger("ABC.Epsilon")
 

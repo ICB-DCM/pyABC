@@ -1,9 +1,10 @@
 """Transform dictionaries to arrays."""
 
-import numpy as np
-import pandas as pd
 from numbers import Number
 from typing import List, Union
+
+import numpy as np
+import pandas as pd
 
 
 def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:

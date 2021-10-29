@@ -1,8 +1,9 @@
-from collections.abc import Sequence, Mapping
-from typing import Callable, Tuple, Union
-from numbers import Number
 import abc
 import logging
+from collections.abc import Mapping, Sequence
+from numbers import Number
+from typing import Callable, Tuple, Union
+
 import numpy as np
 import pandas as pd
 

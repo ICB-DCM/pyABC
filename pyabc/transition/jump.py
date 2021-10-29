@@ -1,8 +1,9 @@
 """A discrete jump transition function."""
 
+from typing import Union
+
 import numpy as np
 import pandas as pd
-from typing import Union
 
 from ..parameters import Parameter
 from ..random_choice import fast_random_choice
