@@ -1,8 +1,9 @@
 """Parameter transformations."""
 
-import numpy as np
-from typing import Callable, List, Union
 from abc import ABC, abstractmethod
+from typing import Callable, List, Union
+
+import numpy as np
 
 from .dict2arr import dict2arr
 

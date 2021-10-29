@@ -1,6 +1,8 @@
-from sklearn.model_selection import GridSearchCV as GridSearchCVSKL
 import logging
+
 import numpy as np
+from sklearn.model_selection import GridSearchCV as GridSearchCVSKL
+
 from .multivariatenormal import MultivariateNormalTransition
 
 logger = logging.getLogger("ABC.Transition")
@@ -24,11 +26,20 @@ class GridSearchCV(GridSearchCVSKL):
     - cv = 5
 
     """
-    def __init__(self, estimator=None, param_grid=None,
-                 scoring=None,
-                 n_jobs=1, refit=True, cv=5,
-                 verbose=0, pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=True):
+
+    def __init__(
+        self,
+        estimator=None,
+        param_grid=None,
+        scoring=None,
+        n_jobs=1,
+        refit=True,
+        cv=5,
+        verbose=0,
+        pre_dispatch='2*n_jobs',
+        error_score='raise',
+        return_train_score=True,
+    ):
 
         if estimator is None:
             estimator = MultivariateNormalTransition()
@@ -38,11 +49,17 @@ class GridSearchCV(GridSearchCVSKL):
         self.best_estimator_ = None
 
         super().__init__(
-            estimator=estimator, param_grid=param_grid, scoring=scoring,
-            n_jobs=n_jobs, pre_dispatch=pre_dispatch,
-            cv=cv, refit=refit, verbose=verbose,
+            estimator=estimator,
+            param_grid=param_grid,
+            scoring=scoring,
+            n_jobs=n_jobs,
+            pre_dispatch=pre_dispatch,
+            cv=cv,
+            refit=refit,
+            verbose=verbose,
             error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+        )
 
     def fit(self, X, y=None, groups=None):
         """
@@ -51,8 +68,11 @@ class GridSearchCV(GridSearchCVSKL):
         if len(X) == 1:
             res = self.estimator.fit(X, y)
             self.best_estimator_ = self.estimator
-            logging.debug("Single sample Gridsearch. Params: {}".format(
-                self.estimator.get_params()))
+            logging.debug(
+                "Single sample Gridsearch. Params: {}".format(
+                    self.estimator.get_params()
+                )
+            )
             return res
 
         if self.cv > len(X):  # pylint: disable=E0203
@@ -60,8 +80,11 @@ class GridSearchCV(GridSearchCVSKL):
             self.cv = len(X)
             res = super().fit(X, y, groups=groups)
             self.cv = old_cv
-            logging.info("Reduced CV Gridsearch {} -> {}. Best params: {}"
-                         .format(self.cv, len(X), self.best_params_))
+            logging.info(
+                "Reduced CV Gridsearch {} -> {}. Best params: {}".format(
+                    self.cv, len(X), self.best_params_
+                )
+            )
             return res
 
         res = super().fit(X, y, groups=groups)

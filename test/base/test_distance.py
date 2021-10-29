@@ -1,52 +1,52 @@
+import os
+import tempfile
+
 import numpy as np
+import pytest
 import scipy as sp
 import scipy.spatial.distance as sp_dist
 import scipy.stats
-import os
-import tempfile
-import pytest
 
 from pyabc.distance import (
-    PercentileDistance,
-    MinMaxDistance,
-    PNormDistance,
-    AdaptivePNormDistance,
-    InfoWeightedPNormDistance,
-    AggregatedDistance,
+    SCALE_LIN,
     AdaptiveAggregatedDistance,
-    WassersteinDistance,
-    SlicedWassersteinDistance,
-    NormalKernel,
-    IndependentNormalKernel,
-    IndependentLaplaceKernel,
+    AdaptivePNormDistance,
+    AggregatedDistance,
     BinomialKernel,
-    PoissonKernel,
+    IndependentLaplaceKernel,
+    IndependentNormalKernel,
+    InfoWeightedPNormDistance,
+    MinMaxDistance,
     NegativeBinomialKernel,
-    median_absolute_deviation,
-    mean_absolute_deviation,
-    standard_deviation,
+    NormalKernel,
+    PercentileDistance,
+    PNormDistance,
+    PoissonKernel,
+    SlicedWassersteinDistance,
+    WassersteinDistance,
     bias,
-    root_mean_square_deviation,
-    std_or_rmsd,
-    median_absolute_deviation_to_observation,
-    mean_absolute_deviation_to_observation,
+    combined_mean_absolute_deviation,
     combined_median_absolute_deviation,
     mad_or_cmad,
-    combined_mean_absolute_deviation,
-    standard_deviation_to_observation,
-    span,
     mean,
+    mean_absolute_deviation,
+    mean_absolute_deviation_to_observation,
     median,
-    SCALE_LIN,
+    median_absolute_deviation,
+    median_absolute_deviation_to_observation,
+    root_mean_square_deviation,
+    span,
+    standard_deviation,
+    standard_deviation_to_observation,
+    std_or_rmsd,
 )
-from pyabc.population import Particle, Sample
-from pyabc.parameters import Parameter
-from pyabc.storage import load_dict_from_json
-from pyabc.predictor import LinearPredictor
-from pyabc.random_variables import Distribution, RV
-from pyabc.storage import create_sqlite_db_id
-from pyabc.sumstat import Sumstat
 from pyabc.inference import ABCSMC
+from pyabc.parameters import Parameter
+from pyabc.population import Particle, Sample
+from pyabc.predictor import LinearPredictor
+from pyabc.random_variables import RV, Distribution
+from pyabc.storage import create_sqlite_db_id, load_dict_from_json
+from pyabc.sumstat import Sumstat
 
 
 class MockABC:
@@ -62,8 +62,9 @@ class MockABC:
             sample.append(
                 Particle(
                     m=0,
-                    parameter=Parameter({'p1': np.random.randint(10),
-                                         'p2': np.random.randn()}),
+                    parameter=Parameter(
+                        {'p1': np.random.randint(10), 'p2': np.random.randn()}
+                    ),
                     weight=np.random.uniform(),
                     sum_stat=sumstat,
                     distance=np.random.uniform(),
@@ -102,15 +103,16 @@ def test_single_parameter_percentile():
     abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1}, {"a": 2})
-    expected = (
-        1 / (np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20))
+    expected = 1 / (
+        np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20)
     )
     assert expected == d
 
 
 def test_pnormdistance():
-    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
-                   {'s1': -1, 's2': 0, 's3': 1}])
+    abc = MockABC(
+        [{'s1': -1, 's2': -1, 's3': -1}, {'s1': -1, 's2': 0, 's3': 1}]
+    )
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
     # first test that for PNormDistance, the weights stay constant
@@ -120,7 +122,7 @@ def test_pnormdistance():
     # call distance function, also to initialize w
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
 
-    expected = pow(0**2 + 1**2 + 2**2, 1/2)
+    expected = pow(0 ** 2 + 1 ** 2 + 2 ** 2, 1 / 2)
     assert expected == d
 
     assert dist_f.fixed_weights[0] == 1
@@ -139,8 +141,9 @@ def test_adaptivepnormdistance():
     # TODO it could be checked that the scale functions lead to the expected
     #  values
 
-    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
-                   {'s1': -1, 's2': 0, 's3': 1}])
+    abc = MockABC(
+        [{'s1': -1, 's2': -1, 's3': -1}, {'s1': -1, 's2': 0, 's3': 1}]
+    )
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
     scale_functions = [
@@ -159,8 +162,7 @@ def test_adaptivepnormdistance():
     ]
 
     for scale_function in scale_functions:
-        dist_f = AdaptivePNormDistance(
-            scale_function=scale_function)
+        dist_f = AdaptivePNormDistance(scale_function=scale_function)
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
         assert (dist_f.scale_weights[0] != np.ones(3)).any()
@@ -168,8 +170,8 @@ def test_adaptivepnormdistance():
     # test max weight ratio
     for scale_function in scale_functions:
         dist_f = AdaptivePNormDistance(
-            scale_function=scale_function,
-            max_scale_weight_ratio=20)
+            scale_function=scale_function, max_scale_weight_ratio=20
+        )
         dist_f.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
 
@@ -180,22 +182,24 @@ def test_adaptivepnormdistance():
 
 def test_adaptivepnorm_all_particles():
     """Test using rejected particles or not for weighting."""
-    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
-                   {'s1': -1, 's2': 0, 's3': 1},
-                   {'s1': -2, 's2': 0.5, 's3': 3}],
-                  accepted=[True, True, False])
+    abc = MockABC(
+        [
+            {'s1': -1, 's2': -1, 's3': -1},
+            {'s1': -1, 's2': 0, 's3': 1},
+            {'s1': -2, 's2': 0.5, 's3': 3},
+        ],
+        accepted=[True, True, False],
+    )
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
     x_1 = {'s1': 0.5, 's2': 0.4, 's3': -5}
 
     # check that distance values calculated when using rejected particles
     #  or not differ
 
-    dist_all = AdaptivePNormDistance(
-        all_particles_for_scale=True)
+    dist_all = AdaptivePNormDistance(all_particles_for_scale=True)
     dist_all.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
 
-    dist_acc = AdaptivePNormDistance(
-        all_particles_for_scale=False)
+    dist_acc = AdaptivePNormDistance(all_particles_for_scale=False)
     dist_acc.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
 
     assert dist_all(x_1, x_0, t=0) != dist_acc(x_1, x_0, t=0)
@@ -230,20 +234,21 @@ def test_scales():
     for scale in scale_functions:
         assert np.isfinite(scale(samples=samples, s0=s0, s_ids=s_ids)).all()
 
-    s0_bad = np.random.normal(size=(n_y-1,))
+    s0_bad = np.random.normal(size=(n_y - 1,))
     for scale in scale_functions:
         with pytest.raises(AssertionError):
             scale(samples=samples, s0=s0_bad, s_ids=s_ids)
 
-    s_ids_bad = [f"s{ix}" for ix in range(n_y+1)]
+    s_ids_bad = [f"s{ix}" for ix in range(n_y + 1)]
     for scale in scale_functions:
         with pytest.raises(AssertionError):
             scale(samples=samples, s0=s0, s_ids=s_ids_bad)
 
 
 def test_adaptivepnormdistance_initial_weights():
-    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
-                   {'s1': -1, 's2': 0, 's3': 1}])
+    abc = MockABC(
+        [{'s1': -1, 's2': -1, 's3': -1}, {'s1': -1, 's2': 0, 's3': 1}]
+    )
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
     # first test that for PNormDistance, the weights stay constant
@@ -254,7 +259,7 @@ def test_adaptivepnormdistance_initial_weights():
 
     # call distance function
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
-    expected = pow(sum([(2*1)**2, (3*2)**2]), 1/2)
+    expected = pow(sum([(2 * 1) ** 2, (3 * 2) ** 2]), 1 / 2)
     assert expected == d
 
     # check updating works
@@ -264,17 +269,19 @@ def test_adaptivepnormdistance_initial_weights():
 
 def test_info_weighted_pnorm_distance():
     """Just test the info weighted distance pipeline."""
-    db_file = create_sqlite_db_id()[len("sqlite:///"):]
+    db_file = create_sqlite_db_id()[len("sqlite:///") :]
     scale_log_file = tempfile.mkstemp()[1]
     info_log_file = tempfile.mkstemp()[1]
     info_sample_log_file = tempfile.mkstemp()[1]
 
     try:
+
         def model(p):
             return {
                 "s0": p["p0"] + np.random.normal(),
                 "s1": p["p1"] + np.random.normal(size=2),
             }
+
         prior = Distribution(p0=RV("uniform", 0, 1), p1=RV("uniform", 0, 10))
         data = {"s0": 0.5, "s1": np.array([5, 5])}
 
@@ -301,39 +308,36 @@ def test_info_weighted_pnorm_distance():
 
 
 def test_aggregateddistance():
-    abc = MockABC([{'s0': -1, 's1': -1},
-                   {'s0': -1, 's1': 0}])
+    abc = MockABC([{'s0': -1, 's1': -1}, {'s0': -1, 's1': 0}])
     x_0 = {'s0': 0, 's1': 0}
 
     def distance0(x, x_0):
         return abs(x['s0'] - x_0['s0'])
 
     def distance1(x, x_0):
-        return np.sqrt((x['s1'] - x_0['s1'])**2)
+        return np.sqrt((x['s1'] - x_0['s1']) ** 2)
 
-    distance = AggregatedDistance(
-        [distance0, distance1])
+    distance = AggregatedDistance([distance0, distance1])
     distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
-    val = distance(
-        abc.sumstats[0], abc.sumstats[1], t=0)
+    val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
     assert isinstance(val, float)
 
 
 def test_adaptiveaggregateddistance():
-    abc = MockABC([{'s0': -1, 's1': -1},
-                   {'s0': -1, 's1': 0}])
+    abc = MockABC([{'s0': -1, 's1': -1}, {'s0': -1, 's1': 0}])
     x_0 = {'s0': 0, 's1': 0}
 
     def distance0(x, x_0):
         return abs(x['s0'] - x_0['s0'])
 
     def distance1(x, x_0):
-        return np.sqrt((x['s1'] - x_0['s1'])**2)
+        return np.sqrt((x['s1'] - x_0['s1']) ** 2)
 
     scale_functions = [span, mean, median]
     for scale_function in scale_functions:
         distance = AdaptiveAggregatedDistance(
-            [distance0, distance1], scale_function=scale_function)
+            [distance0, distance1], scale_function=scale_function
+        )
         distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
         assert isinstance(val, float)
@@ -341,22 +345,23 @@ def test_adaptiveaggregateddistance():
 
 
 def test_adaptiveaggregateddistance_calibration():
-    abc = MockABC([{'s0': -1, 's1': -1},
-                   {'s0': -1, 's1': 0}])
+    abc = MockABC([{'s0': -1, 's1': -1}, {'s0': -1, 's1': 0}])
     x_0 = {'s0': 0, 's1': 0}
 
     def distance0(x, x_0):
         return abs(x['s0'] - x_0['s0'])
 
     def distance1(x, x_0):
-        return np.sqrt((x['s1'] - x_0['s1'])**2)
+        return np.sqrt((x['s1'] - x_0['s1']) ** 2)
 
     scale_functions = [span, mean, median]
     initial_weights = np.array([2, 3])
     for scale_function in scale_functions:
         distance = AdaptiveAggregatedDistance(
-            [distance0, distance1], scale_function=scale_function,
-            initial_weights=initial_weights)
+            [distance0, distance1],
+            scale_function=scale_function,
+            initial_weights=initial_weights,
+        )
         distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         val = distance(abc.sumstats[0], abc.sumstats[1], t=0)
         assert isinstance(val, float)
@@ -375,8 +380,8 @@ def test_normalkernel():
     ret = kernel(x, x0)
     # expected value
     logterm = 3 * np.log(2 * np.pi * 1)
-    quadterm = 1**2 + 2**2 + 1**2
-    expected = - 0.5 * (logterm + quadterm)
+    quadterm = 1 ** 2 + 2 ** 2 + 1 ** 2
+    expected = -0.5 * (logterm + quadterm)
     assert np.isclose(ret, expected)
 
     # define own cov
@@ -403,10 +408,10 @@ def test_independentnormalkernel():
     kernel = IndependentNormalKernel()
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1**2 + 2**2 + 4.5**2)
+    expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1 ** 2 + 2 ** 2 + 4.5 ** 2)
     sp_expected = np.log(
-        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=1)
-                 for x in [1, 2, 4.5]]))
+        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]])
+    )
     assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
@@ -414,11 +419,23 @@ def test_independentnormalkernel():
     kernel = IndependentNormalKernel([1, 2, 3])
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = -0.5 * (3 * np.log(2 * np.pi) + np.log(1) + np.log(2)
-                       + np.log(3) + 1**2 / 1 + 2**2 / 2 + 4.5**2 / 3)
+    expected = -0.5 * (
+        3 * np.log(2 * np.pi)
+        + np.log(1)
+        + np.log(2)
+        + np.log(3)
+        + 1 ** 2 / 1
+        + 2 ** 2 / 2
+        + 4.5 ** 2 / 3
+    )
     sp_expected = np.log(
-        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=s)
-                 for x, s in zip([1, 2, 4.5], np.sqrt([1, 2, 3]))]))
+        np.prod(
+            [
+                sp.stats.norm.pdf(x=x, loc=0, scale=s)
+                for x, s in zip([1, 2, 4.5], np.sqrt([1, 2, 3]))
+            ]
+        )
+    )
     assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
@@ -448,10 +465,12 @@ def test_independentlaplacekernel():
     kernel = IndependentLaplaceKernel()
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = - (3 * np.log(2 * 1) + 1 + 2 + 4.5)
+    expected = -(3 * np.log(2 * 1) + 1 + 2 + 4.5)
     sp_expected = np.log(
-        np.prod([sp.stats.laplace.pdf(x=x, loc=0, scale=1)
-                 for x in [1, 2, 4.5]]))
+        np.prod(
+            [sp.stats.laplace.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]]
+        )
+    )
     assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
@@ -459,11 +478,17 @@ def test_independentlaplacekernel():
     kernel = IndependentLaplaceKernel([1, 2, 3])
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = - (np.log(2 * 1) + np.log(2 * 2) + np.log(2 * 3)
-                  + 1 / 1 + 2 / 2 + 4.5 / 3)
+    expected = -(
+        np.log(2 * 1) + np.log(2 * 2) + np.log(2 * 3) + 1 / 1 + 2 / 2 + 4.5 / 3
+    )
     sp_expected = np.log(
-        np.prod([sp.stats.laplace.pdf(x=x, loc=0, scale=s)
-                 for x, s in zip([1, 2, 4.5], [1, 2, 3])]))
+        np.prod(
+            [
+                sp.stats.laplace.pdf(x=x, loc=0, scale=s)
+                for x, s in zip([1, 2, 4.5], [1, 2, 3])
+            ]
+        )
+    )
     assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
 
@@ -501,11 +526,13 @@ def test_binomialkernel():
     # function p
     def p(par):
         return np.array([0.9, 0.8, 0.7])
+
     kernel = BinomialKernel(p=p)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.sum(sp.stats.binom.logpmf(
-        k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
+    expected = np.sum(
+        sp.stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7])
+    )
     assert np.isclose(ret, expected)
 
 
@@ -547,18 +574,21 @@ def test_negativebinomialkernel():
     # function p
     def p(par):
         return np.array([0.9, 0.8, 0.7])
+
     kernel = NegativeBinomialKernel(p=p)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.sum(sp.stats.nbinom.logpmf(
-        k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7]))
+    expected = np.sum(
+        sp.stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7])
+    )
     assert np.isclose(ret, expected)
 
 
 def test_store_weights():
     """Test whether storing distance weights works."""
-    abc = MockABC([{'s1': -1, 's2': -1, 's3': -1},
-                   {'s1': -1, 's2': 0, 's3': 1}])
+    abc = MockABC(
+        [{'s1': -1, 's2': -1, 's3': -1}, {'s1': -1, 's2': 0, 's3': 1}]
+    )
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
     weights_file = tempfile.mkstemp(suffix=".json")[1]
@@ -568,12 +598,14 @@ def test_store_weights():
         return abs(x_['s1'] - x_0_['s1'])
 
     def distance1(x_, x_0_):
-        return np.sqrt((x_['s2'] - x_0_['s2'])**2)
+        return np.sqrt((x_['s2'] - x_0_['s2']) ** 2)
 
-    for distance in [AdaptivePNormDistance(scale_log_file=weights_file),
-                     AdaptiveAggregatedDistance(
-                         [distance0, distance1, distance1],
-                         log_file=weights_file)]:
+    for distance in [
+        AdaptivePNormDistance(scale_log_file=weights_file),
+        AdaptiveAggregatedDistance(
+            [distance0, distance1, distance1], log_file=weights_file
+        ),
+    ]:
         distance.initialize(0, abc.sample_from_prior, x_0=x_0, total_sims=0)
         distance.update(1, abc.sample_from_prior, total_sims=0)
         distance.update(2, abc.sample_from_prior, total_sims=0)
@@ -602,7 +634,7 @@ def test_wasserstein_distance():
     n_sample = 11
 
     def model_1d(p):
-        return {"y": np.random.normal(p["p0"], 1., size=n_sample)}
+        return {"y": np.random.normal(p["p0"], 1.0, size=n_sample)}
 
     p_true = {"p0": -0.5}
     y0 = model_1d(p_true)
@@ -610,7 +642,7 @@ def test_wasserstein_distance():
     p1 = {"p0": -0.55}
     y1 = model_1d(p1)
 
-    p2 = {"p0": 0.55}
+    p2 = {"p0": 3.55}
     y2 = model_1d(p2)
 
     class IdSumstat(Sumstat):
@@ -667,7 +699,7 @@ def test_wasserstein_distance():
         for distance in [
             WassersteinDistance(
                 sumstat=IdSumstat(),
-                ),
+            ),
             SlicedWassersteinDistance(
                 sumstat=IdSumstat(),
             ),

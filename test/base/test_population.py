@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from pyabc import Population, Sample
+
 from .test_storage import rand_pop_list
 
 
@@ -22,7 +23,8 @@ def test_basic():
     weighted_distances = pop.get_weighted_distances()
     weights, sumstats = pop.get_weighted_sum_stats()
     vals = pop.get_for_keys(
-        keys=['weight', 'distance', 'parameter', 'sum_stat'])
+        keys=['weight', 'distance', 'parameter', 'sum_stat']
+    )
     assert all(weighted_distances['w'] == vals['weight'])
     assert all(weighted_distances['distance'] == vals['distance'])
     assert sumstats == vals['sum_stat']
@@ -104,7 +106,7 @@ def test_sample():
     # zero weight
     particles = rand_pop_list(n_sample=100)
     for p in particles:
-        p.weight = 0.
+        p.weight = 0.0
     sample = Sample(record_rejected=True, max_nr_rejected=10)
     for p in particles:
         sample.append(p)

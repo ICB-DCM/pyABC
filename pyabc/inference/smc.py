@@ -1,47 +1,47 @@
 """ABC-SMC"""
 
-import logging
-from typing import List, Callable, TypeVar, Union
-import numpy as np
 import copy
+import logging
 from datetime import datetime, timedelta
+from typing import Callable, List, TypeVar, Union
+
+import numpy as np
 
 from pyabc.acceptor import (
     Acceptor,
-    UniformAcceptor,
     SimpleFunctionAcceptor,
     StochasticAcceptor,
+    UniformAcceptor,
 )
 from pyabc.distance import (
     Distance,
     PNormDistance,
-    to_distance,
     StochasticKernel,
+    to_distance,
 )
 from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
+from pyabc.inference_util import (
+    AnalysisVars,
+    create_analysis_id,
+    create_prior_pdf,
+    create_simulate_from_prior_function,
+    create_simulate_function,
+    create_transition_pdf,
+    termination_criteria_fulfilled,
+)
 from pyabc.model import Model, SimpleModel
 from pyabc.platform_factory import DefaultSampler
 from pyabc.population import Population, Sample
-from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
+from pyabc.populationstrategy import ConstantPopulationSize, PopulationStrategy
 from pyabc.random_variables import RV, Distribution
 from pyabc.sampler import Sampler
 from pyabc.storage import History
 from pyabc.transition import (
-    Transition,
-    MultivariateNormalTransition,
     ModelPerturbationKernel,
+    MultivariateNormalTransition,
+    Transition,
 )
 from pyabc.weighted_statistics import effective_sample_size
-from pyabc.inference_util import (
-    create_simulate_from_prior_function,
-    create_prior_pdf,
-    create_transition_pdf,
-    create_simulate_function,
-    termination_criteria_fulfilled,
-    create_analysis_id,
-    AnalysisVars,
-)
-
 
 logger = logging.getLogger("ABC")
 
@@ -166,6 +166,7 @@ class ABCSMC:
         Bioinformatics 26, no. 1, 104–10, 2010.
         https://doi.org/10.1093/bioinformatics/btp619
     """
+
     def __init__(
         self,
         models: Union[List[Model], Model, Callable],
@@ -194,7 +195,8 @@ class ABCSMC:
         # sanity checks
         if len(self.models) != len(self.parameter_priors):
             raise AssertionError(
-                "Number models and number parameter priors have to agree.")
+                "Number models and number parameter priors have to agree."
+            )
 
         if distance_function is None:
             distance_function = PNormDistance()
@@ -208,12 +210,12 @@ class ABCSMC:
 
         if model_perturbation_kernel is None:
             model_perturbation_kernel = ModelPerturbationKernel(
-                len(self.models), probability_to_stay=.7)
+                len(self.models), probability_to_stay=0.7
+            )
         self.model_perturbation_kernel = model_perturbation_kernel
 
         if transitions is None:
-            transitions = [MultivariateNormalTransition()
-                           for _ in self.models]
+            transitions = [MultivariateNormalTransition() for _ in self.models]
         if not isinstance(transitions, list):
             transitions = [transitions]
         self.transitions: List[Transition] = transitions
@@ -223,8 +225,7 @@ class ABCSMC:
         self.eps = eps
 
         if isinstance(population_size, int):
-            population_size = ConstantPopulationSize(
-                population_size)
+            population_size = ConstantPopulationSize(population_size)
         self.population_size = population_size
 
         if sampler is None:
@@ -265,12 +266,15 @@ class ABCSMC:
             raise ValueError(
                 "Please only use acceptor.StochasticAcceptor, "
                 "epsilon.TemperatureBase and distance.StochasticKernel "
-                "together.")
+                "together."
+            )
 
         # check sampler
         self.sampler.check_analysis_variables(
-            distance_function=self.distance_function, eps=self.eps,
-            acceptor=self.acceptor)
+            distance_function=self.distance_function,
+            eps=self.eps,
+            acceptor=self.acceptor,
+        )
 
     def __getstate__(self):
         state_red_dict = self.__dict__.copy()
@@ -371,7 +375,8 @@ class ABCSMC:
             distance_function_json_str=self.distance_function.to_json(),
             eps_function_json_str=self.eps.to_json(),
             population_strategy_json_str=self.population_size.to_json(),
-            start_time=datetime.now())
+            start_time=datetime.now(),
+        )
 
         # return history
         # contains id generated in store_initial_data
@@ -429,13 +434,14 @@ class ABCSMC:
             Time point for which to initialize (i.e. the time point at which
             to do the first population). Usually 0 or history.max_t + 1.
         """
+
         def get_initial_sample():
             """Create sample from population, with only accepted particles."""
-            population = self._get_initial_population(t-1)
+            population = self._get_initial_population(t - 1)
             return Sample.from_population(population)
 
         def _get_initial_population_with_distances():
-            population = self._get_initial_population(t-1)
+            population = self._get_initial_population(t - 1)
 
             def distance_to_ground_truth(x, par):
                 return self.distance_function(x, self.x_0, t, par)
@@ -468,11 +474,14 @@ class ABCSMC:
             for particle in population.particles:
                 # we use dummy densities here, since only the quotient
                 #  is of interest
-                records.append({
-                    'distance': particle.distance,
-                    'transition_pd_prev': 1.0,
-                    'transition_pd': 1.0,
-                    'accepted': True})
+                records.append(
+                    {
+                        'distance': particle.distance,
+                        'transition_pd_prev': 1.0,
+                        'transition_pd': 1.0,
+                        'accepted': True,
+                    }
+                )
             return records
 
         self.eps.initialize(
@@ -518,7 +527,8 @@ class ABCSMC:
         """
         return create_simulate_from_prior_function(
             model_prior=self.model_prior,
-            parameter_priors=self.parameter_priors, models=self.models,
+            parameter_priors=self.parameter_priors,
+            models=self.models,
             summary_statistics=self.summary_statistics,
         )
 
@@ -534,8 +544,13 @@ class ABCSMC:
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
-            n=self.population_size(-1), simulate_one=simulate_one, t=t,
-            max_eval=np.inf, all_accepted=True, ana_vars=self._vars())
+            n=self.population_size(-1),
+            simulate_one=simulate_one,
+            t=t,
+            max_eval=np.inf,
+            all_accepted=True,
+            ana_vars=self._vars(),
+        )
 
         # normalize accepted population weight to 1
         sample.normalize_weights()
@@ -545,7 +560,8 @@ class ABCSMC:
 
         # update information saved in history about calibration
         self.history.update_after_calibration(
-            nr_samples=self.sampler.nr_evaluations_, end_time=datetime.now())
+            nr_samples=self.sampler.nr_evaluations_, end_time=datetime.now()
+        )
 
         return population
 
@@ -573,13 +589,18 @@ class ABCSMC:
             in particular not contain references to the ABCSMC class.
         """
         return create_simulate_function(
-            t=t, model_probabilities=self.history.get_model_probabilities(t-1),
+            t=t,
+            model_probabilities=self.history.get_model_probabilities(t - 1),
             model_perturbation_kernel=self.model_perturbation_kernel,
-            transitions=self.transitions, model_prior=self.model_prior,
+            transitions=self.transitions,
+            model_prior=self.model_prior,
             parameter_priors=self.parameter_priors,
-            models=self.models, summary_statistics=self.summary_statistics,
-            x_0=self.x_0, distance_function=self.distance_function,
-            eps=self.eps, acceptor=self.acceptor,
+            models=self.models,
+            summary_statistics=self.summary_statistics,
+            x_0=self.x_0,
+            distance_function=self.distance_function,
+            eps=self.eps,
+            acceptor=self.acceptor,
         )
 
     def _create_transition_pdf(self, t: int, transitions):
@@ -587,19 +608,21 @@ class ABCSMC:
         if t == 0:
             return create_prior_pdf(
                 model_prior=self.model_prior,
-                parameter_priors=self.parameter_priors)
+                parameter_priors=self.parameter_priors,
+            )
 
         return create_transition_pdf(
             transitions=transitions,
-            model_probabilities=self.history.get_model_probabilities(t-1),
-            model_perturbation_kernel=self.model_perturbation_kernel)
+            model_probabilities=self.history.get_model_probabilities(t - 1),
+            model_perturbation_kernel=self.model_perturbation_kernel,
+        )
 
     @run_cleanup
     def run(
         self,
         minimum_epsilon: float = None,
         max_nr_populations: int = np.inf,
-        min_acceptance_rate: float = 0.,
+        min_acceptance_rate: float = 0.0,
         max_total_nr_simulations: int = np.inf,
         max_walltime: timedelta = None,
     ) -> History:
@@ -691,7 +714,8 @@ class ABCSMC:
             current_eps = self.eps(t)
             if current_eps is None or np.isnan(current_eps):
                 raise ValueError(
-                    f"The epsilon threshold {current_eps} is invalid.")
+                    f"The epsilon threshold {current_eps} is invalid."
+                )
             logger.info(f"t: {t}, eps: {current_eps:.8e}.")
 
             # create simulate function
@@ -699,14 +723,20 @@ class ABCSMC:
 
             # population size and maximum number of evaluations
             pop_size = self.population_size(t)
-            max_eval = np.inf if min_acceptance_rate == 0. \
+            max_eval = (
+                np.inf
+                if min_acceptance_rate == 0.0
                 else pop_size / min_acceptance_rate
+            )
 
             # perform the sampling
             logger.debug(f"Submitting population {t}.")
             sample = self.sampler.sample_until_n_accepted(
-                n=pop_size, simulate_one=simulate_one, t=t,
-                max_eval=max_eval, ana_vars=self._vars(),
+                n=pop_size,
+                simulate_one=simulate_one,
+                t=t,
+                max_eval=max_eval,
+                ana_vars=self._vars(),
             )
 
             # check sample health
@@ -725,28 +755,34 @@ class ABCSMC:
             n_sim = self.sampler.nr_evaluations_
             model_names = [model.name for model in self.models]
             self.history.append_population(
-                t, current_eps, population, n_sim, model_names)
+                t, current_eps, population, n_sim, model_names
+            )
             logger.debug(
                 f"Total samples up to t = {t}: "
-                f"{self.history.total_nr_simulations}.")
+                f"{self.history.total_nr_simulations}."
+            )
 
             # acceptance rate and ess
             pop_size = len(population)
             acceptance_rate = pop_size / n_sim
             ess = effective_sample_size(
-                population.get_weighted_distances()['w'])
-            logger.info(f"Accepted: {pop_size} / {n_sim} = "
-                        f"{acceptance_rate:.4e}, ESS: {ess:.4e}.")
+                population.get_weighted_distances()['w']
+            )
+            logger.info(
+                f"Accepted: {pop_size} / {n_sim} = "
+                f"{acceptance_rate:.4e}, ESS: {ess:.4e}."
+            )
 
             # prepare next iteration
             self._prepare_next_iteration(
-                t+1, sample, population, acceptance_rate)
+                t + 1, sample, population, acceptance_rate
+            )
 
             # check termination criteria
             if termination_criteria_fulfilled(
-                current_eps=current_eps, min_eps=minimum_epsilon,
-                stop_if_single_model_alive=  # noqa: E251
-                self.stop_if_only_single_model_alive,
+                current_eps=current_eps,
+                min_eps=minimum_epsilon,
+                stop_if_single_model_alive=self.stop_if_only_single_model_alive,  # noqa: E251
                 nr_of_models_alive=self.history.nr_of_models_alive(),
                 acceptance_rate=acceptance_rate,
                 min_acceptance_rate=min_acceptance_rate,
@@ -754,7 +790,8 @@ class ABCSMC:
                 max_total_nr_simulations=self.max_total_nr_simulations,
                 walltime=datetime.now() - self.init_walltime,
                 max_walltime=self.max_walltime,
-                t=t, max_t=self.max_t,
+                t=t,
+                max_t=self.max_t,
             ):
                 break
 
@@ -808,6 +845,7 @@ class ABCSMC:
         # compute distances with the new distance measure
         def get_weighted_distances():
             if df_updated:
+
                 def distance_to_ground_truth(x, par):
                     return self.distance_function(x, self.x_0, t, par)
 
@@ -818,7 +856,7 @@ class ABCSMC:
         self.acceptor.update(
             t=t,
             get_weighted_distances=get_weighted_distances,
-            prev_temp=self.eps(t-1),
+            prev_temp=self.eps(t - 1),
             acceptance_rate=acceptance_rate,
         )
 
@@ -829,21 +867,25 @@ class ABCSMC:
             records = []
             # get transition functions
             transition_pdf_prev = self._create_transition_pdf(
-                t-1, prev_transitions)
+                t - 1, prev_transitions
+            )
             transition_pdf = self._create_transition_pdf(t, self.transitions)
 
             # iterate over all particles
             for particle in recorded_particles:
                 # evaluate previous and current transition density
                 transition_pd_prev = transition_pdf_prev(
-                    particle.m, particle.parameter)
-                transition_pd = transition_pdf(
-                    particle.m, particle.parameter)
-                records.append({
-                    'distance': particle.distance,
-                    'transition_pd_prev': transition_pd_prev,
-                    'transition_pd': transition_pd,
-                    'accepted': particle.accepted})
+                    particle.m, particle.parameter
+                )
+                transition_pd = transition_pdf(particle.m, particle.parameter)
+                records.append(
+                    {
+                        'distance': particle.distance,
+                        'transition_pd_prev': transition_pd_prev,
+                        'transition_pd': transition_pd,
+                        'accepted': particle.accepted,
+                    }
+                )
             return records
 
         # update epsilon
@@ -868,8 +910,9 @@ class ABCSMC:
             return
 
         # model probabilities
-        w = self.history.get_model_probabilities(
-            self.history.max_t)["p"].values
+        w = self.history.get_model_probabilities(self.history.max_t)[
+            "p"
+        ].values
 
         # make a copy in case the population strategy messes with
         # the transitions
@@ -879,7 +922,8 @@ class ABCSMC:
 
         # update the population size
         self.population_size.update(
-            transitions=copied_transitions, model_weights=w, t=t)
+            transitions=copied_transitions, model_weights=w, t=t
+        )
 
     def _fit_transitions(self, t):
         """

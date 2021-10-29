@@ -1,7 +1,7 @@
 """Util functions for tests."""
 
-import os
 import logging
+import os
 
 # maximum population size environment variable
 PYABC_MAX_POP_SIZE = "PYABC_MAX_POP_SIZE"
@@ -27,6 +27,7 @@ def bound_pop_size_from_env(pop_size: int):
 
     logger.warning(
         f"Bounding population size to {pop_size} via environment variable "
-        f"{PYABC_MAX_POP_SIZE}")
+        f"{PYABC_MAX_POP_SIZE}"
+    )
 
     return pop_size

@@ -1,10 +1,11 @@
-import numpy as np
-import pandas as pd
 import logging
 from typing import Callable, List, Union
-from .base import Epsilon
-from ..weighted_statistics import weighted_quantile
 
+import numpy as np
+import pandas as pd
+
+from ..weighted_statistics import weighted_quantile
+from .base import Epsilon
 
 logger = logging.getLogger("ABC.Epsilon")
 
@@ -30,8 +31,7 @@ class ConstantEpsilon(Epsilon):
         config["constant_epsilon_value"] = self.constant_epsilon_value
         return config
 
-    def __call__(self,
-                 t: int):
+    def __call__(self, t: int):
         return self.constant_epsilon_value
 
 
@@ -56,8 +56,7 @@ class ListEpsilon(Epsilon):
         config["epsilon_values"] = self.epsilon_values
         return config
 
-    def __call__(self,
-                 t: int):
+    def __call__(self, t: int):
         return self.epsilon_values[t]
 
     def __len__(self):
@@ -120,11 +119,14 @@ class QuantileEpsilon(Epsilon):
 
     def get_config(self):
         config = super().get_config()
-        config.update({
-            "initial_epsilon": self._initial_epsilon,
-            "alpha": self.alpha,
-            "quantile_multiplier": self.quantile_multiplier,
-            "weighted": self.weighted})
+        config.update(
+            {
+                "initial_epsilon": self._initial_epsilon,
+                "alpha": self.alpha,
+                "quantile_multiplier": self.quantile_multiplier,
+                "weighted": self.weighted,
+            }
+        )
 
         return config
 
@@ -173,7 +175,8 @@ class QuantileEpsilon(Epsilon):
             eps = self._look_up[t]
         except KeyError as e:
             raise KeyError(
-                f"The epsilon value for time {t} does not exist: {repr(e)}")
+                f"The epsilon value for time {t} does not exist: {repr(e)}"
+            )
 
         return eps
 
@@ -224,7 +227,8 @@ class QuantileEpsilon(Epsilon):
 
         # compute weighted quantile
         quantile = weighted_quantile(
-            points=distances, weights=weights, alpha=self.alpha)
+            points=distances, weights=weights, alpha=self.alpha
+        )
 
         # append to look_up property
         self._look_up[t] = quantile * self.quantile_multiplier

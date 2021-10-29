@@ -2,12 +2,12 @@
 
 import os
 import tempfile
-import pytest
+
 import numpy as np
+import pytest
 
 import pyabc
 import pyabc.visserver.server as server
-
 
 db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
 
@@ -17,22 +17,29 @@ def setup_module():
 
     Called once at the beginning.
     """
+
     def model(p):
-        return {'ss0': p['p0'] + 0.1 * np.random.uniform(),
-                'ss1': p['p1'] + 0.1 * np.random.uniform()}
+        return {
+            'ss0': p['p0'] + 0.1 * np.random.uniform(),
+            'ss1': p['p1'] + 0.1 * np.random.uniform(),
+        }
 
     p_true = {'p0': 3, 'p1': 4}
     observation = {'ss0': p_true['p0'], 'ss1': p_true['p1']}
     limits = {'p0': (0, 5), 'p1': (1, 8)}
-    prior = pyabc.Distribution(**{
-        key: pyabc.RV(
-            'uniform', limits[key][0], limits[key][1] - limits[key][0])
-        for key in p_true.keys()})
+    prior = pyabc.Distribution(
+        **{
+            key: pyabc.RV(
+                'uniform', limits[key][0], limits[key][1] - limits[key][0]
+            )
+            for key in p_true.keys()
+        }
+    )
     distance = pyabc.PNormDistance(p=2)
 
     abc = pyabc.ABCSMC(model, prior, distance, population_size=50)
     abc.new(db_path, observation)
-    abc.run(minimum_epsilon=.1, max_nr_populations=4)
+    abc.run(minimum_epsilon=0.1, max_nr_populations=4)
 
 
 def teardown_module():
@@ -40,7 +47,7 @@ def teardown_module():
 
     Called once after all tests.
     """
-    os.remove(db_path[len("sqlite:///"):])
+    os.remove(db_path[len("sqlite:///") :])
 
 
 @pytest.fixture

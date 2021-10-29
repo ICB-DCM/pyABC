@@ -1,8 +1,10 @@
 """Migration tests."""
 
-import pytest
 import os
 import tempfile
+
+import pytest
+
 import pyabc
 
 

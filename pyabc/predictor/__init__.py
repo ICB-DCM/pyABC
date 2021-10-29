@@ -11,15 +11,15 @@ Gaussian processes, and neural networks are provided.
 """
 
 from .predictor import (
+    GPKernelHandle,
+    GPPredictor,
+    HiddenLayerHandle,
+    LassoPredictor,
+    LinearPredictor,
+    MLPPredictor,
+    ModelSelectionPredictor,
     Predictor,
     SimplePredictor,
-    LinearPredictor,
-    LassoPredictor,
-    GPPredictor,
-    GPKernelHandle,
-    MLPPredictor,
-    HiddenLayerHandle,
-    ModelSelectionPredictor,
     root_mean_square_error,
     root_mean_square_relative_error,
 )

@@ -1,14 +1,14 @@
 """Optimal transport distances."""
 
-import numpy as np
-import scipy.linalg as la
-from typing import Callable, Union
 import logging
 from functools import partial
+from typing import Callable, Union
+
+import numpy as np
+import scipy.linalg as la
 
 from ..population import Sample
 from ..sumstat import Sumstat
-
 from .base import Distance
 
 try:
@@ -66,7 +66,7 @@ class WassersteinDistance(Distance):
     def __init__(
         self,
         sumstat: Sumstat,
-        p: float = 2.,
+        p: float = 2.0,
         dist: Union[str, Callable] = None,
         emd_args: dict = None,
     ):
@@ -98,9 +98,9 @@ class WassersteinDistance(Distance):
         # distance function
         if dist is None:
             # translate from p
-            if p == 1.:
+            if p == 1.0:
                 dist = "cityblock"
-            elif p == 2.:
+            elif p == 2.0:
                 dist = "sqeuclidean"
             else:
                 # of course, we could permit arbitrary norms here if needed
@@ -174,7 +174,7 @@ class WassersteinDistance(Distance):
 
         # take root to match Wasserstein distance definition
         if self.p < np.inf:
-            cost = cost ** (1/self.p)
+            cost = cost ** (1 / self.p)
 
         return cost
 
@@ -222,7 +222,7 @@ class SlicedWassersteinDistance(Distance):
         self,
         sumstat: Sumstat,
         metric: str = "sqeuclidean",
-        p: float = 2.,
+        p: float = 2.0,
         n_proj: int = 50,
         seed: Union[int, np.random.RandomState] = None,
         emd_1d_args: dict = None,
@@ -315,7 +315,9 @@ class SlicedWassersteinDistance(Distance):
         # unit sphere samples for Monte-Carlo approximation,
         #  shape (n_proj, dim)
         sphere_samples = uniform_unit_sphere_samples(
-            n_proj=self.n_proj, dim=dim, seed=self.seed,
+            n_proj=self.n_proj,
+            dim=dim,
+            seed=self.seed,
         )
 
         # 1d linear projections, shape (n_proj, {n, n0})
@@ -326,20 +328,25 @@ class SlicedWassersteinDistance(Distance):
         w, w0 = np.ones((n,)) / n, np.ones((n0,)) / n0
 
         # approximate integral over sphere via Monte-Carlo samples
-        cost = 0.
+        cost = 0.0
         for s_proj, s0_proj in zip(s_projs, s0_projs):
             # calculate optimal 1d earth mover's distance
             # this is computationally O(n*log(n)) efficient via simple sorting
             cost += ot.emd2_1d(
-                x_a=s_proj, x_b=s0_proj, a=w, b=w0,
-                metric=self.metric, p=self.p, log=False,
+                x_a=s_proj,
+                x_b=s0_proj,
+                a=w,
+                b=w0,
+                metric=self.metric,
+                p=self.p,
+                log=False,
                 **self.emd_1d_args,
             )
         cost /= self.n_proj
 
         # take root to match Wasserstein distance definition
         if self.p < np.inf:
-            cost = cost ** (1/self.p)
+            cost = cost ** (1 / self.p)
 
         return cost
 

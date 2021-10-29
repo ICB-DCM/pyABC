@@ -5,9 +5,8 @@ Revises:
 Create Date: 2021-02-19 22:11:16.466274
 
 """
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '1'
@@ -19,8 +18,8 @@ depends_on = None
 def upgrade():
     op.add_column(
         table_name='particles',
-        column=sa.Column(
-            'proposal_id', sa.INTEGER, server_default='0'))
+        column=sa.Column('proposal_id', sa.INTEGER, server_default='0'),
+    )
 
 
 def downgrade():

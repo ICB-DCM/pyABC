@@ -9,15 +9,16 @@ See also the `explanation of the samplers <sampler.html>`_.
 """
 
 from .base import Sampler
-from .singlecore import SingleCoreSampler
+from .concurrent_future import ConcurrentFutureSampler
+from .dask_sampler import DaskDistributedSampler
 from .mapping import MappingSampler
-from .multicorebase import nr_cores_available
 from .multicore import MulticoreParticleParallelSampler
 from .multicore_evaluation_parallel import MulticoreEvalParallelSampler
-from .dask_sampler import DaskDistributedSampler
+from .multicorebase import nr_cores_available
 from .redis_eps import (
     RedisEvalParallelSampler,
-    RedisStaticSampler,
     RedisEvalParallelSamplerServerStarter,
-    RedisStaticSamplerServerStarter)
-from .concurrent_future import ConcurrentFutureSampler
+    RedisStaticSampler,
+    RedisStaticSamplerServerStarter,
+)
+from .singlecore import SingleCoreSampler

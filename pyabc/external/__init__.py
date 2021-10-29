@@ -9,10 +9,11 @@ and file input and output.
 It has been successfully used with models written in e.g. R, Java, or C++.
 """
 
-from .r_rpy2 import R
 from .base import (
+    ExternalDistance,
     ExternalHandler,
     ExternalModel,
     ExternalSumStat,
-    ExternalDistance,
-    create_sum_stat)
+    create_sum_stat,
+)
+from .r_rpy2 import R

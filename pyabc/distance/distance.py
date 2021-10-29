@@ -1,15 +1,14 @@
 """Various basic distances."""
 
+import logging
 from abc import ABC
+from typing import Callable, List
+
 import numpy as np
 from scipy import linalg as la
-from typing import Callable, List
-import logging
 
 from ..population import Sample
-
 from .base import Distance
-
 
 logger = logging.getLogger("ABC.Distance")
 
@@ -70,9 +69,12 @@ class ZScoreDistance(DistanceWithMeasureList):
         t: int = None,
         par: dict = None,
     ) -> float:
-        return sum(abs((x[key] - x_0[key]) / x_0[key]) if x_0[key] != 0 else
-                   (0 if x[key] == 0 else np.inf)
-                   for key in self.measures_to_use) / len(self.measures_to_use)
+        return sum(
+            abs((x[key] - x_0[key]) / x_0[key])
+            if x_0[key] != 0
+            else (0 if x[key] == 0 else np.inf)
+            for key in self.measures_to_use
+        ) / len(self.measures_to_use)
 
 
 class PCADistance(DistanceWithMeasureList):
@@ -96,15 +98,15 @@ class PCADistance(DistanceWithMeasureList):
         return np.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
-        samples_vec = np.asarray([self._dict_to_vect(x)
-                                  for x in sum_stats])
+        samples_vec = np.asarray([self._dict_to_vect(x) for x in sum_stats])
         # samples_vec is an array of shape nr_samples x nr_features
         means = samples_vec.mean(axis=0)
         centered = samples_vec - means
         covariance = centered.T.dot(centered)
         w, v = la.eigh(covariance)
-        self._whitening_transformation_matrix = (
-            v.dot(np.diag(1. / np.sqrt(w))).dot(v.T))
+        self._whitening_transformation_matrix = v.dot(
+            np.diag(1.0 / np.sqrt(w))
+        ).dot(v.T)
 
     def requires_calibration(self) -> bool:
         return True
@@ -137,7 +139,8 @@ class PCADistance(DistanceWithMeasureList):
     ) -> float:
         x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
-            self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2)
+            self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2
+        )
         return distance
 
 
@@ -206,10 +209,11 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         for sample in sum_stats:
             for measure in self.measures_to_use:
                 measures[measure].append(sample[measure])
-        self.normalization = {measure:
-                              self.upper(measures[measure])
-                              - self.lower(measures[measure])
-                              for measure in self.measures_to_use}
+        self.normalization = {
+            measure: self.upper(measures[measure])
+            - self.lower(measures[measure])
+            for measure in self.measures_to_use
+        }
 
     def requires_calibration(self) -> bool:
         return True
@@ -240,8 +244,10 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         t: int = None,
         par: dict = None,
     ) -> float:
-        distance = sum(abs((x[key] - x_0[key]) / self.normalization[key])
-                       for key in self.measures_to_use)
+        distance = sum(
+            abs((x[key] - x_0[key]) / self.normalization[key])
+            for key in self.measures_to_use
+        )
         return distance
 
 
@@ -270,13 +276,13 @@ class PercentileDistance(RangeEstimatorDistance):
 
     @staticmethod
     def upper(parameter_list):
-        return np.percentile(parameter_list,
-                             100 - PercentileDistance.PERCENTILE)
+        return np.percentile(
+            parameter_list, 100 - PercentileDistance.PERCENTILE
+        )
 
     @staticmethod
     def lower(parameter_list):
-        return np.percentile(parameter_list,
-                             PercentileDistance.PERCENTILE)
+        return np.percentile(parameter_list, PercentileDistance.PERCENTILE)
 
     def get_config(self):
         config = super().get_config()

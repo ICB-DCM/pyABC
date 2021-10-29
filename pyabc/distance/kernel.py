@@ -1,12 +1,12 @@
 """Stochastic kernels."""
 
+from typing import Callable, List, Sequence, Union
+
 import numpy as np
 from scipy import stats
-from typing import Callable, List, Sequence, Union
 
 from ..population import Sample
 from .base import Distance
-
 
 SCALE_LIN = "SCALE_LIN"
 SCALE_LOG = "SCALE_LOG"
@@ -72,7 +72,8 @@ class StochasticKernel(Distance):
     def check_ret_scale(ret_scale):
         if ret_scale not in SCALES:
             raise ValueError(
-                f"The ret_scale {ret_scale} must be one of {SCALES}.")
+                f"The ret_scale {ret_scale} must be one of {SCALES}."
+            )
 
     def initialize_keys(self, x):
         self.keys = sorted(x)
@@ -288,9 +289,9 @@ class IndependentNormalKernel(StochasticKernel):
         # compute pdf
         log_2_pi = np.sum(np.log(2) + np.log(np.pi) + np.log(var))
 
-        squares = np.sum((diff**2) / var)
+        squares = np.sum((diff ** 2) / var)
 
-        log_pdf = - 0.5 * (log_2_pi + squares)
+        log_pdf = -0.5 * (log_2_pi + squares)
         return log_pdf
 
 
@@ -318,10 +319,11 @@ class IndependentLaplaceKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            scale: Union[Callable, Sequence[float], float] = None,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        scale: Union[Callable, Sequence[float], float] = None,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
         self.scale = scale
         self.dim = None
@@ -381,7 +383,7 @@ class IndependentLaplaceKernel(StochasticKernel):
 
         abs_diff = np.sum(np.abs(diff) / scale)
 
-        log_pdf = - (log_2_b + abs_diff)
+        log_pdf = -(log_2_b + abs_diff)
 
         return log_pdf
 
@@ -410,7 +412,8 @@ class BinomialKernel(StochasticKernel):
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
                 f"The success probability p={p} must be in the interval"
-                f"[0, 1].")
+                f"[0, 1]."
+            )
         self.p = p
 
     def initialize(
@@ -432,7 +435,8 @@ class BinomialKernel(StochasticKernel):
         if self.pdf_max is None and not callable(self.p):
             # take value at observed summary statistics
             self.pdf_max = binomial_pdf_max(
-                x_0, self.keys, self.p, self.ret_scale)
+                x_0, self.keys, self.p, self.ret_scale
+            )
 
     def __call__(
         self,
@@ -535,7 +539,8 @@ class NegativeBinomialKernel(StochasticKernel):
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
                 f"The success probability p={p} must be in the interval"
-                f"[0, 1].")
+                f"[0, 1]."
+            )
         self.p = p
 
     def initialize(

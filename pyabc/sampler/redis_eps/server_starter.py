@@ -1,23 +1,25 @@
-from time import sleep
-from subprocess import Popen  # noqa: S404
-from multiprocessing import Process
 import tempfile
-import psutil
 import time
+from multiprocessing import Process
+from subprocess import Popen  # noqa: S404
+from time import sleep
 
-from .cli import work, _manage
+import psutil
+
+from .cli import _manage, work
 from .sampler import RedisEvalParallelSampler
 from .sampler_static import RedisStaticSampler
 
 
 class RedisServerStarter:
-
-    def __init__(self,
-                 password: str = None,
-                 workers: int = 2,
-                 processes_per_worker: int = 1,
-                 daemon: bool = True,
-                 catch: bool = True):
+    def __init__(
+        self,
+        password: str = None,
+        workers: int = 2,
+        processes_per_worker: int = 1,
+        daemon: bool = True,
+        catch: bool = True,
+    ):
         # start server
         conn = psutil.net_connections()
         ports = [c.laddr[1] for c in conn]
@@ -34,7 +36,8 @@ class RedisServerStarter:
             maybe_redis_conf = [fname]
 
         self.redis_server = Popen(  # noqa: S607,S603
-            ["redis-server", *maybe_redis_conf, "--port", str(port)])
+            ["redis-server", *maybe_redis_conf, "--port", str(port)]
+        )
 
         # give redis-server time to start
         # TODO this can be improved (also below) by checking whether the
@@ -45,14 +48,24 @@ class RedisServerStarter:
         maybe_password = [] if password is None else ["--password", password]
         maybe_daemon = [] if daemon is None else ["--daemon", str(daemon)]
         self.workers = [
-            Process(target=work,
-                    args=(["--host", "localhost",
-                           "--port", str(port),
-                           *maybe_password,
-                           "--processes", str(processes_per_worker),
-                           *maybe_daemon,
-                           "--catch", str(catch)],),
-                    daemon=False)
+            Process(
+                target=work,
+                args=(
+                    [
+                        "--host",
+                        "localhost",
+                        "--port",
+                        str(port),
+                        *maybe_password,
+                        "--processes",
+                        str(processes_per_worker),
+                        *maybe_daemon,
+                        "--catch",
+                        str(catch),
+                    ],
+                ),
+                daemon=False,
+            )
             for _ in range(workers)
         ]
 
@@ -90,32 +103,39 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
     For the arguments see the base class.
     """
 
-    def __init__(self,
-                 password: str = None,
-                 batch_size: int = 1,
-                 wait_for_all_samples: bool = False,
-                 look_ahead: bool = False,
-                 look_ahead_delay_evaluation=True,
-                 max_n_eval_look_ahead_factor: float = 10.,
-                 workers: int = 2,
-                 processes_per_worker: int = 1,
-                 daemon: bool = True,
-                 catch: bool = True,
-                 log_file: str = None,
-                 ):
+    def __init__(
+        self,
+        password: str = None,
+        batch_size: int = 1,
+        wait_for_all_samples: bool = False,
+        look_ahead: bool = False,
+        look_ahead_delay_evaluation=True,
+        max_n_eval_look_ahead_factor: float = 10.0,
+        workers: int = 2,
+        processes_per_worker: int = 1,
+        daemon: bool = True,
+        catch: bool = True,
+        log_file: str = None,
+    ):
         self.server_starter = RedisServerStarter(
-            password=password, workers=workers,
+            password=password,
+            workers=workers,
             processes_per_worker=processes_per_worker,
-            daemon=daemon, catch=catch)
+            daemon=daemon,
+            catch=catch,
+        )
 
         super().__init__(
-            host="localhost", port=self.server_starter.port,
+            host="localhost",
+            port=self.server_starter.port,
             password=self.server_starter.password,
-            batch_size=batch_size, wait_for_all_samples=wait_for_all_samples,
+            batch_size=batch_size,
+            wait_for_all_samples=wait_for_all_samples,
             look_ahead=look_ahead,
             look_ahead_delay_evaluation=look_ahead_delay_evaluation,
             max_n_eval_look_ahead_factor=max_n_eval_look_ahead_factor,
-            log_file=log_file)
+            log_file=log_file,
+        )
 
     def shutdown(self):
         self.server_starter.shutdown()
@@ -127,22 +147,29 @@ class RedisStaticSamplerServerStarter(RedisStaticSampler):
     For the arguments see the base class.
     """
 
-    def __init__(self,
-                 password: str = None,
-                 workers: int = 2,
-                 processes_per_worker: int = 1,
-                 daemon: bool = True,
-                 catch: bool = True,
-                 log_file: str = None,
-                 ):
+    def __init__(
+        self,
+        password: str = None,
+        workers: int = 2,
+        processes_per_worker: int = 1,
+        daemon: bool = True,
+        catch: bool = True,
+        log_file: str = None,
+    ):
         self.server_starter = RedisServerStarter(
-            password=password, workers=workers,
+            password=password,
+            workers=workers,
             processes_per_worker=processes_per_worker,
-            daemon=daemon, catch=catch)
+            daemon=daemon,
+            catch=catch,
+        )
 
         super().__init__(
-            host="localhost", port=self.server_starter.port,
-            password=self.server_starter.password, log_file=log_file)
+            host="localhost",
+            port=self.server_starter.port,
+            password=self.server_starter.password,
+            log_file=log_file,
+        )
 
     def shutdown(self):
         self.server_starter.shutdown()

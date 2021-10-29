@@ -1,34 +1,45 @@
 """Tests for the `pyabc.sumstat` module."""
 
-import pytest
-import numpy as np
-import pandas as pd
 import os
 import tempfile
 
+import numpy as np
+import pandas as pd
+import pytest
+
 import pyabc
-from pyabc.sumstat import (
-    IdentitySumstat, PredictorSumstat, IdSubsetter, GMMSubsetter,
-)
-from pyabc.util import (
-    EventIxs, dict2arr, dict2arrlabels,
-)
 from pyabc.predictor import LinearPredictor
+from pyabc.sumstat import (
+    GMMSubsetter,
+    IdentitySumstat,
+    IdSubsetter,
+    PredictorSumstat,
+)
+from pyabc.util import EventIxs, dict2arr, dict2arrlabels
 
 
 def test_dict2arr():
     """Test conversion of dicts to arrays."""
-    dct = {"s0": pd.DataFrame({"a": [0, 1], "b": [2, 3]}),
-           "s1": np.array([4, 5]),
-           "s2": 6}
+    dct = {
+        "s0": pd.DataFrame({"a": [0, 1], "b": [2, 3]}),
+        "s1": np.array([4, 5]),
+        "s2": 6,
+    }
     keys = ["s0", "s1", "s2"]
     arr = dict2arr(dct, keys=keys)
     assert (arr == np.array([0, 2, 1, 3, 4, 5, 6])).all()
 
     labels = dict2arrlabels(dct, keys=keys)
     assert len(labels) == len(arr)
-    assert labels == ["s0:a:0", "s0:b:0", "s0:a:1", "s0:b:1",
-                      "s1:0", "s1:1", "s2"]
+    assert labels == [
+        "s0:a:0",
+        "s0:b:0",
+        "s0:a:1",
+        "s0:b:1",
+        "s1:0",
+        "s1:1",
+        "s2",
+    ]
 
     with pytest.raises(TypeError):
         dict2arr({"s0": "alice"}, keys=["s0"])
@@ -36,7 +47,7 @@ def test_dict2arr():
         dict2arrlabels({"s0": "alice"}, keys=["s0"])
 
 
-@pytest.fixture(params=[None, [lambda x: x, lambda x: x**2]])
+@pytest.fixture(params=[None, [lambda x: x, lambda x: x ** 2]])
 def trafos(request):
     """Data transformations."""
     return request.param
@@ -46,20 +57,21 @@ def test_identity_sumstat(trafos):
     """Test the IdentitySumstat."""
     sumstat = IdentitySumstat(trafos=trafos)
 
-    x0 = {'s0': 1., 's1': 42.}
+    x0 = {'s0': 1.0, 's1': 42.0}
     sumstat.initialize(
-        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0,
-        total_sims=0)
+        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0, total_sims=0
+    )
 
     assert not sumstat.requires_calibration()
     assert not sumstat.is_adaptive()
 
     if trafos is None:
-        assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7.])).all()
+        assert (sumstat({'s1': 7.0, 's0': 3.0}) == np.array([3.0, 7.0])).all()
         assert len(sumstat.get_ids()) == 2
     else:
-        assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7., 9., 49.]))\
-            .all()
+        assert (
+            sumstat({'s1': 7.0, 's0': 3.0}) == np.array([3.0, 7.0, 9.0, 49.0])
+        ).all()
         assert len(sumstat.get_ids()) == 4
 
 
@@ -81,31 +93,39 @@ def test_event_ixs():
     assert ixs.act(t=0, total_sims=20)
 
     ixs = EventIxs(from_t=5)
-    assert not ixs.act(t=4, total_sims=50) and ixs.act(t=5, total_sims=50) \
+    assert (
+        not ixs.act(t=4, total_sims=50)
+        and ixs.act(t=5, total_sims=50)
         and ixs.act(t=20, total_sims=50)
+    )
 
     ixs = EventIxs(from_sims=10)
-    assert not ixs.act(t=4, total_sims=9) and ixs.act(t=4, total_sims=10) \
+    assert (
+        not ixs.act(t=4, total_sims=9)
+        and ixs.act(t=4, total_sims=10)
         and ixs.act(t=4, total_sims=20)
+    )
 
 
 def test_pre():
     """Test chaining of summary statistics."""
     sumstat = IdentitySumstat(
-        trafos=[lambda x: x**2],
-        pre=IdentitySumstat(trafos=[lambda x: x, lambda x: x**2]))
+        trafos=[lambda x: x ** 2],
+        pre=IdentitySumstat(trafos=[lambda x: x, lambda x: x ** 2]),
+    )
 
     assert not sumstat.requires_calibration()
     assert not sumstat.is_adaptive()
     sumstat.configure_sampler(pyabc.SingleCoreSampler())
 
-    x0 = {'s0': 1., 's1': 42.}
+    x0 = {'s0': 1.0, 's1': 42.0}
     sumstat.initialize(
-        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0,
-        total_sims=0)
+        t=0, get_sample=lambda: pyabc.population.Sample(), x_0=x0, total_sims=0
+    )
 
-    assert (sumstat({'s1': 7., 's0': 3.}) == np.array([3., 7., 9., 49.])**2)\
-        .all()
+    assert (
+        sumstat({'s1': 7.0, 's0': 3.0}) == np.array([3.0, 7.0, 9.0, 49.0]) ** 2
+    ).all()
     assert len(sumstat.get_ids()) == 4
 
 
@@ -122,14 +142,17 @@ def test_predictor_sumstat():
 
     particles = []
     for y, p in zip(ys, ps):
-        particles.append(pyabc.Particle(
-            m=0,
-            parameter=pyabc.Parameter({f"p{ix}": val
-                                       for ix, val in enumerate(p)}),
-            sum_stat={f"s{ix}": val for ix, val in enumerate(y)},
-            distance=100 + 1 * rng.normal(),
-            weight=1 + 0.01 * rng.normal(),
-        ))
+        particles.append(
+            pyabc.Particle(
+                m=0,
+                parameter=pyabc.Parameter(
+                    {f"p{ix}": val for ix, val in enumerate(p)}
+                ),
+                sum_stat={f"s{ix}": val for ix, val in enumerate(y)},
+                distance=100 + 1 * rng.normal(),
+                weight=1 + 0.01 * rng.normal(),
+            )
+        )
 
     total_weight = sum(p.weight for p in particles)
     for p in particles:
@@ -164,10 +187,12 @@ def test_subsetter():
     ss = rng.normal(size=(n_sample, n_y))
     n_sample_half = int(n_sample / 2)
     # parameter set with two modes
-    par = np.row_stack((
-        np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_half, n_p)),
-        np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_half, n_p)),
-    ))
+    par = np.row_stack(
+        (
+            np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_half, n_p)),
+            np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_half, n_p)),
+        )
+    )
     weights = rng.uniform(size=(n_sample, 1))
 
     # identity mapping
@@ -187,11 +212,13 @@ def test_subsetter():
 
     # 3 components
     n_sample_third = int(n_sample / 3)
-    par = np.row_stack((
-        np.array([10, 10]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
-        np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
-        np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_third, n_p)),
-    ))
+    par = np.row_stack(
+        (
+            np.array([10, 10]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
+            np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
+            np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_third, n_p)),
+        )
+    )
     ss_re, par_re, weights_re = subsetter.select(x=ss, y=par, w=weights)
     assert n_sample * 0.4 > len(par_re) >= n_sample * 0.3
     assert subsetter.n_components == 3
@@ -260,7 +287,8 @@ def test_pipeline(db_file):
 
     # alternative run with info weighting
     distance = pyabc.InfoWeightedPNormDistance(
-        predictor=LinearPredictor(), fit_info_ixs={1, 3},
+        predictor=LinearPredictor(),
+        fit_info_ixs={1, 3},
     )
     abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
     abc.new("sqlite:///" + db_file, data)

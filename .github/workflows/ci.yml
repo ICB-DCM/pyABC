@@ -1,7 +1,14 @@
 name: CI
 
 # trigger
-on: [pull_request]
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+  schedule:
+    # run Monday and Thursday at 03:18 UTC
+    - cron: '18 3 * * MON,THU'
 
 jobs:
 

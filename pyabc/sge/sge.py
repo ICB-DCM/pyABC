@@ -1,17 +1,19 @@
 import inspect
+import logging
 import os
 import pickle
 import shutil
 import subprocess  # noqa: S404
+import sys
 import tempfile
 import time
-import sys
-import cloudpickle
 import warnings
-import logging
+
+import cloudpickle
+
 from .config import get_config
-from .execution_contexts import DefaultContext
 from .db import job_db_factory
+from .execution_contexts import DefaultContext
 from .util import sge_available
 
 logger = logging.getLogger("ABC.SGE")
@@ -115,14 +117,22 @@ class SGE:
         The configured sge mapper.
     """
 
-    def __init__(self, tmp_directory: str = None, memory: str = '3G',
-                 time_h: int = 100,
-                 python_executable_path: str = None,
-                 sge_error_file: str = None,
-                 sge_output_file: str = None,
-                 parallel_environment=None, name="map",
-                 queue=None, priority=None, num_threads: int = 1,
-                 execution_context=DefaultContext, chunk_size=1):
+    def __init__(
+        self,
+        tmp_directory: str = None,
+        memory: str = '3G',
+        time_h: int = 100,
+        python_executable_path: str = None,
+        sge_error_file: str = None,
+        sge_output_file: str = None,
+        parallel_environment=None,
+        name="map",
+        queue=None,
+        priority=None,
+        num_threads: int = 1,
+        execution_context=DefaultContext,
+        chunk_size=1,
+    ):
 
         # simple assignments
         self.memory = memory
@@ -148,15 +158,18 @@ class SGE:
 
         self.job_name = name
         if self.config["SGE"]["PRIORITY"] == "0":
-            warnings.warn("Priority set to 0. "
-                          "This enables the reservation flag.")
+            warnings.warn(
+                "Priority set to 0. " "This enables the reservation flag."
+            )
         self.num_threads = num_threads
         self.execution_context = execution_context
         self.chunk_size = chunk_size
 
         if chunk_size != 1:
-            warnings.warn("Chunk size != 1. "
-                          "This can potentially have bad side effect.")
+            warnings.warn(
+                "Chunk size != 1. "
+                "This can potentially have bad side effect."
+            )
 
         if not sge_available():
             logger.error("Could not find SGE installation.")
@@ -173,22 +186,26 @@ class SGE:
             self.sge_error_file = sge_error_file
         else:
             self.sge_error_file = os.path.join(
-                self.config["DIRECTORIES"]["TMP"], "sge_errors.txt")
+                self.config["DIRECTORIES"]["TMP"], "sge_errors.txt"
+            )
 
         # sge stdout
         if sge_output_file is not None:
             self.sge_output_file = sge_output_file
         else:
             self.sge_output_file = os.path.join(
-                self.config["DIRECTORIES"]["TMP"], "sge_output.txt")
+                self.config["DIRECTORIES"]["TMP"], "sge_output.txt"
+            )
 
     def __repr__(self):
-        return (f"<SGE memory={self.memory}, time={self.time}, "
-                f"priority={self.config['SGE']['PRIORITY']}, "
-                f"num_threads={self.num_threads}, "
-                f"chunk_size={self.chunk_size}, "
-                f"tmp_dir={self.config['DIRECTORIES']['TMP']}, "
-                f"python_executable={self.python_executable_path}>")
+        return (
+            f"<SGE memory={self.memory}, time={self.time}, "
+            f"priority={self.config['SGE']['PRIORITY']}, "
+            f"num_threads={self.num_threads}, "
+            f"chunk_size={self.chunk_size}, "
+            f"tmp_dir={self.config['DIRECTORIES']['TMP']}, "
+            f"python_executable={self.python_executable_path}>"
+        )
 
     @staticmethod
     def _validate_function_arguments(function, array):
@@ -210,7 +227,8 @@ class SGE:
         except TypeError as err:
             raise SGESignatureMismatchException(
                 "Your jobs were not submitted as the function could not be "
-                "applied to the arguments.") from err
+                "applied to the arguments."
+            ) from err
 
     def map(self, function, array):
         """
@@ -236,8 +254,9 @@ class SGE:
         array = list(array)
 
         self._validate_function_arguments(function, array)
-        tmp_dir = tempfile.mkdtemp(prefix="", suffix='_SGE_job',
-                                   dir=self.config["DIRECTORIES"]["TMP"])
+        tmp_dir = tempfile.mkdtemp(
+            prefix="", suffix='_SGE_job', dir=self.config["DIRECTORIES"]["TMP"]
+        )
 
         # jobs directory
         jobs_dir = os.path.join(tmp_dir, 'jobs')
@@ -251,19 +270,22 @@ class SGE:
             cloudpickle.dump(function, my_file)
 
         # store execution context
-        with open(os.path.join(tmp_dir, 'ExecutionContext.pickle'), 'wb') \
-                as my_file:
+        with open(
+            os.path.join(tmp_dir, 'ExecutionContext.pickle'), 'wb'
+        ) as my_file:
             cloudpickle.dump(self.execution_context, my_file)
 
         # store the array
-        for task_nr, start_index in enumerate(range(0, len(array),
-                                                    self.chunk_size)):
-            with open(os.path.join(jobs_dir,
-                                   str(task_nr + 1) + '.job'),
-                      'wb') as my_file:
+        for task_nr, start_index in enumerate(
+            range(0, len(array), self.chunk_size)
+        ):
+            with open(
+                os.path.join(jobs_dir, str(task_nr + 1) + '.job'), 'wb'
+            ) as my_file:
                 cloudpickle.dump(
-                    list(array[start_index:start_index + self.chunk_size]),
-                    my_file)
+                    list(array[start_index : start_index + self.chunk_size]),
+                    my_file,
+                )
 
         nr_tasks = task_nr + 1
 
@@ -278,8 +300,8 @@ class SGE:
 
         # start the job with qsub
         subprocess.run(  # noqa: S607,S603
-            ['qsub', os.path.join(tmp_dir, 'job.sh')],
-            stdout=subprocess.PIPE)
+            ['qsub', os.path.join(tmp_dir, 'job.sh')], stdout=subprocess.PIPE
+        )
 
         # wait for the tasks to be finished
         finished = False
@@ -302,14 +324,20 @@ class SGE:
         for task_nr in range(nr_tasks):
             try:
                 my_file = open(
-                    os.path.join(tmp_dir, 'results', str(task_nr + 1)
-                                 + '.result'), 'rb')
+                    os.path.join(
+                        tmp_dir, 'results', str(task_nr + 1) + '.result'
+                    ),
+                    'rb',
+                )
                 single_result = pickle.load(my_file)
                 results += single_result
                 my_file.close()
             except Exception as e:
-                results.append(Exception('Could not load temporary '
-                                         'result file:' + str(e)))
+                results.append(
+                    Exception(
+                        'Could not load temporary ' 'result file:' + str(e)
+                    )
+                )
                 had_exception = True
 
         # delete the temporary folder if there was no problem
@@ -351,18 +379,22 @@ export MKL_NUM_THREADS=$NSLOTS
 export PYTHONPATH={pythonpath}
 {executable} -m pyabc.sge.execute_sge_array_job {tmp_dir} $SGE_TASK_ID
 {executable} -m pyabc.sge.cleanup_sge_array_job {tmp_dir} $SGE_TASK_ID
-""".format(tmp_dir=tmp_dir, nr_elements=nr_tasks,
-           current_working_directory=os.getcwd(),
-           RAM=self.memory, time=self.time,
-           job_name=self.job_name,
-           executable=self.python_executable_path,
-           sge_error_file=self.sge_error_file,
-           sge_output_file=self.sge_output_file,
-           priority=self.config["SGE"]["PRIORITY"],
-           parallel_environment=self.config["SGE"]["PARALLEL_ENVIRONMENT"],
-           queue=self.config["SGE"]["QUEUE"],
-           map_name=os.path.split(tmp_dir)[-1],
-           num_threads=self.num_threads,
-           pythonpath=pythonpath,
-           reservation="y" if self.config["SGE"]["PRIORITY"] == "0" else "n")
+""".format(
+            tmp_dir=tmp_dir,
+            nr_elements=nr_tasks,
+            current_working_directory=os.getcwd(),
+            RAM=self.memory,
+            time=self.time,
+            job_name=self.job_name,
+            executable=self.python_executable_path,
+            sge_error_file=self.sge_error_file,
+            sge_output_file=self.sge_output_file,
+            priority=self.config["SGE"]["PRIORITY"],
+            parallel_environment=self.config["SGE"]["PARALLEL_ENVIRONMENT"],
+            queue=self.config["SGE"]["QUEUE"],
+            map_name=os.path.split(tmp_dir)[-1],
+            num_threads=self.num_threads,
+            pythonpath=pythonpath,
+            reservation="y" if self.config["SGE"]["PRIORITY"] == "0" else "n",
+        )
         return batch_file

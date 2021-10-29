@@ -1,27 +1,28 @@
 """Summary statistics learning."""
 
-import numpy as np
-from typing import Callable, Collection, List, Union
 import logging
+from typing import Callable, Collection, List, Union
+
+import numpy as np
 
 try:
-    import sklearn.linear_model as skl_lm
     import sklearn.gaussian_process as skl_gp
+    import sklearn.linear_model as skl_lm
 except ImportError:
     skl_lm = skl_gp = None
 
 from ..population import Sample
-from ..predictor import (
-    Predictor,
-    SimplePredictor,
-)
+from ..predictor import Predictor, SimplePredictor
 from ..util import (
-    io_dict2arr, read_sample, dict2arrlabels, ParTrafo, ParTrafoBase, EventIxs,
+    EventIxs,
+    ParTrafo,
+    ParTrafoBase,
+    dict2arrlabels,
+    io_dict2arr,
+    read_sample,
 )
-
-from .base import Sumstat, IdentitySumstat
-from .subset import Subsetter, IdSubsetter
-
+from .base import IdentitySumstat, Sumstat
+from .subset import IdSubsetter, Subsetter
 
 logger = logging.getLogger("ABC.Sumstat")
 
@@ -152,13 +153,17 @@ class PredictorSumstat(Sumstat):
 
         # extract information from sample
         sumstats, parameters, weights = read_sample(
-            sample=sample, sumstat=self.pre, all_particles=self.all_particles,
+            sample=sample,
+            sumstat=self.pre,
+            all_particles=self.all_particles,
             par_trafo=self.par_trafo,
         )
 
         # subset sample
         sumstats, parameters, weights = self.subsetter.select(
-            x=sumstats, y=parameters, w=weights,
+            x=sumstats,
+            y=parameters,
+            w=weights,
         )
 
         # fit model to sample
@@ -186,13 +191,17 @@ class PredictorSumstat(Sumstat):
 
         # extract information from sample
         sumstats, parameters, weights = read_sample(
-            sample=sample, sumstat=self.pre, all_particles=self.all_particles,
+            sample=sample,
+            sumstat=self.pre,
+            all_particles=self.all_particles,
             par_trafo=self.par_trafo,
         )
 
         # subset sample
         sumstats, parameters, weights = self.subsetter.select(
-            x=sumstats, y=parameters, w=weights,
+            x=sumstats,
+            y=parameters,
+            w=weights,
         )
 
         # fit model to sample
@@ -208,12 +217,15 @@ class PredictorSumstat(Sumstat):
             sampler.sample_factory.record_rejected()
 
     def requires_calibration(self) -> bool:
-        return self.fit_ixs.requires_calibration() or \
-            self.pre.requires_calibration()
+        return (
+            self.fit_ixs.requires_calibration()
+            or self.pre.requires_calibration()
+        )
 
     def is_adaptive(self) -> bool:
-        return self.fit_ixs.probably_has_late_events() or \
-            self.pre.is_adaptive()
+        return (
+            self.fit_ixs.probably_has_late_events() or self.pre.is_adaptive()
+        )
 
     @io_dict2arr
     def __call__(self, data: Union[dict, np.ndarray]):
@@ -229,7 +241,8 @@ class PredictorSumstat(Sumstat):
 
         # summary statistic is the (normalized) predictor value
         sumstat = self.predictor.predict(
-            data, normalize=self.normalize_labels).flatten()
+            data, normalize=self.normalize_labels
+        ).flatten()
 
         if sumstat.size != len(self.par_trafo):
             raise AssertionError("Predictor should return #parameters values")
@@ -237,8 +250,10 @@ class PredictorSumstat(Sumstat):
         return sumstat
 
     def __str__(self) -> str:
-        return f"<{self.__class__.__name__} pre={self.pre}, " \
-               f"predictor={self.predictor}>"
+        return (
+            f"<{self.__class__.__name__} pre={self.pre}, "
+            f"predictor={self.predictor}>"
+        )
 
     def get_ids(self) -> List[str]:
         # label by parameter keys

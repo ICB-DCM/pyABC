@@ -1,14 +1,15 @@
-import numpy as np
-import scipy as sp
-from scipy import optimize
-import pandas as pd
+import logging
 import numbers
 from typing import Callable, List, Union
-import logging
 
-from .base import Epsilon
+import numpy as np
+import pandas as pd
+import scipy as sp
+from scipy import optimize
+
 from ..distance import SCALE_LIN
 from ..storage import save_dict_to_json
+from .base import Epsilon
 
 logger = logging.getLogger("ABC.Epsilon")
 
@@ -37,8 +38,7 @@ class ListTemperature(TemperatureBase):
         super().__init__()
         self.values = values
 
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         return self.values[t]
 
 
@@ -114,8 +114,9 @@ class Temperature(TemperatureBase):
         # this is a bit unstable as the schemes are initialized only later,
         #  however is fine as long as compatible functions are used in
         #  `initialize()`
-        return (self.schemes is not None
-                and any(s.requires_distances() for s in self.schemes))
+        return self.schemes is not None and any(
+            s.requires_distances() for s in self.schemes
+        )
 
     def initialize(
         self,
@@ -132,8 +133,10 @@ class Temperature(TemperatureBase):
             # this combination proved rather stable
             acc_rate_scheme = AcceptanceRateScheme()
             decay_scheme = (
-                ExpDecayFixedIterScheme() if np.isfinite(max_nr_populations)
-                else ExpDecayFixedRatioScheme())
+                ExpDecayFixedIterScheme()
+                if np.isfinite(max_nr_populations)
+                else ExpDecayFixedRatioScheme()
+            )
             self.schemes = [acc_rate_scheme, decay_scheme]
 
         # set initial temperature for time t
@@ -160,9 +163,13 @@ class Temperature(TemperatureBase):
         acceptor_config: dict,
     ):
         # set temperature for time t
-        self._update(t, get_weighted_distances,
-                     get_all_records, acceptance_rate,
-                     acceptor_config)
+        self._update(
+            t,
+            get_weighted_distances,
+            get_all_records,
+            acceptance_rate,
+            acceptor_config,
+        )
 
     def _update(
         self,
@@ -183,12 +190,14 @@ class Temperature(TemperatureBase):
             'max_nr_populations': self.max_nr_populations,
             'pdf_norm': acceptor_config['pdf_norm'],
             'kernel_scale': acceptor_config['kernel_scale'],
-            'prev_temperature': self.temperatures.get(t-1, None),
+            'prev_temperature': self.temperatures.get(t - 1, None),
             'acceptance_rate': acceptance_rate,
         }
 
-        if t >= self.max_nr_populations - 1 \
-                and self.enforce_exact_final_temperature:
+        if (
+            t >= self.max_nr_populations - 1
+            and self.enforce_exact_final_temperature
+        ):
             # t is last time
             temps = [1.0]
         elif not self.temperatures:  # need an initial value
@@ -199,7 +208,8 @@ class Temperature(TemperatureBase):
                 temps = [self.initial_temperature]
             else:
                 raise ValueError(
-                    "Initial temperature must be a float or a callable")
+                    "Initial temperature must be a float or a callable"
+                )
         else:
             # evaluate schemes
             temps = []
@@ -209,8 +219,9 @@ class Temperature(TemperatureBase):
 
         # compute next temperature based on proposals and fallback
         # should not be higher than before
-        fallback = self.temperatures[t-1] \
-            if t-1 in self.temperatures else np.inf
+        fallback = (
+            self.temperatures[t - 1] if t - 1 in self.temperatures else np.inf
+        )
         temperature = self.aggregate_fun(temps)
         # also a value lower than 1.0 does not make sense
         temperature = max(min(temperature, fallback), 1.0)
@@ -226,8 +237,7 @@ class Temperature(TemperatureBase):
         if self.log_file:
             save_dict_to_json(self.temperature_proposals, self.log_file)
 
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         return self.temperatures[t]
 
 
@@ -350,13 +360,13 @@ class AcceptanceRateScheme(TemperatureScheme):
         weights /= sum(weights)
 
         temperature = match_acceptance_rate(
-            weights, pds, pdf_norm, kernel_scale, self.target_rate)
+            weights, pds, pdf_norm, kernel_scale, self.target_rate
+        )
 
         return temperature
 
 
-def match_acceptance_rate(
-        weights, pds, pdf_norm, kernel_scale, target_rate):
+def match_acceptance_rate(weights, pds, pdf_norm, kernel_scale, target_rate):
     """
     For large temperature, changes become effective on an exponential scale,
     thus we optimize the logarithm of the inverse temperature beta.
@@ -397,7 +407,7 @@ def match_acceptance_rate(
 
     beta_opt = np.exp(b_opt)
 
-    temperature = 1. / beta_opt
+    temperature = 1.0 / beta_opt
     return temperature
 
 
@@ -451,7 +461,8 @@ class ExpDecayFixedIterScheme(TemperatureScheme):
         if max_nr_populations == np.inf:
             raise ValueError(
                 "The ExpDecayFixedIterScheme requires a finite "
-                "`max_nr_populations`.")
+                "`max_nr_populations`."
+            )
 
         # needs a starting temperature
         # if not available, return infinite temperature
@@ -498,6 +509,7 @@ class ExpDecayFixedRatioScheme(TemperatureScheme):
         Maximum rate to not be exceeded, otherwise the alpha value is
         decreased.
     """
+
     def __init__(
         self,
         alpha: float = 0.5,
@@ -524,16 +536,19 @@ class ExpDecayFixedRatioScheme(TemperatureScheme):
             return np.inf
 
         # previous alpha
-        alpha = self.alphas.get(t-1, self.alpha)
+        alpha = self.alphas.get(t - 1, self.alpha)
 
         # check if acceptance rate criterion violated
         if acceptance_rate > self.max_rate and t > 1:
-            logger.debug("ExpDecayFixedRatioScheme: "
-                         "Reacting to high acceptance rate.")
+            logger.debug(
+                "ExpDecayFixedRatioScheme: "
+                "Reacting to high acceptance rate."
+            )
             alpha = max(alpha / 2, alpha - (1 - alpha) * 2)
         if acceptance_rate < self.min_rate:
-            logger.debug("ExpDecayFixedRatioScheme: "
-                         "Reacting to low acceptance rate.")
+            logger.debug(
+                "ExpDecayFixedRatioScheme: " "Reacting to low acceptance rate."
+            )
             # increase alpha
             alpha = alpha + (1 - alpha) / 2
         # record
@@ -593,18 +608,23 @@ class PolynomialDecayFixedIterScheme(TemperatureScheme):
 
         # check if we can compute a decay step
         if max_nr_populations == np.inf:
-            raise ValueError("Can only perform PolynomialDecayScheme step "
-                             "with a finite max_nr_populations.")
+            raise ValueError(
+                "Can only perform PolynomialDecayScheme step "
+                "with a finite max_nr_populations."
+            )
 
         # how many steps left?
         t_to_go = max_nr_populations - t
 
         # compute sequence
-        temps = np.linspace(1, (temp_base)**(1 / self.exponent),
-                            t_to_go+1) ** self.exponent
+        temps = (
+            np.linspace(1, (temp_base) ** (1 / self.exponent), t_to_go + 1)
+            ** self.exponent
+        )
 
-        logger.debug(f"Temperatures proposed by polynomial decay method: "
-                     f"{temps}.")
+        logger.debug(
+            f"Temperatures proposed by polynomial decay method: " f"{temps}."
+        )
 
         # pre-last step is the next step
         temperature = temps[-2]
@@ -676,7 +696,7 @@ class DalyScheme(TemperatureScheme):
 
         self.k[t] = min(k_base, self.alpha * eps_base)
         eps = eps_base - self.k[t]
-        temperature = eps**2
+        temperature = eps ** 2
 
         return temperature
 
@@ -708,19 +728,21 @@ class FrielPettittScheme(TemperatureScheme):
 
         # check if we can compute a decay step
         if max_nr_populations == np.inf:
-            raise ValueError("Can only perform FrielPettittScheme step with a "
-                             "finite max_nr_populations.")
+            raise ValueError(
+                "Can only perform FrielPettittScheme step with a "
+                "finite max_nr_populations."
+            )
 
         # base temperature
         temp_base = prev_temperature
-        beta_base = 1. / temp_base
+        beta_base = 1.0 / temp_base
 
         # time to go
         t_to_go = max_nr_populations - t
 
-        beta = beta_base + ((1. - beta_base) * 1 / t_to_go) ** 2
+        beta = beta_base + ((1.0 - beta_base) * 1 / t_to_go) ** 2
 
-        temperature = 1. / beta
+        temperature = 1.0 / beta
         return temperature
 
 
@@ -768,21 +790,22 @@ class EssScheme(TemperatureScheme):
         if prev_temperature is None:
             beta_base = 0.0
         else:
-            beta_base = 1. / prev_temperature
+            beta_base = 1.0 / prev_temperature
 
         # objective to minimize
         def obj(beta):
-            return (_ess(values, weights, beta) - target_ess)**2
+            return (_ess(values, weights, beta) - target_ess) ** 2
 
-        bounds = sp.optimize.Bounds(lb=np.array([beta_base]),
-                                    ub=np.array([1.]))
+        bounds = sp.optimize.Bounds(
+            lb=np.array([beta_base]), ub=np.array([1.0])
+        )
         # TODO make more efficient by providing gradients
         ret = sp.optimize.minimize(
-            obj, x0=np.array([0.5 * (1 + beta_base)]),
-            bounds=bounds)
+            obj, x0=np.array([0.5 * (1 + beta_base)]), bounds=bounds
+        )
         beta = ret.x
 
-        temperature = 1. / beta
+        temperature = 1.0 / beta
         return temperature
 
     def requires_distances(self) -> bool:
@@ -793,6 +816,6 @@ def _ess(pdfs, weights, beta):
     """
     Effective sample size (ESS) of importance samples.
     """
-    num = np.sum(weights * pdfs**beta)**2
-    den = np.sum((weights * pdfs**beta)**2)
+    num = np.sum(weights * pdfs ** beta) ** 2
+    den = np.sum((weights * pdfs ** beta) ** 2)
     return num / den

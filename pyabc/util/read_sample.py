@@ -1,10 +1,10 @@
 """Read sample to array."""
 
-import numpy as np
 from typing import Tuple
 
-from ..population import Sample
+import numpy as np
 
+from ..population import Sample
 from .par_trafo import ParTrafoBase
 
 
@@ -77,7 +77,9 @@ def read_sample(
 
     # remove samples where an entry is not finite
     sumstats, parameters, weights = _only_finites(
-        sumstats, parameters, weights,
+        sumstats,
+        parameters,
+        weights,
     )
 
     return sumstats, parameters, weights

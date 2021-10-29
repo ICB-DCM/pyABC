@@ -1,16 +1,17 @@
 """Sample number plots"""
 
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import matplotlib.axes
-from matplotlib.ticker import MaxNLocator
-import numpy as np
-import pandas as pd
 from typing import List, Tuple, Union
 
+import matplotlib as mpl
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.ticker import MaxNLocator
+
 from ..storage import History
-from .util import to_lists, get_labels
 from ..weighted_statistics import effective_sample_size
+from .util import get_labels, to_lists
 
 
 def plot_sample_numbers(
@@ -71,14 +72,16 @@ def plot_sample_numbers(
     n_pop = max(len(sample) for sample in samples)
     matrix = np.zeros((n_pop, n_run))
     for i_sample, sample in enumerate(samples):
-        matrix[:len(sample), i_sample] = sample
+        matrix[: len(sample), i_sample] = sample
 
     # plot bars
     for i_pop in reversed(range(n_pop)):
-        ax.bar(x=np.arange(n_run),
-               height=matrix[i_pop, :],
-               bottom=np.sum(matrix[:i_pop, :], axis=0),
-               label=f"Generation {i_pop-1}")
+        ax.bar(
+            x=np.arange(n_run),
+            height=matrix[i_pop, :],
+            bottom=np.sum(matrix[:i_pop, :], axis=0),
+            label=f"Generation {i_pop-1}",
+        )
 
     # add labels
     ax.set_xticks(np.arange(n_run))
@@ -164,8 +167,7 @@ def plot_total_sample_numbers(
         ylabel = "log10(" + ylabel + ")"
 
     # plot bars
-    ax.bar(x=np.arange(n_run),
-           height=samples)
+    ax.bar(x=np.arange(n_run), height=samples)
 
     # add labels
     ax.set_xticks(np.arange(n_run))
@@ -330,11 +332,12 @@ def plot_acceptance_rates_trajectory(
             ess = np.zeros(len(h_info['t']) - 1)
             for t in np.array(h_info['t'])[1:]:
                 w = history.get_weighted_distances(t=t)['w']
-                ess[t-1] = effective_sample_size(w)
+                ess[t - 1] = effective_sample_size(w)
             pop_sizes.append(ess)
         else:
-            pop_sizes.append(np.array(
-                history.get_nr_particles_per_population().values[1:]))
+            pop_sizes.append(
+                np.array(history.get_nr_particles_per_population().values[1:])
+            )
         samples.append(np.array(h_info['samples'])[1:])
 
     # compute acceptance rates
@@ -438,8 +441,15 @@ def plot_lookahead_evaluations(
         ax.fill_between(t, n_la, n_eval, alpha=alpha, label="Actual")
         ax.fill_between(t, 0, n_la, alpha=alpha, label="Look-ahead")
     else:
-        ax.plot(t, n_eval, linestyle='--', marker='o', color='black',
-                alpha=alpha, label="Total")
+        ax.plot(
+            t,
+            n_eval,
+            linestyle='--',
+            marker='o',
+            color='black',
+            alpha=alpha,
+            label="Total",
+        )
         ax.plot(t, n_act, marker='o', alpha=alpha, label="Actual")
         ax.plot(t, n_la, marker='o', alpha=alpha, label="Look-ahead")
 
@@ -519,7 +529,8 @@ def plot_lookahead_final_acceptance_fractions(
 
         population_sizes = np.array(
             [pop.loc[pop.t == t, 'particles'] for t in sampler_df.t],
-            dtype=float).flatten()
+            dtype=float,
+        ).flatten()
 
     # restrict to t >= 0
     population_sizes = population_sizes[sampler_df.t >= t_min]
@@ -543,12 +554,20 @@ def plot_lookahead_final_acceptance_fractions(
 
     # plot
     if fill:
-        ax.fill_between(t, n_la_acc, population_sizes, alpha=alpha,
-                        label="Actual")
+        ax.fill_between(
+            t, n_la_acc, population_sizes, alpha=alpha, label="Actual"
+        )
         ax.fill_between(t, 0, n_la_acc, alpha=alpha, label="Look-ahead")
     else:
-        ax.plot(t, population_sizes, linestyle='--', marker='o', color='black',
-                alpha=alpha, label="Population size")
+        ax.plot(
+            t,
+            population_sizes,
+            linestyle='--',
+            marker='o',
+            color='black',
+            alpha=alpha,
+            label="Population size",
+        )
         ax.plot(t, n_act_acc, marker='o', alpha=alpha, label="Actual")
         ax.plot(t, n_la_acc, marker='o', alpha=alpha, label="Look-ahead")
 
@@ -627,8 +646,14 @@ def plot_lookahead_acceptance_rates(
     n_act = n_all - n_la
 
     # plot
-    ax.plot(t, n_all_acc / n_all, linestyle='--', marker='o', color='black',
-            label="Combined")
+    ax.plot(
+        t,
+        n_all_acc / n_all,
+        linestyle='--',
+        marker='o',
+        color='black',
+        label="Combined",
+    )
     ax.plot(t, n_act_acc / n_act, marker='o', label="Actual")
     ax.plot(t, n_la_acc / n_la, marker='o', label="Look-ahead")
 

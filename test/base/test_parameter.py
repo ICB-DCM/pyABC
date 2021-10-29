@@ -1,5 +1,6 @@
-from pyabc import Parameter
 import pickle
+
+from pyabc import Parameter
 
 
 def test_param_access():

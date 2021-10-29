@@ -1,13 +1,14 @@
-import numpy as np
-import tempfile
-import subprocess  # noqa: S404
-import os
-from typing import List
 import logging
+import os
 import shutil
+import subprocess  # noqa: S404
+import tempfile
+from typing import List
+
+import numpy as np
+
 from ..model import Model
 from ..parameters import Parameter
-
 
 logger = logging.getLogger("ABC.External")
 
@@ -21,10 +22,13 @@ class ExternalHandler:
 
     def __init__(
         self,
-        executable: str, file: str = None,
+        executable: str,
+        file: str = None,
         fixed_args: List = None,
         create_folder: bool = False,
-        suffix: str = None, prefix: str = None, dir: str = None,
+        suffix: str = None,
+        prefix: str = None,
+        dir: str = None,
         clean_simulation: bool = True,
         show_stdout: bool = False,
         show_stderr: bool = True,
@@ -84,10 +88,12 @@ class ExternalHandler:
         """
         if self.create_folder:
             return tempfile.mkdtemp(
-                suffix=self.suffix, prefix=self.prefix, dir=self.dir)
+                suffix=self.suffix, prefix=self.prefix, dir=self.dir
+            )
         else:
             return tempfile.mkstemp(
-                suffix=self.suffix, prefix=self.prefix, dir=self.dir)[1]
+                suffix=self.suffix, prefix=self.prefix, dir=self.dir
+            )[1]
 
     def clean_simulation_output(loc):
         """
@@ -141,15 +147,26 @@ class ExternalHandler:
         # call
         if cmd is not None:
             status = subprocess.run(
-                    cmd, shell=True, **stdout, **stderr)  # noqa: S602
+                cmd, shell=True, **stdout, **stderr  # noqa: S602
+            )
         else:
             executable = self.create_executable(loc)
             status = subprocess.run(  # noqa: S603
-                [executable, self.file, *self.fixed_args, *args,
-                 f'target={loc}'], **stdout, **stderr)
+                [
+                    executable,
+                    self.file,
+                    *self.fixed_args,
+                    *args,
+                    f'target={loc}',
+                ],
+                **stdout,
+                **stderr,
+            )
         if status.returncode:
-            msg = (f"Simulation error for arguments {args}: "
-                   f"returncode {status.returncode}.")
+            msg = (
+                f"Simulation error for arguments {args}: "
+                f"returncode {status.returncode}."
+            )
             if self.raise_on_error:
                 raise ValueError(msg)
             else:
@@ -179,10 +196,13 @@ class ExternalModel(Model):
     """
 
     def __init__(
-        self, executable: str, file: str,
+        self,
+        executable: str,
+        file: str,
         fixed_args: List = None,
         create_folder: bool = False,
-        suffix: str = None, prefix: str = "modelsim_",
+        suffix: str = None,
+        prefix: str = "modelsim_",
         dir: str = None,
         clean_simulation: bool = True,
         show_stdout: bool = False,
@@ -202,10 +222,13 @@ class ExternalModel(Model):
         """
         super().__init__(name=name)
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable,
+            file=file,
             fixed_args=fixed_args,
             create_folder=create_folder,
-            suffix=suffix, prefix=prefix, dir=dir,
+            suffix=suffix,
+            prefix=prefix,
+            dir=dir,
             clean_simulation=clean_simulation,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
@@ -241,17 +264,21 @@ class ExternalSumStat:
         file: str,
         fixed_args: List = None,
         create_folder: bool = False,
-        suffix: str = None, prefix: str = "sumstat_",
+        suffix: str = None,
+        prefix: str = "sumstat_",
         dir: str = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
     ):
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable,
+            file=file,
             fixed_args=fixed_args,
             create_folder=create_folder,
-            suffix=suffix, prefix=prefix, dir=dir,
+            suffix=suffix,
+            prefix=prefix,
+            dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
             raise_on_error=raise_on_error,
@@ -280,19 +307,24 @@ class ExternalDistance:
 
     def __init__(
         self,
-        executable: str, file: str,
+        executable: str,
+        file: str,
         fixed_args: List = None,
-        suffix: str = None, prefix: str = "dist_",
+        suffix: str = None,
+        prefix: str = "dist_",
         dir: str = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
     ):
         self.eh = ExternalHandler(
-            executable=executable, file=file,
+            executable=executable,
+            file=file,
             fixed_args=fixed_args,
             create_folder=False,
-            suffix=suffix, prefix=prefix, dir=dir,
+            suffix=suffix,
+            prefix=prefix,
+            dir=dir,
             show_stdout=show_stdout,
             show_stderr=show_stderr,
             raise_on_error=raise_on_error,
@@ -302,8 +334,10 @@ class ExternalDistance:
         # check if external script failed
         if sumstat_0['returncode'] or sumstat_1['returncode']:
             return np.nan
-        args = [f"sumstat_0={sumstat_0['loc']}",
-                f"sumstat_1={sumstat_1['loc']}"]
+        args = [
+            f"sumstat_0={sumstat_0['loc']}",
+            f"sumstat_1={sumstat_1['loc']}",
+        ]
         ret = self.eh.run(args)
         # read in distance
         with open(ret['loc'], 'rb') as f:

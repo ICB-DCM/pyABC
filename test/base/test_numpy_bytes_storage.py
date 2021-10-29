@@ -1,5 +1,6 @@
-import pytest
 import numpy as np
+import pytest
+
 from pyabc.storage.numpy_bytes_storage import np_from_bytes, np_to_bytes
 
 

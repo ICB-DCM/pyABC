@@ -1,6 +1,7 @@
-import numpy as np
-from typing import Collection, List, Union
 import collections.abc
+from typing import Collection, List, Union
+
+import numpy as np
 
 
 class EventIxs:
@@ -42,7 +43,8 @@ class EventIxs:
         for ix in ts:
             if ix != np.inf and int(ix) != ix:
                 raise AssertionError(
-                    f"Index {ix} must be either inf or an int")
+                    f"Index {ix} must be either inf or an int"
+                )
         self.ts: Collection[int] = set(ts)
 
         if sims is None:
@@ -53,8 +55,7 @@ class EventIxs:
         # check conversion to index
         for sim in sims:
             if int(sim) != sim:
-                raise AssertionError(
-                    f"Simulation number {sim} must be an int")
+                raise AssertionError(f"Simulation number {sim} must be an int")
         self.sims: List[int] = list(sims)
 
         # track which simulation numbers have been hit
@@ -93,7 +94,8 @@ class EventIxs:
 
         # check simulations
         for i_check_sims, (check_sims, hit) in enumerate(
-                zip(self.sims, self.sims_hit)):
+            zip(self.sims, self.sims_hit)
+        ):
             if hit:
                 continue
             if total_sims >= check_sims:
@@ -123,8 +125,10 @@ class EventIxs:
         True if indices > 0 are likely to evaluate to True, False otherwise.
         """
         return (
-            any(t > 0 for t in self.ts) or len(self.sims) > 0
-            or self.from_t is not None or self.from_sims is not None
+            any(t > 0 for t in self.ts)
+            or len(self.sims) > 0
+            or self.from_t is not None
+            or self.from_sims is not None
         )
 
     def requires_calibration(self) -> bool:
@@ -136,7 +140,8 @@ class EventIxs:
         should typically noly occur later).
         """
         return (
-            0 in self.ts or np.inf in self.ts
+            0 in self.ts
+            or np.inf in self.ts
             or (self.from_t is not None and self.from_t == 0)
         )
 

@@ -31,9 +31,10 @@ values, but distance values, instead use either of
 * mean
 * median
 """
-import numpy as np
-from typing import List
 import logging
+from typing import List
+
+import numpy as np
 
 logger = logging.getLogger("ABC.Distance")
 
@@ -43,22 +44,25 @@ def check_io(fun):
 
     Wrapper around scale functions.
     """
+
     def checked_fun(samples: np.ndarray, **kwargs):
         if "s0" in kwargs:
             if (samples.ndim == 1 and np.ndim(kwargs["s0"]) > 0) or (
-                    samples.ndim > 1 and
-                    samples.shape[1] != kwargs["s0"].shape[0]):
+                samples.ndim > 1 and samples.shape[1] != kwargs["s0"].shape[0]
+            ):
                 raise AssertionError("Shape mismatch of samples and s0")
         if "s_ids" in kwargs:
             if (samples.ndim == 1 and len(kwargs["s_ids"]) > 1) or (
-                    samples.ndim > 1 and
-                    len(kwargs["s_ids"]) != samples.shape[1]):
+                samples.ndim > 1 and len(kwargs["s_ids"]) != samples.shape[1]
+            ):
                 raise AssertionError("Shape mismatch of samples and s_ids")
         scales: np.ndarray = fun(samples=samples, **kwargs)
         if (samples.ndim == 1 and np.ndim(scales) > 0) or (
-                samples.ndim > 1 and scales.shape != (samples.shape[1],)):
+            samples.ndim > 1 and scales.shape != (samples.shape[1],)
+        ):
             raise AssertionError("Shape mismatch of s0 and scales")
         return scales
+
     return checked_fun
 
 
@@ -73,8 +77,7 @@ def warn_obs_off(off_ixs: np.ndarray, s_ids: List[str]):
     off_ixs = np.asarray(off_ixs, dtype=int)
     if len(off_ixs) > 0:
         off_ix_ids = [s_ids[ix] for ix in off_ixs]
-        logger.info(
-            f"Features {off_ix_ids} (ixs={off_ixs}) have a high bias.")
+        logger.info(f"Features {off_ix_ids} (ixs={off_ixs}) have a high bias.")
 
 
 @check_io
@@ -122,7 +125,11 @@ def bias(*, samples: np.ndarray, s0: np.ndarray, **kwargs) -> np.ndarray:
 
 @check_io
 def root_mean_square_deviation(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    s_ids: List[str],
+    **kwargs,
 ) -> np.ndarray:
     """
     Square root of the mean squared error, i.e.
@@ -130,7 +137,7 @@ def root_mean_square_deviation(
     """
     bs = bias(samples=samples, s0=s0)
     std = standard_deviation(samples=samples)
-    mse = bs**2 + std**2
+    mse = bs ** 2 + std ** 2
     rmse = np.sqrt(mse)
 
     # debugging
@@ -144,10 +151,13 @@ rmsd = root_mean_square_deviation
 
 @check_io
 def std_or_rmsd(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    s_ids: List[str],
+    **kwargs,
 ) -> np.ndarray:
-    """Correct std by bias if not too many of the points have bias > std.
-    """
+    """Correct std by bias if not too many of the points have bias > std."""
     bs = bias(samples=samples, s0=s0)
     std = standard_deviation(samples=samples)
 
@@ -155,7 +165,7 @@ def std_or_rmsd(
         logger.info("Too many high-bias values, correcting only for scale.")
         return std
 
-    mse = bs**2 + std**2
+    mse = bs ** 2 + std ** 2
     rmse = np.sqrt(mse)
 
     # debugging
@@ -166,7 +176,10 @@ def std_or_rmsd(
 
 @check_io
 def median_absolute_deviation_to_observation(
-    *, samples: np.ndarray, s0: np.ndarray, **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    **kwargs,
 ) -> np.ndarray:
     """Median absolute deviation of samples w.r.t. the observation s0."""
     mado = np.nanmedian(np.abs(samples - s0), axis=0)
@@ -178,7 +191,10 @@ mado = median_absolute_deviation_to_observation
 
 @check_io
 def mean_absolute_deviation_to_observation(
-    *, samples: np.ndarray, s0: np.ndarray, **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    **kwargs,
 ) -> np.ndarray:
     """Mean absolute deviation of samples w.r.t. the observation s0."""
     mado = np.nanmean(np.abs(samples - s0), axis=0)
@@ -187,7 +203,11 @@ def mean_absolute_deviation_to_observation(
 
 @check_io
 def combined_median_absolute_deviation(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    s_ids: List[str],
+    **kwargs,
 ) -> np.ndarray:
     """
     Compute the sum of the median absolute deviations to the
@@ -208,10 +228,13 @@ cmad = combined_median_absolute_deviation
 
 @check_io
 def mad_or_cmad(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    s_ids: List[str],
+    **kwargs,
 ) -> np.ndarray:
-    """Correct mad std by mado if not too many of the points have mado > mad.
-    """
+    """Correct mad std by mado if not too many of the points have mado > mad."""
     mad = median_absolute_deviation(samples=samples)
     mado = median_absolute_deviation_to_observation(samples=samples, s0=s0)
 
@@ -232,7 +255,11 @@ pcmad = mad_or_cmad
 
 @check_io
 def combined_mean_absolute_deviation(
-    *, samples: np.ndarray, s0: np.ndarray, s_ids: List[str], **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    s_ids: List[str],
+    **kwargs,
 ) -> np.ndarray:
     """
     Compute the sum of the mean absolute deviations to the
@@ -250,7 +277,10 @@ def combined_mean_absolute_deviation(
 
 @check_io
 def standard_deviation_to_observation(
-    *, samples: np.ndarray, s0: np.ndarray, **kwargs,
+    *,
+    samples: np.ndarray,
+    s0: np.ndarray,
+    **kwargs,
 ) -> np.ndarray:
     """
     Standard deviation of absolute deviations of the samples w.r.t.

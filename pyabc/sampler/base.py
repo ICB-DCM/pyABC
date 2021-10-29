@@ -1,32 +1,35 @@
 from abc import ABC, ABCMeta, abstractmethod
-import numpy as np
 from numbers import Real
 from typing import Callable, Union
 
-from ..population import Sample, SampleFactory
-from ..inference_util import AnalysisVars
+import numpy as np
+
+from ..acceptor import Acceptor
 from ..distance import Distance
 from ..epsilon import Epsilon
-from ..acceptor import Acceptor
+from ..inference_util import AnalysisVars
+from ..population import Sample, SampleFactory
 
 
 def wrap_sample(f):
     """Wrapper for Sampler.sample_until_n_accepted.
     Checks whether the sampling output is valid.
     """
+
     def sample_until_n_accepted(self, n, simulate_one, t, **kwargs):
         sample = f(self, n, simulate_one, t, **kwargs)
 
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
-                f"Expected {n} but got {sample.n_accepted} acceptances.")
+                f"Expected {n} but got {sample.n_accepted} acceptances."
+            )
 
         if any(particle.preliminary for particle in sample.all_particles):
-            raise AssertionError(
-                "There cannot be non-evaluated particles.")
+            raise AssertionError("There cannot be non-evaluated particles.")
 
         return sample
+
     return sample_until_n_accepted
 
 
@@ -67,8 +70,9 @@ class Sampler(ABC, metaclass=SamplerMeta):
 
     def __init__(self):
         self.nr_evaluations_: int = 0
-        self.sample_factory: SampleFactory = \
-            SampleFactory(record_rejected=False)
+        self.sample_factory: SampleFactory = SampleFactory(
+            record_rejected=False
+        )
         self.show_progress: bool = False
         self.analysis_id: Union[str, None] = None
 
@@ -136,10 +140,8 @@ class Sampler(ABC, metaclass=SamplerMeta):
         """
 
     def check_analysis_variables(
-            self,
-            distance_function: Distance,
-            eps: Epsilon,
-            acceptor: Acceptor) -> None:
+        self, distance_function: Distance, eps: Epsilon, acceptor: Acceptor
+    ) -> None:
         """Raise if any analysis variable is not conform with the sampler.
         This check serves in particular to ensure that all components are fit
         for look-ahead sampling. Default: Do nothing.

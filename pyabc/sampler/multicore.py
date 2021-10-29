@@ -1,12 +1,13 @@
-from multiprocessing import Process, Queue
-from .singlecore import SingleCoreSampler
-import numpy as np
-import random
 import logging
-import cloudpickle as pickle
-from jabbar import jabbar
-from .multicorebase import MultiCoreSampler, get_if_worker_healthy
+import random
+from multiprocessing import Process, Queue
 
+import cloudpickle as pickle
+import numpy as np
+from jabbar import jabbar
+
+from .multicorebase import MultiCoreSampler, get_if_worker_healthy
+from .singlecore import SingleCoreSampler
 
 logger = logging.getLogger("ABC.Sampler")
 
@@ -35,7 +36,8 @@ def work(feed_q, result_q, simulate_one, max_eval, single_core_sampler):
             break
 
         res = single_core_sampler.sample_until_n_accepted(
-            1, simulate_one, max_eval)
+            1, simulate_one, max_eval
+        )
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
 
@@ -71,21 +73,31 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
     """
 
     def sample_until_n_accepted(
-            self, n, simulate_one, t, *,
-            max_eval=np.inf, all_accepted=False, ana_vars=None):
+        self,
+        n,
+        simulate_one,
+        t,
+        *,
+        max_eval=np.inf,
+        all_accepted=False,
+        ana_vars=None,
+    ):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
-        logger.debug("Start sampling on {} cores ({} requested)"
-                     .format(n_procs, self.n_procs))
+        logger.debug(
+            "Start sampling on {} cores ({} requested)".format(
+                n_procs, self.n_procs
+            )
+        )
         feed_q = Queue()
         result_q = Queue()
 
-        feed_process = Process(target=feed, args=(feed_q, n,
-                                                  n_procs))
+        feed_process = Process(target=feed, args=(feed_q, n, n_procs))
 
         single_core_sampler = SingleCoreSampler(
-            check_max_eval=self.check_max_eval)
+            check_max_eval=self.check_max_eval
+        )
         # the max_eval handling in this sampler is certainly not optimal
         single_core_sampler.sample_factory = self.sample_factory
 
@@ -94,8 +106,9 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
             simulate_one = pickle.dumps(simulate_one)
         args = (feed_q, result_q, simulate_one, max_eval, single_core_sampler)
 
-        worker_processes = [Process(target=work, args=args)
-                            for _ in range(n_procs)]
+        worker_processes = [
+            Process(target=work, args=args) for _ in range(n_procs)
+        ]
 
         for proc in worker_processes:
             proc.start()

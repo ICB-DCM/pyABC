@@ -1,24 +1,30 @@
 import os
 import tempfile
-import pytest
+
 import numpy as np
 import pandas as pd
+import pytest
 
 import pyabc
-from pyabc.sampler import (SingleCoreSampler,
-                           MulticoreEvalParallelSampler,
-                           RedisEvalParallelSamplerServerStarter)
 import pyabc.external
+from pyabc.sampler import (
+    MulticoreEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+    SingleCoreSampler,
+)
 
 
 def RedisEvalParallelSamplerServerStarterWrapper():
     return RedisEvalParallelSamplerServerStarter(batch_size=5)
 
 
-@pytest.fixture(params=[SingleCoreSampler,
-                        MulticoreEvalParallelSampler,
-                        RedisEvalParallelSamplerServerStarterWrapper,
-                        ])
+@pytest.fixture(
+    params=[
+        SingleCoreSampler,
+        MulticoreEvalParallelSampler,
+        RedisEvalParallelSamplerServerStarterWrapper,
+    ]
+)
 def sampler(request):
     s = request.param()
     try:
@@ -40,11 +46,17 @@ def test_rpy2(sampler):
     distance = r.distance("myDistance")
     sum_stat = r.summary_statistics("mySummaryStatistics")
     data = r.observation("mySumStatData")
-    prior = pyabc.Distribution(meanX=pyabc.RV("uniform", 0, 10),
-                               meanY=pyabc.RV("uniform", 0, 10))
-    abc = pyabc.ABCSMC(model, prior, distance,
-                       summary_statistics=sum_stat,
-                       sampler=sampler, population_size=5)
+    prior = pyabc.Distribution(
+        meanX=pyabc.RV("uniform", 0, 10), meanY=pyabc.RV("uniform", 0, 10)
+    )
+    abc = pyabc.ABCSMC(
+        model,
+        prior,
+        distance,
+        summary_statistics=sum_stat,
+        sampler=sampler,
+        population_size=5,
+    )
     db = pyabc.create_sqlite_db_id(file_="test_external.db")
     abc.new(db, data)
     history = abc.run(minimum_epsilon=0.9, max_nr_populations=2)
@@ -52,9 +64,14 @@ def test_rpy2(sampler):
 
     # try load
     id_ = history.id
-    abc = pyabc.ABCSMC(model, prior, distance,
-                       summary_statistics=sum_stat,
-                       sampler=sampler, population_size=6)
+    abc = pyabc.ABCSMC(
+        model,
+        prior,
+        distance,
+        summary_statistics=sum_stat,
+        sampler=sampler,
+        population_size=6,
+    )
     # shan't even need to pass the observed data again
     abc.load(db, id_)
     abc.run(minimum_epsilon=0.1, max_nr_populations=2)
@@ -63,8 +80,9 @@ def test_rpy2(sampler):
 def test_rpy2_details():
     # check using a py model and an r sumstat
     def model(pars):
-        df = pd.DataFrame({'s0': pars['p0'] + np.random.randn(10),
-                           's1': np.random.randn(10)})
+        df = pd.DataFrame(
+            {'s0': pars['p0'] + np.random.randn(10), 's1': np.random.randn(10)}
+        )
         file_ = tempfile.mkstemp()[1]
         df.to_csv(file_)
         return {'loc': file_}
@@ -80,10 +98,10 @@ def test_external():
 
     # initialize
     model = pyabc.external.ExternalModel(executable, folder + "model.r")
-    sum_stat = pyabc.external.ExternalSumStat(
-        executable, folder + "sumstat.r")
+    sum_stat = pyabc.external.ExternalSumStat(executable, folder + "sumstat.r")
     distance = pyabc.external.ExternalDistance(
-        executable, folder + "distance.r")
+        executable, folder + "distance.r"
+    )
 
     # call representation function
     print(model.__repr__())
@@ -103,8 +121,12 @@ def test_external():
 
 def test_external_handler():
     eh = pyabc.external.ExternalHandler(
-        executable="bash", file="", create_folder=False,
-        suffix="sufftest", prefix="preftest")
+        executable="bash",
+        file="",
+        create_folder=False,
+        suffix="sufftest",
+        prefix="preftest",
+    )
     loc = eh.create_loc()
     assert os.path.exists(loc) and os.path.isfile(loc)
     eh.create_folder = True

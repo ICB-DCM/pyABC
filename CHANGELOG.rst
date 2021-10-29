@@ -8,6 +8,15 @@ Release Notes
 ...........
 
 
+0.11.5 (2021-10-29)
+-------------------
+
+* Regularly scheduled CI (#504)
+* Fix Dask for Windows (#503)
+* Apply the uncompromising Python code formatter black (#506)
+* Apply automatic import sorting via isort (#508)
+
+
 0.11.4 (2021-10-27)
 -------------------
 

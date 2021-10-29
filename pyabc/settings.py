@@ -1,9 +1,10 @@
 """Global settings"""
 
+from typing import List
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
-from typing import List
 
 
 def set_figure_params(

@@ -1,29 +1,37 @@
-import pytest
-from pyabc.populationstrategy import (ListPopulationSize,
-                                      AdaptivePopulationSize,
-                                      ConstantPopulationSize,
-                                      PopulationStrategy)
-from pyabc.transition import MultivariateNormalTransition
-import pandas as pd
 import numpy as np
+import pandas as pd
+import pytest
+
+from pyabc.populationstrategy import (
+    AdaptivePopulationSize,
+    ConstantPopulationSize,
+    ListPopulationSize,
+    PopulationStrategy,
+)
+from pyabc.transition import MultivariateNormalTransition
 
 
 def Adaptive(nr_calibration_particles: int = None):
     # Only 4 bootstraps for faster testing
     ada = AdaptivePopulationSize(
-        100, mean_cv=0.18, n_bootstrap=4,
-        nr_calibration_particles=nr_calibration_particles)
+        100,
+        mean_cv=0.18,
+        n_bootstrap=4,
+        nr_calibration_particles=nr_calibration_particles,
+    )
     return ada
 
 
 def Constant(nr_calibration_particles: int = None):
     return ConstantPopulationSize(
-        100, nr_calibration_particles=nr_calibration_particles)
+        100, nr_calibration_particles=nr_calibration_particles
+    )
 
 
 def List(nr_calibration_particles: int = None):
     return ListPopulationSize(
-        [100]*10, nr_calibration_particles=nr_calibration_particles)
+        [100] * 10, nr_calibration_particles=nr_calibration_particles
+    )
 
 
 @pytest.fixture(params=[Adaptive, Constant, List])
@@ -43,7 +51,7 @@ def test_adapt_single_model(population_strategy: PopulationStrategy):
     kernel = MultivariateNormalTransition()
     kernel.fit(df, w)
 
-    population_strategy.update([kernel], np.array([1.]), t=0)
+    population_strategy.update([kernel], np.array([1.0]), t=0)
     assert population_strategy(t=0) > 0
 
 
@@ -57,7 +65,7 @@ def test_adapt_two_models(population_strategy: PopulationStrategy):
         kernel.fit(df, w)
         kernels.append(kernel)
 
-    population_strategy.update(kernels, np.array([.7, .2]), t=0)
+    population_strategy.update(kernels, np.array([0.7, 0.2]), t=0)
     assert population_strategy(t=0) > 0
 
 
@@ -72,12 +80,13 @@ def test_no_parameters(population_strategy: PopulationStrategy):
         kernel.fit(df, w)
         kernels.append(kernel)
 
-    population_strategy.update(kernels, np.array([.7, .3]), t=0)
+    population_strategy.update(kernels, np.array([0.7, 0.3]), t=0)
     assert population_strategy(t=0) > 0
 
 
-def test_one_with_one_without_parameters(population_strategy:
-                                         PopulationStrategy):
+def test_one_with_one_without_parameters(
+    population_strategy: PopulationStrategy,
+):
     n = 10
     kernels = []
 
@@ -93,7 +102,7 @@ def test_one_with_one_without_parameters(population_strategy:
     kernel_with.fit(df_with, w_with)
     kernels.append(kernel_with)
 
-    population_strategy.update(kernels, np.array([.7, .3]), t=0)
+    population_strategy.update(kernels, np.array([0.7, 0.3]), t=0)
     assert population_strategy(t=0) > 0
 
 
@@ -111,14 +120,17 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
 
     test_weights = [k.pdf(test_points) for k in kernels]
 
-    population_strategy.update(kernels, np.array([.7, .2]))
+    population_strategy.update(kernels, np.array([0.7, 0.2]))
 
     after_adaptation_weights = [k.pdf(test_points) for k in kernels]
 
-    same = all((k1 == k2).all()
-               for k1, k2 in zip(test_weights, after_adaptation_weights))
-    err_msg = ("Population strategy {}"
-               " modified the transitions".format(population_strategy))
+    same = all(
+        (k1 == k2).all()
+        for k1, k2 in zip(test_weights, after_adaptation_weights)
+    )
+    err_msg = "Population strategy {}" " modified the transitions".format(
+        population_strategy
+    )
 
     assert same, err_msg
 
@@ -131,6 +143,7 @@ def test_list_population_size():
 
 
 def test_nr_calibration_particles(
-        population_strategy_calibration: PopulationStrategy):
+    population_strategy_calibration: PopulationStrategy,
+):
     assert population_strategy_calibration(t=-1) == 50
     assert population_strategy_calibration(t=0) == 100

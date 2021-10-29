@@ -1,11 +1,12 @@
 """Basic summary statistics."""
 
-import numpy as np
-from typing import Callable, Dict, List, Tuple, Union
 from abc import ABC, abstractmethod
+from typing import Callable, Dict, List, Tuple, Union
+
+import numpy as np
 
 from ..population import Sample
-from ..util import io_dict2arr, dict2arrlabels
+from ..util import dict2arrlabels, io_dict2arr
 
 
 class Sumstat(ABC):
@@ -78,7 +79,8 @@ class Sumstat(ABC):
         # initialize previous statistics
         if self.pre is not None:
             self.pre.initialize(
-                t=t, get_sample=get_sample, x_0=x_0, total_sims=total_sims)
+                t=t, get_sample=get_sample, x_0=x_0, total_sims=total_sims
+            )
 
     def update(
         self,
@@ -109,7 +111,8 @@ class Sumstat(ABC):
         """
         if self.pre is not None:
             return self.pre.update(
-                t=t, get_sample=get_sample, total_sims=total_sims)
+                t=t, get_sample=get_sample, total_sims=total_sims
+            )
         return False
 
     def configure_sampler(self, sampler) -> None:
@@ -203,7 +206,8 @@ class IdentitySumstat(Sumstat):
             # create one long array until structure ever becomes interesting
             # also allows trafos to yield differing dimensions
             data = np.concatenate(
-                [trafo(data).flatten() for trafo in self.trafos])
+                [trafo(data).flatten() for trafo in self.trafos]
+            )
 
         # reshape
         data = data.reshape(self.shape_out)
@@ -220,5 +224,7 @@ class IdentitySumstat(Sumstat):
         return super().get_ids()
 
     def __str__(self) -> str:
-        return f"<{self.__class__.__name__} pre={self.pre}, " \
-               f"trafos={self.trafos}>"
+        return (
+            f"<{self.__class__.__name__} pre={self.pre}, "
+            f"trafos={self.trafos}>"
+        )

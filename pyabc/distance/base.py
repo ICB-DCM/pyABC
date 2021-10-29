@@ -1,8 +1,8 @@
 """Distance base classes."""
 
+import json
 from abc import ABC, abstractmethod
 from typing import Callable
-import json
 
 from ..population import Sample
 
@@ -187,7 +187,8 @@ class NoDistance(Distance):
         par: dict = None,
     ) -> float:
         raise AssertionError(
-            f"Distance {self.__class__.__name__} should not be called.")
+            f"Distance {self.__class__.__name__} should not be called."
+        )
 
 
 class AcceptAllDistance(Distance):

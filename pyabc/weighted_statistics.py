@@ -6,20 +6,22 @@ Functions performing statistical operations on weighted points
 generated via importance sampling.
 """
 
-import numpy as np
 from functools import wraps
+
+import numpy as np
 
 
 def weight_checked(function):
     """
     Function decorator to check normalization of weights.
     """
+
     @wraps(function)
     def function_with_checking(points, weights=None, **kwargs):
         if weights is not None and not np.isclose(weights.sum(), 1):
-            raise AssertionError(
-                f"Weights not normalized: {weights.sum()}.")
+            raise AssertionError(f"Weights not normalized: {weights.sum()}.")
         return function(points, weights, **kwargs)
+
     return function_with_checking
 
 
@@ -39,7 +41,7 @@ def weighted_quantile(points, weights=None, alpha=0.5):
         weights = weights[sorted_indices]
 
     cs = np.cumsum(weights)
-    quantile = np.interp(alpha, cs - 0.5*weights, points)
+    quantile = np.interp(alpha, cs - 0.5 * weights, points)
     return quantile
 
 
@@ -73,7 +75,7 @@ def weighted_var(points, weights):
     See `weighted_mean` for docs.
     """
     mean = weighted_mean(points, weights)
-    return ((points - mean)**2 * weights).sum(axis=0)
+    return ((points - mean) ** 2 * weights).sum(axis=0)
 
 
 def weighted_std(points, weights):
@@ -88,7 +90,7 @@ def weighted_mse(points, weights, refval):
     """Compute the weighted mean square error."""
     var = weighted_var(points, weights)
     bias = weighted_mean(points, weights) - refval
-    return var + bias**2
+    return var + bias ** 2
 
 
 def weighted_rmse(points, weights, refval):
@@ -110,7 +112,7 @@ def effective_sample_size(weights):
     weights: Importance sampling weights.
     """
     weights = np.asarray(weights)
-    n_eff = np.sum(weights)**2 / np.sum(weights**2)
+    n_eff = np.sum(weights) ** 2 / np.sum(weights ** 2)
     return n_eff
 
 

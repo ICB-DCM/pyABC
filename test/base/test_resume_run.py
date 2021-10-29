@@ -1,9 +1,13 @@
-import pytest
 import numpy as np
+import pytest
 
 from pyabc import (
-    ABCSMC, Distribution, RV, RedisEvalParallelSamplerServerStarter,
-    MulticoreEvalParallelSampler)
+    ABCSMC,
+    RV,
+    Distribution,
+    MulticoreEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+)
 
 
 @pytest.fixture(params=[0, None])
@@ -13,13 +17,16 @@ def gt_model(request):
 
 def RedisEvalParallelSamplerLookAheadDelayWrapper(**kwargs):
     return RedisEvalParallelSamplerServerStarter(
-        look_ahead=True, look_ahead_delay_evaluation=True, **kwargs)
+        look_ahead=True, look_ahead_delay_evaluation=True, **kwargs
+    )
 
 
-@pytest.fixture(params=[
-    MulticoreEvalParallelSampler,
-    RedisEvalParallelSamplerLookAheadDelayWrapper,
-])
+@pytest.fixture(
+    params=[
+        MulticoreEvalParallelSampler,
+        RedisEvalParallelSamplerLookAheadDelayWrapper,
+    ]
+)
 def sampler(request):
     s = request.param()
     try:

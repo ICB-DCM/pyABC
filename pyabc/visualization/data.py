@@ -1,26 +1,27 @@
 """Data and summary statistics plots"""
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.axes
 import logging
 from typing import Callable, List, Union
 
-from ..storage import History
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
+from ..storage import History
 
 logger = logging.getLogger("ABC.Visualization")
 
 
 def plot_data_callback(
-        history: History,
-        f_plot: Callable = None,
-        f_plot_aggregated: Callable = None,
-        t: int = None,
-        n_sample: int = None,
-        ax: matplotlib.axes.Axes = None,
-        **kwargs):
+    history: History,
+    f_plot: Callable = None,
+    f_plot_aggregated: Callable = None,
+    t: int = None,
+    n_sample: int = None,
+    ax: matplotlib.axes.Axes = None,
+    **kwargs,
+):
     """
     Plot the summary statistics from the history using callback functions
     to plot single statistics or aggregated values.
@@ -98,9 +99,9 @@ def plot_data_callback_lowlevel(
     return ax
 
 
-def plot_data_default(obs_data: dict,
-                      sim_data: dict,
-                      keys: Union[List[str], str] = None):
+def plot_data_default(
+    obs_data: dict, sim_data: dict, keys: Union[List[str], str] = None
+):
     """
     Plot summary statistic data.
 
@@ -145,8 +146,9 @@ def plot_data_default(obs_data: dict,
     fig, arr_ax = plt.subplots(nrows, ncols)
 
     # iterate over keys
-    for plot_index, ((obs_key, obs), (_, sim)) \
-            in enumerate(zip(obs_data.items(), sim_data.items())):
+    for plot_index, ((obs_key, obs), (_, sim)) in enumerate(
+        zip(obs_data.items(), sim_data.items())
+    ):
         if nrows == ncols == 1:
             ax = arr_ax
         else:
@@ -181,8 +183,10 @@ def plot_data_default(obs_data: dict,
             ax.set_xlabel("Data")
             ax.set_ylabel("Simulation")
         else:
-            logger.info(f"Data type {type(obs)} for key {obs_key} is "
-                        f"not supported.")
+            logger.info(
+                f"Data type {type(obs)} for key {obs_key} is "
+                f"not supported."
+            )
             # remove not needed axis
             ax.axis('off')
 

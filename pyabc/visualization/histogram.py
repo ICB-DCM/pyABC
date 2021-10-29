@@ -8,9 +8,19 @@ from .util import format_plot_matrix
 
 
 def plot_histogram_1d(
-        history: History, x: str, m: int = 0, t: int = None,
-        xmin=None, xmax=None, ax=None, size=None, refval=None,
-        refval_color='C1', xname: str = None, **kwargs):
+    history: History,
+    x: str,
+    m: int = 0,
+    t: int = None,
+    xmin=None,
+    xmax=None,
+    ax=None,
+    size=None,
+    refval=None,
+    refval_color='C1',
+    xname: str = None,
+    **kwargs,
+):
     """
     Plot 1d histogram of parameter samples.
 
@@ -46,14 +56,33 @@ def plot_histogram_1d(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_1d_lowlevel(
-        df, w, x, xmin, xmax, ax=ax, size=size, refval=refval,
-        refval_color=refval_color, xname=xname, **kwargs)
+        df,
+        w,
+        x,
+        xmin,
+        xmax,
+        ax=ax,
+        size=size,
+        refval=refval,
+        refval_color=refval_color,
+        xname=xname,
+        **kwargs,
+    )
 
 
 def plot_histogram_1d_lowlevel(
-        df: pd.DataFrame, w: pd.DataFrame,
-        x: str, xmin=None, xmax=None, ax=None, size=None, refval=None,
-        refval_color='C1', xname: str = None, **kwargs):
+    df: pd.DataFrame,
+    w: pd.DataFrame,
+    x: str,
+    xmin=None,
+    xmax=None,
+    ax=None,
+    size=None,
+    refval=None,
+    refval_color='C1',
+    xname: str = None,
+    **kwargs,
+):
     """
     Lowlevel interface for plot_histogram_1d (see there for the remaining
     parameters).
@@ -91,10 +120,23 @@ def plot_histogram_1d_lowlevel(
 
 
 def plot_histogram_2d(
-        history: History, x: str, y: str, m: int = 0, t: int = None,
-        xmin=None, xmax=None, ymin=None, ymax=None, ax=None, size=None,
-        refval=None, refval_color='C1', xname: str = None, yname: str = None,
-        **kwargs):
+    history: History,
+    x: str,
+    y: str,
+    m: int = 0,
+    t: int = None,
+    xmin=None,
+    xmax=None,
+    ymin=None,
+    ymax=None,
+    ax=None,
+    size=None,
+    refval=None,
+    refval_color='C1',
+    xname: str = None,
+    yname: str = None,
+    **kwargs,
+):
     """
     Plot 2d histogram of parameter pair samples.
 
@@ -132,15 +174,41 @@ def plot_histogram_2d(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_2d_lowlevel(
-        df, w, x, y, xmin, xmax, ymin, ymax, ax=ax, size=size, refval=refval,
-        refval_color=refval_color, xname=xname, yname=yname, **kwargs)
+        df,
+        w,
+        x,
+        y,
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        ax=ax,
+        size=size,
+        refval=refval,
+        refval_color=refval_color,
+        xname=xname,
+        yname=yname,
+        **kwargs,
+    )
 
 
 def plot_histogram_2d_lowlevel(
-        df: pd.DataFrame, w: pd.DataFrame,
-        x, y, xmin=None, xmax=None, ymin=None, ymax=None, ax=None,
-        size=None, refval=None, refval_color='C1',
-        xname: str = None, yname: str = None, **kwargs):
+    df: pd.DataFrame,
+    w: pd.DataFrame,
+    x,
+    y,
+    xmin=None,
+    xmax=None,
+    ymin=None,
+    ymax=None,
+    ax=None,
+    size=None,
+    refval=None,
+    refval_color='C1',
+    xname: str = None,
+    yname: str = None,
+    **kwargs,
+):
     """
     Lowlevel interface for plot_histogram_2d (see there for the remaining
     parameters).
@@ -171,8 +239,9 @@ def plot_histogram_2d_lowlevel(
         range_ = None
 
     # plot
-    ax.hist2d(x=df[x], y=df[y], range=range_, weights=w, density=True,
-              **kwargs)
+    ax.hist2d(
+        x=df[x], y=df[y], range=range_, weights=w, density=True, **kwargs
+    )
     if refval is not None:
         ax.scatter([refval[x]], [refval[y]], color=refval_color)
     ax.set_xlabel(xname)
@@ -186,8 +255,15 @@ def plot_histogram_2d_lowlevel(
 
 
 def plot_histogram_matrix(
-        history: History, m: int = 0, t: int = None, size=None, refval=None,
-        refval_color='C1', names: dict = None, **kwargs):
+    history: History,
+    m: int = 0,
+    t: int = None,
+    size=None,
+    refval=None,
+    refval_color='C1',
+    names: dict = None,
+    **kwargs,
+):
     """
     Plot matrix of 1d and 2d histograms over all parameters.
 
@@ -218,12 +294,19 @@ def plot_histogram_matrix(
     df, w = history.get_distribution(m=m, t=t)
 
     return plot_histogram_matrix_lowlevel(
-        df, w, size, refval, refval_color, names, **kwargs)
+        df, w, size, refval, refval_color, names, **kwargs
+    )
 
 
 def plot_histogram_matrix_lowlevel(
-        df: pd.DataFrame, w: pd.DataFrame, size=None, refval=None,
-        refval_color='C1', names: dict = None, **kwargs):
+    df: pd.DataFrame,
+    w: pd.DataFrame,
+    size=None,
+    refval=None,
+    refval_color='C1',
+    names: dict = None,
+    **kwargs,
+):
     """
     Lowlevel interface for plot_histogram_matrix (see there for the remaining
     parameters).
@@ -244,7 +327,8 @@ def plot_histogram_matrix_lowlevel(
 
     # create new figure
     fig, arr_ax = plt.subplots(
-        nrows=n_par, ncols=n_par, sharex=False, sharey=False)
+        nrows=n_par, ncols=n_par, sharex=False, sharey=False
+    )
 
     def scatter(x, y, ax, refval=None):
         ax.scatter(x, y, color="k")
@@ -259,8 +343,15 @@ def plot_histogram_matrix_lowlevel(
         # diagonal
         ax = arr_ax[i, i]
         plot_histogram_1d_lowlevel(
-            df, w, y_id, ax=ax, refval=refval, refval_color=refval_color,
-            xname=names[y_id], **kwargs)
+            df,
+            w,
+            y_id,
+            ax=ax,
+            refval=refval,
+            refval_color=refval_color,
+            xname=names[y_id],
+            **kwargs,
+        )
 
         for j in range(0, i):
             x_id = par_ids[j]
@@ -269,8 +360,17 @@ def plot_histogram_matrix_lowlevel(
             # lower
             ax = arr_ax[i, j]
             plot_histogram_2d_lowlevel(
-                df, w, x_id, y_id, ax=ax, refval=refval, xname=names[x_id],
-                yname=names[y_id], refval_color=refval_color, **kwargs)
+                df,
+                w,
+                x_id,
+                y_id,
+                ax=ax,
+                refval=refval,
+                xname=names[x_id],
+                yname=names[y_id],
+                refval_color=refval_color,
+                **kwargs,
+            )
 
             # upper
             ax = arr_ax[j, i]
