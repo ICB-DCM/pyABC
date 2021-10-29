@@ -6,7 +6,7 @@ pyABC
    :width: 30 %
    :align: center
 
-|CI| |docs| |codecov| |pypi| |doi|
+|CI| |docs| |codecov| |pypi| |doi| |black|
 
 Massively parallel, distributed and scalable ABC-SMC
 (Approximate Bayesian Computation - Sequential Monte Carlo)
@@ -33,16 +33,20 @@ and also for download and for online inspection in the
 
 .. |docs| image:: https://readthedocs.org/projects/pyabc/badge/?version=latest
    :target: http://pyabc.readthedocs.io/en/latest/
-   :alt: docs
+   :alt: Docs
 
 .. |codecov| image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/ICB-DCM/pyABC
-   :alt: codecov
+   :alt: Codecov
 
 .. |pypi| image:: https://badge.fury.io/py/pyabc.svg
    :target: https://badge.fury.io/py/pyabc
-   :alt: pypi
+   :alt: PyPI
 
 .. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3364560.svg
    :target: https://doi.org/10.5281/zenodo.3364560
-   :alt: doi
+   :alt: DOI
+
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
+   :alt: Code style: Black

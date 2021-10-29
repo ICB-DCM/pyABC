@@ -11,6 +11,8 @@ Welcome to pyABC's documentation!
    :target: https://badge.fury.io/py/pyabc
 .. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3364560.svg
    :target: https://doi.org/10.5281/zenodo.3364560
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
 
 :Release: |version|
 :Source code: https://github.com/icb-dcm/pyabc
