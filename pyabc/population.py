@@ -8,10 +8,12 @@ iteration.
 """
 
 
+import logging
 from typing import Callable, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
-import logging
+
 from .parameters import Parameter
 
 logger = logging.getLogger("ABC.Population")

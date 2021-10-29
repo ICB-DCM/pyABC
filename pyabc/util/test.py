@@ -1,7 +1,7 @@
 """Util functions for tests."""
 
-import os
 import logging
+import os
 
 # maximum population size environment variable
 PYABC_MAX_POP_SIZE = "PYABC_MAX_POP_SIZE"

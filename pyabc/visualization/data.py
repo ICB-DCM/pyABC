@@ -1,14 +1,14 @@
 """Data and summary statistics plots"""
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.axes
 import logging
 from typing import Callable, List, Union
 
-from ..storage import History
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
+from ..storage import History
 
 logger = logging.getLogger("ABC.Visualization")
 

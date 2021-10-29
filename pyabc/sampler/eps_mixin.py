@@ -1,7 +1,8 @@
-import numpy as np
-import cloudpickle as pickle
-from sortedcontainers import SortedListWithKey
 import abc
+
+import cloudpickle as pickle
+import numpy as np
+from sortedcontainers import SortedListWithKey
 
 
 class EPSMixin(abc.ABC):

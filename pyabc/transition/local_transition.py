@@ -1,14 +1,15 @@
-import numpy.linalg as la
-import numpy as np
-from scipy.spatial import cKDTree
-import pandas as pd
 import logging
 from typing import Union
 
+import numpy as np
+import numpy.linalg as la
+import pandas as pd
+from scipy.spatial import cKDTree
+
 from ..parameters import Parameter
 from .base import Transition
-from .util import smart_cov
 from .exceptions import NotEnoughParticles
+from .util import smart_cov
 
 logger = logging.getLogger("ABC.Transition")
 

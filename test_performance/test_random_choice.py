@@ -1,7 +1,9 @@
 """Check pyabc.random_choice"""
 
-import numpy as np
 from time import time
+
+import numpy as np
+
 from pyabc.random_choice import fast_random_choice
 
 

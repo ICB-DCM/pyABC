@@ -1,16 +1,17 @@
-import sys
-import os
-import numpy as np
-import scipy.stats
-import pandas as pd
-import pytest
-import git
 import itertools
-import matplotlib.pyplot as plt
+import os
+import sys
 
 import amici.petab_import
+import git
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import petab
 import petab.C as C
+import pytest
+import scipy.stats
+
 import pyabc.petab
 import pyabc.petab.base
 

@@ -14,17 +14,17 @@ when the distance measure and epsilon criteria develop over
 time.
 """
 
+import logging
+from typing import Callable, Union
+
 import numpy as np
 import pandas as pd
-from typing import Callable, Union
-import logging
 
-from ..distance import Distance, SCALE_LIN, StochasticKernel
+from ..distance import SCALE_LIN, Distance, StochasticKernel
 from ..epsilon import Epsilon
 from ..parameters import Parameter
-from .pdf_norm import pdf_norm_from_kernel, pdf_norm_max_found
 from ..storage import save_dict_to_json
-
+from .pdf_norm import pdf_norm_from_kernel, pdf_norm_max_found
 
 logger = logging.getLogger("ABC.Acceptor")
 

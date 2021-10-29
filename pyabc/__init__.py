@@ -15,135 +15,129 @@ selection.
     determine on how many jobs to parallelize the sampling.
 """
 
-from .version import __version__  # noqa: F401
-from .parameters import Parameter
-from .random_variables import (
-    Distribution,
-    RV,
-    RVBase,
-    RVDecorator,
-    LowerBoundDecorator,
-)
-from .distance import (
-    Distance,
-    NoDistance,
-    AcceptAllDistance,
-    SimpleFunctionDistance,
-    PNormDistance,
-    AdaptivePNormDistance,
-    InfoWeightedPNormDistance,
-    AggregatedDistance,
-    AdaptiveAggregatedDistance,
-    ZScoreDistance,
-    PCADistance,
-    MinMaxDistance,
-    PercentileDistance,
-    RangeEstimatorDistance,
-    DistanceWithMeasureList,
-    WassersteinDistance,
-    SlicedWassersteinDistance,
-    StochasticKernel,
-    NormalKernel,
-    IndependentNormalKernel,
-    IndependentLaplaceKernel,
-    BinomialKernel,
-    PoissonKernel,
-    NegativeBinomialKernel,
-)
-from .epsilon import (
-    Epsilon,
-    NoEpsilon,
-    ConstantEpsilon,
-    QuantileEpsilon,
-    MedianEpsilon,
-    ListEpsilon,
-    TemperatureBase,
-    ListTemperature,
-    Temperature,
-    TemperatureScheme,
-    AcceptanceRateScheme,
-    ExpDecayFixedIterScheme,
-    ExpDecayFixedRatioScheme,
-    PolynomialDecayFixedIterScheme,
-    DalyScheme,
-    FrielPettittScheme,
-    EssScheme,
-)
-from .sampler import (
-    nr_cores_available,
-    SingleCoreSampler,
-    MulticoreParticleParallelSampler,
-    MappingSampler,
-    DaskDistributedSampler,
-    RedisEvalParallelSampler,
-    RedisStaticSampler,
-    RedisEvalParallelSamplerServerStarter,
-    RedisStaticSamplerServerStarter,
-    MulticoreEvalParallelSampler,
-    ConcurrentFutureSampler,
-)
-from .inference import ABCSMC
-from .storage import History, create_sqlite_db_id
+import logging
+import os
+
+# isort: off
+
+from .version import __version__
+
+# isort: on
+
+from . import settings, visualization
 from .acceptor import (
     Acceptor,
+    ScaledPDFNorm,
     SimpleFunctionAcceptor,
-    UniformAcceptor,
     StochasticAcceptor,
+    UniformAcceptor,
     pdf_norm_from_kernel,
     pdf_norm_max_found,
-    ScaledPDFNorm,
 )
-from .model import Model, SimpleModel, ModelResult, IntegratedModel
-from .transition import (
-    MultivariateNormalTransition,
-    LocalTransition,
-    DiscreteRandomWalkTransition,
-    GridSearchCV,
-    AggregatedTransition,
-    DiscreteJumpTransition,
-    ModelPerturbationKernel,
+from .distance import (
+    AcceptAllDistance,
+    AdaptiveAggregatedDistance,
+    AdaptivePNormDistance,
+    AggregatedDistance,
+    BinomialKernel,
+    Distance,
+    DistanceWithMeasureList,
+    IndependentLaplaceKernel,
+    IndependentNormalKernel,
+    InfoWeightedPNormDistance,
+    MinMaxDistance,
+    NegativeBinomialKernel,
+    NoDistance,
+    NormalKernel,
+    PCADistance,
+    PercentileDistance,
+    PNormDistance,
+    PoissonKernel,
+    RangeEstimatorDistance,
+    SimpleFunctionDistance,
+    SlicedWassersteinDistance,
+    StochasticKernel,
+    WassersteinDistance,
+    ZScoreDistance,
 )
-from .population import (
-    Particle,
-    Population,
-    Sample,
+from .epsilon import (
+    AcceptanceRateScheme,
+    ConstantEpsilon,
+    DalyScheme,
+    Epsilon,
+    EssScheme,
+    ExpDecayFixedIterScheme,
+    ExpDecayFixedRatioScheme,
+    FrielPettittScheme,
+    ListEpsilon,
+    ListTemperature,
+    MedianEpsilon,
+    NoEpsilon,
+    PolynomialDecayFixedIterScheme,
+    QuantileEpsilon,
+    Temperature,
+    TemperatureBase,
+    TemperatureScheme,
 )
+from .inference import ABCSMC
+from .model import IntegratedModel, Model, ModelResult, SimpleModel
+from .parameters import Parameter
+from .population import Particle, Population, Sample
 from .populationstrategy import AdaptivePopulationSize, ConstantPopulationSize
 from .predictor import (
-    Predictor,
-    LinearPredictor,
-    LassoPredictor,
-    GPPredictor,
     GPKernelHandle,
-    MLPPredictor,
+    GPPredictor,
     HiddenLayerHandle,
+    LassoPredictor,
+    LinearPredictor,
+    MLPPredictor,
     ModelSelectionPredictor,
+    Predictor,
 )
-from .sumstat import (
-    Sumstat,
-    IdentitySumstat,
-    PredictorSumstat,
+from .random_variables import (
+    RV,
+    Distribution,
+    LowerBoundDecorator,
+    RVBase,
+    RVDecorator,
 )
-from .util import (
-    EventIxs,
+from .sampler import (
+    ConcurrentFutureSampler,
+    DaskDistributedSampler,
+    MappingSampler,
+    MulticoreEvalParallelSampler,
+    MulticoreParticleParallelSampler,
+    RedisEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSampler,
+    RedisStaticSamplerServerStarter,
+    SingleCoreSampler,
+    nr_cores_available,
 )
+from .storage import History, create_sqlite_db_id
+from .sumstat import IdentitySumstat, PredictorSumstat, Sumstat
+from .transition import (
+    AggregatedTransition,
+    DiscreteJumpTransition,
+    DiscreteRandomWalkTransition,
+    GridSearchCV,
+    LocalTransition,
+    ModelPerturbationKernel,
+    MultivariateNormalTransition,
+)
+from .util import EventIxs
 from .weighted_statistics import (
-    weighted_quantile,
-    weighted_median,
-    weighted_mean,
-    weighted_var,
-    weighted_std,
-    weighted_mse,
-    weighted_rmse,
     effective_sample_size,
     resample,
     resample_deterministic,
+    weighted_mean,
+    weighted_median,
+    weighted_mse,
+    weighted_quantile,
+    weighted_rmse,
+    weighted_std,
+    weighted_var,
 )
-from . import visualization
-from . import settings
-
-import os
-import logging
 
 # Set log level
 try:

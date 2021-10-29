@@ -1,52 +1,52 @@
+import os
+import tempfile
+
 import numpy as np
+import pytest
 import scipy as sp
 import scipy.spatial.distance as sp_dist
 import scipy.stats
-import os
-import tempfile
-import pytest
 
 from pyabc.distance import (
-    PercentileDistance,
-    MinMaxDistance,
-    PNormDistance,
-    AdaptivePNormDistance,
-    InfoWeightedPNormDistance,
-    AggregatedDistance,
+    SCALE_LIN,
     AdaptiveAggregatedDistance,
-    WassersteinDistance,
-    SlicedWassersteinDistance,
-    NormalKernel,
-    IndependentNormalKernel,
-    IndependentLaplaceKernel,
+    AdaptivePNormDistance,
+    AggregatedDistance,
     BinomialKernel,
-    PoissonKernel,
+    IndependentLaplaceKernel,
+    IndependentNormalKernel,
+    InfoWeightedPNormDistance,
+    MinMaxDistance,
     NegativeBinomialKernel,
-    median_absolute_deviation,
-    mean_absolute_deviation,
-    standard_deviation,
+    NormalKernel,
+    PercentileDistance,
+    PNormDistance,
+    PoissonKernel,
+    SlicedWassersteinDistance,
+    WassersteinDistance,
     bias,
-    root_mean_square_deviation,
-    std_or_rmsd,
-    median_absolute_deviation_to_observation,
-    mean_absolute_deviation_to_observation,
+    combined_mean_absolute_deviation,
     combined_median_absolute_deviation,
     mad_or_cmad,
-    combined_mean_absolute_deviation,
-    standard_deviation_to_observation,
-    span,
     mean,
+    mean_absolute_deviation,
+    mean_absolute_deviation_to_observation,
     median,
-    SCALE_LIN,
+    median_absolute_deviation,
+    median_absolute_deviation_to_observation,
+    root_mean_square_deviation,
+    span,
+    standard_deviation,
+    standard_deviation_to_observation,
+    std_or_rmsd,
 )
-from pyabc.population import Particle, Sample
-from pyabc.parameters import Parameter
-from pyabc.storage import load_dict_from_json
-from pyabc.predictor import LinearPredictor
-from pyabc.random_variables import Distribution, RV
-from pyabc.storage import create_sqlite_db_id
-from pyabc.sumstat import Sumstat
 from pyabc.inference import ABCSMC
+from pyabc.parameters import Parameter
+from pyabc.population import Particle, Sample
+from pyabc.predictor import LinearPredictor
+from pyabc.random_variables import RV, Distribution
+from pyabc.storage import create_sqlite_db_id, load_dict_from_json
+from pyabc.sumstat import Sumstat
 
 
 class MockABC:

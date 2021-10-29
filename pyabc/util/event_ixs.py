@@ -1,6 +1,7 @@
-import numpy as np
-from typing import Collection, List, Union
 import collections.abc
+from typing import Collection, List, Union
+
+import numpy as np
 
 
 class EventIxs:

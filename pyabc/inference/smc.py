@@ -1,47 +1,47 @@
 """ABC-SMC"""
 
-import logging
-from typing import List, Callable, TypeVar, Union
-import numpy as np
 import copy
+import logging
 from datetime import datetime, timedelta
+from typing import Callable, List, TypeVar, Union
+
+import numpy as np
 
 from pyabc.acceptor import (
     Acceptor,
-    UniformAcceptor,
     SimpleFunctionAcceptor,
     StochasticAcceptor,
+    UniformAcceptor,
 )
 from pyabc.distance import (
     Distance,
     PNormDistance,
-    to_distance,
     StochasticKernel,
+    to_distance,
 )
 from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
+from pyabc.inference_util import (
+    AnalysisVars,
+    create_analysis_id,
+    create_prior_pdf,
+    create_simulate_from_prior_function,
+    create_simulate_function,
+    create_transition_pdf,
+    termination_criteria_fulfilled,
+)
 from pyabc.model import Model, SimpleModel
 from pyabc.platform_factory import DefaultSampler
 from pyabc.population import Population, Sample
-from pyabc.populationstrategy import PopulationStrategy, ConstantPopulationSize
+from pyabc.populationstrategy import ConstantPopulationSize, PopulationStrategy
 from pyabc.random_variables import RV, Distribution
 from pyabc.sampler import Sampler
 from pyabc.storage import History
 from pyabc.transition import (
-    Transition,
-    MultivariateNormalTransition,
     ModelPerturbationKernel,
+    MultivariateNormalTransition,
+    Transition,
 )
 from pyabc.weighted_statistics import effective_sample_size
-from pyabc.inference_util import (
-    create_simulate_from_prior_function,
-    create_prior_pdf,
-    create_transition_pdf,
-    create_simulate_function,
-    termination_criteria_fulfilled,
-    create_analysis_id,
-    AnalysisVars,
-)
-
 
 logger = logging.getLogger("ABC")
 

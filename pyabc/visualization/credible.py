@@ -1,15 +1,16 @@
 """Bayesian credible interval plots"""
 
-import matplotlib.pyplot as plt
-import matplotlib.axes
-from matplotlib.lines import Line2D
 from typing import List, Union
+
+import matplotlib.axes
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.lines import Line2D
 
 from ..storage import History
+from ..transition import MultivariateNormalTransition, Transition
 from ..weighted_statistics import weighted_quantile
-from ..transition import Transition, MultivariateNormalTransition
-from .util import to_lists, get_labels
+from .util import get_labels, to_lists
 
 
 def plot_credible_intervals(

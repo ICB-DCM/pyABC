@@ -1,31 +1,25 @@
 """p-norm based (adaptive) distances."""
 
-import numpy as np
+import logging
 from numbers import Number
 from typing import Callable, Collection, Dict, List, Union
-import logging
+
+import numpy as np
 
 from ..population import Sample
 from ..predictor import Predictor
-from ..sumstat import (
-    Sumstat,
-    IdentitySumstat,
-    Subsetter,
-    IdSubsetter,
-)
+from ..sumstat import IdentitySumstat, IdSubsetter, Subsetter, Sumstat
 from ..util import (
-    dict2arr,
-    read_sample,
-    ParTrafoBase,
-    ParTrafo,
     EventIxs,
+    ParTrafo,
+    ParTrafoBase,
+    dict2arr,
     log_samples,
+    read_sample,
 )
-
-from .scale import mad
 from .base import Distance
-from .util import bound_weights, log_weights, fd_nabla1_multi_delta
-
+from .scale import mad
+from .util import bound_weights, fd_nabla1_multi_delta, log_weights
 
 logger = logging.getLogger("ABC.Distance")
 

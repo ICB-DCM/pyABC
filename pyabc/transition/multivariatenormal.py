@@ -5,10 +5,9 @@ import pandas as pd
 import scipy.stats as st
 
 from ..parameters import Parameter
-from .exceptions import NotEnoughParticles
 from .base import Transition
+from .exceptions import NotEnoughParticles
 from .util import smart_cov
-
 
 BandwidthSelector = Callable[[int, int], float]
 

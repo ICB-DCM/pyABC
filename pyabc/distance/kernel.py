@@ -1,12 +1,12 @@
 """Stochastic kernels."""
 
+from typing import Callable, List, Sequence, Union
+
 import numpy as np
 from scipy import stats
-from typing import Callable, List, Sequence, Union
 
 from ..population import Sample
 from .base import Distance
-
 
 SCALE_LIN = "SCALE_LIN"
 SCALE_LOG = "SCALE_LOG"

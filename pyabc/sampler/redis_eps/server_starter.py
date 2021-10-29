@@ -1,11 +1,12 @@
-from time import sleep
-from subprocess import Popen  # noqa: S404
-from multiprocessing import Process
 import tempfile
-import psutil
 import time
+from multiprocessing import Process
+from subprocess import Popen  # noqa: S404
+from time import sleep
 
-from .cli import work, _manage
+import psutil
+
+from .cli import _manage, work
 from .sampler import RedisEvalParallelSampler
 from .sampler_static import RedisStaticSampler
 

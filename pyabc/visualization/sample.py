@@ -1,16 +1,17 @@
 """Sample number plots"""
 
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import matplotlib.axes
-from matplotlib.ticker import MaxNLocator
-import numpy as np
-import pandas as pd
 from typing import List, Tuple, Union
 
+import matplotlib as mpl
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from matplotlib.ticker import MaxNLocator
+
 from ..storage import History
-from .util import to_lists, get_labels
 from ..weighted_statistics import effective_sample_size
+from .util import get_labels, to_lists
 
 
 def plot_sample_numbers(

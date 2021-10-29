@@ -1,12 +1,13 @@
+import logging
 import os
 import pickle
 import sys
-import logging
+
 import cloudpickle
-from .db import job_db_factory
 
 from pyabc.sge.execution_contexts import NamedPrinter
 
+from .db import job_db_factory
 
 logger = logging.getLogger("ABC.SGE")
 

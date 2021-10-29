@@ -1,24 +1,21 @@
 """Tests for the `pyabc.sumstat` module."""
 
-import pytest
-import numpy as np
-import pandas as pd
 import os
 import tempfile
 
+import numpy as np
+import pandas as pd
+import pytest
+
 import pyabc
-from pyabc.sumstat import (
-    IdentitySumstat,
-    PredictorSumstat,
-    IdSubsetter,
-    GMMSubsetter,
-)
-from pyabc.util import (
-    EventIxs,
-    dict2arr,
-    dict2arrlabels,
-)
 from pyabc.predictor import LinearPredictor
+from pyabc.sumstat import (
+    GMMSubsetter,
+    IdentitySumstat,
+    IdSubsetter,
+    PredictorSumstat,
+)
+from pyabc.util import EventIxs, dict2arr, dict2arrlabels
 
 
 def test_dict2arr():

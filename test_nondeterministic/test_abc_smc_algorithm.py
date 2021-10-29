@@ -9,26 +9,26 @@ import os
 import random
 import tempfile
 
-import pytest
 import numpy as np
+import pytest
 import scipy as sp
 import scipy.stats as st
-from scipy.special import gamma, binom
+from scipy.special import binom, gamma
 
 from pyabc import (
     ABCSMC,
     RV,
+    AdaptivePopulationSize,
+    ConstantPopulationSize,
     Distribution,
+    GridSearchCV,
     MedianEpsilon,
     MinMaxDistance,
-    PercentileDistance,
-    SimpleModel,
     Model,
     ModelResult,
     MultivariateNormalTransition,
-    ConstantPopulationSize,
-    AdaptivePopulationSize,
-    GridSearchCV,
+    PercentileDistance,
+    SimpleModel,
 )
 from pyabc.sampler import MulticoreEvalParallelSampler
 from pyabc.transition import LocalTransition

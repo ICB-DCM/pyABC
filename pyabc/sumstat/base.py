@@ -1,11 +1,12 @@
 """Basic summary statistics."""
 
-import numpy as np
-from typing import Callable, Dict, List, Tuple, Union
 from abc import ABC, abstractmethod
+from typing import Callable, Dict, List, Tuple, Union
+
+import numpy as np
 
 from ..population import Sample
-from ..util import io_dict2arr, dict2arrlabels
+from ..util import dict2arrlabels, io_dict2arr
 
 
 class Sumstat(ABC):
