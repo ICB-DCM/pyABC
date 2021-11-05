@@ -9,7 +9,7 @@ import numpy as np
 
 from pyabc.acceptor import (
     Acceptor,
-    SimpleFunctionAcceptor,
+    FunctionAcceptor,
     StochasticAcceptor,
     UniformAcceptor,
 )
@@ -29,7 +29,7 @@ from pyabc.inference_util import (
     create_transition_pdf,
     termination_criteria_fulfilled,
 )
-from pyabc.model import Model, SimpleModel
+from pyabc.model import FunctionModel, Model
 from pyabc.platform_factory import DefaultSampler
 from pyabc.population import Population, Sample
 from pyabc.populationstrategy import ConstantPopulationSize, PopulationStrategy
@@ -185,7 +185,7 @@ class ABCSMC:
     ):
         if not isinstance(models, list):
             models = [models]
-        models = list(map(SimpleModel.assert_model, models))
+        models = list(map(FunctionModel.assert_model, models))
         self.models = models
 
         if not isinstance(parameter_priors, list):
@@ -234,7 +234,7 @@ class ABCSMC:
 
         if acceptor is None:
             acceptor = UniformAcceptor()
-        self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
+        self.acceptor = FunctionAcceptor.assert_acceptor(acceptor)
 
         self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
         self.max_nr_recorded_particles = max_nr_recorded_particles

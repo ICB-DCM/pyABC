@@ -5,7 +5,7 @@ Models
 A model defines how input parameters relate to output simulated data.
 """
 
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 from .acceptor import Acceptor
 from .distance import Distance
@@ -218,7 +218,7 @@ class Model:
         return result
 
 
-class SimpleModel(Model):
+class FunctionModel(Model):
     """
     A model which is initialized with a function which generates the samples.
     For most cases this class will be adequate.
@@ -247,27 +247,26 @@ class SimpleModel(Model):
         return self.sample_function(pars)
 
     @staticmethod
-    def assert_model(model_or_function):
+    def assert_model(model_or_function: Union[Callable, Model]) -> Model:
         """
         Alternative constructor. Accepts either a Model instance or a
         function and returns always a Model instance.
 
         Parameters
         ----------
-        model_or_function: Model, function
+        model_or_function:
             Constructs a SimpleModel instance if a function is passed.
             If a Model instance is passed, the Model instance itself is
             returned.
 
         Returns
         -------
-        model: SimpleModel or Model
-
+        model: A valid model instance
         """
         if isinstance(model_or_function, Model):
             return model_or_function
         else:
-            return SimpleModel(model_or_function)
+            return FunctionModel(model_or_function)
 
 
 class IntegratedModel(Model):

@@ -14,8 +14,8 @@ from .aggregate import AdaptiveAggregatedDistance, AggregatedDistance
 from .base import (
     AcceptAllDistance,
     Distance,
+    FunctionDistance,
     NoDistance,
-    SimpleFunctionDistance,
     to_distance,
 )
 from .distance import (
@@ -30,12 +30,12 @@ from .kernel import (
     SCALE_LIN,
     SCALE_LOG,
     BinomialKernel,
+    FunctionKernel,
     IndependentLaplaceKernel,
     IndependentNormalKernel,
     NegativeBinomialKernel,
     NormalKernel,
     PoissonKernel,
-    SimpleFunctionKernel,
     StochasticKernel,
 )
 from .ot import SlicedWassersteinDistance, WassersteinDistance
