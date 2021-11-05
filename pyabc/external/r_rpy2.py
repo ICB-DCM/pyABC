@@ -86,7 +86,7 @@ class R:
 
     def __init__(self, source_file: str):
         if r is None:
-            logger.error("Install rpy2, e.g. via `pip install pyabc[R]`")
+            raise ImportError("Install rpy2, e.g. via `pip install pyabc[R]`")
         warnings.warn("The support of R via rpy2 is considered experimental.")
         self.source_file = source_file
         self._read_source()
