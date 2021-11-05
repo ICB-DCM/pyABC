@@ -11,13 +11,7 @@ subclass the pyabc.Distance class.
 """
 
 from .aggregate import AdaptiveAggregatedDistance, AggregatedDistance
-from .base import (
-    AcceptAllDistance,
-    Distance,
-    NoDistance,
-    SimpleFunctionDistance,
-    to_distance,
-)
+from .base import AcceptAllDistance, Distance, FunctionDistance, NoDistance
 from .distance import (
     DistanceWithMeasureList,
     MinMaxDistance,
@@ -30,12 +24,12 @@ from .kernel import (
     SCALE_LIN,
     SCALE_LOG,
     BinomialKernel,
+    FunctionKernel,
     IndependentLaplaceKernel,
     IndependentNormalKernel,
     NegativeBinomialKernel,
     NormalKernel,
     PoissonKernel,
-    SimpleFunctionKernel,
     StochasticKernel,
 )
 from .ot import SlicedWassersteinDistance, WassersteinDistance

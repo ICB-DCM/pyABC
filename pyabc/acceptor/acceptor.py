@@ -206,7 +206,7 @@ class Acceptor:
         return {}
 
 
-class SimpleFunctionAcceptor(Acceptor):
+class FunctionAcceptor(Acceptor):
     """
     Initialize from function.
 
@@ -224,7 +224,7 @@ class SimpleFunctionAcceptor(Acceptor):
         return self.fun(distance_function, eps, x, x_0, t, par)
 
     @staticmethod
-    def assert_acceptor(maybe_acceptor: Union[Acceptor, Callable]):
+    def to_acceptor(maybe_acceptor: Union[Acceptor, Callable]) -> Acceptor:
         """
         Create an acceptor object from input.
 
@@ -242,7 +242,7 @@ class SimpleFunctionAcceptor(Acceptor):
         if isinstance(maybe_acceptor, Acceptor):
             return maybe_acceptor
         else:
-            return SimpleFunctionAcceptor(maybe_acceptor)
+            return FunctionAcceptor(maybe_acceptor)
 
 
 def accept_use_current_time(distance_function, eps, x, x_0, t, par):

@@ -198,7 +198,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
 
     # We define two models, but they are identical so far
     models = [model, model]
-    models = list(map(pyabc.SimpleModel, models))
+    models = list(map(pyabc.FunctionModel, models))
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1

@@ -9,15 +9,15 @@ import numpy as np
 
 from pyabc.acceptor import (
     Acceptor,
-    SimpleFunctionAcceptor,
+    FunctionAcceptor,
     StochasticAcceptor,
     UniformAcceptor,
 )
 from pyabc.distance import (
     Distance,
+    FunctionDistance,
     PNormDistance,
     StochasticKernel,
-    to_distance,
 )
 from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
 from pyabc.inference_util import (
@@ -29,7 +29,7 @@ from pyabc.inference_util import (
     create_transition_pdf,
     termination_criteria_fulfilled,
 )
-from pyabc.model import Model, SimpleModel
+from pyabc.model import FunctionModel, Model
 from pyabc.platform_factory import DefaultSampler
 from pyabc.population import Population, Sample
 from pyabc.populationstrategy import ConstantPopulationSize, PopulationStrategy
@@ -185,7 +185,7 @@ class ABCSMC:
     ):
         if not isinstance(models, list):
             models = [models]
-        models = list(map(SimpleModel.assert_model, models))
+        models = list(map(FunctionModel.to_model, models))
         self.models = models
 
         if not isinstance(parameter_priors, list):
@@ -200,7 +200,9 @@ class ABCSMC:
 
         if distance_function is None:
             distance_function = PNormDistance()
-        self.distance_function = to_distance(distance_function)
+        self.distance_function = FunctionDistance.to_distance(
+            distance_function,
+        )
 
         self.summary_statistics = summary_statistics
 
@@ -234,7 +236,7 @@ class ABCSMC:
 
         if acceptor is None:
             acceptor = UniformAcceptor()
-        self.acceptor = SimpleFunctionAcceptor.assert_acceptor(acceptor)
+        self.acceptor = FunctionAcceptor.to_acceptor(acceptor)
 
         self.stop_if_only_single_model_alive = stop_if_only_single_model_alive
         self.max_nr_recorded_particles = max_nr_recorded_particles
