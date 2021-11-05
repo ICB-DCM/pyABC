@@ -35,8 +35,9 @@ try:
         pandas2ri,
         r,
     )
-except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
-    logger.error("Install rpy2 to enable simple support for the R language.")
+except ImportError:
+    ListVector = conversion = r = None
+    default_converter = numpy2ri = pandas2ri = None
 
 
 __all__ = ["R"]
@@ -84,6 +85,8 @@ class R:
     """
 
     def __init__(self, source_file: str):
+        if r is None:
+            logger.error("Install rpy2, e.g. via `pip install pyabc[R]`")
         warnings.warn("The support of R via rpy2 is considered experimental.")
         self.source_file = source_file
         self._read_source()
