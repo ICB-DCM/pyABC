@@ -21,6 +21,7 @@ from pyabc import (
     AdaptivePopulationSize,
     ConstantPopulationSize,
     Distribution,
+    FunctionModel,
     GridSearchCV,
     MedianEpsilon,
     MinMaxDistance,
@@ -28,7 +29,6 @@ from pyabc import (
     ModelResult,
     MultivariateNormalTransition,
     PercentileDistance,
-    SimpleModel,
 )
 from pyabc.sampler import MulticoreEvalParallelSampler
 from pyabc.transition import LocalTransition
@@ -76,7 +76,7 @@ def test_cookie_jar(db_path, sampler):
     model1 = make_model(theta1)
     model2 = make_model(theta2)
     models = [model1, model2]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(
@@ -112,7 +112,7 @@ def test_empty_population(db_path, sampler):
     model1 = make_model(theta1)
     model2 = make_model(theta2)
     models = [model1, model2]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(
@@ -142,7 +142,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
         return {"result": st.binom(binomial_n, args.theta).rvs()}
 
     models = [model_fun for _ in range(2)]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(800)
     parameter_given_model_prior_distribution = [
         Distribution(theta=st.beta(1, 1)) for _ in range(2)
@@ -209,7 +209,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
         return {"result": st.binom(binomial_n, args['theta']).rvs()}
 
     models = [model for _ in range(2)]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(800)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
@@ -258,7 +258,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(
         return {"result": st.binom(binomial_n, args.theta).rvs()}
 
     models = [model for _ in range(2)]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(800)
     a1, b1 = 1, 1
     a2, b2 = 10, 1
@@ -304,7 +304,7 @@ def test_continuous_non_gaussian(db_path, sampler):
         return {"result": np.random.rand() * args['u']}
 
     models = [model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(250)
     parameter_given_model_prior_distribution = [
         Distribution(u=RV("uniform", 0, 1))
@@ -361,7 +361,7 @@ def test_gaussian_single_population(db_path, sampler):
         return {"y": st.norm(args['x'], sigma_ground_truth).rvs()}
 
     models = [model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     nr_populations = 1
     population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [
@@ -416,7 +416,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
         return {"y": st.norm(args['x'], sigma_y).rvs()}
 
     models = [model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     nr_populations = 4
     population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [
@@ -468,7 +468,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
         return {"y": st.norm(args['x'], sigma_y).rvs()}
 
     models = [model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     nr_populations = 4
     population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [
@@ -528,7 +528,7 @@ def test_two_competing_gaussians_single_population(
         return {"y": st.norm(args['x'], sigma_y).rvs()}
 
     models = [model, model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(500)
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
@@ -580,7 +580,7 @@ def test_two_competing_gaussians_multiple_population(
 
     # We define two models, but they are identical so far
     models = [model, model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
@@ -644,7 +644,7 @@ def test_empty_population_adaptive(db_path, sampler):
     model1 = make_model(theta1)
     model2 = make_model(theta2)
     models = [model1, model2]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = AdaptivePopulationSize(1500)
     parameter_given_model_prior_distribution = [Distribution(), Distribution()]
     abc = ABCSMC(
@@ -674,7 +674,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
         return {"result": st.binom(binomial_n, args.theta).rvs()}
 
     models = [model_fun for _ in range(2)]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     population_size = AdaptivePopulationSize(800)
     parameter_given_model_prior_distribution = [
         Distribution(theta=st.beta(1, 1)) for _ in range(2)
@@ -706,7 +706,7 @@ def test_gaussian_multiple_populations_adpative_population_size(
         return {"y": st.norm(args['x'], sigma_y).rvs()}
 
     models = [model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
     nr_populations = 4
     population_size = AdaptivePopulationSize(600)
     parameter_given_model_prior_distribution = [
@@ -759,7 +759,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(
 
     # We define two models, but they are identical so far
     models = [model, model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
 
     # The prior over the model classes is uniform
     model_prior = RV("randint", 0, 2)

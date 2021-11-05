@@ -6,6 +6,7 @@ from typing import Callable, Union
 
 import numpy as np
 import scipy.linalg as la
+import scipy.spatial as spat
 
 from ..population import Sample
 from ..sumstat import Sumstat
@@ -106,7 +107,7 @@ class WassersteinDistance(Distance):
                 # of course, we could permit arbitrary norms here if needed
                 raise ValueError(f"Cannot translate p={p} into a distance.")
         if isinstance(dist, str):
-            dist = partial(ot.dist, metric=dist)
+            dist = partial(spat.distance.cdist, metric=dist)
         self.dist: Callable = dist
 
         if emd_args is None:
@@ -164,7 +165,7 @@ class WassersteinDistance(Distance):
         n, n0 = s.shape[0], s0.shape[0]
 
         # pairwise cost matrix, shape (n, n0)
-        m = self.dist(x1=s, x2=s0)
+        m = self.dist(XA=s, XB=s0)
 
         # weights (could also be passed/learned?)
         w, w0 = np.ones((n,)) / n, np.ones((n0,)) / n0
