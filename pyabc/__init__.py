@@ -27,8 +27,8 @@ from .version import __version__
 from . import settings, visualization
 from .acceptor import (
     Acceptor,
+    FunctionAcceptor,
     ScaledPDFNorm,
-    SimpleFunctionAcceptor,
     StochasticAcceptor,
     UniformAcceptor,
     pdf_norm_from_kernel,
@@ -42,6 +42,8 @@ from .distance import (
     BinomialKernel,
     Distance,
     DistanceWithMeasureList,
+    FunctionDistance,
+    FunctionKernel,
     IndependentLaplaceKernel,
     IndependentNormalKernel,
     InfoWeightedPNormDistance,
@@ -54,7 +56,6 @@ from .distance import (
     PNormDistance,
     PoissonKernel,
     RangeEstimatorDistance,
-    SimpleFunctionDistance,
     SlicedWassersteinDistance,
     StochasticKernel,
     WassersteinDistance,
@@ -80,7 +81,7 @@ from .epsilon import (
     TemperatureScheme,
 )
 from .inference import ABCSMC
-from .model import IntegratedModel, Model, ModelResult, SimpleModel
+from .model import FunctionModel, IntegratedModel, Model, ModelResult
 from .parameters import Parameter
 from .population import Particle, Population, Sample
 from .populationstrategy import AdaptivePopulationSize, ConstantPopulationSize

@@ -179,7 +179,7 @@ class AmiciPetabImporter(PetabImporter):
             return x['llh']
 
         # create a kernel from function, returning log-scaled values
-        kernel = pyabc.distance.SimpleFunctionKernel(
+        kernel = pyabc.distance.FunctionKernel(
             kernel_fun, ret_scale=pyabc.distance.SCALE_LOG
         )
 

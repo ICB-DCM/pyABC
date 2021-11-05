@@ -16,9 +16,9 @@ from pyabc import (
     ABCSMC,
     ConstantPopulationSize,
     Distribution,
+    FunctionModel,
     MedianEpsilon,
     PercentileDistance,
-    SimpleModel,
 )
 from pyabc.sampler import (
     ConcurrentFutureSampler,
@@ -123,7 +123,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
 
     # We define two models, but they are identical so far
     models = [model, model]
-    models = list(map(SimpleModel, models))
+    models = list(map(FunctionModel, models))
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
