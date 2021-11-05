@@ -2,7 +2,7 @@
 
 import json
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Callable, Union
 
 from ..population import Sample
 
@@ -209,7 +209,7 @@ class AcceptAllDistance(Distance):
         return -1
 
 
-class SimpleFunctionDistance(Distance):
+class FunctionDistance(Distance):
     """
     This is a wrapper around a simple function which calculates the distance.
     If a function/callable is passed to the ABCSMC class, which is not
@@ -249,22 +249,22 @@ class SimpleFunctionDistance(Distance):
                 pass
         return conf
 
+    @staticmethod
+    def to_distance(maybe_distance: Union[Callable, Distance]) -> Distance:
+        """
+        Parameters
+        ----------
+        maybe_distance: either a Callable as in FunctionDistance, or a
+        pyabc.Distance object.
 
-def to_distance(maybe_distance):
-    """
-    Parameters
-    ----------
-    maybe_distance: either a Callable as in SimpleFunctionDistance, or a
-    pyabc.Distance object.
+        Returns
+        -------
+        A Distance instance.
+        """
+        if maybe_distance is None:
+            return NoDistance()
 
-    Returns
-    -------
-    A Distance instance.
-    """
-    if maybe_distance is None:
-        return NoDistance()
+        if isinstance(maybe_distance, Distance):
+            return maybe_distance
 
-    if isinstance(maybe_distance, Distance):
-        return maybe_distance
-
-    return SimpleFunctionDistance(maybe_distance)
+        return FunctionDistance(maybe_distance)

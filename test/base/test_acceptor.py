@@ -20,7 +20,7 @@ def test_simple_function_acceptor():
     x = {'s0': 1, 's1': 0}
     y = {'s0': 2, 's1': 2}
 
-    acceptor = pyabc.SimpleFunctionAcceptor(dummy_accept)
+    acceptor = pyabc.FunctionAcceptor(dummy_accept)
 
     ret = acceptor(
         distance_function=distance,
@@ -54,7 +54,7 @@ def test_uniform_acceptor():
     def dist(x, x_0):
         return sum(abs(x[key] - x_0[key]) for key in x_0)
 
-    distance = pyabc.SimpleFunctionDistance(dist)
+    distance = pyabc.FunctionDistance(dist)
     acceptor = pyabc.UniformAcceptor()
     eps = pyabc.ListEpsilon([1, 4, 2])
 

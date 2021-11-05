@@ -10,7 +10,7 @@ Acceptors handle the acceptance step.
 from .acceptor import (
     Acceptor,
     AcceptorResult,
-    SimpleFunctionAcceptor,
+    FunctionAcceptor,
     StochasticAcceptor,
     UniformAcceptor,
 )

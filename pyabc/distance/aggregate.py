@@ -7,7 +7,7 @@ import numpy as np
 
 from ..population import Sample
 from ..storage import save_dict_to_json
-from .base import Distance, to_distance
+from .base import Distance, FunctionDistance
 from .scale import span
 
 logger = logging.getLogger("ABC.Distance")
@@ -25,7 +25,7 @@ class AggregatedDistance(Distance):
 
     def __init__(
         self,
-        distances: List[Distance],
+        distances: List[Union[Distance, Callable]],
         weights: Union[List, dict] = None,
         factors: Union[List, dict] = None,
     ):
@@ -52,10 +52,10 @@ class AggregatedDistance(Distance):
         """
         super().__init__()
 
-        if not isinstance(distances, list):
+        if isinstance(distances, (Distance, Callable)):
             distances = [distances]
         self.distances: List[Distance] = [
-            to_distance(distance) for distance in distances
+            FunctionDistance.to_distance(distance) for distance in distances
         ]
 
         self.weights = weights
