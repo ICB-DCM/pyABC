@@ -247,14 +247,14 @@ class FunctionModel(Model):
         return self.sample_function(pars)
 
     @staticmethod
-    def to_model(model_or_function: Union[Callable, Model]) -> Model:
+    def to_model(maybe_model: Union[Callable, Model]) -> Model:
         """
         Alternative constructor. Accepts either a Model instance or a
         function and returns always a Model instance.
 
         Parameters
         ----------
-        model_or_function:
+        maybe_model:
             Constructs a SimpleModel instance if a function is passed.
             If a Model instance is passed, the Model instance itself is
             returned.
@@ -263,10 +263,10 @@ class FunctionModel(Model):
         -------
         model: A valid model instance
         """
-        if isinstance(model_or_function, Model):
-            return model_or_function
+        if isinstance(maybe_model, Model):
+            return maybe_model
         else:
-            return FunctionModel(model_or_function)
+            return FunctionModel(maybe_model)
 
 
 class IntegratedModel(Model):
