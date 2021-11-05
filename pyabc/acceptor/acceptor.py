@@ -224,7 +224,7 @@ class FunctionAcceptor(Acceptor):
         return self.fun(distance_function, eps, x, x_0, t, par)
 
     @staticmethod
-    def assert_acceptor(maybe_acceptor: Union[Acceptor, Callable]) -> Acceptor:
+    def to_acceptor(maybe_acceptor: Union[Acceptor, Callable]) -> Acceptor:
         """
         Create an acceptor object from input.
 

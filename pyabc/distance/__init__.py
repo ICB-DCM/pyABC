@@ -11,13 +11,7 @@ subclass the pyabc.Distance class.
 """
 
 from .aggregate import AdaptiveAggregatedDistance, AggregatedDistance
-from .base import (
-    AcceptAllDistance,
-    Distance,
-    FunctionDistance,
-    NoDistance,
-    to_distance,
-)
+from .base import AcceptAllDistance, Distance, FunctionDistance, NoDistance
 from .distance import (
     DistanceWithMeasureList,
     MinMaxDistance,

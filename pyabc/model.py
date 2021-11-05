@@ -247,7 +247,7 @@ class FunctionModel(Model):
         return self.sample_function(pars)
 
     @staticmethod
-    def assert_model(model_or_function: Union[Callable, Model]) -> Model:
+    def to_model(model_or_function: Union[Callable, Model]) -> Model:
         """
         Alternative constructor. Accepts either a Model instance or a
         function and returns always a Model instance.

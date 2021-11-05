@@ -249,22 +249,22 @@ class FunctionDistance(Distance):
                 pass
         return conf
 
+    @staticmethod
+    def to_distance(maybe_distance: Union[Callable, Distance]) -> Distance:
+        """
+        Parameters
+        ----------
+        maybe_distance: either a Callable as in FunctionDistance, or a
+        pyabc.Distance object.
 
-def to_distance(maybe_distance: Union[Callable, Distance]) -> Distance:
-    """
-    Parameters
-    ----------
-    maybe_distance: either a Callable as in FunctionDistance, or a
-    pyabc.Distance object.
+        Returns
+        -------
+        A Distance instance.
+        """
+        if maybe_distance is None:
+            return NoDistance()
 
-    Returns
-    -------
-    A Distance instance.
-    """
-    if maybe_distance is None:
-        return NoDistance()
+        if isinstance(maybe_distance, Distance):
+            return maybe_distance
 
-    if isinstance(maybe_distance, Distance):
-        return maybe_distance
-
-    return FunctionDistance(maybe_distance)
+        return FunctionDistance(maybe_distance)
