@@ -16,4 +16,5 @@ from .base import (
     ExternalSumStat,
     create_sum_stat,
 )
+from .jl_pyjulia import Julia
 from .r_rpy2 import R

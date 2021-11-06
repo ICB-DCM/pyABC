@@ -1,8 +1,6 @@
 """
-Interface to external simulators
-================================
-
-Currently, the R language is supported.
+Interface to R via rpy2
+=======================
 
 .. note::
 
