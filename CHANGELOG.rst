@@ -8,6 +8,15 @@ Release Notes
 ...........
 
 
+0.11.6 (2021-11-05)
+-------------------
+
+* Unfix sphinx version for documentation (#509)
+* Streamline function wrapper objects (#511)
+* Remove rpy2 warning upon import of `pyabc.external` (#512)
+* Move ot distance to scipy due to bug in pot 0.8.0 (#512)
+
+
 0.11.5 (2021-10-29)
 -------------------
 
