@@ -671,6 +671,53 @@ class ABCSMC:
         This method can be called repeatedly to sample further populations
         after sampling was stopped once.
         """
+        t0: int = self.initialize_components_before_run(
+            minimum_epsilon=minimum_epsilon,
+            max_nr_populations=max_nr_populations,
+            min_acceptance_rate=min_acceptance_rate,
+            max_total_nr_simulations=max_total_nr_simulations,
+            max_walltime=max_walltime,
+        )
+
+        # run loop over time points
+        t = t0
+        while True:
+            # perform one generation
+            ret = self.run_generation(t=t)
+
+            # check whether to discontinue
+            if not ret["successful"] or self.check_terminate(
+                t=t,
+                acceptance_rate=ret["acceptance_rate"],
+            ):
+                break
+
+            # increment t
+            t += 1
+
+        # return used history object
+        return self.history
+
+    def initialize_components_before_run(
+        self,
+        minimum_epsilon: float,
+        max_nr_populations: int,
+        min_acceptance_rate: float,
+        max_total_nr_simulations: int,
+        max_walltime: timedelta,
+    ) -> int:
+        """Initialize everything before starting a run.
+
+        In particular sets variables corresponding to arguments, and
+        performs sampling based initialization for e.g. distance and epsilon,
+        if these are adaptive.
+
+        All parameters are as for `run()`.
+
+        Returns
+        -------
+        t0: The initial time point from which to start the next generation.
+        """
         # handle arguments
         if minimum_epsilon is None:
             if isinstance(self.eps, TemperatureBase):
@@ -709,99 +756,135 @@ class ABCSMC:
         # TODO update configuration in each iteration
         self.eps.configure_sampler(self.sampler)
 
-        # run loop over time points
-        t = t0
-        while True:
-            # get epsilon for generation t
-            current_eps = self.eps(t)
-            if current_eps is None or np.isnan(current_eps):
-                raise ValueError(
-                    f"The epsilon threshold {current_eps} is invalid."
-                )
-            logger.info(f"t: {t}, eps: {current_eps:.8e}.")
+        return t0
 
-            # create simulate function
-            simulate_one = self._create_simulate_function(t)
+    def run_generation(
+        self,
+        t: int,
+    ) -> dict:
+        """Run a single generation.
 
-            # population size and maximum number of evaluations
-            pop_size = self.population_size(t)
-            max_eval = (
-                np.inf
-                if min_acceptance_rate == 0.0
-                else pop_size / min_acceptance_rate
+        Parameters
+        ----------
+        t: Generation time index to run for.
+
+        Returns
+        -------
+        ret:
+            Dictionary with entries "successful" indicating whether the
+            generation terminated successfully,
+            and potentially "acceptance_rate".
+        """
+        # get epsilon for generation t
+        current_eps = self.eps(t)
+        if current_eps is None or np.isnan(current_eps):
+            raise ValueError(
+                f"The epsilon threshold {current_eps} is invalid."
             )
+        logger.info(f"t: {t}, eps: {current_eps:.8e}.")
 
-            # perform the sampling
-            logger.debug(f"Submitting population {t}.")
-            sample = self.sampler.sample_until_n_accepted(
-                n=pop_size,
-                simulate_one=simulate_one,
-                t=t,
-                max_eval=max_eval,
-                ana_vars=self._vars(),
-            )
+        # create simulate function
+        simulate_one = self._create_simulate_function(t)
 
-            # check sample health
-            if not sample.ok:
-                logger.info("Stopping: sample not ok.")
-                break
+        # population size and maximum number of evaluations
+        pop_size = self.population_size(t)
+        max_eval = (
+            np.inf
+            if self.min_acceptance_rate == 0.0
+            else pop_size / self.min_acceptance_rate
+        )
 
-            # normalize accepted population weight to 1
-            sample.normalize_weights()
+        # perform the sampling
+        logger.debug(f"Submitting population {t}.")
+        sample = self.sampler.sample_until_n_accepted(
+            n=pop_size,
+            simulate_one=simulate_one,
+            t=t,
+            max_eval=max_eval,
+            ana_vars=self._vars(),
+        )
 
-            # retrieve accepted population
-            population = sample.get_accepted_population()
-            logger.debug(f"Population {t} done.")
+        # check sample health
+        if not sample.ok:
+            logger.info("Stopping: sample not ok.")
+            return {
+                "successful": False,
+            }
 
-            # save to database
-            n_sim = self.sampler.nr_evaluations_
-            model_names = [model.name for model in self.models]
-            self.history.append_population(
-                t, current_eps, population, n_sim, model_names
-            )
-            logger.debug(
-                f"Total samples up to t = {t}: "
-                f"{self.history.total_nr_simulations}."
-            )
+        # normalize accepted population weight to 1
+        sample.normalize_weights()
 
-            # acceptance rate and ess
-            pop_size = len(population)
-            acceptance_rate = pop_size / n_sim
-            ess = effective_sample_size(
-                population.get_weighted_distances()['w']
-            )
-            logger.info(
-                f"Accepted: {pop_size} / {n_sim} = "
-                f"{acceptance_rate:.4e}, ESS: {ess:.4e}."
-            )
+        # retrieve accepted population
+        population = sample.get_accepted_population()
+        logger.debug(f"Population {t} done.")
 
-            # prepare next iteration
-            self._prepare_next_iteration(
-                t + 1, sample, population, acceptance_rate
-            )
+        # save to database
+        n_sim = self.sampler.nr_evaluations_
+        model_names = [model.name for model in self.models]
+        self.history.append_population(
+            t, current_eps, population, n_sim, model_names
+        )
+        logger.debug(
+            f"Total samples up to t = {t}: "
+            f"{self.history.total_nr_simulations}."
+        )
 
-            # check termination criteria
-            if termination_criteria_fulfilled(
-                current_eps=current_eps,
-                min_eps=minimum_epsilon,
-                stop_if_single_model_alive=self.stop_if_only_single_model_alive,  # noqa: E251
-                nr_of_models_alive=self.history.nr_of_models_alive(),
-                acceptance_rate=acceptance_rate,
-                min_acceptance_rate=min_acceptance_rate,
-                total_nr_simulations=self.history.total_nr_simulations,
-                max_total_nr_simulations=self.max_total_nr_simulations,
-                walltime=datetime.now() - self.init_walltime,
-                max_walltime=self.max_walltime,
-                t=t,
-                max_t=self.max_t,
-            ):
-                break
+        # acceptance rate and ess
+        pop_size = len(population)
+        acceptance_rate = pop_size / n_sim
+        ess = effective_sample_size(population.get_weighted_distances()['w'])
+        logger.info(
+            f"Accepted: {pop_size} / {n_sim} = "
+            f"{acceptance_rate:.4e}, ESS: {ess:.4e}."
+        )
 
-            # increment t
-            t += 1
+        # prepare next iteration
+        self._prepare_next_iteration(
+            t=t + 1,
+            sample=sample,
+            population=population,
+            acceptance_rate=acceptance_rate,
+        )
 
-        # return used history object
-        return self.history
+        return {
+            "successful": True,
+            "acceptance_rate": acceptance_rate,
+        }
+
+    def check_terminate(
+        self,
+        t: int,
+        acceptance_rate: float,
+    ) -> bool:
+        """Check whether any termination criterion is met.
+
+        Parameters
+        ----------
+        t: Current time point.
+        acceptance_rate: Acceptance rate in current generation.
+
+        Returns
+        -------
+        terminate: Whether to terminate (True) or not (False).
+        """
+        # check termination criteria
+        if termination_criteria_fulfilled(
+            current_eps=self.eps(t=t),
+            min_eps=self.minimum_epsilon,
+            stop_if_single_model_alive=self.stop_if_only_single_model_alive,
+            # noqa: E251
+            nr_of_models_alive=self.history.nr_of_models_alive(),
+            acceptance_rate=acceptance_rate,
+            min_acceptance_rate=self.min_acceptance_rate,
+            total_nr_simulations=self.history.total_nr_simulations,
+            max_total_nr_simulations=self.max_total_nr_simulations,
+            walltime=datetime.now() - self.init_walltime,
+            max_walltime=self.max_walltime,
+            t=t,
+            max_t=self.max_t,
+        ):
+            return True
+        return False
 
     def _prepare_next_iteration(
         self,
