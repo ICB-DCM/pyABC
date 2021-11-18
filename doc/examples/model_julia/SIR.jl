@@ -1,3 +1,5 @@
+# SIR disease dynamics model
+
 module SIR
 
 # Install dependencies

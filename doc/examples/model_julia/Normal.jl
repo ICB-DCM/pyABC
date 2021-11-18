@@ -1,3 +1,5 @@
+# Simple Gaussian test problem
+
 module Normal
 
 using Random
