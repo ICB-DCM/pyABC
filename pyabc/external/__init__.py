@@ -12,8 +12,8 @@ with communication via file i/o.
 It has been successfully used with models written in e.g. R, Java, or C++.
 
 Further, pyABC provides efficient interfaces to R via the class
-:class:`pyabc.external.R` via the rpy2 package, and to Julia via the class
-:class:`pyabc.external.Julia` via the pyjulia package.
+:class:`pyabc.external.r.R` via the rpy2 package, and to Julia via the class
+:class:`pyabc.external.julia.Julia` via the pyjulia package.
 """
 
 from .base import (
