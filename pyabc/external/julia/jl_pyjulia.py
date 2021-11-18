@@ -1,4 +1,4 @@
-"""Interface to Julia via pyjulia."""
+"""Interface to Julia via PyJulia."""
 
 from typing import Any, Callable, Dict, Union
 
@@ -126,7 +126,7 @@ class Julia:
     interpreters, see
     https://pyjulia.readthedocs.io/en/latest/troubleshooting.html
     for details.
-    Possible solutions are to pass `compiled_modules=False` to the Julia
+    Possible solutions are to pass ``compiled_modules=False`` to the Julia
     constructor early in your code:
 
     >>> from julia.api import Julia
@@ -134,7 +134,7 @@ class Julia:
 
     This however slows down loading and using Julia packages, especially for
     large ones.
-    An alternative is to use the `python-jl` command shipped with PyJulia:
+    An alternative is to use the ``python-jl`` command shipped with PyJulia:
 
     >>> python-jl MY_SCRIPT.py
 
@@ -145,8 +145,8 @@ class Julia:
     >>> python -m ipykernel install --name python-jl [--prefix=/path/to/python/env]
 
     And changing the first argument in
-    `/path/to/python/env/share/jupyter/kernels/python-jl/kernel.json`
-    to `python-jl`.
+    ``/path/to/python/env/share/jupyter/kernels/python-jl/kernel.json``
+    to ``python-jl``.
 
     Model simulations are eagerly converted to Python objects
     (specifically, `numpy.ndarray` and `pandas.DataFrame`).
