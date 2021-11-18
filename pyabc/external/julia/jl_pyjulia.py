@@ -5,9 +5,6 @@ from typing import Any, Callable, Dict, Union
 import numpy as np
 import pandas as pd
 
-# note: we import julia currently only dynamically, as the file is imported
-#  automatically in the sub-module, and julia has issues with some python
-#  distributions
 try:
     from julia import Main
 except ImportError:
