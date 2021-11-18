@@ -239,7 +239,11 @@ class FunctionModel(Model):
         self, sample_function: Callable[[Parameter], Any], name: str = None
     ):
         if name is None:
-            name = sample_function.__name__
+            # try to get the model name
+            try:
+                name = sample_function.__name__
+            except AttributeError:
+                name = sample_function.__class__.__name__
         super().__init__(name)
         self.sample_function = sample_function
 

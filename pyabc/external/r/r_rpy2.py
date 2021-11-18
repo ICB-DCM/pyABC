@@ -1,18 +1,4 @@
-"""
-Interface to R via rpy2
-=======================
-
-.. note::
-
-    The rpy2 package needs to be installed to interface with the R language.
-    Installation of rpy2 is optional if R support is not required.
-    See also :ref:`installation of optional dependencies <install-optional>`.
-
-.. note::
-    Support of R via rpy2 is considered experimental for various reasons
-    (see #116).
-    Should this not work on your system, consider accessing R script-based.
-"""
+"""Interface to R via rpy2"""
 
 import logging
 import warnings
@@ -20,7 +6,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from ..random_variables import Parameter
+from ...random_variables import Parameter
 
 logger = logging.getLogger("ABC.External")
 
@@ -38,10 +24,7 @@ except ImportError:
     default_converter = numpy2ri = pandas2ri = None
 
 
-__all__ = ["R"]
-
-
-def dict_to_named_list(dct):
+def _dict_to_named_list(dct):
     if (
         isinstance(dct, dict)
         or isinstance(dct, Parameter)
@@ -70,13 +53,23 @@ def dict_to_named_list(dct):
 
 
 class R:
-    """
-    Interface to R.
+    """Interface to R via rpy2.
+
+    .. note::
+        The rpy2 package needs to be installed to interface with the R
+        language.
+        Installation of rpy2 is optional if R support is not required.
+        See also :ref:`installation of optional dependencies
+        <install-optional>`.
+
+    .. note::
+        Support of R via rpy2 is considered experimental for various reasons
+        (see #116).
+        Should this not work on your system, consider accessing R script-based.
 
     Parameters
     ----------
-    source_file: str
-
+    source_file:
         Path to the file which contains the definitions for
         the model, the summary statistics and the distance function as
         well as the observed data.
@@ -100,10 +93,7 @@ class R:
         r.source(self.source_file)
 
     def display_source_ipython(self):
-        """
-        Convenience method to print the loaded source file
-        as syntax highlighted HTML within IPython.
-        """
+        """Display source code as syntax highlighted HTML within IPython."""
         import IPython.display as display
         from pygments import highlight
         from pygments.formatters import HtmlFormatter
@@ -138,7 +128,7 @@ class R:
         model = r[function_name]
 
         def model_py(par):
-            return model(dict_to_named_list(par))
+            return model(_dict_to_named_list(par))
 
         model_py.__name__ = function_name
         # set reference to this class to ensure the source file is
@@ -165,7 +155,7 @@ class R:
         distance = r[function_name]
 
         def distance_py(*args):
-            args = tuple(dict_to_named_list(d) for d in args)
+            args = tuple(_dict_to_named_list(d) for d in args)
             return float(np.array(distance(*args)))
 
         distance_py.__name__ = function_name
@@ -204,7 +194,7 @@ class R:
         if is_py_model:
 
             def summary_statistics_py(model_output):
-                return summary_statistics(dict_to_named_list(model_output))
+                return summary_statistics(_dict_to_named_list(model_output))
 
             return summary_statistics_py
 
