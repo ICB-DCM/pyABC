@@ -36,7 +36,8 @@ def sampler(request):
             pass
 
 
-def test_rpy2(sampler):
+def test_rpy2_pipeline(sampler):
+    """Test that a pipeline with rpy2 calls runs through."""
     # run the notebook example
     r_file = "doc/examples/myRModel.R"
     r = pyabc.external.r.R(r_file)

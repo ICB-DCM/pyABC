@@ -7,6 +7,7 @@ Julia(compiled_modules=False)
 import os
 import tempfile
 
+import numpy as np
 import pytest
 
 import pyabc.external.julia
@@ -46,7 +47,7 @@ def sampler(request):
             pass
 
 
-def test_pyjulia(sampler: Sampler):
+def test_pyjulia_pipeline(sampler: Sampler):
     """Test that a pipeline with Julia calls runs through."""
     jl = pyabc.external.julia.Julia(
         source_file="doc/examples/model_julia/Normal.jl",
@@ -65,7 +66,26 @@ def test_pyjulia(sampler: Sampler):
     db_file = tempfile.mkstemp(suffix=".db")[1]
     abc = ABCSMC(model, prior, distance, population_size=100, sampler=sampler)
     abc.new("sqlite:///" + db_file, obs)
-    abc.run(max_nr_populations=5)
+    abc.run(max_nr_populations=2)
 
     if os.path.exists(db_file):
         os.remove(db_file)
+
+
+def test_pyjulia_conversion():
+    """Test Julia object conversion."""
+    jl = pyabc.external.julia.Julia(
+        source_file="doc/examples/model_julia/Normal.jl",
+        module_name="Normal",
+    )
+    model = jl.model()
+    distance = jl.distance()
+    obs = jl.observation()
+
+    sim = model({"p": 0.5})
+    assert sim.keys() == obs.keys() == {"y"}  # noqa: S101
+    assert isinstance(sim["y"], np.ndarray)  # noqa: S101
+    assert len(sim["y"]) == len(obs["y"]) == 4  # noqa: S101
+
+    d = distance(sim, obs)
+    assert isinstance(d, float)  # noqa: S101
