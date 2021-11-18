@@ -46,7 +46,13 @@ def _read_source(module_name: str, source_file: str) -> None:
 
 
 class _JlWrap(object):
-    def __init__(self, module_name, source_file, function_name):
+    """Wrapper around Julia object.
+
+    This in particular makes the objects pickleable, by reconstruction from
+    source.
+    """
+
+    def __init__(self, module_name: str, source_file: str, function_name: str):
         self.module_name: str = module_name
         self.source_file: str = source_file
         self.function_name: str = function_name
@@ -145,11 +151,10 @@ class Julia:
     `/path/to/python/env/share/jupyter/kernels/python-jl/kernel.json`
     to `python-jl`.
 
-    .. note::
-        Model simulations are eagerly converted to Python objects
-        (specifically, `numpy.ndarray` and `pandas.DataFrame`).
-        This can introduce overhead and could be avoided by an alternative
-        lazy implementation.
+    Model simulations are eagerly converted to Python objects
+    (specifically, `numpy.ndarray` and `pandas.DataFrame`).
+    This can introduce overhead and could be avoided by an alternative
+    lazy implementation.
     """
 
     def __init__(self, module_name: str, source_file: str = None):

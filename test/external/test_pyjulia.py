@@ -21,10 +21,6 @@ from pyabc import (
 )
 
 
-def PicklingMulticoreEvalParallelSampler():
-    return MulticoreEvalParallelSampler(pickle=True)
-
-
 def RedisEvalParallelSamplerServerStarterWrapper(**kwargs):
     kwargs.setdefault('batch_size', 5)
     kwargs.setdefault('catch', False)
@@ -34,7 +30,7 @@ def RedisEvalParallelSamplerServerStarterWrapper(**kwargs):
 @pytest.fixture(
     params=[
         SingleCoreSampler,
-        PicklingMulticoreEvalParallelSampler,
+        MulticoreEvalParallelSampler,
         RedisEvalParallelSamplerServerStarterWrapper,
     ]
 )
