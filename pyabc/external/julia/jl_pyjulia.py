@@ -111,6 +111,14 @@ class Julia:
     floating value.
 
     We use the PyJulia package to access Julia from inside Python.
+    It can be installed via `pip install pyabc[julia]`, however requires
+    additional Julia dependencies to be installed via:
+
+    >>>> python -c "import julia; julia.install()"
+
+    For further information, see
+    https://pyjulia.readthedocs.io/en/latest/installation.html.
+
     There are some known problems, e.g. with statically linked Python
     interpreters, see
     https://pyjulia.readthedocs.io/en/latest/troubleshooting.html
@@ -147,7 +155,8 @@ class Julia:
     def __init__(self, module_name: str, source_file: str = None):
         if Main is None:
             raise ImportError(
-                "Install PyJulia, e.g. via `pip install pyabc[julia]`",
+                "Install PyJulia, e.g. via `pip install pyabc[julia]`, "
+                "and see the class documentation",
             )
         self.module_name: str = module_name
         if source_file is None:

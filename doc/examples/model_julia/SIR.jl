@@ -1,5 +1,10 @@
 module SIR
 
+# Install dependencies
+using Pkg
+Pkg.add("Catalyst")
+Pkg.add("DiffEqJump")
+
 # Define reaction network
 using Catalyst
 sir_model = @reaction_network begin
@@ -32,7 +37,6 @@ function model(par)
 end
 
 # observed data
-print(p)
 observation = model(Dict("p1"=>log10(p[1]), "p2"=>log10(p[2])))
 
 """
