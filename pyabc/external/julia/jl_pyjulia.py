@@ -117,7 +117,7 @@ class Julia:
     It can be installed via `pip install pyabc[julia]`, however requires
     additional Julia dependencies to be installed via:
 
-    >>>> python -c "import julia; julia.install()"
+    >>> python -c "import julia; julia.install()"
 
     For further information, see
     https://pyjulia.readthedocs.io/en/latest/installation.html.
