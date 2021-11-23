@@ -3,9 +3,9 @@ import tempfile
 
 import numpy as np
 import pytest
-import scipy as sp
+import scipy.linalg as la
 import scipy.spatial.distance as sp_dist
-import scipy.stats
+import scipy.stats as stats
 
 from pyabc.distance import (
     SCALE_LIN,
@@ -19,11 +19,13 @@ from pyabc.distance import (
     MinMaxDistance,
     NegativeBinomialKernel,
     NormalKernel,
+    PCADistance,
     PercentileDistance,
     PNormDistance,
     PoissonKernel,
     SlicedWassersteinDistance,
     WassersteinDistance,
+    ZScoreDistance,
     bias,
     combined_mean_absolute_deviation,
     combined_median_absolute_deviation,
@@ -79,7 +81,7 @@ def test_single_parameter():
     abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1}, {"a": 2})
-    assert 1 / 13 == d
+    assert 1.0 / 13 == d
 
 
 def test_two_parameters_but_only_one_used():
@@ -87,7 +89,7 @@ def test_two_parameters_but_only_one_used():
     abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1, "b": 10}, {"a": 2, "b": 12})
-    assert 1 / 13 == d
+    assert 1.0 / 13 == d
 
 
 def test_two_parameters_and_two_used():
@@ -95,7 +97,7 @@ def test_two_parameters_and_two_used():
     abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
     d = dist_f({"a": 1, "b": 10}, {"a": 2, "b": 12})
-    assert 1 / 13 + 2 / 2 == d
+    assert 1.0 / 13 + 2 / 2 == d
 
 
 def test_single_parameter_percentile():
@@ -107,6 +109,54 @@ def test_single_parameter_percentile():
         np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20)
     )
     assert expected == d
+
+
+def test_zscore_distance():
+    """Test ZScoreDistance."""
+    dist_f = ZScoreDistance()
+    abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
+    x0 = {"a": 7, "b": 3}
+    n_y = len(x0)
+    dist_f.initialize(0, abc.sample_from_prior, x0, 0)
+
+    d = dist_f({"a": 4, "b": 2}, {"a": -5, "b": 10})
+    expected = (abs((-5 - 4) / 5) + abs((10 - 2) / 10)) / n_y
+    assert expected == d
+
+    d = dist_f({"a": 4, "b": 2}, {"a": -5, "b": 0})
+    assert np.inf == d
+
+    d = dist_f({"a": 4, "b": 0}, {"a": -5, "b": 0})
+    expected = (abs((-5 - 4) / 5)) / n_y
+    assert expected == d
+
+
+def test_pca_distance():
+    """Test PCADistance."""
+    dist_f = PCADistance()
+    assert dist_f.requires_calibration()
+
+    abc = MockABC(
+        [{"a": -3.0, "b": 2.0}, {"a": 3.0, "b": 3.0}, {"a": 10.0, "b": 4.0}]
+    )
+    x0 = {"a": 7.0, "b": 3.0}
+    dist_f.initialize(0, abc.sample_from_prior, x0, 0)
+    assert dist_f.trafo.shape == (2, 2)
+
+    # re-implement PCA whitening
+    # data matrix, shape (n_sample, n_y)
+    data = np.array([[-3.0, 2.0], [3.0, 3.0], [10.0, 4.0]])
+    # covariance matrix
+    cov = np.cov(data, rowvar=False, bias=False)
+    # eigenvalues and eigenvectors
+    eigval, eigvec = la.eigh(cov)
+    # whitening transformation matrix
+    mat = np.diag(1.0 / np.sqrt(eigval)) @ eigvec.T
+    assert np.allclose(mat, dist_f.trafo)
+
+    # check that converted data have standard distribution
+    cov2 = np.cov(mat @ data.T, rowvar=True, bias=False)
+    assert np.allclose(cov2, np.eye(2))
 
 
 def test_pnormdistance():
@@ -389,14 +439,14 @@ def test_normalkernel():
     kernel = NormalKernel(cov=cov)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = sp.stats.multivariate_normal(cov=cov).logpdf([1, 2, 1])
+    expected = stats.multivariate_normal(cov=cov).logpdf([1, 2, 1])
     assert np.isclose(ret, expected)
 
     # define own keys, linear output
     kernel = NormalKernel(keys=['y0'], ret_scale=SCALE_LIN)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = sp.stats.multivariate_normal(cov=np.eye(2)).pdf([1, 2])
+    expected = stats.multivariate_normal(cov=np.eye(2)).pdf([1, 2])
     assert np.isclose(ret, expected)
 
 
@@ -410,7 +460,7 @@ def test_independentnormalkernel():
     ret = kernel(x, x0)
     expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1 ** 2 + 2 ** 2 + 4.5 ** 2)
     sp_expected = np.log(
-        np.prod([sp.stats.norm.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]])
+        np.prod([stats.norm.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]])
     )
     assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
@@ -431,7 +481,7 @@ def test_independentnormalkernel():
     sp_expected = np.log(
         np.prod(
             [
-                sp.stats.norm.pdf(x=x, loc=0, scale=s)
+                stats.norm.pdf(x=x, loc=0, scale=s)
                 for x, s in zip([1, 2, 4.5], np.sqrt([1, 2, 3]))
             ]
         )
@@ -467,9 +517,7 @@ def test_independentlaplacekernel():
     ret = kernel(x, x0)
     expected = -(3 * np.log(2 * 1) + 1 + 2 + 4.5)
     sp_expected = np.log(
-        np.prod(
-            [sp.stats.laplace.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]]
-        )
+        np.prod([stats.laplace.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]])
     )
     assert np.isclose(expected, sp_expected)
     assert np.isclose(ret, expected)
@@ -484,7 +532,7 @@ def test_independentlaplacekernel():
     sp_expected = np.log(
         np.prod(
             [
-                sp.stats.laplace.pdf(x=x, loc=0, scale=s)
+                stats.laplace.pdf(x=x, loc=0, scale=s)
                 for x, s in zip([1, 2, 4.5], [1, 2, 3])
             ]
         )
@@ -509,7 +557,7 @@ def test_binomialkernel():
     kernel = BinomialKernel(p=0.9)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.sum(sp.stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
+    expected = np.sum(stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
 
     # 0 likelihood
@@ -520,7 +568,7 @@ def test_binomialkernel():
     kernel = BinomialKernel(p=0.9, ret_scale=SCALE_LIN)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.prod(sp.stats.binom.pmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
+    expected = np.prod(stats.binom.pmf(k=[4, 5, 7], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
 
     # function p
@@ -531,7 +579,7 @@ def test_binomialkernel():
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(
-        sp.stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7])
+        stats.binom.logpmf(k=[4, 5, 7], n=[7, 7, 7], p=[0.9, 0.8, 0.7])
     )
     assert np.isclose(ret, expected)
 
@@ -543,14 +591,14 @@ def test_poissonkernel():
     kernel = PoissonKernel()
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.sum(sp.stats.poisson.logpmf(k=[4, 5, 7], mu=[7, 7, 7]))
+    expected = np.sum(stats.poisson.logpmf(k=[4, 5, 7], mu=[7, 7, 7]))
     assert np.isclose(ret, expected)
 
     # linear output
     kernel = PoissonKernel(ret_scale=SCALE_LIN)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.prod(sp.stats.poisson.pmf(k=[4, 5, 7], mu=[7, 7, 7]))
+    expected = np.prod(stats.poisson.pmf(k=[4, 5, 7], mu=[7, 7, 7]))
     assert np.isclose(ret, expected)
 
 
@@ -561,14 +609,14 @@ def test_negativebinomialkernel():
     kernel = NegativeBinomialKernel(p=0.9)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.sum(sp.stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
+    expected = np.sum(stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
 
     # linear output
     kernel = NegativeBinomialKernel(p=0.9, ret_scale=SCALE_LIN)
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = np.prod(sp.stats.nbinom.pmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
+    expected = np.prod(stats.nbinom.pmf(k=[4, 5, 8], n=[7, 7, 7], p=0.9))
     assert np.isclose(ret, expected)
 
     # function p
@@ -579,7 +627,7 @@ def test_negativebinomialkernel():
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
     expected = np.sum(
-        sp.stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7])
+        stats.nbinom.logpmf(k=[4, 5, 8], n=[7, 7, 7], p=[0.9, 0.8, 0.7])
     )
     assert np.isclose(ret, expected)
 
