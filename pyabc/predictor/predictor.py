@@ -296,12 +296,7 @@ class LinearPredictor(SimplePredictor):
                 "Install e.g. via `pip install pyabc[scikit-learn]`"
             )
 
-        default_kwargs = {
-            'fit_intercept': True,
-            'normalize': True,
-        }
-        default_kwargs.update(kwargs)
-        predictor = skl_lm.LinearRegression(**default_kwargs)
+        predictor = skl_lm.LinearRegression(**kwargs)
 
         super().__init__(
             predictor=predictor,
@@ -350,13 +345,7 @@ class LassoPredictor(SimplePredictor):
                 "Install e.g. via `pip install pyabc[scikit-learn]`"
             )
 
-        # translate arguments
-        all_args = {
-            'fit_intercept': True,
-            'normalize': True,
-        }
-        all_args.update(kwargs)
-        predictor = skl_lm.Lasso(**all_args)
+        predictor = skl_lm.Lasso(**kwargs)
 
         super().__init__(
             predictor=predictor,
