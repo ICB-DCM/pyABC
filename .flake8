@@ -20,3 +20,5 @@ per-file-ignores =
   pyabc/storage/migrate.py:T001
   # Print and asserts
   test*/*.py:T001,S101
+  # Module level import not at top of file
+  test/external/test_pyjulia.py:E402

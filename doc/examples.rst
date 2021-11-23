@@ -27,6 +27,7 @@ Potentially, further dependencies may be required.
    examples/early_stopping.ipynb
    examples/resuming.ipynb
    examples/using_R.ipynb
+   examples/using_julia.ipynb
    examples/conversion_reaction.ipynb
    examples/chemical_reaction.ipynb
    examples/multiscale_agent_based.ipynb
@@ -52,6 +53,7 @@ Download the examples as notebooks
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
 * :download:`Using R with pyABC <examples/using_R.ipynb>`
+* :download:`Using Julia with pyABC <examples/using_julia.ipynb>`
 * :download:`Ordinary differential equations: Conversion reaction <examples/conversion_reaction.ipynb>`
 * :download:`Markov jump process: Reaction network <examples/chemical_reaction.ipynb>`
 * :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`

@@ -112,6 +112,7 @@ from .sampler import (
     RedisEvalParallelSamplerServerStarter,
     RedisStaticSampler,
     RedisStaticSamplerServerStarter,
+    Sampler,
     SingleCoreSampler,
     nr_cores_available,
 )
