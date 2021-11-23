@@ -4,6 +4,8 @@ from julia.api import Julia
 #  https://pyjulia.readthedocs.io/en/latest/troubleshooting.html
 Julia(compiled_modules=False)
 
+# The pyjulia wrapper appears to ignore global noqas, thus per line here
+
 import os
 import tempfile
 
@@ -53,6 +55,9 @@ def test_pyjulia_pipeline(sampler: Sampler):
         source_file="doc/examples/model_julia/Normal.jl",
         module_name="Normal",
     )
+    # just call it
+    assert jl.display_source_ipython()  # noqa: S101
+
     model = jl.model()
     distance = jl.distance()
     obs = jl.observation()
