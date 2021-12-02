@@ -141,7 +141,7 @@ def df_from_bytes(bytes_: bytes) -> pd.DataFrame:
     """
     if pyarrow is None:
         try:
-            df_from_bytes_csv(bytes_)
+            return df_from_bytes_csv(bytes_)
         except DataFrameLoadException:
             raise DataFrameLoadException(
                 "Not a csv DataFrame. An installation of pyarrow "
