@@ -126,9 +126,9 @@ def df_to_bytes(df: pd.DataFrame) -> bytes:
     """
     if pyarrow is None:
         warnings.warn(
-            "Can't find pyarrow, thus falling back to the less efficient csv "
-            "format to store pandas DataFrames. Install e.g. via "
-            "`pip install pyabc[pyarrow]`",
+            "Can't find pyarrow, falling back to less efficient csv "
+            "to store pandas DataFrames.\n"
+            "Install e.g. via `pip install pyabc[pyarrow]`",
         )
         return df_to_bytes_csv(df)
     return df_to_bytes_parquet(df)
