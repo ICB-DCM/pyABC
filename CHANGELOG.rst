@@ -8,6 +8,17 @@ Release Notes
 ...........
 
 
+0.11.8 (2021-12-03)
+-------------------
+
+* Interface Julia simulators via pyjulia (#514)
+* Refactor PCA distance, add tests (#518)
+* Remove pyarrow as hard dependency for pandas storage (#523)
+* Hierarchically structure examples, update "Parameter Inference"
+  introduction (#524)
+* Add minimum epsilon difference stopping condition (#525)
+
+
 0.11.7 (2021-11-10)
 -------------------
 
