@@ -34,6 +34,8 @@ except ImportError:
 
 
 class AmiciModel:
+    """Amici model."""
+
     def __init__(
         self,
         petab_problem,
@@ -42,6 +44,8 @@ class AmiciModel:
         x_free_ids,
         x_fixed_ids,
         x_fixed_vals,
+        prior_scales,
+        scaled_scales,
         return_simulations,
         return_rdatas,
     ):
@@ -51,6 +55,8 @@ class AmiciModel:
         self.x_free_ids = x_free_ids
         self.x_fixed_ids = x_fixed_ids
         self.x_fixed_vals = x_fixed_vals
+        self.prior_scales = prior_scales
+        self.scaled_scales = scaled_scales
         self.return_simulations = return_simulations
         self.return_rdatas = return_rdatas
 
