@@ -1,3 +1,5 @@
+from typing import Union
+
 import click
 
 from .df_to_file import to_file
@@ -50,7 +52,13 @@ from .history import History
     "time point.",
 )
 def main(
-    db, out, out_format, generation="last", model=None, id=1, tidy=True
+    db: str,
+    out: str,
+    out_format: str,
+    generation: Union[int, str] = "last",
+    model: Union[int, str] = "all",
+    id: int = 1,
+    tidy: bool = True,
 ):  # pylint: disable=W0622
     """
     Export from the SQLite database to different table formats.
@@ -58,6 +66,26 @@ def main(
     to extract the data to export from the database, see there for
     further details.
     """
+    return export(
+        db=db,
+        out=out,
+        out_format=out_format,
+        generation=generation,
+        model=model,
+        id=id,
+        tidy=tidy,
+    )
+
+
+def export(
+    db: str,
+    out: str,
+    out_format: str,
+    generation: Union[int, str] = "last",
+    model: Union[int, str] = "all",
+    id: int = 1,
+    tidy: bool = True,
+):  # pylint: disable=W0622
     # check if db is a file or SQLAlchemy identifier
     if ":///" not in db:
         db = "sqlite:///" + db
