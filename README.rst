@@ -1,7 +1,7 @@
 pyABC
 =====
 
-.. figure:: https://raw.githubusercontent.com/ICB-DCM/pyABC/master/doc/logo/logo.svg
+.. figure:: https://raw.githubusercontent.com/ICB-DCM/pyABC/main/doc/logo/logo.svg
    :alt: pyABC logo
    :width: 30 %
    :align: center
@@ -22,7 +22,7 @@ Examples
 --------
 
 Many examples are available as Jupyter Notebooks in the
-`examples directory <https://github.com/icb-dcm/pyabc/tree/master/doc/examples>`_
+`examples directory <https://github.com/icb-dcm/pyabc/tree/main/doc/examples>`_
 and also for download and for online inspection in the
 `example section of the documentation <http://pyabc.readthedocs.io/en/latest/examples.html>`_.
 
