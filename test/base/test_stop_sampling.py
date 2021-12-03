@@ -119,5 +119,5 @@ def test_min_eps_diff(db_path):
     )
     pops = history.get_all_populations()
     eps = pops.epsilon.to_numpy()
-    assert (eps[-1] - eps[-2]) < min_eps_diff
+    assert abs(eps[-1] - eps[-2]) < min_eps_diff
     assert history.n_populations < 100
