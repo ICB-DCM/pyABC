@@ -27,6 +27,7 @@ from pyabc.inference_util import (
     create_simulate_from_prior_function,
     create_simulate_function,
     create_transition_pdf,
+    eps_from_hist,
     termination_criteria_fulfilled,
 )
 from pyabc.model import FunctionModel, Model
@@ -251,6 +252,8 @@ class ABCSMC:
         self.max_t = None
         self.max_total_nr_simulations = None
         self.max_walltime = None
+        self.min_eps_diff = None
+
         self.init_walltime = None
         self.analysis_id = None
 
@@ -551,7 +554,7 @@ class ABCSMC:
             t=t,
             max_eval=np.inf,
             all_accepted=True,
-            ana_vars=self._vars(),
+            ana_vars=self._vars(t=t),
         )
 
         # normalize accepted population weight to 1
@@ -627,6 +630,7 @@ class ABCSMC:
         min_acceptance_rate: float = 0.0,
         max_total_nr_simulations: int = np.inf,
         max_walltime: timedelta = None,
+        min_eps_diff: float = 0.0,
     ) -> History:
         """
         Run the ABCSMC model selection until either of the stopping
@@ -647,6 +651,8 @@ class ABCSMC:
             Maximum allowed total number of evaluations.
         max_walltime:
             Maximum allowed walltime since start of the run() method.
+        min_eps_diff:
+            Minimum epsilon difference in two sequential generations.
 
         Population after population is sampled and particles which are close
         enough to the observed data are accepted and added to the next
@@ -677,6 +683,7 @@ class ABCSMC:
             min_acceptance_rate=min_acceptance_rate,
             max_total_nr_simulations=max_total_nr_simulations,
             max_walltime=max_walltime,
+            min_eps_diff=min_eps_diff,
         )
 
         # run loop over time points
@@ -705,6 +712,7 @@ class ABCSMC:
         min_acceptance_rate: float,
         max_total_nr_simulations: int,
         max_walltime: timedelta,
+        min_eps_diff: float,
     ) -> int:
         """Initialize everything before starting a run.
 
@@ -730,6 +738,7 @@ class ABCSMC:
         self.min_acceptance_rate = min_acceptance_rate
         self.max_total_nr_simulations = max_total_nr_simulations
         self.max_walltime = max_walltime
+        self.min_eps_diff = min_eps_diff
 
         # for recording the overall time
         self.init_walltime = datetime.now()
@@ -801,7 +810,7 @@ class ABCSMC:
             simulate_one=simulate_one,
             t=t,
             max_eval=max_eval,
-            ana_vars=self._vars(),
+            ana_vars=self._vars(t=t),
         )
 
         # check sample health
@@ -871,6 +880,8 @@ class ABCSMC:
         if termination_criteria_fulfilled(
             current_eps=self.eps(t=t),
             min_eps=self.minimum_epsilon,
+            prev_eps=eps_from_hist(history=self.history, t=t - 1),
+            min_eps_diff=self.min_eps_diff,
             stop_if_single_model_alive=self.stop_if_only_single_model_alive,
             # noqa: E251
             nr_of_models_alive=self.history.nr_of_models_alive(),
@@ -1026,12 +1037,13 @@ class ABCSMC:
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
 
-    def _vars(self) -> AnalysisVars:
+    def _vars(self, t: int) -> AnalysisVars:
         """Create a dictionary of analysis variables of interest.
 
         These variables are passed to the sampler, as some need to create
         simulation settings themselves.
         """
+
         return AnalysisVars(
             model_prior=self.model_prior,
             parameter_priors=self.parameter_priors,
@@ -1051,4 +1063,6 @@ class ABCSMC:
             prev_total_nr_simulations=self.history.total_nr_simulations,
             max_walltime=self.max_walltime,
             init_walltime=self.init_walltime,
+            min_eps_diff=self.min_eps_diff,
+            prev_eps=eps_from_hist(history=self.history, t=t - 1),
         )

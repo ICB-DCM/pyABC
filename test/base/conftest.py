@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 
-REMOVE_DB = False
+REMOVE_DB = True
 
 
 @pytest.fixture

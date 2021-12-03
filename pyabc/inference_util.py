@@ -18,6 +18,7 @@ from pyabc.parameters import Parameter
 from pyabc.population import Particle
 from pyabc.random_choice import fast_random_choice
 from pyabc.random_variables import RV, Distribution
+from pyabc.storage.history import History
 from pyabc.transition import ModelPerturbationKernel, Transition
 
 logger = logging.getLogger("ABC")
@@ -49,6 +50,8 @@ class AnalysisVars:
         prev_total_nr_simulations: int,
         max_walltime: timedelta,
         init_walltime: datetime,
+        min_eps_diff: float,
+        prev_eps: float,
     ):
         self.model_prior = model_prior
         self.parameter_priors = parameter_priors
@@ -68,6 +71,8 @@ class AnalysisVars:
         self.prev_total_nr_simulations = prev_total_nr_simulations
         self.max_walltime = max_walltime
         self.init_walltime = init_walltime
+        self.min_eps_diff = min_eps_diff
+        self.prev_eps = prev_eps
 
 
 def create_simulate_from_prior_function(
@@ -549,6 +554,8 @@ def evaluate_preliminary_particle(
 def termination_criteria_fulfilled(
     current_eps: float,
     min_eps: float,
+    prev_eps: float,
+    min_eps_diff: float,
     stop_if_single_model_alive: bool,
     nr_of_models_alive: int,
     acceptance_rate: float,
@@ -587,6 +594,9 @@ def termination_criteria_fulfilled(
     if current_eps <= min_eps:
         logger.info("Stop: Minimum epsilon.")
         return True
+    if prev_eps is not None and abs(current_eps - prev_eps) < min_eps_diff:
+        logger.info("Stop: Minimum epsilon difference")
+        return True
     elif stop_if_single_model_alive and nr_of_models_alive <= 1:
         logger.info("Stop: Single model alive.")
         return True
@@ -607,3 +617,13 @@ def create_analysis_id():
     Used by the inference routine to uniquely associated results with analyses.
     """
     return str(uuid.uuid4())
+
+
+def eps_from_hist(history: History, t: int = None) -> float:
+    """Read epsilon value for time `t` from `history`. Defaults to latest."""
+    pops = history.get_all_populations()
+    if len(pops) == 0 or (t is not None and t not in pops.t):
+        return None
+    if t is None:
+        return pops.epsilon.to_numpy()[-1]
+    return pops.set_index("t").loc[t].epsilon
