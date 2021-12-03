@@ -49,6 +49,7 @@ class AnalysisVars:
         prev_total_nr_simulations: int,
         max_walltime: timedelta,
         init_walltime: datetime,
+        min_eps_diff: float,
     ):
         self.model_prior = model_prior
         self.parameter_priors = parameter_priors
@@ -68,6 +69,7 @@ class AnalysisVars:
         self.prev_total_nr_simulations = prev_total_nr_simulations
         self.max_walltime = max_walltime
         self.init_walltime = init_walltime
+        self.min_eps_diff = min_eps_diff
 
 
 def create_simulate_from_prior_function(

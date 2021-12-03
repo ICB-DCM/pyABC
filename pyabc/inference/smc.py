@@ -1061,4 +1061,5 @@ class ABCSMC:
             prev_total_nr_simulations=self.history.total_nr_simulations,
             max_walltime=self.max_walltime,
             init_walltime=self.init_walltime,
+            min_eps_diff=self.min_eps_diff,
         )
