@@ -43,6 +43,7 @@ def s_model(request) -> str:
     return request.param
 
 
+@pytest.mark.flaky(reruns=5)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_fit(s_model, s_predictor):
     """Test fit on a simple model."""
