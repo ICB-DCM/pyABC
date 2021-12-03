@@ -240,6 +240,9 @@ class Temperature(TemperatureBase):
     def __call__(self, t: int) -> float:
         return self.temperatures[t]
 
+    def has(self, t: int) -> bool:
+        return t in self.temperatures
+
 
 class TemperatureScheme:
     """

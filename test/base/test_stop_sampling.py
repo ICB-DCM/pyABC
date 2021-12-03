@@ -105,3 +105,19 @@ def test_max_walltime(db_path):
     history = abc.run(-1, 100, max_walltime=max_walltime)
     assert datetime.now() - init_walltime > max_walltime
     assert history.n_populations < 100
+
+
+def test_min_eps_diff(db_path):
+    """Test the minimum epsilon difference condition."""
+    abc = ABCSMC(model, Distribution(par=st.uniform(0, 10)), dist, pop_size)
+    abc.new(db_path, {"par": 0.5})
+    min_eps_diff = 1
+    history = abc.run(
+        minimum_epsilon=-1,
+        max_nr_populations=100,
+        min_eps_diff=min_eps_diff,
+    )
+    pops = history.get_all_populations()
+    eps = pops.epsilon.to_numpy()
+    assert (eps[-1] - eps[-2]) < min_eps_diff
+    assert history.n_populations < 100

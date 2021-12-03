@@ -549,6 +549,8 @@ def evaluate_preliminary_particle(
 def termination_criteria_fulfilled(
     current_eps: float,
     min_eps: float,
+    prev_eps: float,
+    min_eps_diff: float,
     stop_if_single_model_alive: bool,
     nr_of_models_alive: int,
     acceptance_rate: float,
@@ -586,6 +588,9 @@ def termination_criteria_fulfilled(
         return True
     if current_eps <= min_eps:
         logger.info("Stop: Minimum epsilon.")
+        return True
+    if prev_eps is not None and abs(current_eps - prev_eps) < min_eps_diff:
+        logger.info("Stop: Minimum epsilon difference")
         return True
     elif stop_if_single_model_alive and nr_of_models_alive <= 1:
         logger.info("Stop: Single model alive.")
