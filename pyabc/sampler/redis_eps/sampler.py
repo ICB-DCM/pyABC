@@ -525,7 +525,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         if termination_criteria_fulfilled(
             current_eps=ana_vars.eps(t),
             min_eps=ana_vars.min_eps,
-            prev_eps=ana_vars.eps(t - 1) if ana_vars.eps.has(t - 1) else None,
+            prev_eps=ana_vars.prev_eps,
             min_eps_diff=ana_vars.min_eps_diff,
             stop_if_single_model_alive=ana_vars.stop_if_single_model_alive,  # noqa: E251
             nr_of_models_alive=population.nr_of_models_alive(),

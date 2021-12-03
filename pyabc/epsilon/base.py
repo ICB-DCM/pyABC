@@ -117,19 +117,6 @@ class Epsilon(ABC):
         eps: The epsilon for population t.
         """
 
-    @abstractmethod
-    def has(self, t: int) -> bool:
-        """Indicate whether an epsilon for time `t` can be calculated.
-
-        Parameters
-        ----------
-        t: Time index to query for.
-
-        Returns
-        -------
-        has: Whether an epsilon value for time t can be returned.
-        """
-
     def requires_calibration(self) -> bool:
         """
         Whether the class requires an initial calibration, based on
@@ -184,6 +171,3 @@ class NoEpsilon(Epsilon):
 
     def __call__(self, t: int) -> float:
         return np.nan
-
-    def has(self, t: int) -> bool:
-        return False

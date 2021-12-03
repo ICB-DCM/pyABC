@@ -27,6 +27,7 @@ from pyabc.inference_util import (
     create_simulate_from_prior_function,
     create_simulate_function,
     create_transition_pdf,
+    eps_from_hist,
     termination_criteria_fulfilled,
 )
 from pyabc.model import FunctionModel, Model
@@ -553,7 +554,7 @@ class ABCSMC:
             t=t,
             max_eval=np.inf,
             all_accepted=True,
-            ana_vars=self._vars(),
+            ana_vars=self._vars(t=t),
         )
 
         # normalize accepted population weight to 1
@@ -809,7 +810,7 @@ class ABCSMC:
             simulate_one=simulate_one,
             t=t,
             max_eval=max_eval,
-            ana_vars=self._vars(),
+            ana_vars=self._vars(t=t),
         )
 
         # check sample health
@@ -879,7 +880,7 @@ class ABCSMC:
         if termination_criteria_fulfilled(
             current_eps=self.eps(t=t),
             min_eps=self.minimum_epsilon,
-            prev_eps=self.eps(t - 1) if self.eps.has(t - 1) else None,
+            prev_eps=eps_from_hist(history=self.history, t=t - 1),
             min_eps_diff=self.min_eps_diff,
             stop_if_single_model_alive=self.stop_if_only_single_model_alive,
             # noqa: E251
@@ -1036,12 +1037,13 @@ class ABCSMC:
             particles, w = self.history.get_distribution(m, t - 1)
             self.transitions[m].fit(particles, w)
 
-    def _vars(self) -> AnalysisVars:
+    def _vars(self, t: int) -> AnalysisVars:
         """Create a dictionary of analysis variables of interest.
 
         These variables are passed to the sampler, as some need to create
         simulation settings themselves.
         """
+
         return AnalysisVars(
             model_prior=self.model_prior,
             parameter_priors=self.parameter_priors,
@@ -1062,4 +1064,5 @@ class ABCSMC:
             max_walltime=self.max_walltime,
             init_walltime=self.init_walltime,
             min_eps_diff=self.min_eps_diff,
+            prev_eps=eps_from_hist(history=self.history, t=t - 1),
         )

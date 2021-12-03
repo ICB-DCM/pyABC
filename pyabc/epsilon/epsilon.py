@@ -180,9 +180,6 @@ class QuantileEpsilon(Epsilon):
 
         return eps
 
-    def has(self, t: int) -> bool:
-        return t in self._look_up
-
     def _set_initial_value(self, t: int):
         self._look_up = {t: self._initial_epsilon}
 
