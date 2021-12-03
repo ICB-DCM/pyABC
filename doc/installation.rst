@@ -1,7 +1,7 @@
 .. _installation:
 
-Installation und Upgrading
-==========================
+Installation und Upgrade
+========================
 
 
 Preparation

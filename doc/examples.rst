@@ -19,31 +19,54 @@ which can be performed by
 
 Potentially, further dependencies may be required.
 
+Getting started
+---------------
+
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    examples/parameter_inference.ipynb
    examples/model_selection.ipynb
+
+Algorithms and features
+-----------------------
+
+.. toctree::
+   :maxdepth: 2
+
    examples/early_stopping.ipynb
    examples/resuming.ipynb
-   examples/using_R.ipynb
-   examples/using_julia.ipynb
-   examples/conversion_reaction.ipynb
-   examples/chemical_reaction.ipynb
-   examples/multiscale_agent_based.ipynb
-   examples/sde_ion_channels.ipynb
    examples/adaptive_distances.ipynb
    examples/informative.ipynb
    examples/aggregated_distances.ipynb
    examples/wasserstein.ipynb
-   examples/external_simulators.ipynb
    examples/data_plots.ipynb
    examples/noise.ipynb
-   examples/petab_yaml2sbml.ipynb
-   examples/petab_application.ipynb
    examples/discrete_parameters.ipynb
    examples/look_ahead.ipynb
 
+Languages
+---------
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/using_R.ipynb
+   examples/using_julia.ipynb
+   examples/external_simulators.ipynb
+   examples/petab_yaml2sbml.ipynb
+
+Application examples
+--------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/conversion_reaction.ipynb
+   examples/chemical_reaction.ipynb
+   examples/multiscale_agent_based.ipynb
+   examples/sde_ion_channels.ipynb
+   examples/petab_application.ipynb
 
 Download the examples as notebooks
 ----------------------------------
