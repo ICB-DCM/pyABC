@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC
-from typing import Callable, List
+from typing import Callable, List, Union
 
 import numpy as np
 from scipy import linalg as la
@@ -81,32 +81,41 @@ class PCADistance(DistanceWithMeasureList):
     """
     Calculate distance in whitened coordinates.
 
-    A whitening transformation :math:`X` is calculated from an initial sample.
-    The distance is measured as euclidean distance in the transformed space.
+    A PCA whitening transformation :math:`X` is calculated from an initial
+    sample.
+    The distance is measured as p-norm distance in the transformed space.
     I.e
 
     .. math::
 
         d(x,y) = \\| Wx - Wy \\|
+
+    Parameters
+    ----------
+    measures_to_use: See DistanceWithMeasureList.
+    p: p-norm, defaults to Euclidean distance.
     """
 
-    def __init__(self, measures_to_use='all'):
+    def __init__(self, measures_to_use='all', p: float = 2):
         super().__init__(measures_to_use)
-        self._whitening_transformation_matrix = None
+        self.p: float = p
+        self.trafo: Union[np.ndarray, None] = None
 
     def _dict_to_vect(self, x):
         return np.asarray([x[key] for key in self.measures_to_use])
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
-        samples_vec = np.asarray([self._dict_to_vect(x) for x in sum_stats])
-        # samples_vec is an array of shape nr_samples x nr_features
-        means = samples_vec.mean(axis=0)
-        centered = samples_vec - means
-        covariance = centered.T.dot(centered)
-        w, v = la.eigh(covariance)
-        self._whitening_transformation_matrix = v.dot(
-            np.diag(1.0 / np.sqrt(w))
-        ).dot(v.T)
+        # create data matrix, shape (n_sample, n_y)
+        x = np.asarray([self._dict_to_vect(x) for x in sum_stats])
+        # center
+        mean = np.mean(x, axis=0)
+        x -= mean
+        # covariance matrix, with bias correction
+        cov = (x.T @ x) / (x.shape[0] - 1)
+        # eigenvalues and eigenvectors
+        ew, ev = la.eigh(cov)
+        # whitening transformation
+        self.trafo = np.diag(1.0 / np.sqrt(ew)) @ ev.T
 
     def requires_calibration(self) -> bool:
         return True
@@ -139,7 +148,7 @@ class PCADistance(DistanceWithMeasureList):
     ) -> float:
         x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
-            self._whitening_transformation_matrix.dot(x_vec - x_0_vec), 2
+            self.trafo @ (x_vec - x_0_vec).reshape(-1, 1), ord=self.p
         )
         return distance
 

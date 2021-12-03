@@ -65,6 +65,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Install julia
+      uses: julia-actions/setup-julia@v1
+      with:
+        version: nightly
+
     - name: Cache
       uses: actions/cache@v1
       with:

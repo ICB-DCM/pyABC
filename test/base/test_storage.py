@@ -565,3 +565,38 @@ def test_dataframe_formats():
     # will interpret as mspack, but late pandas version dropped that method
     with pytest.raises(pyarrow.lib.ArrowInvalid):
         df_from_bytes_parquet(df_csv)
+
+
+def test_export():
+    """Test database export.
+
+    Just calls export and does some very basic checks.
+    """
+    # simple problem
+    def model(p):
+        return {"y": p["p"] + 0.1 * np.random.normal()}
+
+    prior = pyabc.Distribution(p=pyabc.RV("uniform", -1, 2))
+    distance = pyabc.PNormDistance()
+
+    try:
+        # run
+        db_file = tempfile.mkstemp(suffix=".db")[1]
+        abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
+        abc.new("sqlite:///" + db_file, model({"p": 0}))
+        abc.run(max_nr_populations=3)
+
+        # export history
+        for fmt in ["csv", "json", "html", "stata"]:
+            out_file = tempfile.mkstemp()[1]
+            try:
+                pyabc.storage.export(db_file, out=out_file, out_format=fmt)
+                assert os.path.exists(out_file)
+                assert os.stat(out_file).st_size > 0
+            finally:
+                if os.path.exists(out_file):
+                    os.remove(out_file)
+
+    finally:
+        if os.path.exists(db_file):
+            os.remove(db_file)
