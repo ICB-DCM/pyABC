@@ -11,6 +11,13 @@ from ..parameters import Parameter
 
 logger = logging.getLogger("ABC.External")
 
+# timeout error code
+TIMEOUT: int = -15
+# location key
+LOC: str = "loc"
+# returncode key
+RETURNCODE: str = "returncode"
+
 
 class ExternalHandler:
     """
@@ -18,9 +25,6 @@ class ExternalHandler:
 
     This class bundles repeated functionality.
     """
-
-    # timeout error code
-    TIMEOUT: int = -15
 
     def __init__(
         self,
@@ -156,7 +160,7 @@ class ExternalHandler:
                 )
             returncode, msg = status.returncode, ""
         except subprocess.TimeoutExpired as e:
-            returncode, msg = ExternalHandler.TIMEOUT, str(e)
+            returncode, msg = TIMEOUT, str(e)
         if returncode:
             msg = (
                 f"Simulation error for arguments {args}: "
@@ -168,7 +172,7 @@ class ExternalHandler:
                 logger.warning(msg)
 
         # return location and call's return status
-        return {'loc': loc, 'returncode': returncode}
+        return {LOC: loc, RETURNCODE: returncode}
 
 
 class ExternalModel(Model):
@@ -285,7 +289,7 @@ class ExternalSumStat:
         Create summary statistics from the `model_output` generated
         by the model.
         """
-        args = [f"model_output={model_output['loc']}"]
+        args = [f"model_output={model_output[LOC]}"]
         return self.eh.run(args=args)
 
 
@@ -330,17 +334,17 @@ class ExternalDistance:
 
     def __call__(self, sumstat_0, sumstat_1):
         # check if external script failed
-        if sumstat_0['returncode'] or sumstat_1['returncode']:
+        if sumstat_0[RETURNCODE] or sumstat_1[RETURNCODE]:
             return np.nan
         args = [
-            f"sumstat_0={sumstat_0['loc']}",
-            f"sumstat_1={sumstat_1['loc']}",
+            f"sumstat_0={sumstat_0[LOC]}",
+            f"sumstat_1={sumstat_1[LOC]}",
         ]
         ret = self.eh.run(args)
         # read in distance
-        with open(ret['loc'], 'rb') as f:
+        with open(ret[LOC], 'rb') as f:
             distance = float(f.read())
-        os.remove(ret['loc'])
+        os.remove(ret[LOC])
         return distance
 
 
@@ -365,4 +369,4 @@ def create_sum_stat(loc: str = '', returncode: int = 0):
     A dictionary with keys 'loc' and 'returncode' of the given
     parameters.
     """
-    return {'loc': loc, 'returncode': returncode}
+    return {LOC: loc, RETURNCODE: returncode}

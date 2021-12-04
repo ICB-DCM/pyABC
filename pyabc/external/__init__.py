@@ -17,6 +17,9 @@ Further, pyABC provides efficient interfaces to R via the class
 """
 
 from .base import (
+    LOC,
+    RETURNCODE,
+    TIMEOUT,
     ExternalDistance,
     ExternalHandler,
     ExternalModel,
