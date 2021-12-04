@@ -80,8 +80,7 @@ class ExternalHandler:
         self.timeout: float = timeout
 
     def create_loc(self):
-        """
-        Create temporary file or folder.
+        """Create temporary file or folder.
 
         Returns
         -------
@@ -98,8 +97,7 @@ class ExternalHandler:
             )[1]
 
     def create_executable(self, loc):
-        """
-        Parse and return executable.
+        """Parse and return executable.
 
         Replaces instances of {loc} by the location `loc`.
         """
@@ -107,8 +105,7 @@ class ExternalHandler:
         return executable
 
     def run(self, args: List[str] = None, cmd: str = None, loc: str = None):
-        """
-        Run the script for the given arguments.
+        """Run the script for the given arguments.
 
         Parameters
         ----------
@@ -208,8 +205,7 @@ class ExternalModel(Model):
         timeout: float = None,
         name: str = "ExternalModel",
     ):
-        """
-        Initialize the model.
+        """Initialize the model.
 
         Parameters
         ----------
