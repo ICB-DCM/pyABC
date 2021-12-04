@@ -3,6 +3,7 @@ import os
 import sys
 
 import amici.petab_import
+import cloudpickle as pickle
 import git
 import matplotlib.pyplot as plt
 import numpy as np
@@ -286,10 +287,11 @@ def test_get_bounds():
         )
 
 
-def test_pipeline():
-    """Test the petab pipeline on an application model."""
+benchmark_dir = "doc/examples/tmp/benchmark-models-petab"
+
+
+def download_benchmark_repo():
     # download archive
-    benchmark_dir = "doc/examples/tmp/benchmark-models-petab"
     if not os.path.exists(benchmark_dir):
         git.Repo.clone_from(
             "https://github.com/benchmarking-initiative"
@@ -304,6 +306,11 @@ def test_pipeline():
         g.pull()
     except git.exc.GitCommandError:
         pass
+
+
+def boehm_model_importer():
+    """Import Boehm model."""
+    download_benchmark_repo()
 
     # create problem
     model_name = 'Boehm_JProteomeRes2014'
@@ -324,6 +331,24 @@ def test_pipeline():
 
     # import to pyabc
     importer = pyabc.petab.AmiciPetabImporter(petab_problem, model, solver)
+
+    return importer
+
+
+def test_pickling():
+    """Test pickling (needed for some samplers)."""
+    importer = boehm_model_importer()
+
+    model = importer.create_model()
+    model_re = pickle.loads(pickle.dumps(model))
+
+    p = importer.get_nominal_parameters()
+    assert np.isclose(model(p)["llh"], model_re(p)["llh"])
+
+
+def test_pipeline():
+    """Test the petab pipeline on an application model."""
+    importer = boehm_model_importer()
 
     # extract required objects
     prior = importer.create_prior()

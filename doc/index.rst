@@ -5,7 +5,7 @@ Welcome to pyABC's documentation!
    :target: https://github.com/ICB-DCM/pyABC/actions
 .. image:: https://readthedocs.org/projects/pyabc/badge/?version=latest
    :target: https://pyabc.readthedocs.io/en/latest
-.. image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/ICB-DCM/pyABC/branch/main/graph/badge.svg
    :target: https://codecov.io/gh/ICB-DCM/pyABC
 .. image:: https://badge.fury.io/py/pyabc.svg
    :target: https://badge.fury.io/py/pyabc
