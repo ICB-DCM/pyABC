@@ -8,6 +8,14 @@ Release Notes
 ...........
 
 
+0.11.9 (2021-12-04)
+-------------------
+
+* Allow pickling of AMICI models (#527)
+* Remove external handler cleanup as not used (#529)
+* Allow timeout of external handlers (#530)
+
+
 0.11.8 (2021-12-03)
 -------------------
 
