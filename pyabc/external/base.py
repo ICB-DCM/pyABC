@@ -19,6 +19,9 @@ class ExternalHandler:
     This class bundles repeated functionality.
     """
 
+    # timeout error code
+    TIMEOUT: int = -15
+
     def __init__(
         self,
         executable: str,
@@ -31,32 +34,36 @@ class ExternalHandler:
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
+        timeout: float = None,
     ):
         """
         Parameters
         ----------
-        executable: str
+        executable:
             Name of the executable to call, e.g. bash, java or Rscript.
             The executable may be parameterized, e.g. appearances of {loc}
             in the string are replaced at runtime by the location of the
             output.
-        file: str
+        file:
             Path to the file to be executed, e.g. a
             .sh, .java or .r file, or also a .xml file depending on the
             executable.
-        fixed_args: str, optional (default = None)
+        fixed_args:
             Argument string to use every time.
-        create_folder: bool, optional (default = True)
+        create_folder:
             Whether the function should create a temporary directory.
             If False, only one temporary file is created.
-        suffix, prefix, dir: str, optional (default = None)
-            Specify suffix, prefix, or base directory for the created
+        suffix, prefix, dir:
+            Suffix, prefix, and base directory for the created
             temporary files.
-        show_stdout, show_stderr: bool, optional (default: False, True)
+        show_stdout, show_stderr:
             Whether to show or hide the stdout and stderr streams.
-        raise_on_error: bool, optional (default = False)
+        raise_on_error:
             Whether to raise when an error in the execution of the external
             script occurs, or just continue.
+        timeout:
+            Maximum execution time in seconds, after which the executable is
+            stopped.
         """
         self.executable = executable
         self.file = file
@@ -70,6 +77,7 @@ class ExternalHandler:
         self.show_stdout = show_stdout
         self.show_stderr = show_stderr
         self.raise_on_error = raise_on_error
+        self.timeout: float = timeout
 
     def create_loc(self):
         """
@@ -126,35 +134,44 @@ class ExternalHandler:
             stderr = {'stderr': devnull}
 
         # call
-        if cmd is not None:
-            status = subprocess.run(
-                cmd, shell=True, **stdout, **stderr  # noqa: S602
-            )
-        else:
-            executable = self.create_executable(loc)
-            status = subprocess.run(  # noqa: S603
-                [
-                    executable,
-                    self.file,
-                    *self.fixed_args,
-                    *args,
-                    f'target={loc}',
-                ],
-                **stdout,
-                **stderr,
-            )
-        if status.returncode:
+        try:
+            if cmd is not None:
+                status = subprocess.run(
+                    cmd,
+                    shell=True,  # noqa: S602
+                    **stdout,
+                    **stderr,
+                    timeout=self.timeout,
+                )
+            else:
+                executable = self.create_executable(loc)
+                status = subprocess.run(  # noqa: S603
+                    [
+                        executable,
+                        self.file,
+                        *self.fixed_args,
+                        *args,
+                        f'target={loc}',
+                    ],
+                    **stdout,
+                    **stderr,
+                    timeout=self.timeout,
+                )
+            returncode, msg = status.returncode, ""
+        except subprocess.TimeoutExpired as e:
+            returncode, msg = ExternalHandler.TIMEOUT, str(e)
+        if returncode:
             msg = (
                 f"Simulation error for arguments {args}: "
-                f"returncode {status.returncode}."
+                f"returncode {returncode}, msg={msg}."
             )
             if self.raise_on_error:
                 raise ValueError(msg)
             else:
-                logger.warn(msg)
+                logger.warning(msg)
 
         # return location and call's return status
-        return {'loc': loc, 'returncode': status.returncode}
+        return {'loc': loc, 'returncode': returncode}
 
 
 class ExternalModel(Model):
@@ -188,6 +205,7 @@ class ExternalModel(Model):
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
+        timeout: float = None,
         name: str = "ExternalModel",
     ):
         """
@@ -212,6 +230,7 @@ class ExternalModel(Model):
             show_stdout=show_stdout,
             show_stderr=show_stderr,
             raise_on_error=raise_on_error,
+            timeout=timeout,
         )
 
     def __call__(self, pars: Parameter):
@@ -249,6 +268,7 @@ class ExternalSumStat:
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
+        timeout: float = None,
     ):
         self.eh = ExternalHandler(
             executable=executable,
@@ -261,6 +281,7 @@ class ExternalSumStat:
             show_stdout=show_stdout,
             show_stderr=show_stderr,
             raise_on_error=raise_on_error,
+            timeout=timeout,
         )
 
     def __call__(self, model_output):
@@ -295,6 +316,7 @@ class ExternalDistance:
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
+        timeout: float = None,
     ):
         self.eh = ExternalHandler(
             executable=executable,
@@ -307,6 +329,7 @@ class ExternalDistance:
             show_stdout=show_stdout,
             show_stderr=show_stderr,
             raise_on_error=raise_on_error,
+            timeout=timeout,
         )
 
     def __call__(self, sumstat_0, sumstat_1):
