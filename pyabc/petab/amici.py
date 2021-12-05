@@ -1,3 +1,5 @@
+"""PEtab import with AMICI simulator."""
+
 import copy
 import logging
 import os

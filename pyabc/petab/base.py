@@ -1,3 +1,5 @@
+"""Simulator-independent PEtab handling."""
+
 import abc
 import logging
 from collections.abc import Mapping, Sequence
