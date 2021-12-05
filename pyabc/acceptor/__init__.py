@@ -3,7 +3,6 @@ Acceptors
 =========
 
 Acceptors handle the acceptance step.
-
 """
 
 

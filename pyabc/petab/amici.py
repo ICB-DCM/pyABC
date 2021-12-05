@@ -1,3 +1,5 @@
+"""PEtab import with AMICI simulator."""
+
 import copy
 import logging
 import os
@@ -17,19 +19,19 @@ try:
 except ImportError:
     petab = C = None
     logger.error(
-        "Install petab (see https://github.com/icb-dcm/petab) to use "
-        "the petab functionality."
+        "Install PEtab (see https://github.com/icb-dcm/petab) to use "
+        "the petab functionality, e.g. via `pip install pyabc[petab]`"
     )
 
 try:
     import amici
-    import amici.petab_import
+    from amici import petab_import as amici_petab_import
     from amici.petab_objective import LLH, RDATAS, simulate_petab
 except ImportError:
-    amici = amici.petab_import = simulate_petab = LLH = RDATAS = None
+    amici = amici_petab_import = simulate_petab = LLH = RDATAS = None
     logger.error(
         "Install amici (see https://github.com/icb-dcm/amici) to use "
-        "the amici functionality."
+        "the amici functionality, e.g. via `pip install pyabc[amici]`"
     )
 
 
@@ -132,7 +134,7 @@ class AmiciModel:
     def __setstate__(self, state: Dict):
         self.__dict__.update(state)
 
-        model = amici.petab_import.import_petab_problem(self.petab_problem)
+        model = amici_petab_import.import_petab_problem(self.petab_problem)
         solver = model.getSolver()
 
         _fd, _file = tempfile.mkstemp()
@@ -181,13 +183,13 @@ class AmiciPetabImporter(PetabImporter):
     def __init__(
         self,
         petab_problem: petab.Problem,
-        amici_model: amici.Model = None,
-        amici_solver: amici.Solver = None,
+        amici_model: "amici.Model" = None,
+        amici_solver: "amici.Solver" = None,
     ):
         super().__init__(petab_problem=petab_problem)
 
         if amici_model is None:
-            amici_model = amici.petab_import.import_petab_problem(
+            amici_model = amici_petab_import.import_petab_problem(
                 petab_problem
             )
         self.amici_model = amici_model
