@@ -59,6 +59,7 @@ class BasicoModel(Model):
         method:
             Simulation method, can be any method supported by
             `basico.run_time_course`, in particular:
+
             * deterministic, lsoda: the LSODA implementation
             * stochastic: the Gibson & Bruck Gillespie implementation
             * directMethod: Gillespie Direct Method

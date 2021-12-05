@@ -76,9 +76,9 @@ Download the examples as notebooks
 * :download:`Model selection <examples/model_selection.ipynb>`
 * :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
 * :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
-* :download:`Using R <examples/using_R.ipynb>`
-* :download:`Using Julia <examples/using_julia.ipynb>`
-* :download:`Using COPASI <examples/using_copasi.ipynb>`
+* :download:`Using R via rpy2 <examples/using_R.ipynb>`
+* :download:`Using Julia via pyjulia <examples/using_julia.ipynb>`
+* :download:`Using COPASI via BasiCO <examples/using_copasi.ipynb>`
 * :download:`Ordinary differential equations: Conversion reaction <examples/conversion_reaction.ipynb>`
 * :download:`Markov jump process: Reaction network <examples/chemical_reaction.ipynb>`
 * :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
