@@ -1,15 +1,22 @@
-"""Interface pyABC with COPASI via BASICO."""
+"""Interface pyABC with COPASI via BasiCO."""
 
 import logging
 import os
 from typing import Dict, List
 
-import basico
-
 from .. import Parameter
 from ..model import Model
 
 logger = logging.getLogger("ABC.Copasi")
+
+try:
+    import basico
+except ImportError:
+    basico = None
+    logger.error(
+        "Install BasiCO (see https://basico.rtfd.io) to use the BasiCO model, "
+        "e.g. via `pip install pyabc[copasi]`"
+    )
 
 
 class BasicoModel(Model):
@@ -17,9 +24,9 @@ class BasicoModel(Model):
 
     This class is a :class:`pyabc.Model` compliant wrapper around
     `basico.run_time_course`, allowing to update model parameters and use
-    various simulation methods. BasiCO
-    (https://basico.readthedocs.io/en/latest/index.html) is a simple Python
-    interface to COPASI (http://copasi.org/).
+    various simulation methods.
+    BasiCO (https://basico.rtfd.io) is a simple Python interface to
+    COPASI (http://copasi.org).
 
     The implementation is derived from an implementation by Frank Bergmann at
     https://github.com/fbergmann/pyabc-copasi.
