@@ -15,8 +15,7 @@ try:
             return py_object_
         return object_
 
-
-except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
+except ImportError:
 
     def r_to_py(object_):
         return object_
