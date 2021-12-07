@@ -325,7 +325,9 @@ def boehm_model_importer():
     if output_folder not in sys.path:
         sys.path.insert(0, output_folder)
     model = amici.petab_import.import_petab_problem(
-        petab_problem, model_output_dir=output_folder
+        petab_problem,
+        model_output_dir=output_folder,
+        generate_sensitivity_code=False,
     )
     solver = model.getSolver()
 
