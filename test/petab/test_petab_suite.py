@@ -90,6 +90,7 @@ def _execute_case(case):
     amici_model = amici.petab_import.import_petab_problem(
         petab_problem=petab_problem,
         model_output_dir=output_folder,
+        generate_sensitivity_code=False,
     )
     solver = amici_model.getSolver()
 
