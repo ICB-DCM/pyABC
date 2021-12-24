@@ -23,5 +23,7 @@ API reference
    api_random_variables
    api_sge
    api_external
+   api_petab
+   api_copasi
    api_visualization
    api_weightedstatistics

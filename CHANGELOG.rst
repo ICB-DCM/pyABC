@@ -8,6 +8,13 @@ Release Notes
 ...........
 
 
+0.11.10 (2021-12-24)
+--------------------
+
+* Add BasiCO-Copasi model interface (thanks to Frank Bergmann) (#531)
+* CI: Run Amici without sensitivity calculation (#533)
+
+
 0.11.9 (2021-12-04)
 -------------------
 

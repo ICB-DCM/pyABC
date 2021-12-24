@@ -1,3 +1,5 @@
+"""Simulator-independent PEtab handling."""
+
 import abc
 import logging
 from collections.abc import Mapping, Sequence
@@ -17,8 +19,8 @@ try:
 except ImportError:
     petab = C = None
     logger.error(
-        "Install petab (see https://github.com/icb-dcm/petab) to use "
-        "the petab functionality."
+        "Install PEtab (see https://github.com/icb-dcm/petab) to use "
+        "the petab functionality, e.g. via `pip install pyabc[petab]`"
     )
 
 
