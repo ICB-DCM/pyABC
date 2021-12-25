@@ -89,6 +89,12 @@ def plot_sensitivity_sankey(
         Plot width.
     height:
         Plot height.
+    sumstat_color:
+        Callable assigning a color code for a given flattened summary
+        statistic id.
+    par_color:
+        Callable assigning a color code for a given parameter or parameter
+        transformation id.
     node_kwargs:
         Arguments for `go.Sankey.nodes`.
     layout_kwargs:
