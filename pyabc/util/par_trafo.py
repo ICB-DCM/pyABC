@@ -46,8 +46,13 @@ class ParTrafo(ParTrafoBase):
     def __init__(
         self,
         trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
+        trafo_ids: Union[str, List[str]] = "{par_id}_{trafo_ix}",
     ):
         self.trafos = trafos
+
+        if not isinstance(trafo_ids, str) and len(trafos) != len(trafo_ids):
+            raise AssertionError("Lengths of trafos and trafo_ids must match")
+        self.trafo_ids = trafo_ids
 
         # to maintain key order
         self.keys: Union[List[str], None] = None
@@ -84,13 +89,15 @@ class ParTrafo(ParTrafoBase):
         {par_id_1}_{trafo_1}, ..., {par_id_n}_{trafo_1}, ...,
         {par_id_1}_{trafo_m}, ..., {par_id_n}_{trafo_m}
         """
-        base_ids = [f"{key}" for key in self.keys]
+        par_ids = [f"{key}" for key in self.keys]
         if self.trafos is None:
-            return base_ids
+            return par_ids
 
         ids = [
-            f"{base_id}_{trafo_ix}"
+            self.trafo_ids.format(par_id=par_id, trafo_ix=trafo_ix)
+            if isinstance(self.trafo_ids, str)
+            else self.trafo_ids[trafo_ix].format(par_id=par_id)
             for trafo_ix in range(len(self.trafos))
-            for base_id in base_ids
+            for par_id in par_ids
         ]
         return ids

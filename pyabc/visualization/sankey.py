@@ -1,6 +1,6 @@
 """Sensitivity sankey flow plot."""
 
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Union
 
 import numpy as np
 
@@ -14,6 +14,8 @@ import pyabc.predictor
 import pyabc.storage
 import pyabc.sumstat
 import pyabc.util
+
+from . import colors
 
 
 def plot_sensitivity_sankey(
@@ -31,6 +33,10 @@ def plot_sensitivity_sankey(
     title: str = "Data-parameter sensitivities",
     width: float = None,
     height: float = None,
+    sumstat_color: Callable[[str], str] = None,
+    par_color: Callable[[str], str] = None,
+    node_kwargs: dict = None,
+    layout_kwargs: dict = None,
 ):
     """Plot sensitivity matrix as a Sankey flow plot.
 
@@ -83,6 +89,10 @@ def plot_sensitivity_sankey(
         Plot width.
     height:
         Plot height.
+    node_kwargs:
+        Arguments for `go.Sankey.nodes`.
+    layout_kwargs:
+        Arguments for `fig.update_layout`.
 
     Returns
     -------
@@ -96,6 +106,27 @@ def plot_sensitivity_sankey(
         sumstat = pyabc.sumstat.IdentitySumstat()
     if subsetter is None:
         subsetter = pyabc.sumstat.IdSubsetter()
+
+    if node_kwargs is None:
+        node_kwargs = {}
+    node_kwargs_all = {
+        "pad": 15,
+        "thickness": 20,
+        "line": {
+            "color": "black",
+            "width": 0.5,
+        },
+    }
+    node_kwargs_all.update(node_kwargs)
+
+    if layout_kwargs is None:
+        layout_kwargs = {}
+    layout_kwargs_all = {
+        "title_x": 0.5,
+        "font_size": 12,
+        "template": "simple_white",
+    }
+    layout_kwargs_all.update(layout_kwargs)
 
     # extract latest fitting time point
     if not isinstance(t, int):
@@ -162,15 +193,66 @@ def plot_sensitivity_sankey(
             target.append(n_in + i_out)
             value.append(sensis[i_in, i_out])
 
+    # node colors
+
+    sumstat_color_dict = {}
+
+    def default_sumstat_color(id_: str):
+        # extract summary statistic name
+        base = id_.split(":")[0]
+
+        if base in sumstat_color_dict:
+            return sumstat_color_dict[base]
+
+        i = len(sumstat_color_dict)
+        color = getattr(
+            colors,
+            f"{colors.REDSORANGES[i % len(colors.REDSORANGES)]}400",
+        )
+        sumstat_color_dict[base] = color
+        return color
+
+    par_color_dict = {}
+
+    def default_par_color(id_: str):
+        # extract parameter base name
+        #  this may require customization
+        if "^" in id_:
+            base = id_.split("^")[0]
+        elif "(" in id_:
+            base = id_.split("(")[1].split(")")[0]
+        else:
+            base = id_.split("_")[0]
+
+        if base in par_color_dict:
+            return par_color_dict[base]
+
+        i = len(par_color_dict)
+        color = getattr(
+            colors,
+            f"{colors.GREENSBLUES[i % len(colors.GREENSBLUES)]}400",
+        )
+        par_color_dict[base] = color
+        return color
+
+    if sumstat_color is None:
+        sumstat_color = default_sumstat_color
+    if par_color is None:
+        par_color = default_par_color
+
+    node_color = [
+        *[sumstat_color(id_) for id_ in sumstat.get_ids()],
+        *[par_color(id_) for id_ in par_trafo.get_ids()],
+    ]
+
     # generate figure
     fig = go.Figure(
         data=[
             go.Sankey(
                 node={
-                    "pad": 15,
-                    "thickness": 20,
-                    "line": {"color": "black", "width": 0.5},
                     "label": node_label,
+                    "color": node_color,
+                    **node_kwargs_all,
                 },
                 link={
                     "source": source,
@@ -184,11 +266,9 @@ def plot_sensitivity_sankey(
     # layout prettifications
     fig.update_layout(
         title_text=title,
-        title_x=0.5,
-        font_size=12,
         width=width,
         height=height,
-        template="simple_white",
+        **layout_kwargs_all,
     )
 
     return fig
