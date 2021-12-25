@@ -8,6 +8,13 @@ Release Notes
 ...........
 
 
+0.11.11 (2021-12-25)
+--------------------
+
+* Implement color grouping by summary statistics and parameters in sankey
+  plots (#536)
+
+
 0.11.10 (2021-12-24)
 --------------------
 
