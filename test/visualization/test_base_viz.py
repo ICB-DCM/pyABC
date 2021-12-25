@@ -377,3 +377,13 @@ def test_sensitivity_sankey():
         h=h,
         predictor=pyabc.predictor.LinearPredictor(),
     )
+
+
+def test_colors():
+    """Some basic tests regarding color codes."""
+    for basecolor in pyabc.visualization.colors.BASECOLORS:
+        for level in pyabc.visualization.colors.LEVELS:
+            color = getattr(pyabc.visualization.colors, f"{basecolor}{level}")
+            assert len(color) == 7
+            assert color[0] == "#"
+            assert int(color[1:], 16)
