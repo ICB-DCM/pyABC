@@ -165,7 +165,7 @@ def test_scheme_exponentialdecay():
 
     # check normal behavior
     temp = scheme(t=0, **scheme_args)
-    assert 1.0 < temp and temp < np.inf
+    assert 1.0 < temp < np.inf
     temp = scheme(t=2, **scheme_args)
     assert temp == 1.0
 

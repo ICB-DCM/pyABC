@@ -35,7 +35,6 @@ class ListTemperature(TemperatureBase):
     """
 
     def __init__(self, values: List[float]):
-        super().__init__()
         self.values = values
 
     def __call__(self, t: int) -> float:
@@ -87,7 +86,6 @@ class Temperature(TemperatureBase):
         enforce_exact_final_temperature: bool = True,
         log_file: str = None,
     ):
-        super().__init__()
         self.schemes = schemes
 
         if aggregate_fun is None:

@@ -62,6 +62,7 @@ from .distance import (
     ZScoreDistance,
 )
 from .epsilon import (
+    AcceptanceRateEpsilon,
     AcceptanceRateScheme,
     ConstantEpsilon,
     DalyScheme,

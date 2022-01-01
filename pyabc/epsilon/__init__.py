@@ -9,7 +9,7 @@ the observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
-
+from .acceptance_rate import AcceptanceRateEpsilon
 from .base import Epsilon, NoEpsilon
 from .epsilon import (
     ConstantEpsilon,
