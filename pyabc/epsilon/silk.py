@@ -6,7 +6,11 @@ from typing import Callable, Dict, List
 import autograd.numpy as anp
 import numpy as np
 import pandas as pd
-from autograd import hessian
+
+try:
+    from autograd import hessian
+except ImportError:
+    hessian = None
 from scipy import optimize
 
 from .base import Epsilon
@@ -67,6 +71,10 @@ class SilkOptimalEpsilon(Epsilon):
             step aproximation (which is used to obtain a more meaningful
             2nd derivative). If inf, no continuous approximation is used.
         """
+        if hessian is None:
+            raise ImportError(
+                "Install autograd, e.g. via `pip install pyabc[autograd]`"
+            )
         super().__init__()
         self.min_rate: float = min_rate
         self.k: float = k
