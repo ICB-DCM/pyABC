@@ -3,14 +3,14 @@
 import logging
 from typing import Callable, Dict, List
 
-import autograd.numpy as anp
 import numpy as np
 import pandas as pd
 
 try:
+    import autograd.numpy as anp
     from autograd import hessian
 except ImportError:
-    hessian = None
+    anp = hessian = None
 from scipy import optimize
 
 from .base import Epsilon
