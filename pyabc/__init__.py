@@ -62,7 +62,6 @@ from .distance import (
     ZScoreDistance,
 )
 from .epsilon import (
-    AcceptanceRateEpsilon,
     AcceptanceRateScheme,
     ConstantEpsilon,
     DalyScheme,
@@ -77,6 +76,7 @@ from .epsilon import (
     NoEpsilon,
     PolynomialDecayFixedIterScheme,
     QuantileEpsilon,
+    SilkOptimalEpsilon,
     Temperature,
     TemperatureBase,
     TemperatureScheme,

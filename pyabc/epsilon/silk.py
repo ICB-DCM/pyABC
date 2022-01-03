@@ -14,7 +14,7 @@ from .base import Epsilon
 logger = logging.getLogger("ABC.Epsilon")
 
 
-class AcceptanceRateEpsilon(Epsilon):
+class SilkOptimalEpsilon(Epsilon):
     """Threshold based on the threshold - acceptance rate relation.
 
     Approaches based on quantiles over previously observed distances
@@ -32,7 +32,13 @@ class AcceptanceRateEpsilon(Epsilon):
     approximation via importance sampling propagation and automatic
     differentiation.
 
-
+    It chooses a threshold maximizing the second derivative of the acceptance
+    rate as a function of the threshold. This tackles in particular local
+    optima, which induce a convex shape.
+    In case of a convex curve, common for unimodal problems, or more general
+    too low proposed thresholds or acceptance rates, instead a value is
+    calculated as a trade-off between high acceptance rate and low threshold,
+    minimizing a joint distance.
 
     .. [#silk2012]
         Silk, D., Filippi, S. and Stumpf, M.P., 2012.
@@ -40,12 +46,13 @@ class AcceptanceRateEpsilon(Epsilon):
         sequential Monte Carlo samplers:
         applications to molecular systems.
         arXiv preprint arXiv:1210.3296.
+        https://arxiv.org/pdf/1210.3296.pdf
     """
 
     def __init__(
         self,
         min_rate: float = 1e-2,
-        k: float = 1.0,
+        k: float = 10.0,
     ):
         """
         Parameters
@@ -74,7 +81,11 @@ class AcceptanceRateEpsilon(Epsilon):
         max_nr_populations: int,
         acceptor_config: dict,
     ):
-        self._update(get_all_records=get_all_records, t=t)
+        self._update(
+            get_weighted_distances=get_weighted_distances,
+            get_all_records=get_all_records,
+            t=t,
+        )
 
     def update(
         self,
@@ -84,7 +95,11 @@ class AcceptanceRateEpsilon(Epsilon):
         acceptance_rate: float,
         acceptor_config: dict,
     ):
-        self._update(get_all_records=get_all_records, t=t)
+        self._update(
+            get_weighted_distances=get_weighted_distances,
+            get_all_records=get_all_records,
+            t=t,
+        )
 
     def configure_sampler(self, sampler):
         # needs rejected samples to work properly
@@ -92,9 +107,13 @@ class AcceptanceRateEpsilon(Epsilon):
 
     def _update(
         self,
+        get_weighted_distances: Callable[[], pd.DataFrame],
         get_all_records: Callable[[], List[dict]],
         t: int,
     ):
+        # extract accepted particles
+        dist_max = get_weighted_distances()['distance'].max()
+
         # extract all simulated particles
         records = get_all_records()
         records = pd.DataFrame(records)
@@ -123,15 +142,12 @@ class AcceptanceRateEpsilon(Epsilon):
             """
             # sigmoid smooth step approximation
             if k < np.inf:
-                acc_prob = 1.0 / (
-                    1.0 + anp.exp(-k * ((distances / eps) - 1.0))
-                )
+                # large for distance << eps, small for distance >> eps
+                acc_prob = 1.0 / (1.0 + anp.exp(k * ((distances / eps) - 1.0)))
             else:
                 acc_prob = distances <= eps
             rate = anp.sum(weights * acc_prob)
             return rate
-
-        dist_max = distances.max()
 
         # find optimal epsilon and corresponding acceptance rate
         eps_opt = optimal_eps_from_second_order(
@@ -143,7 +159,7 @@ class AcceptanceRateEpsilon(Epsilon):
         logger.info(
             f"Optimal threshold for t={t}: eps={eps_opt:.4e}, "
             f"estimated rate={acc_rate_opt:.4e} "
-            f"(discontinuous={acc_rate(eps_opt, k=np.inf)})"
+            f"(discontinuous={acc_rate(eps_opt, k=np.inf):.4e})"
         )
 
         # use value if acceptance rate high enough or value high enough
@@ -158,7 +174,7 @@ class AcceptanceRateEpsilon(Epsilon):
             logger.info(
                 f"Overriding via trade-off: eps={the_eps}, "
                 f"estimated rate={acc_rate(the_eps)} "
-                f"(discontinuous={acc_rate(the_eps, k=np.inf)})"
+                f"(discontinuous={acc_rate(the_eps, k=np.inf):.4e})"
             )
 
         self.eps[t] = the_eps
