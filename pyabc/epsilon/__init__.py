@@ -9,7 +9,6 @@ the observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
-
 from .base import Epsilon, NoEpsilon
 from .epsilon import (
     ConstantEpsilon,
@@ -17,6 +16,7 @@ from .epsilon import (
     MedianEpsilon,
     QuantileEpsilon,
 )
+from .silk import SilkOptimalEpsilon
 from .temperature import (
     AcceptanceRateScheme,
     DalyScheme,

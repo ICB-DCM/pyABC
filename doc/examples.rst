@@ -42,6 +42,7 @@ Algorithms and features
    examples/wasserstein.ipynb
    examples/data_plots.ipynb
    examples/noise.ipynb
+   examples/optimal_threshold.ipynb
    examples/discrete_parameters.ipynb
    examples/look_ahead.ipynb
 
@@ -68,33 +69,6 @@ Application examples
    examples/multiscale_agent_based.ipynb
    examples/sde_ion_channels.ipynb
    examples/petab_application.ipynb
-
-Download the examples as notebooks
-----------------------------------
-
-* :download:`Parameter inference <examples/parameter_inference.ipynb>`
-* :download:`Model selection <examples/model_selection.ipynb>`
-* :download:`Early stopping of model simulations <examples/early_stopping.ipynb>`
-* :download:`Resuming stored ABC runs <examples/resuming.ipynb>`
-* :download:`Using R via rpy2 <examples/using_R.ipynb>`
-* :download:`Using Julia via pyjulia <examples/using_julia.ipynb>`
-* :download:`Using COPASI via BasiCO <examples/using_copasi.ipynb>`
-* :download:`Ordinary differential equations: Conversion reaction <examples/conversion_reaction.ipynb>`
-* :download:`Markov jump process: Reaction network <examples/chemical_reaction.ipynb>`
-* :download:`Multi-scale model: Tumor spheroid growth <examples/multiscale_agent_based.ipynb>`
-* :download:`Stochastic Differential Equation: Ion channel noise in Hodgkin-Huxley neurons <examples/sde_ion_channels.ipynb>`
-* :download:`Adaptive distances <examples/adaptive_distances.ipynb>`
-* :download:`Informative distances and summary statistics <examples/informative.ipynb>`
-* :download:`Aggregated distances <examples/aggregated_distances.ipynb>`
-* :download:`Wasserstein distances <examples/wasserstein.ipynb>`
-* :download:`External simulators <examples/external_simulators.ipynb>`
-* :download:`Data plots <examples/data_plots.ipynb>`
-* :download:`Measurement noise and exact inference <examples/noise.ipynb>`
-* :download:`PEtab import and yaml2sbml <examples/petab_yaml2sbml.ipynb>`
-* :download:`PEtab application example <examples/petab_application.ipynb>`
-* :download:`Discrete parameters <examples/discrete_parameters.ipynb>`
-* :download:`Look-ahead sampling <examples/look_ahead.ipynb>`
-
 
 .. warning::
 
