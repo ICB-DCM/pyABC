@@ -14,10 +14,6 @@ class Epsilon(ABC):
     each new population.
     """
 
-    def __init__(self):
-        """Constructor."""
-        pass
-
     def initialize(
         self,
         t: int,
@@ -165,9 +161,6 @@ class NoEpsilon(Epsilon):
     This can be used as a dummy epsilon when the Acceptor integrates the
     acceptance threshold.
     """
-
-    def __init__(self):
-        super().__init__()
 
     def __call__(self, t: int) -> float:
         return np.nan

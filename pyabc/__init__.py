@@ -76,6 +76,7 @@ from .epsilon import (
     NoEpsilon,
     PolynomialDecayFixedIterScheme,
     QuantileEpsilon,
+    SilkOptimalEpsilon,
     Temperature,
     TemperatureBase,
     TemperatureScheme,
