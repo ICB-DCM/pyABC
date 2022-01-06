@@ -68,7 +68,7 @@ jobs:
     - name: Install julia
       uses: julia-actions/setup-julia@v1
       with:
-        version: nightly
+        version: 1.7
 
     - name: Cache
       uses: actions/cache@v1
