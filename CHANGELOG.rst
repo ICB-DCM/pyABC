@@ -8,6 +8,15 @@ Release Notes
 ...........
 
 
+0.11.12 (2022-02-19)
+--------------------
+
+* Fix Julia version in tests (#542)
+* Apply nbqa black and isort to notebooks (#544)
+* Update to stable tox
+* Require python>=3.8 (#543)
+
+
 0.11.11 (2021-12-25)
 --------------------
 
