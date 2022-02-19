@@ -90,7 +90,7 @@ def weighted_mse(points, weights, refval):
     """Compute the weighted mean square error."""
     var = weighted_var(points, weights)
     bias = weighted_mean(points, weights) - refval
-    return var + bias ** 2
+    return var + bias**2
 
 
 def weighted_rmse(points, weights, refval):
@@ -112,7 +112,7 @@ def effective_sample_size(weights):
     weights: Importance sampling weights.
     """
     weights = np.asarray(weights)
-    n_eff = np.sum(weights) ** 2 / np.sum(weights ** 2)
+    n_eff = np.sum(weights) ** 2 / np.sum(weights**2)
     return n_eff
 
 

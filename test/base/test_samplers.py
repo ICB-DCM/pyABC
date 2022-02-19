@@ -233,7 +233,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, np.sqrt(sigma ** 2 + sigma ** 2)).pdf(
+        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(
             y_observed
         )
         return res

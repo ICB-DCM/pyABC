@@ -225,7 +225,7 @@ class PNormDistance(Distance):
         # maximum or p-norm distance
         if self.p == np.inf:
             return distances.max()
-        return (distances ** self.p).sum() ** (1 / self.p)
+        return (distances**self.p).sum() ** (1 / self.p)
 
     def get_config(self) -> dict:
         return {
