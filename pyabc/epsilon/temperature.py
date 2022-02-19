@@ -694,7 +694,7 @@ class DalyScheme(TemperatureScheme):
 
         self.k[t] = min(k_base, self.alpha * eps_base)
         eps = eps_base - self.k[t]
-        temperature = eps ** 2
+        temperature = eps**2
 
         return temperature
 
@@ -814,6 +814,6 @@ def _ess(pdfs, weights, beta):
     """
     Effective sample size (ESS) of importance samples.
     """
-    num = np.sum(weights * pdfs ** beta) ** 2
-    den = np.sum((weights * pdfs ** beta) ** 2)
+    num = np.sum(weights * pdfs**beta) ** 2
+    den = np.sum((weights * pdfs**beta) ** 2)
     return num / den

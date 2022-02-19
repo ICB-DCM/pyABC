@@ -56,7 +56,7 @@ def test_weighted_mse():
     var_ = np.sum(weights * (points - m_) ** 2)
     bias_ = m_ - refval
 
-    assert mse == var_ + bias_ ** 2
+    assert mse == var_ + bias_**2
 
 
 def test_weighted_rmse():
@@ -67,7 +67,7 @@ def test_weighted_rmse():
     var_ = np.sum(weights * (points - m_) ** 2)
     bias_ = m_ - refval
 
-    assert rmse == np.sqrt(var_ + bias_ ** 2)
+    assert rmse == np.sqrt(var_ + bias_**2)
 
 
 def test_resample():

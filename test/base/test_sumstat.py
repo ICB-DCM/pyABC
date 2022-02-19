@@ -47,7 +47,7 @@ def test_dict2arr():
         dict2arrlabels({"s0": "alice"}, keys=["s0"])
 
 
-@pytest.fixture(params=[None, [lambda x: x, lambda x: x ** 2]])
+@pytest.fixture(params=[None, [lambda x: x, lambda x: x**2]])
 def trafos(request):
     """Data transformations."""
     return request.param
@@ -110,8 +110,8 @@ def test_event_ixs():
 def test_pre():
     """Test chaining of summary statistics."""
     sumstat = IdentitySumstat(
-        trafos=[lambda x: x ** 2],
-        pre=IdentitySumstat(trafos=[lambda x: x, lambda x: x ** 2]),
+        trafos=[lambda x: x**2],
+        pre=IdentitySumstat(trafos=[lambda x: x, lambda x: x**2]),
     )
 
     assert not sumstat.requires_calibration()
