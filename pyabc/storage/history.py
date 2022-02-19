@@ -202,7 +202,7 @@ class History:
             Returns an error string if the DB size cannot be calculated.
         """
         try:
-            return os.path.getsize(self.db_file()) / 10 ** 6
+            return os.path.getsize(self.db_file()) / 10**6
         except FileNotFoundError:
             return "Cannot calculate size"
 

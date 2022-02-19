@@ -172,7 +172,7 @@ def test_pnormdistance():
     # call distance function, also to initialize w
     d = dist_f(abc.sumstats[0], abc.sumstats[1], t=0)
 
-    expected = pow(0 ** 2 + 1 ** 2 + 2 ** 2, 1 / 2)
+    expected = pow(0**2 + 1**2 + 2**2, 1 / 2)
     assert expected == d
 
     assert dist_f.fixed_weights[0] == 1
@@ -430,7 +430,7 @@ def test_normalkernel():
     ret = kernel(x, x0)
     # expected value
     logterm = 3 * np.log(2 * np.pi * 1)
-    quadterm = 1 ** 2 + 2 ** 2 + 1 ** 2
+    quadterm = 1**2 + 2**2 + 1**2
     expected = -0.5 * (logterm + quadterm)
     assert np.isclose(ret, expected)
 
@@ -458,7 +458,7 @@ def test_independentnormalkernel():
     kernel = IndependentNormalKernel()
     kernel.initialize(0, None, x0, total_sims=0)
     ret = kernel(x, x0)
-    expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1 ** 2 + 2 ** 2 + 4.5 ** 2)
+    expected = -0.5 * (3 * np.log(2 * np.pi * 1) + 1**2 + 2**2 + 4.5**2)
     sp_expected = np.log(
         np.prod([stats.norm.pdf(x=x, loc=0, scale=1) for x in [1, 2, 4.5]])
     )
@@ -474,9 +474,9 @@ def test_independentnormalkernel():
         + np.log(1)
         + np.log(2)
         + np.log(3)
-        + 1 ** 2 / 1
-        + 2 ** 2 / 2
-        + 4.5 ** 2 / 3
+        + 1**2 / 1
+        + 2**2 / 2
+        + 4.5**2 / 3
     )
     sp_expected = np.log(
         np.prod(

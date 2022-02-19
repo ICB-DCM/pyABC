@@ -35,7 +35,7 @@ class TextRVComposition(unittest.TestCase):
         self.x_two = Parameter({"a": 2, "b": Parameter({"b1": 2, "b2": 2})})
 
     def test_composition(self):
-        self.assertEqual(1 / 4 ** 3, self.d.pdf(self.x_one))
+        self.assertEqual(1 / 4**3, self.d.pdf(self.x_one))
 
 
 class TestRVInitialization(unittest.TestCase):

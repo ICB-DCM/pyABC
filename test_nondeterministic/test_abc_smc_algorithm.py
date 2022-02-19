@@ -390,10 +390,10 @@ def test_gaussian_single_population(db_path, sampler):
     )
 
     sigma_x_given_y = 1 / np.sqrt(
-        1 / sigma_prior ** 2 + 1 / sigma_ground_truth ** 2
+        1 / sigma_prior**2 + 1 / sigma_ground_truth**2
     )
     mu_x_given_y = (
-        sigma_x_given_y ** 2 * observed_data / sigma_ground_truth ** 2
+        sigma_x_given_y**2 * observed_data / sigma_ground_truth**2
     )
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
     x = np.linspace(-8, 8)
@@ -445,8 +445,8 @@ def test_gaussian_multiple_populations(db_path, sampler):
         np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)),
     )
 
-    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x ** 2 + 1 / sigma_y ** 2)
-    mu_x_given_y = sigma_x_given_y ** 2 * y_observed / sigma_y ** 2
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
+    mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
     x = np.linspace(-8, 8)
     max_distribution_difference = np.absolute(
@@ -503,8 +503,8 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
         np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)),
     )
 
-    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x ** 2 + 1 / sigma_y ** 2)
-    mu_x_given_y = sigma_x_given_y ** 2 * y_observed / sigma_y ** 2
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
+    mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
     x = np.linspace(-8, 8)
     max_distribution_difference = np.absolute(
@@ -553,7 +553,7 @@ def test_two_competing_gaussians_single_population(
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        return st.norm(mu_x_model, np.sqrt(sigma_y ** 2 + sigma_x ** 2)).pdf(
+        return st.norm(mu_x_model, np.sqrt(sigma_y**2 + sigma_x**2)).pdf(
             y_observed
         )
 
@@ -616,7 +616,7 @@ def test_two_competing_gaussians_multiple_population(
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        return st.norm(mu_x_model, np.sqrt(sigma ** 2 + sigma ** 2)).pdf(
+        return st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(
             y_observed
         )
 
@@ -734,8 +734,8 @@ def test_gaussian_multiple_populations_adpative_population_size(
         np.hstack((0, np.cumsum(posterior_weight[sort_indices]), 1)),
     )
 
-    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x ** 2 + 1 / sigma_y ** 2)
-    mu_x_given_y = sigma_x_given_y ** 2 * y_observed / sigma_y ** 2
+    sigma_x_given_y = 1 / np.sqrt(1 / sigma_x**2 + 1 / sigma_y**2)
+    mu_x_given_y = sigma_x_given_y**2 * y_observed / sigma_y**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
     x = np.linspace(-8, 8)
     max_distribution_difference = np.absolute(
@@ -804,7 +804,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        return st.norm(mu_x_model, np.sqrt(sigma ** 2 + sigma ** 2)).pdf(
+        return st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(
             y_observed
         )
 

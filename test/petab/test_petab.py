@@ -48,7 +48,7 @@ def prior_specs(request):
         if scale == C.LOG:
             unscaled_var1, unscaled_var2 = np.exp([var1, var2])
         elif scale == C.LOG10:
-            unscaled_var1, unscaled_var2 = 10.0 ** var1, 10.0 ** var2
+            unscaled_var1, unscaled_var2 = 10.0**var1, 10.0**var2
         # dataframe without objective prior
         df = pd.DataFrame(
             {
@@ -100,22 +100,22 @@ def test_petab_prior(prior_specs):
         var_th = (var2 - var1) ** 2 / 12
     elif prior_type in [C.NORMAL, C.PARAMETER_SCALE_NORMAL]:
         mean_th = var1
-        var_th = var2 ** 2
+        var_th = var2**2
     elif prior_type in [C.LAPLACE, C.PARAMETER_SCALE_LAPLACE]:
         mean_th = var1
-        var_th = 2 * var2 ** 2
+        var_th = 2 * var2**2
     elif prior_type == C.LOG_NORMAL:
         # just log-transform all
         mean = np.mean(np.log(samples))
         var = np.var(np.log(samples))
         mean_th = var1
-        var_th = var2 ** 2
+        var_th = var2**2
     elif prior_type == C.LOG_LAPLACE:
         # just log-transform all
         mean = np.mean(np.log(samples))
         var = np.var(np.log(samples))
         mean_th = var1
-        var_th = 2 * var2 ** 2
+        var_th = 2 * var2**2
     else:
         raise ValueError(f"Unexpected prior type: {prior_type}")
 
