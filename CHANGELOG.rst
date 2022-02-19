@@ -11,6 +11,7 @@ Release Notes
 0.11.12 (2022-02-19)
 --------------------
 
+* Add Silk acceptance rate curve based optimal threshold scheme (#539)
 * Fix Julia version in tests (#542)
 * Apply nbqa black and isort to notebooks (#544)
 * Update to stable tox
