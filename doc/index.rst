@@ -1,5 +1,5 @@
-Welcome to pyABC's documentation!
-=================================
+pyABC - distributed, likelihood-free inference
+==============================================
 
 .. image:: https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg
    :target: https://github.com/ICB-DCM/pyABC/actions

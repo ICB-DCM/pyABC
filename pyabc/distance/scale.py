@@ -137,7 +137,7 @@ def root_mean_square_deviation(
     """
     bs = bias(samples=samples, s0=s0)
     std = standard_deviation(samples=samples)
-    mse = bs ** 2 + std ** 2
+    mse = bs**2 + std**2
     rmse = np.sqrt(mse)
 
     # debugging
@@ -165,7 +165,7 @@ def std_or_rmsd(
         logger.info("Too many high-bias values, correcting only for scale.")
         return std
 
-    mse = bs ** 2 + std ** 2
+    mse = bs**2 + std**2
     rmse = np.sqrt(mse)
 
     # debugging

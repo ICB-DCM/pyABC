@@ -35,7 +35,6 @@ class ListTemperature(TemperatureBase):
     """
 
     def __init__(self, values: List[float]):
-        super().__init__()
         self.values = values
 
     def __call__(self, t: int) -> float:
@@ -87,7 +86,6 @@ class Temperature(TemperatureBase):
         enforce_exact_final_temperature: bool = True,
         log_file: str = None,
     ):
-        super().__init__()
         self.schemes = schemes
 
         if aggregate_fun is None:
@@ -696,7 +694,7 @@ class DalyScheme(TemperatureScheme):
 
         self.k[t] = min(k_base, self.alpha * eps_base)
         eps = eps_base - self.k[t]
-        temperature = eps ** 2
+        temperature = eps**2
 
         return temperature
 
@@ -816,6 +814,6 @@ def _ess(pdfs, weights, beta):
     """
     Effective sample size (ESS) of importance samples.
     """
-    num = np.sum(weights * pdfs ** beta) ** 2
-    den = np.sum((weights * pdfs ** beta) ** 2)
+    num = np.sum(weights * pdfs**beta) ** 2
+    den = np.sum((weights * pdfs**beta) ** 2)
     return num / den

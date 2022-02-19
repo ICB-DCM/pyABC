@@ -165,7 +165,7 @@ def test_scheme_exponentialdecay():
 
     # check normal behavior
     temp = scheme(t=0, **scheme_args)
-    assert 1.0 < temp and temp < np.inf
+    assert 1.0 < temp < np.inf
     temp = scheme(t=2, **scheme_args)
     assert temp == 1.0
 
@@ -198,3 +198,58 @@ def test_default_eps():
     abc.run(max_nr_populations=3)
 
     assert abc.minimum_epsilon == 1.0
+
+
+def test_silk_optimal_eps(db_path):
+    """Test an analysis with"""
+
+    def model(p):
+        theta = p["theta"]
+        return {"y": (theta - 10) ** 2 - 100 * np.exp(-100 * (theta - 3) ** 2)}
+
+    p_true = {"theta": 3}
+    y_obs = model(p_true)
+
+    bounds = {"theta": (0, 20)}
+    prior = pyabc.Distribution(
+        **{
+            key: pyabc.RV("uniform", lb, ub - lb)
+            for key, (lb, ub) in bounds.items()
+        }
+    )
+
+    # analysis using a bad threshold
+    abc = pyabc.ABCSMC(
+        model,
+        prior,
+        pyabc.PNormDistance(p=2),
+        population_size=100,
+        eps=pyabc.QuantileEpsilon(alpha=0.8),
+    )
+    abc.new(db_path, y_obs)
+    h = abc.run(max_total_nr_simulations=2000)
+
+    df, w = h.get_distribution()
+    assert not (
+        pyabc.weighted_quantile(df.theta.to_numpy(), w, alpha=0.25)
+        < 3
+        < pyabc.weighted_quantile(df.theta.to_numpy(), w, alpha=0.75)
+    )
+
+    # analysis using the optimal threshold
+    abc = pyabc.ABCSMC(
+        model,
+        prior,
+        pyabc.PNormDistance(p=2),
+        population_size=100,
+        eps=pyabc.SilkOptimalEpsilon(k=10),
+    )
+    abc.new(db_path, y_obs)
+    h = abc.run(max_total_nr_simulations=2000)
+
+    df, w = h.get_distribution()
+    assert (
+        pyabc.weighted_quantile(df.theta.to_numpy(), w, alpha=0.25)
+        < 3
+        < pyabc.weighted_quantile(df.theta.to_numpy(), w, alpha=0.75)
+    )
