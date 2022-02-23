@@ -4,6 +4,34 @@ Release Notes
 =============
 
 
+0.12 Series
+...........
+
+
+0.12.0 (2022-02-23)
+-------------------
+
+Major changes compared to 0.11.0:
+
+New features:
+
+* Add Silk acceptance rate curve based optimal threshold scheme (#539)
+* Interface Copasi model simulators via BasiCO (thanks to Frank Bergmann)
+  (#531)
+* Interface simulators in the Julia language via pyjulia (#514)
+* Add Wasserstein and Sliced Wasserstein optimal transport distances (#500)
+* Finalize sensitivity weighted distance functions using inverse
+  regression models and augmented regression targets (#478, 484)
+
+Technical changes:
+
+* Support python>=3.8 (#543)
+
+Internals:
+
+* Automatic code formatting via black, isort, and nbqa (#506, #508, #544)
+
+
 0.11 series
 ...........
 
