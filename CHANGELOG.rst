@@ -33,7 +33,7 @@ Internals:
 
 Random:
 
-* The logo is pink
+* The logo is pink (#549)
 
 
 0.11 series
