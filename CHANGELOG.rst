@@ -31,6 +31,10 @@ Internals:
 
 * Automatic code formatting via black, isort, and nbqa (#506, #508, #544)
 
+Random:
+
+* The logo is pink
+
 
 0.11 series
 ...........
