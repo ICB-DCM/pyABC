@@ -650,7 +650,12 @@ class ABCSMC:
         max_total_nr_simulations:
             Maximum allowed total number of evaluations.
         max_walltime:
-            Maximum allowed walltime since start of the run() method.
+            Maximum allowed walltime since start of the run() method,
+            e.g.
+
+            >>> from datetime import timedelta
+            >>> max_walltime = timedelta(hours=2, minutes=30)
+
         min_eps_diff:
             Minimum epsilon difference in two sequential generations.
 

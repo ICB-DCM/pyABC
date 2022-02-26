@@ -17,13 +17,11 @@ described in the documentation and illustrated in example
 notebooks.
 Written in Python with support for especially R and Julia.
 
-
 - **Documentation:** https://pyabc.rtfd.io
 - **Examples:** http://pyabc.rtfd.io/en/latest/examples.html
 - **Contact:** https://pyabc.rtfd.io/en/latest/about.html
 - **Bug reports:** https://github.com/icb-dcm/pyabc/issues
 - **Source code:** https://github.com/icb-dcm/pyabc
-
 
 .. |CI| image:: https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg
    :target: https://github.com/ICB-DCM/pyABC/actions
