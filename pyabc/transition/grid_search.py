@@ -68,10 +68,9 @@ class GridSearchCV(GridSearchCVSKL):
         if len(X) == 1:
             res = self.estimator.fit(X, y)
             self.best_estimator_ = self.estimator
-            logging.debug(
-                "Single sample Gridsearch. Params: {}".format(
-                    self.estimator.get_params()
-                )
+            logger.debug(
+                "Single sample Gridsearch. "
+                f"Params: {self.estimator.get_params()}"
             )
             return res
 
@@ -80,15 +79,14 @@ class GridSearchCV(GridSearchCVSKL):
             self.cv = len(X)
             res = super().fit(X, y, groups=groups)
             self.cv = old_cv
-            logging.info(
-                "Reduced CV Gridsearch {} -> {}. Best params: {}".format(
-                    self.cv, len(X), self.best_params_
-                )
+            logger.info(
+                f"Reduced CV Gridsearch {self.cv} -> {len(X)}. "
+                f"Best params: {self.best_params_}"
             )
             return res
 
         res = super().fit(X, y, groups=groups)
-        logging.info("Best params: {}".format(self.best_params_))
+        logger.info(f"Best params: {self.best_params_}")
         return res
 
     def __getattr__(self, item):
