@@ -36,11 +36,6 @@ to analytically calculate the likelihood function.
 pyABC runs efficiently on multi-core machines and distributed cluster setups.
 It is easy to use and flexibly extensible.
 
-If you use it in your work, you can cite the paper:
-
-    Emmanuel Klinger, Dennis Rickert, Jan Hasenauer; pyABC: distributed, likelihood-free inference;
-    Bioinformatics 2018; https://doi.org/10.1093/bioinformatics/bty361
-
 
 .. toctree::
    :maxdepth: 2
@@ -60,7 +55,7 @@ If you use it in your work, you can cite the paper:
 
    changelog
    about
-   references
+   cite
 
 
 .. toctree::
