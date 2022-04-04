@@ -36,6 +36,7 @@ Algorithms and features
 
    examples/early_stopping.ipynb
    examples/resuming.ipynb
+   examples/custom_priors.ipynb
    examples/adaptive_distances.ipynb
    examples/informative.ipynb
    examples/aggregated_distances.ipynb
