@@ -99,6 +99,7 @@ from .predictor import (
 from .random_variables import (
     RV,
     Distribution,
+    DistributionBase,
     LowerBoundDecorator,
     RVBase,
     RVDecorator,

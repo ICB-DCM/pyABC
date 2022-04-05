@@ -23,6 +23,7 @@ nbs_2=(
   "data_plots"
   "discrete_parameters"
   "optimal_threshold"
+  "custom_priors"
 )
 
 # All notebooks
