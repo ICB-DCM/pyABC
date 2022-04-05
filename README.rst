@@ -22,6 +22,7 @@ Written in Python with support for especially R and Julia.
 - **Contact:** https://pyabc.rtfd.io/en/latest/about.html
 - **Bug reports:** https://github.com/icb-dcm/pyabc/issues
 - **Source code:** https://github.com/icb-dcm/pyabc
+- **Cite:** https://pyabc.rtfd.io/en/latest/cite.html
 
 .. |CI| image:: https://github.com/ICB-DCM/pyABC/workflows/CI/badge.svg
    :target: https://github.com/ICB-DCM/pyABC/actions
