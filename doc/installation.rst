@@ -3,32 +3,27 @@
 Install und Upgrade
 ===================
 
-
 Preparation
 -----------
 
 This package requires Python 3.8 or later.
-The package is tested on Linux (using Travis continuous integration).
+The package is continuously tested on Linux, and in parts on iOS,
+via GitHub Actions.
 
-Not all of the package's functionality is available for Microsoft Windows.
-As some of the multi-core parallelizations rely on forking,
-these won't work on Windows.
-However, most other parts of the
-package should work on Windows
-as well.
-
+While many parts of the package should work on Microsoft Windows
+as well, in particular the multi-core parallelizations rely on forking,
+which won't be available.
+Still, the main development focus is on Linux.
 
 My system's Python distribution is outdated, what now?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Several Python distributions can coexist on a single system.
+Several Python distributions can coexist on a system.
 If you don't have access to a recent Python version via your
-system's package manager (this might be the case for old
-Debian or Ubuntu operating systems),
-it is recommended to install the latest version of the
+system's package manager (may be the case for old systems),
+we recommend to install the latest version of the
 `Anaconda Python 3 distribution <https://www.continuum.io/downloads>`_.
 See also: :ref:`anacondaCluster`.
-
 
 PIP Installation
 ----------------
@@ -40,9 +35,7 @@ The package can be installed via pip.::
 
     pip install pyabc
 
-
 into your system's Python distribution. This requires usually root access.
-
 
 Install as user into your home directory (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,8 +49,6 @@ home directory with::
 
    pip install --user pyabc
 
-
-
 GIT Installation
 ----------------
 
@@ -65,10 +56,7 @@ If you want the bleeding edge version, install directly from github::
 
    pip install git+https://github.com/icb-dcm/pyabc.git
 
-
-
 .. _upgrading:
-
 
 Upgrading
 ---------
@@ -78,7 +66,6 @@ pyABC version, use::
 
     pip install --upgrade pyabc
 
-
 instead of ``pip install``.
 You can also consult the `pip documentation <https://pip.pypa.io/en/stable/>`_
 on how to manage packages.
@@ -86,53 +73,29 @@ If you installed pyABC into your
 home directory with
 ``pip install --user pyabc``, then upgrade also with the ``--user`` flag::
 
-
     pip install --upgrade --user pyabc
-
-
-
 
 .. _anacondaCluster:
 
 Installing Anaconda on a Cluster environment
 --------------------------------------------
 
-We're assuming you're on a Linux environment.
-Use the most recent Anaconda Python 3.x distribution.
-As of writing this documentation, this is the
-`Anaconda Python 3.6 <https://www.continuum.io/downloads>`_ distribution.
-To install it, run::
+To install `Anaconda <https://anaconda.com/products/distribution>`_, run::
 
-   wget https://repo.continuum.io/archive/Anaconda3-4.4.0-Linux-x86_64.sh
+   wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
+   bash Anaconda3-2021.11-Linux-x86_64.sh
 
-to download the installer. To execute the installer run::
+and follow the installation guide.
+Replace the "2021.11" by the most recent version of Anaconda, see
+https://repo.anaconda.com/archive.
 
-   bash Anaconda3-4.4.0-Linux-x86_64.sh
+`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
+provides an alternative, minimal installer for conda, including
+only conda, Python, and some core and useful packages. Install the latest
+version via::
 
-and follow the guided installation process (i.e. approve the license
-and tell the installer where to install it to). You might want to replace
-the "4.4.0" by the most recent version of Anaconda.
-Find out on the `Anaconda Download <https://www.continuum.io/downloads>`_
-page which one it is.
-
-
-.. note::
-
-    The Anaconda installer asks you at the end of the installation whether
-    you want to use Anaconda Python as your default Python:: bash
-
-       Do you wish the installer to prepend the Anaconda3 install location
-       to PATH in your /home/username/.bashrc ? [yes|no]
-       [no] >>>
-
-    If you answer yes, the path to the Anaconda installation is prepended to
-    your ``PATH`` environment variable and subsequent calls to ``pip``
-    (see below) use the Anaconda Python pip (check with the command
-    ``which pip``).
-    If you answer no, you need to ensure manually, that the correct Python
-    installation is used.
-    Just saying "yes" here might safe you from some difficulties later on.
-
+  wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  bash Miniconda3-latest-Linux-x86_64.sh
 
 .. _install-optional:
 
