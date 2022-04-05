@@ -89,7 +89,8 @@ and follow the installation guide.
 Replace the "2021.11" by the most recent version of Anaconda, see
 https://repo.anaconda.com/archive.
 
-Miniconda provides an alternative, minimal installer for conda, including
+`Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
+provides an alternative, minimal installer for conda, including
 only conda, Python, and some core and useful packages. Install the latest
 version via::
 
