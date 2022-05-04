@@ -19,6 +19,8 @@ get your work merged, please:
 3. check that the documentation is up-to-date,
 4. request a code review from the main developers.
 
+.. _environment:
+
 Environment
 -----------
 
@@ -30,8 +32,8 @@ via::
 Pre-commit hooks
 ~~~~~~~~~~~~~~~~
 
-Firstly, this installs a `pre-commit <https://pre-commit.com/>`_ tool.
-To add those hooks to the `.git` folder of your local clone such that they are
+First, this installs a `pre-commit <https://pre-commit.com/>`_ tool.
+To add those hooks to the ``.git`` folder of your local clone such that they are
 run on every commit, run::
 
     pre-commit install
@@ -43,7 +45,7 @@ once as usually only the diff is checked. The configuration is specified in
 Tox
 ~~~
 
-Secondly, this installs the virtual testing tool
+Second, this installs the virtual testing tool
 `tox <https://tox.readthedocs.io/en/latest/>`_, which we use for all tests,
 format and quality checks. Its configuration is specified in ``tox.ini``.
 To run it locally, simply execute::
@@ -52,6 +54,15 @@ To run it locally, simply execute::
 
 with optional ``-e`` options specifying the environments to run, see
 ``tox.ini`` for details.
+
+Extra dependencies
+~~~~~~~~~~~~~~~~~~
+
+Not all dependencies in particular of tests and documentation are managed via
+tox, e.g. installations of R and Julia, pandoc, and AMICI dependencies.
+To set these up locally, see e.g. ``.github/workflows/ci.yml`` and
+``.github/workflows/install_deps.sh`` (which can also be invoked locally)
+on how these are installed on GitHub Actions.
 
 GitHub Actions
 ~~~~~~~~~~~~~~
@@ -79,7 +90,8 @@ and then compile the documentation via::
 
 The documentation is then under ``doc/_build``.
 
-Alternatively, the documentation can be compiled and tested via a single line::
+Alternatively, the documentation can be compiled and tested via a single
+command::
 
     tox -e doc
 
@@ -101,11 +113,17 @@ Run them locally via e.g.::
     tox -e base
 
 with ``base`` covering basic tests, but some parts (``external,petab,...``)
-being in separate subfolders. This boils mostly down to e.g.::
+are in separate subfolders.
+Some dependencies are not managed via tox, see the above
+:ref:`environment` section.
+
+Tox basically mostly executes pytest on subsets of the tests, e.g.::
 
     pytest test/base
 
-You can also run only specific tests.
+pytest (install via ``pip install pytest``) can also be invoked directly
+like this, but may then require various further dependencies,
+see the environments in ``tox.ini``.
 
 Unit tests can be written with `pytest <https://docs.pytest.org/en/latest/>`_
 or `unittest <https://docs.python.org/3/library/unittest.html>`_.
