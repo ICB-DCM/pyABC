@@ -27,7 +27,7 @@ class RVBase(ABC):
         distributions are not pickleable.
         This class is really a very thin wrapper around ``scipy.stats``
         distributions to make them pickleable.
-        It is important to be able to pickle them to execute the ACBSMC
+        It is important to be able to pickle them to execute the ABCSMC
         algorithm in a distributed cluster
         environment
     """
@@ -192,7 +192,7 @@ class RVDecorator(RVBase):
 
     It stores the decorated random variable in ``self.component``
 
-    Overwrite the method ``decorator_repr`` the represent the decorator type.
+    Overwrite the method ``decorator_repr`` to represent the decorator type.
     The decorated variable will then be automatically included in
     the call to ``__repr__``.
 
@@ -310,16 +310,42 @@ class LowerBoundDecorator(RVDecorator):
         return (self.component.cdf(x) - lower_mass) / (1 - lower_mass)
 
 
-class Distribution(ParameterStructure):
-    """Distribution of parameters for a model.
+class DistributionBase(ABC):
+    """Distribution of parameters for a model, abstract base class.
 
     A distribution is a collection of RVs and/or distributions.
+
+    This should be used to define a prior.
+    """
+
+    @abstractmethod
+    def rvs(self, *args, **kwargs) -> Parameter:
+        """Sample from joint distribution.
+
+        Returns
+        -------
+        parameter: Parameter
+            A parameter which was sampled.
+        """
+
+    @abstractmethod
+    def pdf(self, x: Union[Parameter, dict]):
+        """Get probability density at point `x`.
+
+        Parameters
+        ----------
+        x : Union[Parameter, dict]
+            Evaluate at the given Parameter ``x``.
+        """
+
+
+class Distribution(DistributionBase, ParameterStructure):
+    """Distribution of parameters for a model assuming independence.
+
     Essentially something like a dictionary
     of random variables or distributions.
     The variables from which the distribution is initialized are
     independent.
-
-    This should be used to define a prior.
     """
 
     def __repr__(self):
@@ -394,7 +420,6 @@ class Distribution(ParameterStructure):
 
         Returns
         -------
-
         parameter: Parameter
             A parameter which was sampled.
         """
