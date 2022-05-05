@@ -413,7 +413,13 @@ class Sample:
         weights by the same factor ensures that weights stay comparable.
         """
         total_weight_accepted = sum(p.weight for p in self.accepted_particles)
-        if np.isclose(total_weight_accepted, 0):
+
+        if np.isclose(total_weight_accepted, 0.0):
+            logger.warning(
+                f"The total population weight {total_weight_accepted} is "
+                "close to zero, which can be numerically problematic"
+            )
+        if total_weight_accepted == 0.0:
             raise AssertionError("The total population weight is zero")
         for p in self.all_particles:
             p.weight /= total_weight_accepted

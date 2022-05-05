@@ -16,9 +16,9 @@ per-file-ignores =
   # Imported but unused
   */__init__.py:F401
   # Print
-  */cli.py:T001
-  pyabc/storage/migrate.py:T001
+  */cli.py:T201
+  pyabc/storage/migrate.py:T201
   # Print and asserts
-  test*/*.py:T001,S101
+  test*/*.py:T201,S101
   # Module level import not at top of file
   test/external/test_pyjulia.py:E402
