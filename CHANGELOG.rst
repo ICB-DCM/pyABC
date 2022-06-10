@@ -8,6 +8,16 @@ Release Notes
 ...........
 
 
+0.12.4 (2022-05-05)
+-------------------
+
+Minor:
+
+* Move near-zero population weight to warning (#563)
+* Improve test installation instructions;
+  fix for updates of flake8-print and black (#567)
+
+
 0.12.3 (2022-04-05)
 -------------------
 
