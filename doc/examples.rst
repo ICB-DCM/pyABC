@@ -18,6 +18,9 @@ which can be performed by
    !pip install pyabc --quiet
 
 Potentially, further dependencies may be required.
+Unfortunately, at the moment (2022-06), Google Colab is using Python 3.7,
+while pyABC and many other packages have proceeded to require Python >= 3.8.
+Thus, not everything may work properly.
 
 Getting started
 ---------------
