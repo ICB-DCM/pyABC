@@ -63,9 +63,19 @@ ABC is often combined with a sequential Monte-Carlo (ABC-SMC) scheme using impor
 ![**Basic ABC algorithm.** Parameters $\theta\sim\pi(\theta)$ are sampled from the prior or a proposal distribution, and passed to a black-box model generating potentially stochastic simulated data according to the likelihood $y\sim\pi(y|\theta)$. These are optionally passed through a summary statistics function giving a low-dimensional representation $s(y)$. Summary statistics of simulated and observed data are compared via a distance metric $d$, and the underlying parameters accepted if the distance is below an acceptance threshold $\varepsilon$.\label{fig:concept}](concept.pdf){ width=99% }
 
 While conceptually simple and widely applicable, ABC is computationally expensive, and its practical performance relies on a number of factors.
-There exist several software packages implementing different algorithms in different languages, each with their own strengths, including notably in Python ABCpy [@DuttaSch2017] and ELFI [@LintusaariVuo2018], in Julia GpABC [@TankhilevichIsh2020], and in R EasyABC [@JabotFau2013].
 pyABC implements at its core an ABC-SMC scheme based on @ToniStu2010 and facilicates robust and efficient inference for a broad spectrum of applications via robust methods and self-tuned choices of hyperparameters, reducing the need for manual tuning.
-An article on core features of pyABC was previously published [@KlingerRic2018], discussing in particular adaptive transition kernels [@FilippiBar2013], population sizes [@KlingerHas2017], and wall-time efficient parallelization via dynamic scheduling. pyABC is in use in a variety of fields, e.g. to model virus transmission on cellular [@ImleKum2019] and population level [@KerrStu2021], neuron circuits [@BittnerPal2021], cancer [@ColomHer2021], gene expression [@CoulierHel2021], axolotl regeneration [@CostaOts2021], universe expansion [@BernardoSai2021], cardiac electrophysiology [@CantwellYum2019], and bee colonies [@MinucciCur2021].
+An article on core features of pyABC was previously published [@KlingerRic2018], discussing in particular adaptive transition kernels [@FilippiBar2013], population sizes [@KlingerHas2017], and wall-time efficient parallelization via dynamic scheduling.
+pyABC is in use in a variety of fields, e.g. to model virus transmission on cellular [@ImleKum2019] and population level [@KerrStu2021], neuron circuits [@BittnerPal2021], cancer [@ColomHer2021], gene expression [@CoulierHel2021], axolotl regeneration [@CostaOts2021], universe expansion [@BernardoSai2021], cardiac electrophysiology [@CantwellYum2019], and bee colonies [@MinucciCur2021].
+
+Besides pyABC, there exist several other software packages implementing different algorithms in different languages, each with their own strengths, including notably in Python ABCpy [@DuttaSch2017] and ELFI [@LintusaariVuo2018], in Julia GpABC [@TankhilevichIsh2020], and in R EasyABC [@JabotFau2013].
+In particular, ABCpy, ELFI and GpABC, which are actively maintained at the time of writing, implement various likelihood-free methods, including and beyond ABC-SMC, such as Bayesian optimization, synthetic likelihoods, or Gaussian process emulation.
+In contrast, pyABC focuses on providing a broadly applicable, efficient and robust implementation of ABC-SMC with various tailored algorithms.
+Exclusive to pyABC are, at the time of writing and to the best of our knowledge, the following features:
+While ABCpy and ELFI also allow distributed execution via static scheduling, only pyABC implements dynamic scheduling, further improving wall-time efficiency [@KlingerRic2018].
+Further, most methods described in the below section are only implemented in pyABC:
+While e.g. ELFI implements basic adaptive distances based on @Prangle2017, only pyABC implements the robuster approach @SchaelteAla2021.
+While e.g. ABCpy implements basic regression-based summary statistics based on @FearnheadPra2012, only pyABC implements the approaches in @SchaelteHas2022Pre overcoming limitations in the method by @FearnheadPra2012, improving the posterior approximation and introducing sensitivity weights.
+Further, only pyABC implements the exact method under measurement noise @SchaelteHas2020.
 
 # New Features
 
