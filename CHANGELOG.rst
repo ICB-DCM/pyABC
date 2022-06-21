@@ -8,6 +8,14 @@ Release Notes
 ...........
 
 
+0.12.5 (2022-06-21)
+-------------------
+
+Minor:
+
+* Document outdated Google Colab version (Python 3.7)
+
+
 0.12.4 (2022-05-05)
 -------------------
 
