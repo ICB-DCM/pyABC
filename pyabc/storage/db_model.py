@@ -12,11 +12,21 @@ For further information see also http://docs.sqlalchemy.org.
 """
 
 import datetime
+
 import sqlalchemy.types as types
-from sqlalchemy import (Column, Integer, DateTime, String, VARCHAR,
-                        ForeignKey, Float, LargeBinary)
+from sqlalchemy import (
+    VARCHAR,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+
 from .bytes_storage import from_bytes, to_bytes
 from .version import __db_version__
 
@@ -35,8 +45,9 @@ class BytesStorage(types.TypeDecorator):
 
 class Version(Base):
     __tablename__ = 'version'
-    version_num = Column(VARCHAR(32), primary_key=True,
-                         default=str(__db_version__))
+    version_num = Column(
+        VARCHAR(32), primary_key=True, default=str(__db_version__)
+    )
 
 
 class ABCSMC(Base):
@@ -52,16 +63,24 @@ class ABCSMC(Base):
     populations = relationship("Population")
 
     def __repr__(self):
-        return (f"<ABCSMC id={self.id}, start_time={self.start_time}, "
-                "end_time={self.end_time}>")
+        return (
+            f"<ABCSMC id={self.id}, "
+            f"start_time={datetime2str(self.start_time)}, "
+            f"end_time={datetime2str(self.end_time)}>"
+        )
 
     def start_info(self):
-        return f"<ABCSMC id={self.id}, start_time={self.start_time}>"
+        return (
+            f"<ABCSMC id={self.id}, "
+            f"start_time={datetime2str(self.start_time)}>"
+        )
 
     def end_info(self):
         duration = self.end_time - self.start_time
-        return (f"<ABCSMC id={self.id}, duration={duration}, "
-                f"end_time={self.end_time}>")
+        return (
+            f"<ABCSMC id={self.id}, duration={duration}, "
+            f"end_time={datetime2str(self.end_time)}>"
+        )
 
 
 class Population(Base):
@@ -79,10 +98,12 @@ class Population(Base):
         self.population_end_time = datetime.datetime.now()
 
     def __repr__(self):
-        return (f"<Population id={self.id}, abc_smc_id={self.abc_smc_id}, "
-                f"t={self.t}, nr_samples={self.nr_samples}, "
-                f"eps={self.epsilon}, "
-                f"population_end_time={self.population_end_time}>")
+        return (
+            f"<Population id={self.id}, abc_smc_id={self.abc_smc_id}, "
+            f"t={self.t}, nr_samples={self.nr_samples}, "
+            f"eps={self.epsilon}, "
+            f"population_end_time={self.population_end_time}>"
+        )
 
 
 class Model(Base):
@@ -95,8 +116,10 @@ class Model(Base):
     particles = relationship("Particle")
 
     def __repr__(self):
-        return (f"<Model id={self.id}, population_id={self.population_id}, "
-                f"m={self.m}, name={self.name}, p_model={self.p_model}>")
+        return (
+            f"<Model id={self.id}, population_id={self.population_id}, "
+            f"m={self.m}, name={self.name}, p_model={self.p_model}>"
+        )
 
 
 class Particle(Base):
@@ -134,3 +157,8 @@ class SummaryStatistic(Base):
     sample_id = Column(Integer, ForeignKey('samples.id'))
     name = Column(String(200))
     value = Column(BytesStorage)
+
+
+def datetime2str(datetime: datetime.datetime) -> str:
+    """Format print datetime."""
+    return datetime.strftime("%Y-%m-%d %H:%M:%S")

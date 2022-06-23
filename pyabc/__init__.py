@@ -15,108 +15,145 @@ selection.
     determine on how many jobs to parallelize the sampling.
 """
 
-from .version import __version__  # noqa: F401
-from .parameters import Parameter
-from .random_variables import (
-    Distribution,
-    RV,
-    RVBase,
-    RVDecorator,
-    LowerBoundDecorator)
-from .distance import (
-    Distance,
-    NoDistance,
-    AcceptAllDistance,
-    SimpleFunctionDistance,
-    PNormDistance,
-    AdaptivePNormDistance,
-    AggregatedDistance,
-    AdaptiveAggregatedDistance,
-    ZScoreDistance,
-    PCADistance,
-    MinMaxDistance,
-    PercentileDistance,
-    RangeEstimatorDistance,
-    DistanceWithMeasureList,
-    StochasticKernel,
-    NormalKernel,
-    IndependentNormalKernel,
-    IndependentLaplaceKernel,
-    BinomialKernel,
-    PoissonKernel,
-    NegativeBinomialKernel)
-from .epsilon import (
-    Epsilon,
-    NoEpsilon,
-    ConstantEpsilon,
-    QuantileEpsilon,
-    MedianEpsilon,
-    ListEpsilon,
-    TemperatureBase,
-    ListTemperature,
-    Temperature,
-    TemperatureScheme,
-    AcceptanceRateScheme,
-    ExpDecayFixedIterScheme,
-    ExpDecayFixedRatioScheme,
-    PolynomialDecayFixedIterScheme,
-    DalyScheme,
-    FrielPettittScheme,
-    EssScheme)
-from .sampler import (
-    SingleCoreSampler,
-    MulticoreParticleParallelSampler,
-    MappingSampler,
-    DaskDistributedSampler,
-    RedisEvalParallelSampler,
-    RedisStaticSampler,
-    RedisEvalParallelSamplerServerStarter,
-    RedisStaticSamplerServerStarter,
-    MulticoreEvalParallelSampler,
-    ConcurrentFutureSampler)
-from .inference import ABCSMC
-from .storage import (
-    History,
-    create_sqlite_db_id)
+import logging
+import os
+
+# isort: off
+
+from .version import __version__
+
+# isort: on
+
+from . import settings, visualization
 from .acceptor import (
     Acceptor,
-    SimpleFunctionAcceptor,
-    UniformAcceptor,
+    FunctionAcceptor,
+    ScaledPDFNorm,
     StochasticAcceptor,
+    UniformAcceptor,
     pdf_norm_from_kernel,
     pdf_norm_max_found,
-    ScaledPDFNorm)
-from .model import (
-    Model,
-    SimpleModel,
-    ModelResult,
-    IntegratedModel)
+)
+from .distance import (
+    AcceptAllDistance,
+    AdaptiveAggregatedDistance,
+    AdaptivePNormDistance,
+    AggregatedDistance,
+    BinomialKernel,
+    Distance,
+    DistanceWithMeasureList,
+    FunctionDistance,
+    FunctionKernel,
+    IndependentLaplaceKernel,
+    IndependentNormalKernel,
+    InfoWeightedPNormDistance,
+    MinMaxDistance,
+    NegativeBinomialKernel,
+    NoDistance,
+    NormalKernel,
+    PCADistance,
+    PercentileDistance,
+    PNormDistance,
+    PoissonKernel,
+    RangeEstimatorDistance,
+    SlicedWassersteinDistance,
+    StochasticKernel,
+    WassersteinDistance,
+    ZScoreDistance,
+)
+from .epsilon import (
+    AcceptanceRateScheme,
+    ConstantEpsilon,
+    DalyScheme,
+    Epsilon,
+    EssScheme,
+    ExpDecayFixedIterScheme,
+    ExpDecayFixedRatioScheme,
+    FrielPettittScheme,
+    ListEpsilon,
+    ListTemperature,
+    MedianEpsilon,
+    NoEpsilon,
+    PolynomialDecayFixedIterScheme,
+    QuantileEpsilon,
+    SilkOptimalEpsilon,
+    Temperature,
+    TemperatureBase,
+    TemperatureScheme,
+)
+from .inference import ABCSMC
+from .model import FunctionModel, IntegratedModel, Model, ModelResult
+from .parameters import Parameter
+from .population import Particle, Population, Sample
+from .populationstrategy import AdaptivePopulationSize, ConstantPopulationSize
+from .predictor import (
+    GPKernelHandle,
+    GPPredictor,
+    HiddenLayerHandle,
+    LassoPredictor,
+    LinearPredictor,
+    MLPPredictor,
+    ModelSelectionPredictor,
+    Predictor,
+)
+from .random_variables import (
+    RV,
+    Distribution,
+    DistributionBase,
+    LowerBoundDecorator,
+    RVBase,
+    RVDecorator,
+)
+from .sampler import (
+    ConcurrentFutureSampler,
+    DaskDistributedSampler,
+    MappingSampler,
+    MulticoreEvalParallelSampler,
+    MulticoreParticleParallelSampler,
+    RedisEvalParallelSampler,
+    RedisEvalParallelSamplerServerStarter,
+    RedisStaticSampler,
+    RedisStaticSamplerServerStarter,
+    Sampler,
+    SingleCoreSampler,
+    nr_cores_available,
+)
+from .storage import History, create_sqlite_db_id
+from .sumstat import IdentitySumstat, PredictorSumstat, Sumstat
 from .transition import (
-    MultivariateNormalTransition,
-    LocalTransition,
-    DiscreteRandomWalkTransition,
-    GridSearchCV,
     AggregatedTransition,
     DiscreteJumpTransition,
-    ModelPerturbationKernel)
-from .population import (
-    Particle,
-    Population)
-from .populationstrategy import (
-    AdaptivePopulationSize,
-    ConstantPopulationSize)
-from . import visualization
-from . import settings
-
-import os
-import logging
+    DiscreteRandomWalkTransition,
+    GridSearchCV,
+    LocalTransition,
+    ModelPerturbationKernel,
+    MultivariateNormalTransition,
+)
+from .util import EventIxs
+from .weighted_statistics import (
+    effective_sample_size,
+    resample,
+    resample_deterministic,
+    weighted_mean,
+    weighted_median,
+    weighted_mse,
+    weighted_quantile,
+    weighted_rmse,
+    weighted_std,
+    weighted_var,
+)
 
 # Set log level
 try:
     loglevel = os.environ['ABC_LOG_LEVEL'].upper()
 except KeyError:
     loglevel = 'INFO'
-logging.basicConfig(level=loglevel)
+
+logger = logging.getLogger("ABC")
+logger.setLevel(loglevel)
+sh = logging.StreamHandler()
+sh.setFormatter(logging.Formatter('%(name)s %(levelname)s: %(message)s'))
+logger.addHandler(sh)
 
 # Set number of threads e.g. for numpy. as pyabc uses parallelization on its
 #  own, this is a safer default.

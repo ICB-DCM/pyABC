@@ -1,8 +1,9 @@
 """A discrete jump transition function."""
 
+from typing import Union
+
 import numpy as np
 import pandas as pd
-from typing import Union
 
 from ..parameters import Parameter
 from ..random_choice import fast_random_choice
@@ -27,7 +28,7 @@ class PerturbationKernel:
         self.domain = domain
 
         if len(domain) == 1:
-            p_stay = 1.
+            p_stay = 1.0
         if not 0 <= p_stay <= 1:
             raise ValueError("p_stay must be in [0, 1].")
         self.p_stay = p_stay
@@ -60,11 +61,11 @@ class PerturbationKernel:
         return self.domain[ix]
 
     def pdf(self, b: float, a: float) -> float:
-        """Probability mass function for a jump to target `b` from source `a`.
-        """
+        """Probability mass function for a jump to target `b` from source `a`."""
         if a not in self.domain or b not in self.domain:
             raise ValueError(
-                "At least one parameter value is not in the domain.")
+                "At least one parameter value is not in the domain."
+            )
         return self.p_stay if b == a else self.p_move
 
 
@@ -85,19 +86,20 @@ class DiscreteJumpTransition(DiscreteTransition):
         AggregatedTransition to combine multiple parameters.
     """
 
-    def __init__(self, domain: np.ndarray,
-                 p_stay: float = 0.7):
+    def __init__(self, domain: np.ndarray, p_stay: float = 0.7):
         self.values = None
         self.weights = None
         self.perturbation_kernel = PerturbationKernel(
-            domain=domain, p_stay=p_stay)
+            domain=domain, p_stay=p_stay
+        )
 
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         """Fit starting weights to the distribution of samples."""
         # this is only meant to be used with a single parameter
         if len(X.columns) != 1:
             raise ValueError(
-                "This transition can only handle a single parameter.")
+                "This transition can only handle a single parameter."
+            )
         # compute a single weight per unique parameter value
         x = np.array(X).flatten()
         self.values = []
@@ -118,8 +120,9 @@ class DiscreteJumpTransition(DiscreteTransition):
         value = self.perturbation_kernel.rvs(value)
         return Parameter({self.X.columns[0]: value})
 
-    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]) \
-            -> Union[float, np.ndarray]:
+    def pdf(
+        self, x: Union[Parameter, pd.Series, pd.DataFrame]
+    ) -> Union[float, np.ndarray]:
         """Compute the probability mass function at `x`."""
         # extract values
         key = self.X.columns[0]
@@ -129,9 +132,14 @@ class DiscreteJumpTransition(DiscreteTransition):
             x = x.to_numpy()
 
         # compute densities
-        pds = np.array([
-            sum(w * self.perturbation_kernel.pdf(par, start)
-                for w, start in zip(self.weights, self.values))
-            for par in x])
+        pds = np.array(
+            [
+                sum(
+                    w * self.perturbation_kernel.pdf(par, start)
+                    for w, start in zip(self.weights, self.values)
+                )
+                for par in x
+            ]
+        )
 
         return pds if pds.size != 1 else float(pds)

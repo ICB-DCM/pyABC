@@ -1,20 +1,24 @@
-import pyabc
-import tempfile
 import os
-import pytest
+import tempfile
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import pytest
 
+import pyabc
 
 db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
+log_files = []
 histories = []
 labels = []
 
 
 def model(p):
-    return {'ss0': p['p0'] + 0.1 * np.random.uniform(),
-            'ss1': p['p1'] + 0.1 * np.random.uniform()}
+    return {
+        'ss0': p['p0'] + 0.1 * np.random.uniform(),
+        'ss1': p['p1'] + 0.1 * np.random.uniform(),
+    }
 
 
 p_true = {'p0': 3, 'p1': 4}
@@ -26,20 +30,28 @@ def setup_module():
     # create and run some model
     observation = {'ss0': p_true['p0'], 'ss1': p_true['p1']}
 
-    prior = pyabc.Distribution(**{
-        key: pyabc.RV('uniform', limits[key][0],
-                      limits[key][1] - limits[key][0])
-        for key in p_true.keys()})
+    prior = pyabc.Distribution(
+        **{
+            key: pyabc.RV(
+                'uniform', limits[key][0], limits[key][1] - limits[key][0]
+            )
+            for key in p_true.keys()
+        }
+    )
 
-    distance = pyabc.PNormDistance(p=2)
     n_history = 2
     sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
 
     for _ in range(n_history):
-        abc = pyabc.ABCSMC(model, prior, distance, population_size=100,
-                           sampler=sampler)
+        log_file = tempfile.mkstemp(suffix=".json")[1]
+        log_files.append(log_file)
+        distance = pyabc.AdaptivePNormDistance(p=2, scale_log_file=log_file)
+
+        abc = pyabc.ABCSMC(
+            model, prior, distance, population_size=100, sampler=sampler
+        )
         abc.new(db_path, observation)
-        abc.run(minimum_epsilon=.1, max_nr_populations=3)
+        abc.run(minimum_epsilon=0.1, max_nr_populations=3)
 
     for j in range(n_history):
         history = pyabc.History(db_path)
@@ -50,15 +62,16 @@ def setup_module():
 
 def teardown_module():
     """Tear down module. Called after all tests here."""
-    os.remove(db_path[len("sqlite:///"):])
+    os.remove(db_path[len("sqlite:///") :])
+    for log_file in log_files:
+        os.remove(log_file)
 
 
 def test_set_figure_params():
     """Test setting figure parameters globally."""
     pyabc.settings.set_figure_params('pyabc')
     # plot something
-    pyabc.visualization.plot_kde_matrix_highlevel(
-        histories[0], refval=p_true)
+    pyabc.visualization.plot_kde_matrix_highlevel(histories[0], refval=p_true)
     pyabc.settings.set_figure_params('default')
     # plot something else
     pyabc.visualization.plot_walltime(histories, labels)
@@ -76,7 +89,8 @@ def test_epsilons():
 def test_sample_numbers():
     """Test `pyabc.visualization.plot_sample_numbers`"""
     pyabc.visualization.plot_sample_numbers(
-        histories, rotation=43, size=(5, 5))
+        histories, rotation=43, size=(5, 5)
+    )
     _, ax = plt.subplots()
     pyabc.visualization.plot_sample_numbers(histories, labels, ax=ax)
     pyabc.visualization.plot_sample_numbers(histories, labels[0])
@@ -86,24 +100,37 @@ def test_sample_numbers():
 def test_sample_numbers_trajectory():
     """Test `pyabc.visualization.plot_sample_numbers_trajectory`"""
     pyabc.visualization.plot_sample_numbers_trajectory(
-        histories, labels, yscale='log', rotation=90)
+        histories, labels, yscale='log', rotation=90
+    )
     _, ax = plt.subplots()
     pyabc.visualization.plot_sample_numbers_trajectory(
-        histories, labels, yscale='log10', size=(8, 8), ax=ax)
+        histories, labels, yscale='log10', size=(8, 8), ax=ax
+    )
     plt.close()
 
 
 def test_acceptance_rates_trajectory():
     """Test `pyabc.visualization.plot_acceptance_rates_trajectory`"""
     pyabc.visualization.plot_acceptance_rates_trajectory(
-        histories, labels, yscale='log')
+        histories, labels, yscale='log'
+    )
     _, ax = plt.subplots()
     pyabc.visualization.plot_acceptance_rates_trajectory(
-        histories, labels, yscale='log10', size=(10, 5), ax=ax,
-        normalize_by_ess=True)
+        histories,
+        labels,
+        yscale='log10',
+        size=(10, 5),
+        ax=ax,
+        normalize_by_ess=True,
+    )
     pyabc.visualization.plot_acceptance_rates_trajectory(
-        histories, labels, yscale='log10', size=(10, 5), ax=ax,
-        normalize_by_ess=False)
+        histories,
+        labels,
+        yscale='log10',
+        size=(10, 5),
+        ax=ax,
+        normalize_by_ess=False,
+    )
     plt.close()
 
 
@@ -111,17 +138,20 @@ def test_total_sample_numbers():
     """Test `pyabc.visualization.plot_total_sample_numbers`"""
     pyabc.visualization.plot_total_sample_numbers(histories)
     pyabc.visualization.plot_total_sample_numbers(
-        histories, labels, yscale='log', size=(10, 5))
+        histories, labels, yscale='log', size=(10, 5)
+    )
     _, ax = plt.subplots()
     pyabc.visualization.plot_total_sample_numbers(
-        histories, rotation=75, yscale='log10', ax=ax)
+        histories, rotation=75, yscale='log10', ax=ax
+    )
     plt.close()
 
 
 def test_effective_sample_sizes():
     """Test `pyabc.visualization.plot_effective_sample_numbers`"""
     pyabc.visualization.plot_effective_sample_sizes(
-        histories, labels, rotation=45, relative=True)
+        histories, labels, rotation=45, relative=True
+    )
     plt.close()
 
 
@@ -129,16 +159,31 @@ def test_histograms():
     """Test `pyabc.visualization.plot_histogram_1d/2d/matrix`"""
     # 1d
     pyabc.visualization.plot_histogram_1d(
-        histories[0], 'p0', bins=20,
-        xmin=limits['p0'][0], xmax=limits['p0'][1], size=(5, 5), refval=p_true)
+        histories[0],
+        'p0',
+        bins=20,
+        xmin=limits['p0'][0],
+        xmax=limits['p0'][1],
+        size=(5, 5),
+        refval=p_true,
+    )
     # 2d
     pyabc.visualization.plot_histogram_2d(histories[0], 'p0', 'p1')
     pyabc.visualization.plot_histogram_2d(
-        histories[0], 'p0', 'p1', xmin=limits['p0'][0], xmax=limits['p0'][1],
-        ymin=limits['p1'][0], ymax=limits['p1'][1], size=(5, 6), refval=p_true)
+        histories[0],
+        'p0',
+        'p1',
+        xmin=limits['p0'][0],
+        xmax=limits['p0'][1],
+        ymin=limits['p1'][0],
+        ymax=limits['p1'][1],
+        size=(5, 6),
+        refval=p_true,
+    )
     # matrix
     pyabc.visualization.plot_histogram_matrix(
-        histories[0], bins=1000, size=(6, 7), refval=p_true)
+        histories[0], bins=1000, size=(6, 7), refval=p_true
+    )
     plt.close()
 
 
@@ -148,19 +193,21 @@ def test_kdes():
     history = histories[0]
     df, w = history.get_distribution(m=0, t=None)
     pyabc.visualization.plot_kde_1d(
-        df, w, x='p0',
-        xmin=limits['p0'][0], xmax=limits['p0'][1],
-        label="PDF")
+        df, w, x='p0', xmin=limits['p0'][0], xmax=limits['p0'][1], label="PDF"
+    )
     pyabc.visualization.plot_kde_2d(df, w, x='p0', y='p1')
     pyabc.visualization.plot_kde_matrix(df, w)
 
     # also use the highlevel interfaces
     pyabc.visualization.plot_kde_1d_highlevel(
-        history, x='p0', size=(4, 5), refval=p_true)
+        history, x='p0', size=(4, 5), refval=p_true
+    )
     pyabc.visualization.plot_kde_2d_highlevel(
-        history, x='p0', y='p1', size=(7, 5), refval=p_true)
+        history, x='p0', y='p1', size=(7, 5), refval=p_true
+    )
     pyabc.visualization.plot_kde_matrix_highlevel(
-        history, height=27.43, refval=p_true)
+        history, height=27.43, refval=p_true
+    )
     plt.close()
 
 
@@ -169,13 +216,21 @@ def test_credible_intervals():
     `pyabc.visualization.plot_credible_intervals_for_time`"""
     pyabc.visualization.plot_credible_intervals(histories[0])
     pyabc.visualization.plot_credible_intervals(
-        histories[0], levels=[0.2, 0.5, 0.9],
-        show_kde_max_1d=True, show_kde_max=True, show_mean=True,
-        refval=p_true)
+        histories[0],
+        levels=[0.2, 0.5, 0.9],
+        show_kde_max_1d=True,
+        show_kde_max=True,
+        show_mean=True,
+        refval=p_true,
+    )
     pyabc.visualization.plot_credible_intervals_for_time(
-        histories, levels=[0.5, 0.99],
-        show_kde_max_1d=True, show_kde_max=True, show_mean=True,
-        refvals=p_true)
+        histories,
+        levels=[0.5, 0.99],
+        show_kde_max_1d=True,
+        show_kde_max=True,
+        show_mean=True,
+        refvals=p_true,
+    )
     plt.close()
 
 
@@ -187,6 +242,7 @@ def test_model_probabilities():
 
 def test_data_callback():
     """Test `pyabc.visualization.plot_data_callback`"""
+
     def plot_data(sum_stat, weight, ax, **kwargs):
         ax.plot(sum_stat['ss0'], alpha=weight, **kwargs)
 
@@ -197,15 +253,23 @@ def test_data_callback():
         plot_data({'ss0': mean}, 1.0, ax)
 
     pyabc.visualization.plot_data_callback(
-        histories[0], plot_data, plot_data_aggregated)
+        histories[0], plot_data, plot_data_aggregated
+    )
+    plt.close()
 
 
 def test_data_default():
     """Test `pyabc.visualization.plot_data_default`"""
-    obs_dict = {1: 0.7, 2: np.array([43, 423, 5.5]),
-                3: pd.DataFrame({'a': [1, 2], 'b': [4, 6]})}
-    sim_dict = {1: 6.5, 2: np.array([32, 5, 6]),
-                3: pd.DataFrame({'a': [1.55, -0.1], 'b': [54, 6]})}
+    obs_dict = {
+        1: 0.7,
+        2: np.array([43, 423, 5.5]),
+        3: pd.DataFrame({'a': [1, 2], 'b': [4, 6]}),
+    }
+    sim_dict = {
+        1: 6.5,
+        2: np.array([32, 5, 6]),
+        3: pd.DataFrame({'a': [1.55, -0.1], 'b': [54, 6]}),
+    }
     pyabc.visualization.plot_data_default(obs_dict, sim_dict)
     for i in range(5):
         obs_dict[i] = i + 1
@@ -217,7 +281,12 @@ def test_data_default():
 def test_total_walltime():
     """Test `pyabc.visualization.plot_total_walltime`"""
     pyabc.visualization.plot_total_walltime(
-        histories, labels, rotation=45, unit='m', size=(5, 5))
+        histories,
+        labels,
+        rotation=45,
+        unit='m',
+        size=(5, 5),
+    )
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_total_walltime(histories, unit='min')
     plt.close()
@@ -226,7 +295,8 @@ def test_total_walltime():
 def test_walltime():
     """Test `pyabc.visualization.plot_walltime`"""
     pyabc.visualization.plot_walltime(
-        histories, labels, rotation=45, unit='m', size=(5, 5))
+        histories, labels, rotation=45, unit='m', size=(5, 5)
+    )
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_walltime(histories, unit='min')
     plt.close()
@@ -234,8 +304,86 @@ def test_walltime():
 
 def test_eps_walltime():
     """Test `pyabc.visualization.plot_eps_walltime`"""
-    pyabc.visualization.plot_eps_walltime(
-        histories, labels, unit='m', size=(5, 5), yscale='log')
+    for group_by_label in [True, False]:
+        pyabc.visualization.plot_eps_walltime(
+            histories,
+            labels,
+            unit='m',
+            size=(5, 5),
+            yscale='log',
+            group_by_label=group_by_label,
+        )
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_eps_walltime(histories, unit='min')
     plt.close()
+
+
+def test_distance_weights():
+    """Test `pyabc.visualization.plot_distance_weights`"""
+    for keys_as_labels in [True, False]:
+        pyabc.visualization.plot_distance_weights(
+            log_files, keys_as_labels=keys_as_labels
+        )
+
+
+def test_sensitivity_sankey():
+    """Test pyabc.visualization.plot_sensitivity_sankey`"""
+    sigmas = {"p1": 0.1}
+
+    def model(p):
+        return {
+            "y1": p["p1"] + 1 + sigmas["p1"] * np.random.normal(),
+            "y2": 2 + 0.1 * np.random.normal(size=3),
+        }
+
+    gt_par = {"p1": 3}
+
+    data = {"y1": gt_par["p1"] + 1, "y2": 2 * np.ones(shape=3)}
+
+    prior_bounds = {"p1": (0, 10)}
+
+    prior = pyabc.Distribution(
+        **{
+            key: pyabc.RV("uniform", lb, ub - lb)
+            for key, (lb, ub) in prior_bounds.items()
+        },
+    )
+
+    total_sims = 1000
+
+    # tmp files
+    db_file = tempfile.mkstemp(suffix=".db")[1]
+    scale_log_file = tempfile.mkstemp(suffix=".json")[1]
+    info_log_file = tempfile.mkstemp(suffix=".json")[1]
+    info_sample_log_file = tempfile.mkstemp()[1]
+
+    distance = pyabc.InfoWeightedPNormDistance(
+        p=1,
+        scale_function=pyabc.distance.mad,
+        predictor=pyabc.predictor.LinearPredictor(),
+        fit_info_ixs=pyabc.util.EventIxs(sims=int(0.4 * total_sims)),
+        scale_log_file=scale_log_file,
+        info_log_file=info_log_file,
+        info_sample_log_file=info_sample_log_file,
+    )
+
+    abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
+    h = abc.new(db="sqlite:///" + db_file, observed_sum_stat=data)
+    abc.run(max_total_nr_simulations=total_sims)
+
+    pyabc.visualization.plot_sensitivity_sankey(
+        info_sample_log_file=info_sample_log_file,
+        t=info_log_file,
+        h=h,
+        predictor=pyabc.predictor.LinearPredictor(),
+    )
+
+
+def test_colors():
+    """Some basic tests regarding color codes."""
+    for basecolor in pyabc.visualization.colors.BASECOLORS:
+        for level in pyabc.visualization.colors.LEVELS:
+            color = getattr(pyabc.visualization.colors, f"{basecolor}{level}")
+            assert len(color) == 7
+            assert color[0] == "#"
+            assert int(color[1:], 16)

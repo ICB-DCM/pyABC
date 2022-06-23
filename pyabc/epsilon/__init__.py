@@ -9,27 +9,24 @@ the observed data, can follow a pre-defined list, can be constant, or can have
 a user-defined implementation.
 """
 
-
-from .base import (
-    Epsilon,
-    NoEpsilon,
-)
+from .base import Epsilon, NoEpsilon
 from .epsilon import (
     ConstantEpsilon,
     ListEpsilon,
-    QuantileEpsilon,
     MedianEpsilon,
+    QuantileEpsilon,
 )
+from .silk import SilkOptimalEpsilon
 from .temperature import (
-    TemperatureBase,
-    ListTemperature,
-    Temperature,
-    TemperatureScheme,
     AcceptanceRateScheme,
+    DalyScheme,
+    EssScheme,
     ExpDecayFixedIterScheme,
     ExpDecayFixedRatioScheme,
-    PolynomialDecayFixedIterScheme,
-    DalyScheme,
     FrielPettittScheme,
-    EssScheme,
+    ListTemperature,
+    PolynomialDecayFixedIterScheme,
+    Temperature,
+    TemperatureBase,
+    TemperatureScheme,
 )

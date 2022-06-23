@@ -12,12 +12,14 @@ STATIC = "static"
 DYNAMIC = "dynamic"
 # the queue to return results through
 QUEUE = "queue"
+# list of done indices
+DONE_IXS = "done_ixs"
 
 # default sleep time
-SLEEP_TIME = .1
+SLEEP_TIME = 0.1
 
 # message channel
-MSG = "msg_pubsub"
+MSG = "abc_msg_pubsub"
 # start and stop messages
 START = "start"
 STOP = "stop"

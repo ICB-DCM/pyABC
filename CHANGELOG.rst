@@ -4,17 +4,288 @@ Release Notes
 =============
 
 
+0.12 Series
+...........
+
+
+0.12.5 (2022-06-21)
+-------------------
+
+Minor:
+
+* Document outdated Google Colab version (Python 3.7)
+
+
+0.12.4 (2022-05-05)
+-------------------
+
+Minor:
+
+* Move near-zero population weight to warning (#563)
+* Improve test installation instructions;
+  fix for updates of flake8-print and black (#567)
+
+
+0.12.3 (2022-04-05)
+-------------------
+
+* Document custom priors (#559)
+
+
+0.12.2 (2022-03-25)
+-------------------
+
+* Update citation hints, add logo license (#554)
+
+
+0.12.1 (2022-03-02)
+-------------------
+
+* Fix double logging in grid search
+
+
+0.12.0 (2022-02-23)
+-------------------
+
+Major changes compared to 0.11.0:
+
+New features:
+
+* Add Silk acceptance rate curve based optimal threshold scheme (#539)
+* Interface Copasi model simulators via BasiCO (thanks to Frank Bergmann)
+  (#531)
+* Interface simulators in the Julia language via pyjulia (#514)
+* Add Wasserstein and Sliced Wasserstein optimal transport distances (#500)
+* Finalize sensitivity weighted distance functions using inverse
+  regression models and augmented regression targets (#478, 484)
+
+Technical changes:
+
+* Support python>=3.8 (#543)
+
+Internals:
+
+* Automatic code formatting via black, isort, and nbqa (#506, #508, #544)
+
+Random:
+
+* The logo is pink (#549)
+
+
+0.11 series
+...........
+
+
+0.11.12 (2022-02-19)
+--------------------
+
+* Add Silk acceptance rate curve based optimal threshold scheme (#539)
+* Fix Julia version in tests (#542)
+* Apply nbqa black and isort to notebooks (#544)
+* Update to stable tox
+* Require python>=3.8 (#543)
+
+
+0.11.11 (2021-12-25)
+--------------------
+
+* Implement color grouping by summary statistics and parameters in sankey
+  plots (#536)
+
+
+0.11.10 (2021-12-24)
+--------------------
+
+* Add BasiCO-Copasi model interface (thanks to Frank Bergmann) (#531)
+* CI: Run Amici without sensitivity calculation (#533)
+
+
+0.11.9 (2021-12-04)
+-------------------
+
+* Allow pickling of AMICI models (#527)
+* Remove external handler cleanup as not used (#529)
+* Allow timeout of external handlers (#530)
+
+
+0.11.8 (2021-12-03)
+-------------------
+
+* Interface Julia simulators via pyjulia (#514)
+* Refactor PCA distance, add tests (#518)
+* Remove pyarrow as hard dependency for pandas storage (#523)
+* Hierarchically structure examples, update "Parameter Inference"
+  introduction (#524)
+* Add minimum epsilon difference stopping condition (#525)
+
+
+0.11.7 (2021-11-10)
+-------------------
+
+* Decompose ABCSMC.run for easier outer loop (#510)
+
+
+0.11.6 (2021-11-05)
+-------------------
+
+* Unfix sphinx version for documentation (#509)
+* Streamline function wrapper objects (#511)
+* Remove rpy2 warning upon import of `pyabc.external` (#512)
+* Move ot distance to scipy due to bug in pot 0.8.0 (#512)
+
+
+0.11.5 (2021-10-29)
+-------------------
+
+* Regularly scheduled CI (#504)
+* Fix Dask for Windows (#503)
+* Apply the uncompromising Python code formatter black (#506)
+* Apply automatic import sorting via isort (#508)
+
+
+0.11.4 (2021-10-27)
+-------------------
+
+* Implement Wasserstein and Sliced Wasserstein distances (#500)
+* Add env variable to bound population size in tests (#501)
+
+
+0.11.3 (2021-10-16)
+-------------------
+
+* Update to amici 0.11.19 for scaled residual support (#491)
+* Add links for online execution of notebooks on Google Colab and nbviewer
+  (#492)
+* Tests: Fix early stopping test for first generation (#494)
+
+
+0.11.2 (2021-10-07)
+-------------------
+
+* Remove codacy due to excessive permission requests
+* Tidy up example titles
+
+0.11.1 (2021-10-06)
+-------------------
+
+Summary statistics:
+
+* Allow transformed parameters as regression targets via `ParTrafo` (#478)
+* Add Sankey flow plot (#484)
+* Add "informative" notebook to document regression-based summary statistics
+  and weights (#484)
+
+Sampler:
+
+* Speed up redis done-list checking by atomic operations (#482)
+
+
+0.11.0 (2021-07-31)
+-------------------
+
+Diverse:
+
+* Shorten date-time log (#456)
+* Add look-ahead example notebook (#461)
+* Fix decoration of `plot_acceptance_rates_trajectory` (#465)
+* Hot-fix redis clean-up (#475)
+
+Semi-automatic summary statistics and robust sample weighting (#429)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Breaking changes:
+
+* API of the `(Adaptive)PNormDistance` was altered substantially to allow
+  cutom definition of update indices.
+* Internal weighting of samples (should not affect users).
+
+Semi-automatic summary statistics:
+
+* Implement (Adaptive)PNormDistance with the ability to learn summary
+  statistics from simulations.
+* Add `sumstat` submodule for generic mappings (id, trafos), and especially a
+  `PredictorSumstat` summary statistic that can make use of `Predictor` objects.
+* Add subsetting routines that allow restricting predictor model training
+  samples.
+* Add `predictor` submodule with generic `Predictor` class and concrete
+  implementations including linear regression, Lasso, Gaussian Process,
+  Neural Network.
+* Add `InfoWeightedPNormDistance` that allows using predictor models to weight
+  data not only by scale, but also by information content.
+
+Outlier-robust adaptive distances:
+
+* Update documentation towards robust distances.
+* Add section in the corresponding notebook.
+* Implement PCMAD outlier correction scheme.
+
+Changes to internal sample weighting:
+
+* Do not normalize weights of in-memory particles by model; this allows to
+  more easily use the sampling weights and the list of particles for
+  adaptive components (e.g. distance functions)
+* Normalization of population to 1 is applied on sample level in the
+  sampler wrapper function
+* In the database, normalization is still by sample to not break old db
+  support; would be nicer to also there only normalize by total sum
+  -- requires a db update though.
+
+Changes to internal object instruction from samples:
+
+* Pass sample instead of weighted_sum_stats to distance function.
+  This is because thus the distance can choose on its own what it wants
+  -- all or only accepted particles; distances; weights; parameters;
+  summary statistics.
+
+Visualization:
+
+* Function to plot adaptive distance weights from log file.
+
+
 0.10 series
 ...........
 
 
-0.10.15 (2021-02-22)
+0.10.16 (2021-05-11)
 --------------------
+
+* Allow color customization for `plot_credible_intervals` plots (#414)
+* pyABC logo to grey to fit with both black and white backgrounds (#453)
+* Add style set to global figure parameters, enabling dark mode (#454)
+
+
+0.10.15 (2021-05-09)
+--------------------
+
+Sampler:
+
+* Allow redis dynamical sampler to only wait for relevant particles after
+  a generatio, giving a speed-up without drawbacks (#448)
+* Add option to limit number of delayed look-ahead samples to limit memory
+  usage (#428)
+
+Logging:
+
+* Standardize output of floats (#450)
+* Use hierarchical logging (ABC.Submodule) (#417)
+
+General:
 
 * Refactor: Remove deprecated `nr_samples_per_parameter`, internal
   simplifications (#422)
-* Add option to limit number of delayed look-ahead samples to limit memory
-  usage (#428)
+* Tidy up and minimize dependencies (#436, #441)
+* External: Remove simulation files after collecting results (#434)
+* Make feather/pyarrow dependency optional for older hardware (#442)
+
+Documentation:
+
+* Add description of JupyterHub to documentation (#439)
+
+CI:
+
+* Test webserver basic functionality
+* Rerun stochastically failing tests (all #436)
+* Test whether dataframe storage routines work properly (#442)
 
 
 0.10.14 (2021-02-21)
@@ -63,6 +334,7 @@ Database:
 * Make sure `ABCSMC.run()` is always properly finished (sampler, history)
   by a wrapper (all #401).
 * Redis sampler with look-ahead mode:
+
   * Fix insufficient logging of look-ahead samples.
   * Log all accepted particles.
 * Add `plot_lookahead_...` plots for look-ahead mode diagnostics.

@@ -1,15 +1,16 @@
 """Walltime plots"""
 
-import numpy as np
-import matplotlib.pyplot as plt
+import datetime
+from typing import Any, List, Union
+
 import matplotlib as mpl
 import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import MaxNLocator
-import datetime
-from typing import List, Union
 
 from ..storage import History
-from .util import to_lists, get_labels
+from .util import get_labels, to_lists
 
 SECOND = 's'
 MINUTE = 'm'
@@ -19,13 +20,14 @@ TIME_UNITS = [SECOND, MINUTE, HOUR, DAY]
 
 
 def plot_total_walltime(
-        histories: Union[List[History], History],
-        labels: Union[List, str] = None,
-        unit: str = 's',
-        rotation: int = 0,
-        title: str = "Total walltimes",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
+    histories: Union[List[History], History],
+    labels: Union[List, str] = None,
+    unit: str = 's',
+    rotation: int = 0,
+    title: str = "Total walltimes",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
     """Plot total walltimes, for each history one single-color bar.
 
     Parameters
@@ -77,9 +79,9 @@ def plot_total_walltime(
     if unit == MINUTE:
         walltimes /= 60
     elif unit == HOUR:
-        walltimes /= (60*60)
+        walltimes /= 60 * 60
     elif unit == DAY:
-        walltimes /= (60*60*24)
+        walltimes /= 60 * 60 * 24
 
     # plot bars
     ax.bar(x=np.arange(n_run), height=walltimes, label=labels)
@@ -98,14 +100,15 @@ def plot_total_walltime(
 
 
 def plot_walltime(
-        histories: Union[List[History], History],
-        labels: Union[List, str] = None,
-        show_calibration: bool = None,
-        unit: str = 's',
-        rotation: int = 0,
-        title: str = "Walltime by generation",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
+    histories: Union[List[History], History],
+    labels: Union[List, str] = None,
+    show_calibration: bool = None,
+    unit: str = 's',
+    rotation: int = 0,
+    title: str = "Walltime by generation",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
     """Plot walltimes, with different colors indicating different iterations.
 
     Parameters
@@ -140,7 +143,8 @@ def plot_walltime(
     # show calibration if that makes sense
     if show_calibration is None:
         show_calibration = any(
-            h.get_all_populations().samples[0] > 0 for h in histories)
+            h.get_all_populations().samples[0] > 0 for h in histories
+        )
 
     # extract start times and end times
     start_times = []
@@ -152,21 +156,29 @@ def plot_walltime(
         end_times.append(h.get_all_populations().population_end_time)
 
     return plot_walltime_lowlevel(
-        end_times=end_times, start_times=start_times, labels=labels,
-        show_calibration=show_calibration, unit=unit, rotation=rotation,
-        title=title, size=size, ax=ax)
+        end_times=end_times,
+        start_times=start_times,
+        labels=labels,
+        show_calibration=show_calibration,
+        unit=unit,
+        rotation=rotation,
+        title=title,
+        size=size,
+        ax=ax,
+    )
 
 
 def plot_walltime_lowlevel(
-        end_times: List,
-        start_times: Union[List, None] = None,
-        labels: Union[List, str] = None,
-        show_calibration: bool = None,
-        unit: str = 's',
-        rotation: int = 0,
-        title: str = "Walltime by generation",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
+    end_times: List,
+    start_times: Union[List, None] = None,
+    labels: Union[List, str] = None,
+    show_calibration: bool = None,
+    unit: str = 's',
+    rotation: int = 0,
+    title: str = "Walltime by generation",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
     """Low-level access to `plot_walltime`.
     Directly define `end_times` and `start_times`."""
     # preprocess input
@@ -178,7 +190,8 @@ def plot_walltime_lowlevel(
     if start_times is None:
         if show_calibration:
             raise AssertionError(
-                "To plot the calibration iteration, start times are needed.")
+                "To plot the calibration iteration, start times are needed."
+            )
         # fill in dummy times which will not be used anyhow
         start_times = [datetime.datetime.now() for _ in range(n_run)]
 
@@ -208,7 +221,7 @@ def plot_walltime_lowlevel(
     n_pop = max(len(wt) for wt in walltimes)
     matrix = np.zeros((n_pop, n_run))
     for i_run, wt in enumerate(walltimes):
-        matrix[:len(wt), i_run] = wt
+        matrix[: len(wt), i_run] = wt
 
     if not show_calibration:
         matrix = matrix[1:, :]
@@ -217,19 +230,21 @@ def plot_walltime_lowlevel(
     if unit == MINUTE:
         matrix /= 60
     elif unit == HOUR:
-        matrix /= (60*60)
+        matrix /= 60 * 60
     elif unit == DAY:
-        matrix /= (60*60*24)
+        matrix /= 60 * 60 * 24
 
     # plot bars
     for i_pop in reversed(range(matrix.shape[0])):
         pop_ix = i_pop - 1
         if not show_calibration:
             pop_ix = i_pop
-        ax.bar(x=np.arange(n_run),
-               height=matrix[i_pop, :],
-               bottom=np.sum(matrix[:i_pop, :], axis=0),
-               label=f"Generation {pop_ix}")
+        ax.bar(
+            x=np.arange(n_run),
+            height=matrix[i_pop, :],
+            bottom=np.sum(matrix[:i_pop, :], axis=0),
+            label=f"Generation {pop_ix}",
+        )
 
     # prettify plot
     ax.set_xticks(np.arange(n_run))
@@ -246,14 +261,18 @@ def plot_walltime_lowlevel(
 
 
 def plot_eps_walltime(
-        histories: Union[List[History], History],
-        labels: Union[List, str] = None,
-        unit: str = 's',
-        xscale: str = 'linear',
-        yscale: str = 'log',
-        title: str = "Epsilon over walltime",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
+    histories: Union[List[History], History],
+    labels: Union[List, str] = None,
+    colors: List[Any] = None,
+    group_by_label: bool = True,
+    indicate_end: bool = True,
+    unit: str = 's',
+    xscale: str = 'linear',
+    yscale: str = 'log',
+    title: str = "Epsilon over walltime",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
     """Plot epsilon values (y-axis) over the walltime (x-axis), iterating over
     the generations.
 
@@ -264,6 +283,13 @@ def plot_eps_walltime(
     labels:
         Labels corresponding to the histories. If None are provided,
         indices are used as labels.
+    colors:
+        One color for each history.
+    group_by_label:
+        Whether to group colors (unless explicitly provided) and legends by
+        label.
+    indicate_end:
+        Whether to indicate the final time by a line.
     unit:
         Time unit to use ('s', 'm', 'h', 'd' as seconds, minutes, hours, days).
     xscale:
@@ -293,20 +319,35 @@ def plot_eps_walltime(
         eps.append(h.get_all_populations().epsilon)
 
     return plot_eps_walltime_lowlevel(
-        end_times=end_times, eps=eps, labels=labels, unit=unit,
-        xscale=xscale, yscale=yscale, title=title, size=size, ax=ax)
+        end_times=end_times,
+        eps=eps,
+        labels=labels,
+        colors=colors,
+        group_by_label=group_by_label,
+        indicate_end=indicate_end,
+        unit=unit,
+        xscale=xscale,
+        yscale=yscale,
+        title=title,
+        size=size,
+        ax=ax,
+    )
 
 
 def plot_eps_walltime_lowlevel(
-        end_times: List,
-        eps: List,
-        labels: Union[List, str] = None,
-        unit: str = 's',
-        xscale: str = 'linear',
-        yscale: str = 'log',
-        title: str = "Epsilon over walltime",
-        size: tuple = None,
-        ax: mpl.axes.Axes = None) -> mpl.axes.Axes:
+    end_times: List,
+    eps: List,
+    labels: Union[List, str] = None,
+    colors: List[Any] = None,
+    group_by_label: bool = True,
+    indicate_end: bool = True,
+    unit: str = 's',
+    xscale: str = 'linear',
+    yscale: str = 'log',
+    title: str = "Epsilon over walltime",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
     """Low-level access to `plot_eps_walltime`.
     Directly define `end_times` and `eps`. Note that both should be arrays of
     the same length and at the beginning include a value for the calibration
@@ -318,6 +359,21 @@ def plot_eps_walltime_lowlevel(
     end_times = to_lists(end_times)
     labels = get_labels(labels, len(end_times))
     n_run = len(end_times)
+
+    if group_by_label:
+        if colors is None:
+            colors = []
+            color_ix = -1
+            for ix, label in enumerate(labels):
+                if label not in labels[:ix]:
+                    color_ix += 1
+                colors.append(f"C{color_ix}")
+
+        labels = [
+            x if x not in labels[:ix] else None for ix, x in enumerate(labels)
+        ]
+    if colors is None:
+        colors = [None] * n_run
 
     # check time unit
     if unit not in TIME_UNITS:
@@ -342,17 +398,19 @@ def plot_eps_walltime_lowlevel(
     # disregard calibration epsilon (inf)
     eps = [ep[1:] for ep in eps]
 
-    for wt, ep, label in zip(walltimes, eps, labels):
+    for wt, ep, label, color in zip(walltimes, eps, labels, colors):
         wt = np.asarray(wt)
         # apply time unit
         if unit == MINUTE:
             wt /= 60
         elif unit == HOUR:
-            wt /= (60 * 60)
+            wt /= 60 * 60
         elif unit == DAY:
-            wt /= (60 * 60 * 24)
+            wt /= 60 * 60 * 24
         # plot
-        ax.plot(wt, ep, label=label, marker='o')
+        ax.plot(wt, ep, label=label, marker='o', color=color)
+        if indicate_end:
+            ax.axvline(wt[-1], linestyle='dashed', color=color)
 
     # prettify plot
     if n_run > 1:

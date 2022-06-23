@@ -1,12 +1,12 @@
-from .numpy_bytes_storage import np_from_bytes, np_to_bytes
-from .dataframe_bytes_storage import df_to_bytes, df_from_bytes
 import pandas as pd
 
+from .dataframe_bytes_storage import df_from_bytes, df_to_bytes
+from .numpy_bytes_storage import np_from_bytes, np_to_bytes
 
 try:
     import rpy2.robjects as robjects
-    from rpy2.robjects.conversion import localconverter
     from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
 
     def r_to_py(object_):
         if isinstance(object_, robjects.DataFrame):
@@ -14,7 +14,9 @@ try:
                 py_object_ = robjects.conversion.rpy2py(object_)
             return py_object_
         return object_
-except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
+
+except ImportError:
+
     def r_to_py(object_):
         return object_
 

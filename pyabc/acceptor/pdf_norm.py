@@ -1,11 +1,10 @@
-import numpy as np
 from typing import Callable, Union
+
+import numpy as np
 import pandas as pd
 
 
-def pdf_norm_from_kernel(
-        kernel_val: float,
-        **kwargs):
+def pdf_norm_from_kernel(kernel_val: float, **kwargs):
     """
     Just use the pdf_max value passed, usually originating from the distance
     function.
@@ -14,9 +13,10 @@ def pdf_norm_from_kernel(
 
 
 def pdf_norm_max_found(
-        prev_pdf_norm: Union[float, None],
-        get_weighted_distances: Callable[[], pd.DataFrame],
-        **kwargs):
+    prev_pdf_norm: Union[float, None],
+    get_weighted_distances: Callable[[], pd.DataFrame],
+    **kwargs,
+):
     """
     Take as pdf_max the maximum over the values found so far in the history,
     and `get_weighted_distances`.
@@ -29,7 +29,7 @@ def pdf_norm_max_found(
 
     # set previous normalization to dummy if not existent
     if prev_pdf_norm is None:
-        prev_pdf_norm = - np.inf
+        prev_pdf_norm = -np.inf
 
     # take maximum over all normalizations
     pdf_norm = max(prev_pdf_norm, *pdfs)
@@ -63,26 +63,29 @@ class ScaledPDFNorm:
     """
 
     def __init__(
-            self,
-            factor: float = 10,
-            alpha: float = 0.5,
-            min_acceptance_rate: bool = 0.1):
+        self,
+        factor: float = 10,
+        alpha: float = 0.5,
+        min_acceptance_rate: bool = 0.1,
+    ):
         self.factor = 10
         self.alpha = alpha
         self.min_acceptance_rate = min_acceptance_rate
         self._hit = False
 
     def __call__(
-            self,
-            prev_pdf_norm: Union[float, None],
-            get_weighted_distances: Callable[[], pd.DataFrame],
-            prev_temp: Union[float, None],
-            acceptance_rate: float,
-            **kwargs):
+        self,
+        prev_pdf_norm: Union[float, None],
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        prev_temp: Union[float, None],
+        acceptance_rate: float,
+        **kwargs,
+    ):
         # base: the maximum found temperature
         pdf_norm = pdf_norm_max_found(
             prev_pdf_norm=prev_pdf_norm,
-            get_weighted_distances=get_weighted_distances)
+            get_weighted_distances=get_weighted_distances,
+        )
 
         # log-scale
         offset = np.log(self.factor)

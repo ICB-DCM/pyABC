@@ -1,18 +1,19 @@
 """Stochastic kernels."""
+from abc import ABC
+from typing import Callable, List, Sequence, Union
 
 import numpy as np
 from scipy import stats
-from typing import Callable, List, Union
 
+from ..population import Sample
 from .base import Distance
-
 
 SCALE_LIN = "SCALE_LIN"
 SCALE_LOG = "SCALE_LOG"
 SCALES = [SCALE_LIN, SCALE_LOG]
 
 
-class StochasticKernel(Distance):
+class StochasticKernel(Distance, ABC):
     """
     A stochastic kernel assesses the similarity between observed and
     simulated summary statistics or data via a probability measure.
@@ -42,20 +43,23 @@ class StochasticKernel(Distance):
     """
 
     def __init__(
-            self,
-            ret_scale: str = SCALE_LIN,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        ret_scale: str = SCALE_LIN,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         StochasticKernel.check_ret_scale(ret_scale)
         self.ret_scale = ret_scale
         self.keys = keys
         self.pdf_max = pdf_max
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         """
         Remember the summary statistic keys in sorted order,
         if not set in __init__ already.
@@ -68,20 +72,20 @@ class StochasticKernel(Distance):
     def check_ret_scale(ret_scale):
         if ret_scale not in SCALES:
             raise ValueError(
-                f"The ret_scale {ret_scale} must be one of {SCALES}.")
+                f"The ret_scale {ret_scale} must be one of {SCALES}."
+            )
 
     def initialize_keys(self, x):
         self.keys = sorted(x)
 
 
-class SimpleFunctionKernel(StochasticKernel):
+class FunctionKernel(StochasticKernel):
     """
     This is a wrapper around a simple function which calculates the
     probability density.
 
     Parameters
     ----------
-
     fun: Callable
         A Callable accepting `__call__`'s parameters.
         The function should be a pdf or pmf.
@@ -89,20 +93,22 @@ class SimpleFunctionKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            fun: Callable,
-            ret_scale: str = SCALE_LIN,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        fun: Callable,
+        ret_scale: str = SCALE_LIN,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
         self.fun = fun
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         return self.fun(x=x, x_0=x_0, t=t, par=par)
 
 
@@ -113,10 +119,8 @@ class NormalKernel(StochasticKernel):
 
     Parameters
     ----------
-
     cov: array_like, optional (default = identiy matrix)
         Covariance matrix of the distribution.
-
     ret_scale, keys, pdf_max: As in StochasticKernel.
 
 
@@ -128,25 +132,30 @@ class NormalKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            cov: np.ndarray = None,
-            ret_scale: str = SCALE_LOG,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        cov: np.ndarray = None,
+        ret_scale: str = SCALE_LOG,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
         self.cov = cov
         self.ret_scale = ret_scale
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
-            x_0=x_0)
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # initialize distribution
         self._init_distr(x_0)
@@ -170,11 +179,12 @@ class NormalKernel(StochasticKernel):
         self.rv = stats.multivariate_normal(mean=mean, cov=self.cov)
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         """
         Return the value of the normal distribution at x - x_0, or its
         logarithm.
@@ -218,23 +228,28 @@ class IndependentNormalKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            var: Union[Callable, List[float], float] = None,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        var: Union[Callable, Sequence[float], float] = None,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
         self.var = var
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
-            x_0=x_0)
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # dimension
         dim = sum(np.size(x_0[key]) for key in self.keys)
@@ -251,11 +266,12 @@ class IndependentNormalKernel(StochasticKernel):
             self.pdf_max = self(x_0, x_0)
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None):
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ):
         # safety check
         if self.keys is None:
             self.initialize_keys(x_0)
@@ -275,7 +291,7 @@ class IndependentNormalKernel(StochasticKernel):
 
         squares = np.sum((diff**2) / var)
 
-        log_pdf = - 0.5 * (log_2_pi + squares)
+        log_pdf = -0.5 * (log_2_pi + squares)
         return log_pdf
 
 
@@ -293,37 +309,39 @@ class IndependentLaplaceKernel(StochasticKernel):
 
     Parameters
     ----------
-
     scale: Union[array_like, float, Callable], optional (default = ones vector)
         Scale terms b of the distribution. Can also be a Callable taking as
         arguments the parameters. In that case, pdf_max should also be given
         if it is supposed to be used. Usually, it will then be given as the
         density at the observed statistics assuming the minimum allowed
         variance.
-
     keys, pdf_max: As in StochasticKernel.
-
     """
 
     def __init__(
-            self,
-            scale: Union[Callable, List[float], float] = None,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        scale: Union[Callable, Sequence[float], float] = None,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
         self.scale = scale
         self.dim = None
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
-            x_0=x_0)
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # dimension
         dim = sum(np.size(x_0[key]) for key in self.keys)
@@ -340,11 +358,12 @@ class IndependentLaplaceKernel(StochasticKernel):
             self.pdf_max = self(x_0, x_0)
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None):
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ):
         # safety check
         if self.keys is None:
             self.initialize_keys(x_0)
@@ -364,7 +383,7 @@ class IndependentLaplaceKernel(StochasticKernel):
 
         abs_diff = np.sum(np.abs(diff) / scale)
 
-        log_pdf = - (log_2_b + abs_diff)
+        log_pdf = -(log_2_b + abs_diff)
 
         return log_pdf
 
@@ -382,42 +401,50 @@ class BinomialKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            p: Union[float, Callable],
-            ret_scale: str = SCALE_LOG,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        p: Union[float, Callable],
+        ret_scale: str = SCALE_LOG,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
                 f"The success probability p={p} must be in the interval"
-                f"[0, 1].")
+                f"[0, 1]."
+            )
         self.p = p
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
-            x_0=x_0)
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # cache pdf_max
         if self.pdf_max is None and not callable(self.p):
             # take value at observed summary statistics
             self.pdf_max = binomial_pdf_max(
-                x_0, self.keys, self.p, self.ret_scale)
+                x_0, self.keys, self.p, self.ret_scale
+            )
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         x = np.asarray(_arr(x, self.keys), dtype=int)
         x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
 
@@ -442,22 +469,27 @@ class PoissonKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            ret_scale: str = SCALE_LOG,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        ret_scale: str = SCALE_LOG,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
-            x_0=x_0)
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # cache pdf_max
         if self.pdf_max is None:
@@ -466,11 +498,12 @@ class PoissonKernel(StochasticKernel):
             self.pdf_max = self(x_0, x_0)
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         x = np.asarray(_arr(x, self.keys), dtype=int)
         x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
 
@@ -495,38 +528,45 @@ class NegativeBinomialKernel(StochasticKernel):
     """
 
     def __init__(
-            self,
-            p: float,
-            ret_scale: str = SCALE_LOG,
-            keys: List[str] = None,
-            pdf_max: float = None):
+        self,
+        p: float,
+        ret_scale: str = SCALE_LOG,
+        keys: List[str] = None,
+        pdf_max: float = None,
+    ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
                 f"The success probability p={p} must be in the interval"
-                f"[0, 1].")
+                f"[0, 1]."
+            )
         self.p = p
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
         # in particular set keys
         super().initialize(
             t=t,
-            get_all_sum_stats=get_all_sum_stats,
-            x_0=x_0)
+            get_sample=get_sample,
+            x_0=x_0,
+            total_sims=total_sims,
+        )
 
         # pdf_max is not computed
 
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         x = np.asarray(_arr(x, self.keys), dtype=int)
         x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
 

@@ -1,42 +1,46 @@
 """Data and summary statistics plots"""
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.axes
 import logging
 from typing import Callable, List, Union
 
+import matplotlib.axes
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from ..storage import History
 
-
-logger = logging.getLogger("Data_plot")
+logger = logging.getLogger("ABC.Visualization")
 
 
 def plot_data_callback(
-        history: History,
-        f_plot: Callable = None,
-        f_plot_aggregated: Callable = None,
-        t: int = None,
-        ax: matplotlib.axes.Axes = None,
-        **kwargs):
+    history: History,
+    f_plot: Callable = None,
+    f_plot_aggregated: Callable = None,
+    t: int = None,
+    n_sample: int = None,
+    ax: matplotlib.axes.Axes = None,
+    **kwargs,
+):
     """
     Plot the summary statistics from the history using callback functions
     to plot single statistics or aggregated values.
 
     Parameters
     ----------
-    history: History
+    history:
         The history object to use.
-    f_plot: Callable, optional
+    f_plot:
         Function to plot a single summary statistic. Takes the parameters
         ``(sum_stat, weight, ax, **kwargs)``.
-    f_plot_aggregated: Callable
+    f_plot_aggregated:
         Function to plot aggregated values on summary statistics. Takes
         the parameters ``(sum_stats, weights, ax, **kwargs)``.
-    t: int, optional
+    t:
         Time point to extract data from the history for.
-    ax: maplotlib.axes.Axes
+    n_sample:
+        Number of samples to plot. Defaults to all.
+    ax:
         Axis object for the plot. This object is not touched directly and
         can thus be also e.g. a list of axis objects.
 
@@ -48,15 +52,25 @@ def plot_data_callback(
     """
     weights, sum_stats = history.get_weighted_sum_stats(t=t)
     return plot_data_callback_lowlevel(
-        sum_stats, weights, f_plot, f_plot_aggregated, ax, **kwargs)
+        sum_stats=sum_stats,
+        weights=weights,
+        f_plot=f_plot,
+        f_plot_aggregated=f_plot_aggregated,
+        n_sample=n_sample,
+        ax=ax,
+        **kwargs,
+    )
 
 
 def plot_data_callback_lowlevel(
-        sum_stats: List,
-        weights: List,
-        f_plot: Callable,
-        f_plot_aggregated: Callable = None,
-        ax=None, **kwargs):
+    sum_stats: List,
+    weights: List,
+    f_plot: Callable,
+    f_plot_aggregated: Callable = None,
+    n_sample: int = None,
+    ax=None,
+    **kwargs,
+):
     """
     Lowlevel interface for plot_data_callback (see there for the remaining
     parameters).
@@ -73,7 +87,10 @@ def plot_data_callback_lowlevel(
         _, ax = plt.subplots()
 
     if f_plot is not None:
-        for sum_stat, weight in zip(sum_stats, weights):
+        if n_sample is None:
+            n_sample = len(weights)
+        _sum_stats, _weights = sum_stats[:n_sample], weights[:n_sample]
+        for sum_stat, weight in zip(_sum_stats, _weights):
             f_plot(sum_stat, weight, ax, **kwargs)
 
     if f_plot_aggregated is not None:
@@ -82,9 +99,9 @@ def plot_data_callback_lowlevel(
     return ax
 
 
-def plot_data_default(obs_data: dict,
-                      sim_data: dict,
-                      keys: Union[List[str], str] = None):
+def plot_data_default(
+    obs_data: dict, sim_data: dict, keys: Union[List[str], str] = None
+):
     """
     Plot summary statistic data.
 
@@ -129,8 +146,9 @@ def plot_data_default(obs_data: dict,
     fig, arr_ax = plt.subplots(nrows, ncols)
 
     # iterate over keys
-    for plot_index, ((obs_key, obs), (_, sim)) \
-            in enumerate(zip(obs_data.items(), sim_data.items())):
+    for plot_index, ((obs_key, obs), (_, sim)) in enumerate(
+        zip(obs_data.items(), sim_data.items())
+    ):
         if nrows == ncols == 1:
             ax = arr_ax
         else:
@@ -165,8 +183,10 @@ def plot_data_default(obs_data: dict,
             ax.set_xlabel("Data")
             ax.set_ylabel("Simulation")
         else:
-            logger.info(f"Data type {type(obs)} for key {obs_key} is "
-                        f"not supported.")
+            logger.info(
+                f"Data type {type(obs)} for key {obs_key} is "
+                f"not supported."
+            )
             # remove not needed axis
             ax.axis('off')
 

@@ -1,23 +1,27 @@
 """Inference utilities."""
 
+# Note: Due to cyclic imports, these need to be separated from other modules
+
+import logging
+import uuid
+from datetime import datetime, timedelta
+from typing import Callable, List
+
 import numpy as np
 import pandas as pd
-import logging
-from datetime import datetime, timedelta
-from typing import List, Callable
-import uuid
 
 from pyabc.acceptor import Acceptor
 from pyabc.distance import Distance
 from pyabc.epsilon import Epsilon
 from pyabc.model import Model
-from pyabc.random_variables import RV, Distribution
-from pyabc.transition import Transition, ModelPerturbationKernel
-from pyabc.random_choice import fast_random_choice
 from pyabc.parameters import Parameter
 from pyabc.population import Particle
+from pyabc.random_choice import fast_random_choice
+from pyabc.random_variables import RV, Distribution
+from pyabc.storage.history import History
+from pyabc.transition import ModelPerturbationKernel, Transition
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC")
 
 
 class AnalysisVars:
@@ -46,6 +50,8 @@ class AnalysisVars:
         prev_total_nr_simulations: int,
         max_walltime: timedelta,
         init_walltime: datetime,
+        min_eps_diff: float,
+        prev_eps: float,
     ):
         self.model_prior = model_prior
         self.parameter_priors = parameter_priors
@@ -65,11 +71,15 @@ class AnalysisVars:
         self.prev_total_nr_simulations = prev_total_nr_simulations
         self.max_walltime = max_walltime
         self.init_walltime = init_walltime
+        self.min_eps_diff = min_eps_diff
+        self.prev_eps = prev_eps
 
 
 def create_simulate_from_prior_function(
-        model_prior: RV, parameter_priors: List[Distribution],
-        models: List[Model], summary_statistics: Callable,
+    model_prior: RV,
+    parameter_priors: List[Distribution],
+    models: List[Model],
+    summary_statistics: Callable,
 ) -> Callable:
     """Create a function that simulates from the prior.
 
@@ -97,7 +107,8 @@ def create_simulate_from_prior_function(
         theta = parameter_priors[m].rvs()
         # simulate summary statistics
         model_result = models[m].summary_statistics(
-            0, theta, summary_statistics)
+            0, theta, summary_statistics
+        )
         # sampled from prior, so all have uniform weight
         weight = 1.0
         # distance will be computed after initialization of the
@@ -114,16 +125,21 @@ def create_simulate_from_prior_function(
             distance=distance,
             accepted=accepted,
             proposal_id=0,
-            preliminary=False)
+            preliminary=False,
+        )
 
     return simulate_one
 
 
 def generate_valid_proposal(
-        t: int, m: np.ndarray, p: np.ndarray,
-        model_prior: RV, parameter_priors: List[Distribution],
-        model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition]):
+    t: int,
+    m: np.ndarray,
+    p: np.ndarray,
+    model_prior: RV,
+    parameter_priors: List[Distribution],
+    model_perturbation_kernel: ModelPerturbationKernel,
+    transitions: List[Transition],
+):
     """Sample a parameter for a model.
 
     Parameters
@@ -167,8 +183,7 @@ def generate_valid_proposal(
         theta_ss = transitions[m_ss].rvs()
 
         # check if positive under prior
-        if (model_prior.pmf(m_ss)
-                * parameter_priors[m_ss].pdf(theta_ss) > 0):
+        if model_prior.pmf(m_ss) * parameter_priors[m_ss].pdf(theta_ss) > 0:
             return m_ss, theta_ss
 
         # unhealthy sampling detection
@@ -176,15 +191,22 @@ def generate_valid_proposal(
         if n_sample == n_sample_soft_limit:
             logger.warning(
                 "Unusually many (model, parameter) samples have prior "
-                "density zero. The transition might be inappropriate.")
+                "density zero. The transition might be inappropriate."
+            )
 
 
 def evaluate_proposal(
-        m_ss: int, theta_ss: Parameter, t: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        distance_function: Distance, eps: Epsilon, acceptor: Acceptor,
-        x_0: dict, weight_function: Callable, proposal_id: int,
+    m_ss: int,
+    theta_ss: Parameter,
+    t: int,
+    models: List[Model],
+    summary_statistics: Callable,
+    distance_function: Distance,
+    eps: Epsilon,
+    acceptor: Acceptor,
+    x_0: dict,
+    weight_function: Callable,
+    proposal_id: int,
 ) -> Particle:
     """Evaluate a proposed parameter.
 
@@ -211,13 +233,8 @@ def evaluate_proposal(
     """
     # simulate, compute distance, check acceptance
     model_result = models[m_ss].accept(
-        t,
-        theta_ss,
-        summary_statistics,
-        distance_function,
-        eps,
-        acceptor,
-        x_0)
+        t, theta_ss, summary_statistics, distance_function, eps, acceptor, x_0
+    )
 
     # compute acceptance weight
     if model_result.accepted:
@@ -233,11 +250,13 @@ def evaluate_proposal(
         distance=model_result.distance,
         accepted=model_result.accepted,
         preliminary=False,
-        proposal_id=proposal_id)
+        proposal_id=proposal_id,
+    )
 
 
 def create_prior_pdf(
-        model_prior: RV, parameter_priors: List[Distribution]) -> Callable:
+    model_prior: RV, parameter_priors: List[Distribution]
+) -> Callable:
     """Create a function that calculates a sample's prior density.
 
     Parameters
@@ -249,18 +268,19 @@ def create_prior_pdf(
     -------
     prior_pdf: The prior density function.
     """
+
     def prior_pdf(m_ss, theta_ss):
-        prior_pd = (model_prior.pmf(m_ss)
-                    * parameter_priors[m_ss].pdf(theta_ss))
+        prior_pd = model_prior.pmf(m_ss) * parameter_priors[m_ss].pdf(theta_ss)
         return prior_pd
 
     return prior_pdf
 
 
 def create_transition_pdf(
-        transitions: List[Transition],
-        model_probabilities: pd.DataFrame,
-        model_perturbation_kernel: ModelPerturbationKernel) -> Callable:
+    transitions: List[Transition],
+    model_probabilities: pd.DataFrame,
+    model_perturbation_kernel: ModelPerturbationKernel,
+) -> Callable:
     """Create the transition probability density function for time `t`.
 
     Parameters
@@ -273,10 +293,12 @@ def create_transition_pdf(
     -------
     transition_pdf: The transition density function.
     """
+
     def transition_pdf(m_ss, theta_ss):
         model_factor = sum(
             row.p * model_perturbation_kernel.pmf(m_ss, m)
-            for m, row in model_probabilities.iterrows())
+            for m, row in model_probabilities.iterrows()
+        )
         particle_factor = transitions[m_ss].pdf(theta_ss)
 
         transition_pd = model_factor * particle_factor
@@ -289,8 +311,8 @@ def create_transition_pdf(
 
 
 def create_weight_function(
-        prior_pdf: Callable,
-        transition_pdf: Callable,
+    prior_pdf: Callable,
+    transition_pdf: Callable,
 ) -> Callable:
     """Create a function that calculates a sample's importance weight.
     The weight is the prior divided by the transition density and the
@@ -305,6 +327,7 @@ def create_weight_function(
     -------
     weight_function: The importance sample weight function.
     """
+
     def weight_function(m_ss, theta_ss, acceptance_weight: float):
         """Calculate total weight, from sampling and acceptance weight.
 
@@ -329,20 +352,20 @@ def create_weight_function(
 
 
 def create_simulate_function(
-        t: int,
-        model_probabilities: pd.DataFrame,
-        model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition],
-        model_prior: RV,
-        parameter_priors: List[Distribution],
-        models: List[Model],
-        summary_statistics: Callable,
-        x_0: dict,
-        distance_function: Distance,
-        eps: Epsilon,
-        acceptor: Acceptor,
-        evaluate: bool = True,
-        proposal_id: int = 0,
+    t: int,
+    model_probabilities: pd.DataFrame,
+    model_perturbation_kernel: ModelPerturbationKernel,
+    transitions: List[Transition],
+    model_prior: RV,
+    parameter_priors: List[Distribution],
+    models: List[Model],
+    summary_statistics: Callable,
+    x_0: dict,
+    distance_function: Distance,
+    eps: Epsilon,
+    acceptor: Acceptor,
+    evaluate: bool = True,
+    proposal_id: int = 0,
 ) -> Callable:
     """
     Create a simulation function which performs the sampling of parameters,
@@ -388,50 +411,68 @@ def create_simulate_function(
 
     # create prior and transition densities for weight function
     prior_pdf = create_prior_pdf(
-        model_prior=model_prior, parameter_priors=parameter_priors)
+        model_prior=model_prior, parameter_priors=parameter_priors
+    )
     if t == 0:
         transition_pdf = prior_pdf
     else:
         transition_pdf = create_transition_pdf(
             transitions=transitions,
             model_probabilities=model_probabilities,
-            model_perturbation_kernel=model_perturbation_kernel)
+            model_perturbation_kernel=model_perturbation_kernel,
+        )
 
     # create weight function
     weight_function = create_weight_function(
-        prior_pdf=prior_pdf, transition_pdf=transition_pdf)
+        prior_pdf=prior_pdf, transition_pdf=transition_pdf
+    )
 
     # simulation function
     def simulate_one():
         parameter = generate_valid_proposal(
-            t=t, m=m, p=p,
-            model_prior=model_prior, parameter_priors=parameter_priors,
+            t=t,
+            m=m,
+            p=p,
+            model_prior=model_prior,
+            parameter_priors=parameter_priors,
             model_perturbation_kernel=model_perturbation_kernel,
-            transitions=transitions)
+            transitions=transitions,
+        )
         if evaluate:
             particle = evaluate_proposal(
-                *parameter, t=t,
-                models=models, summary_statistics=summary_statistics,
-                distance_function=distance_function, eps=eps,
+                *parameter,
+                t=t,
+                models=models,
+                summary_statistics=summary_statistics,
+                distance_function=distance_function,
+                eps=eps,
                 acceptor=acceptor,
-                x_0=x_0, weight_function=weight_function,
-                proposal_id=proposal_id)
+                x_0=x_0,
+                weight_function=weight_function,
+                proposal_id=proposal_id,
+            )
         else:
             particle = only_simulate_data_for_proposal(
-                *parameter, t=t,
-                models=models, summary_statistics=summary_statistics,
-                weight_function=weight_function, proposal_id=proposal_id)
+                *parameter,
+                t=t,
+                models=models,
+                summary_statistics=summary_statistics,
+                weight_function=weight_function,
+                proposal_id=proposal_id,
+            )
         return particle
 
     return simulate_one
 
 
 def only_simulate_data_for_proposal(
-        m_ss: int, theta_ss: Parameter, t: int,
-        models: List[Model],
-        summary_statistics: Callable,
-        weight_function: Callable,
-        proposal_id: int,
+    m_ss: int,
+    theta_ss: Parameter,
+    t: int,
+    models: List[Model],
+    summary_statistics: Callable,
+    weight_function: Callable,
+    proposal_id: int,
 ) -> Particle:
     """Simulate data for parameters.
 
@@ -441,11 +482,12 @@ def only_simulate_data_for_proposal(
 
     # simulate
     model_result = models[m_ss].summary_statistics(
-        t, theta_ss, summary_statistics)
+        t, theta_ss, summary_statistics
+    )
 
     # dummies for distance and weight, need to be recomputed later
     distance = np.inf
-    acceptance_weight = 1.
+    acceptance_weight = 1.0
 
     # needs to be accepted in order to be forwarded by the sampler, and so
     #  as a single particle
@@ -467,7 +509,8 @@ def only_simulate_data_for_proposal(
 
 
 def evaluate_preliminary_particle(
-        particle: Particle, t, ana_vars: AnalysisVars) -> Particle:
+    particle: Particle, t, ana_vars: AnalysisVars
+) -> Particle:
     """Evaluate a preliminary particle.
     I.e. compute distance and check acceptance.
 
@@ -484,7 +527,8 @@ def evaluate_preliminary_particle(
         x=particle.sum_stat,
         x_0=ana_vars.x_0,
         t=t,
-        par=particle.parameter)
+        par=particle.parameter,
+    )
 
     # reconstruct weighting function from `weight_function`
     sampling_weight = particle.weight
@@ -508,12 +552,21 @@ def evaluate_preliminary_particle(
 
 
 def termination_criteria_fulfilled(
-        current_eps: float, min_eps: float,
-        stop_if_single_model_alive: bool, nr_of_models_alive: int,
-        acceptance_rate: float, min_acceptance_rate: float,
-        total_nr_simulations: int, max_total_nr_simulations: int,
-        walltime: timedelta, max_walltime: timedelta,
-        t: int, max_t: int) -> bool:
+    current_eps: float,
+    min_eps: float,
+    prev_eps: float,
+    min_eps_diff: float,
+    stop_if_single_model_alive: bool,
+    nr_of_models_alive: int,
+    acceptance_rate: float,
+    min_acceptance_rate: float,
+    total_nr_simulations: int,
+    max_total_nr_simulations: int,
+    walltime: timedelta,
+    max_walltime: timedelta,
+    t: int,
+    max_t: int,
+) -> bool:
     """Check termination criteria.
 
     Parameters
@@ -536,22 +589,25 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
-        logger.info("Stopping: maximum number of generations.")
+        logger.info("Stop: Maximum number of generations.")
         return True
     if current_eps <= min_eps:
-        logger.info("Stopping: minimum epsilon.")
+        logger.info("Stop: Minimum epsilon.")
+        return True
+    if prev_eps is not None and abs(current_eps - prev_eps) < min_eps_diff:
+        logger.info("Stop: Minimum epsilon difference")
         return True
     elif stop_if_single_model_alive and nr_of_models_alive <= 1:
-        logger.info("Stopping: single model alive.")
+        logger.info("Stop: Single model alive.")
         return True
     elif acceptance_rate < min_acceptance_rate:
-        logger.info("Stopping: minimum acceptance rate.")
+        logger.info("Stop: Minimum acceptance rate.")
         return True
     elif total_nr_simulations >= max_total_nr_simulations:
-        logger.info("Stopping: total simulations budget.")
+        logger.info("Stop: Total simulations budget.")
         return True
     elif max_walltime is not None and walltime > max_walltime:
-        logger.info("Stopping: maximum walltime.")
+        logger.info("Stop: Maximum walltime.")
         return True
     return False
 
@@ -561,3 +617,13 @@ def create_analysis_id():
     Used by the inference routine to uniquely associated results with analyses.
     """
     return str(uuid.uuid4())
+
+
+def eps_from_hist(history: History, t: int = None) -> float:
+    """Read epsilon value for time `t` from `history`. Defaults to latest."""
+    pops = history.get_all_populations()
+    if len(pops) == 0 or (t is not None and t not in pops.t):
+        return None
+    if t is None:
+        return pops.epsilon.to_numpy()[-1]
+    return pops.set_index("t").loc[t].epsilon

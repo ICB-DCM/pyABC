@@ -1,6 +1,7 @@
-import json
-import numpy as np
 import copy
+import json
+
+import numpy as np
 
 
 def save_dict_to_json(dct: dict, file_: str):
@@ -43,5 +44,5 @@ def load_dict_from_json(file_: str, key_type: type = int):
         _dct = json.load(f)
     dct = {}
     for key, val in _dct.items():
-        dct[int(key)] = val
+        dct[key_type(key)] = val
     return dct

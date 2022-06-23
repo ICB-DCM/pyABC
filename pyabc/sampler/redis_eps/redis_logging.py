@@ -1,23 +1,25 @@
-import os
 import logging
+import os
+
 import pandas as pd
 
-logger = logging.getLogger("Redis-Sampler")
+logger = logging.getLogger("ABC.Sampler")
 
 
 class RedisSamplerLogger:
-    """A logger for the redis sampler with enhanced interest-variables output.
-    """
+    """A logger for the redis sampler with enhanced interest-variables output."""
 
     def __init__(self, log_file: str = None):
         self.log_file = log_file
         if log_file:
             if os.path.exists(log_file) and os.stat(log_file).st_size > 0:
                 raise ValueError(
-                    f"Sampler log file {log_file} exists and is not empty.")
+                    f"Sampler log file {log_file} exists and is not empty."
+                )
             if not log_file.endswith('.csv'):
                 raise ValueError(
-                    f"Sampler log  file {log_file} must be a .csv file")
+                    f"Sampler log  file {log_file} must be a .csv file"
+                )
 
         # data is a list that can be translated to pandas
         self.data = []
@@ -38,12 +40,16 @@ class RedisSamplerLogger:
         # apply defaults
 
         # append a row
-        self.data.append({
-            't': t, 'n_evaluated': n_evaluated,
-            'n_accepted': self.n_accepted,
-            'n_lookahead': n_lookahead,
-            'n_lookahead_accepted': self.n_lookahead_accepted,
-            'n_preliminary': self.n_preliminary})
+        self.data.append(
+            {
+                't': t,
+                'n_evaluated': n_evaluated,
+                'n_accepted': self.n_accepted,
+                'n_lookahead': n_lookahead,
+                'n_lookahead_accepted': self.n_lookahead_accepted,
+                'n_preliminary': self.n_preliminary,
+            }
+        )
 
     def write(self):
         """Write data to output."""

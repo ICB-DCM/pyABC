@@ -1,26 +1,38 @@
-import pytest
+import datetime
 import os
+import pickle
+import tempfile
+
 import numpy as np
 import pandas as pd
-import datetime
-import tempfile
-import pickle
-from rpy2.robjects import r
-from rpy2.robjects import pandas2ri
+import pyarrow
+import pytest
+from rpy2.robjects import pandas2ri, r
 from rpy2.robjects.conversion import localconverter
 
 import pyabc
+from pyabc import History
 from pyabc.parameters import Parameter
 from pyabc.population import Particle, Population
-from pyabc import History
+from pyabc.storage.dataframe_bytes_storage import (
+    DataFrameLoadException,
+    df_from_bytes_csv,
+    df_from_bytes_json,
+    df_from_bytes_np_records,
+    df_from_bytes_parquet,
+    df_to_bytes_csv,
+    df_to_bytes_json,
+    df_to_bytes_np_records,
+    df_to_bytes_parquet,
+)
 from pyabc.storage.df_to_file import sumstat_to_json
 
 
 def example_df():
-    return pd.DataFrame({"col_a": [1, 2],
-                         "col_b": [1.1, 2.2],
-                         "col_c": ["foo", "bar"]},
-                        index=["ind_first", "ind_second"])
+    return pd.DataFrame(
+        {"col_a": [1, 2], "col_b": [1.1, 2.2], "col_c": ["foo", "bar"]},
+        index=["ind_first", "ind_second"],
+    )
 
 
 def path():
@@ -38,8 +50,9 @@ def history(request):
         raise Exception(f"Bad database type for testing: {request.param}")
     model_names = ["fake_name_{}".format(k) for k in range(50)]
     h = History("sqlite://" + this_path)
-    h.store_initial_data(0, {}, {}, {}, model_names,
-                         "", "", '{"name": "pop_strategy_str_test"}')
+    h.store_initial_data(
+        0, {}, {}, {}, model_names, "", "", '{"name": "pop_strategy_str_test"}'
+    )
     yield h
     if request.param == "file":
         try:
@@ -61,42 +74,59 @@ def history_uninitialized():
         pass
 
 
-def rand_pop_list(m: int):
+def rand_pop_list(m: int = 0, normalized: bool = True, n_sample: int = None):
     """
     Create a population for model m, of random size >= 3.
 
     Parameters
     ----------
-    m: int
-
-        the model number
+    m: The model index
+    normalized: Whether to normalize the population weight to 1.
+    n_sample: Number of samples.
 
     Returns
     -------
-
+    List[Particle]: A list of particles
     """
+    if n_sample is None:
+        n_sample = np.random.randint(10) + 3
     pop = [
-        Particle(m=m,
-                 parameter=Parameter({"a": np.random.randint(10),
-                                      "b": np.random.randn()}),
-                 weight=np.random.rand() * 42,
-                 sum_stat={"ss_float": 0.1,
-                           "ss_int": 42,
-                           "ss_str": "foo bar string",
-                           "ss_np": np.random.rand(13, 42),
-                           "ss_df": example_df()},
-                 distance=np.random.rand())
-        for _ in range(np.random.randint(10) + 3)]
+        Particle(
+            m=m,
+            parameter=Parameter(
+                {"a": np.random.randint(10), "b": np.random.randn()}
+            ),
+            weight=np.random.rand() * 42,
+            sum_stat={
+                "ss_float": 0.1,
+                "ss_int": 42,
+                "ss_str": "foo bar string",
+                "ss_np": np.random.rand(13, 42),
+                "ss_df": example_df(),
+            },
+            accepted=True,
+            distance=np.random.rand(),
+        )
+        for _ in range(n_sample)
+    ]
+
+    if normalized:
+        total_weight = sum(p.weight for p in pop)
+        for p in pop:
+            p.weight /= total_weight
+
     return pop
 
 
 def test_single_particle_save_load(history: History):
     particle_list = [
-        Particle(m=0,
-                 parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
-                 sum_stat={"ss": .1},
-                 distance=.1),
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=1.0,
+            sum_stat={"ss": 0.1},
+            distance=0.1,
+        ),
     ]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
@@ -116,9 +146,10 @@ def test_save_no_sum_stats(history: History):
         particle = Particle(
             m=0,
             parameter=Parameter({"th0": np.random.random()}),
-            weight=.2,
+            weight=1.0 / 6,
             sum_stat={"ss0": np.random.random(), "ss1": np.random.random()},
-            distance=np.random.random())
+            distance=np.random.random(),
+        )
         particle_list.append(particle)
 
     population = Population(particle_list)
@@ -129,10 +160,13 @@ def test_save_no_sum_stats(history: History):
     history.stores_sum_stats = False
 
     # test some basic routines
-    history.append_population(t=0, current_epsilon=42.97,
-                              population=population,
-                              nr_simulations=10,
-                              model_names=[""])
+    history.append_population(
+        t=0,
+        current_epsilon=42.97,
+        population=population,
+        nr_simulations=10,
+        model_names=[""],
+    )
 
     # just call
     history.get_distribution(0, 0)
@@ -140,11 +174,14 @@ def test_save_no_sum_stats(history: History):
     # test whether weights and distances returned correctly
     weighted_distances_h = history.get_weighted_distances()
     weighted_distances = population.get_weighted_distances()
-    assert (weighted_distances_h[['distance', 'w']]
-            == weighted_distances[['distance', 'w']]).all().all()
+
+    assert np.allclose(
+        weighted_distances_h[['distance', 'w']],
+        weighted_distances[['distance', 'w']],
+    )
 
     weights, sum_stats = history.get_weighted_sum_stats(t=0)
-    # all particles should be contained nontheless
+    # all particles should be contained nonetheless
     assert len(weights) == len(particle_list)
     for sum_stat in sum_stats:
         # should be empty
@@ -155,24 +192,27 @@ def test_save_no_sum_stats(history: History):
 
 def test_get_population(history: History):
     population = Population(rand_pop_list(0))
-    history.append_population(t=0, current_epsilon=7.0,
-                              population=population,
-                              nr_simulations=200,
-                              model_names=["m0"])
+    history.append_population(
+        t=0,
+        current_epsilon=7.0,
+        population=population,
+        nr_simulations=200,
+        model_names=["m0"],
+    )
     population_h = history.get_population(t=0)
 
     # length
     assert len(population) == len(population_h)
 
     # distances
-    distances = [p.distance for p in population.get_list()]
-    distances_h = [p.distance for p in population_h.get_list()]
+    distances = [p.distance for p in population.particles]
+    distances_h = [p.distance for p in population_h.particles]
     for d0, d1 in zip(distances, distances_h):
         assert np.isclose(d0, d1)
 
     # weights
-    weights = [p.weight for p in population.get_list()]
-    weights_h = [p.weight for p in population_h.get_list()]
+    weights = [p.weight for p in population.particles]
+    weights_h = [p.weight for p in population_h.particles]
     for w0, w1 in zip(weights, weights_h):
         assert np.isclose(w0, w1)
 
@@ -182,12 +222,15 @@ def test_single_particle_save_load_np_int64(history: History):
     # This is an important test!!!
     m_list = [0, np.int64(0)]
     t_list = [0, np.int64(0)]
-    particle_list = [Particle(
-        m=0,
-        parameter=Parameter({"a": 23, "b": 12}),
-        weight=.2,
-        sum_stat={"ss": .1},
-        distance=.1)]
+    particle_list = [
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=1.0,
+            sum_stat={"ss": 0.1},
+            distance=0.1,
+        )
+    ]
     history.append_population(0, 42, Population(particle_list), 2, [""])
 
     for m in m_list:
@@ -202,30 +245,43 @@ def test_sum_stats_save_load(history: History):
     arr = np.random.rand(10)
     arr2 = np.random.rand(10, 2)
     particle_list = [
-        Particle(m=0,
-                 parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
-                 sum_stat={"ss1": .1, "ss2": arr2,
-                           "ss3": example_df(),
-                           "rdf0": r["iris"]},
-                 distance=.1),
-        Particle(m=0,
-                 parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
-                 sum_stat={"ss12": .11, "ss22": arr, "ss33": example_df(),
-                           "rdf": r["mtcars"]},
-                 distance=.1)]
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=0.2,
+            sum_stat={
+                "ss1": 0.1,
+                "ss2": arr2,
+                "ss3": example_df(),
+                "rdf0": r["iris"],
+            },
+            distance=0.1,
+        ),
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=0.8,
+            sum_stat={
+                "ss12": 0.11,
+                "ss22": arr,
+                "ss33": example_df(),
+                "rdf": r["mtcars"],
+            },
+            distance=0.1,
+        ),
+    ]
 
-    history.append_population(0, 42,
-                              Population(particle_list), 2, ["m1", "m2"])
+    history.append_population(
+        0, 42, Population(particle_list), 2, ["m1", "m2"]
+    )
     weights, sum_stats = history.get_weighted_sum_stats_for_model(0, 0)
-    assert (weights == 0.5).all()
-    assert sum_stats[0]["ss1"] == .1
+    assert (weights == np.array([0.2, 0.8])).all()
+    assert sum_stats[0]["ss1"] == 0.1
     assert (sum_stats[0]["ss2"] == arr2).all()
     assert (sum_stats[0]["ss3"] == example_df()).all().all()
     with localconverter(pandas2ri.converter):
         assert (sum_stats[0]["rdf0"] == r["iris"]).all().all()
-    assert sum_stats[1]["ss12"] == .11
+    assert sum_stats[1]["ss12"] == 0.11
     assert (sum_stats[1]["ss22"] == arr).all()
     assert (sum_stats[1]["ss33"] == example_df()).all().all()
     with localconverter(pandas2ri.converter):
@@ -234,11 +290,14 @@ def test_sum_stats_save_load(history: History):
 
 def test_total_nr_samples(history: History):
     particle_list = [
-        Particle(m=0,
-                 parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
-                 sum_stat={"ss": .1},
-                 distance=.1)]
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=1.0,
+            sum_stat={"ss": 0.1},
+            distance=0.1,
+        )
+    ]
     population = Population(particle_list)
     history.append_population(0, 42, population, 4234, ["m1"])
     history.append_population(0, 42, population, 3, ["m1"])
@@ -248,11 +307,14 @@ def test_total_nr_samples(history: History):
 
 def test_t_count(history: History):
     particle_list = [
-        Particle(m=0,
-                 parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
-                 sum_stat={"ss": .1},
-                 distance=.1)]
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=1.0,
+            sum_stat={"ss": 0.1},
+            distance=0.1,
+        )
+    ]
     for t in range(1, 10):
         history.append_population(t, 42, Population(particle_list), 2, ["m1"])
         assert t == history.max_t
@@ -273,11 +335,15 @@ def test_dataframe_storage_readout():
         for t in range(4):
             particle_list = []
             for m in range(5):
-                pops[(h, m, t)] = rand_pop_list(m)
+                pops[(h, m, t)] = rand_pop_list(m, normalized=False)
                 for particle in pops[(h, m, t)]:
                     particle_list.append(particle)
-            h.append_population(t, .1, Population(particle_list), 2,
-                                model_names)
+            total_weight = sum(p.weight for p in particle_list)
+            for p in particle_list:
+                p.weight /= total_weight
+            h.append_population(
+                t, 0.1, Population(particle_list), 2, model_names
+            )
 
     for h in histories:
         for t in range(4):
@@ -288,8 +354,7 @@ def test_dataframe_storage_readout():
                 # use range(len and not zip on dataframe to not stop early
                 # in case of population not completely stored
                 assert np.isclose(w.sum(), 1)
-                for par_ix, expected_par in \
-                        enumerate(expected_particles_list):
+                for par_ix, expected_par in enumerate(expected_particles_list):
                     actual_par = pars_df.iloc[par_ix]
                     assert expected_par.a == actual_par.a
                     assert expected_par.b == actual_par.b
@@ -302,19 +367,23 @@ def test_dataframe_storage_readout():
 
 def test_population_retrieval(history: History):
     history.append_population(
-        1, .23, Population(rand_pop_list(0)), 234, ["m1"])
+        1, 0.23, Population(rand_pop_list(0)), 234, ["m1"]
+    )
     history.append_population(
-        2, .123, Population(rand_pop_list(0)), 345, ["m1"])
+        2, 0.123, Population(rand_pop_list(0)), 345, ["m1"]
+    )
     history.append_population(
-        2, .1235, Population(rand_pop_list(5)), 20345, ["m1"] * 6)
+        2, 0.1235, Population(rand_pop_list(5)), 20345, ["m1"] * 6
+    )
     history.append_population(
-        3, .12330, Population(rand_pop_list(30)), 30345, ["m1"] * 31)
+        3, 0.12330, Population(rand_pop_list(30)), 30345, ["m1"] * 31
+    )
     df = history.get_all_populations()
 
-    assert df[df.t == 1].epsilon.iloc[0] == .23
-    assert df[df.t == 2].epsilon.iloc[0] == .123
-    assert df[df.t == 2].epsilon.iloc[1] == .1235
-    assert df[df.t == 3].epsilon.iloc[0] == .12330
+    assert df[df.t == 1].epsilon.iloc[0] == 0.23
+    assert df[df.t == 2].epsilon.iloc[0] == 0.123
+    assert df[df.t == 2].epsilon.iloc[1] == 0.1235
+    assert df[df.t == 3].epsilon.iloc[0] == 0.12330
 
     assert df[df.t == 1].samples.iloc[0] == 234
     assert df[df.t == 2].samples.iloc[0] == 345
@@ -332,16 +401,18 @@ def test_population_strategy_storage(history):
 
 
 def test_model_probabilities(history):
-    history.append_population(1, .23, Population(rand_pop_list(3)), 234,
-                              ["m0", "m1", "m2", "m3"])
+    history.append_population(
+        1, 0.23, Population(rand_pop_list(3)), 234, ["m0", "m1", "m2", "m3"]
+    )
     probs = history.get_model_probabilities(1)
     assert probs.p[3] == 1
     assert probs.index.tolist() == [3]
 
 
 def test_model_probabilities_all(history):
-    history.append_population(1, .23, Population(rand_pop_list(3)), 234,
-                              ["m0", "m1", "m2", "m3"])
+    history.append_population(
+        1, 0.23, Population(rand_pop_list(3)), 234, ["m0", "m1", "m2", "m3"]
+    )
     probs = history.get_model_probabilities()
     assert (probs[3].values == np.array([1])).all()
 
@@ -353,10 +424,12 @@ def gt_model(request):
 
 def test_observed_sum_stats(history_uninitialized: History, gt_model):
     h = history_uninitialized
-    obs_sum_stats = {"s1": 1,
-                     "s2": 1.1,
-                     "s3": np.array(.1),
-                     "s4": np.random.rand(10)}
+    obs_sum_stats = {
+        "s1": 1,
+        "s2": 1.1,
+        "s3": np.array(0.1),
+        "s4": np.random.rand(10),
+    }
     h.store_initial_data(gt_model, {}, obs_sum_stats, {}, [""], "", "", "")
 
     h2 = History(h.db)
@@ -397,11 +470,14 @@ def test_model_name_load_single_with_pop(history_uninitialized: History):
     model_names = ["m1"]
     h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
     particle_list = [
-        Particle(m=0,
-                 parameter=Parameter({"a": 23, "b": 12}),
-                 weight=.2,
-                 sum_stat={"ss": .1},
-                 distance=.1)]
+        Particle(
+            m=0,
+            parameter=Parameter({"a": 23, "b": 12}),
+            weight=1.0,
+            sum_stat={"ss": 0.1},
+            distance=0.1,
+        )
+    ]
     h.append_population(0, 42, Population(particle_list), 2, model_names)
 
     h2 = History(h.db)
@@ -413,9 +489,13 @@ def test_population_to_df(history: History):
     # TODO this test is not very good yet
     for t in range(3):
         for m in range(4):
-            history.append_population(t, .23, Population(rand_pop_list(m)),
-                                      234,
-                                      ["m0", "m1", "m2", "m3"])
+            history.append_population(
+                t,
+                0.23,
+                Population(rand_pop_list(m)),
+                234,
+                ["m0", "m1", "m2", "m3"],
+            )
     df = history.get_population_extended(m=0)
     df_js = sumstat_to_json(df)
     assert len(df) == len(df_js)
@@ -458,3 +538,65 @@ def test_create_db():
     os.remove(file_)
     with pytest.raises(ValueError):
         pyabc.History("sqlite:///" + file_, create=False)
+
+
+def test_dataframe_formats():
+    """Test correct behavior of the different dataframe storage methods."""
+    df = pd.DataFrame(
+        {'a': [6.57, 7], 'b': [True, False], 'c': ['hola', 'hej']},
+    )
+
+    df_parquet = df_to_bytes_parquet(df)
+    df_csv = df_to_bytes_csv(df)
+    df_json = df_to_bytes_json(df)
+
+    # np does not allow object arrays
+    df_float = pd.DataFrame({'a': [4.32, 5], 'b': [4, 1.24]})
+    df_np_records = df_to_bytes_np_records(df_float)
+
+    assert (df == df_from_bytes_parquet(df_parquet)).all(axis=None)
+    assert (df == df_from_bytes_csv(df_csv)).all(axis=None)
+    assert (df == df_from_bytes_json(df_json)).all(axis=None)
+    assert (df_float == df_from_bytes_np_records(df_np_records)).all(axis=None)
+
+    with pytest.raises(DataFrameLoadException):
+        df_from_bytes_csv(df_parquet)
+
+    # will interpret as mspack, but late pandas version dropped that method
+    with pytest.raises(pyarrow.lib.ArrowInvalid):
+        df_from_bytes_parquet(df_csv)
+
+
+def test_export():
+    """Test database export.
+
+    Just calls export and does some very basic checks.
+    """
+    # simple problem
+    def model(p):
+        return {"y": p["p"] + 0.1 * np.random.normal()}
+
+    prior = pyabc.Distribution(p=pyabc.RV("uniform", -1, 2))
+    distance = pyabc.PNormDistance()
+
+    try:
+        # run
+        db_file = tempfile.mkstemp(suffix=".db")[1]
+        abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
+        abc.new("sqlite:///" + db_file, model({"p": 0}))
+        abc.run(max_nr_populations=3)
+
+        # export history
+        for fmt in ["csv", "json", "html", "stata"]:
+            out_file = tempfile.mkstemp()[1]
+            try:
+                pyabc.storage.export(db_file, out=out_file, out_format=fmt)
+                assert os.path.exists(out_file)
+                assert os.stat(out_file).st_size > 0
+            finally:
+                if os.path.exists(out_file):
+                    os.remove(out_file)
+
+    finally:
+        if os.path.exists(db_file):
+            os.remove(db_file)

@@ -1,7 +1,3 @@
-# TODO in python 3.9, the dask.distributed.Client() hangs if this is not
-#  imported first, until https://github.com/dask/distributed/issues/4168
-#  is fixed
-import multiprocessing.popen_spawn_posix  # noqa: F401
 import numpy as np
 from dask.distributed import Client
 
@@ -41,8 +37,13 @@ class DaskDistributedSampler(EPSMixin, Sampler):
         batching is done.
     """
 
-    def __init__(self, dask_client=None, client_max_jobs=np.inf,
-                 default_pickle=False, batch_size=1):
+    def __init__(
+        self,
+        dask_client=None,
+        client_max_jobs=np.inf,
+        default_pickle=False,
+        batch_size=1,
+    ):
         super().__init__()
 
         # Assign Client

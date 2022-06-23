@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.stats import ks_2samp
-import pyabc.weighted_statistics as ws
 
+import pyabc.weighted_statistics as ws
 
 points = np.array([1, 5, 2.5])
 weights = np.array([0.5, 0.2, 0.3])
@@ -22,7 +22,7 @@ def test_weighted_quantile():
 
 def test_weighted_median():
     m = ws.weighted_median(points, weights)
-    assert 1 < m and m < 2.5
+    assert 1 < m < 2.5
 
 
 def test_weighted_mean():
@@ -30,13 +30,44 @@ def test_weighted_mean():
     assert m == 2.25
 
 
+def test_weighted_var():
+    var = ws.weighted_var(points, weights)
+
+    m_ = np.sum(points * weights)
+    var_ = np.sum(weights * (points - m_) ** 2)
+
+    assert var == var_
+
+
 def test_weighted_std():
     std = ws.weighted_std(points, weights)
 
     m_ = np.sum(points * weights)
-    std_ = np.sqrt(np.sum(weights * (points - m_)**2))
+    std_ = np.sqrt(np.sum(weights * (points - m_) ** 2))
 
     assert std == std_
+
+
+def test_weighted_mse():
+    refval = np.array(3)
+    mse = ws.weighted_mse(points, weights, refval)
+
+    m_ = np.sum(points * weights)
+    var_ = np.sum(weights * (points - m_) ** 2)
+    bias_ = m_ - refval
+
+    assert mse == var_ + bias_**2
+
+
+def test_weighted_rmse():
+    refval = np.array(3)
+    rmse = ws.weighted_rmse(points, weights, refval)
+
+    m_ = np.sum(points * weights)
+    var_ = np.sum(weights * (points - m_) ** 2)
+    bias_ = m_ - refval
+
+    assert rmse == np.sqrt(var_ + bias_**2)
 
 
 def test_resample():

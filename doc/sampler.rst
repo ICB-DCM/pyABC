@@ -395,6 +395,26 @@ to be taken into account. Also, memory requirements should be checked in
 advance.
 
 
+JupyterHub
+~~~~~~~~~~
+
+As an intermediate step between local desktop systems and a full HPC cluster
+system, Jupyterhub (https://jupyterhub.readthedocs.io/en/stable/) can speed up
+computations with pyABC without requiring detailed knowledge about the HPC
+system.
+From the user’s perspective, JupyterHub provides a web based interface to
+computational resources through standard Jupyter notebooks.
+With minimal adaptions to the local workflow, the resources of one full
+computing node of a cluster can be utilized for pyABC by using the multicore
+samplers.
+Depending on the hardware, this could be as much as 128 CPU cores.
+No interaction with the command line and the batch system is required.
+Jupyterhub is installed on many HPC centers, e.g. at the Centre for Information
+Services and High Performance Computing at TU Dresden
+(https://doc.zih.tu-dresden.de/hpc-wiki/bin/view/Compendium/JupyterHub)
+or at the Juelich Supercomputing Centre (https://jupyter-jsc.fz-juelich.de).
+
+
 Pickling
 --------
 

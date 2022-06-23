@@ -1,8 +1,10 @@
 """Distance base classes."""
 
-from abc import ABC, abstractmethod
-from typing import List, Callable
 import json
+from abc import ABC, abstractmethod
+from typing import Callable, Union
+
+from ..population import Sample
 
 
 class Distance(ABC):
@@ -14,67 +16,63 @@ class Distance(ABC):
     """
 
     def initialize(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]],
-            x_0: dict = None):
-        """
-        This method is called by the ABCSMC framework before the first
-        use of the distance (at the beginning of ABCSMC.run()),
-        and can be used to calibrate it to the statistics of the samples.
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        x_0: dict,
+        total_sims: int,
+    ):
+        """Initialize before the first generation.
 
+        Called at the beginning by the inference routine, can be used for
+        calibration to the problem.
         The default is to do nothing.
 
         Parameters
         ----------
-
-        t: int
+        t:
             Time point for which to initialize the distance.
-        get_all_sum_stats: Callable[[], List[dict]]
-            Returns on command the initial summary statistics.
-        x_0: dict, optional
+        get_sample:
+            Returns on command the initial sample.
+        x_0:
             The observed summary statistics.
+        total_sims:
+            The total number of simulations so far.
         """
 
-    def configure_sampler(
-            self,
-            sampler):
-        """
-        This is called by the ABCSMC class and gives the distance
-        the opportunity to configure the sampler.
-        For example, the distance might request the sampler to
-        also return rejected particles in order to adapt the
-        distance to the statistics of the sample.
-        The method is called by the ABCSMC framework before the first
-        used of the distance (at the beginning of ABCSMC.run()), after
-        initialize().
+    def configure_sampler(self, sampler):
+        """Configure the sampler.
 
+        This method is called by the inference routine at the beginning.
+        A possible configuration would be to request also the storing of
+        rejected particles.
         The default is to do nothing.
 
         Parameters
         ----------
-
         sampler: Sampler
-            The sampler used in ABCSMC.
+            The used sampler.
         """
 
-    # pylint: disable=R0201
     def update(
-            self,
-            t: int,
-            get_all_sum_stats: Callable[[], List[dict]]) -> bool:
-        """
-        Update the distance for the upcoming generation t.
+        self,
+        t: int,
+        get_sample: Callable[[], Sample],
+        total_sims: int,
+    ) -> bool:
+        """Update for the upcoming generation t.
 
+        Similar to `initialize`, however called for every subsequent iteration.
         The default is to do nothing.
 
         Parameters
         ----------
-        t: int
+        t:
             Time point for which to update the distance.
-        get_all_sum_stats: Callable[[], List[dict]]
-            Returns on demand a list of all summary statistics from the
-            finished generation that should be used to update the distance.
+        get_sample:
+            Returns on demand the last generation's complete sample.
+        total_sims:
+            The total number of simulations so far.
 
         Returns
         -------
@@ -88,11 +86,12 @@ class Distance(ABC):
 
     @abstractmethod
     def __call__(
-            self,
-            x: dict,
-            x_0: dict,
-            t: int = None,
-            par: dict = None) -> float:
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         """
         Evaluate at time point t the distance of the summary statistics of
         the data simulated for the tentatively sampled particle to those of
@@ -103,7 +102,6 @@ class Distance(ABC):
 
         Parameters
         ----------
-
         x: dict
             Summary statistics of the data simulated for the tentatively
             sampled parameter.
@@ -119,7 +117,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         distance: float
             Quantifies the distance between the summary statistics of the
             data simulated for the tentatively sampled particle and of the
@@ -146,7 +143,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         config: dict
             Dictionary describing the distance.
         """
@@ -158,7 +154,6 @@ class Distance(ABC):
 
         Returns
         -------
-
         json_str: str:
             JSON encoded string describing the distance.
             The default implementation is to try to convert the dictionary
@@ -184,13 +179,16 @@ class NoDistance(Distance):
     def __init__(self):
         super().__init__()
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         raise AssertionError(
-            f"Distance {self.__class__.__name__} should not be called.")
+            f"Distance {self.__class__.__name__} should not be called."
+        )
 
 
 class AcceptAllDistance(Distance):
@@ -201,15 +199,17 @@ class AcceptAllDistance(Distance):
     Can be used for testing.
     """
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         return -1
 
 
-class SimpleFunctionDistance(Distance):
+class FunctionDistance(Distance):
     """
     This is a wrapper around a simple function which calculates the distance.
     If a function/callable is passed to the ABCSMC class, which is not
@@ -228,11 +228,13 @@ class SimpleFunctionDistance(Distance):
         super().__init__()
         self.fun = fun
 
-    def __call__(self,
-                 x: dict,
-                 x_0: dict,
-                 t: int = None,
-                 par: dict = None) -> float:
+    def __call__(
+        self,
+        x: dict,
+        x_0: dict,
+        t: int = None,
+        par: dict = None,
+    ) -> float:
         return self.fun(x, x_0)
 
     def get_config(self):
@@ -247,24 +249,22 @@ class SimpleFunctionDistance(Distance):
                 pass
         return conf
 
+    @staticmethod
+    def to_distance(maybe_distance: Union[Callable, Distance]) -> Distance:
+        """
+        Parameters
+        ----------
+        maybe_distance: either a Callable as in FunctionDistance, or a
+        pyabc.Distance object.
 
-def to_distance(maybe_distance):
-    """
-    Parameters
-    ----------
-    maybe_distance: either a Callable as in SimpleFunctionDistance, or a
-    pyabc.Distance object.
+        Returns
+        -------
+        A Distance instance.
+        """
+        if maybe_distance is None:
+            return NoDistance()
 
-    Returns
-    -------
+        if isinstance(maybe_distance, Distance):
+            return maybe_distance
 
-    A Distance instance.
-    """
-
-    if maybe_distance is None:
-        return NoDistance()
-
-    if isinstance(maybe_distance, Distance):
-        return maybe_distance
-
-    return SimpleFunctionDistance(maybe_distance)
+        return FunctionDistance(maybe_distance)

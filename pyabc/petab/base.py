@@ -1,28 +1,35 @@
-from collections.abc import Sequence, Mapping
-from typing import Callable, Tuple, Union
-from numbers import Number
+"""Simulator-independent PEtab handling."""
+
 import abc
 import logging
+from collections.abc import Mapping, Sequence
+from numbers import Number
+from typing import Callable, Tuple, Union
+
 import numpy as np
 import pandas as pd
 
 import pyabc
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("ABC.PEtab")
 
 try:
     import petab
     import petab.C as C
 except ImportError:
     petab = C = None
-    logger.error("Install petab (see https://github.com/icb-dcm/petab) to use "
-                 "the petab functionality.")
+    logger.error(
+        "Install PEtab (see https://github.com/icb-dcm/petab) to use "
+        "the petab functionality, e.g. via `pip install pyabc[petab]`"
+    )
 
 
 # priors that are evaluated "on-scale"
-SCALED_PRIORS = [C.PARAMETER_SCALE_UNIFORM,
-                 C.PARAMETER_SCALE_NORMAL,
-                 C.PARAMETER_SCALE_LAPLACE]
+SCALED_PRIORS = [
+    C.PARAMETER_SCALE_UNIFORM,
+    C.PARAMETER_SCALE_NORMAL,
+    C.PARAMETER_SCALE_LAPLACE,
+]
 
 
 class PetabImporter(abc.ABC):
@@ -39,11 +46,13 @@ class PetabImporter(abc.ABC):
     """
 
     def __init__(
-            self,
-            petab_problem: petab.Problem):
+        self,
+        petab_problem: petab.Problem,
+    ):
         self.petab_problem = petab_problem
         self.prior_scales, self.scaled_scales = get_scales(
-            self.petab_problem.parameter_df)
+            self.petab_problem.parameter_df
+        )
         self._sanity_check()
 
     def create_prior(self) -> pyabc.Distribution:
@@ -97,7 +106,9 @@ class PetabImporter(abc.ABC):
         """
 
     def get_nominal_parameters(
-            self, target_scale: str = 'prior') -> pyabc.Parameter:
+        self,
+        target_scale: str = 'prior',
+    ) -> pyabc.Parameter:
         """Get nominal parameters.
 
         Parameters
@@ -122,7 +133,10 @@ class PetabImporter(abc.ABC):
         )
 
     def get_bounds(
-            self, target_scale: str = 'prior', use_prior: bool = True) -> dict:
+        self,
+        target_scale: str = 'prior',
+        use_prior: bool = True,
+    ) -> dict:
         """Get bounds.
 
         Parameters
@@ -147,7 +161,8 @@ class PetabImporter(abc.ABC):
     def get_parameter_names(self, target_scale: str = 'prior'):
         """Get meaningful parameter names, corrected for target scale."""
         parameter_df = petab.normalize_parameter_df(
-            self.petab_problem.parameter_df)
+            self.petab_problem.parameter_df
+        )
 
         # scale
         if target_scale == C.LIN:
@@ -179,13 +194,16 @@ class PetabImporter(abc.ABC):
 
     def _sanity_check(self):
         """Some checks to identify potential problems."""
-        if any(self.scaled_scales[key] != C.LIN
-               and self.prior_scales[key] == C.LIN
-               for key in self.prior_scales):
+        if any(
+            self.scaled_scales[key] != C.LIN
+            and self.prior_scales[key] == C.LIN
+            for key in self.prior_scales
+        ):
             logger.warning(
                 "Found parameters with prior scale lin, parameter scale not "
                 "lin. Note that pyABC currently ignores the parameter scale "
-                "in this case and just performs sampling on the prior scale.")
+                "in this case and just performs sampling on the prior scale."
+            )
 
 
 def create_prior(parameter_df: pd.DataFrame) -> pyabc.Distribution:
@@ -223,18 +241,15 @@ def create_prior(parameter_df: pd.DataFrame) -> pyabc.Distribution:
         prior_pars = tuple(float(val) for val in pars_str.split(';'))
 
         # create random variable from table entry
-        if prior_type in [C.PARAMETER_SCALE_UNIFORM,
-                          C.UNIFORM]:
+        if prior_type in [C.PARAMETER_SCALE_UNIFORM, C.UNIFORM]:
             lb, ub = prior_pars
             # scipy pars are location, width
-            rv = pyabc.RV('uniform', loc=lb, scale=ub-lb)
-        elif prior_type in [C.PARAMETER_SCALE_NORMAL,
-                            C.NORMAL]:
+            rv = pyabc.RV('uniform', loc=lb, scale=ub - lb)
+        elif prior_type in [C.PARAMETER_SCALE_NORMAL, C.NORMAL]:
             mean, std = prior_pars
             # scipy pars are mean, std
             rv = pyabc.RV('norm', loc=mean, scale=std)
-        elif prior_type in [C.PARAMETER_SCALE_LAPLACE,
-                            C.LAPLACE]:
+        elif prior_type in [C.PARAMETER_SCALE_LAPLACE, C.LAPLACE]:
             mean, b = prior_pars
             # scipy pars are loc=mean, scale=b
             rv = pyabc.RV('laplace', loc=mean, scale=b)
@@ -249,7 +264,7 @@ def create_prior(parameter_df: pd.DataFrame) -> pyabc.Distribution:
             # petab pars are mean, b of the underlying laplace distribution
             # scipy pars are c, loc, scale where c = 1 / b, scale = exp(mean)
             #  as a simple calculation shows
-            rv = pyabc.RV('loglaplace', c=1/b, scale=np.exp(mean))
+            rv = pyabc.RV('loglaplace', c=1 / b, scale=np.exp(mean))
         else:
             raise ValueError(f"Cannot handle prior type {prior_type}.")
 
@@ -286,7 +301,8 @@ def get_scales(parameter_df: pd.DataFrame) -> Tuple[dict, dict]:
         prior_scales[row[C.PARAMETER_ID]] = (
             row[C.PARAMETER_SCALE]
             if row[C.OBJECTIVE_PRIOR_TYPE] in SCALED_PRIORS
-            else C.LIN)
+            else C.LIN
+        )
         scaled_scales[row[C.PARAMETER_ID]] = row[C.PARAMETER_SCALE]
     return prior_scales, scaled_scales
 
@@ -312,10 +328,11 @@ def rescale(val: Number, origin_scale: str, target_scale: str) -> Number:
 
 
 def get_nominal_parameters(
-        parameter_df: pd.DataFrame,
-        target_scale: str,
-        prior_scales: dict,
-        scaled_scales: dict) -> pyabc.Parameter:
+    parameter_df: pd.DataFrame,
+    target_scale: str,
+    prior_scales: dict,
+    scaled_scales: dict,
+) -> pyabc.Parameter:
     """Get nominal parameters.
 
     Parameters
@@ -333,8 +350,11 @@ def get_nominal_parameters(
     """
     # unscaled parameters
     par = pyabc.Parameter(
-        {key: parameter_df.loc[key, C.NOMINAL_VALUE]
-         for key in prior_scales.keys()})
+        {
+            key: parameter_df.loc[key, C.NOMINAL_VALUE]
+            for key in prior_scales.keys()
+        }
+    )
 
     # scale
     if target_scale == C.LIN:
@@ -351,11 +371,12 @@ def get_nominal_parameters(
 
 
 def get_bounds(
-        parameter_df: pd.DataFrame,
-        target_scale: str,
-        prior_scales: dict,
-        scaled_scales: dict,
-        use_prior: bool) -> dict:
+    parameter_df: pd.DataFrame,
+    target_scale: str,
+    prior_scales: dict,
+    scaled_scales: dict,
+    use_prior: bool,
+) -> dict:
     """Get bounds.
 
     Parameters
@@ -407,16 +428,19 @@ def get_bounds(
 
         # convert to target scale
         lower = rescale(
-            lower, origin_scale=origin_scale, target_scale=target_scales[key])
+            lower, origin_scale=origin_scale, target_scale=target_scales[key]
+        )
         upper = rescale(
-            upper, origin_scale=origin_scale, target_scale=target_scales[key])
+            upper, origin_scale=origin_scale, target_scale=target_scales[key]
+        )
         bounds[key] = (lower, upper)
     return bounds
 
 
 def map_rescale(
-        par: pyabc.Parameter,
-        origin_scales: Union[dict, str], target_scales: Union[dict, str],
+    par: pyabc.Parameter,
+    origin_scales: Union[dict, str],
+    target_scales: Union[dict, str],
 ) -> pyabc.Parameter:
     """Rescale parameter dictionary.
 

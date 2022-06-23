@@ -1,8 +1,9 @@
-import numpy as np
-import pandas as pd
 import json
 from abc import ABC, abstractmethod
 from typing import Callable, List
+
+import numpy as np
+import pandas as pd
 
 
 class Epsilon(ABC):
@@ -13,18 +14,14 @@ class Epsilon(ABC):
     each new population.
     """
 
-    def __init__(self):
-        """
-        Constructor.
-        """
-        pass
-
-    def initialize(self,
-                   t: int,
-                   get_weighted_distances: Callable[[], pd.DataFrame],
-                   get_all_records: Callable[[], List[dict]],
-                   max_nr_populations: int,
-                   acceptor_config: dict):
+    def initialize(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        max_nr_populations: int,
+        acceptor_config: dict,
+    ):
         """
         This method is called by the ABCSMC framework before the first usage
         of the epsilon and can be used to calibrate it to the statistics of the
@@ -34,17 +31,16 @@ class Epsilon(ABC):
 
         Parameters
         ----------
-
-        t: int
+        t:
             The time point to initialize the epsilon for.
-        get_weighted_distances: Callable[[], pd.DataFrame]
+        get_weighted_distances:
             Returns on demand the distances for initializing the epsilon.
-        get_all_records: Callable[[], List[dict]]
+        get_all_records:
             Returns on demand a list of information obtained from all
             particles sampled in the previous iteration.
-        max_nr_populations: int
+        max_nr_populations:
             The maximum number of populations.
-        acceptor_config: dict
+        acceptor_config:
             An object provided by the Acceptor class.
         """
         pass
@@ -64,17 +60,18 @@ class Epsilon(ABC):
 
         Parameters
         ----------
-
         sampler: Sampler
             The sampler used in ABCSMC.
         """
 
-    def update(self,
-               t: int,
-               get_weighted_distances: Callable[[], pd.DataFrame],
-               get_all_records: Callable[[], List[dict]],
-               acceptance_rate: float,
-               acceptor_config: dict):
+    def update(
+        self,
+        t: int,
+        get_weighted_distances: Callable[[], pd.DataFrame],
+        get_all_records: Callable[[], List[dict]],
+        acceptance_rate: float,
+        acceptor_config: dict,
+    ):
         """
         Update epsilon value to be used as acceptance criterion for
         generation t.
@@ -83,43 +80,37 @@ class Epsilon(ABC):
 
         Parameters
         ----------
-
-        t: int
+        t:
             The generation index to update / set epsilon for. Counting is
             zero-based. So the first population has t=0.
-        get_weighted_distances: Callable[[], pd.DataFrame]
+        get_weighted_distances:
             The distances that should be used to update epsilon, as returned
             by Population.get_weighted_distances(). These are usually the
             distances of samples accepted in population t-1. The distances may
             differ from those used for acceptance in population t-1, if the
             distance function for population t has been updated.
-        get_all_records: Callable[[], List[dict]]
+        get_all_records:
             Returns on demand a list of information obtained from all
             particles.
-        acceptance_rate: float
+        acceptance_rate:
             The current generation's acceptance rate.
-        acceptor_config: dict
+        acceptor_config:
             An object provided by the Acceptor class.
         """
         pass
 
     @abstractmethod
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         """
         Get epsilon value for generation t.
 
         Parameters
         ----------
-
-        t: int
-            The time point to get the epsilon threshold for.
+        t: The time point to get the epsilon threshold for.
 
         Returns
         -------
-
-        eps: float
-            The epsilon for population t.
+        eps: The epsilon for population t.
         """
 
     def requires_calibration(self) -> bool:
@@ -171,9 +162,5 @@ class NoEpsilon(Epsilon):
     acceptance threshold.
     """
 
-    def __init__(self):
-        super().__init__()
-
-    def __call__(self,
-                 t: int) -> float:
+    def __call__(self, t: int) -> float:
         return np.nan

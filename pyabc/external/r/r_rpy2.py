@@ -1,49 +1,41 @@
-"""
-Interface to external simulators
-================================
+"""Interface to R via rpy2"""
 
-Currently, the R language is supported.
+import logging
+import warnings
 
-.. note::
-
-    The rpy2 package needs to be installed to interface with the R language.
-    Installation of rpy2 is optional if R support is not required.
-    See also :ref:`installation of optional dependencies <install-optional>`.
-
-.. note::
-    Support of R via rpy2 is considered experimental for various reasons
-    (see #116).
-    Should this not work on your system, consider accessing R script-based.
-"""
-
-from ..random_variables import Parameter
 import numpy as np
 import pandas as pd
-import warnings
-import logging
 
-logger = logging.getLogger("External")
+from ...random_variables import Parameter
+
+logger = logging.getLogger("ABC.External")
 
 try:
-    from rpy2.robjects import (ListVector, r, default_converter, conversion,
-                               pandas2ri, numpy2ri)
-except ImportError:  # in Python 3.6 ModuleNotFoundError can be used
-    logger.error(
-        "Install rpy2 to enable simple support for the R language.")
+    from rpy2.robjects import (
+        ListVector,
+        conversion,
+        default_converter,
+        numpy2ri,
+        pandas2ri,
+        r,
+    )
+except ImportError:
+    ListVector = conversion = r = None
+    default_converter = numpy2ri = pandas2ri = None
 
 
-__all__ = ["R"]
-
-
-def dict_to_named_list(dct):
-    if (isinstance(dct, dict)
-            or isinstance(dct, Parameter)
-            or isinstance(dct, pd.core.series.Series)):
+def _dict_to_named_list(dct):
+    if (
+        isinstance(dct, dict)
+        or isinstance(dct, Parameter)
+        or isinstance(dct, pd.core.series.Series)
+    ):
         dct = {key: val for key, val in dct.items()}
         # convert numbers, numpy arrays and pandas dataframes to builtin
         # types before conversion (see rpy2 #548)
         with conversion.localconverter(
-                default_converter + pandas2ri.converter + numpy2ri.converter):
+            default_converter + pandas2ri.converter + numpy2ri.converter
+        ):
             for key, val in dct.items():
                 dct[key] = conversion.py2rpy(val)
         r_list = ListVector(dct)
@@ -61,18 +53,31 @@ def dict_to_named_list(dct):
 
 
 class R:
-    """
-    Interface to R.
+    """Interface to R via rpy2.
+
+    .. note::
+        The rpy2 package needs to be installed to interface with the R
+        language.
+        Installation of rpy2 is optional if R support is not required.
+        See also :ref:`installation of optional dependencies
+        <install-optional>`.
+
+    .. note::
+        Support of R via rpy2 is considered experimental for various reasons
+        (see #116).
+        Should this not work on your system, consider accessing R script-based.
 
     Parameters
     ----------
-    source_file: str
-
+    source_file:
         Path to the file which contains the definitions for
         the model, the summary statistics and the distance function as
         well as the observed data.
     """
+
     def __init__(self, source_file: str):
+        if r is None:
+            raise ImportError("Install rpy2, e.g. via `pip install pyabc[R]`")
         warnings.warn("The support of R via rpy2 is considered experimental.")
         self.source_file = source_file
         self._read_source()
@@ -88,23 +93,22 @@ class R:
         r.source(self.source_file)
 
     def display_source_ipython(self):
-        """
-        Convenience method to print the loaded source file
-        as syntax highlighted HTML within IPython.
-        """
-        from pygments import highlight
-        from pygments.lexers import SLexer
-
-        from pygments.formatters import HtmlFormatter
+        """Display source code as syntax highlighted HTML within IPython."""
         import IPython.display as display
+        from pygments import highlight
+        from pygments.formatters import HtmlFormatter
+        from pygments.lexers import SLexer
 
         with open(self.source_file) as f:
             code = f.read()
 
         formatter = HtmlFormatter()
-        return display.HTML('<style type="text/css">{}</style>{}'.format(
-            formatter.get_style_defs('.highlight'),
-            highlight(code, SLexer(), formatter)))
+        return display.HTML(
+            '<style type="text/css">{}</style>{}'.format(
+                formatter.get_style_defs('.highlight'),
+                highlight(code, SLexer(), formatter),
+            )
+        )
 
     def model(self, function_name: str):
         """
@@ -124,7 +128,7 @@ class R:
         model = r[function_name]
 
         def model_py(par):
-            return model(dict_to_named_list(par))
+            return model(_dict_to_named_list(par))
 
         model_py.__name__ = function_name
         # set reference to this class to ensure the source file is
@@ -151,7 +155,7 @@ class R:
         distance = r[function_name]
 
         def distance_py(*args):
-            args = tuple(dict_to_named_list(d) for d in args)
+            args = tuple(_dict_to_named_list(d) for d in args)
             return float(np.array(distance(*args)))
 
         distance_py.__name__ = function_name
@@ -160,9 +164,9 @@ class R:
         distance_py._R = self
         return distance_py
 
-    def summary_statistics(self,
-                           function_name: str,
-                           is_py_model: bool = False):
+    def summary_statistics(
+        self, function_name: str, is_py_model: bool = False
+    ):
         """
         The R-summary statistics.
 
@@ -188,9 +192,10 @@ class R:
         summary_statistics._R = self
 
         if is_py_model:
+
             def summary_statistics_py(model_output):
-                return summary_statistics(
-                    dict_to_named_list(model_output))
+                return summary_statistics(_dict_to_named_list(model_output))
+
             return summary_statistics_py
 
         return summary_statistics

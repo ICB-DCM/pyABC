@@ -6,20 +6,22 @@ Functions performing statistical operations on weighted points
 generated via importance sampling.
 """
 
-import numpy as np
 from functools import wraps
+
+import numpy as np
 
 
 def weight_checked(function):
     """
     Function decorator to check normalization of weights.
     """
+
     @wraps(function)
     def function_with_checking(points, weights=None, **kwargs):
         if weights is not None and not np.isclose(weights.sum(), 1):
-            raise AssertionError(
-                f"Weights not normalized: {weights.sum()}.")
+            raise AssertionError(f"Weights not normalized: {weights.sum()}.")
         return function(points, weights, **kwargs)
+
     return function_with_checking
 
 
@@ -39,7 +41,7 @@ def weighted_quantile(points, weights=None, alpha=0.5):
         weights = weights[sorted_indices]
 
     cs = np.cumsum(weights)
-    quantile = np.interp(alpha, cs - 0.5*weights, points)
+    quantile = np.interp(alpha, cs - 0.5 * weights, points)
     return quantile
 
 
@@ -52,22 +54,48 @@ def weighted_median(points, weights):
 
 
 @weight_checked
-def weighted_mean(points, weights):
+def weighted_mean(points: np.ndarray, weights: np.ndarray):
+    """Compute the weighted mean.
+
+    Parameters
+    ----------
+    points: Parameter samples, shape (n_sample,) or (n_sample, n_par).
+    weights: Weights, shape (n_sample,) or (n_sample, 1).
+
+    Returns
+    -------
+    mean: The mean, shape () or (n_par,).
     """
-    Compute the weighted mean.
-    """
-    return (points * weights).sum()
+    return (points * weights).sum(axis=0)
 
 
-@weight_checked
-def weighted_std(points, weights):
-    """
-    Compute the weighted standard deviation from the
-    weighted mean.
+def weighted_var(points, weights):
+    """Compute the weighted variance.
+
+    See `weighted_mean` for docs.
     """
     mean = weighted_mean(points, weights)
-    std = np.sqrt(((points - mean)**2 * weights).sum())
-    return std
+    return ((points - mean) ** 2 * weights).sum(axis=0)
+
+
+def weighted_std(points, weights):
+    """Compute the weighted standard deviation.
+
+    See `weighted_mean` for docs.
+    """
+    return np.sqrt(weighted_var(points, weights))
+
+
+def weighted_mse(points, weights, refval):
+    """Compute the weighted mean square error."""
+    var = weighted_var(points, weights)
+    bias = weighted_mean(points, weights) - refval
+    return var + bias**2
+
+
+def weighted_rmse(points, weights, refval):
+    """Compute the weighted root mean square error."""
+    return np.sqrt(weighted_mse(points, weights, refval))
 
 
 def effective_sample_size(weights):
@@ -83,8 +111,8 @@ def effective_sample_size(weights):
     ----------
     weights: Importance sampling weights.
     """
-    weights = np.array(weights)
-    n_eff = np.sum(weights)**2 / np.sum(weights**2)
+    weights = np.asarray(weights)
+    n_eff = np.sum(weights) ** 2 / np.sum(weights**2)
     return n_eff
 
 
@@ -107,7 +135,7 @@ def resample(points, weights, n):
         A total of `n` points sampled from `points` with putting back
         according to `weights`.
     """
-    weights = np.array(weights)
+    weights = np.asarray(weights)
     weights /= np.sum(weights)
     resampled = np.random.choice(points, size=n, p=weights)
     return resampled
@@ -139,7 +167,7 @@ def resample_deterministic(points, weights, n, enforce_n=False):
         A total of (roughly) `n` points resampled from `points`
         deterministically using a rational representation of the `weights`.
     """
-    weights = np.array(weights)
+    weights = np.asarray(weights)
     numbers_f = weights * (n / np.sum(weights))
 
     numbers = np.round(numbers_f)

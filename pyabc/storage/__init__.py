@@ -85,5 +85,6 @@ In addition, it is also possible to store pandas DataFrames.
 
 """
 
+from .db_export import export
 from .history import History, create_sqlite_db_id
-from .json import save_dict_to_json, load_dict_from_json
+from .json import load_dict_from_json, save_dict_to_json
