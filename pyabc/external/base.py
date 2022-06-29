@@ -1,12 +1,12 @@
-import pandas as pd
 import logging
 import os
 import subprocess  # noqa: S404
 import tempfile
-from typing import List
 import copy
-from .utils import timethis
 import numpy as np
+import pandas as pd
+from typing import List
+from .utils import timethis
 from ..model import Model
 from ..parameters import Parameter
 logger = logging.getLogger("ABC.External")
