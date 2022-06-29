@@ -9,4 +9,5 @@ def timethis(func):
         func(*args, **kwargs)
         end = time.time()
         return end - start
+
     return wrapper
