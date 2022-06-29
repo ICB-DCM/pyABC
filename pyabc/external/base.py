@@ -3,9 +3,12 @@ import logging
 import os
 import subprocess  # noqa: S404
 import tempfile
+
 import numpy as np
 import pandas as pd
+
 from typing import List
+
 from ..model import Model
 from ..parameters import Parameter
 from .utils import timethis
