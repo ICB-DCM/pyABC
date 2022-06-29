@@ -1,14 +1,15 @@
+import copy
 import logging
 import os
 import subprocess  # noqa: S404
 import tempfile
-import copy
 import numpy as np
 import pandas as pd
 from typing import List
-from .utils import timethis
 from ..model import Model
 from ..parameters import Parameter
+from .utils import timethis
+
 logger = logging.getLogger("ABC.External")
 
 # timeout error code
@@ -292,9 +293,11 @@ class ExternalModel(Model):
              limit value of parameters.
         """
         time_eval_mat = np.zeros(shape=(len(limits), len(limits)))
-        time_eval_mat_df_lower = pd.DataFrame(time_eval_mat,
-                                              columns=[list(limits.keys())],
-                                              index=[list(limits.keys())])
+        time_eval_mat_df_lower = pd.DataFrame(
+            time_eval_mat,
+            columns=[list(limits.keys())],
+            index=[list(limits.keys())],
+        )
         time_eval_mat_df_upper = copy.deepcopy(time_eval_mat_df_lower)
         for i, (key_col, val_col) in enumerate(limits.items(), 0):
             for j, (key_row, val_row) in enumerate(limits.items(), 0):
@@ -308,9 +311,11 @@ class ExternalModel(Model):
 
                 else:
                     lower_bound = self.sample_timing(
-                        {key_col: val_col[0], key_row: val_row[0]})
+                        {key_col: val_col[0], key_row: val_row[0]}
+                    )
                     lower_bound = self.sample_timing(
-                        {key_col: val_col[1], key_row: val_row[1]})
+                        {key_col: val_col[1], key_row: val_row[1]}
+                    )
                 time_eval_mat_df_lower.loc[[key_col], [key_row]] = lower_bound
                 time_eval_mat_df_upper.loc[[key_col], [key_row]] = upper_bound
 
