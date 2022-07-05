@@ -215,10 +215,15 @@ def page_not_found(e):
 
 
 @click.command()
-@click.option("--debug", default=False, type=bool,
-              help="Whether to run the server in debug mode")
-@click.option("--port", default=8050, type=int,
-              help="The port on which the server runs")
+@click.option(
+    "--debug",
+    default=False,
+    type=bool,
+    help="Whether to run the server in debug mode",
+)
+@click.option(
+    "--port", default=8050, type=int, help="The port on which the server runs"
+)
 @click.argument("db")
 def run_app(db, debug, port):
     db = os.path.expanduser(db)

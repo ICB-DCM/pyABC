@@ -25,7 +25,7 @@ A copy of the selected database will be saved on ``/tmp/``, if you want to chang
 
 To upload your database, you can click or drag and drop your file in the dashed rectangle. Please note that the database file should have the extension ``.db``
 
-The time taken to upload the database to the server will depend on the database size. Once you select your database, you will notice that the title bar of the tab changed to ``uploading``. Please wait until the uploading process finishes. 
+The time taken to upload the database to the server will depend on the database size. Once you select your database, you will notice that the title bar of the tab changed to ``uploading``. Please wait until the uploading process finishes.
 
 .. image:: server_screenshots/dash_update.png
 
@@ -33,13 +33,13 @@ If the metadata of your file appears, that means your database file was uploaded
 
 .. image:: server_screenshots/dash_meta.png
 
-you can then select the requested run's ID. 
+you can then select the requested run's ID.
 
 Once you slelct the run's ID, the left side of the page will be updated to show more details about the selected run.
 
-You can then select one of the plots by selecting one of the tabs under ``Run's plots``. For some of the tabs, you will be asked to select one parameter, or more, from the dropdown list. 
+You can then select one of the plots by selecting one of the tabs under ``Run's plots``. For some of the tabs, you will be asked to select one parameter, or more, from the dropdown list.
 
-To save any plot, right-click on the plot and then select ``save image as``.   
+To save any plot, right-click on the plot and then select ``save image as``.
 
 
 Information about individual model parameters for each model and time point is also displayed:
