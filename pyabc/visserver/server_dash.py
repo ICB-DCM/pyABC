@@ -418,7 +418,7 @@ def update_DB_details(list_of_contents, list_of_names, list_of_dates):
         file_name = "pyABC_server_" + list_of_names[0]
     except Exception as e:
         print("database name is none" + e)  # noqa: T201
-        print("list of names: ", list_of_names) # noqa: T201
+        print("list of names: ", list_of_names)  # noqa: T201
 
     save_file(file_name, list_of_contents[0])
     global db_path
