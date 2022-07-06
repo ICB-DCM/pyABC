@@ -61,7 +61,7 @@ To get more information on available options, such as selecting another port:
 
 
 Web based visualizations - using Dash
-------------------------
+-------------------------------------
 
 The pyABC package comes with another web server that uses Dash, which displays lots of useful
 information on the currently running and already completed ABC tasks.
