@@ -1,4 +1,4 @@
-.. _web_visualization:
+.. _web_visualization_dash:
 
 Web based visualizations
 ========================
