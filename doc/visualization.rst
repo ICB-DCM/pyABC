@@ -61,9 +61,9 @@ To get more information on available options, such as selecting another port:
 
 
 Web based visualizations - using Dash
-========================
+------------------------
 
-The pyABC package comes with a web server, which displays lots of useful
+The pyABC package comes with another web server that uses Dash, which displays lots of useful
 information on the currently running and already completed ABC tasks.
 You can launch it from the command line with
 
@@ -102,21 +102,11 @@ You can then select one of the plots by selecting one of the tabs under ``Run's 
 To save any plot, right-click on the plot and then select ``save image as``.
 
 
-Information about individual model parameters for each model and time point is also displayed:
 
-
-
-
-
-Type in the command line
+To get help, type in the command line:
 
 .. code-block:: bash
 
    abc-server-dash --help
 
 To get more information on available options, such as selecting another port:
-
-
-.. code-block:: bash
-
-   abc-server-dash --port=8888
