@@ -5,7 +5,7 @@ module SIR
 # Install dependencies
 using Pkg
 Pkg.add("Catalyst")
-Pkg.add("DiffEqJump")
+Pkg.add("JumpProcesses")
 
 # Define reaction network
 using Catalyst
@@ -24,7 +24,7 @@ tspan = (0.0, 250.0)
 prob  = DiscreteProblem(sir_model, u0, tspan, p)
 
 # formulate as Markov jump process
-using DiffEqJump
+using JumpProcesses
 jump_prob = JumpProblem(
     sir_model, prob, Direct(), save_positions=(false, false),
 )
