@@ -210,7 +210,9 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         look_ahead_delay_evaluation: bool = True,
         max_n_eval_look_ahead_factor: float = 10.0,
         wait_for_all_samples: bool = False,
+        adapt_pre_proposal: bool = False,
         log_file: str = None,
+
     ):
         super().__init__(
             host=host, port=port, password=password, log_file=log_file
@@ -220,6 +222,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         self.look_ahead_delay_evaluation: bool = look_ahead_delay_evaluation
         self.max_n_eval_look_ahead_factor: float = max_n_eval_look_ahead_factor
         self.wait_for_all_samples: bool = wait_for_all_samples
+        self.adapt_pre_proposal: bool = adapt_pre_proposal
 
     def sample_until_n_accepted(
         self,
@@ -298,6 +301,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             id_results=id_results,
             all_accepted=all_accepted,
             ana_vars=ana_vars,
+            simulate_one=simulate_one,
         )
 
         # wait until all relevant simulations done
@@ -474,6 +478,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         id_results: List,
         all_accepted: bool,
         ana_vars: AnalysisVars,
+        simulate_one: Callable,
     ) -> None:
         """Start the next generation already, if that looks reasonable.
 
@@ -542,12 +547,15 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             return
 
         # create a preliminary simulate_one function
-        simulate_one_prel = create_preliminary_simulate_one(
-            t=t + 1,
-            population=population,
-            delay_evaluation=self.look_ahead_delay_evaluation,
-            ana_vars=ana_vars,
-        )
+        if self.adapt_pre_proposal:
+            simulate_one_prel = create_preliminary_simulate_one(
+                t=t + 1,
+                population=population,
+                delay_evaluation=self.look_ahead_delay_evaluation,
+                ana_vars=ana_vars,
+            )
+        else:
+            simulate_one_prel = simulate_one
 
         # maximum number of look-ahead evaluations
         if self.look_ahead_delay_evaluation:
