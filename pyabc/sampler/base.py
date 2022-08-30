@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from numbers import Real
 from typing import Callable, Union
 
@@ -33,12 +33,13 @@ def wrap_sample(f):
     return sample_until_n_accepted
 
 
-class SamplerMeta(type):
+class SamplerMeta(ABCMeta):  # noqa: B024
     """
     This metaclass handles the checking of sampling output values.
     """
 
     def __init__(cls, name, bases, attrs):
+        ABCMeta.__init__(cls, name, bases, attrs)
         cls.sample_until_n_accepted = wrap_sample(cls.sample_until_n_accepted)
 
 

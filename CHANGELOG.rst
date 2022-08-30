@@ -8,6 +8,17 @@ Release Notes
 ...........
 
 
+0.12.6 (2022-08-30)
+-------------------
+
+Minor:
+
+* Add JOSS paper of version 0.12.5
+* Update Julia reference DiffEqJump -> JumpProcesses (name change)
+* Unfix jinja2
+* Update flake8 dependencies after new issues
+
+
 0.12.5 (2022-06-21)
 -------------------
 

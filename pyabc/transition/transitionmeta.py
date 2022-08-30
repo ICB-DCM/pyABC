@@ -1,4 +1,5 @@
 import functools
+from abc import ABCMeta
 from typing import Union
 
 import numpy as np
@@ -52,13 +53,14 @@ def wrap_rvs_single(f):
     return rvs_single
 
 
-class TransitionMeta(type):
+class TransitionMeta(ABCMeta):  # noqa: B024
     """
     This metaclass handles the special case of no parameters.
     Transition classes do not have to check for it anymore
     """
 
     def __init__(cls, name, bases, attrs):
+        ABCMeta.__init__(cls, name, bases, attrs)
         cls.fit = wrap_fit(cls.fit)
         cls.pdf = wrap_pdf(cls.pdf)
         cls.rvs = wrap_rvs(cls.rvs)
