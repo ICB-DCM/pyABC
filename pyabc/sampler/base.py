@@ -33,7 +33,7 @@ def wrap_sample(f):
     return sample_until_n_accepted
 
 
-class SamplerMeta(ABCMeta):
+class SamplerMeta(ABCMeta):  # noqa: B024
     """
     This metaclass handles the checking of sampling output values.
     """

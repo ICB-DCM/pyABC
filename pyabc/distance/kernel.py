@@ -1,5 +1,4 @@
 """Stochastic kernels."""
-from abc import ABC
 from typing import Callable, List, Sequence, Union
 
 import numpy as np
@@ -13,7 +12,7 @@ SCALE_LOG = "SCALE_LOG"
 SCALES = [SCALE_LIN, SCALE_LOG]
 
 
-class StochasticKernel(Distance, ABC):
+class StochasticKernel(Distance):
     """
     A stochastic kernel assesses the similarity between observed and
     simulated summary statistics or data via a probability measure.
