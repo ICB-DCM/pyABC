@@ -104,9 +104,10 @@ class Population:
             raise AssertionError(
                 "A population should only consist of accepted particles"
             )
-        if not np.isclose(sum(p.weight for p in particles), 1):
+
+        if not np.isclose(total_weight := sum(p.weight for p in particles), 1):
             raise AssertionError(
-                "The population total weight is not normalized."
+                f"The population total weight {total_weight} is not normalized."
             )
 
         self.calculate_model_probabilities()
