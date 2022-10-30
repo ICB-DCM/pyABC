@@ -1,3 +1,5 @@
+"""Sample via the python concurrent futures executor interface."""
+
 from .base import Sampler
 from .eps_mixin import EPSMixin
 

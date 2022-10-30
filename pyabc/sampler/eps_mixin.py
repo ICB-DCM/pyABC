@@ -1,21 +1,27 @@
+"""Client submission interface."""
+
 from abc import ABC, abstractmethod
+from time import sleep
 from typing import Union
 
 import cloudpickle as pickle
 import numpy as np
-from sortedcontainers import SortedListWithKey
+from sortedcontainers import SortedList
 
 
 class EPSMixin(ABC):
     """
-
+    Provides sampling functionality for standard job submission clients.
 
     Mixin is the Python version of an interface.
+    To be used in classes deriving from both `EPSMixin` and `Sampler`.
 
     Attributes
     ----------
     client:
-        Client to perform the sampling on.
+        Client to submit jobs to. Provides a `submit()` function,
+        which returns jobs, which provide `done()`, `cancel()` and `result()`
+        functions.
     client_max_jobs:
         Maximum number of jobs that can submitted to the client at a time.
         If this value is smaller than the maximum number of cores provided by
@@ -96,108 +102,72 @@ class EPSMixin(ABC):
         # Run variables
         #  Counters for total and sequential (i.e. taking first-start into
         #  account) numbers of acceptance
-        num_accepted_total = num_accepted_sequential = 0
+        num_accepted = 0
         # Job identifier
         next_job_id = 0
-        #  List of running jobs
+        # List of running jobs
         running_jobs = []
-        unprocessed_results = SortedListWithKey(key=lambda x: x[0])
-        all_results = SortedListWithKey(key=lambda x: x[0])
-        next_valid_index = -1
+        # List of results
+        results = SortedList(key=lambda x: x[2])
 
         # Main loop, leave once we have enough material
         while True:
-            # Gather finished jobs
-            # make sure to track and update both
-            # total accepted and sequentially
-            # accepted jobs
-            for cur_job in running_jobs:
-                if cur_job.done():
-                    remote_batch = cur_job.result()
-                    running_jobs.remove(cur_job)
-                    # Extract particles
-                    for i in range(self.batch_size):
-                        remote_evaluated = remote_batch[i]
-                        (
-                            remote_result,
-                            remote_accept,
-                            remote_jobid,
-                        ) = remote_evaluated
-                        # print("Received result on job ", remote_jobid)
-                        unprocessed_results.add(
-                            (remote_jobid, remote_accept, remote_result)
-                        )
-                        if remote_accept:
-                            num_accepted_total += 1
+            # Gather results from finished jobs
+            for job_id, job in running_jobs:
+                if job.done():
+                    batch = job.result()
+                    results.update(batch)
+                    num_accepted += sum(1 for ret in batch if ret[1])
+                    running_jobs.remove((job_id, job))
 
-            next_index = (
-                unprocessed_results[0][0]
-                if len(unprocessed_results) > 0
-                else np.nan
-            )
+            # Check whether all done
+            if num_accepted >= n:
+                # nth start index among accepted particles
+                nth_accepted_id = [
+                    result[2] for result in results if result[1]
+                ][n - 1]
+                # Cancel jobs started later than nth accepted one
+                for job_id, job in running_jobs:
+                    if job_id > nth_accepted_id:
+                        running_jobs.remove((job_id, job))
+                        job.cancel()
+                # Break when no more jobs are running
+                if len(running_jobs) == 0:
+                    break
 
-            # Process results
-            while next_index == next_valid_index + 1:
-                seq_jobid, seq_accept, seq_result = unprocessed_results.pop(0)
-                # add to all_results
-                all_results.add((seq_jobid, seq_result))
-                # update accepted counter
-                if seq_accept:
-                    num_accepted_sequential += 1
-                next_valid_index += 1
-                next_index = (
-                    unprocessed_results[0][0]
-                    if len(unprocessed_results) > 0
-                    else np.nan
-                )
-
-            # If num_accepted >= n
-            # return the first n accepted results
-            if num_accepted_sequential >= n:
-                break
-
-            # Update information on scheduler state
-            # Only submit more jobs if:
+            # Submit jobs, only if:
             # * Number of jobs open < max_jobs
             # * Number of jobs open < self.scheduler_workers_running *
             #   worker_load_factor
             # * num_accepted_total < jobs required
-            if (
-                (len(running_jobs) < self.client_max_jobs)
-                and (len(running_jobs) < self.client_cores())
-                and (num_accepted_total < n)
-            ):
-                for _ in range(
-                    0,
-                    np.minimum(
-                        self.client_max_jobs, self.client_cores()
-                    ).astype(int)
-                    - len(running_jobs),
-                ):
-                    job_id_batch = []
-                    for _ in range(self.batch_size):
-                        job_id_batch.append(next_job_id)
-                        next_job_id += 1
-
-                    running_jobs.append(
-                        self.client.submit(full_submit_function, job_id_batch)
+            n_job_max = int(min(self.client_max_jobs, self.client_cores()))
+            if (len(running_jobs) < n_job_max) and (num_accepted < n):
+                n_job_req = n_job_max - len(running_jobs)
+                for _ in range(0, n_job_req):
+                    # Define job and batch ids
+                    job_id = next_job_id
+                    job_id_batch = [job_id + i for i in range(self.batch_size)]
+                    next_job_id += self.batch_size
+                    # Submit job
+                    job = self.client.submit(
+                        full_submit_function, job_id_batch
                     )
+                    # Register job
+                    running_jobs.append((job_id, job))
 
-        # cancel all unfinished jobs
-        for cur_job in running_jobs:
-            cur_job.cancel()
+            # No need to be always awake
+            sleep(0.01)
 
-        # create 1 to-be-returned sample from all results
+        # Create 1 to-be-returned sample from results
         sample = self._create_empty_sample()
-        counter_accepted = 0
-        self.nr_evaluations_ = 0
-        while counter_accepted < n:
-            cur_res = all_results.pop(0)
-            particle = cur_res[1]
-            sample.append(particle)
-            if particle.accepted:
-                counter_accepted += 1
-            # n_eval is latest job_id + 1
-            self.nr_evaluations_ = max(self.nr_evaluations_, cur_res[0] + 1)
+        # Collect until n acceptances
+        nth_accepted_id = [result[2] for result in results if result[1]][n - 1]
+        while True:
+            result = results.pop(0)
+            sample.append(result[0])
+            if result[2] == nth_accepted_id:
+                break
+
+        self.nr_evaluations_ = next_job_id
 
         return sample

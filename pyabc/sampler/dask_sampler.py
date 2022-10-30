@@ -1,3 +1,5 @@
+"""Sample via dask."""
+
 import numpy as np
 from dask.distributed import Client
 
