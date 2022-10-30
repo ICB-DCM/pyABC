@@ -16,9 +16,7 @@ Minor:
 * Ignore B027 empty method in an abstract base class
 * Refactor EPSMixin
 * Fix EPSMixin for ConcurrentFutureSampler
-* restrict distributed, see dask/distributed#7227
-* tmp add bokeh for tests to avoid restrictions (all #587)
-
+* Temporarily add bokeh to test due to dask error
 
 0.12.6 (2022-08-30)
 -------------------
