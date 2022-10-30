@@ -11,6 +11,8 @@ extend-ignore =
   E203
   # Don't be crazy if line too long
   E501
+  # Empty method in an abstract base class
+  B027
 
 per-file-ignores =
   # Imported but unused

@@ -8,6 +8,16 @@ Release Notes
 ...........
 
 
+0.12.7 (2022-10-30)
+-------------------
+
+Minor:
+
+* Ignore B027 empty method in an abstract base class
+* Refactor EPSMixin
+* Fix EPSMixin for ConcurrentFutureSampler
+* Temporarily add bokeh to test due to dask error
+
 0.12.6 (2022-08-30)
 -------------------
 
