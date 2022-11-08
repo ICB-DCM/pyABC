@@ -862,7 +862,7 @@ class History:
         else:
             p_models_df = (
                 pd.DataFrame(p_models, columns=["p", "m", "t"])
-                .pivot("t", "m", "p")
+                .pivot(index="t", columns="m", values="p")
                 .fillna(0)
             )
             return p_models_df
