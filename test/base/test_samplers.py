@@ -179,17 +179,14 @@ def basic_testcase():
     return model, prior, distance, obs
 
 
-def test_two_competing_gaussians_multiple_population(db_path, sampler):
-    two_competing_gaussians_multiple_population(db_path, sampler, 1)
-
-
-def test_two_competing_gaussians_multiple_population_2_evaluations(
-    db_path, sampler
+@pytest.mark.parametrize('execution_number', range(100))
+def test_two_competing_gaussians_multiple_population(
+    db_path, sampler, execution_number
 ):
-    two_competing_gaussians_multiple_population(db_path, sampler, 2)
+    two_competing_gaussians_multiple_population(db_path, sampler)
 
 
-def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
+def two_competing_gaussians_multiple_population(db_path, sampler):
     # Define a gaussian model
     sigma = 0.5
 
