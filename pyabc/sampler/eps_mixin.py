@@ -1,5 +1,6 @@
 """Client submission interface."""
 
+import random
 from abc import ABC, abstractmethod
 from time import sleep
 from typing import Union
@@ -65,6 +66,9 @@ class EPSMixin(ABC):
         # Unpickle function
         simulate_one = pickle.loads(self._simulate_accept_one)
 
+        random.seed()
+        np.random.seed()
+
         # Run batch_size evaluations and create list of tuples
         result_batch = []
         for j in range(self.batch_size):
@@ -91,6 +95,8 @@ class EPSMixin(ABC):
         else:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(job_id):
+                random.seed()
+                np.random.seed()
                 # Run batch_size evaluations and create list of tuples
                 result_batch = []
                 for j in range(self.batch_size):
@@ -167,6 +173,11 @@ class EPSMixin(ABC):
             sample.append(result[0])
             if result[2] == nth_accepted_id:
                 break
+
+        if sample.n_accepted != n:
+            raise AssertionError(
+                f"Got {sample.n_accepted} accepted particles but expected {n}"
+            )
 
         self.nr_evaluations_ = next_job_id
 

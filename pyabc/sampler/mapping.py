@@ -86,6 +86,7 @@ latest/task.html#quick-and-easy-parallelism)
 
         np.random.seed()
         random.seed()
+
         nr_simulations = 0
         sample = self._create_empty_sample()
 

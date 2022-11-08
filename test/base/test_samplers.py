@@ -179,9 +179,7 @@ def basic_testcase():
     return model, prior, distance, obs
 
 
-def test_two_competing_gaussians_multiple_population(
-    db_path, sampler, execution_number
-):
+def test_two_competing_gaussians_multiple_population(db_path, sampler):
     two_competing_gaussians_multiple_population(db_path, sampler)
 
 
@@ -542,7 +540,6 @@ def test_redis_look_ahead_delayed():
         assert (df.n_lookahead_accepted > 0).any()
         # in delayed mode, all look-aheads must have been preliminary
         assert (df.n_lookahead == df.n_preliminary).all()
-        print(df)
 
         # check history proposal ids
         for t in range(0, h.max_t + 1):
