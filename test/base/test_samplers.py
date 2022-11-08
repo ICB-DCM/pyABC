@@ -179,7 +179,6 @@ def basic_testcase():
     return model, prior, distance, obs
 
 
-@pytest.mark.parametrize('execution_number', range(100))
 def test_two_competing_gaussians_multiple_population(
     db_path, sampler, execution_number
 ):
