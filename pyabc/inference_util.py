@@ -536,7 +536,7 @@ def evaluate_preliminary_particle(
     if acc_res.accept:
         weight = sampling_weight * acc_res.weight
     else:
-        weight = 0
+        weight = 0.0
 
     # return the evaluated particle
     return Particle(
