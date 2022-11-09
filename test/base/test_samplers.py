@@ -288,9 +288,7 @@ def test_progressbar(sampler):
 
 def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
-    two_competing_gaussians_multiple_population(
-        db_path, redis_starter_sampler, 1
-    )
+    two_competing_gaussians_multiple_population(db_path, redis_starter_sampler)
 
 
 def test_wrong_output_sampler():
