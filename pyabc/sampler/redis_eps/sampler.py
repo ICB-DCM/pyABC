@@ -687,11 +687,10 @@ def create_preliminary_simulate_one(
         for m in population.get_alive_models():
             parameters, w = population.get_distribution(m)
             transitions[m].fit(parameters, w)
-    elif t == -1:
+    elif t == 1:
         # at t=0, the prior is used for sampling
         #  (and the transition not fitted yet)
-        if t == 1:
-            transitions = ana_vars.parameter_priors
+        transitions = ana_vars.parameter_priors
 
     return create_simulate_function(
         t=t,
