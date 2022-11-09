@@ -315,7 +315,6 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             id_results=id_results,
             all_accepted=all_accepted,
             ana_vars=ana_vars,
-            simulate_one=simulate_one,
         )
 
         # wait until all relevant simulations done
@@ -492,7 +491,6 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         id_results: List,
         all_accepted: bool,
         ana_vars: AnalysisVars,
-        simulate_one: Callable,
     ) -> None:
         """Start the next generation already, if that looks reasonable.
 
@@ -680,14 +678,20 @@ def create_preliminary_simulate_one(
     """
     model_probabilities = population.get_model_probabilities()
 
-    # create deep copy of the transition function
-    transitions = copy.deepcopy(ana_vars.transitions)
-
-    # fit transition
+    # set proposal distribution
+    transitions = ana_vars.transitions
     if adapt_proposal:
+        # create deep copy of the transition function
+        transitions = copy.deepcopy(transitions)
+        # fit transitions
         for m in population.get_alive_models():
             parameters, w = population.get_distribution(m)
             transitions[m].fit(parameters, w)
+    elif t == -1:
+        # at t=0, the prior is used for sampling
+        #  (and the transition not fitted yet)
+        if t == 1:
+            transitions = ana_vars.parameter_priors
 
     return create_simulate_function(
         t=t,
@@ -786,6 +790,13 @@ def post_check_acceptance(
 
 def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
     """Applies subpopulation-wise self-normalization of samples, in-place.
+
+    The weights are adjusted per proposal id, such that all particles
+    belonging to one proposal id have a total weight proportional to the
+    effective sample size of the sub-population.
+    This defines the relative importances of all particles in the accepted
+    population in a reasonabler manner.
+    Conceptually, also hter normalizations are possible.
 
     Parameters
     ----------
