@@ -611,6 +611,12 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         for j in range(n):
             sample += results[j]
 
+        # check number of acceptances
+        if (n_accepted := sample.n_accepted) != n:
+            raise AssertionError(
+                f"Expected {n} accepted particles but got {n_accepted}"
+            )
+
         return sample
 
     def check_analysis_variables(
