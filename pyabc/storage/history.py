@@ -346,7 +346,9 @@ class History:
             .filter(ABCSMC.id == self.id)
         )
         df = pd.read_sql_query(query.statement, self._engine)
-        pars = df.pivot("id", "name", "value").sort_index()
+        pars = df.pivot(
+            index="id", columns="name", values="value"
+        ).sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
         if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
@@ -860,7 +862,7 @@ class History:
         else:
             p_models_df = (
                 pd.DataFrame(p_models, columns=["p", "m", "t"])
-                .pivot("t", "m", "p")
+                .pivot(index="t", columns="m", values="p")
                 .fillna(0)
             )
             return p_models_df

@@ -53,7 +53,7 @@ def wrap_rvs_single(f):
     return rvs_single
 
 
-class TransitionMeta(ABCMeta):
+class TransitionMeta(ABCMeta):  # noqa: B024
     """
     This metaclass handles the special case of no parameters.
     Transition classes do not have to check for it anymore

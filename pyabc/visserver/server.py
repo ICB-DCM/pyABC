@@ -7,7 +7,7 @@ import sys
 import click
 import pandas as pd
 from bokeh.embed import components  # noqa: E402
-from bokeh.models.widgets import Panel, Tabs  # noqa: E402
+from bokeh.models.layouts import TabPanel, Tabs  # noqa: E402
 from bokeh.plotting import figure
 from bokeh.resources import INLINE  # noqa: E402
 from flask import Flask, render_template
@@ -137,10 +137,10 @@ def abc_detail(abc_id):
 
         plot = Tabs(
             tabs=[
-                Panel(child=prob_plot, title="Probability"),
-                Panel(child=samples_fig, title="Samples"),
-                Panel(child=particles_fig, title="Particles"),
-                Panel(child=eps_fig, title="Epsilon"),
+                TabPanel(child=prob_plot, title="Probability"),
+                TabPanel(child=samples_fig, title="Samples"),
+                TabPanel(child=particles_fig, title="Particles"),
+                TabPanel(child=eps_fig, title="Epsilon"),
             ]
         )
         plot = PlotScriptDiv(*components(plot))
@@ -181,7 +181,7 @@ def abc_model(abc_id, model_id, t):
         plot_df_cumsum[parameter] = plot_df[parameter]
         f = figure()
         f.line(x=plot_df_cumsum[parameter], y=plot_df_cumsum["CDF"])
-        p = Panel(child=f, title=parameter)
+        p = TabPanel(child=f, title=parameter)
         tabs.append(p)
     if len(tabs) == 0:
         plot = PlotScriptDiv("", "This model has no Parameters")

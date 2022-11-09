@@ -8,6 +8,27 @@ Release Notes
 ...........
 
 
+0.12.7 (2022-10-30)
+-------------------
+
+Minor:
+
+* Ignore B027 empty method in an abstract base class
+* Refactor EPSMixin
+* Fix EPSMixin for ConcurrentFutureSampler
+* Temporarily add bokeh to test due to dask error
+
+0.12.6 (2022-08-30)
+-------------------
+
+Minor:
+
+* Add JOSS paper of version 0.12.5
+* Update Julia reference DiffEqJump -> JumpProcesses (name change)
+* Unfix jinja2
+* Update flake8 dependencies after new issues
+
+
 0.12.5 (2022-06-21)
 -------------------
 

@@ -180,16 +180,10 @@ def basic_testcase():
 
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
-    two_competing_gaussians_multiple_population(db_path, sampler, 1)
+    two_competing_gaussians_multiple_population(db_path, sampler)
 
 
-def test_two_competing_gaussians_multiple_population_2_evaluations(
-    db_path, sampler
-):
-    two_competing_gaussians_multiple_population(db_path, sampler, 2)
-
-
-def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
+def two_competing_gaussians_multiple_population(db_path, sampler):
     # Define a gaussian model
     sigma = 0.5
 
@@ -294,9 +288,7 @@ def test_progressbar(sampler):
 
 def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
-    two_competing_gaussians_multiple_population(
-        db_path, redis_starter_sampler, 1
-    )
+    two_competing_gaussians_multiple_population(db_path, redis_starter_sampler)
 
 
 def test_wrong_output_sampler():
@@ -546,7 +538,6 @@ def test_redis_look_ahead_delayed():
         assert (df.n_lookahead_accepted > 0).any()
         # in delayed mode, all look-aheads must have been preliminary
         assert (df.n_lookahead == df.n_preliminary).all()
-        print(df)
 
         # check history proposal ids
         for t in range(0, h.max_t + 1):
