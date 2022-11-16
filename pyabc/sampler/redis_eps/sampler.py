@@ -181,7 +181,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         lead to a worse performance, especially if evaluation is costly
         compared to simulation, because evaluation happens sequentially on the
         main thread.
-        Only effective if `look_ahead=True`.
+        Only effective if `look_ahead is True`.
     max_n_eval_look_ahead_factor:
         In delayed evaluation, only this factor times the previous number of
         samples are generated, afterwards the workers wait.
@@ -194,6 +194,21 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         If not, then the sampler only waits for all simulations that were
         started prior to the last started particle of the first `n`
         acceptances.
+        Waiting for all should not be needed, this is for studying purposes.
+    adapt_look_ahead_proposal:
+        In look-ahead mode, adapt the preliminary proposal based on previous
+        acceptances.
+        In theory, as long as proposal >> prior, everything is fine.
+        However, in practice, given a finite sample size, in some cases the
+        preliminary proposal may be biased towards earlier-accepted particles,
+        which can induce a similar bias in the next accepted population.
+        Thus, if any parameter dependent simulation time heterogeneity is to be
+        expected, i.e. if different plausible parameter space regions come
+        with different simulation times, then this flag should be set to False.
+        If no such heterogeneity is to be expected, this flag can be set to
+        True, which can result in improved performance due to a more tailored
+        proposal distribution.
+        Only effective if `look_ahead is True`.
     log_file:
         A file for a dedicated sampler history. Updated in each iteration.
         This log file is complementary to the logging realized via the
@@ -210,6 +225,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         look_ahead_delay_evaluation: bool = True,
         max_n_eval_look_ahead_factor: float = 10.0,
         wait_for_all_samples: bool = False,
+        adapt_look_ahead_proposal: bool = False,
         log_file: str = None,
     ):
         super().__init__(
@@ -220,6 +236,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         self.look_ahead_delay_evaluation: bool = look_ahead_delay_evaluation
         self.max_n_eval_look_ahead_factor: float = max_n_eval_look_ahead_factor
         self.wait_for_all_samples: bool = wait_for_all_samples
+        self.adapt_look_ahead_proposal: bool = adapt_look_ahead_proposal
 
     def sample_until_n_accepted(
         self,
@@ -546,6 +563,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             t=t + 1,
             population=population,
             delay_evaluation=self.look_ahead_delay_evaluation,
+            adapt_proposal=self.adapt_look_ahead_proposal,
             ana_vars=ana_vars,
         )
 
@@ -591,6 +609,12 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         for j in range(n):
             sample += results[j]
 
+        # check number of acceptances
+        if (n_accepted := sample.n_accepted) != n:
+            raise AssertionError(
+                f"Expected {n} accepted particles but got {n_accepted}"
+            )
+
         return sample
 
     def check_analysis_variables(
@@ -604,7 +628,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             # nothing to be done
             return
 
-        def check_bad(var):
+        def _check_bad(var):
             """Check whether a component is incompatible."""
             # do not check for `requires_calibration()`, because in the first
             #  iteration we do not look ahead
@@ -615,15 +639,16 @@ class RedisEvalParallelSampler(RedisSamplerBase):
                     "sampler's `look_ahead_delay_evaluation` flag."
                 )
 
-        check_bad(acceptor)
-        check_bad(distance_function)
-        check_bad(eps)
+        _check_bad(acceptor)
+        _check_bad(distance_function)
+        _check_bad(eps)
 
 
 def create_preliminary_simulate_one(
     t,
     population,
     delay_evaluation: bool,
+    adapt_proposal: bool,
     ana_vars: AnalysisVars,
 ) -> Callable:
     """Create a preliminary simulate_one function for generation `t`.
@@ -636,10 +661,16 @@ def create_preliminary_simulate_one(
 
     Parameters
     ----------
-    t: The time index for which to create the function (i.e. call with t+1).
-    population: The preliminary population.
-    delay_evaluation: Whether to delay evaluation.
-    ana_vars: The analysis variables.
+    t:
+        The time index for which to create the function (i.e. call with t+1).
+    population:
+        The preliminary population.
+    delay_evaluation:
+        Whether to delay evaluation.
+    adapt_proposal:
+        Whether to fit the proposal distribution to the new population.
+    ana_vars:
+        The analysis variables.
 
     Returns
     -------
@@ -647,13 +678,19 @@ def create_preliminary_simulate_one(
     """
     model_probabilities = population.get_model_probabilities()
 
-    # create deep copy of the transition function
-    transitions = copy.deepcopy(ana_vars.transitions)
-
-    # fit transition
-    for m in population.get_alive_models():
-        parameters, w = population.get_distribution(m)
-        transitions[m].fit(parameters, w)
+    # set proposal distribution
+    transitions = ana_vars.transitions
+    if adapt_proposal:
+        # create deep copy of the transition function
+        transitions = copy.deepcopy(transitions)
+        # fit transitions
+        for m in population.get_alive_models():
+            parameters, w = population.get_distribution(m)
+            transitions[m].fit(parameters, w)
+    elif t == 1:
+        # at t=0, the prior is used for sampling
+        #  (and the transition not fitted yet)
+        transitions = ana_vars.parameter_priors
 
     return create_simulate_function(
         t=t,
@@ -752,6 +789,13 @@ def post_check_acceptance(
 
 def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
     """Applies subpopulation-wise self-normalization of samples, in-place.
+
+    The weights are adjusted per proposal id, such that all particles
+    belonging to one proposal id have a total weight proportional to the
+    effective sample size of the sub-population.
+    This defines the relative importances of all particles in the accepted
+    population in a reasonabler manner.
+    Conceptually, also hter normalizations are possible.
 
     Parameters
     ----------

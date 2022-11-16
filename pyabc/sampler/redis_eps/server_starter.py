@@ -109,8 +109,9 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         batch_size: int = 1,
         wait_for_all_samples: bool = False,
         look_ahead: bool = False,
-        look_ahead_delay_evaluation=True,
+        look_ahead_delay_evaluation: bool = True,
         max_n_eval_look_ahead_factor: float = 10.0,
+        adapt_look_ahead_proposal: bool = False,
         workers: int = 2,
         processes_per_worker: int = 1,
         daemon: bool = True,
@@ -134,6 +135,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
             look_ahead=look_ahead,
             look_ahead_delay_evaluation=look_ahead_delay_evaluation,
             max_n_eval_look_ahead_factor=max_n_eval_look_ahead_factor,
+            adapt_look_ahead_proposal=adapt_look_ahead_proposal,
             log_file=log_file,
         )
 
