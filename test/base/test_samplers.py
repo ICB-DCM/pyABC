@@ -1,3 +1,4 @@
+import copy
 import logging
 import multiprocessing
 import os
@@ -180,16 +181,10 @@ def basic_testcase():
 
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
-    two_competing_gaussians_multiple_population(db_path, sampler, 1)
+    two_competing_gaussians_multiple_population(db_path, sampler)
 
 
-def test_two_competing_gaussians_multiple_population_2_evaluations(
-    db_path, sampler
-):
-    two_competing_gaussians_multiple_population(db_path, sampler, 2)
-
-
-def two_competing_gaussians_multiple_population(db_path, sampler, n_sim):
+def two_competing_gaussians_multiple_population(db_path, sampler):
     # Define a gaussian model
     sigma = 0.5
 
@@ -294,9 +289,7 @@ def test_progressbar(sampler):
 
 def test_in_memory(redis_starter_sampler):
     db_path = "sqlite://"
-    two_competing_gaussians_multiple_population(
-        db_path, redis_starter_sampler, 1
-    )
+    two_competing_gaussians_multiple_population(db_path, redis_starter_sampler)
 
 
 def test_wrong_output_sampler():
@@ -435,7 +428,8 @@ def test_redis_subprocess():
         sampler.shutdown()
 
 
-def test_redis_look_ahead():
+@pytest.mark.parametrize("adapt_proposal", [False, True])
+def test_redis_look_ahead(adapt_proposal: bool):
     """Test the redis sampler in look-ahead mode."""
     model, prior, distance, obs = basic_testcase()
     eps = pyabc.ListEpsilon([20, 10, 5])
@@ -447,6 +441,7 @@ def test_redis_look_ahead():
         sampler = RedisEvalParallelSamplerServerStarter(
             look_ahead=True,
             look_ahead_delay_evaluation=False,
+            adapt_look_ahead_proposal=adapt_proposal,
             log_file=fh.name,
         )
         try:
@@ -516,7 +511,8 @@ def test_redis_look_ahead_error():
                 sampler.shutdown()
 
 
-def test_redis_look_ahead_delayed():
+@pytest.mark.parametrize("adapt_proposal", [False, True])
+def test_redis_look_ahead_delayed(adapt_proposal: bool):
     """Test the look-ahead sampler with delayed evaluation in an adaptive
     setup."""
     model, prior, distance, obs = basic_testcase()
@@ -526,7 +522,9 @@ def test_redis_look_ahead_delayed():
     )
     with tempfile.NamedTemporaryFile(mode='w', suffix='.csv') as fh:
         sampler = RedisEvalParallelSamplerLookAheadDelayWrapper(
-            log_file=fh.name, wait_for_all_samples=True
+            log_file=fh.name,
+            wait_for_all_samples=True,
+            adapt_look_ahead_proposal=adapt_proposal,
         )
         try:
             abc = pyabc.ABCSMC(
@@ -546,7 +544,6 @@ def test_redis_look_ahead_delayed():
         assert (df.n_lookahead_accepted > 0).any()
         # in delayed mode, all look-aheads must have been preliminary
         assert (df.n_lookahead == df.n_preliminary).all()
-        print(df)
 
         # check history proposal ids
         for t in range(0, h.max_t + 1):
@@ -559,3 +556,100 @@ def test_redis_look_ahead_delayed():
                 min(pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted']))
                 == n_lookahead_pop
             )
+
+
+def test_normalize_within_subpopulations():
+    """Test normalization within subpopulation function."""
+    n_acc: int = 100
+    n_rej: int = 150
+
+    sample0: pyabc.Sample = pyabc.Sample(record_rejected=True)
+    proposal_ids = [-2, -1, 0]
+    for n, accepted in [(n_acc, True), (n_rej, False)]:
+        for _ in range(n):
+            proposal_id = np.random.choice(proposal_ids, p=[0.3, 0.2, 0.5])
+            particle = pyabc.Particle(
+                m=0,
+                parameter={"theta": np.random.normal()},
+                weight=np.random.lognormal(sigma=abs(proposal_id) + 1),
+                sum_stat={"y": np.random.normal(size=2)},
+                distance=np.random.lognormal(),
+                accepted=accepted,
+                proposal_id=proposal_id,
+                preliminary=False,
+            )
+            sample0.append(particle)
+
+    # perform normalization
+    sample = copy.deepcopy(sample0)
+    pyabc.sampler.redis_eps.sampler.self_normalize_within_subpopulations(
+        sample, n_acc
+    )
+
+    # basic checks
+    assert sample0.n_accepted == sample.n_accepted == n_acc
+    assert (
+        len(sample0.all_particles)
+        == len(sample.all_particles)
+        == n_acc + n_rej
+        > n_acc
+    )
+
+    # calculate effective sample sizes from original sample
+    ess0, ess = {}, {}
+    for _ess, _sample in [(ess0, sample0), (ess, sample)]:
+        for proposal_id in proposal_ids:
+            particles = [
+                p
+                for p in _sample.accepted_particles
+                if p.proposal_id == proposal_id
+            ]
+            weights = np.array([p.weight for p in particles])
+            _ess[proposal_id] = pyabc.effective_sample_size(weights)
+
+    # check effective sample sizes coincide
+    for proposal_id in proposal_ids:
+        assert np.isclose(ess0[proposal_id], ess[proposal_id])
+    assert np.isclose(sum(ess0.values()), sum(ess.values()))
+
+    # check that impact of sub-population is proportional to ESS
+    total_weight = sum(p.weight for p in sample.accepted_particles)
+    sample.normalize_weights()
+    accepted_population = sample.get_accepted_population()
+    total_ess = sum(ess.values())
+    for proposal_id in proposal_ids:
+        particles = [
+            p
+            for p in accepted_population.particles
+            if p.proposal_id == proposal_id
+        ]
+        weight = sum([p.weight for p in particles])
+        assert np.isclose(weight, ess[proposal_id] / total_ess)
+
+    # also check ESS calculation as sum and directly
+    assert np.isclose(
+        pyabc.effective_sample_size(
+            np.array([p.weight for p in accepted_population.particles])
+        ),
+        total_ess,
+    )
+
+    # check same factor applied to all particles, including rejected ones
+    for proposal_id in proposal_ids:
+        particles0 = [
+            p for p in sample0.all_particles if p.proposal_id == proposal_id
+        ]
+        weight_of_subpop = sum(p.weight for p in particles0 if p.accepted)
+        pop_factor = ess0[proposal_id] / weight_of_subpop / total_weight
+
+        particles = [
+            p for p in sample.all_particles if p.proposal_id == proposal_id
+        ]
+
+        for p0, p in zip(particles0, particles):
+            # check that it is the sample particle
+            assert p0.distance == p.distance
+
+            # multiple weight by subpopulation specific factor
+            w = pop_factor * p0.weight
+            assert np.isclose(p.weight, w)

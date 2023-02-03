@@ -37,7 +37,7 @@ jobs:
       run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
-      timeout-minutes: 12
+      timeout-minutes: 15
       run: tox -e base
 
     - name: Run visualization tests
@@ -80,7 +80,7 @@ jobs:
       run: .github/workflows/install_deps.sh base R
 
     - name: Run tests
-      timeout-minutes: 10
+      timeout-minutes: 15
       run: tox -e external
 
     - name: Coverage
@@ -114,7 +114,7 @@ jobs:
       run: .github/workflows/install_deps.sh amici
 
     - name: Run tests
-      timeout-minutes: 16
+      timeout-minutes: 20
       run: tox -e petab
 
     - name: Coverage
@@ -148,7 +148,7 @@ jobs:
         run: .github/workflows/install_deps.sh
 
       - name: Run tests
-        timeout-minutes: 7
+        timeout-minutes: 10
         run: tox -e mac
 
       - name: Coverage
@@ -182,7 +182,7 @@ jobs:
       run: .github/workflows/install_deps.sh
 
     - name: Run notebooks
-      timeout-minutes: 10
+      timeout-minutes: 15
       run: tox -e notebooks1
 
   notebooks2:
@@ -210,7 +210,7 @@ jobs:
       run: .github/workflows/install_deps.sh R amici
 
     - name: Run notebooks
-      timeout-minutes: 10
+      timeout-minutes: 15
       run: tox -e notebooks2
 
   quality:

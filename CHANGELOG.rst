@@ -8,6 +8,43 @@ Release Notes
 ...........
 
 
+0.12.8 (2022-11-16)
+-------------------
+
+* Fix look-ahead implementation in case of biased proposals (#568)
+
+Minor:
+
+* Remove boteh in test env as distributed #7227 got fixed
+* Remove obsolete two gaussians test
+* Fix Mixin random seed (set it via /dev/urandom)
+* Update viserver to bokeh >= 3.0.1 (different import of TabPanel, Tabs)
+  (all #589)
+* Fix sqlalchemy warning "SAWarning: TypeDecorator BytesStorage()
+  will not produce a cache key" (#590)
+
+
+0.12.7 (2022-10-30)
+-------------------
+
+Minor:
+
+* Ignore B027 empty method in an abstract base class
+* Refactor EPSMixin
+* Fix EPSMixin for ConcurrentFutureSampler
+* Temporarily add bokeh to test due to dask error
+
+0.12.6 (2022-08-30)
+-------------------
+
+Minor:
+
+* Add JOSS paper of version 0.12.5
+* Update Julia reference DiffEqJump -> JumpProcesses (name change)
+* Unfix jinja2
+* Update flake8 dependencies after new issues
+
+
 0.12.5 (2022-06-21)
 -------------------
 

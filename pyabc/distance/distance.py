@@ -1,7 +1,6 @@
 """Various basic distances."""
 
 import logging
-from abc import ABC
 from typing import Callable, List, Union
 
 import numpy as np
@@ -13,7 +12,7 @@ from .base import Distance
 logger = logging.getLogger("ABC.Distance")
 
 
-class DistanceWithMeasureList(Distance, ABC):
+class DistanceWithMeasureList(Distance):
     """
     Base class for distance functions with measure list.
     This class is not functional on its own.

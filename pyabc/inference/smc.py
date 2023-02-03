@@ -3,7 +3,7 @@
 import copy
 import logging
 from datetime import datetime, timedelta
-from typing import Callable, List, TypeVar, Union
+from typing import Callable, List, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -497,7 +497,9 @@ class ABCSMC:
             acceptor_config=self.acceptor.get_epsilon_config(t),
         )
 
-    def _get_initial_population(self, t: int) -> (List[float], List[dict]):
+    def _get_initial_population(
+        self, t: int
+    ) -> Tuple[List[float], List[dict]]:
         """
         Get initial samples, either from the last population stored in history,
         or via sampling sum stats from the prior. This can be used to calibrate
