@@ -133,7 +133,6 @@ class SGE:
         execution_context=DefaultContext,
         chunk_size=1,
     ):
-
         # simple assignments
         self.memory = memory
         self.time_h = time_h

@@ -308,7 +308,7 @@ class History:
     @with_session
     def get_distribution(
         self, m: int = 0, t: int = None
-    ) -> (pd.DataFrame, np.ndarray):
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         Returns the weighted population sample for model m and timepoint t
         as a tuple.
@@ -997,7 +997,7 @@ class History:
     @with_session
     def get_weighted_sum_stats_for_model(
         self, m: int = 0, t: int = None
-    ) -> (np.ndarray, List):
+    ) -> tuple[np.ndarray, List]:
         """
         Summary statistics for model `m`. The weights sum to 1, unless
         there were multiple acceptances per particle.
@@ -1046,7 +1046,7 @@ class History:
     @with_session
     def get_weighted_sum_stats(
         self, t: int = None
-    ) -> (List[float], List[dict]):
+    ) -> tuple[List[float], List[dict]]:
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
