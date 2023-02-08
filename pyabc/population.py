@@ -72,7 +72,6 @@ class Particle:
         proposal_id: int = 0,
         preliminary: bool = False,
     ):
-
         self.m = m
         self.parameter = parameter
         self.weight = weight

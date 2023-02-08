@@ -40,7 +40,6 @@ class GridSearchCV(GridSearchCVSKL):
         error_score='raise',
         return_train_score=True,
     ):
-
         if estimator is None:
             estimator = MultivariateNormalTransition()
         if param_grid is None:

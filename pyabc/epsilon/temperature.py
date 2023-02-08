@@ -372,6 +372,7 @@ def match_acceptance_rate(weights, pds, pdf_norm, kernel_scale, target_rate):
     For a temperature close to 1, subtler changes are neccesary, however here
     the logarhtm is nearly linear anyway.
     """
+
     # objective function which we wish to find a root for
     def obj(b):
         beta = np.exp(b)
