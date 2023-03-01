@@ -158,7 +158,8 @@ class SGE:
         self.job_name = name
         if self.config["SGE"]["PRIORITY"] == "0":
             warnings.warn(
-                "Priority set to 0. " "This enables the reservation flag."
+                "Priority set to 0. " "This enables the reservation flag.",
+                stacklevel=2,
             )
         self.num_threads = num_threads
         self.execution_context = execution_context
@@ -167,7 +168,8 @@ class SGE:
         if chunk_size != 1:
             warnings.warn(
                 "Chunk size != 1. "
-                "This can potentially have bad side effect."
+                "This can potentially have bad side effect.",
+                stacklevel=2,
             )
 
         if not sge_available():
