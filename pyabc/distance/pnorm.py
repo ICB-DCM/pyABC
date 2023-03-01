@@ -35,8 +35,8 @@ class PNormDistance(Distance):
         \\left [\\sum_{i} \\left| w_i ( x_i-y_i ) \\right|^{p} \\right ]^{1/p}
 
     E.g.
-    * p=1 for a Euclidean or L1 metric,
-    * p=2 for a Manhattan or L2 metric,
+    * p=1 for a Manhattan or L1 metric,
+    * p=2 for a Euclidean or L2 metric,
     * p=np.inf for a Chebyshev, maximum or inf metric.
 
     Parameters

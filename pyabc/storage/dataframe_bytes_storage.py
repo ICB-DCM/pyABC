@@ -129,6 +129,7 @@ def df_to_bytes(df: pd.DataFrame) -> bytes:
             "Can't find pyarrow, falling back to less efficient csv "
             "to store pandas DataFrames.\n"
             "Install e.g. via `pip install pyabc[pyarrow]`",
+            stacklevel=2,
         )
         return df_to_bytes_csv(df)
     return df_to_bytes_parquet(df)
