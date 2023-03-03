@@ -43,7 +43,6 @@ def work(
         sample.append(new_sim)
 
         if new_sim.accepted:
-
             # increase number of accepted particles
             with n_acc.get_lock():
                 n_acc.value += 1

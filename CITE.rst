@@ -9,7 +9,7 @@ When using pyABC version >= 0.8, please cite:
   https://doi.org/10.21105/joss.04304.
 
   .. code-block:: bibtex
-    
+
     @article{schaelte2022pyabc,
       title = {pyABC: Efficient and robust easy-to-use approximate Bayesian computation},
       author = {Schälte, Yannik and Klinger, Emmanuel and Alamoudi, Emad and Hasenauer, Jan},
