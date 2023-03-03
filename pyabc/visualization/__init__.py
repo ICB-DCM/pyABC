@@ -5,6 +5,12 @@ Visualization
 Visualize results of ABCSMC runs.
 """
 
+from .contour import (
+    plot_contour_2d,
+    plot_contour_2d_lowlevel,
+    plot_contour_matrix,
+    plot_contour_matrix_lowlevel,
+)
 from .credible import plot_credible_intervals, plot_credible_intervals_for_time
 from .data import plot_data_callback, plot_data_default
 from .distance import plot_distance_weights
