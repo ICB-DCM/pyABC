@@ -180,10 +180,10 @@ def plot_contour_2d_lowlevel(
 
     """
     X, Y, PDF = kde_2d(
-        df,
-        w,
-        x,
-        y,
+        df=df,
+        w=w,
+        x=x,
+        y=y,
         xmin=xmin,
         xmax=xmax,
         ymin=ymin,
