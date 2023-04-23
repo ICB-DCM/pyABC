@@ -60,7 +60,7 @@ def log_weights(
     log_file: File to log formatted output to.
     """
     # create weights dictionary with labels
-    weights = {key: val for key, val in zip(keys, weights[t])}
+    weights = dict(zip(keys, weights[t]))
 
     vals = [f"'{key}': {val:.4e}" for key, val in weights.items()]
     logger.debug(f"{label} weights[{t}] = {{{', '.join(vals)}}}")
