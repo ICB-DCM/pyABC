@@ -18,7 +18,7 @@ do
   case $par in
     base)
       # basic setup
-      if [ "$(uname)" == "Darwin" ]; then
+      if [ "$(uname)" = "Darwin" ]; then
         # MacOS
         brew install redis
       else
@@ -29,7 +29,7 @@ do
 
     R)
       # R environment
-      if [ "$(uname)" == "Darwin" ]; then
+      if [ "$(uname)" = "Darwin" ]; then
         # MacOS
         brew install r
       else
