@@ -3,7 +3,7 @@
 Visualization and analysis
 ==========================
 
-Overview
+Plotting
 --------
 
 pyABC offers a variety of routines to visualize and analyze results.
@@ -14,63 +14,18 @@ Further, functions to correctly extract statistics, in particular
 on importance samples obtained via ABCSMC, can be found in the
 :ref:`Weighted statistics API documentation <api_weightedstatistics>`.
 
+Visualization server
+--------------------
 
-Web-based visualizations
-------------------------
+pyABC compes with a visualization server based on the data visualization
+tool Dash,
+to interactively display information on running and completed jobs.
 
-Further, pyABC comes with a web server, which displays lots of useful
-information on the currently running and already completed ABC tasks.
-You can launch it from the command line with
-
-.. code-block:: bash
-
-    abc-server <databasename>
-
-
-It opens per default a web server on port 5000.
-
-You should see something similar to the following:
-
-.. image:: server_screenshots/main.png
-
-
-Via "Go to ABC Run List", you can see all running and finished ABC runs, which you can then inspect in more detail.
-
-You can get overviews over the models:
-
-.. image:: server_screenshots/model_overview.png
-
-Information about individual model parameters for each model and time point is also displayed:
-
-.. image:: server_screenshots/model_detail.png
-
-
-
-Type in the command line
-
-.. code-block:: bash
-
-   abc-server --help
-
-To get more information on available options, such as selecting another port:
-
-
-.. code-block:: bash
-
-   abc-server --port=8888 <databasename>
-
-
-Web based visualizations - using Dash
--------------------------------------
-
-The pyABC package comes with another web server that uses Dash, which displays lots of useful
-information on the currently running and already completed ABC tasks.
 You can launch it from the command line with
 
 .. code-block:: bash
 
     abc-server-dash
-
 
 It opens per default a web server on port 8050.
 
@@ -102,7 +57,6 @@ You can then select one of the plots by selecting one of the tabs under ``Run's 
 To save any plot, right-click on the plot and then select ``save image as``.
 
 
-
 To get help, type in the command line:
 
 .. code-block:: bash
@@ -110,3 +64,43 @@ To get help, type in the command line:
    abc-server-dash --help
 
 To get more information on available options, such as selecting another port:
+
+Visualization server -- using Flask
+-----------------------------------
+
+Note: This web-server is deprecated and no longer maintained.
+
+Further, pyABC comes with a web server based on the micro web framework Flask.
+You can launch it from the command line with
+
+.. code-block:: bash
+
+    abc-server-flask <databasename>
+
+It opens per default a web server on port 5000.
+
+You should see something similar to the following:
+
+.. image:: server_screenshots/main.png
+
+Via "Go to ABC Run List", you can see all running and finished ABC runs, which you can then inspect in more detail.
+
+You can get overviews over the models:
+
+.. image:: server_screenshots/model_overview.png
+
+Information about individual model parameters for each model and time point is also displayed:
+
+.. image:: server_screenshots/model_detail.png
+
+Type in the command line
+
+.. code-block:: bash
+
+   abc-server-flask --help
+
+To get more information on available options, such as selecting another port:
+
+.. code-block:: bash
+
+   abc-server-flask --port=8888 <databasename>

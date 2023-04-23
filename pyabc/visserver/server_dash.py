@@ -9,10 +9,9 @@ from pathlib import Path
 
 import click
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
 import matplotlib
 import matplotlib.pyplot as plt
+from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 import pyabc
@@ -842,7 +841,16 @@ def displayClick(btn_click, tab_type):
     help="Whether to run the server in debug mode",
 )
 @click.option(
-    "--port", default=8050, type=int, help="The port on which the server runs"
+    "--port",
+    default=8050,
+    type=int,
+    help="The port on which the server runs (default: 8050)",
 )
-def run_app(debug, port):
-    app.run_server(debug=debug, port=port)
+@click.option(
+    "--host",
+    default="localhost",
+    type=str,
+    help="Host name (default: 127.0.0.1 / localhost)",
+)
+def run_app(debug, port, host):
+    app.run_server(host=host, port=port, debug=debug)
