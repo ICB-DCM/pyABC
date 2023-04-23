@@ -7,6 +7,15 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.9 (2023-03-01)
+-------------------
+
+Minor:
+
+* Improve documentation of p-norm (#592)
+* Update citation to JOSS
+* Temporarily fixate sqlalchemy version
+* Update pre-commit hooks (all #596)
 
 0.12.10 (2023-05-09)
 --------------------
