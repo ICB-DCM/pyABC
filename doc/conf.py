@@ -49,6 +49,8 @@ extensions = [
     'nbsphinx',
     # code highlighting in jupyter cells
     'IPython.sphinxext.ipython_console_highlighting',
+    # ensure that jQuery is installed
+    'sphinxcontrib.jquery',
 ]
 
 # default autodoc options
@@ -57,6 +59,8 @@ autodoc_default_options = {
     'members': True,
     'special-members': '__init__, __call__',
     'show-inheritance': True,
+    'autodoc_inherit_docstrings': True,
+    'imported-members': True,
 }
 
 # links for intersphinx
