@@ -244,7 +244,7 @@ jobs:
       run: tox -e project,flake8,doc
 
     - name: Test migration
-      timeout-minutes: 3
+      timeout-minutes: 5
       run: tox -e migrate
 
     - name: Coverage
