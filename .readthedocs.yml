@@ -11,7 +11,7 @@ sphinx:
 
 # python requirements
 python:
-  version: 3.8
+  version: 3.11
   install:
     - method: pip
       path: .
