@@ -102,11 +102,12 @@ version via::
 Optional dependencies
 ---------------------
 
-pyABC has an optional interface to the R language. To enable it install
-pyabc via ``pip install pyabc[R]``. All Python based features will work just
-fine if R is not installed. See also
-:ref:`pyABC's external API <api_external>`.
+pyABC has various optional dependencies, see `setup.cfg`.
 
-pyABC optionally uses git to store commit hashed in its database leveraging
-the gitpython package. This feature can be installed via
+In particular, pyABC has optional interfaces to the :ref:`R <api_external_r>`
+and :ref:`Julia <api_external_julia>` languages, see the API documentation
+for details.
+
+pyABC optionally uses git to store commit hashes in its database,
+leveraging the gitpython package. This feature can be installed via
 ``pip install pyabc[git]``.

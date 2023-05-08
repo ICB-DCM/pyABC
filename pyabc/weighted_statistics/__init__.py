@@ -1,4 +1,6 @@
 """
+.. _api_weighted_statistics:
+
 Weighted statistics
 ===================
 

@@ -1,4 +1,6 @@
 """
+.. _api_external:
+
 External simulators
 ===================
 

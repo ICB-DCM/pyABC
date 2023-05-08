@@ -1,4 +1,6 @@
 """
+.. _api_datastore:
+
 Data store
 ==========
 
