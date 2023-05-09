@@ -240,8 +240,12 @@ jobs:
         pip install tox
 
     - name: Run quality checks
-      timeout-minutes: 10
-      run: tox -e project,flake8,doc
+      timeout-minutes: 5
+      run: tox -e project,flake8
+
+    - name: Build docs
+      timeout-minutes: 5
+      run: tox -e doc
 
     - name: Test migration
       timeout-minutes: 5
