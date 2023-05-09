@@ -252,11 +252,7 @@ class PNormDistance(Distance):
         """
         # assumes that the summary statistic labels do not change over time
         return {
-            t: {
-                key: val
-                for key, val in zip(self.sumstat.get_ids(), weights[t])
-            }
-            for t in weights
+            t: dict(zip(self.sumstat.get_ids(), weights[t])) for t in weights
         }
 
 

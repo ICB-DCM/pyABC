@@ -1,13 +1,3 @@
-"""
-Population strategies
-=====================
-
-Strategies to choose the population size.
-
-The population size can be constant or can change over the course
-of the generations.
-"""
-
 import json
 import logging
 from abc import ABC, abstractmethod
@@ -15,11 +5,11 @@ from typing import Dict, List, Union
 
 import numpy as np
 
-from pyabc.cv.bootstrap import calc_cv
+from pyabc.cv import calc_cv
 
-from .transition import Transition
-from .transition.predict_population_size import predict_population_size
-from .util import bound_pop_size_from_env
+from ..transition import Transition
+from ..transition.predict_population_size import predict_population_size
+from ..util import bound_pop_size_from_env
 
 logger = logging.getLogger("ABC.Adaptation")
 

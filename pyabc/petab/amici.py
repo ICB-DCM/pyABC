@@ -72,7 +72,7 @@ class AmiciModel:
 
         # convenience to allow calling model not only with dicts
         if not isinstance(par, Mapping):
-            par = {key: val for key, val in zip(self.x_free_ids, par)}
+            par = dict(zip(self.x_free_ids, par))
 
         # add fixed parameters
         for key, val in zip(self.x_fixed_ids, self.x_fixed_vals):

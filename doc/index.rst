@@ -38,7 +38,7 @@ It is easy to use and flexibly extensible.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: User's guide
 
    what
@@ -47,19 +47,11 @@ It is easy to use and flexibly extensible.
    sampler
    datastore
    visualization
+   api
 
 
 .. toctree::
-   :maxdepth: 2
-   :caption: About
-
-   changelog
-   about
-   cite
-
-
-.. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Developer's guide
 
    contribute
@@ -68,9 +60,12 @@ It is easy to use and flexibly extensible.
 
 .. toctree::
    :maxdepth: 3
-   :caption: API reference
+   :caption: About
 
-   api
+   changelog
+   about
+   cite
+
 
 
 Indices and tables
