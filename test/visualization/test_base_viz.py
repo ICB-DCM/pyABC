@@ -211,6 +211,33 @@ def test_kdes():
     plt.close()
 
 
+def test_contours():
+    """Test `pyabc.visualization.plot_contour_2d/matrix` and lowlevel version."""
+    history = histories[0]
+    df, w = history.get_distribution(m=0, t=None)
+    for kwargs in [
+        {},
+        {
+            "show_clabel": True,
+            "show_legend": True,
+            "clabel_kwargs": {"inline": False},
+        },
+    ]:
+        # lowlevel interfaces
+        pyabc.visualization.plot_contour_2d_lowlevel(df, w, x='p0', y='p1')
+        pyabc.visualization.plot_contour_matrix_lowlevel(df, w)
+
+        # also use the highlevel interfaces
+        pyabc.visualization.plot_contour_2d(
+            history, x='p0', y='p1', size=(4, 5), refval=p_true, **kwargs
+        )
+        pyabc.visualization.plot_contour_matrix(
+            history, size=(7, 5), refval=p_true, **kwargs
+        )
+
+    plt.close()
+
+
 def test_credible_intervals():
     """Test `pyabc.visualization.plot_credible_intervals` and
     `pyabc.visualization.plot_credible_intervals_for_time`"""

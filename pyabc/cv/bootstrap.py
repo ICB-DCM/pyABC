@@ -4,7 +4,7 @@ import numpy as np
 from scipy import stats as st
 
 
-def weights(n_per_model, transitions, test_transitions, test_X):
+def _weights(n_per_model, transitions, test_transitions, test_X):
     """
     For each model m, sample `n_per_model[m]` points from `transitions[m]`,
     fit `test_transitions[m]` to them, and then compute the weights of all
@@ -86,7 +86,7 @@ def calc_cv(
     # N_BOOTSTR times, train test_transitions on n_per_model points, and
     # calculate the weights associated with test_X, for each model
     bootstr_w_at_test_X = [
-        weights(n_per_model, transitions, test_transitions, test_X)
+        _weights(n_per_model, transitions, test_transitions, test_X)
         for _ in range(N_BOOTSTR)
     ]
 

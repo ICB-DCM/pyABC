@@ -1,5 +1,3 @@
-"""Global settings"""
-
 from typing import List
 
 import matplotlib as mpl

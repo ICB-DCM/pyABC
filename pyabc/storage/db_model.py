@@ -24,8 +24,7 @@ from sqlalchemy import (
     LargeBinary,
     String,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 from .bytes_storage import from_bytes, to_bytes
 from .version import __db_version__

@@ -7,6 +7,36 @@ Release Notes
 0.12 Series
 ...........
 
+
+0.12.10 (2023-05-09)
+--------------------
+
+General:
+
+* Update to Python 3.11, drop Python 3.8 support
+* Turn simple files into submodules for cleaner import
+* Fix dask sampler (change default pickling and use global function that it can pickle)
+
+Documentation:
+
+* Configure readthedocs build environment
+* Refactor API docs (add [+]; easier navigation)
+* Correct scipy intersphinx link
+* Add docstrings to submodules
+
+Minor fixes:
+
+* Flake8 fixes of dict creation from key+value
+* Fix imports from correct submodule in external submodule
+* Fix package versions in migration test
+
+Visualization:
+
+* Contour plots as a direct alternative to kernel density heat maps
+  and histograms (#597)
+* Fix column renaming in visserver
+
+
 0.12.9 (2023-03-01)
 -------------------
 
@@ -16,6 +46,7 @@ Minor:
 * Update citation to JOSS
 * Temporarily fixate sqlalchemy version
 * Update pre-commit hooks (all #596)
+
 
 0.12.8 (2022-11-16)
 -------------------
@@ -42,6 +73,7 @@ Minor:
 * Refactor EPSMixin
 * Fix EPSMixin for ConcurrentFutureSampler
 * Temporarily add bokeh to test due to dask error
+
 
 0.12.6 (2022-08-30)
 -------------------

@@ -49,6 +49,8 @@ extensions = [
     'nbsphinx',
     # code highlighting in jupyter cells
     'IPython.sphinxext.ipython_console_highlighting',
+    # ensure that jQuery is installed
+    'sphinxcontrib.jquery',
 ]
 
 # default autodoc options
@@ -57,13 +59,15 @@ autodoc_default_options = {
     'members': True,
     'special-members': '__init__, __call__',
     'show-inheritance': True,
+    'autodoc_inherit_docstrings': True,
+    'imported-members': True,
 }
 
 # links for intersphinx
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/devdocs/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/dev', None),
     'petab': ('https://petab.readthedocs.io/en/stable/', None),
     'amici': ('https://amici.readthedocs.io/en/latest/', None),

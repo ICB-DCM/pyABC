@@ -5,9 +5,32 @@ from abc import ABC, abstractmethod
 from time import sleep
 from typing import Union
 
-import cloudpickle as pickle
+import cloudpickle
 import numpy as np
 from sortedcontainers import SortedList
+
+
+def _global_full_submit_function_pickle(
+    simulate_one_pickle, batch_size, job_id
+):
+    """Submit function defined outside the class.
+
+    This is because some dask versions had problems with bound methods.
+    """
+    # Unpickle function
+    simulate_one = cloudpickle.loads(simulate_one_pickle)
+
+    random.seed()
+    np.random.seed()
+
+    # Run batch_size evaluations and create list of tuples
+    result_batch = []
+    for j in range(batch_size):
+        eval_result = simulate_one()
+        eval_accept = eval_result.accepted
+        result_batch.append((eval_result, eval_accept, job_id[j]))
+
+    return result_batch
 
 
 class EPSMixin(ABC):
@@ -61,23 +84,6 @@ class EPSMixin(ABC):
     def client_cores(self) -> int:
         """Number of active client cores."""
 
-    def _full_submit_function_pickle(self, job_id):
-        """Default pickle function call wrapper."""
-        # Unpickle function
-        simulate_one = pickle.loads(self._simulate_accept_one)
-
-        random.seed()
-        np.random.seed()
-
-        # Run batch_size evaluations and create list of tuples
-        result_batch = []
-        for j in range(self.batch_size):
-            eval_result = simulate_one()
-            eval_accept = eval_result.accepted
-            result_batch.append((eval_result, eval_accept, job_id[j]))
-
-        return result_batch
-
     def sample_until_n_accepted(
         self,
         n,
@@ -90,8 +96,7 @@ class EPSMixin(ABC):
     ):
         # For default pickling
         if self.default_pickle:
-            self._simulate_accept_one = pickle.dumps(simulate_one)
-            full_submit_function = self._full_submit_function_pickle
+            simulate_one_pickle = cloudpickle.dumps(simulate_one)
         else:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(job_id):
@@ -155,9 +160,17 @@ class EPSMixin(ABC):
                     job_id_batch = [job_id + i for i in range(self.batch_size)]
                     next_job_id += self.batch_size
                     # Submit job
-                    job = self.client.submit(
-                        full_submit_function, job_id_batch
-                    )
+                    if self.default_pickle:
+                        job = self.client.submit(
+                            _global_full_submit_function_pickle,
+                            simulate_one_pickle,
+                            self.batch_size,
+                            job_id_batch,
+                        )
+                    else:
+                        job = self.client.submit(
+                            full_submit_function, job_id_batch
+                        )
                     # Register job
                     running_jobs.append((job_id, job))
 
