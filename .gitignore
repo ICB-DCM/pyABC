@@ -59,6 +59,7 @@ coverage.xml
 
 #documentation
 doc/_build
+doc/api
 
 # notebooks
 doc/examples/out

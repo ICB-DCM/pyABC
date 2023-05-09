@@ -1,11 +1,3 @@
-"""
-Model parameters
-================
-
-Parameters define the model input variables that are to be inferred using ABC.
-"""
-
-
 class ParameterStructure(dict):
     """
     Basic functionality of a structure containing parameters.

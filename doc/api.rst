@@ -1,29 +1,33 @@
 API reference
 =============
 
+.. autosummary::
+   :toctree: api
 
-.. automodule:: pyabc
-
-.. toctree::
-   :maxdepth: 3
-
-   api_inference
-   api_distance
-   api_acceptor
-   api_model
-   api_epsilon
-   api_predictor
-   api_sumstat
-   api_datastore
-   api_transition
-   api_populationstrategy
-   api_sampler
-   api_parameters
-   api_population
-   api_random_variables
-   api_sge
-   api_external
-   api_petab
-   api_copasi
-   api_visualization
-   api_weightedstatistics
+   pyabc.acceptor
+   pyabc.copasi
+   pyabc.distance
+   pyabc.epsilon
+   pyabc.external
+   pyabc.external.r
+   pyabc.external.julia
+   pyabc.inference
+   pyabc.inference_util
+   pyabc.model
+   pyabc.parameters
+   pyabc.petab
+   pyabc.population
+   pyabc.populationstrategy
+   pyabc.predictor
+   pyabc.random_choice
+   pyabc.random_variables
+   pyabc.sampler
+   pyabc.settings
+   pyabc.sge
+   pyabc.storage
+   pyabc.sumstat
+   pyabc.transition
+   pyabc.util
+   pyabc.visserver
+   pyabc.visualization
+   pyabc.weighted_statistics

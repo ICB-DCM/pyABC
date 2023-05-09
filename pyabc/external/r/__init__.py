@@ -1,4 +1,6 @@
 """
+.. _api_external_r:
+
 R interface via rpy2
 ====================
 """

@@ -1,8 +1,8 @@
 .. _sampler:
 
 
-Parallel and Distributed Sampling
-=================================
+Parallel sampling
+=================
 
 pyABC offers a variety of multi-core parallel and distributed samplers,
 which handle the usually most time-expensive part of an ABC analysis:
@@ -125,7 +125,7 @@ implementations are available for both multi-core (e.g.
 concurrent.futures.ProcessPoolExecutor) and distributed (e.g. Dask)
 environments
 
-Check the :doc:`API documentation <api_sampler>` for more details.
+Check the :ref:`API documentation <api_sampler>` for more details.
 
 
 How to set up a Redis based distributed cluster
@@ -519,7 +519,7 @@ where distributed file systems are rather slow.
 
 The ``pyabc.sge.sge_available`` can be used to check if an SGE cluster can be used on the machine.
 
-Check the :doc:`API documentation <api_sge>` for more details.
+Check the :ref:`API documentation <api_sge>` for more details.
 
 
 Information about running jobs

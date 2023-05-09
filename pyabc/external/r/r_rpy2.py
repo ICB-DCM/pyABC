@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from ...random_variables import Parameter
+from ...parameters import Parameter
 
 logger = logging.getLogger("ABC.External")
 
