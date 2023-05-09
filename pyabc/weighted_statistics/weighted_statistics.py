@@ -1,11 +1,3 @@
-"""
-Weighted statistics
-===================
-
-Functions performing statistical operations on weighted points
-generated via importance sampling.
-"""
-
 from functools import wraps
 
 import numpy as np

@@ -1,20 +1,10 @@
-"""
-Particles and Populations
-=========================
-
-A particle contains the sampled parameters and simulated data.
-A population gathers all particles collected in one SMC
-iteration.
-"""
-
-
 import logging
 from typing import Callable, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
 
-from .parameters import Parameter
+from ..parameters import Parameter
 
 logger = logging.getLogger("ABC.Population")
 

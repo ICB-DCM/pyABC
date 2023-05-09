@@ -79,21 +79,24 @@ class ABCInfo:
 def abc_detail(abc_id):
     history = app.config["HISTORY"]
     history.id = abc_id
+
     abc = ABCInfo(history.get_abc())
+
     model_probabilities = history.get_model_probabilities()
     model_ids = model_probabilities.columns
     model_probabilities.columns = list(
         map("{}".format, model_probabilities.columns)
     )
     model_probabilities = model_probabilities.reset_index()
+
     if len(model_probabilities) > 0:
         populations = history.get_all_populations()
         populations = populations[populations.t >= 0]
         particles = (
             history.get_nr_particles_per_population()
             .reset_index()
-            .rename(columns={"index": "t", "t": "particles"})
             .query("t >= 0")
+            .rename(columns={"count": "particles"})
         )
 
         melted = pd.melt(

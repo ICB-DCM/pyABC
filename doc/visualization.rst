@@ -12,7 +12,7 @@ An overview of all plotting routines can be found in the
 :ref:`Visualization API documentation <api_visualization>`.
 Further, functions to correctly extract statistics, in particular
 on importance samples obtained via ABCSMC, can be found in the
-:ref:`Weighted statistics API documentation <api_weightedstatistics>`.
+:ref:`Weighted statistics API documentation <api_weighted_statistics>`.
 
 Visualization server
 --------------------

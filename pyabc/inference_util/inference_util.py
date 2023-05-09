@@ -1,5 +1,3 @@
-"""Inference utilities."""
-
 # Note: Due to cyclic imports, these need to be separated from other modules
 
 import logging
@@ -10,16 +8,16 @@ from typing import Callable, List
 import numpy as np
 import pandas as pd
 
-from pyabc.acceptor import Acceptor
-from pyabc.distance import Distance
-from pyabc.epsilon import Epsilon
-from pyabc.model import Model
-from pyabc.parameters import Parameter
-from pyabc.population import Particle
-from pyabc.random_choice import fast_random_choice
-from pyabc.random_variables import RV, Distribution
-from pyabc.storage.history import History
-from pyabc.transition import ModelPerturbationKernel, Transition
+from ..acceptor import Acceptor
+from ..distance import Distance
+from ..epsilon import Epsilon
+from ..model import Model
+from ..parameters import Parameter
+from ..population import Particle
+from ..random_choice import fast_random_choice
+from ..random_variables import RV, Distribution
+from ..storage.history import History
+from ..transition import ModelPerturbationKernel, Transition
 
 logger = logging.getLogger("ABC")
 
