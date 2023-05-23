@@ -9,6 +9,7 @@ from pathlib import Path
 
 import click
 import dash
+import dash_bootstrap_components as dbc
 import matplotlib
 import matplotlib.pyplot as plt
 from dash import dcc, html
@@ -26,7 +27,7 @@ static_logo = Path(str(pathlib.Path(__file__).parent.absolute())).parent.parent
 DOWNLOAD_DIR = tempfile.mkdtemp() + '/'
 db_path = DOWNLOAD_DIR
 parameter = ""
-square_png = static + 'square.png'
+square_png = static + 'square_v2.png'
 square_base64 = base64.b64encode(open(square_png, 'rb').read()).decode('ascii')
 pyABC_png = str(static_logo) + '/doc/logo/logo.png'
 pyABC_base64 = base64.b64encode(open(pyABC_png, 'rb').read()).decode('ascii')
@@ -40,6 +41,9 @@ app = dash.Dash(__name__)
 # Define the app
 app.layout = app.layout = html.Div(
     children=[
+        html.Div(
+            id='alert_div',
+        ),
         html.Div(
             className='row',  # Define the row element
             children=[
@@ -101,7 +105,7 @@ app.layout = app.layout = html.Div(
                                                 "ABC runs: ",
                                                 dcc.Dropdown(id='ABC_runs'),
                                             ]
-                                        )
+                                        ),
                                     ],
                                     style={'width': '100%', 'height': '100%'},
                                 ),
@@ -139,10 +143,25 @@ def parse_contents(contents, filename, date):
             for col in dist_df[0].columns:
                 para_list.append(col)
     except Exception as e:
-        return html.Div(
-            [
-                'There was an error processing this file. ' + e,
-            ]
+        return (
+            'There was an error processing this file.',
+            [],
+            "",
+            dbc.Alert(
+                [
+                    html.H4("Error!", className="alert-heading"),
+                    html.P(
+                        f"There were an error while loading the database. "
+                        f"{str(e)}.",
+                    ),
+                ],
+                id="user_update_alert",
+                is_open=True,
+                fade=True,
+                color="success",
+                duration=3000,
+                style={'color': '#006400'},
+            ),
         )
     return html.Div(
         [
@@ -228,24 +247,32 @@ def prepare_run_detailes(history):
         [
             html.Div(
                 [
+                    html.Hr(),
                     html.H1("Run's details"),
-                    html.Hr(),  # horizontal line
+                    # html.Hr(),  # horizontal line
                 ]
             ),
             html.Div(
                 [
                     html.Div(
                         [
-                            html.H6("General info:"),
+                            html.H5("General info:"),
                             html.Label("Start time: " + str(start_time)),
                             html.Label("End time: " + str(end_time)),
                             html.Label("Run's ID: " + str(id)),
                         ],
                         style={
                             'display': 'inline-block',
+                            'margin-right': '40px',
                             'vertical-align': 'top',
                             'height': '200px',
                             'fontSize': 14,
+                            'margin-bottom': '25px',
+                            'border-radius': '5px',
+                            'padding': '15px',
+                            'position': 'relative',
+                            'background-color': 'WhiteSmoke',
+                            'box-shadow': '2px 2px 2px lightgrey',
                         },
                     ),
                     html.Div(
@@ -256,13 +283,19 @@ def prepare_run_detailes(history):
                         style={
                             'display': 'inline-block',
                             'vertical-align': 'top',
-                            'margin-left': '40px',
+                            'margin-right': '40px',
                             'height': '200px',
+                            'margin-bottom': '25px',
+                            'border-radius': '5px',
+                            'padding': '15px',
+                            'position': 'relative',
+                            'background-color': 'WhiteSmoke',
+                            'box-shadow': '2px 2px 2px lightgrey',
                         },
                     ),
                     html.Div(
                         [
-                            html.H2("Population strategy:"),
+                            html.H5("Population strategy:"),
                             html.Label("Name: " + str(pop_str_name)),
                             html.Label(
                                 "Number of calibration particles: "
@@ -280,13 +313,19 @@ def prepare_run_detailes(history):
                         style={
                             'display': 'inline-block',
                             'vertical-align': 'top',
-                            'margin-left': '40px',
+                            'margin-right': '40px',
                             'height': '200px',
+                            'margin-bottom': '25px',
+                            'border-radius': '5px',
+                            'padding': '15px',
+                            'position': 'relative',
+                            'background-color': 'WhiteSmoke',
+                            'box-shadow': '2px 2px 2px lightgrey',
                         },
                     ),
                     html.Div(
                         [
-                            html.H1("Epsilon function:"),
+                            html.H5("Epsilon function:"),
                             html.Label("Name: " + str(eps_name)),
                             html.Label(
                                 "Initial epsilon: " + str(eps_init_spe)
@@ -300,20 +339,18 @@ def prepare_run_detailes(history):
                         style={
                             'display': 'inline-block',
                             'vertical-align': 'top',
-                            'margin-left': '40px',
                             'height': '200px',
+                            'margin-bottom': '25px',
+                            'border-radius': '5px',
+                            'padding': '15px',
+                            'position': 'relative',
+                            'background-color': 'WhiteSmoke',
+                            'box-shadow': '2px 2px 2px lightgrey',
                         },
                     ),
-                ]
+                ],
             ),
-            html.Div(
-                [
-                    html.H1("Run's plots"),
-                    html.Hr(),
-                    html.Br(),
-                    # horizontal line
-                ]
-            ),
+            html.Hr(),
             html.Div(
                 children=[
                     dcc.Tabs(
@@ -365,9 +402,14 @@ def prepare_run_detailes(history):
                                 selected_className='custom-tab--selected',
                             ),
                         ],
+                        vertical=True,
                     ),
+                    html.Div(style={'width': '5%'}),
                     html.Div(id='tabs-content'),
-                ]
+                ],
+                style={
+                    'display': 'Flex',
+                },
             ),
         ],
         style={
@@ -384,7 +426,10 @@ def prepare_run_detailes(history):
 )
 def display_info(smc_id):
     global db_path
-    history = h.History("sqlite:///" + db_path, _id=smc_id)
+    try:
+        history = h.History("sqlite:///" + db_path, _id=smc_id)
+    except Exception:
+        return " "
     global para_list
     dist_df = history.get_distribution()
     para_list.clear()
@@ -403,11 +448,19 @@ def update_download_path(new_download_path):
     return [DOWNLOAD_DIR]
 
 
+# @app.callback(
+#     dash.dependencies.Output("alert-fade", "is_open"),
+# )
+# def error_handler(message):
+#     return message
+
+
 @app.callback(
     [
         Output('output-data-upload', 'children'),
         Output('ABC_runs', 'options'),
         Output('ABC_runs', 'value'),
+        dash.dependencies.Output("alert_div", "children"),
     ],
     [Input('upload-data', 'contents')],
     [State('upload-data', 'filename'), State('upload-data', 'last_modified')],
@@ -415,14 +468,52 @@ def update_download_path(new_download_path):
 def update_DB_details(list_of_contents, list_of_names, list_of_dates):
     try:
         file_name = "pyABC_server_" + list_of_names[0]
+        save_file(file_name, list_of_contents[0])
+        global db_path
+        db_path = DOWNLOAD_DIR + file_name
+        history = h.History("sqlite:///" + db_path)
     except Exception as e:
-        print("database name is none" + e)  # noqa: T201
-        print("list of names: ", list_of_names)  # noqa: T201
-
-    save_file(file_name, list_of_contents[0])
-    global db_path
-    db_path = DOWNLOAD_DIR + file_name
-    history = h.History("sqlite:///" + db_path)
+        if e.__class__.__name__ == "TypeError":
+            return (
+                "",
+                [],
+                "",
+                dbc.Alert(
+                    [
+                        html.H4(
+                            "Please upload a database!",
+                            className="alert-heading",
+                        ),
+                    ],
+                    id="user_update_alert",
+                    is_open=True,
+                    fade=True,
+                    color="success",
+                    duration=2000,
+                    style={'color': '#006400'},
+                ),
+            )
+        else:
+            return (
+                "",
+                [],
+                "",
+                dbc.Alert(
+                    [
+                        html.H4("Error!", className="alert-heading"),
+                        html.P(
+                            f"There were an error while loading the database. "
+                            f"{str(e)}.",
+                        ),
+                    ],
+                    id="user_update_alert",
+                    is_open=True,
+                    fade=True,
+                    color="success",
+                    duration=5000,
+                    style={'color': 'red'},
+                ),
+            )
     all_runs = h.History.all_runs(history)
     list_run_ids = [x.id for x in all_runs]
     if list_of_contents is not None:
@@ -434,6 +525,20 @@ def update_DB_details(list_of_contents, list_of_names, list_of_dates):
             children,
             [{'label': name, 'value': name} for name in list_run_ids],
             list_run_ids[-1],
+            dbc.Alert(
+                [
+                    html.H4("Great!", className="alert-heading"),
+                    html.P(
+                        "The database was loaded successfully.",
+                    ),
+                ],
+                id="user_update_alert",
+                is_open=True,
+                fade=True,
+                color="success",
+                duration=3000,
+                style={'color': '#006400'},
+            ),
         )
 
 
@@ -488,9 +593,9 @@ def prepare_fig_tab(smc_id):
             html.Br(),
             html.Div(
                 [
-                    "ABC run plots: ",
-                    html.Br(),
-                    html.Br(),
+                    # "ABC run plots: ",
+                    # html.Br(),
+                    # html.Br(),
                     html.Img(
                         id='abc_run_plot',
                         src='data:image/png;base64,{}'.format(square_base64),
@@ -529,9 +634,7 @@ def update_figure_ABC_run(smc_id, f_type):
             ),
             html.Div(
                 [
-                    "ABC run plots: ",
-                    html.Br(),
-                    html.Br(),
+                    # "ABC run plots: ",
                     html.Img(
                         id='abc_run_plot',
                         src='data:image/png;base64,{}'.format(square_base64),
@@ -575,7 +678,7 @@ def update_figure_ABC_run(smc_id, f_type):
                                 min=0,
                                 max=20,
                                 step=1,
-                                value=[5, 15],
+                                value=[1, 15],
                             ),
                         ]
                     ),
@@ -600,19 +703,25 @@ def update_figure_ABC_run(smc_id, f_type):
     elif f_type == "tab-epsilons":
         pyabc.visualization.plot_epsilons(history)
     elif f_type == "tab-credible":
+        # buf = io.BytesIO()  # in-memory files
+        #
+        # plt.savefig(buf, format="png")  # save to the above file object
+        # data = base64.b64encode(buf.getbuffer()).decode()
+
         return [
             html.Label('Select parameter: '),
             dcc.Dropdown(
                 id="parameters",
                 options=[{'label': name, 'value': name} for name in para_list],
+                style={'color': 'red'},
                 multi=True,
                 value=[para_list[0]],
             ),
             html.Div(
                 [
-                    "ABC run plots: ",
-                    html.Br(),
-                    html.Br(),
+                    # "ABC run plots: ",
+                    # html.Br(),
+                    # html.Br(),
                     html.Img(
                         id='abc_run_plot',
                         src='data:image/png;base64,{}'.format(square_base64),
@@ -629,7 +738,7 @@ def update_figure_ABC_run(smc_id, f_type):
                         min=0,
                         max=20,
                         step=1,
-                        value=[5, 15],
+                        value=[1, 15],
                     )
                 ],
                 style={'display': 'none'},
@@ -641,17 +750,16 @@ def update_figure_ABC_run(smc_id, f_type):
         df, w = history.get_distribution(m=0)
         pyabc.visualization.plot_kde_matrix(df, w)
     buf = io.BytesIO()  # in-memory files
-
     plt.savefig(buf, format="png")  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
         "utf8"
     )  # encode to html elements
-    plt.close()
+    # plt.close()
     return [
-        html.Br(),
-        "ABC run plots: ",
-        html.Br(),
-        html.Br(),
+        # html.Br(),
+        # # "ABC run plots: ",
+        # html.Br(),
+        # html.Br(),
         html.Div(
             [
                 html.Img(
@@ -721,8 +829,7 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
     data = base64.b64encode(buf.getbuffer()).decode(
         "utf8"
     )  # encode to html elements
-    plt.close()
-
+    # plt.close()
     return "data:image/png;base64,{}".format(data)
 
 
@@ -852,5 +959,8 @@ def displayClick(btn_click, tab_type):
     type=str,
     help="Host name (default: 127.0.0.1 / localhost)",
 )
-def run_app(debug, port, host):
-    app.run_server(host=host, port=port, debug=debug)
+def run_app(host, port, debug):
+    app.run(host=host, port=port, debug=debug)
+
+
+run_app()
