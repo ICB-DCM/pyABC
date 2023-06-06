@@ -1,6 +1,6 @@
 import base64
-import datetime
 import io
+import math
 import os
 import pathlib
 import re
@@ -13,7 +13,7 @@ import dash_bootstrap_components as dbc
 import matplotlib
 import matplotlib.pyplot as plt
 from dash import dcc, html
-from dash.dependencies import Input, Output, State
+from dash.dependencies import Input, Output
 
 import pyabc
 from pyabc.storage import history as h
@@ -59,12 +59,12 @@ app.layout = app.layout = html.Div(
                             width="300",
                         ),
                         html.Br(),
-                        html.H1('pyABC: Likelihood free inference'),
-                        html.H3('(Web server)'),
+                        html.H3('(Visulization Web server)'),
                         html.Hr(),
                         html.Div(
                             [
-                                "A copy of the db will be save in: ",
+                                "A copy of the generated files will be"
+                                " save in: ",
                                 dcc.Input(
                                     id="download_path",
                                     placeholder=DOWNLOAD_DIR,
@@ -74,16 +74,19 @@ app.layout = app.layout = html.Div(
                             ]
                         ),
                         html.Div(id="hidden-div", style={"display": "none"}),
-                        dcc.Upload(
+                        dcc.Input(
                             id='upload-data',
-                            children=html.Div(
-                                [
-                                    'Drag and Drop or ',
-                                    html.A('Select Files'),
-                                ]
-                            ),
+                            type='text',
+                            placeholder='Please write the path to the db '
+                            'file HERE',
+                            # children=html.Div(
+                            #     [
+                            #         'Drag and Drop or ',
+                            #         html.A('Select Files'),
+                            #     ]
+                            # ),
                             style={
-                                'width': '100%',
+                                'width': '70%',
                                 'height': '60px',
                                 'lineHeight': '60px',
                                 'borderWidth': '1px',
@@ -91,8 +94,15 @@ app.layout = app.layout = html.Div(
                                 'borderRadius': '5px',
                                 'textAlign': 'center',
                                 'margin': '10px',
+                                'display': 'inline-block',
                             },
                             multiple=True,
+                        ),
+                        html.Button(
+                            'Upload',
+                            id='upload_file',
+                            style={'height': '60px'},
+                            n_clicks=0,
                         ),
                         # show details in boxes once db is loaded
                         html.Div(
@@ -125,8 +135,7 @@ app.layout = app.layout = html.Div(
 )
 
 
-def parse_contents(contents, filename, date):
-    content_type, content_string = contents.split(',')
+def parse_contents(filename):
     try:
         if 'db' in filename:
             # Assume that the user uploaded a db file
@@ -134,10 +143,12 @@ def parse_contents(contents, filename, date):
             history = h.History("sqlite:///" + db_path)
             all_runs = h.History.all_runs(history)
             list_run_ids = [x.id for x in all_runs]
-            name = filename
-            time = "last modified: " + str(
-                datetime.datetime.fromtimestamp(date)
-            )
+            # get file name form full path
+            name = filename.split('/')[-1]
+            # name = filename
+            # time = "last modified: " + str(
+            #     datetime.datetime.fromtimestamp(date)
+            # )
             dist_df = history.get_distribution()
             para_list = []
             for col in dist_df[0].columns:
@@ -169,11 +180,11 @@ def parse_contents(contents, filename, date):
                 "Name: " + name,
                 id='btn-nclicks-1',
             ),
-            html.Button(
-                time,
-                id='btn-nclicks-2',
-                style={'margin-left': '10px'},
-            ),
+            # html.Button(
+            #     time,
+            #     id='btn-nclicks-2',
+            #     style={'margin-left': '10px'},
+            # ),
             html.Br(),
             html.Button(
                 '# of Runs: ' + str(len(list_run_ids)),
@@ -247,7 +258,6 @@ def prepare_run_detailes(history):
         [
             html.Div(
                 [
-                    html.Hr(),
                     html.H1("Run's details"),
                     # html.Hr(),  # horizontal line
                 ]
@@ -462,82 +472,101 @@ def update_download_path(new_download_path):
         Output('ABC_runs', 'value'),
         dash.dependencies.Output("alert_div", "children"),
     ],
-    [Input('upload-data', 'contents')],
-    [State('upload-data', 'filename'), State('upload-data', 'last_modified')],
+    [
+        Input('upload_file', 'n_clicks'),
+        dash.dependencies.Input('upload-data', 'value'),
+    ],
 )
-def update_DB_details(list_of_contents, list_of_names, list_of_dates):
-    try:
-        file_name = "pyABC_server_" + list_of_names[0]
-        save_file(file_name, list_of_contents[0])
-        global db_path
-        db_path = DOWNLOAD_DIR + file_name
-        history = h.History("sqlite:///" + db_path)
-    except Exception as e:
-        if e.__class__.__name__ == "TypeError":
+def update_DB_details(btn_click, db_path_new):
+    if btn_click > 0:
+        try:
+            # file_name = "pyABC_server_" + db_path_new
+            # save_file(file_name, list_of_contents[0])
+            global db_path
+            db_path = db_path_new
+            history = h.History("sqlite:///" + db_path_new)
+        except Exception as e:
+            if e.__class__.__name__ == "TypeError":
+                return (
+                    "",
+                    [],
+                    "",
+                    dbc.Alert(
+                        [
+                            html.H4(
+                                "There were an error while loading the "
+                                "database!",
+                                className="alert-heading",
+                            ),
+                        ],
+                        id="user_update_alert",
+                        is_open=True,
+                        fade=True,
+                        color="error",
+                        duration=2000,
+                        style={'color': 'red'},
+                    ),
+                )
+            else:
+                return (
+                    "",
+                    [],
+                    "",
+                    dbc.Alert(
+                        [
+                            html.H4("Error!", className="alert-heading"),
+                            html.P(
+                                f"Please upload a database. " f"{str(e)}.",
+                            ),
+                        ],
+                        id="user_update_alert",
+                        is_open=True,
+                        fade=True,
+                        color="success",
+                        duration=5000,
+                        style={'color': 'red'},
+                    ),
+                )
+        all_runs = h.History.all_runs(history)
+        list_run_ids = [x.id for x in all_runs]
+        if all_runs is not None:
+            children = [parse_contents(db_path_new)]
             return (
-                "",
-                [],
-                "",
+                children,
+                [{'label': name, 'value': name} for name in list_run_ids],
+                list_run_ids[-1],
                 dbc.Alert(
                     [
-                        html.H4(
-                            "Please upload a database!",
-                            className="alert-heading",
+                        html.H4("Great!", className="alert-heading"),
+                        html.P(
+                            "The database was loaded successfully.",
                         ),
                     ],
                     id="user_update_alert",
                     is_open=True,
                     fade=True,
                     color="success",
-                    duration=2000,
+                    duration=3000,
                     style={'color': '#006400'},
                 ),
             )
-        else:
-            return (
-                "",
-                [],
-                "",
-                dbc.Alert(
-                    [
-                        html.H4("Error!", className="alert-heading"),
-                        html.P(
-                            f"There were an error while loading the database. "
-                            f"{str(e)}.",
-                        ),
-                    ],
-                    id="user_update_alert",
-                    is_open=True,
-                    fade=True,
-                    color="success",
-                    duration=5000,
-                    style={'color': 'red'},
-                ),
-            )
-    all_runs = h.History.all_runs(history)
-    list_run_ids = [x.id for x in all_runs]
-    if list_of_contents is not None:
-        children = [
-            parse_contents(c, n, d)
-            for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)
-        ]
+    else:
         return (
-            children,
-            [{'label': name, 'value': name} for name in list_run_ids],
-            list_run_ids[-1],
+            "",
+            [],
+            "",
             dbc.Alert(
                 [
-                    html.H4("Great!", className="alert-heading"),
+                    html.H4("Error!", className="alert-heading"),
                     html.P(
-                        "The database was loaded successfully.",
+                        "Please upload a database!.",
                     ),
                 ],
                 id="user_update_alert",
                 is_open=True,
                 fade=True,
                 color="success",
-                duration=3000,
-                style={'color': '#006400'},
+                duration=5000,
             ),
         )
 
@@ -663,13 +692,6 @@ def update_figure_ABC_run(smc_id, f_type):
                                 type='number',
                                 value='20',
                             ),
-                            "step: ",
-                            dcc.Input(
-                                id="bar_step",
-                                placeholder='step',
-                                type='text',
-                                value='1',
-                            ),
                             "Generate code: ",
                             html.Button('Generate', id='copy', n_clicks=0),
                             html.Hr(),
@@ -677,8 +699,12 @@ def update_figure_ABC_run(smc_id, f_type):
                                 id='my-range-slider',
                                 min=0,
                                 max=20,
-                                step=1,
-                                value=[1, 15],
+                                marks=None,
+                                value=[0, 0],
+                                tooltip={
+                                    "placement": "bottom",
+                                    "always_visible": True,
+                                },
                             ),
                         ]
                     ),
@@ -732,14 +758,29 @@ def update_figure_ABC_run(smc_id, f_type):
             "Generate code: ",
             html.Button('Generate', id='copy', n_clicks=0),
             html.Div(
-                [
+                children=[
+                    "min: ",
+                    dcc.Input(
+                        id="bar_min",
+                        placeholder='min',
+                        type='number',
+                        value='0',
+                    ),
+                    "max: ",
+                    dcc.Input(
+                        id="bar_max",
+                        placeholder='max',
+                        type='number',
+                        value='20',
+                    ),
+                    html.Hr(),
                     dcc.RangeSlider(
                         id='my-range-slider',
                         min=0,
                         max=20,
-                        step=1,
-                        value=[1, 15],
-                    )
+                        marks=None,
+                        value=[0, 0],
+                    ),
                 ],
                 style={'display': 'none'},
             ),
@@ -776,7 +817,11 @@ def update_figure_ABC_run(smc_id, f_type):
 
 
 @app.callback(
-    dash.dependencies.Output('abc_run_plot', 'src'),
+    [
+        dash.dependencies.Output('abc_run_plot', 'src'),
+        dash.dependencies.Output('bar_min', 'value'),
+        dash.dependencies.Output('bar_max', 'value'),
+    ],
     [
         dash.dependencies.Input('ABC_runs', 'value'),
         dash.dependencies.Input('parameters', 'value'),
@@ -787,17 +832,25 @@ def update_figure_ABC_run(smc_id, f_type):
 def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
     # create some matplotlib graph
     history = h.History("sqlite:///" + db_path, _id=smc_id)
+    buf = None
     global para_list
     if f_type == "tab-pdf":
         fig, ax = plt.subplots()
         if len(parameters) == 1:
             for t in range(history.max_t + 1):
                 df, w = history.get_distribution(m=0, t=t)
+                if bar_val == [0, 0]:
+                    xmin = df[parameters[0]].min()
+                    xmax = df[parameters[0]].max()
+                else:
+                    xmin = bar_val[0]
+                    xmax = bar_val[1]
+
                 pyabc.visualization.plot_kde_1d(
                     df,
                     w,
-                    xmin=bar_val[0],
-                    xmax=bar_val[1],
+                    xmin=xmin,
+                    xmax=xmax,
                     x=parameters[0],
                     ax=ax,
                     label="PDF t={}".format(t),
@@ -805,15 +858,36 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
             ax.legend()
         elif len(parameters) == 2:
             df, w = history.get_distribution(m=0)
+            if bar_val == [0, 0]:
+                xmin = df[parameters[0]].min()
+                xmax = df[parameters[0]].max()
+            else:
+                xmin = bar_val[0]
+                xmax = bar_val[1]
+
             pyabc.visualization.plot_kde_2d(
-                df, w, parameters[0], parameters[1]
+                df, w, parameters[0], parameters[1], xmin=xmin, xmax=xmax
             )
 
         else:
             df, w = history.get_distribution(m=0)
             pyabc.visualization.plot_kde_matrix(df, w)
+            if bar_val == [0, 0]:
+                xmin = df[parameters[0]].min()
+                xmax = df[parameters[0]].max()
+            else:
+                xmin = bar_val[0]
+                xmax = bar_val[1]
 
     elif f_type == "tab-credible":
+        df, w = history.get_distribution()
+        if bar_val == [0, 0]:
+            xmin = df[parameters[0]].min()
+            xmax = df[parameters[0]].max()
+        else:
+            xmin = bar_val[0]
+            xmax = bar_val[1]
+
         if len(parameters) == 0:
             return
         pyabc.visualization.plot_credible_intervals(
@@ -825,12 +899,18 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
             par_names=parameters,
         )
     buf = io.BytesIO()  # in-memory files
+    plt.gcf().set_size_inches(7, 5)
+    plt.tight_layout()
     plt.savefig(buf, format="png")  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
         "utf8"
     )  # encode to html elements
     # plt.close()
-    return "data:image/png;base64,{}".format(data)
+    return (
+        "data:image/png;base64,{}".format(data),
+        math.floor(xmin),
+        math.ceil(xmax),
+    )
 
 
 # @app.callback(
@@ -855,16 +935,14 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
     [
         dash.dependencies.Output("my-range-slider", "min"),
         dash.dependencies.Output("my-range-slider", "max"),
-        dash.dependencies.Output("my-range-slider", "step"),
     ],
     [
         dash.dependencies.Input("bar_min", "value"),
         dash.dependencies.Input("bar_max", "value"),
-        dash.dependencies.Input("bar_step", "value"),
     ],
 )
-def number_render(min, max, step):
-    return int(min), int(max), float(step)
+def number_render(min, max):
+    return int(min), int(max)
 
 
 def save_file(name, content):
