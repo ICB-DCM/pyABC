@@ -71,6 +71,7 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/pandas-docs/dev', None),
     'petab': ('https://petab.readthedocs.io/en/stable/', None),
     'amici': ('https://amici.readthedocs.io/en/latest/', None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
 }
 
 
