@@ -1,7 +1,6 @@
 """Execute petab test suite."""
 
 import logging
-import os
 import sys
 
 import petabtests
@@ -22,8 +21,11 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+MODEL_TYPE = "sbml"
+PETAB_VERSION = "v1.0.0"
 
-@pytest.fixture(params=petabtests.CASES_LIST)
+
+@pytest.fixture(params=petabtests.get_cases(MODEL_TYPE, version=PETAB_VERSION))
 def case(request):
     """A single test case."""
     return request.param
@@ -63,11 +65,10 @@ def _execute_case(case):
     case = petabtests.test_id_str(case)
     logger.info(f"Case {case}")
 
-    # case folder
-    case_dir = os.path.join(petabtests.CASES_DIR, case)
-
     # load solution
-    solution = petabtests.load_solution(case, format='sbml')
+    solution = petabtests.load_solution(
+        case, format=MODEL_TYPE, version=PETAB_VERSION
+    )
     gt_chi2 = solution[petabtests.CHI2]
     gt_llh = solution[petabtests.LLH]
     gt_simulation_dfs = solution[petabtests.SIMULATION_DFS]
@@ -79,7 +80,8 @@ def _execute_case(case):
     output_folder = f'amici_models/model_{case}'
 
     # import petab problem
-    yaml_file = os.path.join(case_dir, petabtests.problem_yaml_name(case))
+    case_dir = petabtests.get_case_dir(case, MODEL_TYPE, PETAB_VERSION)
+    yaml_file = case_dir / petabtests.problem_yaml_name(case)
 
     # create problem
     petab_problem = petab.Problem.from_yaml(yaml_file)
@@ -87,8 +89,14 @@ def _execute_case(case):
     # compile amici
     if output_folder not in sys.path:
         sys.path.insert(0, output_folder)
+
+    # use distinct model IDs for each test case since we cannot import different
+    # models with the same name in a single python session
+    model_name = f"petab_{MODEL_TYPE}_test_case_{case}_{PETAB_VERSION.replace('.', '_')}"
+
     amici_model = amici.petab_import.import_petab_problem(
         petab_problem=petab_problem,
+        model_name=model_name,
         model_output_dir=output_folder,
         generate_sensitivity_code=False,
     )

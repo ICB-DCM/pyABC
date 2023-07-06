@@ -8,6 +8,16 @@ Release Notes
 ...........
 
 
+0.12.11 (2023-07-06)
+--------------------
+
+Fixes (#608)
+
+* Fix petab test suite (different name resolution)
+* Fix LocalTransition (pandas -> numpy argument)
+* Fix sklearn intersphinx
+
+
 0.12.10 (2023-05-09)
 --------------------
 
