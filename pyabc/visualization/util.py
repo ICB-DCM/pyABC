@@ -1,8 +1,12 @@
 """Visualization util functions"""
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+if TYPE_CHECKING:
+    import plotly.graph_objs as go
 
 
 def to_lists(*args):
@@ -85,3 +89,24 @@ def format_plot_matrix(arr_ax: np.ndarray, par_names: Sequence):
         ax.set_xlabel(label)
     for ax, label in zip(arr_ax[:, 0], par_names):
         ax.set_ylabel(label)
+
+
+def format_plot_matrix_plotly(fig: "go.Figure", par_names: Sequence):
+    """Clear all labels and legends, and set the left-most and bottom-most
+    labels to the parameter names.
+    """
+    n_par = len(par_names)
+
+    for i in range(0, n_par):
+        for j in range(0, n_par):
+            # clear labels
+            fig.update_xaxes(title_text="", row=i + 1, col=j + 1)
+            fig.update_yaxes(title_text="", row=i + 1, col=j + 1)
+
+    # set left-most and bottom-most labels to parameter names
+    for i, label in enumerate(par_names):
+        fig.update_xaxes(title_text=label, row=n_par, col=i + 1)
+        fig.update_yaxes(title_text=label, row=i + 1, col=1)
+
+    # remove legends
+    fig.update_layout(showlegend=False)
