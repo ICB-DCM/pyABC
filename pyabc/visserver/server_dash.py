@@ -1323,6 +1323,3 @@ def displayClick(btn_click, tab_type):
 )
 def run_app(host, port, debug):
     app.run(host=host, port=port, debug=debug)
-
-
-run_app()
