@@ -5,6 +5,7 @@ import os
 import pathlib
 import re
 import tempfile
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -21,8 +22,6 @@ from pyabc.storage import history as h
 matplotlib.use('Agg')
 
 static = str(pathlib.Path(__file__).parent.absolute()) + '/assets/'
-os.chdir('../../')
-
 static_logo = Path(str(pathlib.Path(__file__).parent.absolute())).parent.parent
 DOWNLOAD_DIR = tempfile.mkdtemp() + '/'
 db_path = DOWNLOAD_DIR
@@ -36,14 +35,15 @@ colors = {
     'div': '#595959',
 }
 # Initialise the app
-app = dash.Dash(__name__)
+# app = dash.Dash(__name__)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Define the app
-app.layout = app.layout = html.Div(
+app.layout = html.Div(
     children=[
-        html.Div(
-            id='alert_div',
-        ),
+        # html.Div(
+        #     id='alert_div',
+        # ),
         html.Div(
             className='row',  # Define the row element
             children=[
@@ -51,6 +51,9 @@ app.layout = app.layout = html.Div(
                 html.Div(
                     className='four columns div-user-controls',
                     children=[
+                        html.Div(
+                            id='alert_div',
+                        ),
                         html.Img(
                             id='pyABC_logo',
                             src='data:image/png;base64,{}'.format(
@@ -59,7 +62,7 @@ app.layout = app.layout = html.Div(
                             width="300",
                         ),
                         html.Br(),
-                        html.H3('(Visulization Web server)'),
+                        html.H3('Visualization web server'),
                         html.Hr(),
                         html.Div(
                             [
@@ -77,7 +80,7 @@ app.layout = app.layout = html.Div(
                         dcc.Input(
                             id='upload-data',
                             type='text',
-                            placeholder='Please write the path to the db '
+                            placeholder='Please write the path to the DB '
                             'file HERE',
                             # children=html.Div(
                             #     [
@@ -99,7 +102,7 @@ app.layout = app.layout = html.Div(
                             multiple=True,
                         ),
                         html.Button(
-                            'Upload',
+                            'Load',
                             id='upload_file',
                             style={'height': '60px'},
                             n_clicks=0,
@@ -145,14 +148,21 @@ def parse_contents(filename):
             list_run_ids = [x.id for x in all_runs]
             # get file name form full path
             name = filename.split('/')[-1]
+            path = Path(filename)
+            last_modified = datetime.fromtimestamp(path.stat().st_mtime)
+            # show the date in the format: 2020-01-01 00:00:00
+            last_modified = last_modified.strftime("%Y-%m-%d %H:%M:%S")
+            # get the file size in MB
+            size = path.stat().st_size
+            size_mb = size / 1000000
             # name = filename
             # time = "last modified: " + str(
             #     datetime.datetime.fromtimestamp(date)
             # )
-            dist_df = history.get_distribution()
-            para_list = []
-            for col in dist_df[0].columns:
-                para_list.append(col)
+            # dist_df = history.get_distribution()
+            # para_list = []
+            # for col in dist_df[0].columns:
+            #     para_list.append(col)
     except Exception as e:
         return (
             'There was an error processing this file.',
@@ -162,16 +172,15 @@ def parse_contents(filename):
                 [
                     html.H4("Error!", className="alert-heading"),
                     html.P(
-                        f"There were an error while loading the database. "
+                        f"There was an error while loading the database. "
                         f"{str(e)}.",
                     ),
                 ],
                 id="user_update_alert",
                 is_open=True,
                 fade=True,
-                color="success",
-                duration=3000,
-                style={'color': '#006400'},
+                color="danger",
+                dismissable=True,
             ),
         )
     return html.Div(
@@ -187,12 +196,17 @@ def parse_contents(filename):
             # ),
             html.Br(),
             html.Button(
-                '# of Runs: ' + str(len(list_run_ids)),
+                'Number of Runs: ' + str(len(list_run_ids)),
                 id='btn-nclicks-3',
                 style={'margin-left': '10px'},
             ),
             html.Button(
-                '# of parameters: ' + str(len(para_list)),
+                'Last modification: ' + str(last_modified),
+                id='btn-nclicks-4',
+                style={'margin-left': '10px'},
+            ),
+            html.Button(
+                'File size: ' + str(size_mb) + ' MB',
                 id='btn-nclicks-4',
                 style={'margin-left': '10px'},
             ),
@@ -200,7 +214,7 @@ def parse_contents(filename):
         ],
         style={
             'width': '100%',
-            'height': '180px',
+            'height': '250px',
             'lineHeight': '60px',
             'borderWidth': '1px',
             'borderStyle': 'solid',
@@ -270,6 +284,9 @@ def prepare_run_detailes(history):
                             html.Label("Start time: " + str(start_time)),
                             html.Label("End time: " + str(end_time)),
                             html.Label("Run's ID: " + str(id)),
+                            html.Label(
+                                "Number of parameters: " + str(len(para_list))
+                            ),
                         ],
                         style={
                             'display': 'inline-block',
@@ -494,7 +511,7 @@ def update_DB_details(btn_click, db_path_new):
                     dbc.Alert(
                         [
                             html.H4(
-                                "There were an error while loading the "
+                                "There was an error while loading the "
                                 "database!",
                                 className="alert-heading",
                             ),
@@ -502,9 +519,8 @@ def update_DB_details(btn_click, db_path_new):
                         id="user_update_alert",
                         is_open=True,
                         fade=True,
-                        color="error",
-                        duration=2000,
-                        style={'color': 'red'},
+                        color="danger",
+                        dismissable=True,
                     ),
                 )
             else:
@@ -522,9 +538,8 @@ def update_DB_details(btn_click, db_path_new):
                         id="user_update_alert",
                         is_open=True,
                         fade=True,
-                        color="success",
-                        duration=5000,
-                        style={'color': 'red'},
+                        color="danger",
+                        dismissable=True,
                     ),
                 )
         all_runs = h.History.all_runs(history)
@@ -544,10 +559,8 @@ def update_DB_details(btn_click, db_path_new):
                     ],
                     id="user_update_alert",
                     is_open=True,
-                    fade=True,
                     color="success",
-                    duration=3000,
-                    style={'color': '#006400'},
+                    dismissable=True,
                 ),
             )
     else:
@@ -557,7 +570,7 @@ def update_DB_details(btn_click, db_path_new):
             "",
             dbc.Alert(
                 [
-                    html.H4("Error!", className="alert-heading"),
+                    html.H4("Tip!", className="alert-heading"),
                     html.P(
                         "Please upload a database!.",
                     ),
@@ -565,7 +578,7 @@ def update_DB_details(btn_click, db_path_new):
                 id="user_update_alert",
                 is_open=True,
                 fade=True,
-                color="success",
+                color="info",
                 duration=5000,
             ),
         )
@@ -692,8 +705,16 @@ def update_figure_ABC_run(smc_id, f_type):
                                 type='number',
                                 value='20',
                             ),
-                            "Generate code: ",
-                            html.Button('Generate', id='copy', n_clicks=0),
+                            "  Copy code to clipboard:  ",
+                            # html.Button('Generate', id='copy', n_clicks=0),
+                            dcc.Clipboard(
+                                id="code_copy",
+                                style={
+                                    "fontSize": 25,
+                                    "display": "inline-block",
+                                    "verticalAlign": "middle",
+                                },
+                            ),
                             html.Hr(),
                             dcc.RangeSlider(
                                 id='my-range-slider',
@@ -755,8 +776,16 @@ def update_figure_ABC_run(smc_id, f_type):
                 ],
                 style={'textAlign': 'center'},
             ),
-            "Generate code: ",
-            html.Button('Generate', id='copy', n_clicks=0),
+            "  Copy code to clipboard:  ",
+            # html.Button('Generate', id='copy', n_clicks=0),
+            dcc.Clipboard(
+                id="code_copy",
+                style={
+                    "fontSize": 25,
+                    "display": "inline-block",
+                    "verticalAlign": "middle",
+                },
+            ),
             html.Div(
                 children=[
                     "min: ",
@@ -811,8 +840,16 @@ def update_figure_ABC_run(smc_id, f_type):
             ],
             style={'textAlign': 'center'},
         ),
-        "Generate code: ",
-        html.Button('Generate', id='copy', n_clicks=0),
+        "  Copy code to clipboard:  ",
+        # html.Button('Generate', id='copy', n_clicks=0),
+        dcc.Clipboard(
+            id="code_copy",
+            style={
+                "fontSize": 25,
+                "display": "inline-block",
+                "verticalAlign": "middle",
+            },
+        ),
     ]
 
 
@@ -833,6 +870,9 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
     # create some matplotlib graph
     history = h.History("sqlite:///" + db_path, _id=smc_id)
     buf = None
+    xmin = 0
+    xmax = 0
+
     global para_list
     if f_type == "tab-pdf":
         fig, ax = plt.subplots()
@@ -871,10 +911,12 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
 
         else:
             df, w = history.get_distribution(m=0)
-            pyabc.visualization.plot_kde_matrix(df, w)
+            # get column in df that are in parameters
+            df_new = df[parameters]
+            pyabc.visualization.plot_kde_matrix(df_new, w)
             if bar_val == [0, 0]:
-                xmin = df[parameters[0]].min()
-                xmax = df[parameters[0]].max()
+                xmin = df_new[parameters[0]].min()
+                xmax = df_new[parameters[0]].max()
             else:
                 xmin = bar_val[0]
                 xmax = bar_val[1]
@@ -954,30 +996,33 @@ def save_file(name, content):
         fp.write(base64.decodebytes(data))
 
 
-def save_code_snippet(code_pt2):
-    code_pt1 = 'import pyabc\n\
-import matplotlib.pyplot as plt\n\
-# Please please adapt this: db_path\n\
-history = pyabc.storage.History("sqlite:///" + db_path)\n'
-    code_pt3 = 'plt.show()'
-    code = code_pt1 + code_pt2 + code_pt3
-    if not os.path.exists(DOWNLOAD_DIR):
-        os.makedirs(DOWNLOAD_DIR)
-    with open(os.path.join(DOWNLOAD_DIR, "code_snippet.py"), "w") as fp:
-        fp.write(code)
+# def save_code_snippet(code_pt2):
+#     code_pt1 = 'import pyabc\n\
+# import matplotlib.pyplot as plt\n\
+# # Please adapt this: db_path\n\
+# history = pyabc.storage.History("sqlite:///" + db_path)\n'
+#     code_pt3 = 'plt.show()'
+#     code = code_pt1 + code_pt2 + code_pt3
+#     if not os.path.exists(DOWNLOAD_DIR):
+#         os.makedirs(DOWNLOAD_DIR)
+#     with open(os.path.join(DOWNLOAD_DIR, "code_snippet.py"), "w") as fp:
+#         fp.write(code)
 
 
 @app.callback(
-    Output('container-button-timestamp', 'children'),
-    Input('copy', 'n_clicks'),
+    Output("code_copy", "content"),
+    Input("code_copy", "n_clicks"),
     Input("tabs", "value"),
 )
 def displayClick(btn_click, tab_type):
+    if btn_click is None:
+        return ""
     if btn_click > 0:
         code_pt2 = ""
         if tab_type == 'tab-pdf':
             code_pt2 = (
-                '# Please please adapt this: '
+                'history = h.History("sqlite:///" + DB_PATH)\n'
+                '# Please adapt this: '
                 'lower_lim, upper_lim, parameter\n'
                 'for t in range(history.max_t + 1):\n'
                 '    df, w = history.get_distribution(m=0, t=t)\n'
@@ -987,7 +1032,10 @@ def displayClick(btn_click, tab_type):
                 '    label="PDF t={}".format(t))\n'
             )
         elif tab_type == 'tab-samples':
-            code_pt2 = 'pyabc.visualization.plot_sample_numbers(history)\n'
+            code_pt2 = (
+                'history = h.History("sqlite:///" + DB_PATH)\n'
+                'pyabc.visualization.plot_sample_numbers(history)\n'
+            )
         elif tab_type == 'tab-particles':
             code_pt2 = (
                 'fig2, ax2 = plt.subplots()\n'
@@ -1001,21 +1049,26 @@ def displayClick(btn_click, tab_type):
                        ax2.plot(particles["t"], particles["particles"])\n'
             )
         elif tab_type == 'tab-epsilons':
-            code_pt2 = 'pyabc.visualization.plot_epsilons(history)\n'
+            code_pt2 = (
+                'history = h.History("sqlite:///" + DB_PATH)\n'
+                'pyabc.visualization.plot_epsilons(history)\n'
+            )
         elif tab_type == 'tab-effective':
             code_pt2 = (
-                'pyabc.visualization.plot_effective_' 'sample_sizes(history)\n'
+                'history = h.History("sqlite:///" + DB_PATH)\n'
+                'pyabc.visualization.plot_effective_'
+                'sample_sizes(history)\n'
             )
         elif tab_type == 'tab-credible':
             code_pt2 = (
-                '# Please please adapt this: parameter\n'
+                '# Please adapt this: parameter\n'
                 'pyabc.visualization.plot_credible_intervals(\n'
                 'history, levels=[0.95, 0.9, 0.5], '
                 'ts=[0, 1, 2, 3, 4],\n'
                 'how_mean=True, '
                 'show_kde_max_1d=True,par_names=parameter)\n'
             )
-        save_code_snippet(code_pt2)
+        return code_pt2
 
 
 @click.command()
@@ -1039,3 +1092,6 @@ def displayClick(btn_click, tab_type):
 )
 def run_app(host, port, debug):
     app.run(host=host, port=port, debug=debug)
+
+
+run_app()
