@@ -74,7 +74,8 @@ app.layout = html.Div(
                                     type='text',
                                     value=DOWNLOAD_DIR,
                                 ),
-                            ]
+                            ],
+                            style={'display': 'none'},
                         ),
                         html.Div(id="hidden-div", style={"display": "none"}),
                         dcc.Input(
@@ -666,6 +667,29 @@ def update_figure_ABC_run(smc_id, f_type):
     history = h.History("sqlite:///" + db_path, _id=smc_id)
     global para_list
     if f_type == "tab-pdf":
+        parameters = para_list.copy()
+        fig, ax = plt.subplots()
+        for t in range(history.max_t + 1):
+            df, w = history.get_distribution(m=0, t=t)
+            xmin = df[parameters[0]].min()
+            xmax = df[parameters[0]].max()
+
+            pyabc.visualization.plot_kde_1d(
+                df,
+                w,
+                xmin=xmin,
+                xmax=xmax,
+                x=parameters[0],
+                ax=ax,
+                label="PDF t={}".format(t),
+            )
+        ax.legend()
+        buf = io.BytesIO()  # in-memory files
+        plt.savefig(buf, format="png")  # save to the above file object
+        data = base64.b64encode(buf.getbuffer()).decode(
+            "utf8"
+        )  # encode to html elements
+
         return [
             html.Label('Select parameter: '),
             dcc.Dropdown(
@@ -685,52 +709,89 @@ def update_figure_ABC_run(smc_id, f_type):
                 style={'textAlign': 'center'},
             ),
             html.Div(
+                dbc.Card(
+                    [
+                        dbc.CardHeader("Plot configration"),
+                        dbc.CardBody(
+                            [
+                                "x limits: ",
+                                html.Br(),
+                                html.Br(),
+                                html.Div(
+                                    children=[
+                                        "min: ",
+                                        dcc.Input(
+                                            id="bar_min",
+                                            placeholder='min',
+                                            type='number',
+                                            value='0',
+                                        ),
+                                        "max: ",
+                                        dcc.Input(
+                                            id="bar_max",
+                                            placeholder='max',
+                                            type='number',
+                                            value='20',
+                                        ),
+                                        "  Copy code to clipboard:  ",
+                                        # html.Button('Generate', id='copy', n_clicks=0),
+                                        dcc.Clipboard(
+                                            id="code_copy",
+                                            style={
+                                                "fontSize": 25,
+                                                "display": "inline-block",
+                                                "verticalAlign": "middle",
+                                            },
+                                        ),
+                                        html.Hr(),
+                                        dcc.RangeSlider(
+                                            id='my-range-slider',
+                                            min=xmin,
+                                            max=xmax,
+                                            marks=None,
+                                            value=[xmin, xmax],
+                                            tooltip={
+                                                "placement": "bottom",
+                                                "always_visible": True,
+                                            },
+                                        ),
+                                    ]
+                                ),
+                                html.Div(id='output-container-range-slider'),
+                            ]
+                        ),
+                    ],
+                ),
+            ),
+            html.Div(
                 [
-                    "x limits: ",
-                    html.Br(),
-                    html.Br(),
-                    html.Div(
-                        children=[
-                            "min: ",
-                            dcc.Input(
-                                id="bar_min",
-                                placeholder='min',
-                                type='number',
-                                value='0',
-                            ),
-                            "max: ",
-                            dcc.Input(
-                                id="bar_max",
-                                placeholder='max',
-                                type='number',
-                                value='20',
-                            ),
-                            "  Copy code to clipboard:  ",
-                            # html.Button('Generate', id='copy', n_clicks=0),
-                            dcc.Clipboard(
-                                id="code_copy",
-                                style={
-                                    "fontSize": 25,
-                                    "display": "inline-block",
-                                    "verticalAlign": "middle",
-                                },
-                            ),
-                            html.Hr(),
-                            dcc.RangeSlider(
-                                id='my-range-slider',
-                                min=0,
-                                max=20,
-                                marks=None,
-                                value=[0, 0],
-                                tooltip={
-                                    "placement": "bottom",
-                                    "always_visible": True,
-                                },
-                            ),
-                        ]
+                    dcc.Dropdown(
+                        options=["linear", "log", "symlog", "logit"],
+                        id="y_scale",
+                        style={
+                            'display': 'none',
+                        },
                     ),
-                    html.Div(id='output-container-range-slider'),
-                ]
+                    dcc.RangeSlider(
+                        id='levels_slider',
+                        min=0,
+                        max=1,
+                        marks=None,
+                        value=[0.50, 0.95],
+                        tooltip={
+                            "placement": "bottom",
+                            "always_visible": True,
+                        },
+                    ),
+                    dbc.Checklist(
+                        id="switches-mean",
+                        options=['Show mean'],
+                        switch=True,
+                    ),
+                ],
+                style={
+                    'display': 'none',
+                },
             ),
         ]
     elif f_type == "tab-samples":
@@ -749,42 +810,52 @@ def update_figure_ABC_run(smc_id, f_type):
 
     elif f_type == "tab-epsilons":
         pyabc.visualization.plot_epsilons(history)
-    elif f_type == "tab-credible":
-        # buf = io.BytesIO()  # in-memory files
-        #
-        # plt.savefig(buf, format="png")  # save to the above file object
-        # data = base64.b64encode(buf.getbuffer()).decode()
+        buf = io.BytesIO()  # in-memory files
+        plt.savefig(buf, format="png")  # save to the above file object
+        data = base64.b64encode(buf.getbuffer()).decode(
+            "utf8"
+        )  # encode to html elements
 
         return [
-            html.Label('Select parameter: '),
-            dcc.Dropdown(
-                id="parameters",
-                options=[{'label': name, 'value': name} for name in para_list],
-                style={'color': 'red'},
-                multi=True,
-                value=[para_list[0]],
-            ),
             html.Div(
                 [
-                    # "ABC run plots: ",
-                    # html.Br(),
-                    # html.Br(),
                     html.Img(
                         id='abc_run_plot',
-                        src='data:image/png;base64,{}'.format(square_base64),
+                        src="data:image/png;base64,{}".format(data),
                     ),
+                    # img element,
                 ],
                 style={'textAlign': 'center'},
             ),
-            "  Copy code to clipboard:  ",
-            # html.Button('Generate', id='copy', n_clicks=0),
-            dcc.Clipboard(
-                id="code_copy",
-                style={
-                    "fontSize": 25,
-                    "display": "inline-block",
-                    "verticalAlign": "middle",
-                },
+            dbc.Card(
+                [
+                    dbc.CardHeader("Plot configration"),
+                    dbc.CardBody(
+                        [
+                            "Y scale: ",
+                            dcc.Dropdown(
+                                options=["linear", "log", "symlog", "logit"],
+                                id="y_scale",
+                                value="log",
+                                style={
+                                    "display": "inline-block",
+                                    "verticalAlign": "middle",
+                                    "width": "100px",
+                                },
+                            ),
+                            "  Copy code to clipboard:  ",
+                            # html.Button('Generate', id='copy', n_clicks=0),
+                            dcc.Clipboard(
+                                id="code_copy",
+                                style={
+                                    "fontSize": 25,
+                                    "display": "inline-block",
+                                    "verticalAlign": "middle",
+                                },
+                            ),
+                        ]
+                    ),
+                ]
             ),
             html.Div(
                 children=[
@@ -813,12 +884,146 @@ def update_figure_ABC_run(smc_id, f_type):
                 ],
                 style={'display': 'none'},
             ),
+            html.Div(
+                [
+                    dcc.Dropdown(
+                        id="parameters",
+                        options=[
+                            {'label': name, 'value': name}
+                            for name in para_list
+                        ],
+                        multi=True,
+                        value=[para_list[0]],
+                    ),
+                    dcc.RangeSlider(
+                        id='levels_slider',
+                        min=0,
+                        max=1,
+                        marks=None,
+                        value=[0.50, 0.95],
+                        tooltip={
+                            "placement": "bottom",
+                            "always_visible": True,
+                        },
+                    ),
+                    dbc.Checklist(
+                        id="switches-mean",
+                        options=['Show mean'],
+                        switch=True,
+                    ),
+                ],
+                style={
+                    'display': 'none',
+                },
+            ),
+        ]
+    elif f_type == "tab-credible":
+        # buf = io.BytesIO()  # in-memory files
+        #
+        # plt.savefig(buf, format="png")  # save to the above file object
+        # data = base64.b64encode(buf.getbuffer()).decode()
+        parameters = para_list.copy()
+
+        pyabc.visualization.plot_credible_intervals(
+            history,
+            show_mean=True,
+            show_kde_max_1d=False,
+            par_names=parameters,
+        )
+
+        return [
+            html.Label('Select parameter: '),
+            dcc.Dropdown(
+                id="parameters",
+                options=[{'label': name, 'value': name} for name in para_list],
+                style={'color': 'red'},
+                multi=True,
+                value=[para_list[0]],
+            ),
+            html.Div(
+                [
+                    # "ABC run plots: ",
+                    # html.Br(),
+                    # html.Br(),
+                    html.Img(
+                        id='abc_run_plot',
+                        src='data:image/png;base64,{}'.format(square_base64),
+                    ),
+                ],
+                style={'textAlign': 'center'},
+            ),
+            dbc.Card(
+                [
+                    dbc.CardHeader("Plot configration"),
+                    dbc.CardBody(
+                        [
+                            "confidence levels: ",
+                            html.Br(),
+                            dcc.RangeSlider(
+                                id='levels_slider',
+                                min=0,
+                                max=1,
+                                value=[0.50, 0.95],
+                            ),
+                            dbc.Checklist(
+                                id="switches-mean",
+                                options=['Show mean', 'Show KDE max'],
+                                value=['Show mean'],
+                                switch=True,
+                            ),
+                            "  Copy code to clipboard:  ",
+                            # html.Button('Generate', id='copy', n_clicks=0),
+                            dcc.Clipboard(
+                                id="code_copy",
+                                style={
+                                    "fontSize": 25,
+                                    "display": "inline-block",
+                                    "verticalAlign": "middle",
+                                },
+                            ),
+                            html.Div(
+                                children=[
+                                    "min: ",
+                                    dcc.Input(
+                                        id="bar_min",
+                                        placeholder='min',
+                                        type='number',
+                                        value='0',
+                                    ),
+                                    "max: ",
+                                    dcc.Input(
+                                        id="bar_max",
+                                        placeholder='max',
+                                        type='number',
+                                        value='20',
+                                    ),
+                                    html.Hr(),
+                                    dcc.RangeSlider(
+                                        id='my-range-slider',
+                                        min=0,
+                                        max=20,
+                                        marks=None,
+                                        value=[0, 0],
+                                    ),
+                                ],
+                                style={'display': 'none'},
+                            ),
+                            dcc.Dropdown(
+                                options=["linear", "log", "symlog", "logit"],
+                                id="y_scale",
+                                style={
+                                    "verticalAlign": "middle",
+                                    "width": "100px",
+                                    'display': 'none',
+                                },
+                            ),
+                        ]
+                    ),
+                ]
+            ),
         ]
     elif f_type == "tab-effective":
         pyabc.visualization.plot_effective_sample_sizes(history)
-    elif f_type == "tab-pdf":
-        df, w = history.get_distribution(m=0)
-        pyabc.visualization.plot_kde_matrix(df, w)
     buf = io.BytesIO()  # in-memory files
     plt.savefig(buf, format="png")  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
@@ -840,15 +1045,24 @@ def update_figure_ABC_run(smc_id, f_type):
             ],
             style={'textAlign': 'center'},
         ),
-        "  Copy code to clipboard:  ",
-        # html.Button('Generate', id='copy', n_clicks=0),
-        dcc.Clipboard(
-            id="code_copy",
-            style={
-                "fontSize": 25,
-                "display": "inline-block",
-                "verticalAlign": "middle",
-            },
+        dbc.Card(
+            [
+                dbc.CardHeader("Plot configration"),
+                dbc.CardBody(
+                    [
+                        "  Copy code to clipboard:  ",
+                        # html.Button('Generate', id='copy', n_clicks=0),
+                        dcc.Clipboard(
+                            id="code_copy",
+                            style={
+                                "fontSize": 25,
+                                "display": "inline-block",
+                                "verticalAlign": "middle",
+                            },
+                        ),
+                    ]
+                ),
+            ]
         ),
     ]
 
@@ -864,15 +1078,20 @@ def update_figure_ABC_run(smc_id, f_type):
         dash.dependencies.Input('parameters', 'value'),
         dash.dependencies.Input("tabs", "value"),
         dash.dependencies.Input('my-range-slider', 'value'),
+        Input('y_scale', 'value'),
+        dash.dependencies.Input('levels_slider', 'value'),
+        dash.dependencies.Input('switches-mean', 'value'),
     ],
 )
-def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
+def update_figure_ABC_run_parameters(
+    smc_id, parameters, f_type, bar_val, scale_val, levels_val, mean_val
+):
     # create some matplotlib graph
     history = h.History("sqlite:///" + db_path, _id=smc_id)
-    buf = None
     xmin = 0
     xmax = 0
-
+    mean_flag = True
+    kde_flag = True
     global para_list
     if f_type == "tab-pdf":
         fig, ax = plt.subplots()
@@ -932,14 +1151,26 @@ def update_figure_ABC_run_parameters(smc_id, parameters, f_type, bar_val):
 
         if len(parameters) == 0:
             return
+        if mean_val is None:
+            mean_flag = False
+            kde_flag = False
+
+        elif "Show mean" not in mean_val:
+            mean_flag = False
+        elif "Show KDE max" not in mean_val:
+            kde_flag = False
         pyabc.visualization.plot_credible_intervals(
             history,
-            levels=[0.95, 0.9, 0.5],
-            ts=[0, 1, 2, 3, 4],
-            show_mean=True,
-            show_kde_max_1d=True,
+            levels=levels_val,
+            show_mean=mean_flag,
+            show_kde_max_1d=kde_flag,
             par_names=parameters,
         )
+    elif f_type == "tab-epsilons":
+        if scale_val is None:
+            scale_val = "log"
+        pyabc.visualization.plot_epsilons(history, yscale=scale_val)
+
     buf = io.BytesIO()  # in-memory files
     plt.gcf().set_size_inches(7, 5)
     plt.tight_layout()
