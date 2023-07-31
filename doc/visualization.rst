@@ -27,48 +27,52 @@ You can launch it from the command line with
 
     abc-server-dash
 
-It opens per default a web server on port 8050.
+By default, this opens a web server on port 8050.
 
 You should see something similar to the following:
 
 .. image:: server_screenshots/dash_main.png
 
 
-A copy of the selected generated code snippet will be saved on ``/tmp/...``, if you want to change the path, you can enter the full path of the new folder in the text box.
 
-.. image:: server_screenshots/dash_path.png
-
-To upload your database, you can write the full path to your database file. Please note that the database file should have the extension ``.db``
-
-The time taken to upload the database to the server will depend on the database size. Once you select your database, you will notice that the title bar of the tab changed to ``uploading``. Please wait until the uploading process finishes.
+You can upload your database to the server by providing the absolute or relative path to your database file. Please ensure that your database file has a ``.db`` extension.
 
 
+
+The duration of the upload process will depend on the size of your database. Upon completion, you will receive a notification message indicating the success or failure of the upload process:
+
+.. image:: server_screenshots/dash_successful.png
+
+If not, then you will receive an error message describing the issue
 
 If the metadata of your file appears, that means your database file was uploaded successfully.
 
 .. image:: server_screenshots/dash_meta.png
 
-If not, then you will receive an error message at the top of the screen describing the issue
+After a successful upload, you can select the ID of the specific run you wish to analyze (the first run will be automatically selected by default). Upon selecting the run's ID, the right panel of the page will update to show detailed information about the selected run:
 
-After successfully uploading the database file, you can then select the requested run's ID (The first run will be selected by default).
+The upper section of the loaded page will contain some general information about the selected run:
 
-Once you select the run's ID, the left side of the page will be updated to show more details about the selected run.
+.. image:: server_screenshots/dash_details.png
 
-You can then select one of the plots by selecting one of the tabs under ``Run's plots``. For some of the tabs, you will be asked to select one parameter, or more, from the dropdown list.
+On the lower section, the user can select one of the plots by selecting one of the tabs under ``Run's plots``
 
-To save any plot, right-click on the plot and then select ``save image as``.
+Upon selection, the corresponding plot will be displayed. These plots can be adjusted using tools found in the ``Plot configuration`` box. For certain tabs, you may be required to select one or more parameters from a dropdown list.
 
-To get the code that was used to generate the plot, click on generate button at the bottom of the figure.
+To save a plot, simply right-click on the plot and choose ``Save image as``.
 
-.. image:: server_screenshots/dash_generate.png
+If you wish to access the code used to generate a specific plot, click on ``Copy code to clipboard`` placed below the figure.
 
-To get help, type in the command line:
+
+.. image:: server_screenshots/dash_code.png
+
+For further assistance or to explore more available options (like selecting a different port), type the following command into your command line:
+
 
 .. code-block:: bash
 
    abc-server-dash --help
 
-to get more information on available options, such as selecting another port:
 
 Visualization server -- using Flask
 -----------------------------------
