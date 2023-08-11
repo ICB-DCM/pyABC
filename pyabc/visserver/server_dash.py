@@ -7,6 +7,7 @@ import re
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from textwrap import dedent
 
 import click
 import dash
@@ -797,16 +798,16 @@ def update_figure_ABC_run(smc_id, f_type):
     elif f_type == "tab-samples":
         pyabc.visualization.plot_sample_numbers(history)
     elif f_type == "tab-particles":
-        fig2, ax2 = plt.subplots()
+        _, ax2 = plt.subplots()
         particles = (
             history.get_nr_particles_per_population()
             .reset_index()
-            .rename(columns={"index": "t", "t": "particles"})
+            .rename(columns={"count": "particles"})
             .query("t >= 0")
         )
         ax2.set_xlabel('population index')
         ax2.set_ylabel('Particles')
-        ax2.plot(particles["t"], particles["particles"])
+        ax2.plot(particles["t"], particles["particles"], "x-")
 
     elif f_type == "tab-epsilons":
         pyabc.visualization.plot_epsilons(history)
@@ -1251,53 +1252,74 @@ def displayClick(btn_click, tab_type):
     if btn_click > 0:
         code_pt2 = ""
         if tab_type == 'tab-pdf':
-            code_pt2 = (
-                'history = h.History("sqlite:///" + DB_PATH)\n'
-                '# Please adapt this: '
-                'lower_lim, upper_lim, parameter\n'
-                'for t in range(history.max_t + 1):\n'
-                '    df, w = history.get_distribution(m=0, t=t)\n'
-                '    pyabc.visualization.plot_kde_1d(\n'
-                '    df, w, xmin=lower_lim[0], xmax=bar_val[1],\n'
-                '    x=parameter, ax=ax,\n'
-                '    label="PDF t={}".format(t))\n'
+            code_pt2 = dedent(
+                """
+                history = h.History("sqlite:///" + DB_PATH)
+                # Please adapt this: lower_lim, upper_lim, parameter
+                for t in range(history.max_t + 1):
+                    df, w = history.get_distribution(m=0, t=t)
+                    pyabc.visualization.plot_kde_1d(
+                        df,
+                        w,
+                        xmin=lower_lim[0],
+                        xmax=bar_val[1],
+                        x=parameter,
+                        ax=ax,
+                        label="PDF t={}".format(t),
+                    )
+                """
             )
         elif tab_type == 'tab-samples':
-            code_pt2 = (
-                'history = h.History("sqlite:///" + DB_PATH)\n'
-                'pyabc.visualization.plot_sample_numbers(history)\n'
+            code_pt2 = dedent(
+                """
+                history = h.History("sqlite:///" + DB_PATH)
+                pyabc.visualization.plot_sample_numbers(history)
+                """
             )
         elif tab_type == 'tab-particles':
-            code_pt2 = (
-                'fig2, ax2 = plt.subplots()\n'
-                'particles = (history.get_nr_particles_'
-                'per_population()'
-                '.reset_index().'
-                'rename(columns={"index": "t", "t": "particles"})'
-                '.query("t >= 0"))\n\
-                       ax2.set_xlabel("population index")\n\
-                       ax2.set_ylabel("Particles")\n\
-                       ax2.plot(particles["t"], particles["particles"])\n'
+            code_pt2 = dedent(
+                """
+                fig2, ax2 = plt.subplots()
+                particles = (
+                    history.get_nr_particles_per_population()
+                    .reset_index()
+                    .rename(columns={"index": "t", "t": "particles"})
+                    .query("t >= 0")
+                )
+                ax2.set_xlabel("population index")
+                ax2.set_ylabel("Particles")
+                ax2.plot(particles["t"], particles["particles"])
+                """
             )
         elif tab_type == 'tab-epsilons':
-            code_pt2 = (
-                'history = h.History("sqlite:///" + DB_PATH)\n'
-                'pyabc.visualization.plot_epsilons(history)\n'
+            code_pt2 = dedent(
+                """
+                history = h.History("sqlite:///" + DB_PATH)
+                pyabc.visualization.plot_epsilons(history)
+                """
             )
         elif tab_type == 'tab-effective':
-            code_pt2 = (
-                'history = h.History("sqlite:///" + DB_PATH)\n'
-                'pyabc.visualization.plot_effective_'
-                'sample_sizes(history)\n'
+            code_pt2 = dedent(
+                """
+                history = h.History("sqlite:///" + DB_PATH)
+                pyabc.visualization.plot_effective_sample_sizes(
+                    history,
+                )
+                """
             )
         elif tab_type == 'tab-credible':
-            code_pt2 = (
-                '# Please adapt this: parameter\n'
-                'pyabc.visualization.plot_credible_intervals(\n'
-                'history, levels=[0.95, 0.9, 0.5], '
-                'ts=[0, 1, 2, 3, 4],\n'
-                'how_mean=True, '
-                'show_kde_max_1d=True,par_names=parameter)\n'
+            code_pt2 = dedent(
+                """
+                # Please adapt this: parameter
+                pyabc.visualization.plot_credible_intervals(
+                    history,
+                    levels=[0.95, 0.9, 0.5],
+                    ts=[0, 1, 2, 3, 4],
+                    show_mean=True,
+                    show_kde_max_1d=True,
+                    par_names=parameter
+                )
+                """
             )
         return code_pt2
 
