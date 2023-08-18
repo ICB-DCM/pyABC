@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 import pyabc
-import pyabc.visserver.server as server
+import pyabc.visserver.server_flask as server
 
 db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
 

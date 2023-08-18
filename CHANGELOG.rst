@@ -8,10 +8,18 @@ Release Notes
 ...........
 
 
+0.12.12 (2023-08-18)
+--------------------
+
+Visualization:
+
+* Dash-based visualization server (#581)
+
+
 0.12.11 (2023-07-06)
 --------------------
 
-Fixes (#608)
+Fixes (#608):
 
 * Fix petab test suite (different name resolution)
 * Fix LocalTransition (pandas -> numpy argument)
