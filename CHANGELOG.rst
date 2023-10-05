@@ -8,6 +8,102 @@ Release Notes
 ...........
 
 
+0.12.12 (2023-08-18)
+--------------------
+
+Visualization:
+
+* Dash-based visualization server (#581)
+
+
+0.12.11 (2023-07-06)
+--------------------
+
+Fixes (#608):
+
+* Fix petab test suite (different name resolution)
+* Fix LocalTransition (pandas -> numpy argument)
+* Fix sklearn intersphinx
+
+
+0.12.10 (2023-05-09)
+--------------------
+
+General:
+
+* Update to Python 3.11, drop Python 3.8 support
+* Turn simple files into submodules for cleaner import
+* Fix dask sampler (change default pickling and use global function that it can pickle)
+
+Documentation:
+
+* Configure readthedocs build environment
+* Refactor API docs (add [+]; easier navigation)
+* Correct scipy intersphinx link
+* Add docstrings to submodules
+
+Minor fixes:
+
+* Flake8 fixes of dict creation from key+value
+* Fix imports from correct submodule in external submodule
+* Fix package versions in migration test
+
+Visualization:
+
+* Contour plots as a direct alternative to kernel density heat maps
+  and histograms (#597)
+* Fix column renaming in visserver
+
+
+0.12.9 (2023-03-01)
+-------------------
+
+Minor:
+
+* Improve documentation of p-norm (#592)
+* Update citation to JOSS
+* Temporarily fixate sqlalchemy version
+* Update pre-commit hooks (all #596)
+
+
+0.12.8 (2022-11-16)
+-------------------
+
+* Fix look-ahead implementation in case of biased proposals (#568)
+
+Minor:
+
+* Remove boteh in test env as distributed #7227 got fixed
+* Remove obsolete two gaussians test
+* Fix Mixin random seed (set it via /dev/urandom)
+* Update viserver to bokeh >= 3.0.1 (different import of TabPanel, Tabs)
+  (all #589)
+* Fix sqlalchemy warning "SAWarning: TypeDecorator BytesStorage()
+  will not produce a cache key" (#590)
+
+
+0.12.7 (2022-10-30)
+-------------------
+
+Minor:
+
+* Ignore B027 empty method in an abstract base class
+* Refactor EPSMixin
+* Fix EPSMixin for ConcurrentFutureSampler
+* Temporarily add bokeh to test due to dask error
+
+
+0.12.6 (2022-08-30)
+-------------------
+
+Minor:
+
+* Add JOSS paper of version 0.12.5
+* Update Julia reference DiffEqJump -> JumpProcesses (name change)
+* Unfix jinja2
+* Update flake8 dependencies after new issues
+
+
 0.12.5 (2022-06-21)
 -------------------
 

@@ -4,7 +4,7 @@ import logging
 import os
 import tempfile
 from functools import wraps
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -308,7 +308,7 @@ class History:
     @with_session
     def get_distribution(
         self, m: int = 0, t: int = None
-    ) -> (pd.DataFrame, np.ndarray):
+    ) -> Tuple[pd.DataFrame, np.ndarray]:
         """
         Returns the weighted population sample for model m and timepoint t
         as a tuple.
@@ -346,7 +346,9 @@ class History:
             .filter(ABCSMC.id == self.id)
         )
         df = pd.read_sql_query(query.statement, self._engine)
-        pars = df.pivot("id", "name", "value").sort_index()
+        pars = df.pivot(
+            index="id", columns="name", values="value"
+        ).sort_index()
         w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
         w_arr = w.w.values
         if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
@@ -860,7 +862,7 @@ class History:
         else:
             p_models_df = (
                 pd.DataFrame(p_models, columns=["p", "m", "t"])
-                .pivot("t", "m", "p")
+                .pivot(index="t", columns="m", values="p")
                 .fillna(0)
             )
             return p_models_df
@@ -995,7 +997,7 @@ class History:
     @with_session
     def get_weighted_sum_stats_for_model(
         self, m: int = 0, t: int = None
-    ) -> (np.ndarray, List):
+    ) -> Tuple[np.ndarray, List]:
         """
         Summary statistics for model `m`. The weights sum to 1, unless
         there were multiple acceptances per particle.
@@ -1044,7 +1046,7 @@ class History:
     @with_session
     def get_weighted_sum_stats(
         self, t: int = None
-    ) -> (List[float], List[dict]):
+    ) -> Tuple[List[float], List[dict]]:
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.

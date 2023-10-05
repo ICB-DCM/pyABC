@@ -29,19 +29,28 @@ sys.path.insert(0, os.path.abspath('../'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    # include documentation from docstrings
     'sphinx.ext.autodoc',
+    # generate autodoc summaries
+    'sphinx.ext.autosummary',
+    # use mathjax for latex formulas
     'sphinx.ext.mathjax',
     # link to code
     'sphinx.ext.viewcode',
     # link to other projects' docs
     'sphinx.ext.intersphinx',
+    # support numpy and google style docstrings
     'sphinx.ext.napoleon',
+    # support todo items
     'sphinx.ext.todo',
+    # test snippets in the documentation
     'sphinx.ext.doctest',
+    # source parser for jupyter notebook files
     'nbsphinx',
     # code highlighting in jupyter cells
     'IPython.sphinxext.ipython_console_highlighting',
-    'sphinx.ext.autosummary',
+    # ensure that jQuery is installed
+    'sphinxcontrib.jquery',
 ]
 
 # default autodoc options
@@ -50,16 +59,19 @@ autodoc_default_options = {
     'members': True,
     'special-members': '__init__, __call__',
     'show-inheritance': True,
+    'autodoc_inherit_docstrings': True,
+    'imported-members': True,
 }
 
 # links for intersphinx
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/devdocs/', None),
-    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/dev', None),
     'petab': ('https://petab.readthedocs.io/en/stable/', None),
     'amici': ('https://amici.readthedocs.io/en/latest/', None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
 }
 
 

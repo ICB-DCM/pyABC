@@ -1,7 +1,7 @@
 import logging
 from collections import namedtuple
 
-from pyabc.cv.powerlaw import fitpowerlaw
+from pyabc.cv import fitpowerlaw
 
 logger = logging.getLogger("ABC.Transition")
 

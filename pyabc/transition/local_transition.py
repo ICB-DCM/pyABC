@@ -84,8 +84,8 @@ class LocalTransition(Transition):
             raise NotEnoughParticles("Fitting not possible.")
         self.X_arr = X.values
 
-        ctree = cKDTree(X)
-        _, indices = ctree.query(X, k=min(self.k + 1, X.shape[0]))
+        ctree = cKDTree(self.X_arr)
+        _, indices = ctree.query(self.X_arr, k=min(self.k + 1, X.shape[0]))
 
         covs, inv_covs, dets = list(
             zip(*[self._cov_and_inv(n, indices) for n in range(X.shape[0])])

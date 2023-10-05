@@ -24,8 +24,7 @@ from sqlalchemy import (
     LargeBinary,
     String,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import declarative_base, relationship
 
 from .bytes_storage import from_bytes, to_bytes
 from .version import __db_version__
@@ -34,7 +33,17 @@ Base = declarative_base()
 
 
 class BytesStorage(types.TypeDecorator):
+    """Bytes storage.
+
+    See https://docs.sqlalchemy.org/en/14/core/custom_types.html.
+    """
+
+    # Type
     impl = LargeBinary
+
+    # Safe to be used as part of a cache key, see https://sqlalche.me/e/14/cprf
+    # (guaranteed to produce the same bind/result behavior every time)
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):  # pylint: disable=R0201
         return to_bytes(value)

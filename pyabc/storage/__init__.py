@@ -1,7 +1,8 @@
 """
+.. _api_datastore:
+
 Data store
 ==========
-
 
 Purpose of the data store
 -------------------------
@@ -10,7 +11,6 @@ The most important class here is the History class. The History class
 is the interface to the database in which pyABC stores and logs information
 during the ABC-SMC run, but also the interface which allows you to query that
 information later on.
-
 
 Initializing the database interface from a file
 -----------------------------------------------
@@ -33,7 +33,6 @@ specific run n (e.g. n=3), do
 .. code-block:: python
 
     history.id = n
-
 
 Querying the database
 ---------------------
@@ -70,7 +69,6 @@ which indicates the population number (the first population is t=0)
 .. code-block:: python
 
    df, w = history.get_distribution(m, t)
-
 
 What can be stored as summary statistics
 ----------------------------------------

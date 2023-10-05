@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from ...random_variables import Parameter
+from ...parameters import Parameter
 
 logger = logging.getLogger("ABC.External")
 
@@ -30,7 +30,7 @@ def _dict_to_named_list(dct):
         or isinstance(dct, Parameter)
         or isinstance(dct, pd.core.series.Series)
     ):
-        dct = {key: val for key, val in dct.items()}
+        dct = dict(dct.items())
         # convert numbers, numpy arrays and pandas dataframes to builtin
         # types before conversion (see rpy2 #548)
         with conversion.localconverter(
@@ -78,7 +78,10 @@ class R:
     def __init__(self, source_file: str):
         if r is None:
             raise ImportError("Install rpy2, e.g. via `pip install pyabc[R]`")
-        warnings.warn("The support of R via rpy2 is considered experimental.")
+        warnings.warn(
+            "The support of R via rpy2 is considered experimental.",
+            stacklevel=2,
+        )
         self.source_file = source_file
         self._read_source()
 

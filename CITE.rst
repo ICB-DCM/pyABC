@@ -5,21 +5,26 @@ When using pyABC version >= 0.8, please cite:
 
 * Schälte, Y., Klinger, E., Alamoudi, E., Hasenauer, J., 2022.
   pyABC: Efficient and robust easy-to-use approximate Bayesian computation.
-  arXiv.
-  https://doi.org/10.48550/arxiv.2203.13043.
+  Journal of Open Source Software.
+  https://doi.org/10.21105/joss.04304.
 
   .. code-block:: bibtex
 
-     @article{schaelte2022pyabc,
-       title = {pyABC: Efficient and robust easy-to-use approximate Bayesian computation},
-       author = {Schälte, Yannik and Klinger, Emmanuel and Alamoudi, Emad and Hasenauer, Jan},
-       journal = {arXiv},
-       year = {2022},
-       doi = {10.48550/arxiv.2203.13043},
-       url = {https://arxiv.org/abs/2203.13043},
-     }
+    @article{schaelte2022pyabc,
+      title = {pyABC: Efficient and robust easy-to-use approximate Bayesian computation},
+      author = {Schälte, Yannik and Klinger, Emmanuel and Alamoudi, Emad and Hasenauer, Jan},
+      journal = {Journal of Open Source Software},
+      publisher = {The Open Journal},
+      year = {2022},
+      volume = {7},
+      number = {74},
+      pages = {4304},
+      doi = {10.21105/joss.04304},
+      url = {https://doi.org/10.21105/joss.04304},
+    }
 
-When using pyABC version < 0.8 or functionality not introduced in later versions, please cite:
+When using pyABC version < 0.8 or functionality not introduced in later
+versions, please (also) cite:
 
 * Klinger, E., Rickert, D., Hasenauer, J., 2018.
   pyABC: distributed, likelihood-free inference.

@@ -3,24 +3,24 @@
 import copy
 import logging
 from datetime import datetime, timedelta
-from typing import Callable, List, TypeVar, Union
+from typing import Callable, List, Tuple, TypeVar, Union
 
 import numpy as np
 
-from pyabc.acceptor import (
+from ..acceptor import (
     Acceptor,
     FunctionAcceptor,
     StochasticAcceptor,
     UniformAcceptor,
 )
-from pyabc.distance import (
+from ..distance import (
     Distance,
     FunctionDistance,
     PNormDistance,
     StochasticKernel,
 )
-from pyabc.epsilon import Epsilon, MedianEpsilon, TemperatureBase
-from pyabc.inference_util import (
+from ..epsilon import Epsilon, MedianEpsilon, TemperatureBase
+from ..inference_util import (
     AnalysisVars,
     create_analysis_id,
     create_prior_pdf,
@@ -30,19 +30,19 @@ from pyabc.inference_util import (
     eps_from_hist,
     termination_criteria_fulfilled,
 )
-from pyabc.model import FunctionModel, Model
-from pyabc.platform_factory import DefaultSampler
-from pyabc.population import Population, Sample
-from pyabc.populationstrategy import ConstantPopulationSize, PopulationStrategy
-from pyabc.random_variables import RV, Distribution
-from pyabc.sampler import Sampler
-from pyabc.storage import History
-from pyabc.transition import (
+from ..model import FunctionModel, Model
+from ..platform_factory import DefaultSampler
+from ..population import Population, Sample
+from ..populationstrategy import ConstantPopulationSize, PopulationStrategy
+from ..random_variables import RV, Distribution
+from ..sampler import Sampler
+from ..storage import History
+from ..transition import (
     ModelPerturbationKernel,
     MultivariateNormalTransition,
     Transition,
 )
-from pyabc.weighted_statistics import effective_sample_size
+from ..weighted_statistics import effective_sample_size
 
 logger = logging.getLogger("ABC")
 
@@ -497,7 +497,9 @@ class ABCSMC:
             acceptor_config=self.acceptor.get_epsilon_config(t),
         )
 
-    def _get_initial_population(self, t: int) -> (List[float], List[dict]):
+    def _get_initial_population(
+        self, t: int
+    ) -> Tuple[List[float], List[dict]]:
         """
         Get initial samples, either from the last population stored in history,
         or via sampling sum stats from the prior. This can be used to calibrate

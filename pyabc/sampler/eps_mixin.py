@@ -1,19 +1,88 @@
-import abc
+"""Client submission interface."""
 
-import cloudpickle as pickle
+import random
+from abc import ABC, abstractmethod
+from time import sleep
+from typing import Union
+
+import cloudpickle
 import numpy as np
-from sortedcontainers import SortedListWithKey
+from sortedcontainers import SortedList
 
 
-class EPSMixin(abc.ABC):
-    def full_submit_function_pickle(self, job_id):
-        simulate_one = pickle.loads(self.simulate_accept_one)
-        result_batch = []
-        for j in range(self.batch_size):
-            eval_result = simulate_one()
-            eval_accept = eval_result.accepted
-            result_batch.append((eval_result, eval_accept, job_id[j]))
-        return result_batch
+def _global_full_submit_function_pickle(
+    simulate_one_pickle, batch_size, job_id
+):
+    """Submit function defined outside the class.
+
+    This is because some dask versions had problems with bound methods.
+    """
+    # Unpickle function
+    simulate_one = cloudpickle.loads(simulate_one_pickle)
+
+    random.seed()
+    np.random.seed()
+
+    # Run batch_size evaluations and create list of tuples
+    result_batch = []
+    for j in range(batch_size):
+        eval_result = simulate_one()
+        eval_accept = eval_result.accepted
+        result_batch.append((eval_result, eval_accept, job_id[j]))
+
+    return result_batch
+
+
+class EPSMixin(ABC):
+    """
+    Provides sampling functionality for standard job submission clients.
+
+    Mixin is the Python version of an interface.
+    To be used in classes deriving from both `EPSMixin` and `Sampler`.
+
+    Attributes
+    ----------
+    client:
+        Client to submit jobs to. Provides a `submit()` function,
+        which returns jobs, which provide `done()`, `cancel()` and `result()`
+        functions.
+    client_max_jobs:
+        Maximum number of jobs that can submitted to the client at a time.
+        If this value is smaller than the maximum number of cores provided by
+        the distributed infrastructure, the infrastructure will not be utilized
+        fully.
+    default_pickle:
+        Specify if the sampler uses python's default pickle function to
+        communicate the submit function to python; if this is the case, a
+        cloud-pickle based workaround is used to pickle the simulate and
+        evaluate functions. This allows utilization of locally defined
+        functions, which can not be pickled using default pickle, at the cost
+        of an additional pickling overhead.
+    batch_size:
+        Number of parameter samples that are evaluated in one remote execution
+        call. Batchsubmission can be used to reduce the communication overhead
+        for fast (ms-s) model evaluations. Large batch sizes can result in un-
+        necessary model evaluations. By default, batch_size=1, i.e. no
+        batching is done.
+    """
+
+    def __init__(
+        self,
+        client,
+        client_max_jobs: int,
+        default_pickle: bool,
+        batch_size: int,
+    ):
+        self.client = client
+        self.client_max_jobs: int = client_max_jobs
+        self.default_pickle: bool = default_pickle
+        self.batch_size: int = batch_size
+
+        self._simulate_accept_one: Union[bytes, None] = None
+
+    @abstractmethod
+    def client_cores(self) -> int:
+        """Number of active client cores."""
 
     def sample_until_n_accepted(
         self,
@@ -27,11 +96,13 @@ class EPSMixin(abc.ABC):
     ):
         # For default pickling
         if self.default_pickle:
-            self.simulate_accept_one = pickle.dumps(simulate_one)
-            full_submit_function = self.full_submit_function_pickle
+            simulate_one_pickle = cloudpickle.dumps(simulate_one)
         else:
             # For advanced pickling, e.g. cloudpickle
             def full_submit_function(job_id):
+                random.seed()
+                np.random.seed()
+                # Run batch_size evaluations and create list of tuples
                 result_batch = []
                 for j in range(self.batch_size):
                     eval_result = simulate_one()
@@ -39,102 +110,88 @@ class EPSMixin(abc.ABC):
                     result_batch.append((eval_result, eval_accept, job_id[j]))
                 return result_batch
 
-        num_accepted_total = 0
-        num_accepted_sequential = 0
+        # Run variables
+        #  Counters for total and sequential (i.e. taking first-start into
+        #  account) numbers of acceptance
+        num_accepted = 0
+        # Job identifier
         next_job_id = 0
+        # List of running jobs
         running_jobs = []
-        unprocessed_results = SortedListWithKey(key=lambda x: x[0])
-        all_results = SortedListWithKey(key=lambda x: x[0])
-        next_valid_index = -1
+        # List of results
+        results = SortedList(key=lambda x: x[2])
 
-        # Main Loop, leave once we have enough material
+        # Main loop, leave once we have enough material
         while True:
-            # Gather finished jobs
-            # make sure to track and update both
-            # total accepted and sequentially
-            # accepted jobs
-            for curJob in running_jobs:
-                if curJob.done():
-                    remote_batch = curJob.result()
-                    running_jobs.remove(curJob)
-                    for i in range(self.batch_size):
-                        remote_evaluated = remote_batch[i]
-                        remote_result = remote_evaluated[0]
-                        remote_accept = remote_evaluated[1]
-                        remote_jobid = remote_evaluated[2]
-                        # print("Received result on job ", remote_jobid)
-                        unprocessed_results.add(
-                            (remote_jobid, remote_accept, remote_result)
+            # Gather results from finished jobs
+            for job_id, job in running_jobs:
+                if job.done():
+                    batch = job.result()
+                    results.update(batch)
+                    num_accepted += sum(1 for ret in batch if ret[1])
+                    running_jobs.remove((job_id, job))
+
+            # Check whether all done
+            if num_accepted >= n:
+                # nth start index among accepted particles
+                nth_accepted_id = [
+                    result[2] for result in results if result[1]
+                ][n - 1]
+                # Cancel jobs started later than nth accepted one
+                for job_id, job in running_jobs:
+                    if job_id > nth_accepted_id:
+                        running_jobs.remove((job_id, job))
+                        job.cancel()
+                # Break when no more jobs are running
+                if len(running_jobs) == 0:
+                    break
+
+            # Submit jobs, only if:
+            # * Number of jobs open < max_jobs
+            # * Number of jobs open < self.scheduler_workers_running *
+            #   worker_load_factor
+            # * num_accepted_total < jobs required
+            n_job_max = int(min(self.client_max_jobs, self.client_cores()))
+            if (len(running_jobs) < n_job_max) and (num_accepted < n):
+                n_job_req = n_job_max - len(running_jobs)
+                for _ in range(0, n_job_req):
+                    # Define job and batch ids
+                    job_id = next_job_id
+                    job_id_batch = [job_id + i for i in range(self.batch_size)]
+                    next_job_id += self.batch_size
+                    # Submit job
+                    if self.default_pickle:
+                        job = self.client.submit(
+                            _global_full_submit_function_pickle,
+                            simulate_one_pickle,
+                            self.batch_size,
+                            job_id_batch,
                         )
-                        if remote_accept:
-                            num_accepted_total += 1
-
-            if len(unprocessed_results) > 0:
-                next_index = unprocessed_results[0][0]
-            else:
-                next_index = np.nan
-            while next_index == next_valid_index + 1:
-                seq_evaluated = unprocessed_results.pop(0)
-                # add to all_results
-                all_results.add((seq_evaluated[0], seq_evaluated[2]))
-                # update accepted counter
-                if seq_evaluated[1]:
-                    num_accepted_sequential += 1
-                next_valid_index += 1
-                if len(unprocessed_results) > 0:
-                    next_index = unprocessed_results[0][0]
-                else:
-                    next_index = np.nan
-
-            # If num_accepted >= n
-            # return the first n accepted results
-            if num_accepted_sequential >= n:
-                break
-
-            # Update information on scheduler state
-            # Only submit more jobs if:
-            # Number of jobs open < max_jobs
-            # Number of jobs open < self.scheduler_workers_running *
-            # worker_load_factor
-            # num_accepted_total < jobs required
-            if (
-                (len(running_jobs) < self.client_max_jobs)
-                and (len(running_jobs) < self.client_cores())
-                and (num_accepted_total < n)
-            ):
-                for _ in range(
-                    0,
-                    np.minimum(
-                        self.client_max_jobs, self.client_cores()
-                    ).astype(int)
-                    - len(running_jobs),
-                ):
-                    job_id_batch = []
-                    for _ in range(self.batch_size):
-                        job_id_batch.append(next_job_id)
-                        next_job_id += 1
-
-                    running_jobs.append(
-                        self.my_client.submit(
+                    else:
+                        job = self.client.submit(
                             full_submit_function, job_id_batch
                         )
-                    )
+                    # Register job
+                    running_jobs.append((job_id, job))
 
-        # cancel all unfinished jobs
-        for curJob in running_jobs:
-            curJob.cancel()
+            # No need to be always awake
+            sleep(0.01)
 
-        # create 1 to-be-returned sample from all results
+        # Create 1 to-be-returned sample from results
         sample = self._create_empty_sample()
-        counter_accepted = 0
-        self.nr_evaluations_ = 0
-        while counter_accepted < n:
-            cur_res = all_results.pop(0)
-            particle = cur_res[1]
-            sample.append(particle)
-            if particle.accepted:
-                counter_accepted += 1
-            # n_eval is latest job_id + 1
-            self.nr_evaluations_ = max(self.nr_evaluations_, cur_res[0] + 1)
+        # Collect until n acceptances
+        nth_accepted_id = [result[2] for result in results if result[1]][n - 1]
+        while True:
+            result = results.pop(0)
+            sample.append(result[0])
+            if result[2] == nth_accepted_id:
+                break
+
+        if sample.n_accepted != n:
+            raise AssertionError(
+                f"Got {sample.n_accepted} accepted particles but expected {n}"
+            )
+
+        self.nr_evaluations_ = next_job_id
 
         return sample

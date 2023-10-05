@@ -20,7 +20,7 @@ def test_constantepsilon():
 
 def test_listepsilon():
     eps = pyabc.ListEpsilon([3.5, 2.3, 1, 0.3])
-    with pytest.raises(Exception):
+    with pytest.raises(IndexError):
         eps(4)
 
 
