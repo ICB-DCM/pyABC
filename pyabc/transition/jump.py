@@ -142,4 +142,4 @@ class DiscreteJumpTransition(DiscreteTransition):
             ]
         )
 
-        return pds if pds.size != 1 else float(pds)
+        return pds if pds.size != 1 else float(pds[0])
