@@ -1,13 +1,15 @@
 """Walltime plots"""
 
 import datetime
-from typing import Any, List, Union
+from typing import TYPE_CHECKING, Any, List, Union
 
 import matplotlib as mpl
-import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
+
+if TYPE_CHECKING:
+    import plotly.graph_objs as go
 
 from ..storage import History
 from .util import get_labels, to_lists
@@ -17,6 +19,38 @@ MINUTE = 'm'
 HOUR = 'h'
 DAY = 'd'
 TIME_UNITS = [SECOND, MINUTE, HOUR, DAY]
+
+
+def _prepare_plot_total_walltime(
+    histories: Union[List[History], History],
+    labels: Union[List, str],
+    unit: str,
+):
+    # preprocess input
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
+    n_run = len(histories)
+
+    # check time unit
+    if unit not in TIME_UNITS:
+        raise AssertionError(f"`unit` must be in {TIME_UNITS}")
+
+    # extract total walltimes
+    walltimes = []
+    for h in histories:
+        abc = h.get_abc()
+        walltimes.append((abc.end_time - abc.start_time).total_seconds())
+    walltimes = np.asarray(walltimes)
+
+    # apply time unit
+    if unit == MINUTE:
+        walltimes /= 60
+    elif unit == HOUR:
+        walltimes /= 60 * 60
+    elif unit == DAY:
+        walltimes /= 60 * 60 * 24
+
+    return labels, n_run, walltimes
 
 
 def plot_total_walltime(
@@ -46,42 +80,21 @@ def plot_total_walltime(
         Title for the plot.
     size: tuple of float, optional
         The size of the plot in inches.
-    ax: matplotlib.axes.Axes, optional
-        The axis object to use.
 
     Returns
     -------
-    ax: Axis of the generated plot.
+    A reference to the axis of the generated plot.
     """
     # preprocess input
-    histories = to_lists(histories)
-    labels = get_labels(labels, len(histories))
-    n_run = len(histories)
-
-    # check time unit
-    if unit not in TIME_UNITS:
-        raise AssertionError(f"`unit` must be in {TIME_UNITS}")
+    labels, n_run, walltimes = _prepare_plot_total_walltime(
+        histories=histories, labels=labels, unit=unit
+    )
 
     # create figure
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-
-    # extract total walltimes
-    walltimes = []
-    for h in histories:
-        abc = h.get_abc()
-        walltimes.append((abc.end_time - abc.start_time).total_seconds())
-    walltimes = np.asarray(walltimes)
-
-    # apply time unit
-    if unit == MINUTE:
-        walltimes /= 60
-    elif unit == HOUR:
-        walltimes /= 60 * 60
-    elif unit == DAY:
-        walltimes /= 60 * 60 * 24
 
     # plot bars
     ax.bar(x=np.arange(n_run), height=walltimes, label=labels)
@@ -97,6 +110,73 @@ def plot_total_walltime(
     fig.tight_layout()
 
     return ax
+
+
+def plot_total_walltime_plotly(
+    histories: Union[List[History], History],
+    labels: Union[List, str] = None,
+    unit: str = 's',
+    rotation: int = 0,
+    title: str = "Total walltimes",
+    size: tuple = None,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot total walltimes using plotly."""
+    import plotly.graph_objects as go
+
+    # preprocess input
+    labels, n_run, walltimes = _prepare_plot_total_walltime(
+        histories=histories, labels=labels, unit=unit
+    )
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot bars
+    fig.add_trace(go.Bar(x=np.arange(n_run), y=walltimes))
+
+    # prettify plot
+    fig.update_layout(
+        xaxis={
+            'tickmode': 'array',
+            'tickvals': np.arange(n_run),
+            'ticktext': labels,
+            'tickangle': rotation,
+        },
+        title=title,
+        xaxis_title="Run",
+        yaxis_title=f"Time [{unit}]",
+    )
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
+
+
+def _prepare_walltime(
+    histories: Union[List[History], History],
+    show_calibration: bool,
+):
+    # preprocess input
+    histories = to_lists(histories)
+
+    # show calibration if that makes sense
+    if show_calibration is None:
+        show_calibration = any(
+            h.get_all_populations().samples[0] > 0 for h in histories
+        )
+
+    # extract start times and end times
+    start_times = []
+    end_times = []
+    for h in histories:
+        # start time
+        start_times.append(h.get_abc().start_time)
+        # end times
+        end_times.append(h.get_all_populations().population_end_time)
+
+    return start_times, end_times, show_calibration
 
 
 def plot_walltime(
@@ -135,25 +215,13 @@ def plot_walltime(
 
     Returns
     -------
-    ax: Axis of the generated plot.
+    ax:
+        A reference to the axis of the generated plot.
     """
     # preprocess input
-    histories = to_lists(histories)
-
-    # show calibration if that makes sense
-    if show_calibration is None:
-        show_calibration = any(
-            h.get_all_populations().samples[0] > 0 for h in histories
-        )
-
-    # extract start times and end times
-    start_times = []
-    end_times = []
-    for h in histories:
-        # start time
-        start_times.append(h.get_abc().start_time)
-        # end times
-        end_times.append(h.get_all_populations().population_end_time)
+    start_times, end_times, show_calibration = _prepare_walltime(
+        histories=histories, show_calibration=show_calibration
+    )
 
     return plot_walltime_lowlevel(
         end_times=end_times,
@@ -168,19 +236,42 @@ def plot_walltime(
     )
 
 
-def plot_walltime_lowlevel(
-    end_times: List,
-    start_times: Union[List, None] = None,
+def plot_walltime_plotly(
+    histories: Union[List[History], History],
     labels: Union[List, str] = None,
     show_calibration: bool = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = "Walltime by generation",
     size: tuple = None,
-    ax: mpl.axes.Axes = None,
-) -> mpl.axes.Axes:
-    """Low-level access to `plot_walltime`.
-    Directly define `end_times` and `start_times`."""
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot walltimes using plotly."""
+    # preprocess input
+    start_times, end_times, show_calibration = _prepare_walltime(
+        histories=histories, show_calibration=show_calibration
+    )
+
+    return plot_walltime_lowlevel_plotly(
+        end_times=end_times,
+        start_times=start_times,
+        labels=labels,
+        show_calibration=show_calibration,
+        unit=unit,
+        rotation=rotation,
+        title=title,
+        size=size,
+        fig=fig,
+    )
+
+
+def _prepare_plot_walltime_lowlevel(
+    end_times: List,
+    start_times: Union[List, None] = None,
+    labels: Union[List, str] = None,
+    show_calibration: bool = None,
+    unit: str = 's',
+):
     # preprocess input
     end_times = to_lists(end_times)
     labels = get_labels(labels, len(end_times))
@@ -198,12 +289,6 @@ def plot_walltime_lowlevel(
     # check time unit
     if unit not in TIME_UNITS:
         raise AssertionError(f"`unit` must be in {TIME_UNITS}")
-
-    # create figure
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
 
     # extract relative walltimes
     walltimes = []
@@ -234,6 +319,39 @@ def plot_walltime_lowlevel(
     elif unit == DAY:
         matrix /= 60 * 60 * 24
 
+    return matrix, labels, n_run
+
+
+def plot_walltime_lowlevel(
+    end_times: List,
+    start_times: Union[List, None] = None,
+    labels: Union[List, str] = None,
+    show_calibration: bool = None,
+    unit: str = 's',
+    rotation: int = 0,
+    title: str = "Walltime by generation",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
+    """Low-level access to `plot_walltime`.
+
+    Directly define `end_times` and `start_times`.
+    """
+    # preprocess input
+    matrix, labels, n_run = _prepare_plot_walltime_lowlevel(
+        end_times=end_times,
+        start_times=start_times,
+        labels=labels,
+        show_calibration=show_calibration,
+        unit=unit,
+    )
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
     # plot bars
     for i_pop in reversed(range(matrix.shape[0])):
         pop_ix = i_pop - 1
@@ -258,6 +376,82 @@ def plot_walltime_lowlevel(
     fig.tight_layout()
 
     return ax
+
+
+def plot_walltime_lowlevel_plotly(
+    end_times: List,
+    start_times: Union[List, None] = None,
+    labels: Union[List, str] = None,
+    show_calibration: bool = None,
+    unit: str = 's',
+    rotation: int = 0,
+    title: str = "Walltime by generation",
+    size: tuple = None,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Low-level access to `plot_walltime_plotly`."""
+    import plotly.graph_objects as go
+
+    # preprocess input
+    matrix, labels, n_run = _prepare_plot_walltime_lowlevel(
+        end_times=end_times,
+        start_times=start_times,
+        labels=labels,
+        show_calibration=show_calibration,
+        unit=unit,
+    )
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot bars
+    for i_pop in reversed(range(matrix.shape[0])):
+        pop_ix = i_pop - 1
+        if not show_calibration:
+            pop_ix = i_pop
+        fig.add_trace(
+            go.Bar(
+                x=np.arange(n_run),
+                y=matrix[i_pop, :],
+                name=f"Generation {pop_ix}",
+                offsetgroup=0,
+                base=np.sum(matrix[:i_pop, :], axis=0),
+            )
+        )
+
+    # prettify plot
+    fig.update_layout(
+        xaxis_title="Run",
+        yaxis_title=f"Time [{unit}]",
+        title=title,
+        xaxis_tickvals=np.arange(n_run),
+        xaxis_ticktext=labels,
+        xaxis_tickangle=rotation,
+        legend_title="Generation",
+    )
+
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
+
+
+def _prepare_plot_eps_walltime(
+    histories: Union[List[History], History],
+):
+    # preprocess input
+    histories = to_lists(histories)
+
+    # extract end times and epsilons
+    end_times = []
+    eps = []
+    for h in histories:
+        # end times
+        end_times.append(h.get_all_populations().population_end_time)
+        eps.append(h.get_all_populations().epsilon.to_numpy())
+
+    return end_times, eps
 
 
 def plot_eps_walltime(
@@ -305,18 +499,10 @@ def plot_eps_walltime(
 
     Returns
     -------
-    ax: Axis of the generated plot.
+    A reference of the plot object.
     """
     # preprocess input
-    histories = to_lists(histories)
-
-    # extract end times and epsilons
-    end_times = []
-    eps = []
-    for h in histories:
-        # end times
-        end_times.append(h.get_all_populations().population_end_time)
-        eps.append(h.get_all_populations().epsilon)
+    end_times, eps = _prepare_plot_eps_walltime(histories=histories)
 
     return plot_eps_walltime_lowlevel(
         end_times=end_times,
@@ -334,9 +520,8 @@ def plot_eps_walltime(
     )
 
 
-def plot_eps_walltime_lowlevel(
-    end_times: List,
-    eps: List,
+def plot_eps_walltime_plotly(
+    histories: Union[List[History], History],
     labels: Union[List, str] = None,
     colors: List[Any] = None,
     group_by_label: bool = True,
@@ -346,15 +531,36 @@ def plot_eps_walltime_lowlevel(
     yscale: str = 'log',
     title: str = "Epsilon over walltime",
     size: tuple = None,
-    ax: mpl.axes.Axes = None,
-) -> mpl.axes.Axes:
-    """Low-level access to `plot_eps_walltime`.
-    Directly define `end_times` and `eps`. Note that both should be arrays of
-    the same length and at the beginning include a value for the calibration
-    iteration. This is just what `pyabc.History.get_all_populations()` returns.
-    The first time is used as the base time differences to which are plotted.
-    The first epsilon is ignored.
-    """
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot epsilon values over walltime using plotly."""
+    # preprocess input
+    end_times, eps = _prepare_plot_eps_walltime(histories=histories)
+
+    return plot_eps_walltime_lowlevel_plotly(
+        end_times=end_times,
+        eps=eps,
+        labels=labels,
+        colors=colors,
+        group_by_label=group_by_label,
+        indicate_end=indicate_end,
+        unit=unit,
+        xscale=xscale,
+        yscale=yscale,
+        title=title,
+        size=size,
+        fig=fig,
+    )
+
+
+def _prepare_plot_eps_walltime_lowlevel(
+    end_times: List,
+    eps: List,
+    labels: Union[List, str],
+    colors: List[Any],
+    group_by_label: bool,
+    unit: str,
+):
     # preprocess input
     end_times = to_lists(end_times)
     labels = get_labels(labels, len(end_times))
@@ -379,12 +585,6 @@ def plot_eps_walltime_lowlevel(
     if unit not in TIME_UNITS:
         raise AssertionError(f"`unit` must be in {TIME_UNITS}")
 
-    # create figure
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
-
     # extract relative walltimes
     walltimes = []
     for end_ts in end_times:
@@ -397,6 +597,52 @@ def plot_eps_walltime_lowlevel(
 
     # disregard calibration epsilon (inf)
     eps = [ep[1:] for ep in eps]
+
+    return walltimes, eps, labels, colors, n_run
+
+
+def plot_eps_walltime_lowlevel(
+    end_times: List,
+    eps: List,
+    labels: Union[List, str] = None,
+    colors: List[Any] = None,
+    group_by_label: bool = True,
+    indicate_end: bool = True,
+    unit: str = 's',
+    xscale: str = 'linear',
+    yscale: str = 'log',
+    title: str = "Epsilon over walltime",
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
+    """Low-level access to `plot_eps_walltime`.
+    Directly define `end_times` and `eps`. Note that both should be arrays of
+    the same length and at the beginning include a value for the calibration
+    iteration. This is just what `pyabc.History.get_all_populations()` returns.
+    The first time is used as the base time differences to which are plotted.
+    The first epsilon is ignored.
+    """
+    # preprocess input
+    (
+        walltimes,
+        eps,
+        labels,
+        colors,
+        n_run,
+    ) = _prepare_plot_eps_walltime_lowlevel(
+        end_times=end_times,
+        eps=eps,
+        labels=labels,
+        colors=colors,
+        group_by_label=group_by_label,
+        unit=unit,
+    )
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
 
     for wt, ep, label, color in zip(walltimes, eps, labels, colors):
         wt = np.asarray(wt)
@@ -428,3 +674,81 @@ def plot_eps_walltime_lowlevel(
     fig.tight_layout()
 
     return ax
+
+
+def plot_eps_walltime_lowlevel_plotly(
+    end_times: List,
+    eps: List,
+    labels: Union[List, str] = None,
+    colors: List[Any] = None,
+    group_by_label: bool = True,
+    indicate_end: bool = True,
+    unit: str = 's',
+    xscale: str = 'linear',
+    yscale: str = 'log',
+    title: str = "Epsilon over walltime",
+    size: tuple = None,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot epsilon values over walltime using plotly."""
+    import plotly.graph_objects as go
+
+    # preprocess input
+    walltimes, eps, labels, colors, _ = _prepare_plot_eps_walltime_lowlevel(
+        end_times=end_times,
+        eps=eps,
+        labels=labels,
+        colors=colors,
+        group_by_label=group_by_label,
+        unit=unit,
+    )
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    for wt, ep, label in zip(walltimes, eps, labels):
+        wt = np.asarray(wt)
+        # apply time unit
+        if unit == MINUTE:
+            wt /= 60
+        elif unit == HOUR:
+            wt /= 60 * 60
+        elif unit == DAY:
+            wt /= 60 * 60 * 24
+        # plot
+        fig.add_trace(
+            go.Scatter(
+                x=wt,
+                y=ep,
+                name=label,
+                mode='lines+markers',
+            )
+        )
+        if indicate_end:
+            # add a vertical line from minimum to maximum value
+            fig.add_shape(
+                type="line",
+                x0=wt[-1],
+                y0=ep[-1],
+                x1=wt[-1],
+                y1=ep[0],
+                line={
+                    'width': 1,
+                    'dash': "dash",
+                },
+            )
+
+    # prettify plot
+    fig.update_layout(
+        title=title,
+        xaxis_title=f"Time [{unit}]",
+        yaxis_title="Epsilon",
+        xaxis_type=xscale,
+        yaxis_type=yscale,
+    )
+
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig

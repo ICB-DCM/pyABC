@@ -474,7 +474,10 @@ def test_redis_look_ahead(adapt_proposal: bool):
                 [p for p in pop.particles if p.proposal_id == -1]
             )
             assert (
-                min(pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted']))
+                min(
+                    pop_size,
+                    int(df.loc[df.t == t, 'n_lookahead_accepted'].iloc[0]),
+                )
                 == n_lookahead_pop
             )
 
@@ -553,7 +556,10 @@ def test_redis_look_ahead_delayed(adapt_proposal: bool):
                 [p for p in pop.particles if p.proposal_id == -1]
             )
             assert (
-                min(pop_size, int(df.loc[df.t == t, 'n_lookahead_accepted']))
+                min(
+                    pop_size,
+                    int(df.loc[df.t == t, 'n_lookahead_accepted'].iloc[0]),
+                )
                 == n_lookahead_pop
             )
 

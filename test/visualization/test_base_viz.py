@@ -100,7 +100,9 @@ def test_sample_numbers():
 def test_sample_numbers_trajectory():
     """Test `pyabc.visualization.plot_sample_numbers_trajectory`"""
     pyabc.visualization.plot_sample_numbers_trajectory(
-        histories, labels, yscale='log', rotation=90
+        histories,
+        labels,
+        yscale='log',
     )
     _, ax = plt.subplots()
     pyabc.visualization.plot_sample_numbers_trajectory(
