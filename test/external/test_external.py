@@ -82,4 +82,4 @@ def test_eval_param_limits():
     model = pyabc.external.ExternalModel(executable, folder + "model.r")
     limits = {"meanX": (1, 5), "meanY": (1, 5.5)}
     evaluation = pyabc.external.ExternalModel.eval_param_limits(model, limits)
-    assert type(evaluation) == dict
+    assert type(evaluation) is dict
