@@ -23,13 +23,12 @@ from pyabc.storage import history as h
 matplotlib.use('Agg')
 
 static = str(pathlib.Path(__file__).parent.absolute()) + '/assets/'
-static_logo = Path(str(pathlib.Path(__file__).parent.absolute())).parent.parent
 DOWNLOAD_DIR = tempfile.mkdtemp() + '/'
 db_path = DOWNLOAD_DIR
 parameter = ""
 square_png = static + 'square_v2.png'
 square_base64 = base64.b64encode(open(square_png, 'rb').read()).decode('ascii')
-pyABC_png = str(static_logo) + '/doc/logo/logo.png'
+pyABC_png = str(static) + '/pyABC_logo.png'
 pyABC_base64 = base64.b64encode(open(pyABC_png, 'rb').read()).decode('ascii')
 para_list = []
 colors = {
