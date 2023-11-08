@@ -14,6 +14,7 @@ Authors
 
 The first main developer of the package was Emmanuel Klinger, with major contributions from Dennis Rickert and Nick Jagiella.
 Currently, the main developer and maintainer is Yannik Schaelte.
+Additional maintainers are Jonas Arruda and Stephan Grein.
 Emad Alamoudi is co-developer with various contributions.
 Elba Raimúndez-Álvarez contributed to the examples.
 Felipe Reck contributed to the "look-ahead" Redis-based sampler and example notebook.

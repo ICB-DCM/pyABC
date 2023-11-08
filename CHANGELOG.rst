@@ -7,6 +7,17 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.13 (2023-11-08)
+--------------------
+
+Fixes (#615):
+
+* Fix for wrong assets path in abc-server-dash 
+
+General
+
+* Added new maintainers to RTD's about section
+
 
 0.12.12 (2023-08-18)
 --------------------

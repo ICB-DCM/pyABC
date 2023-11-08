@@ -3,3 +3,4 @@ recursive-include pyabc/visserver/static *
 recursive-include pyabc/visserver/templates *
 include pyabc/storage/alembic.ini
 recursive-include pyabc/storage/migrations *
+recursive-include pyabc/visserver/assets *
