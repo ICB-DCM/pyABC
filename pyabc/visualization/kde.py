@@ -8,13 +8,19 @@ MultivariateNormalTransition(), or to replace it by a GridSearchCV() to
 automatically find a visually good level of smoothness.
 """
 
+from typing import TYPE_CHECKING
+
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from ..storage import History
 from ..transition import MultivariateNormalTransition
-from .util import format_plot_matrix
+from .util import format_plot_matrix, format_plot_matrix_plotly
+
+if TYPE_CHECKING:
+    import plotly.graph_objs as go
 
 
 def kde_1d(df, w, x, xmin=None, xmax=None, numx=50, kde=None):
@@ -83,7 +89,7 @@ def plot_kde_1d_highlevel(
     xmin=None,
     xmax=None,
     numx=50,
-    ax=None,
+    ax: mpl.axes.Axes = None,
     size=None,
     title: str = None,
     refval=None,
@@ -91,7 +97,7 @@ def plot_kde_1d_highlevel(
     kde=None,
     xname: str = None,
     **kwargs,
-):
+) -> mpl.axes.Axes:
     """
     Plot 1d kernel density estimate of parameter samples.
 
@@ -160,6 +166,49 @@ def plot_kde_1d_highlevel(
     )
 
 
+def plot_kde_1d_highlevel_plotly(
+    history: History,
+    x: str,
+    m: int = 0,
+    t: int = None,
+    xmin=None,
+    xmax=None,
+    numx: int = 50,
+    fig: "go.Figure" = None,
+    row: int = 1,
+    col: int = 1,
+    size=None,
+    title: str = None,
+    refval=None,
+    refval_color='gray',
+    marker_color=None,
+    kde=None,
+    xname: str = None,
+    **kwargs,
+):
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_1d_plotly(
+        df=df,
+        w=w,
+        x=x,
+        xmin=xmin,
+        xmax=xmax,
+        numx=numx,
+        fig=fig,
+        row=row,
+        col=col,
+        size=size,
+        title=title,
+        refval=refval,
+        refval_color=refval_color,
+        kde=kde,
+        xname=xname,
+        marker_color=marker_color,
+        **kwargs,
+    )
+
+
 def plot_kde_1d(
     df,
     w,
@@ -167,7 +216,7 @@ def plot_kde_1d(
     xmin=None,
     xmax=None,
     numx=50,
-    ax=None,
+    ax: mpl.axes.Axes = None,
     size=None,
     title: str = None,
     refval=None,
@@ -175,7 +224,7 @@ def plot_kde_1d(
     kde=None,
     xname: str = None,
     **kwargs,
-):
+) -> mpl.axes.Axes:
     """
     Lowlevel interface for plot_kde_1d_highlevel (see there for the remaining
     parameters).
@@ -215,6 +264,76 @@ def plot_kde_1d(
     return ax
 
 
+def plot_kde_1d_plotly(
+    df,
+    w,
+    x,
+    xmin=None,
+    xmax=None,
+    numx=50,
+    fig: "go.Figure" = None,
+    row: int = 1,
+    col: int = 1,
+    size=None,
+    title: str = None,
+    refval=None,
+    refval_color='gray',
+    marker_color=None,
+    kde=None,
+    xname: str = None,
+    **kwargs,
+) -> "go.Figure":
+    """Plot 1d kde using plotly."""
+    import plotly.graph_objects as go
+    from plotly.colors import DEFAULT_PLOTLY_COLORS
+    from plotly.subplots import make_subplots
+
+    x_vals, pdf = kde_1d(df, w, x, xmin=xmin, xmax=xmax, numx=numx, kde=kde)
+    if xname is None:
+        xname = x
+    if fig is None:
+        fig = make_subplots(rows=1, cols=1)
+    if marker_color is None:
+        marker_color = DEFAULT_PLOTLY_COLORS[0]
+    # add trace, in blue color
+    fig.add_trace(
+        go.Scatter(
+            x=x_vals,
+            y=pdf,
+            name=xname,
+            marker_color=marker_color,
+            **kwargs,
+        ),
+        row=row,
+        col=col,
+    )
+    # set trace color to blue
+    # fig.update_traces(marker_color="blue", row=row, col=col)
+    # fig.add_trace(
+    #     go.Scatter(x=x_vals, y=pdf, name=xname, **kwargs),
+    #     row=row,
+    #     col=col,
+    # )
+    fig.update_xaxes(title_text=xname, range=[xmin, xmax], row=row, col=col)
+
+    # add vertical line for reference value
+    if refval is not None:
+        fig.add_vline(
+            x=refval[x],
+            line_dash="dash",
+            line_color=refval_color,
+            row=row,
+            col=col,
+        )
+    # set size
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+    # set title
+    if title is not None:
+        fig.update_layout(title_text=title)
+    return fig
+
+
 def kde_2d(
     df,
     w,
@@ -237,7 +356,6 @@ def kde_2d(
         df, w = history.get_distribution(0)
         X, Y, PDF = hist_2d(df, w, "x", "y")
         plt.pcolormesh(X, Y, PDF)
-
 
     Parameters
     ----------
@@ -316,7 +434,7 @@ def plot_kde_2d_highlevel(
     ymax: float = None,
     numx: int = 50,
     numy: int = 50,
-    ax=None,
+    ax: mpl.axes.Axes = None,
     size=None,
     colorbar=True,
     title: str = None,
@@ -326,7 +444,7 @@ def plot_kde_2d_highlevel(
     xname: str = None,
     yname: str = None,
     **kwargs,
-):
+) -> mpl.axes.Axes:
     """
     Plot 2d kernel density estimate of parameter samples.
 
@@ -416,6 +534,64 @@ def plot_kde_2d_highlevel(
     )
 
 
+def plot_kde_2d_highlevel_plotly(
+    history: History,
+    x: str,
+    y: str,
+    m: int = 0,
+    t: int = None,
+    xmin: float = None,
+    xmax: float = None,
+    ymin: float = None,
+    ymax: float = None,
+    numx: int = 50,
+    numy: int = 50,
+    fig: "go.Figure" = None,
+    row: int = 1,
+    col: int = 1,
+    size=None,
+    showscale=True,
+    showlegend=True,
+    title: str = None,
+    refval=None,
+    refval_color='gray',
+    kde=None,
+    xname: str = None,
+    yname: str = None,
+    **kwargs,
+) -> "go.Figure":
+    """
+    Plot 2d kernel density estimate of parameter samples using plotly.
+    """
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_2d_plotly(
+        df,
+        w,
+        x,
+        y,
+        xmin,
+        xmax,
+        ymin,
+        ymax,
+        numx,
+        numy,
+        fig,
+        row,
+        col,
+        size,
+        showscale,
+        showlegend,
+        title,
+        refval,
+        refval_color,
+        kde,
+        xname,
+        yname,
+        **kwargs,
+    )
+
+
 def plot_kde_2d(
     df,
     w,
@@ -427,7 +603,7 @@ def plot_kde_2d(
     ymax=None,
     numx=50,
     numy=50,
-    ax=None,
+    ax: mpl.axes.Axes = None,
     size=None,
     colorbar=True,
     title: str = None,
@@ -437,7 +613,7 @@ def plot_kde_2d(
     xname: str = None,
     yname: str = None,
     **kwargs,
-):
+) -> mpl.axes.Axes:
     """
     Plot a 2d kernel density estimate of parameter samples.
 
@@ -490,6 +666,95 @@ def plot_kde_2d(
         ax.get_figure().set_size_inches(size)
 
     return ax
+
+
+def plot_kde_2d_plotly(
+    df,
+    w,
+    x,
+    y,
+    xmin=None,
+    xmax=None,
+    ymin=None,
+    ymax=None,
+    numx=50,
+    numy=50,
+    fig: "go.Figure" = None,
+    row: int = 1,
+    col: int = 1,
+    size=None,
+    showscale=True,
+    showlegend=True,
+    title: str = None,
+    refval=None,
+    refval_color='gray',
+    kde=None,
+    xname: str = None,
+    yname: str = None,
+    **kwargs,
+):
+    """
+    Plot a 2d kernel density estimate of parameter samples using plotly.
+    """
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    X, Y, PDF = kde_2d(
+        df,
+        w,
+        x,
+        y,
+        xmin=xmin,
+        xmax=xmax,
+        ymin=ymin,
+        ymax=ymax,
+        numx=numx,
+        numy=numy,
+        kde=kde,
+    )
+    if xname is None:
+        xname = x
+    if yname is None:
+        yname = y
+    if fig is None:
+        fig = make_subplots(rows=1, cols=1)
+
+    fig.add_trace(
+        go.Heatmap(
+            x=X[0],
+            y=Y[:, 0],
+            z=PDF,
+            showscale=showscale,
+            showlegend=showlegend,
+            name="Posterior",
+            **kwargs,
+        ),
+        row=row,
+        col=col,
+    )
+    fig.update_xaxes(title_text=xname, row=row, col=col)
+    fig.update_yaxes(title_text=yname, row=row, col=col)
+
+    # title
+    if title is not None:
+        fig.update_layout(title_text=title, row=row, col=col)
+    # reference value
+    if refval is not None:
+        fig.add_trace(
+            go.Scatter(
+                x=[refval[x]],
+                y=[refval[y]],
+                mode='markers',
+                marker={'color': refval_color},
+                name='Refval',
+            ),
+            row=row,
+            col=col,
+        )
+    # size
+    if size is not None:
+        fig.update_layout(height=size[0], width=size[1])
+    return fig
 
 
 def plot_kde_matrix_highlevel(
@@ -568,6 +833,42 @@ def plot_kde_matrix_highlevel(
     )
 
 
+def plot_kde_matrix_highlevel_plotly(
+    history,
+    m: int = 0,
+    t: int = None,
+    limits=None,
+    height: float = 30,
+    numx: int = 50,
+    numy: int = 50,
+    refval=None,
+    refval_color='gray',
+    marker_color=None,
+    kde=None,
+    names: dict = None,
+    title: str = "Univariate and bivariate distributions using KDE",
+) -> "go.Figure":
+    """
+    Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples,
+    using plotly.
+    """
+    df, w = history.get_distribution(m=m, t=t)
+
+    return plot_kde_matrix_plotly(
+        df=df,
+        w=w,
+        limits=limits,
+        height=height,
+        numx=numx,
+        numy=numy,
+        refval=refval,
+        refval_color=refval_color,
+        kde=kde,
+        names=names,
+        title=title,
+    )
+
+
 def plot_kde_matrix(
     df,
     w,
@@ -599,7 +900,6 @@ def plot_kde_matrix(
     arr_ax:
         Array of the generated plots' axes.
     """
-
     n_par = df.shape[1]
     par_ids = list(df.columns.values)
 
@@ -697,3 +997,147 @@ def plot_kde_matrix(
     fig.tight_layout()
 
     return arr_ax
+
+
+def plot_kde_matrix_plotly(
+    df,
+    w,
+    limits=None,
+    height=100,
+    numx=50,
+    numy=50,
+    refval=None,
+    refval_color='gray',
+    marker_color=None,
+    kde=None,
+    names: dict = None,
+    title: str = "Univariate and bivariate distributions using KDE",
+) -> "go.Figure":
+    """
+    Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples,
+    using plotly.
+    """
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+
+    n_par = df.shape[1]
+    par_ids = list(df.columns.values)
+
+    if names is None:
+        names = {key: key for key in par_ids}
+    # create figure
+    fig = make_subplots(
+        rows=n_par,
+        cols=n_par,
+        shared_xaxes=False,
+        shared_yaxes=False,
+    )
+    # set size
+    if height is not None:
+        fig.update_layout(
+            height=height * n_par,
+            width=height * n_par,
+        )
+
+    if limits is None:
+        limits = {}
+    default = (None, None)
+
+    def hist_2d(x, y, fig, row, col):
+        df = pd.concat((x, y), axis=1)
+        plot_kde_2d_plotly(
+            df,
+            w,
+            x.name,
+            y.name,
+            xmin=limits.get(x.name, default)[0],
+            xmax=limits.get(x.name, default)[1],
+            ymin=limits.get(y.name, default)[0],
+            ymax=limits.get(y.name, default)[1],
+            numx=numx,
+            numy=numy,
+            fig=fig,
+            row=row,
+            col=col,
+            title=None,
+            showscale=False,
+            showlegend=False,
+            refval=refval,
+            refval_color=refval_color,
+            kde=kde,
+            xname=names[x.name],
+            yname=names[y.name],
+        )
+
+    def scatter(x, y, fig, row, col):
+        alpha = w / w.max()
+        colors = np.zeros((alpha.size, 4))
+        colors[:, 3] = alpha
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y,
+                mode="markers",
+                marker={'color': "black"},
+            ),
+            row=row,
+            col=col,
+        )
+        if refval is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=[refval[x.name]],
+                    y=[refval[y.name]],
+                    mode="markers",
+                    marker={'color': refval_color},
+                ),
+                row=row,
+                col=col,
+            )
+        fig.update_xaxes(range=limits.get(x.name, default), row=row, col=col)
+        fig.update_yaxes(range=limits.get(y.name, default), row=row, col=col)
+
+    def hist_1d(x, fig, row, col):
+        df = pd.concat((x,), axis=1)
+        plot_kde_1d_plotly(
+            df,
+            w,
+            x.name,
+            xmin=limits.get(x.name, default)[0],
+            xmax=limits.get(x.name, default)[1],
+            numx=numx,
+            fig=fig,
+            row=row,
+            col=col,
+            refval=refval,
+            refval_color=refval_color,
+            marker_color=marker_color,
+            kde=kde,
+            xname=x.name,
+        )
+
+    # fill all subplots
+    for i in range(0, n_par):
+        y_name = par_ids[i]
+        y = df[y_name]
+
+        # diagonal
+        hist_1d(y, fig, row=i + 1, col=i + 1)
+
+        for j in range(0, i):
+            x_name = par_ids[j]
+            x = df[x_name]
+
+            # lower
+            hist_2d(x, y, fig, row=i + 1, col=j + 1)
+
+            # upper
+            scatter(y, x, fig, row=j + 1, col=i + 1)
+
+    # title
+    fig.update_layout(title=title)
+
+    # format
+    format_plot_matrix_plotly(fig, [names[key] for key in par_ids])
+
+    return fig

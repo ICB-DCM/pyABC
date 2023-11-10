@@ -13,6 +13,90 @@ from ..weighted_statistics import weighted_quantile
 from .util import get_labels, to_lists
 
 
+def _prepare_credible_intervals(
+    history: History,
+    m: int,
+    ts: Union[List[int], int],
+    par_names: List,
+    levels: List,
+    show_mean: bool,
+    show_kde_max: bool,
+    show_kde_max_1d: bool,
+    kde: Transition,
+    kde_1d: Transition,
+):
+    if levels is None:
+        levels = [0.95]
+    levels = sorted(levels)
+
+    if par_names is None:
+        # extract all parameter names
+        df, _ = history.get_distribution(m=m)
+        par_names = list(df.columns.values)
+
+    # dimensions
+    n_par = len(par_names)
+    n_confidence = len(levels)
+    if ts is None:
+        ts = list(range(0, history.max_t + 1))
+    n_pop = len(ts)
+
+    # prepare matrices
+    cis = np.empty((n_par, n_pop, 2 * n_confidence))
+    median = np.empty((n_par, n_pop))
+    mean = np.empty((n_par, n_pop))
+    kde_max = np.empty((n_par, n_pop))
+    kde_max_1d = np.empty((n_par, n_pop))
+    if kde is None and show_kde_max:
+        kde = MultivariateNormalTransition()
+    if kde_1d is None and show_kde_max_1d:
+        kde_1d = MultivariateNormalTransition()
+
+    # fill matrices
+    # iterate over populations
+    for i_t, t in enumerate(ts):
+        df, w = history.get_distribution(m=m, t=t)
+        # normalize weights to be sure
+        w /= w.sum()
+        # fit kde
+        if show_kde_max:
+            _kde_max_pnt = compute_kde_max(kde, df, w)
+        # iterate over parameters
+        for i_par, par in enumerate(par_names):
+            # as numpy array
+            vals = np.array(df[par])
+            # median
+            median[i_par, i_t] = compute_quantile(vals, w, 0.5)
+            # mean
+            if show_mean:
+                mean[i_par, i_t] = np.sum(w * vals)
+            # kde max
+            if show_kde_max:
+                kde_max[i_par, i_t] = _kde_max_pnt[par]
+            if show_kde_max_1d:
+                _kde_max_1d_pnt = compute_kde_max(kde_1d, df[[par]], w)
+                kde_max_1d[i_par, i_t] = _kde_max_1d_pnt[par]
+            # levels
+            for i_c, confidence in enumerate(levels):
+                lb, ub = compute_credible_interval(vals, w, confidence)
+                cis[i_par, i_t, i_c] = lb
+                cis[i_par, i_t, -1 - i_c] = ub
+
+    return (
+        par_names,
+        levels,
+        n_par,
+        n_confidence,
+        n_pop,
+        ts,
+        cis,
+        median,
+        mean,
+        kde_max,
+        kde_max_1d,
+    )
+
+
 def plot_credible_intervals(
     history: History,
     m: int = 0,
@@ -88,23 +172,36 @@ def plot_credible_intervals(
     -------
     arr_ax: Array of generated axes.
     """
-    if levels is None:
-        levels = [0.95]
-    levels = sorted(levels)
+    # prepare data
+    (
+        par_names,
+        levels,
+        n_par,
+        n_confidence,
+        n_pop,
+        ts,
+        cis,
+        median,
+        mean,
+        kde_max,
+        kde_max_1d,
+    ) = _prepare_credible_intervals(
+        history=history,
+        m=m,
+        ts=ts,
+        par_names=par_names,
+        levels=levels,
+        show_mean=show_mean,
+        show_kde_max=show_kde_max,
+        show_kde_max_1d=show_kde_max_1d,
+        kde=kde,
+        kde_1d=kde_1d,
+    )
+
     if colors is None:
         colors = [None for _ in range(len(levels))]
     if color_median is None:
         color_median = colors[0]
-    if par_names is None:
-        # extract all parameter names
-        df, _ = history.get_distribution(m=m)
-        par_names = list(df.columns.values)
-    # dimensions
-    n_par = len(par_names)
-    n_confidence = len(levels)
-    if ts is None:
-        ts = list(range(0, history.max_t + 1))
-    n_pop = len(ts)
 
     # prepare axes
     if arr_ax is None:
@@ -114,50 +211,6 @@ def plot_credible_intervals(
     if not isinstance(arr_ax, (list, np.ndarray)):
         arr_ax = [arr_ax]
     fig = arr_ax[0].get_figure()
-
-    # prepare matrices
-    cis = np.empty((n_par, n_pop, 2 * n_confidence))
-    median = np.empty((n_par, n_pop))
-    if show_mean:
-        mean = np.empty((n_par, n_pop))
-    if show_kde_max:
-        kde_max = np.empty((n_par, n_pop))
-    if show_kde_max_1d:
-        kde_max_1d = np.empty((n_par, n_pop))
-    if kde is None and show_kde_max:
-        kde = MultivariateNormalTransition()
-    if kde_1d is None and show_kde_max_1d:
-        kde_1d = MultivariateNormalTransition()
-
-    # fill matrices
-    # iterate over populations
-    for i_t, t in enumerate(ts):
-        df, w = history.get_distribution(m=m, t=t)
-        # normalize weights to be sure
-        w /= w.sum()
-        # fit kde
-        if show_kde_max:
-            _kde_max_pnt = compute_kde_max(kde, df, w)
-        # iterate over parameters
-        for i_par, par in enumerate(par_names):
-            # as numpy array
-            vals = np.array(df[par])
-            # median
-            median[i_par, i_t] = compute_quantile(vals, w, 0.5)
-            # mean
-            if show_mean:
-                mean[i_par, i_t] = np.sum(w * vals)
-            # kde max
-            if show_kde_max:
-                kde_max[i_par, i_t] = _kde_max_pnt[par]
-            if show_kde_max_1d:
-                _kde_max_1d_pnt = compute_kde_max(kde_1d, df[[par]], w)
-                kde_max_1d[i_par, i_t] = _kde_max_1d_pnt[par]
-            # levels
-            for i_c, confidence in enumerate(levels):
-                lb, ub = compute_credible_interval(vals, w, confidence)
-                cis[i_par, i_t, i_c] = lb
-                cis[i_par, i_t, -1 - i_c] = ub
 
     # plot
     for i_par, (par, ax) in enumerate(zip(par_names, arr_ax)):
@@ -220,6 +273,108 @@ def plot_credible_intervals(
     return arr_ax
 
 
+def plot_credible_intervals_plotly(
+    history: History,
+    m: int = 0,
+    ts: Union[List[int], int] = None,
+    par_names: List = None,
+    levels: List = None,
+    colors=None,
+    size: tuple = None,
+    refval: dict = None,
+    refval_color: str = 'gray',
+    kde: Transition = None,
+    kde_1d: Transition = None,
+):
+    """Plot credible intervals over time using plotly."""
+    import plotly.graph_objects as go
+    from plotly.colors import DEFAULT_PLOTLY_COLORS
+    from plotly.subplots import make_subplots
+
+    # prepare data
+    (
+        par_names,
+        levels,
+        n_par,
+        _,
+        n_pop,
+        ts,
+        cis,
+        median,
+        _,
+        _,
+        _,
+    ) = _prepare_credible_intervals(
+        history=history,
+        m=m,
+        ts=ts,
+        par_names=par_names,
+        levels=levels,
+        show_mean=False,
+        show_kde_max=False,
+        show_kde_max_1d=False,
+        kde=kde,
+        kde_1d=kde_1d,
+    )
+
+    # create figure
+    fig = make_subplots(rows=n_par, cols=1, shared_xaxes=True)
+
+    opacities = [1 for _ in range(len(levels))]
+    # colors
+    if colors is None:
+        colors = DEFAULT_PLOTLY_COLORS[0]
+        colors = [colors for _ in range(len(levels))]
+        # opacities
+        opacities = np.linspace(1, 0.3, len(levels))
+
+    # plot
+    for i_par, par in enumerate(par_names):
+        showlegend = i_par == 0
+        for i_c, confidence in reversed(list(enumerate(levels))):
+            fig.add_trace(
+                go.Scatter(
+                    x=ts,
+                    y=median[i_par].flatten(),
+                    error_y={
+                        'type': 'data',
+                        'symmetric': False,
+                        'array': cis[i_par, :, i_c] - median[i_par],
+                        'arrayminus': median[i_par] - cis[i_par, :, -1 - i_c],
+                    },
+                    mode='lines+markers',
+                    marker={'color': colors[i_c]},
+                    opacity=opacities[i_c],
+                    name="{:.2f}".format(confidence),
+                    showlegend=showlegend,
+                ),
+                row=i_par + 1,
+                col=1,
+            )
+        # reference value
+        if refval is not None:
+            fig.add_trace(
+                go.Scatter(
+                    x=ts,
+                    y=[refval[par]] * n_pop,
+                    mode='lines',
+                    marker={'color': refval_color},
+                    name="Reference value",
+                    showlegend=showlegend,
+                ),
+                row=i_par + 1,
+                col=1,
+            )
+        # y axis label
+        fig.update_yaxes(title_text=par, row=i_par + 1, col=1)
+
+    # set size
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
+
+
 def plot_credible_intervals_for_time(
     histories: Union[List[History], History],
     labels: Union[List[str], str] = None,
@@ -241,32 +396,31 @@ def plot_credible_intervals_for_time(
 
     Parameters
     ----------
-
-    histories: Union[List[History], History]
+    histories:
         The histories to extract data from.
-    labels: Union[List[str], str], optional
+    labels:
         Labels for the histories. If None, they are just numbered.
-    ms: Union[List[int], int], optional (default = 0)
+    ms:
         List of the ids of the models to plot for. Default is
         model id 0 for all histories.
-    ts: Union[List[int], int], optional (default = all)
+    ts:
         The time points to plot for, same length as histories.
         If None, the last times are taken.
-    par_names: List[str], optional
+    par_names:
         The parameter to plot for. If None, then all parameters are used.
         Assumes all histories have these parameters.
-    levels: List[float], optional (default = [0.95])
+    levels:
         Confidence intervals to compute.
-    show_mean, show_kde_max, show_kde_max_1d: bool, optional (default = False)
+    show_mean, show_kde_max, show_kde_max_1d:
         As in `plot_credible_intervals`.
-    size: tuple of float
+    size:
         Size of the plot.
-    refvals: Union[List[dict], dict], optional (default = None)
+    refvals:
         A dictionary of reference parameter values to plot for each of
         `par_names`, for each history. Same length as histories.
-    kde: Transition, optional (default = MultivariateNormalTransition)
+    kde:
         The KDE to use for `show_kde_max`.
-    kde_1d: Transition, optional (default = MultivariateNormalTransition)
+    kde_1d:
         The KDE to use for `show_kde_max_1d`.
     """
     histories = to_lists(histories)

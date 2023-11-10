@@ -1,15 +1,38 @@
 """Epsilon threshold plots"""
 
-from typing import List, Union
+from typing import TYPE_CHECKING, List, Union
 
 import matplotlib as mpl
-import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
 from ..storage import History
 from .util import get_labels, to_lists
+
+if TYPE_CHECKING:
+    import plotly.graph_objs as go
+
+
+def _prepare(
+    histories: Union[List, History],
+    labels: Union[List, str],
+    colors: List,
+):
+    # preprocess input
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
+    if colors is None:
+        colors = [None for _ in range(len(histories))]
+
+    # extract epsilons
+    eps = []
+    for history in histories:
+        # note: first entry is from calibration and thus translates to inf,
+        # thus must be discarded
+        eps.append(np.array(history.get_all_populations()['epsilon'][1:]))
+
+    return labels, colors, eps
 
 
 def plot_epsilons(
@@ -45,26 +68,17 @@ def plot_epsilons(
 
     Returns
     -------
-    ax: Axis of the generated plot.
+    ax:
+        The axis object used.
     """
-    # preprocess input
-    histories = to_lists(histories)
-    labels = get_labels(labels, len(histories))
-    if colors is None:
-        colors = [None for _ in range(len(histories))]
+    # process inputs
+    labels, colors, eps = _prepare(histories, labels, colors)
 
     # create figure
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-
-    # extract epsilons
-    eps = []
-    for history in histories:
-        # note: first entry is from calibration and thus translates to inf,
-        # thus must be discarded
-        eps.append(np.array(history.get_all_populations()['epsilon'][1:]))
 
     # plot
     for ep, label, color in zip(eps, labels, colors):
@@ -85,3 +99,49 @@ def plot_epsilons(
     fig.tight_layout()
 
     return ax
+
+
+def plot_epsilons_plotly(
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    colors: List = None,
+    yscale: str = 'log',
+    title: str = "Epsilon values",
+    size: tuple = None,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot epsilon trajectory using plotly."""
+    import plotly.graph_objects as go
+
+    # process inputs
+    labels, colors, eps = _prepare(histories, labels, colors)
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot
+    for ep, label, color in zip(eps, labels, colors):
+        fig.add_trace(
+            go.Scatter(
+                x=np.arange(len(ep)),
+                y=ep,
+                mode='lines+markers',
+                name=label,
+                line_color=color,
+            )
+        )
+
+    # format
+    fig.update_layout(
+        xaxis_title="Population index",
+        yaxis_title="Epsilon",
+        title=title,
+        yaxis_type=yscale,
+    )
+
+    # set size
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
