@@ -1,17 +1,45 @@
 """Sample number plots"""
 
-from typing import List, Tuple, Union
+from typing import TYPE_CHECKING, List, Tuple, Union
 
 import matplotlib as mpl
-import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+if TYPE_CHECKING:
+    import plotly.graph_objs as go
+
 from ..storage import History
 from ..weighted_statistics import effective_sample_size
 from .util import get_labels, to_lists
+
+
+def _prepare_plot_sample_numbers(
+    histories: Union[List[History], History],
+    labels: Union[List[str], str],
+):
+    # preprocess input
+    histories = to_lists(histories)
+    labels = get_labels(labels, len(histories))
+
+    # extract sample numbers
+    samples = []
+    for history in histories:
+        # note: the first entry corresponds to the calibration and should
+        # be included here to be fair against methods not requiring
+        # calibration
+        samples.append(np.array(history.get_all_populations()['samples']))
+
+    # create matrix
+    n_run = len(histories)
+    n_pop = max(len(sample) for sample in samples)
+    matrix = np.zeros((n_pop, n_run))
+    for i_sample, sample in enumerate(samples):
+        matrix[: len(sample), i_sample] = sample
+
+    return labels, matrix, n_run, n_pop
 
 
 def plot_sample_numbers(
@@ -21,13 +49,12 @@ def plot_sample_numbers(
     title: str = "Required samples",
     size: Tuple[float, float] = None,
     ax: mpl.axes.Axes = None,
-):
+) -> mpl.axes.Axes:
     """
     Stacked bar plot of required numbers of samples over all iterations.
 
     Parameters
     ----------
-
     histories:
         The histories to plot from. History ids must be set correctly.
     labels:
@@ -40,39 +67,24 @@ def plot_sample_numbers(
         Title for the plot.
     size:
         The size of the plot in inches.
-    ax: matplotlib.axes.Axes, optional
-        The axis object to use.
+    ax:
+        The matplotlib axes to plot on. If None, a new figure is created.
 
     Returns
     -------
-
-    ax: Axis of the generated plot.
+    ax:
+        A reference to the axis object created.
     """
-    # preprocess input
-    histories = to_lists(histories)
-    labels = get_labels(labels, len(histories))
+    # prepare data
+    labels, matrix, n_run, n_pop = _prepare_plot_sample_numbers(
+        histories, labels
+    )
 
     # create figure
     if ax is None:
         fig, ax = plt.subplots()
     else:
         fig = ax.get_figure()
-
-    n_run = len(histories)
-
-    # extract sample numbers
-    samples = []
-    for history in histories:
-        # note: the first entry corresponds to the calibration and should
-        # be included here to be fair against methods not requiring
-        # calibration
-        samples.append(np.array(history.get_all_populations()['samples']))
-
-    # create matrix
-    n_pop = max(len(sample) for sample in samples)
-    matrix = np.zeros((n_pop, n_run))
-    for i_sample, sample in enumerate(samples):
-        matrix[: len(sample), i_sample] = sample
 
     # plot bars
     for i_pop in reversed(range(n_pop)):
@@ -98,53 +110,69 @@ def plot_sample_numbers(
     return ax
 
 
-def plot_total_sample_numbers(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
+def plot_sample_numbers_plotly(
+    histories: Union[List[History], History],
+    labels: Union[List[str], str] = None,
     rotation: int = 0,
-    title: str = "Total required samples",
-    yscale: str = 'lin',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    title: str = "Required samples",
+    size: Tuple[float, float] = None,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot sample numbers using plotly."""
+    import plotly.graph_objects as go
+
+    # prepare data
+    labels, matrix, n_run, n_pop = _prepare_plot_sample_numbers(
+        histories, labels
+    )
+    # none or empty values are not supported by plotly
+    for ix in range(n_run):
+        if labels[ix] is None:
+            labels[ix] = " "
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot bars
+    for i_pop in reversed(range(n_pop)):
+        fig.add_trace(
+            go.Bar(
+                x=np.arange(n_run),
+                y=matrix[i_pop, :],
+                name=f"Generation {i_pop-1}",
+                offsetgroup=0,
+                base=np.sum(matrix[:i_pop, :], axis=0),
+            )
+        )
+
+    # add labels
+    fig.update_layout(
+        xaxis=go.layout.XAxis(
+            tickmode="array",
+            tickvals=list(range(n_run)),
+            ticktext=labels,
+            tickangle=rotation,
+            title="Run",
+        ),
+        yaxis=go.layout.YAxis(title="Samples"),
+        title=title,
+    )
+
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
+
+
+def _prepare_plot_total_sample_numbers(
+    histories: Union[List[History], History],
+    labels: Union[List[str], str],
+    yscale: str,
 ):
-    """
-    Bar plot of total required sample number over all iterations, i.e.
-    a single-colored bar per history, in contrast to `plot_sample_numbers`,
-    which visually distinguishes iterations.
-
-    Parameters
-    ----------
-    histories: Union[List, History]
-        The histories to plot from. History ids must be set correctly.
-    labels: Union[List ,str], optional
-        Labels corresponding to the histories. If None are provided,
-        indices are used as labels.
-    rotation: int, optional (default = 0)
-        Rotation to apply to the plot's x tick labels. For longer labels,
-        a tilting of 45 or even 90 can be preferable.
-    title: str, optional (default = "Total required samples")
-        Title for the plot.
-    yscale: str, optional (default = 'lin')
-        The scale on which to plot the counts. Can be one of 'lin', 'log'
-        (basis e) or 'log10'
-    size: tuple of float, optional
-        The size of the plot in inches.
-    ax: matplotlib.axes.Axes, optional
-        The axis object to use.
-
-    Returns
-    -------
-    ax: Axis of the generated plot.
-    """
     # preprocess input
     histories = to_lists(histories)
     labels = get_labels(labels, len(histories))
-
-    # create figure
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
 
     n_run = len(histories)
 
@@ -166,6 +194,59 @@ def plot_total_sample_numbers(
         samples = np.log10(samples)
         ylabel = "log10(" + ylabel + ")"
 
+    return samples, labels, ylabel, n_run
+
+
+def plot_total_sample_numbers(
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    rotation: int = 0,
+    title: str = "Total required samples",
+    yscale: str = 'lin',
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
+    """
+    Bar plot of total required sample number over all iterations, i.e.
+    a single-colored bar per history, in contrast to `plot_sample_numbers`,
+    which visually distinguishes iterations.
+
+    Parameters
+    ----------
+    histories:
+        The histories to plot from. History ids must be set correctly.
+    labels:
+        Labels corresponding to the histories. If None are provided,
+        indices are used as labels.
+    rotation:
+        Rotation to apply to the plot's x tick labels. For longer labels,
+        a tilting of 45 or even 90 can be preferable.
+    title:
+        Title for the plot.
+    yscale:
+        The scale on which to plot the counts. Can be one of 'lin', 'log'
+        (basis e) or 'log10'
+    size:
+        The size of the plot in inches.
+    ax:
+        The matplotlib axes to plot on. If None, a new figure is created.
+
+    Returns
+    -------
+    ax:
+        A reference to the axis object created.
+    """
+    # prepare data
+    samples, labels, ylabel, n_run = _prepare_plot_total_sample_numbers(
+        histories, labels, yscale
+    )
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
     # plot bars
     ax.bar(x=np.arange(n_run), height=samples)
 
@@ -183,52 +264,65 @@ def plot_total_sample_numbers(
     return ax
 
 
-def plot_sample_numbers_trajectory(
+def plot_total_sample_numbers_plotly(
     histories: Union[List, History],
     labels: Union[List, str] = None,
     rotation: int = 0,
-    title: str = "Required samples",
+    title: str = "Total required samples",
     yscale: str = 'lin',
     size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot total sample numbers using plotly."""
+    import plotly.graph_objects as go
+
+    # prepare data
+    samples, labels, ylabel, n_run = _prepare_plot_total_sample_numbers(
+        histories, labels, yscale
+    )
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot bars
+    fig.add_trace(
+        go.Bar(
+            x=np.arange(n_run),
+            y=samples,
+            name="Total samples",
+            offsetgroup=0,
+            base=0,
+        )
+    )
+
+    # add labels
+    fig.update_layout(
+        xaxis=go.layout.XAxis(
+            tickmode="array",
+            tickvals=list(range(n_run)),
+            ticktext=labels,
+            tickangle=rotation,
+        ),
+        yaxis=go.layout.YAxis(title=ylabel),
+        title=title,
+    )
+
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
+
+
+def _prepare_plot_sample_numbers_trajectory(
+    histories: Union[List, History],
+    labels: Union[List, str],
+    yscale: str,
 ):
-    """
-    Plot of required sample number over all iterations, i.e. one trajectory
-    per history.
-
-    Parameters
-    ----------
-    histories: Union[List, History]
-        The histories to plot from. History ids must be set correctly.
-    labels: Union[List ,str], optional
-        Labels corresponding to the histories. If None are provided,
-        indices are used as labels.
-    rotation: int, optional (default = 0)
-        Rotation to apply to the plot's x tick labels. For longer labels,
-        a tilting of 45 or even 90 can be preferable.
-    title: str, optional (default = "Required samples")
-        Title for the plot.
-    yscale: str, optional (default = 'lin')
-        The scale on which to plot the counts. Can be one of 'lin', 'log'
-        (basis e) or 'log10'
-    size: tuple of float, optional
-        The size of the plot in inches.
-    ax: matplotlib.axes.Axes, optional
-        The axis object to use.
-
-    Returns
-    -------
-    ax: Axis of the generated plot.
-    """
+    """Prepare data for plotting sample number trajectories."""
     # preprocess input
     histories = to_lists(histories)
     labels = get_labels(labels, len(histories))
-
-    # create figure
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
 
     # extract sample numbers
     times = []
@@ -250,6 +344,54 @@ def plot_sample_numbers_trajectory(
         samples = [np.log10(sample) for sample in samples]
         ylabel = "log10(" + ylabel + ")"
 
+    return samples, times, labels, ylabel
+
+
+def plot_sample_numbers_trajectory(
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    title: str = "Required samples",
+    yscale: str = 'lin',
+    size: tuple = None,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
+    """
+    Plot of required sample number over all iterations, i.e. one trajectory
+    per history.
+
+    Parameters
+    ----------
+    histories:
+        The histories to plot from. History ids must be set correctly.
+    labels:
+        Labels corresponding to the histories. If None are provided,
+        indices are used as labels.
+    title:
+        Title for the plot.
+    yscale:
+        The scale on which to plot the counts. Can be one of 'lin', 'log'
+        (basis e) or 'log10'
+    size:
+        The size of the plot in inches.
+    ax:
+        The matplotlib axes to plot on. If None, a new figure is created.
+
+    Returns
+    -------
+    ax:
+        Axis of the generated plot.
+    """
+    # prepare data
+    samples, times, labels, ylabel = _prepare_plot_sample_numbers_trajectory(
+        histories, labels, yscale
+    )
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
     # plot
     for t, sample, label in zip(times, samples, labels):
         ax.plot(t, sample, 'x-', label=label)
@@ -268,57 +410,62 @@ def plot_sample_numbers_trajectory(
     return ax
 
 
-def plot_acceptance_rates_trajectory(
+def plot_sample_numbers_trajectory_plotly(
     histories: Union[List, History],
     labels: Union[List, str] = None,
-    title: str = "Acceptance rates",
+    title: str = "Required samples",
     yscale: str = 'lin',
     size: tuple = None,
-    ax: mpl.axes.Axes = None,
-    colors: List[str] = None,
-    normalize_by_ess: bool = False,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot sample number trajectories using plotly."""
+    import plotly.graph_objects as go
+
+    # prepare data
+    samples, times, labels, ylabel = _prepare_plot_sample_numbers_trajectory(
+        histories, labels, yscale
+    )
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot
+    for t, sample, label in zip(times, samples, labels):
+        fig.add_trace(
+            go.Scatter(
+                x=t,
+                y=sample,
+                mode='lines+markers',
+                name=label,
+            )
+        )
+
+    # add labels
+    fig.update_layout(
+        title=title,
+        xaxis=go.layout.XAxis(title="Population index $t$"),
+        yaxis=go.layout.YAxis(title=ylabel),
+    )
+
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
+
+
+def _prepare_plot_acceptance_rates_trajectory(
+    histories: Union[List, History],
+    labels: Union[List, str],
+    yscale: str,
+    colors: List[str],
+    normalize_by_ess: bool,
 ):
-    """
-    Plot of acceptance rates over all iterations, i.e. one trajectory
-    per history.
-
-    Parameters
-    ----------
-    histories:
-        The histories to plot from. History ids must be set correctly.
-    labels:
-        Labels corresponding to the histories. If None are provided,
-        indices are used as labels.
-    title:
-        Title for the plot.
-    yscale:
-        The scale on which to plot the counts. Can be one of 'lin', 'log'
-        (basis e) or 'log10'
-    size:
-        The size of the plot in inches.
-    ax:
-        The axis object to use.
-    colors:
-        Colors to use for the trajectories. If None, then the matplotlib
-        default values are used.
-    normalize_by_ess: bool, optional (default = False)
-        Indicator to use effective sample size for the acceptance rate in
-        place of the population size.
-
-    Returns
-    -------
-    ax: Axis of the generated plot.
-    """
     # preprocess input
     histories = to_lists(histories)
     labels = get_labels(labels, len(histories))
     if colors is None:
         colors = [None] * len(histories)
-    # create figure
-    if ax is None:
-        fig, ax = plt.subplots()
-    else:
-        fig = ax.get_figure()
 
     # extract sample numbers
     times = []
@@ -354,12 +501,75 @@ def plot_acceptance_rates_trajectory(
         rates = [np.log10(rate) for rate in rates]
         ylabel = "log10(" + ylabel + ")"
 
+    return rates, times, labels, ylabel, colors
+
+
+def plot_acceptance_rates_trajectory(
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    title: str = "Acceptance rates",
+    yscale: str = 'lin',
+    size: tuple = None,
+    colors: List[str] = None,
+    normalize_by_ess: bool = False,
+    ax: mpl.axes.Axes = None,
+) -> mpl.axes.Axes:
+    """
+    Plot of acceptance rates over all iterations, i.e. one trajectory
+    per history.
+
+    Parameters
+    ----------
+    histories:
+        The histories to plot from. History ids must be set correctly.
+    labels:
+        Labels corresponding to the histories. If None are provided,
+        indices are used as labels.
+    title:
+        Title for the plot.
+    yscale:
+        The scale on which to plot the counts. Can be one of 'lin', 'log'
+        (basis e) or 'log10'
+    size:
+        The size of the plot in inches.
+    colors:
+        Colors to use for the trajectories. If None, then the matplotlib
+        default values are used.
+    normalize_by_ess: bool, optional (default = False)
+        Indicator to use effective sample size for the acceptance rate in
+        place of the population size.
+    ax:
+        Axis of the plot. If None, a new axis object is generated.
+
+    Returns
+    -------
+    ax:
+        Axis of the generated plot.
+    """
+    # prepare data
+    (
+        rates,
+        times,
+        labels,
+        ylabel,
+        colors,
+    ) = _prepare_plot_acceptance_rates_trajectory(
+        histories, labels, yscale, colors, normalize_by_ess
+    )
+
+    # create figure
+    if ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = ax.get_figure()
+
     # plot
     for t, rate, label, color in zip(times, rates, labels, colors):
         ax.plot(t, rate, 'x-', label=label, color=color)
 
     # add labels
-    ax.legend()
+    if any(lab is not None for lab in labels):
+        ax.legend()
     ax.set_title(title)
     ax.set_ylabel(ylabel)
     ax.set_xlabel("Population index $t$")
@@ -369,6 +579,59 @@ def plot_acceptance_rates_trajectory(
     fig.tight_layout()
 
     return ax
+
+
+def plot_acceptance_rates_trajectory_plotly(
+    histories: Union[List, History],
+    labels: Union[List, str] = None,
+    title: str = "Acceptance rates",
+    yscale: str = 'lin',
+    size: tuple = None,
+    colors: List[str] = None,
+    normalize_by_ess: bool = False,
+    fig: "go.Figure" = None,
+) -> "go.Figure":
+    """Plot acceptance rates trajectories using plotly."""
+    import plotly.graph_objects as go
+
+    # prepare data
+    (
+        rates,
+        times,
+        labels,
+        ylabel,
+        colors,
+    ) = _prepare_plot_acceptance_rates_trajectory(
+        histories, labels, yscale, colors, normalize_by_ess
+    )
+
+    # create figure
+    if fig is None:
+        fig = go.Figure()
+
+    # plot
+    for t, rate, label, color in zip(times, rates, labels, colors):
+        fig.add_trace(
+            go.Scatter(
+                x=t,
+                y=rate,
+                mode='lines+markers',
+                name=label,
+                line={'color': color},
+            )
+        )
+
+    # add labels
+    fig.update_layout(
+        title=title,
+        xaxis_title="Population index $t$",
+        yaxis_title=ylabel,
+    )
+    # set size
+    if size is not None:
+        fig.update_layout(width=size[0], height=size[1])
+
+    return fig
 
 
 def plot_lookahead_evaluations(
