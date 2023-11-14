@@ -7,6 +7,18 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.14 (2023-11-10)
+--------------------
+
+Visualization:
+
+* Selected plotly versions of matplotlib visualizations
+
+General:
+
+* Added functionality to evaluate the model using boundary values of parameter
+
+
 0.12.13 (2023-11-08)
 --------------------
 
