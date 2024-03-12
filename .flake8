@@ -13,6 +13,8 @@ extend-ignore =
   E501
   # Empty method in an abstract base class
   B027
+  # Disable black would make changes warning
+  BLK100
 
 per-file-ignores =
   # Imported but unused
