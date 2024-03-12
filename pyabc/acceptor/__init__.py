@@ -5,7 +5,6 @@ Acceptors
 Acceptors handle the acceptance step.
 """
 
-
 from .acceptor import (
     Acceptor,
     AcceptorResult,
