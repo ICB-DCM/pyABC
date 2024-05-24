@@ -82,8 +82,8 @@ class AmiciModel:
         for key in self.prior_scales.keys():
             par[key] = rescale(
                 val=par[key],
-                origin_scale=self.prior_scales,
-                target_scale=self.scaled_scales,
+                origin_scale=self.prior_scales[key],
+                target_scale=self.scaled_scales[key],
             )
 
         # simulate model
