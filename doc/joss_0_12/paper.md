@@ -115,7 +115,7 @@ Extensive documentation is hosted on [Read the Docs](https://pyabc.rtfd.io), inc
 
 We thank many collaboration partners and pyABC users for valuable input, in particular Frank Bergmann for the COPASI wrapper, and Elba Raimúndez for fruitful discussions.
 This work was supported by the German Federal Ministry of Education and Research (BMBF)
-(FitMultiCell/031L0159 and EMUNE/031L0293) and the German Research Foundation (DFG)
+(FitMultiCell/031L0159 [Link to project](https://fitmulticell.gitlab.io/) and EMUNE/031L0293) and the German Research Foundation (DFG)
 under Germany’s Excellence Strategy (EXC 2047 390873048 and EXC 2151 390685813).
 
 # References
