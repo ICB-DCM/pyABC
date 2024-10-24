@@ -14,8 +14,8 @@ import pyabc
 logger = logging.getLogger("ABC.PEtab")
 
 try:
-    import petab
     import petab.C as C
+    import petab.v1 as petab
 except ImportError:
     petab = C = None
     logger.error(
