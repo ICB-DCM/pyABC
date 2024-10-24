@@ -47,7 +47,7 @@ class Model:
     .. note::
 
         Most likely you do not want to use this class directly, but the
-        :class:`SimpleModel` instead, or even just pass a plain function
+        :class:`FunctionModel` instead, or even just pass a plain function
         as model.
 
     Parameters
@@ -216,7 +216,7 @@ class FunctionModel(Model):
     A model which is initialized with a function which generates the samples.
     For most cases this class will be adequate.
     Note that you can also pass a plain function to the ABCSMC class, which
-    then gets automatically converted to a SimpleModel.
+    then gets automatically converted to a FunctionModel.
 
     Parameters
     ----------
@@ -252,7 +252,7 @@ class FunctionModel(Model):
         Parameters
         ----------
         maybe_model:
-            Constructs a SimpleModel instance if a function is passed.
+            Constructs a FunctionModel instance if a function is passed.
             If a Model instance is passed, the Model instance itself is
             returned.
 
