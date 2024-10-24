@@ -18,9 +18,7 @@ import pyabc.petab.base
 
 
 @pytest.fixture(
-    params=itertools.product(
-        [petab.C.LIN, petab.C.LOG, petab.C.LOG10], [*petab.C.PRIOR_TYPES, None]
-    )
+    params=itertools.product([C.LIN, C.LOG, C.LOG10], [*C.PRIOR_TYPES, None])
 )
 def prior_specs(request):
     """A one-line parameter df for a given prior type."""
