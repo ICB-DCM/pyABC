@@ -8,8 +8,8 @@ import git
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import petab.C as C
 import petab.v1 as petab
+import petab.v1.C as C
 import pytest
 import scipy.stats
 
