@@ -14,8 +14,8 @@ from .base import PetabImporter, rescale
 logger = logging.getLogger("ABC.PEtab")
 
 try:
-    import petab.v1 as petab
     import petab.v1.C as C
+    import petab.v1 as petab
 except ImportError:
     petab = C = None
     logger.error(
