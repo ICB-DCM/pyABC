@@ -31,7 +31,13 @@ prior = pyabc.Distribution(
 
 distance = pyabc.PNormDistance(p=2)
 
-abc = pyabc.ABCSMC(model, prior, distance, population_size=10)
+abc = pyabc.ABCSMC(
+    model,
+    prior,
+    distance,
+    population_size=10,
+    sampler=pyabc.SingleCoreSampler(),
+)
 db_file = os.path.join(tempfile.gettempdir(), 'pyabc_test_migrate.db')
 abc.new("sqlite:///" + db_file, observation)
 abc.run(minimum_epsilon=0.1, max_nr_populations=3)
