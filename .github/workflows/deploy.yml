@@ -3,14 +3,14 @@ name: Deploy
 on:
   release:
     types: [created]
-   
+
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.11]
 
     steps:
     - name: Check out repository
