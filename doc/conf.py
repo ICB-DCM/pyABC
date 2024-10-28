@@ -155,7 +155,7 @@ todo_include_todos = True
 
 # Add notebooks prolog to Google Colab and nbviewer
 nbsphinx_prolog = r"""
-{% set docname = 'github/icb-dcm/pyabc/blob/main/doc/' + env.doc2path(env.docname, base=None) %}
+{% set docname = 'github/icb-dcm/pyabc/blob/main/doc/' + env.doc2path(env.docname, base=None) | string %}
 .. raw:: html
 
     <div class="note">
