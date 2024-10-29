@@ -7,8 +7,8 @@ on:
     - main
   pull_request:
   schedule:
-    # run Monday and Thursday at 03:18 UTC
-    - cron: '18 15 * * MON,THU'
+    # run Monday at 03:18 UTC
+    - cron: '18 15 * * MON'
 
 jobs:
 
@@ -16,14 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11', '3.9']
+        python-version: ['3.12', '3.11', '3.10']
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -54,14 +54,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11', '3.9']
+        python-version: ['3.12']
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -100,7 +100,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -127,14 +127,14 @@ jobs:
     runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ['3.11', '3.9']
+        python-version: ['3.12']
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
 
       - name: Prepare python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -161,14 +161,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.12']
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -189,14 +189,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.12']
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -224,7 +224,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 

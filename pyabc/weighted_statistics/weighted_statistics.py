@@ -129,7 +129,10 @@ def resample(points, weights, n):
     """
     weights = np.asarray(weights)
     weights /= np.sum(weights)
-    resampled = np.random.choice(points, size=n, p=weights)
+    indices = np.random.choice(
+        points.shape[0], size=n, p=weights
+    )  # sample index from multi-dimensional sample
+    resampled = points[indices]
     return resampled
 
 

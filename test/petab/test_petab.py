@@ -8,8 +8,8 @@ import git
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import petab
-import petab.C as C
+import petab.v1 as petab
+import petab.v1.C as C
 import pytest
 import scipy.stats
 
@@ -18,9 +18,7 @@ import pyabc.petab.base
 
 
 @pytest.fixture(
-    params=itertools.product(
-        [petab.C.LIN, petab.C.LOG, petab.C.LOG10], [*petab.C.PRIOR_TYPES, None]
-    )
+    params=itertools.product([C.LIN, C.LOG, C.LOG10], [*C.PRIOR_TYPES, None])
 )
 def prior_specs(request):
     """A one-line parameter df for a given prior type."""

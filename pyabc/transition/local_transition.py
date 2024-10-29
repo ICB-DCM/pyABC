@@ -136,7 +136,10 @@ class LocalTransition(Transition):
         while det <= 0:
             cov += np.identity(cov.shape[0]) * self.EPS
             det = la.det(cov)
-        inv_cov = la.inv(cov)
+        try:
+            inv_cov = la.inv(cov)
+        except np.linalg.LinAlgError:
+            inv_cov = np.linalg.pinv(cov)  # Use pseudo-inverse as a fallback
         return cov, inv_cov, det
 
     def _cov(self, indices, n):

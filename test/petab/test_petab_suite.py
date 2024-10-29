@@ -12,7 +12,7 @@ import pyabc
 try:
     import amici.petab_import
     import amici.petab_objective
-    import petab
+    import petab.v1 as petab
 
     import pyabc.petab
 except ImportError:

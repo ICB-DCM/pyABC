@@ -3,21 +3,21 @@ name: Deploy
 on:
   release:
     types: [created]
-   
+
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version: [3.12]
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
 
     - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 

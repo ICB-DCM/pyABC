@@ -7,6 +7,18 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.15 (2024-10-29)
+--------------------
+
+General:
+
+* Minor improvements in the documentation
+* Minor bug fixes in dependencies
+* Minor bug fixed in general
+* Dropping support of python 3.9
+* Adding support for python 3.12
+
+
 0.12.14 (2023-11-10)
 --------------------
 
@@ -24,7 +36,7 @@ General:
 
 Fixes (#615):
 
-* Fix for wrong assets path in abc-server-dash 
+* Fix for wrong assets path in abc-server-dash
 
 General
 
