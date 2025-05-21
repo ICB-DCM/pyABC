@@ -65,13 +65,14 @@ texlive-latex-extra \
 zlib1g-dev \
 gfortran \
 libpcre2-dev \
-libicu-dev
+libicu-dev \
+libboost-all-dev
 
      cd /tmp
         wget https://cran.r-project.org/src/base/R-4/R-4.4.0.tar.gz
         tar -xvzf R-4.4.0.tar.gz
         cd R-4.4.0
-        ./configure --enable-R-shlib --with-blas 
+        ./configure --enable-R-shlib --with-blas --with-lapack
         make -j$(nproc)
         sudo make install
       fi
@@ -79,7 +80,8 @@ libicu-dev
 
     amici)
       # AMICI dependencies
-      sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev
+      sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+      pip install amici
     ;;
 
     doc)
