@@ -11,13 +11,11 @@ import pyabc
 
 try:
     import amici.petab.petab_import
-    #import amici.petab.petab_objective
+    import amici.petab.simulations
     import petab.v1 as petab
 
     import pyabc.petab
-except ImportError as e:
-    print("IMPORT ERROR")
-    print(e)
+except ImportError:
     pass
 
 
@@ -120,7 +118,7 @@ def _execute_case(case):
     # extract results
     rdatas = ret['rdatas']
     chi2 = sum(rdata['chi2'] for rdata in rdatas)
-    simulation_df = amici.petab_objective.rdatas_to_measurement_df(
+    simulation_df = amici.petab.simulations.rdatas_to_measurement_df(
         rdatas, amici_model, importer.petab_problem.measurement_df
     )
     petab.check_measurement_df(
