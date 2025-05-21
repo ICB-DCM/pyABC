@@ -39,8 +39,8 @@ do
         #sudo apt-get update
         #sudo apt-get install libtiff5 r-base
         sudo apt update
-        sudo apt install build-essential libreadline-dev libx11-dev libxt-dev libpng-dev libjpeg-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libxml2-dev texinfo texlive texlive-fonts-extra screen wget
-        sudo apt install liblzma-dev
+        sudo apt install -y build-essential libreadline-dev libx11-dev libxt-dev libpng-dev libjpeg-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libxml2-dev texinfo texlive texlive-fonts-extra screen wget
+        sudo apt install -y liblzma-dev
         cd /tmp
         wget https://cran.r-project.org/src/base/R-4/R-4.4.0.tar.gz
         tar -xvzf R-4.4.0.tar.gz
