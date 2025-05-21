@@ -97,7 +97,7 @@ def _execute_case(case):
     # models with the same name in a single python session
     model_name = f"petab_{MODEL_TYPE}_test_case_{case}_{PETAB_VERSION.replace('.', '_')}"
 
-    amici_model = amici.petab_import.import_petab_problem(
+    amici_model = amici.petab.petab_import.import_petab_problem(
         petab_problem=petab_problem,
         model_name=model_name,
         model_output_dir=output_folder,
