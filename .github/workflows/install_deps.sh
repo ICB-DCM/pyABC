@@ -41,11 +41,37 @@ do
         sudo apt update
         sudo apt install -y build-essential libreadline-dev libx11-dev libxt-dev libpng-dev libjpeg-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libxml2-dev texinfo texlive texlive-fonts-extra screen wget
         sudo apt install -y liblzma-dev
-        cd /tmp
+
+sudo apt install -y \
+build-essential \
+libreadline-dev \
+libx11-dev \
+libxt-dev \
+libpng-dev \
+libjpeg-dev \
+libcairo2-dev \
+libtiff-dev \
+libglib2.0-dev \
+liblzma-dev \
+libbz2-dev \
+libzstd-dev \
+libcurl4-openssl-dev \
+libssl-dev \
+libxml2-dev \
+texinfo \
+texlive \
+texlive-fonts-extra \
+texlive-latex-extra \
+zlib1g-dev \
+gfortran \
+libpcre2-dev \
+libicu-dev
+
+     cd /tmp
         wget https://cran.r-project.org/src/base/R-4/R-4.4.0.tar.gz
         tar -xvzf R-4.4.0.tar.gz
         cd R-4.4.0
-        ./configure --enable-R-shlib
+        ./configure --enable-R-shlib --with-blas 
         make -j$(nproc)
         sudo make install
       fi
