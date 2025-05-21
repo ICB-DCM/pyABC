@@ -10,8 +10,8 @@ from _pytest.outcomes import Skipped
 import pyabc
 
 try:
-    import amici.petab_import
-    import amici.petab_objective
+    import amici.petab.petab_import
+    import amici.petab.petab_objective
     import petab.v1 as petab
 
     import pyabc.petab
