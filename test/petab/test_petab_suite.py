@@ -16,7 +16,13 @@ try:
 
     import pyabc.petab
 except ImportError:
+    print("IMPORT ERROR")
+    print("IMPORT ERROR")
+    print("IMPORT ERROR")
+    print("IMPORT ERROR")
+    print("IMPORT ERROR")
     pass
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
