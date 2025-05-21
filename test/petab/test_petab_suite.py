@@ -11,16 +11,13 @@ import pyabc
 
 try:
     import amici.petab.petab_import
-    import amici.petab.petab_objective
+    #import amici.petab.petab_objective
     import petab.v1 as petab
 
     import pyabc.petab
-except ImportError:
+except ImportError as e:
     print("IMPORT ERROR")
-    print("IMPORT ERROR")
-    print("IMPORT ERROR")
-    print("IMPORT ERROR")
-    print("IMPORT ERROR")
+    print(e)
     pass
 
 
