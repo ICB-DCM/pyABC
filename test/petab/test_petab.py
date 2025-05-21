@@ -2,7 +2,7 @@ import itertools
 import os
 import sys
 
-import amici.petab_import
+import amici.petab.petab_import
 import cloudpickle as pickle
 import git
 import matplotlib.pyplot as plt
