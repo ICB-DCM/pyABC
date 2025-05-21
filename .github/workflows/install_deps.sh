@@ -33,11 +33,20 @@ do
         # MacOS
         brew install r
       else
-        # Linux
-        wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo gpg --dearmor -o /usr/share/keyrings/r-project.gpg
-        echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | sudo tee -a /etc/apt/sources.list.d/r-project.list
-        sudo apt-get update
-        sudo apt-get install libtiff5 r-base
+         # Linux (Not compatible with Ubuntu 24)
+        #wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo gpg --dearmor -o /usr/share/keyrings/r-project.gpg
+        #echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | sudo tee -a /etc/apt/sources.list.d/r-project.list
+        #sudo apt-get update
+        #sudo apt-get install libtiff5 r-base
+        sudo apt update
+        sudo apt install build-essential libreadline-dev libx11-dev libxt-dev libpng-dev libjpeg-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libxml2-dev texinfo texlive texlive-fonts-extra screen wget
+        cd /tmp
+        wget https://cran.r-project.org/src/base/R-4/R-4.4.0.tar.gz
+        tar -xvzf R-4.4.0.tar.gz
+        cd R-4.4.0
+        ./configure --enable-R-shlib
+        make -j$(nproc)
+        sudo make install
       fi
     ;;
 
