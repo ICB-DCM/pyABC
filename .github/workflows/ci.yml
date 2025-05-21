@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -28,7 +28,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-base
@@ -58,7 +58,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -97,7 +97,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -118,7 +118,7 @@ jobs:
       run: tox -e petab
 
     - name: Coverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
@@ -131,7 +131,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -139,7 +139,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ~/Library/Caches/pip
           key: ci-${{ runner.os }}-${{ matrix.python-version }}-mac
@@ -165,7 +165,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -193,7 +193,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -221,7 +221,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
