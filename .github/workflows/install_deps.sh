@@ -82,6 +82,7 @@ libboost-all-dev
       # AMICI dependencies
       sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
       pip install amici
+      pip install pyabc[amici]
     ;;
 
     doc)
