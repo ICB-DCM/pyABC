@@ -33,7 +33,7 @@ do
         # MacOS
         brew install r
       else
-         # Linux (Not compatible with Ubuntu 24)
+         # Linux (Not compatible with Ubuntu 24: no CRAN repository currently available)
         #wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo gpg --dearmor -o /usr/share/keyrings/r-project.gpg
         #echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | sudo tee -a /etc/apt/sources.list.d/r-project.list
         #sudo apt-get update
@@ -81,6 +81,7 @@ libboost-all-dev
     amici)
       # AMICI dependencies
       sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+
       # pip install amici
       pip uninstall amici pyabc
       pip install 'pyabc[amici]'
