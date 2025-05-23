@@ -83,8 +83,8 @@ libboost-all-dev
       sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
 
       # pip install amici
-      #pip uninstall amici pyabc
-      #pip install 'pyabc[amici]'
+      pip uninstall amici pyabc
+      pip install 'pyabc[amici]'
     ;;
 
     doc)
