@@ -2,7 +2,7 @@ import itertools
 import os
 import sys
 
-import amici.petab_import
+import amici.petab.petab_import
 import cloudpickle as pickle
 import git
 import matplotlib.pyplot as plt
@@ -322,7 +322,7 @@ def boehm_model_importer():
     output_folder = f'amici_models/{model_name}'
     if output_folder not in sys.path:
         sys.path.insert(0, output_folder)
-    model = amici.petab_import.import_petab_problem(
+    model = amici.petab.petab_import.import_petab_problem(
         petab_problem,
         model_output_dir=output_folder,
         generate_sensitivity_code=False,

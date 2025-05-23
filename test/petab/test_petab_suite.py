@@ -10,13 +10,14 @@ from _pytest.outcomes import Skipped
 import pyabc
 
 try:
-    import amici.petab_import
-    import amici.petab_objective
+    import amici.petab.petab_import
+    import amici.petab.simulations
     import petab.v1 as petab
 
     import pyabc.petab
 except ImportError:
     pass
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -94,7 +95,7 @@ def _execute_case(case):
     # models with the same name in a single python session
     model_name = f"petab_{MODEL_TYPE}_test_case_{case}_{PETAB_VERSION.replace('.', '_')}"
 
-    amici_model = amici.petab_import.import_petab_problem(
+    amici_model = amici.petab.petab_import.import_petab_problem(
         petab_problem=petab_problem,
         model_name=model_name,
         model_output_dir=output_folder,
@@ -117,7 +118,7 @@ def _execute_case(case):
     # extract results
     rdatas = ret['rdatas']
     chi2 = sum(rdata['chi2'] for rdata in rdatas)
-    simulation_df = amici.petab_objective.rdatas_to_measurement_df(
+    simulation_df = amici.petab.simulations.rdatas_to_measurement_df(
         rdatas, amici_model, importer.petab_problem.measurement_df
     )
     petab.check_measurement_df(

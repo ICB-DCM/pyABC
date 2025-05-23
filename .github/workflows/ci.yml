@@ -5,6 +5,7 @@ on:
   push:
     branches:
     - main
+    - develop
   pull_request:
   schedule:
     # run Monday at 03:18 UTC
@@ -20,7 +21,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -28,7 +29,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-base
@@ -58,7 +59,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -71,7 +72,7 @@ jobs:
         version: 1.7
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-external
@@ -97,7 +98,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -105,7 +106,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-petab
@@ -115,10 +116,15 @@ jobs:
 
     - name: Run tests
       timeout-minutes: 20
-      run: tox -e petab
+      run: |
+         echo "Amici installed (1):"
+         pip list | grep amici
+         tox -e petab -vvv
+         echo "Amici installed (2):"
+         pip list | grep amici
 
     - name: Coverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
@@ -131,7 +137,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Prepare python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -139,7 +145,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Cache
-        uses: actions/cache@v1
+        uses: actions/cache@v4
         with:
           path: ~/Library/Caches/pip
           key: ci-${{ runner.os }}-${{ matrix.python-version }}-mac
@@ -165,7 +171,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -173,7 +179,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks1
@@ -193,7 +199,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -201,7 +207,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks2
@@ -221,7 +227,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Prepare python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -229,7 +235,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Cache
-      uses: actions/cache@v1
+      uses: actions/cache@v4
       with:
         path: ~/.cache
         key: ci-${{ runner.os }}-${{ matrix.python-version }}-quality

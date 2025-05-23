@@ -25,8 +25,8 @@ except ImportError:
 
 try:
     import amici
-    from amici import petab_import as amici_petab_import
-    from amici.petab_objective import LLH, RDATAS, simulate_petab
+    from amici.petab import petab_import as amici_petab_import
+    from amici.petab.simulations import LLH, RDATAS, simulate_petab
 except ImportError:
     amici = amici_petab_import = simulate_petab = LLH = RDATAS = None
     logger.error(
