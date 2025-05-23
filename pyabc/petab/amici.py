@@ -17,7 +17,6 @@ try:
     import petab.v1 as petab
     import petab.v1.C as C
 except ImportError:
-    print("Import error 1")
     petab = C = None
     logger.error(
         "Install PEtab (see https://github.com/icb-dcm/petab) to use "
@@ -29,7 +28,6 @@ try:
     from amici.petab import petab_import as amici_petab_import
     from amici.petab.simulations import LLH, RDATAS, simulate_petab
 except ImportError:
-    print("Import error 2")
     amici = amici_petab_import = simulate_petab = LLH = RDATAS = None
     logger.error(
         "Install amici (see https://github.com/icb-dcm/amici) to use "
