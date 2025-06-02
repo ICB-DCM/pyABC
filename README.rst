@@ -6,9 +6,12 @@ pyABC
    :width: 30 %
    :align: center
 
-[![Python](https://img.shields.io/badge/Python-%3E%3D3.10-blue?logo=python&logoColor=white)]
 
-|CI| |docs| |codecov| |pypi| |doi| |black|
+
+|CI| |docs| |codecov| |pypi| |doi| |black| |python|
+
+
+
 
 Massively parallel, distributed and scalable ABC-SMC
 (Approximate Bayesian Computation - Sequential Monte Carlo)
@@ -45,6 +48,10 @@ Written in Python with support for especially R and Julia.
 .. |doi| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3257587.svg
    :target: https://doi.org/10.5281/zenodo.3257587
    :alt: DOI
+
+.. |python| image:: https://img.shields.io/badge/Python-%3E%3D3.10-blue?logo=python&logoColor=green
+   :target: https://python.org
+   :alt: Python
 
 .. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
