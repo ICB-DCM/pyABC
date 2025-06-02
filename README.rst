@@ -6,6 +6,8 @@ pyABC
    :width: 30 %
    :align: center
 
+![Python](https://img.shields.io/badge/Python-%3E%3D3.10-blue?logo=python&logoColor=white)
+
 |CI| |docs| |codecov| |pypi| |doi| |black|
 
 Massively parallel, distributed and scalable ABC-SMC
