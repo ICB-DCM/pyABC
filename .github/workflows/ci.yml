@@ -241,6 +241,8 @@ jobs:
         .github/workflows/install_deps.sh doc
         pip install tox
         pip install pypandoc
+        python .github/workflows/generate_readme_rst.py
+
 
     - name: Run quality checks
       timeout-minutes: 5

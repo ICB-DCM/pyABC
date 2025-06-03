@@ -30,5 +30,5 @@ Written in Python, with support for integration with R and Julia.
 - 💡 **Examples**: [https://pyabc.rtfd.io/en/latest/examples.html](https://pyabc.rtfd.io/en/latest/examples.html)
 - 💬 **Contact**: [https://pyabc.rtfd.io/en/latest/about.html](https://pyabc.rtfd.io/en/latest/about.html)
 - 🐛 **Bug Reports**: [https://github.com/icb-dcm/pyabc/issues](https://github.com/icb-dcm/pyabc/issues)
-- 🧑‍💻 **Source Code**: [https://github.com/icb-dcm/pyabc](https://github.com/icb-dcm/pyabc)
+- 💻 **Source Code**: [https://github.com/icb-dcm/pyabc](https://github.com/icb-dcm/pyabc)
 - 📄 **Cite**: [https://pyabc.rtfd.io/en/latest/cite.html](https://pyabc.rtfd.io/en/latest/cite.html)
