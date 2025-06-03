@@ -10,17 +10,10 @@
 [![PyPI](https://badge.fury.io/py/pyabc.svg)](https://badge.fury.io/py/pyabc)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3257587.svg)](https://doi.org/10.5281/zenodo.3257587)
 
----
 
-**pyABC** is a massively parallel, distributed, and scalable ABC-SMC  
-(Approximate Bayesian Computation - Sequential Monte Carlo) framework  
-for parameter estimation of complex stochastic models.
-
-It provides numerous state-of-the-art algorithms for efficient, accurate,  
-robust likelihood-free inference, described in the documentation and  
-illustrated in example notebooks.
-
-Written in Python, with support for integration with R and Julia.
+**pyABC** is a massively parallel, distributed, and scalable ABC-SMC (Approximate Bayesian Computation - Sequential Monte Carlo) framework  
+for parameter estimation of complex stochastic models. It provides numerous state-of-the-art algorithms for efficient, accurate,  
+robust likelihood-free inference, described in the documentation and illustrated in example notebooks. Written in Python, with support for integration with R and Julia.
 
 ---
 
