@@ -240,6 +240,7 @@ jobs:
       run: |
         .github/workflows/install_deps.sh doc
         pip install tox
+        pip install pypandoc
 
     - name: Run quality checks
       timeout-minutes: 5
