@@ -2,11 +2,12 @@ import setuptools
 
 try:
     import pypandoc
-    long_description = pypandoc.convert_file('README.md', 'rst')
-except (IOError, ImportError):
-    long_description = open('README.md').read()
+    content = pypandoc.convert_file('README.md', 'rst')
+except (ImportError, OSError):
+    with open('README.md', encoding='utf-8') as f:
+        content = f.read()
 
-setuptools.setup(
-    long_description = long_description,
-    long_description_content_type="text/x-rst"
-)
+with open('README.rst', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+setuptools.setup()
