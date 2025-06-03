@@ -24,7 +24,7 @@ Written in Python, with support for integration with R and Julia.
 
 ---
 
-### 📚 Resources
+### Resources
 
 - 📖 **Documentation**: [https://pyabc.rtfd.io](https://pyabc.rtfd.io)
 - 💡 **Examples**: [https://pyabc.rtfd.io/en/latest/examples.html](https://pyabc.rtfd.io/en/latest/examples.html)
