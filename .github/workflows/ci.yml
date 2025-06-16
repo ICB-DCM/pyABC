@@ -117,15 +117,7 @@ jobs:
     - name: Run tests
       timeout-minutes: 20
       run: |
-<<<<<<< develop
          tox -e petab
-=======
-         echo "Amici installed (1):"
-         pip list | grep amici
-         tox -e petab -vvv
-         echo "Amici installed (2):"
-         pip list | grep amici
->>>>>>> main
 
     - name: Coverage
       uses: codecov/codecov-action@v4
