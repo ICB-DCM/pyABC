@@ -392,17 +392,17 @@ options. For further details see the respective documentation.
 
 When submitting a large number of individual SLURM jobs (``n_jobs``), the
 scheduler could be overloaded, i.e. increased scheduling overhead may degrade
-the overall effiency of the scheduling on the HPC system.
+the overall efficiency of the scheduling respectively performance  on the HPC system.
 
 As an alternative, consider to use SLURM job arrays. A SLURM job array is a feature
 to manage a collection of similar jobs efficiently using a single submission script.
 Each job in the array (task), shares the same job script but can operate on
-different inputs and parameters identified by an unique index ``$SLURM_ARRAY_TASK_ID``.
+different inputs and parameters identified by an unique index ``${SLURM_ARRAY_TASK_ID}``.
 
 Furthermore, monitoring and job control is streamlined compared to numerous individual
 jobs scattered across the queue (scalability of job submission). SLURM is optimized to handle
-large job arrays efficienctly and should be thus considered as an alternative to to the
-submission of many individual, yet related or similar jobs.
+large job arrays efficiently and should thus be considered as an alternative to the
+submission of many individual, yet related or similar, jobs.
 
 
 .. code:: bash
