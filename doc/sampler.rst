@@ -374,6 +374,7 @@ It makes sense to define a script for this as well:
      sbatch script_redis_worker.sh
    done
 
+
 Here, ``n_jobs`` would be the number of jobs submitted. When the job scheduler
 is based on qsub, e.g. SGE/UGE, instead use a script like
 
@@ -388,6 +389,30 @@ is based on qsub, e.g. SGE/UGE, instead use a script like
 
 and adapt the worker script. For both, there exist many more configuration
 options. For further details see the respective documentation.
+
+When submitting a large number of individual SLURM jobs (``n_jobs``), the
+scheduler could be overloaded, i.e. increased scheduling overhead may degrade
+the overall effiency of the scheduling on the HPC system.
+
+As an alternative, consider to use SLURM job arrays. A SLURM job array is a feature
+to manage a collection of similar jobs efficiently using a single submission script.
+Each job in the array (task), shares the same job script but can operate on
+different inputs and parameters identified by an unique index ``$SLURM_ARRAY_TASK_ID``.
+
+Furthermore, monitoring and job control is streamlined compared to numerous individual
+jobs scattered across the queue (scalability of job submission). SLURM is optimized to handle
+large job arrays efficienctly and should be thus considered as an alternative to to the
+submission of many individual, yet related or similar jobs.
+
+
+.. code:: bash
+
+   sbatch --array=0-99 script_redis_worker script_redis_worker.sh ${SLURM_ARRAY_TASK_ID}
+
+Using ``--array`` one specifies the number of jobs (here ``n_jobs`` is manually set to 99, resulting in 100 tasks)
+and note that depending on the variable ``${SLURM_ARRAY_TASK_ID}`` the script ``script_redis_worker.sh`` could 
+handle for instance different input parameters or input files as identified by a unique index.
+
 
 Note that when planning for the number of overall redis workers, batches, and
 cpus per batch, also the parallelization on the level of the simulations has
