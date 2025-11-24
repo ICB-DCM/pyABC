@@ -24,3 +24,6 @@
 - 🐛 **Bug Reports**: [https://github.com/icb-dcm/pyabc/issues](https://github.com/icb-dcm/pyabc/issues)
 - 💻 **Source Code**: [https://github.com/icb-dcm/pyabc](https://github.com/icb-dcm/pyabc)
 - 📄 **Cite**: [https://pyabc.rtfd.io/en/latest/cite.html](https://pyabc.rtfd.io/en/latest/cite.html)
+
+#### Related Projects
+- 🧠 **Neural Posterior Estimation**: [BayesFlow](https://bayesflow.org/main/_examples/From_ABC_to_BayesFlow.html)
