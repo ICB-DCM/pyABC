@@ -162,7 +162,7 @@ class R:
 
             res = np.asarray(distance(*args)).squeeze()
             if res.size != 1:
-                raise TypeError(
+                raise ValueError(
                     f"R distance function '{function_name}' must return a single "
                     f"numeric value, but got shape {res.shape} (size={res.size})."
                 )
