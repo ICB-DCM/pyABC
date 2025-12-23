@@ -159,7 +159,14 @@ class R:
 
         def distance_py(*args):
             args = tuple(_dict_to_named_list(d) for d in args)
-            return float(np.array(distance(*args)))
+
+            res = np.asarray(distance(*args)).squeeze()
+            if res.size != 1:
+                raise TypeError(
+                    f"R distance function '{function_name}' must return a single "
+                    f"numeric value, but got shape {res.shape} (size={res.size})."
+                )
+            return float(res.item())
 
         distance_py.__name__ = function_name
         # set reference to this class to ensure the source file is
