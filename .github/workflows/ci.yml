@@ -44,33 +44,6 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
 
-  # Early warning for upcoming Python (allowed to fail)
-  future-python:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.14-dev"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          allow-prereleases: true
-          cache: pip
-
-      - name: Install dependencies
-        run: .github/workflows/install_deps.sh base R
-
-      - name: Run tests (base)
-        timeout-minutes: 20
-        run: tox -e base
-
   external:
     runs-on: ubuntu-latest
     strategy:
@@ -89,9 +62,9 @@ jobs:
           cache: pip
 
       - name: Install Julia
-        uses: julia-actions/setup-julia@v1
+        uses: julia-actions/setup-julia@v2
         with:
-          version: "1.7"
+          version: "1.11"
 
       - name: Install dependencies
         run: .github/workflows/install_deps.sh base R
@@ -240,6 +213,11 @@ jobs:
           .github/workflows/install_deps.sh doc
           python -m pip install -U pip
           python -m pip install tox
+
+      - name: Preview Ruff linting
+        timeout-minutes: 5
+        run: tox -e lint
+        continue-on-error: true
 
       - name: Run quality checks
         timeout-minutes: 10
