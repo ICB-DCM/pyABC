@@ -57,7 +57,7 @@ def _prepare_credible_intervals(
     for i_t, t in enumerate(ts):
         df, w = history.get_distribution(m=m, t=t)
         # normalize weights to be sure
-        w /= w.sum()
+        w = w / w.sum()
         # fit kde
         if show_kde_max:
             _kde_max_pnt = compute_kde_max(kde, df, w)
@@ -470,7 +470,7 @@ def plot_credible_intervals_for_time(
     for i_run, (h, t, m) in enumerate(zip(histories, ts, ms)):
         df, w = h.get_distribution(m=m, t=t)
         # normalize weights to be sure
-        w /= w.sum()
+        w = w / w.sum()
         # fit kde
         if show_kde_max:
             _kde_max_pnt = compute_kde_max(kde, df, w)

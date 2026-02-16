@@ -237,6 +237,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          .github/workflows/install_deps.sh doc
           python -m pip install -U pip
           python -m pip install tox
 
