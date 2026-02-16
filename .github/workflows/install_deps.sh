@@ -74,12 +74,21 @@ install_amici() {
   python -m pip install -U "pyabc[amici]"
 }
 
+install_doc_tools() {
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    brew install pandoc || true
+  else
+    sudo apt-get update -y
+    sudo apt-get install -y --no-install-recommends pandoc
+  fi
+}
 
 for arg in "$@"; do
   case "$arg" in
     base)  install_base ;;
     R)     install_r ;;
     amici) install_amici ;;
+    doc) install_doc_tools ;;
     *)
       echo "Unknown argument: ${arg}" >&2
       exit 1
