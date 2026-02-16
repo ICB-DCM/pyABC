@@ -10,51 +10,72 @@
 # `pre-commit run --all-files` as by default only changed files are checked
 
 repos:
-- repo: https://github.com/psf/black
-  rev: 23.7.0
-  hooks:
-  - id: black
-    description: The uncompromising code formatter
-- repo: https://github.com/pycqa/isort
-  rev: 5.12.0
-  hooks:
-  - id: isort
-    name: isort (python)
-  - id: isort
-    name: isort (cython)
-    types: [cython]
-  - id: isort
-    name: isort (pyi)
-    types: [pyi]
-- repo: https://github.com/nbQA-dev/nbQA
-  rev: 1.7.0
-  hooks:
-    - id: nbqa-black
-    - id: nbqa-pyupgrade
-      args: [--py36-plus]
-    - id: nbqa-isort
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
-  hooks:
-  - id: check-yaml
-    description: Check yaml files for parseable syntax
-  - id: check-added-large-files
-    description: Prevent large files from being committed
-  - id: check-merge-conflict
-    description: Check for files that contain merge conflict strings
-  - id: check-symlinks
-    description: Check for symlinks which do not point to anything
-  - id: trailing-whitespace
-    description: Trim trailing whitespaces
-  - id: end-of-file-fixer
-    description: Fix empty lines at ends of files
-  - id: detect-private-key
-    description: Detects the presence of private keys
-- repo: local
-  hooks:
-  - id: style
-    name: Check style
-    description: Check style
-    entry: tox -e flake8 --
-    language: system
-    types: [python]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        description: Fast Python linter (replaces flake8 + plugins)
+      # Run the formatter
+      - id: ruff-format
+        description: Fast Python formatter (replaces black + isort)
+
+  # Notebook formatting with nbQA + ruff
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.9.1
+    hooks:
+      - id: nbqa-ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: nbqa-pyupgrade
+        args: [--py310-plus]
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        description: Check yaml files for parseable syntax
+      - id: check-toml
+        description: Check toml files for parseable syntax
+      - id: check-added-large-files
+        description: Prevent large files from being committed
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        description: Check for files that contain merge conflict strings
+      - id: check-symlinks
+        description: Check for symlinks which do not point to anything
+      - id: trailing-whitespace
+        description: Trim trailing whitespaces
+        exclude: ^test/
+      - id: end-of-file-fixer
+        description: Fix empty lines at ends of files
+        exclude: ^test/
+      - id: detect-private-key
+        description: Detects the presence of private keys
+      - id: check-case-conflict
+        description: Check for files with case-insensitive name conflicts
+      - id: mixed-line-ending
+        description: Ensure consistent line endings
+        args: ['--fix=lf']
+
+# Configuration
+default_language_version:
+  python: python3.11
+
+# Global exclusions
+exclude: |
+  (?x)^(
+      \.git/|
+      \.tox/|
+      \.venv/|
+      venv/|
+      build/|
+      dist/|
+      .*\.egg-info/|
+      __pycache__/|
+      \.pytest_cache/|
+      \.mypy_cache/|
+      \.ruff_cache/|
+      doc/_build/
+  )
