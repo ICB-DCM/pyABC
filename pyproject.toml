@@ -1,20 +1,143 @@
-#############################
-# Build System Requirements #
-#############################
 
 [build-system]
 requires = [
-  "setuptools >= 52.0.0",
-  "wheel >= 0.36.2",
+  "setuptools>=68.0.0",
+  "wheel>=0.36.2",
 ]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "pyabc"
+dynamic = ["version"]
+
+description = "Distributed, likelihood-free ABC-SMC inference"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+
+authors = [{ name = "The pyABC developers", email = "jonas.arruda@uni-bonn.de" }]
+maintainers = [{ name = "Jonas Arruda", email = "jonas.arruda@uni-bonn.de" }]
+
+license = { text = "BSD-3-Clause" }
+
+keywords = [
+  "likelihood-free",
+  "inference",
+  "abc",
+  "approximate Bayesian computation",
+  "sge",
+  "distributed",
+]
+
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+  "numpy>=1.23.5",
+  "scipy>=1.5.2",
+  "pandas>=2.0.1",
+  "cloudpickle>=1.5.0",
+  "scikit-learn>=0.23.1",
+  "click>=7.1.2",
+  "redis>=2.10.6",
+  "distributed>=2022.10.2",
+  "matplotlib>=3.3.0",
+  "sqlalchemy",
+  "jabbar>=0.0.10",
+  "gitpython>=3.1.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/icb-dcm/pyabc"
+Download = "https://github.com/icb-dcm/pyabc/releases"
+"Bug Tracker" = "https://github.com/icb-dcm/pyabc/issues"
+Documentation = "https://pyabc.readthedocs.io"
+Changelog = "https://github.com/ICB-DCM/pyABC/blob/main/CHANGELOG.rst"
+
+[project.optional-dependencies]
+webserver-flask = [
+  "flask-bootstrap>=3.3.7.1",
+  "flask>=1.1.2",
+  "bokeh>=3.0.1",
+]
+webserver-dash = [
+  "dash>=2.11.1",
+  "dash-bootstrap-components>=1.4.2",
+]
+pyarrow = ["pyarrow>=6.0.0"]
+R = [
+  "rpy2>=3.4.4",
+  "cffi>=1.14.5",
+  "ipython>=7.18.1",
+  "pygments>=2.6.1",
+]
+julia = [
+  "julia>=0.5.7",
+  "pygments>=2.6.1",
+]
+copasi = ["copasi-basico>=0.8"]
+ot = ["pot>=0.7.0"]
+petab = ["petab>=0.2.0"]
+amici = ["amici>=0.18.0"]
+yaml2sbml = ["yaml2sbml>=0.2.1"]
+migrate = ["alembic>=1.5.4"]
+plotly = ["plotly>=5.3.1", "kaleido>=0.2.1"]
+autograd = ["autograd>=1.3"]
+examples = ["notebook>=6.1.4"]
+doc = [
+  "sphinx>=8.1.3",
+  "nbsphinx>=0.9.5",
+  "nbconvert>=7.16.4",
+  "sphinx-rtd-theme>=1.2.0",
+  "sphinx-autodoc-typehints>=1.18.3",
+  "ipython>=8.4.0",
+]
+test = [
+  "pytest>=5.4.3",
+  "pytest-cov>=2.10.0",
+  "pytest-rerunfailures>=9.1.1",
+]
+
+[project.scripts]
+abc-server-flask = "pyabc.visserver.server_flask:run_app"
+abc-server-dash = "pyabc.visserver.server_dash:run_app"
+abc-server = "pyabc.visserver.server_dash:run_app"
+abc-redis-worker = "pyabc.sampler.redis_eps.cli:work"
+abc-redis-manager = "pyabc.sampler.redis_eps.cli:manage"
+abc-export = "pyabc.storage.db_export:main"
+abc-migrate = "pyabc.storage.migrate:migrate"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+license-files = ["LICENSE.txt"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.dynamic]
+version = { attr = "pyabc.version.__version__" }
+
 [tool.black]
 line-length = 79
-target-version = ['py37', 'py38', 'py39']
+target-version = ["py310", "py311", "py312"]
 skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
 line_length = 79
 multi_line_output = 3
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.5.1",
+  "tox>=4.36.0",
+]

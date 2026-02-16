@@ -1,101 +1,88 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-# pip
-python -m pip install --upgrade pip
+python -m pip install -U pip
+python -m pip install -U wheel tox
 
-# wheel
-pip install wheel
+is_macos() {
+  [[ "$(uname -s)" == "Darwin" ]]
+}
 
-# tox
-pip install tox
+apt_update_once() {
+  if [[ "${_APT_UPDATED:-0}" == "0" ]]; then
+    export _APT_UPDATED=1
+    sudo apt-get update -y
+  fi
+}
 
-# update apt package lists
-sudo apt-get update
+apt_install() {
+  apt_update_once
+  sudo apt-get install -y --no-install-recommends "$@"
+}
 
-# optional dependencies
-for par in "$@"
-do
-  case $par in
-    base)
-      # basic setup
-      if [ "$(uname)" == "Darwin" ]; then
-        # MacOS
-        brew install redis
-      else
-        # Linux
-        sudo apt-get install redis-server
-      fi
-    ;;
+install_base() {
+  if is_macos; then
+    brew install redis
+  else
+    apt_install redis-server
+  fi
+}
 
-    R)
-      # R environment
-      if [ "$(uname)" == "Darwin" ]; then
-        # MacOS
-        brew install r
-      else
-         # Linux (Not compatible with Ubuntu 24: no CRAN repository currently available)
-        #wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo gpg --dearmor -o /usr/share/keyrings/r-project.gpg
-        #echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | sudo tee -a /etc/apt/sources.list.d/r-project.list
-        #sudo apt-get update
-        #sudo apt-get install libtiff5 r-base
-        sudo apt update
-        sudo apt install -y build-essential libreadline-dev libx11-dev libxt-dev libpng-dev libjpeg-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libxml2-dev texinfo texlive texlive-fonts-extra screen wget
-        sudo apt install -y liblzma-dev
+build_and_install_r_from_source() {
+  # Adjust if you want a different R version
+  local R_VER="${1:-4.4.0}"
+  local TAR="R-${R_VER}.tar.gz"
+  local URL="https://cran.r-project.org/src/base/R-4/${TAR}"
 
-sudo apt install -y \
-build-essential \
-libreadline-dev \
-libx11-dev \
-libxt-dev \
-libpng-dev \
-libjpeg-dev \
-libcairo2-dev \
-libtiff-dev \
-libglib2.0-dev \
-liblzma-dev \
-libbz2-dev \
-libzstd-dev \
-libcurl4-openssl-dev \
-libssl-dev \
-libxml2-dev \
-texinfo \
-texlive \
-texlive-fonts-extra \
-texlive-latex-extra \
-zlib1g-dev \
-gfortran \
-libpcre2-dev \
-libicu-dev \
-libboost-all-dev
+  # Toolchain + common R build deps (Ubuntu 24.04-friendly)
+  apt_install \
+    build-essential gfortran wget ca-certificates \
+    libreadline-dev libx11-dev libxt-dev \
+    libpng-dev libjpeg-dev libcairo2-dev libtiff-dev \
+    libglib2.0-dev liblzma-dev libbz2-dev libzstd-dev zlib1g-dev \
+    libcurl4-openssl-dev libssl-dev libxml2-dev \
+    libpcre2-dev libicu-dev \
+    texinfo texlive texlive-fonts-extra texlive-latex-extra
 
-     cd /tmp
-        wget https://cran.r-project.org/src/base/R-4/R-4.4.0.tar.gz
-        tar -xvzf R-4.4.0.tar.gz
-        cd R-4.4.0
-        ./configure --enable-R-shlib --with-blas --with-lapack
-        make -j$(nproc)
-        sudo make install
-      fi
-    ;;
+  pushd /tmp >/dev/null
+  wget -q "${URL}"
+  tar -xzf "${TAR}"
+  cd "R-${R_VER}"
+  ./configure --enable-R-shlib --with-blas --with-lapack
+  make -j"$(nproc)"
+  sudo make install
+  popd >/dev/null
+}
 
-    amici)
-      # AMICI dependencies
-      sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+install_r() {
+  if is_macos; then
+    brew install r
+  else
+    # Ubuntu-latest may not have the desired CRAN apt repo available;
+    # compiling R is the reliable option.
+    build_and_install_r_from_source "4.4.0"
+  fi
+}
 
-      # pip install amici
-      pip uninstall amici pyabc
-      pip install 'pyabc[amici]'
-    ;;
+install_amici() {
+  if ! is_macos; then
+    apt_install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+  fi
 
-    doc)
-      # documentation
-      sudo apt-get install pandoc
-    ;;
+  # Ensure non-interactive uninstalls in CI
+  python -m pip uninstall -y amici pyabc || true
+  python -m pip install -U "pyabc[amici]"
+}
 
+
+for arg in "$@"; do
+  case "$arg" in
+    base)  install_base ;;
+    R)     install_r ;;
+    amici) install_amici ;;
     *)
-      echo "Unknown argument" >&2
-	  exit 1
-    ;;
-
+      echo "Unknown argument: ${arg}" >&2
+      exit 1
+      ;;
   esac
 done
