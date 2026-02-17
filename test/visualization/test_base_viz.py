@@ -353,6 +353,7 @@ def test_distance_weights():
         pyabc.visualization.plot_distance_weights(
             log_files, keys_as_labels=keys_as_labels
         )
+    plt.close()
 
 
 def test_sensitivity_sankey():
@@ -406,6 +407,7 @@ def test_sensitivity_sankey():
         h=h,
         predictor=pyabc.predictor.LinearPredictor(),
     )
+    plt.close()
 
 
 def test_colors():
@@ -416,3 +418,4 @@ def test_colors():
             assert len(color) == 7
             assert color[0] == '#'
             assert int(color[1:], 16)
+    plt.close()

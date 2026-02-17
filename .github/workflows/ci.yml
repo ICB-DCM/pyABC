@@ -9,6 +9,7 @@ on:
 
 jobs:
   tests:
+    name: ${{ matrix.toxenv }} (py${{ matrix.python }} • ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -39,7 +40,7 @@ jobs:
           # Quality
           - os: ubuntu-latest
             python: "3.11"
-            toxenv: lint
+            toxenv: quality
           - os: ubuntu-latest
             python: "3.11"
             toxenv: project
