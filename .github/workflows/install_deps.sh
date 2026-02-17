@@ -54,7 +54,7 @@ install_r() {
     brew install r
   else
     # Prefer distro packages in CI
-    apt_install r-base r-base-dev
+    apt-get update && apt-get install -y libtirpc-dev r-base r-base-dev
     # Make R shared libs discoverable for the rest of the job
     export_env_var LD_LIBRARY_PATH "${LD_LIBRARY_PATH:-/usr/lib}:/usr/lib/R/lib:/usr/local/lib/R/lib"
   fi
