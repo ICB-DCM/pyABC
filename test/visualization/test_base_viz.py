@@ -237,7 +237,7 @@ def test_contours():
             history, size=(7, 5), refval=p_true, **kwargs
         )
 
-    plt.close()
+        plt.close()
 
 
 def test_credible_intervals():
