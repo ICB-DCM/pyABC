@@ -214,7 +214,7 @@ jobs:
           python -m pip install -U pip
           python -m pip install tox
 
-      - name: Preview Ruff linting
+      - name: Ruff linting
         timeout-minutes: 5
         run: tox -e lint
 
