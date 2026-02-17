@@ -30,15 +30,13 @@ def _dict_to_named_list(dct):
     if isinstance(dct, dict | Parameter | pd.core.series.Series):
         dct = dict(dct.items())
 
-        # Build converter using the current conversion object
         conv = get_conversion()
         conv = (
             conv + default_converter + pandas2ri.converter + numpy2ri.converter
         )
 
         with localconverter(conv):
-            for key, val in dct.items():
-                dct[key] = conversion.py2rpy(val)
+            dct = {key: conv.py2rpy(val) for key, val in dct.items()}
 
         return ListVector(dct)
 
