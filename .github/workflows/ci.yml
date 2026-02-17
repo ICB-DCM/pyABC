@@ -51,7 +51,6 @@ jobs:
             python: "3.11"
             toxenv: migrate
 
-          # Heavier
           - os: ubuntu-latest
             python: "3.11"
             toxenv: external-R
@@ -63,10 +62,10 @@ jobs:
             toxenv: petab
           - os: ubuntu-latest
             python: "3.11"
-            toxenv: notebooks1
+            toxenv: base-notebooks
           - os: ubuntu-latest
             python: "3.11"
-            toxenv: notebooks2
+            toxenv: external-notebooks
 
     steps:
       - uses: actions/checkout@v4
@@ -76,7 +75,6 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: pip
 
-      # Install extra runtimes only when needed
       - name: Install Julia
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
         uses: julia-actions/setup-julia@v2
@@ -86,10 +84,9 @@ jobs:
       - name: Install dependencies
         run: |
           case "${{ matrix.toxenv }}" in
-            base|visualization|mac|notebooks1) .github/workflows/install_deps.sh base R ;;
-            notebooks2) .github/workflows/install_deps.sh R amici ;;
+            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base R ;;
             petab) .github/workflows/install_deps.sh amici ;;
-            external-*) .github/workflows/install_deps.sh base R ;;
+            external-*) .github/workflows/install_deps.sh base R amici ;;
             lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
           esac
           python -m pip install -U pip tox
