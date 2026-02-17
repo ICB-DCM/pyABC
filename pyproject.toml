@@ -52,7 +52,7 @@ dependencies = [
   "sqlalchemy>=2.0.0",
   "jabbar>=0.0.10",
   "gitpython>=3.1.7",
-  "pyarrow>=22.0.0"
+  "ipykernel>=7.2.0",
 ]
 
 [project.urls]
@@ -74,6 +74,7 @@ webserver-dash = [
   "dash>=2.11.1",
   "dash-bootstrap-components>=1.4.2",
 ]
+pyarrow = ["pyarrow>=22.0.0"]
 r = [
   "rpy2>=3.4.4",
   "cffi>=1.14.5",
@@ -91,7 +92,7 @@ ot = [
   "cython>=0.29.0",
 ]
 petab = ["petab>=0.2.0"]
-amici = ["amici>=0.18.0"]
+amici = ["amici>=0.32.0"]
 yaml2sbml = ["yaml2sbml>=0.2.1"]
 migrate = ["alembic>=1.5.4"]
 plotly = ["plotly>=5.3.1", "kaleido>=0.2.1"]
@@ -161,6 +162,7 @@ ignore = [
   "B905",  # zip() without an explicit strict= parameter
   "SIM105",  # Replace `try`-`except`-`pass`
   "C408",
+  "E402"
 ]
 
 [tool.ruff.lint.per-file-ignores]
