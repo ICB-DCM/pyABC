@@ -74,7 +74,7 @@ webserver-dash = [
   "dash-bootstrap-components>=1.4.2",
 ]
 pyarrow = ["pyarrow>=6.0.0"]
-R = [
+r = [
   "rpy2>=3.4.4",
   "cffi>=1.14.5",
   "ipython>=7.18.1",
