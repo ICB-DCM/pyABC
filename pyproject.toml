@@ -16,7 +16,8 @@ requires-python = ">=3.10"
 authors = [{ name = "The pyABC developers", email = "jonas.arruda@uni-bonn.de" }]
 maintainers = [{ name = "Jonas Arruda", email = "jonas.arruda@uni-bonn.de" }]
 
-license = { text = "BSD-3-Clause" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
 
 keywords = [
   "likelihood-free",
