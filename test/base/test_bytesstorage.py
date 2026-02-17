@@ -4,9 +4,6 @@ import tempfile
 import numpy as np
 import pandas as pd
 import pytest
-import rpy2.robjects as robjects
-from rpy2.robjects import pandas2ri, r
-from rpy2.robjects.conversion import localconverter
 
 import pyabc
 from pyabc.storage.bytes_storage import from_bytes, to_bytes
@@ -40,6 +37,8 @@ from pyabc.storage.numpy_bytes_storage import _primitive_types
     ]
 )
 def object_(request):
+    from rpy2.robjects import r
+
     par = request.param
     if par == 'empty':
         return pd.DataFrame()
@@ -114,6 +113,10 @@ def object_(request):
 
 
 def test_storage(object_):
+    import rpy2.robjects as robjects
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import localconverter
+
     serial = to_bytes(object_)
     assert isinstance(serial, bytes)
 
@@ -143,6 +146,8 @@ def test_storage(object_):
 
 
 def _check_type(object_, rebuilt):
+    import rpy2.robjects as robjects
+
     # r objects are converted to pd.DataFrame
     if isinstance(object_, robjects.DataFrame):
         assert isinstance(rebuilt, pd.DataFrame)

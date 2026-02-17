@@ -7,8 +7,6 @@ import numpy as np
 import pandas as pd
 import pyarrow
 import pytest
-from rpy2.robjects import pandas2ri, r
-from rpy2.robjects.conversion import localconverter
 
 import pyabc
 from pyabc import History
@@ -242,6 +240,9 @@ def test_single_particle_save_load_np_int64(history: History):
 
 
 def test_sum_stats_save_load(history: History):
+    from rpy2.robjects import pandas2ri, r
+    from rpy2.robjects.conversion import localconverter
+
     arr = np.random.rand(10)
     arr2 = np.random.rand(10, 2)
     particle_list = [
