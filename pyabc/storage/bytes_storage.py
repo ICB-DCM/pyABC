@@ -13,6 +13,10 @@ try:
             conv = get_conversion()
             with localconverter(conv + pandas2ri.converter):
                 py_object_ = conv.rpy2py(object_)
+            # Ensure factor columns are converted to strings
+            for col in py_object_.columns:
+                if pd.api.types.is_categorical_dtype(py_object_[col]):
+                    py_object_[col] = py_object_[col].astype(str)
             return py_object_
         return object_
 

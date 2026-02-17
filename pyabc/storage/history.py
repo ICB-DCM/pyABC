@@ -82,7 +82,7 @@ def git_hash():
 
 def create_sqlite_db_id(dir_: str = None, file_: str = 'pyabc_test.db'):
     """
-    Convenience function to create an sqlite database identifier which
+    Convenience function to create a sqlite database identifier which
     can be understood by sqlalchemy.
 
     Parameters

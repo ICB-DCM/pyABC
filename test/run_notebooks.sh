@@ -15,6 +15,10 @@ nbs_1=(
   "noise"
   "parameter_inference"
   "resuming"
+  "chemical_reaction"
+  "informative"
+  "look_ahead"
+  "sde_ion_channels"
 )
 nbs_2=(
   "external_simulators"
@@ -24,6 +28,11 @@ nbs_2=(
   "discrete_parameters"
   "optimal_threshold"
   "custom_priors"
+  "petab_application"
+  "petab_yaml2sbml"
+  "multiscale_agent_based"
+  "using_copasi"
+  "using_julia"
 )
 
 # All notebooks
@@ -59,7 +68,7 @@ done
 
 run_notebook () {
   # Run a notebook and raise upon failure
-  tempfile=$(tempfile)
+  tempfile=$(mktemp)
   echo $@
   jupyter nbconvert --ExecutePreprocessor.timeout=-1 --debug \
     --stdout --execute --to markdown $@ &> $tempfile
