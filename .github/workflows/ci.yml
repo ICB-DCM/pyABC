@@ -217,11 +217,10 @@ jobs:
       - name: Preview Ruff linting
         timeout-minutes: 5
         run: tox -e lint
-        continue-on-error: true
 
       - name: Run quality checks
         timeout-minutes: 10
-        run: tox -e project,flake8
+        run: tox -e project
 
       - name: Build docs
         timeout-minutes: 10
