@@ -8,7 +8,7 @@ import pandas as pd
 
 from ...parameters import Parameter
 
-logger = logging.getLogger("ABC.External")
+logger = logging.getLogger('ABC.External')
 
 try:
     from rpy2.robjects import (
@@ -25,11 +25,7 @@ except ImportError:
 
 
 def _dict_to_named_list(dct):
-    if (
-        isinstance(dct, dict)
-        or isinstance(dct, Parameter)
-        or isinstance(dct, pd.core.series.Series)
-    ):
+    if isinstance(dct, dict | Parameter | pd.core.series.Series):
         dct = dict(dct.items())
         # convert numbers, numpy arrays and pandas dataframes to builtin
         # types before conversion (see rpy2 #548)
@@ -77,9 +73,9 @@ class R:
 
     def __init__(self, source_file: str):
         if r is None:
-            raise ImportError("Install rpy2, e.g. via `pip install pyabc[R]`")
+            raise ImportError('Install rpy2, e.g. via `pip install pyabc[R]`')
         warnings.warn(
-            "The support of R via rpy2 is considered experimental.",
+            'The support of R via rpy2 is considered experimental.',
             stacklevel=2,
         )
         self.source_file = source_file
@@ -164,7 +160,7 @@ class R:
             if res.size != 1:
                 raise ValueError(
                     f"R distance function '{function_name}' must return a single "
-                    f"numeric value, but got shape {res.shape} (size={res.size})."
+                    f'numeric value, but got shape {res.shape} (size={res.size}).'
                 )
             return float(res.item())
 

@@ -103,11 +103,11 @@ latest/task.html#quick-and-easy-parallelism)
         self,
         n,
         simulate_one,
-        t,
+        t,  # noqa: ARG002
         *,
-        max_eval=np.inf,
-        all_accepted=False,
-        ana_vars=None,
+        max_eval=np.inf,  # noqa: ARG002
+        all_accepted=False,  # noqa: ARG002
+        ana_vars=None,  # noqa: ARG002
     ):
         # pickle them as a tuple instead of individual pickling
         # this should save time and should make better use of

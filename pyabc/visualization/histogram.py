@@ -101,10 +101,7 @@ def plot_histogram_1d_lowlevel(
     if xname is None:
         xname = x
 
-    if xmin is not None and xmax is not None:
-        range_ = (xmin, xmax)
-    else:
-        range_ = None
+    range_ = (xmin, xmax) if xmin is not None and xmax is not None else None
     if refval is not None:
         ax.axvline(refval[x], color=refval_color, linestyle='dotted')
 
@@ -233,10 +230,7 @@ def plot_histogram_2d_lowlevel(
         xrange_ = [xmin, xmax]
     if ymin is not None and ymax is not None:
         yrange_ = [ymin, ymax]
-    if xrange_ and yrange_:
-        range_ = [xrange_, yrange_]
-    else:
-        range_ = None
+    range_ = [xrange_, yrange_] if xrange_ and yrange_ else None
 
     # plot
     ax.hist2d(
@@ -331,7 +325,7 @@ def plot_histogram_matrix_lowlevel(
     )
 
     def scatter(x, y, ax, refval=None):
-        ax.scatter(x, y, color="k")
+        ax.scatter(x, y, color='k')
         if refval is not None:
             ax.scatter([refval[x.name]], [refval[y.name]], color=refval_color)
 
