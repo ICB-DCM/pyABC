@@ -136,7 +136,6 @@ abc-migrate = "pyabc.storage.migrate:migrate"
 [tool.setuptools]
 include-package-data = true
 zip-safe = false
-license-files = ["LICENSE.txt"]
 
 [tool.setuptools.packages.find]
 where = ["."]
