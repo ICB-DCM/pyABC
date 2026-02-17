@@ -92,7 +92,6 @@ ot = [
   "cython>=0.29.0",
 ]
 petab = ["petab>=0.2.0"]
-test-petab = ["petabtests>=0.0.1"]
 amici = ["amici>=0.18.0"]
 yaml2sbml = ["yaml2sbml>=0.2.1"]
 migrate = ["alembic>=1.5.4"]
