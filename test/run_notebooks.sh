@@ -18,16 +18,16 @@ nbs_1=(
   "chemical_reaction"
   "informative"
   "look_ahead"
+  "data_plots"
+  "discrete_parameters"
+  "custom_priors"
+  "aggregated_distances"
   #"sde_ion_channels"  # url error
 )
 nbs_2=(
   "external_simulators"
   "using_R"
-  "aggregated_distances"
-  "data_plots"
-  "discrete_parameters"
   "optimal_threshold"
-  "custom_priors"
   "petab_application"
   # "petab_yaml2sbml"  # yaml2sbml does not work with current petab version
   # "multiscale_agent_based"  # too slow
