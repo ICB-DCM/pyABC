@@ -11,7 +11,8 @@ try:
     def r_to_py(object_):
         if isinstance(object_, robjects.DataFrame):
             conv = get_conversion()
-            with localconverter(conv + pandas2ri.converter):
+            conv = conv + pandas2ri.converter
+            with localconverter(conv):
                 py_object_ = conv.rpy2py(object_)
             # Ensure factor columns are converted to strings
             for col in py_object_.columns:

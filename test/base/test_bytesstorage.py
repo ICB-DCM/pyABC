@@ -140,8 +140,9 @@ def test_storage(object_):
         assert (object_.to_frame() == rebuilt).all().all()
     elif isinstance(object_, robjects.DataFrame):
         conv = get_conversion()
-        with localconverter(conv + pandas2ri.converter):
-            assert (robjects.conversion.rpy2py(object_) == rebuilt).all().all()
+        conv = conv + pandas2ri.converter
+        with localconverter(conv):
+            assert (conv.rpy2py(object_) == rebuilt).all().all()
     else:
         raise Exception('Could not compare')
 
