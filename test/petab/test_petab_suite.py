@@ -18,6 +18,16 @@ try:
 except ImportError:
     pass
 
+try:
+    import petabtests
+except ImportError:
+    pytest.skip(
+        'PEtab test suite not available. Please install petabtests to run this '
+        'test.',
+        allow_module_level=True,
+    )
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
