@@ -1,4 +1,4 @@
-# Note: Due to cyclic imports, these need to be separated from other modules
+from __future__ import annotations
 
 import logging
 import uuid
@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pandas as pd
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # to avoid circular imports
     from ..acceptor import Acceptor
     from ..distance import Distance
     from ..epsilon import Epsilon
