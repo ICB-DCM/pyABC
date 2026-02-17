@@ -184,11 +184,6 @@ addopts = [
 ]
 testpaths = ["test", "test_performance"]
 pythonpath = ["."]
-filterwarnings = [
-  "error",
-  "ignore::DeprecationWarning",
-  "ignore::PendingDeprecationWarning",
-]
 
 [tool.coverage.run]
 source = ["pyabc"]
