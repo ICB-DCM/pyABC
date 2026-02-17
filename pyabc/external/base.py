@@ -129,12 +129,8 @@ class ExternalHandler:
             loc = self.create_loc()
 
         # redirect output
-        stdout = stderr = {}
-        with open(os.devnull, 'w') as devnull:
-            if not self.show_stdout:
-                stdout = {'stdout': devnull}
-            if not self.show_stderr:
-                stderr = {'stderr': devnull}
+        stdout = {} if self.show_stdout else {'stdout': subprocess.DEVNULL}
+        stderr = {} if self.show_stderr else {'stderr': subprocess.DEVNULL}
 
         # call
         try:
