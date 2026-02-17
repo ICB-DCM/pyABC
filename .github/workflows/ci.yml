@@ -54,23 +54,18 @@ jobs:
           - os: ubuntu-latest
             python: "3.11"
             toxenv: external-R
-            heavy: true
           - os: ubuntu-latest
             python: "3.11"
             toxenv: external-other-simulators
-            heavy: true
           - os: ubuntu-latest
             python: "3.11"
             toxenv: petab
-            heavy: true
           - os: ubuntu-latest
             python: "3.11"
             toxenv: notebooks1
-            heavy: true
           - os: ubuntu-latest
             python: "3.11"
             toxenv: notebooks2
-            heavy: true
 
     steps:
       - uses: actions/checkout@v4
@@ -79,13 +74,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache: pip
-
-      # Gate heavy items (example: only schedule or push to main)
-      - name: Skip heavy in PRs
-        if: ${{ matrix.heavy == true && github.event_name == 'pull_request' }}
-        run: |
-          echo "Skipping heavy job on PR"
-          exit 0
 
       # Install extra runtimes only when needed
       - name: Install Julia
@@ -96,7 +84,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Map toxenv -> deps groups (keep your script)
           case "${{ matrix.toxenv }}" in
             base|visualization|mac|notebooks1) .github/workflows/install_deps.sh base ;;
             notebooks2) .github/workflows/install_deps.sh R amici ;;

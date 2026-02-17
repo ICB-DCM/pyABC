@@ -16,10 +16,10 @@ repos:
       # Run the linter
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-        description: Fast Python linter (replaces flake8 + plugins)
+        description: Fast Python linter
       # Run the formatter
       - id: ruff-format
-        description: Fast Python formatter (replaces black + isort)
+        description: Fast Python formatter
 
   # Notebook formatting with nbQA + ruff
   - repo: https://github.com/nbQA-dev/nbQA
