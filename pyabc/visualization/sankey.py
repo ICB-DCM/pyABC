@@ -1,6 +1,6 @@
 """Sensitivity sankey flow plot."""
 
-from typing import Callable, Dict, List, Union
+from collections.abc import Callable
 
 import numpy as np
 
@@ -20,7 +20,7 @@ from . import colors
 
 def plot_sensitivity_sankey(
     info_sample_log_file: str,
-    t: Union[int, str],
+    t: int | str,
     h: pyabc.storage.History,
     predictor: pyabc.predictor.Predictor,
     par_trafo: pyabc.util.ParTrafoBase = None,
@@ -28,9 +28,9 @@ def plot_sensitivity_sankey(
     subsetter: pyabc.sumstat.Subsetter = None,
     feature_normalization: str = pyabc.distance.InfoWeightedPNormDistance.MAD,
     normalize_by_par: bool = True,
-    fd_deltas: Union[List[float], float] = None,
-    scale_weights: Dict[int, np.ndarray] = None,
-    title: str = "Data-parameter sensitivities",
+    fd_deltas: list[float] | float = None,
+    scale_weights: dict[int, np.ndarray] = None,
+    title: str = 'Data-parameter sensitivities',
     width: float = None,
     height: float = None,
     sumstat_color: Callable[[str], str] = None,
@@ -116,11 +116,11 @@ def plot_sensitivity_sankey(
     if node_kwargs is None:
         node_kwargs = {}
     node_kwargs_all = {
-        "pad": 15,
-        "thickness": 20,
-        "line": {
-            "color": "black",
-            "width": 0.5,
+        'pad': 15,
+        'thickness': 20,
+        'line': {
+            'color': 'black',
+            'width': 0.5,
         },
     }
     node_kwargs_all.update(node_kwargs)
@@ -128,9 +128,9 @@ def plot_sensitivity_sankey(
     if layout_kwargs is None:
         layout_kwargs = {}
     layout_kwargs_all = {
-        "title_x": 0.5,
-        "font_size": 12,
-        "template": "simple_white",
+        'title_x': 0.5,
+        'font_size': 12,
+        'template': 'simple_white',
     }
     layout_kwargs_all.update(layout_kwargs)
 
@@ -148,8 +148,8 @@ def plot_sensitivity_sankey(
 
     # read training samples
     sumstats, parameters, weights = [
-        np.load(f"{info_sample_log_file}_{t}_{var}.npy")
-        for var in ["sumstats", "parameters", "weights"]
+        np.load(f'{info_sample_log_file}_{t}_{var}.npy')
+        for var in ['sumstats', 'parameters', 'weights']
     ]
 
     s_0 = sumstat(data)
@@ -166,7 +166,7 @@ def plot_sensitivity_sankey(
         scale_weights=scale_weights,
     )
     x, y, weights, use_ixs, x0 = (
-        ret[key] for key in ("x", "y", "weights", "use_ixs", "x0")
+        ret[key] for key in ('x', 'y', 'weights', 'use_ixs', 'x0')
     )
 
     # learn predictor model
@@ -205,7 +205,7 @@ def plot_sensitivity_sankey(
 
     def default_sumstat_color(id_: str):
         # extract summary statistic name
-        base = id_.split(":")[0]
+        base = id_.split(':')[0]
 
         if base in sumstat_color_dict:
             return sumstat_color_dict[base]
@@ -213,7 +213,7 @@ def plot_sensitivity_sankey(
         i = len(sumstat_color_dict)
         color = getattr(
             colors,
-            f"{colors.REDSORANGES[i % len(colors.REDSORANGES)]}400",
+            f'{colors.REDSORANGES[i % len(colors.REDSORANGES)]}400',
         )
         sumstat_color_dict[base] = color
         return color
@@ -223,12 +223,12 @@ def plot_sensitivity_sankey(
     def default_par_color(id_: str):
         # extract parameter base name
         #  this may require customization
-        if "^" in id_:
-            base = id_.split("^")[0]
-        elif "(" in id_:
-            base = id_.split("(")[1].split(")")[0]
+        if '^' in id_:
+            base = id_.split('^')[0]
+        elif '(' in id_:
+            base = id_.split('(')[1].split(')')[0]
         else:
-            base = id_.split("_")[0]
+            base = id_.split('_')[0]
 
         if base in par_color_dict:
             return par_color_dict[base]
@@ -236,7 +236,7 @@ def plot_sensitivity_sankey(
         i = len(par_color_dict)
         color = getattr(
             colors,
-            f"{colors.GREENSBLUES[i % len(colors.GREENSBLUES)]}400",
+            f'{colors.GREENSBLUES[i % len(colors.GREENSBLUES)]}400',
         )
         par_color_dict[base] = color
         return color
@@ -256,14 +256,14 @@ def plot_sensitivity_sankey(
         data=[
             go.Sankey(
                 node={
-                    "label": node_label,
-                    "color": node_color,
+                    'label': node_label,
+                    'color': node_color,
                     **node_kwargs_all,
                 },
                 link={
-                    "source": source,
-                    "target": target,
-                    "value": value,
+                    'source': source,
+                    'target': target,
+                    'value': value,
                 },
             ),
         ],

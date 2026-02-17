@@ -1,7 +1,7 @@
 """Acceptance rate based optimal threshold."""
 
 import logging
-from typing import Callable, Dict, List
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -15,7 +15,7 @@ from scipy import optimize
 
 from .base import Epsilon
 
-logger = logging.getLogger("ABC.Epsilon")
+logger = logging.getLogger('ABC.Epsilon')
 
 
 class SilkOptimalEpsilon(Epsilon):
@@ -73,21 +73,21 @@ class SilkOptimalEpsilon(Epsilon):
         """
         if hessian is None:
             raise ImportError(
-                "Install autograd, e.g. via `pip install pyabc[autograd]`"
+                'Install autograd, e.g. via `pip install pyabc[autograd]`'
             )
         super().__init__()
         self.min_rate: float = min_rate
         self.k: float = k
 
-        self.eps: Dict[int, float] = {}
+        self.eps: dict[int, float] = {}
 
     def initialize(
         self,
         t: int,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        get_all_records: Callable[[], List[dict]],
-        max_nr_populations: int,
-        acceptor_config: dict,
+        get_all_records: Callable[[], list[dict]],
+        max_nr_populations: int,  # noqa: ARG002
+        acceptor_config: dict,  # noqa: ARG002
     ):
         self._update(
             get_weighted_distances=get_weighted_distances,
@@ -99,9 +99,9 @@ class SilkOptimalEpsilon(Epsilon):
         self,
         t: int,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        get_all_records: Callable[[], List[dict]],
-        acceptance_rate: float,
-        acceptor_config: dict,
+        get_all_records: Callable[[], list[dict]],
+        acceptance_rate: float,  # noqa: ARG002
+        acceptor_config: dict,  # noqa: ARG002
     ):
         self._update(
             get_weighted_distances=get_weighted_distances,
@@ -116,7 +116,7 @@ class SilkOptimalEpsilon(Epsilon):
     def _update(
         self,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        get_all_records: Callable[[], List[dict]],
+        get_all_records: Callable[[], list[dict]],
         t: int,
     ):
         # extract accepted particles
@@ -165,9 +165,9 @@ class SilkOptimalEpsilon(Epsilon):
         acc_rate_opt = acc_rate(eps_opt)
 
         logger.info(
-            f"Optimal threshold for t={t}: eps={eps_opt:.4e}, "
-            f"estimated rate={acc_rate_opt:.4e} "
-            f"(discontinuous={acc_rate(eps_opt, k=np.inf):.4e})"
+            f'Optimal threshold for t={t}: eps={eps_opt:.4e}, '
+            f'estimated rate={acc_rate_opt:.4e} '
+            f'(discontinuous={acc_rate(eps_opt, k=np.inf):.4e})'
         )
 
         # use value if acceptance rate high enough or value high enough
@@ -180,9 +180,9 @@ class SilkOptimalEpsilon(Epsilon):
                 ub=dist_max,
             )
             logger.info(
-                f"Overriding via trade-off: eps={the_eps}, "
-                f"estimated rate={acc_rate(the_eps)} "
-                f"(discontinuous={acc_rate(the_eps, k=np.inf):.4e})"
+                f'Overriding via trade-off: eps={the_eps}, '
+                f'estimated rate={acc_rate(the_eps)} '
+                f'(discontinuous={acc_rate(the_eps, k=np.inf):.4e})'
             )
 
         self.eps[t] = the_eps
@@ -213,7 +213,7 @@ def optimal_eps_from_second_order(
     ret = optimize.minimize_scalar(
         lambda x: -hess(x),
         bounds=(0, ub),
-        method="bounded",
+        method='bounded',
     )
     eps_opt = ret.x
 
@@ -246,7 +246,7 @@ def tradeoff_eps(
     ret = optimize.minimize_scalar(
         obj,
         bounds=(0, ub),
-        method="bounded",
+        method='bounded',
     )
     eps = ret.x
 

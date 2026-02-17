@@ -15,7 +15,7 @@ time.
 """
 
 import logging
-from typing import Callable, Union
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -26,7 +26,7 @@ from ..parameters import Parameter
 from ..storage import save_dict_to_json
 from .pdf_norm import pdf_norm_from_kernel, pdf_norm_max_found
 
-logger = logging.getLogger("ABC.Acceptor")
+logger = logging.getLogger('ABC.Acceptor')
 
 
 class AcceptorResult(dict):
@@ -59,7 +59,7 @@ class AcceptorResult(dict):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError(key)
+            raise AttributeError(key) from None
 
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
@@ -187,8 +187,7 @@ class Acceptor:
         """
         return False
 
-    # pylint: disable=R0201
-    def get_epsilon_config(self, t: int) -> dict:
+    def get_epsilon_config(self, t: int) -> dict:  # noqa: ARG002
         """
         Create a configuration object that contains all values of interest for
         the update of the Epsilon object.
@@ -224,7 +223,7 @@ class FunctionAcceptor(Acceptor):
         return self.fun(distance_function, eps, x, x_0, t, par)
 
     @staticmethod
-    def to_acceptor(maybe_acceptor: Union[Acceptor, Callable]) -> Acceptor:
+    def to_acceptor(maybe_acceptor: Acceptor | Callable) -> Acceptor:
         """
         Create an acceptor object from input.
 
@@ -451,7 +450,7 @@ class StochasticAcceptor(Acceptor):
         self.log(t)
 
     def log(self, t):
-        logger.debug(f"pdf_norm={self.pdf_norms[t]:.4e} for t={t}.")
+        logger.debug(f'pdf_norm={self.pdf_norms[t]:.4e} for t={t}.')
 
         if self.log_file:
             save_dict_to_json(self.pdf_norms, self.log_file)
@@ -487,10 +486,7 @@ class StochasticAcceptor(Acceptor):
 
         # accept
         threshold = np.random.uniform(low=0, high=1)
-        if acc_prob >= threshold:
-            accept = True
-        else:
-            accept = False
+        accept = acc_prob >= threshold
 
         # weight
         if acc_prob == 0.0:
@@ -503,8 +499,8 @@ class StochasticAcceptor(Acceptor):
         # check pdf max ok
         if pdf_norm < density:
             logger.debug(
-                f"Encountered density={density:.4e} > c={pdf_norm:.4e}, "
-                f"thus weight={weight:.4e}."
+                f'Encountered density={density:.4e} > c={pdf_norm:.4e}, '
+                f'thus weight={weight:.4e}.'
             )
 
         # return unscaled density value and the acceptance flag

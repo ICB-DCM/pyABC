@@ -1,11 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Union
 
 from ..parameters import Parameter, ParameterStructure
 
-rv_logger = logging.getLogger("ABC.RV")
+rv_logger = logging.getLogger('ABC.RV')
 
 
 class RVBase(ABC):
@@ -27,7 +26,7 @@ class RVBase(ABC):
     """
 
     @abstractmethod
-    def copy(self) -> "RVBase":
+    def copy(self) -> 'RVBase':
         """Copy the random variable.
 
         Returns
@@ -108,7 +107,7 @@ class RV(RVBase):
     """
 
     @classmethod
-    def from_dictionary(cls, dictionary: dict) -> "RV":
+    def from_dictionary(cls, dictionary: dict) -> 'RV':
         """Construct random variable from dictionary.
 
         Parameters
@@ -138,7 +137,7 @@ class RV(RVBase):
         self.args = args
         self.kwargs = kwargs
         self.distribution = None
-        "the scipy.stats. ... distribution object"
+        'the scipy.stats. ... distribution object'
         self.__setstate__(self.__getstate__())
 
     def __getattr__(self, item):
@@ -172,9 +171,7 @@ class RV(RVBase):
         return self.distribution.cdf(x, *args, **kwargs)
 
     def __repr__(self):
-        return "<RV name={name}, args={args}, kwargs={kwargs}>".format(
-            name=self.name, args=self.args, kwargs=self.kwargs
-        )
+        return f'<RV name={self.name}, args={self.args}, kwargs={self.kwargs}>'
 
 
 class RVDecorator(RVBase):
@@ -229,13 +226,10 @@ class RVDecorator(RVBase):
             A string representing the decorator only.
         """
 
-        return "Decorator"
+        return 'Decorator'
 
     def __repr__(self):
-        return (
-            "[{decorator_repr}]".format(decorator_repr=self.decorator_repr())
-            + self.component.__repr__()
-        )
+        return f'[{self.decorator_repr()}]' + self.component.__repr__()
 
 
 class LowerBoundDecorator(RVDecorator):
@@ -264,18 +258,18 @@ class LowerBoundDecorator(RVDecorator):
     def __init__(self, component: RV, lower_bound: float):
         if component.cdf(lower_bound) == 1:
             raise Exception(
-                "LowerBoundDecorator: Conditioning on a set of measure zero."
+                'LowerBoundDecorator: Conditioning on a set of measure zero.'
             )
         self.lower_bound = lower_bound
-        super(LowerBoundDecorator, self).__init__(component)
+        super().__init__(component)
 
     def copy(self):
         return self.__class__(self.component.copy(), self.lower_bound)
 
     def decorator_repr(self):
-        return "Lower: X > {lower:2f}".format(lower=self.lower_bound)
+        return f'Lower: X > {self.lower_bound:2f}'
 
-    def rvs(self, *args, **kwargs):
+    def rvs(self, *args, **kwargs):  # noqa: ARG002
         for _ in range(LowerBoundDecorator.MAX_TRIES):
             sample = self.component.rvs()
             # not sure whether > is the exact opposite. but <= is consistent
@@ -283,21 +277,21 @@ class LowerBoundDecorator(RVDecorator):
                 return sample  # with the other functions
         return None
 
-    def pdf(self, x, *args, **kwargs):
+    def pdf(self, x, *args, **kwargs):  # noqa: ARG002
         if x <= self.lower_bound:
             return 0.0
         return self.component.pdf(x) / (
             1 - self.component.cdf(self.lower_bound)
         )
 
-    def pmf(self, x, *args, **kwargs):
+    def pmf(self, x, *args, **kwargs):  # noqa: ARG002
         if x <= self.lower_bound:
             return 0.0
         return self.component.pmf(x) / (
             1 - self.component.cdf(self.lower_bound)
         )
 
-    def cdf(self, x, *args, **kwargs):
+    def cdf(self, x, *args, **kwargs):  # noqa: ARG002
         if x <= self.lower_bound:
             return 0.0
         lower_mass = self.component.cdf(self.lower_bound)
@@ -323,7 +317,7 @@ class DistributionBase(ABC):
         """
 
     @abstractmethod
-    def pdf(self, x: Union[Parameter, dict]):
+    def pdf(self, x: Parameter | dict):
         """Get probability density at point `x`.
 
         Parameters
@@ -344,15 +338,15 @@ class Distribution(DistributionBase, ParameterStructure):
 
     def __repr__(self):
         return (
-            "<Distribution\n    "
-            + ",\n    ".join(f"{id}={rv}" for id, rv in self.items())
-            + ">"
+            '<Distribution\n    '
+            + ',\n    '.join(f'{id}={rv}' for id, rv in self.items())
+            + '>'
         )
 
     @classmethod
     def from_dictionary_of_dictionaries(
         cls, dict_of_dicts: dict
-    ) -> "Distribution":
+    ) -> 'Distribution':
         """Create distribution from dictionary of dictionaries.
 
         Parameters
@@ -374,7 +368,7 @@ class Distribution(DistributionBase, ParameterStructure):
             rv_dictionary[key] = RV.from_dictionary(value)
         return cls(rv_dictionary)
 
-    def copy(self) -> "Distribution":
+    def copy(self) -> 'Distribution':
         """Copy the distribution.
 
         Returns
@@ -422,7 +416,7 @@ class Distribution(DistributionBase, ParameterStructure):
             **{key: val.rvs(*args, **kwargs) for key, val in self.items()}
         )
 
-    def pdf(self, x: Union[Parameter, dict]):
+    def pdf(self, x: Parameter | dict):
         """Get probability density at point `x` (product of marginals).
 
         Combination of probability density functions (for continuous
@@ -436,9 +430,9 @@ class Distribution(DistributionBase, ParameterStructure):
         # check if the parameters match
         if sorted(x.keys()) != sorted(self.keys()):
             raise Exception(
-                "Random variable parameter mismatch. Expected: "
+                'Random variable parameter mismatch. Expected: '
                 + str(sorted(self.keys()))
-                + " got "
+                + ' got '
                 + str(sorted(x.keys()))
             )
         if len(self) > 0:

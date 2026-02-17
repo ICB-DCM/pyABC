@@ -1,8 +1,8 @@
 """Optimal transport distances."""
 
 import logging
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Union
 
 import numpy as np
 import scipy.linalg as la
@@ -18,7 +18,7 @@ except ImportError:
     ot = None
 
 
-logger = logging.getLogger("ABC.Distance")
+logger = logging.getLogger('ABC.Distance')
 
 
 class WassersteinDistance(Distance):
@@ -68,7 +68,7 @@ class WassersteinDistance(Distance):
         self,
         sumstat: Sumstat,
         p: float = 2.0,
-        dist: Union[str, Callable] = None,
+        dist: str | Callable = None,
         emd_args: dict = None,
     ):
         """
@@ -88,8 +88,8 @@ class WassersteinDistance(Distance):
         """
         if ot is None:
             raise ImportError(
-                "This distance requires the optimal transport library pot. "
-                "Install via `pip install pyabc[ot]` or `pip install pot`.",
+                'This distance requires the optimal transport library pot. '
+                'Install via `pip install pyabc[ot]` or `pip install pot`.',
             )
         super().__init__()
 
@@ -100,12 +100,12 @@ class WassersteinDistance(Distance):
         if dist is None:
             # translate from p
             if p == 1.0:
-                dist = "cityblock"
+                dist = 'cityblock'
             elif p == 2.0:
-                dist = "sqeuclidean"
+                dist = 'sqeuclidean'
             else:
                 # of course, we could permit arbitrary norms here if needed
-                raise ValueError(f"Cannot translate p={p} into a distance.")
+                raise ValueError(f'Cannot translate p={p} into a distance.')
         if isinstance(dist, str):
             dist = partial(spat.distance.cdist, metric=dist)
         self.dist: Callable = dist
@@ -115,8 +115,8 @@ class WassersteinDistance(Distance):
         self.emd_args: dict = emd_args
 
         # observed data
-        self.x0: Union[dict, None] = None
-        self.s0: Union[np.ndarray, None] = None
+        self.x0: dict | None = None
+        self.s0: np.ndarray | None = None
 
     def initialize(
         self,
@@ -157,8 +157,8 @@ class WassersteinDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         # compute summary statistics, shape (n, dim), (n0, dim)
         s, s0 = self.sumstat(x), self.sumstat(x_0)
@@ -222,10 +222,10 @@ class SlicedWassersteinDistance(Distance):
     def __init__(
         self,
         sumstat: Sumstat,
-        metric: str = "sqeuclidean",
+        metric: str = 'sqeuclidean',
         p: float = 2.0,
         n_proj: int = 50,
-        seed: Union[int, np.random.RandomState] = None,
+        seed: int | np.random.RandomState = None,
         emd_1d_args: dict = None,
     ):
         """
@@ -249,8 +249,8 @@ class SlicedWassersteinDistance(Distance):
         """
         if ot is None:
             raise ImportError(
-                "This distance requires the optimal transport library pot. "
-                "Install via `pip install pyabc[ot]` or `pip install pot`.",
+                'This distance requires the optimal transport library pot. '
+                'Install via `pip install pyabc[ot]` or `pip install pot`.',
             )
         super().__init__()
 
@@ -258,14 +258,14 @@ class SlicedWassersteinDistance(Distance):
         self.metric: str = metric
         self.p: float = p
         self.n_proj: int = n_proj
-        self.seed: Union[int, np.random.RandomState] = seed
+        self.seed: int | np.random.RandomState = seed
         if emd_1d_args is None:
             emd_1d_args = {}
         self.emd_1d_args: dict = emd_1d_args
 
         # observed data
-        self.x0: Union[dict, None] = None
-        self.s0: Union[np.ndarray, None] = None
+        self.x0: dict | None = None
+        self.s0: np.ndarray | None = None
 
     def initialize(
         self,
@@ -302,8 +302,8 @@ class SlicedWassersteinDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         # compute summary statistics, shape (n, dim), (n0, dim)
         s, s0 = self.sumstat(x), self.sumstat(x_0)
@@ -311,7 +311,7 @@ class SlicedWassersteinDistance(Distance):
 
         dim, dim0 = s.shape[1], s0.shape[1]
         if dim != dim0:
-            raise ValueError(f"Sumstat dimensions do not match: {dim}!={dim0}")
+            raise ValueError(f'Sumstat dimensions do not match: {dim}!={dim0}')
 
         # unit sphere samples for Monte-Carlo approximation,
         #  shape (n_proj, dim)
@@ -355,7 +355,7 @@ class SlicedWassersteinDistance(Distance):
 def uniform_unit_sphere_samples(
     n_proj: int,
     dim: int,
-    seed: Union[int, np.random.RandomState] = None,
+    seed: int | np.random.RandomState = None,
 ) -> np.ndarray:
     r"""
     Generate uniformly distributed samples from the :math:`d-1`-dim.

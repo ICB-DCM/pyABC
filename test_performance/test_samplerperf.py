@@ -38,7 +38,7 @@ def multi_proc_map(f, x):
 
 
 class GenericFutureWithProcessPool(ConcurrentFutureSampler):
-    def __init__(self, map=None):
+    def __init__(self):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_core_load_factor = 1.0
         client_max_jobs = 8
@@ -52,7 +52,7 @@ class GenericFutureWithProcessPool(ConcurrentFutureSampler):
 
 
 class GenericFutureWithThreadPool(ConcurrentFutureSampler):
-    def __init__(self, map=None):
+    def __init__(self):
         cfuture_executor = ThreadPoolExecutor(max_workers=8)
         client_core_load_factor = 1.0
         client_max_jobs = 8
@@ -66,18 +66,18 @@ class GenericFutureWithThreadPool(ConcurrentFutureSampler):
 
 
 class MultiProcessingMappingSampler(MappingSampler):
-    def __init__(self, map=None):
+    def __init__(self):
         super().__init__(multi_proc_map)
 
 
 class DaskDistributedSamplerBatch(DaskDistributedSampler):
-    def __init__(self, map=None):
+    def __init__(self):
         batch_size = 10
         super().__init__(batch_size=batch_size)
 
 
 class GenericFutureWithProcessPoolBatch(ConcurrentFutureSampler):
-    def __init__(self, map=None):
+    def __init__(self):
         cfuture_executor = ProcessPoolExecutor(max_workers=8)
         client_max_jobs = 8
         batch_size = 10
@@ -103,8 +103,8 @@ def sampler(request):
 
 @pytest.fixture
 def db_path():
-    db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest.db")
-    db = "sqlite:///" + db_file_location
+    db_file_location = os.path.join(tempfile.gettempdir(), 'abc_unittest.db')
+    db = 'sqlite:///' + db_file_location
     yield db
     if REMOVE_DB:
         try:
@@ -119,7 +119,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     sigma = 0.5
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma).rvs()}
+        return {'y': st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
     models = [model, model]
@@ -138,7 +138,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        PercentileDistance(measures_to_use=["y"]),
+        PercentileDistance(measures_to_use=['y']),
         population_size,
         eps=MedianEpsilon(0.2),
         sampler=sampler,
@@ -148,7 +148,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     # define where to store the results
     # y_observed is the important piece here: our actual observation.
     y_observed = 2
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = 0.05
@@ -160,9 +160,7 @@ def test_two_competing_gaussians_multiple_population(db_path, sampler):
     history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(
-            y_observed
-        )
+        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
         return res
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)

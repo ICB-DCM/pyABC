@@ -1,6 +1,6 @@
 """Sample number plots"""
 
-from typing import TYPE_CHECKING, List, Tuple, Union
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -17,8 +17,8 @@ from .util import get_labels, to_lists
 
 
 def _prepare_plot_sample_numbers(
-    histories: Union[List[History], History],
-    labels: Union[List[str], str],
+    histories: list[History] | History,
+    labels: list[str] | str,
 ):
     # preprocess input
     histories = to_lists(histories)
@@ -43,11 +43,11 @@ def _prepare_plot_sample_numbers(
 
 
 def plot_sample_numbers(
-    histories: Union[List[History], History],
-    labels: Union[List[str], str] = None,
+    histories: list[History] | History,
+    labels: list[str] | str = None,
     rotation: int = 0,
-    title: str = "Required samples",
-    size: Tuple[float, float] = None,
+    title: str = 'Required samples',
+    size: tuple[float, float] = None,
     ax: mpl.axes.Axes = None,
 ) -> mpl.axes.Axes:
     """
@@ -92,15 +92,15 @@ def plot_sample_numbers(
             x=np.arange(n_run),
             height=matrix[i_pop, :],
             bottom=np.sum(matrix[:i_pop, :], axis=0),
-            label=f"Generation {i_pop-1}",
+            label=f'Generation {i_pop-1}',
         )
 
     # add labels
     ax.set_xticks(np.arange(n_run))
     ax.set_xticklabels(labels, rotation=rotation)
     ax.set_title(title)
-    ax.set_ylabel("Samples")
-    ax.set_xlabel("Run")
+    ax.set_ylabel('Samples')
+    ax.set_xlabel('Run')
     ax.legend()
     # set size
     if size is not None:
@@ -111,13 +111,13 @@ def plot_sample_numbers(
 
 
 def plot_sample_numbers_plotly(
-    histories: Union[List[History], History],
-    labels: Union[List[str], str] = None,
+    histories: list[History] | History,
+    labels: list[str] | str = None,
     rotation: int = 0,
-    title: str = "Required samples",
-    size: Tuple[float, float] = None,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    title: str = 'Required samples',
+    size: tuple[float, float] = None,
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot sample numbers using plotly."""
     import plotly.graph_objects as go
 
@@ -128,7 +128,7 @@ def plot_sample_numbers_plotly(
     # none or empty values are not supported by plotly
     for ix in range(n_run):
         if labels[ix] is None:
-            labels[ix] = " "
+            labels[ix] = ' '
 
     # create figure
     if fig is None:
@@ -140,7 +140,7 @@ def plot_sample_numbers_plotly(
             go.Bar(
                 x=np.arange(n_run),
                 y=matrix[i_pop, :],
-                name=f"Generation {i_pop-1}",
+                name=f'Generation {i_pop-1}',
                 offsetgroup=0,
                 base=np.sum(matrix[:i_pop, :], axis=0),
             )
@@ -149,13 +149,13 @@ def plot_sample_numbers_plotly(
     # add labels
     fig.update_layout(
         xaxis=go.layout.XAxis(
-            tickmode="array",
+            tickmode='array',
             tickvals=list(range(n_run)),
             ticktext=labels,
             tickangle=rotation,
-            title="Run",
+            title='Run',
         ),
-        yaxis=go.layout.YAxis(title="Samples"),
+        yaxis=go.layout.YAxis(title='Samples'),
         title=title,
     )
 
@@ -166,8 +166,8 @@ def plot_sample_numbers_plotly(
 
 
 def _prepare_plot_total_sample_numbers(
-    histories: Union[List[History], History],
-    labels: Union[List[str], str],
+    histories: list[History] | History,
+    labels: list[str] | str,
     yscale: str,
 ):
     # preprocess input
@@ -186,22 +186,22 @@ def _prepare_plot_total_sample_numbers(
     samples = np.array(samples)
 
     # apply scale
-    ylabel = "Total samples"
+    ylabel = 'Total samples'
     if yscale == 'log':
         samples = np.log(samples)
-        ylabel = "log(" + ylabel + ")"
+        ylabel = 'log(' + ylabel + ')'
     elif yscale == 'log10':
         samples = np.log10(samples)
-        ylabel = "log10(" + ylabel + ")"
+        ylabel = 'log10(' + ylabel + ')'
 
     return samples, labels, ylabel, n_run
 
 
 def plot_total_sample_numbers(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
+    histories: list | History,
+    labels: list | str = None,
     rotation: int = 0,
-    title: str = "Total required samples",
+    title: str = 'Total required samples',
     yscale: str = 'lin',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
@@ -255,7 +255,7 @@ def plot_total_sample_numbers(
     ax.set_xticklabels(labels, rotation=rotation)
     ax.set_title(title)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel("Run")
+    ax.set_xlabel('Run')
     # set size
     if size is not None:
         fig.set_size_inches(size)
@@ -265,14 +265,14 @@ def plot_total_sample_numbers(
 
 
 def plot_total_sample_numbers_plotly(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
+    histories: list | History,
+    labels: list | str = None,
     rotation: int = 0,
-    title: str = "Total required samples",
+    title: str = 'Total required samples',
     yscale: str = 'lin',
     size: tuple = None,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot total sample numbers using plotly."""
     import plotly.graph_objects as go
 
@@ -290,7 +290,7 @@ def plot_total_sample_numbers_plotly(
         go.Bar(
             x=np.arange(n_run),
             y=samples,
-            name="Total samples",
+            name='Total samples',
             offsetgroup=0,
             base=0,
         )
@@ -299,7 +299,7 @@ def plot_total_sample_numbers_plotly(
     # add labels
     fig.update_layout(
         xaxis=go.layout.XAxis(
-            tickmode="array",
+            tickmode='array',
             tickvals=list(range(n_run)),
             ticktext=labels,
             tickangle=rotation,
@@ -315,8 +315,8 @@ def plot_total_sample_numbers_plotly(
 
 
 def _prepare_plot_sample_numbers_trajectory(
-    histories: Union[List, History],
-    labels: Union[List, str],
+    histories: list | History,
+    labels: list | str,
     yscale: str,
 ):
     """Prepare data for plotting sample number trajectories."""
@@ -336,21 +336,21 @@ def _prepare_plot_sample_numbers_trajectory(
         samples.append(np.array(h_info['samples']))
 
     # apply scale
-    ylabel = "Samples"
+    ylabel = 'Samples'
     if yscale == 'log':
         samples = [np.log(sample) for sample in samples]
-        ylabel = "log(" + ylabel + ")"
+        ylabel = 'log(' + ylabel + ')'
     elif yscale == 'log10':
         samples = [np.log10(sample) for sample in samples]
-        ylabel = "log10(" + ylabel + ")"
+        ylabel = 'log10(' + ylabel + ')'
 
     return samples, times, labels, ylabel
 
 
 def plot_sample_numbers_trajectory(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
-    title: str = "Required samples",
+    histories: list | History,
+    labels: list | str = None,
+    title: str = 'Required samples',
     yscale: str = 'lin',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
@@ -401,7 +401,7 @@ def plot_sample_numbers_trajectory(
         ax.legend()
     ax.set_title(title)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel("Population index $t$")
+    ax.set_xlabel('Population index $t$')
     # set size
     if size is not None:
         fig.set_size_inches(size)
@@ -411,13 +411,13 @@ def plot_sample_numbers_trajectory(
 
 
 def plot_sample_numbers_trajectory_plotly(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
-    title: str = "Required samples",
+    histories: list | History,
+    labels: list | str = None,
+    title: str = 'Required samples',
     yscale: str = 'lin',
     size: tuple = None,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot sample number trajectories using plotly."""
     import plotly.graph_objects as go
 
@@ -444,7 +444,7 @@ def plot_sample_numbers_trajectory_plotly(
     # add labels
     fig.update_layout(
         title=title,
-        xaxis=go.layout.XAxis(title="Population index $t$"),
+        xaxis=go.layout.XAxis(title='Population index $t$'),
         yaxis=go.layout.YAxis(title=ylabel),
     )
 
@@ -455,10 +455,10 @@ def plot_sample_numbers_trajectory_plotly(
 
 
 def _prepare_plot_acceptance_rates_trajectory(
-    histories: Union[List, History],
-    labels: Union[List, str],
+    histories: list | History,
+    labels: list | str,
     yscale: str,
-    colors: List[str],
+    colors: list[str],
     normalize_by_ess: bool,
 ):
     # preprocess input
@@ -493,24 +493,24 @@ def _prepare_plot_acceptance_rates_trajectory(
         rates.append(pop_size / sample)
 
     # apply scale
-    ylabel = "Acceptance rate"
+    ylabel = 'Acceptance rate'
     if yscale == 'log':
         rates = [np.log(rate) for rate in rates]
-        ylabel = "log(" + ylabel + ")"
+        ylabel = 'log(' + ylabel + ')'
     elif yscale == 'log10':
         rates = [np.log10(rate) for rate in rates]
-        ylabel = "log10(" + ylabel + ")"
+        ylabel = 'log10(' + ylabel + ')'
 
     return rates, times, labels, ylabel, colors
 
 
 def plot_acceptance_rates_trajectory(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
-    title: str = "Acceptance rates",
+    histories: list | History,
+    labels: list | str = None,
+    title: str = 'Acceptance rates',
     yscale: str = 'lin',
     size: tuple = None,
-    colors: List[str] = None,
+    colors: list[str] = None,
     normalize_by_ess: bool = False,
     ax: mpl.axes.Axes = None,
 ) -> mpl.axes.Axes:
@@ -572,7 +572,7 @@ def plot_acceptance_rates_trajectory(
         ax.legend()
     ax.set_title(title)
     ax.set_ylabel(ylabel)
-    ax.set_xlabel("Population index $t$")
+    ax.set_xlabel('Population index $t$')
     # set size
     if size is not None:
         fig.set_size_inches(size)
@@ -582,15 +582,15 @@ def plot_acceptance_rates_trajectory(
 
 
 def plot_acceptance_rates_trajectory_plotly(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
-    title: str = "Acceptance rates",
+    histories: list | History,
+    labels: list | str = None,
+    title: str = 'Acceptance rates',
     yscale: str = 'lin',
     size: tuple = None,
-    colors: List[str] = None,
+    colors: list[str] = None,
     normalize_by_ess: bool = False,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot acceptance rates trajectories using plotly."""
     import plotly.graph_objects as go
 
@@ -624,7 +624,7 @@ def plot_acceptance_rates_trajectory_plotly(
     # add labels
     fig.update_layout(
         title=title,
-        xaxis_title="Population index $t$",
+        xaxis_title='Population index $t$',
         yaxis_title=ylabel,
     )
     # set size
@@ -635,12 +635,12 @@ def plot_acceptance_rates_trajectory_plotly(
 
 
 def plot_lookahead_evaluations(
-    sampler_df: Union[pd.DataFrame, str],
+    sampler_df: pd.DataFrame | str,
     relative: bool = False,
     fill: bool = False,
     alpha: float = None,
     t_min: int = 0,
-    title: str = "Total evaluations",
+    title: str = 'Total evaluations',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
 ):
@@ -701,8 +701,8 @@ def plot_lookahead_evaluations(
 
     # plot
     if fill:
-        ax.fill_between(t, n_la, n_eval, alpha=alpha, label="Actual")
-        ax.fill_between(t, 0, n_la, alpha=alpha, label="Look-ahead")
+        ax.fill_between(t, n_la, n_eval, alpha=alpha, label='Actual')
+        ax.fill_between(t, 0, n_la, alpha=alpha, label='Look-ahead')
     else:
         ax.plot(
             t,
@@ -711,16 +711,16 @@ def plot_lookahead_evaluations(
             marker='o',
             color='black',
             alpha=alpha,
-            label="Total",
+            label='Total',
         )
-        ax.plot(t, n_act, marker='o', alpha=alpha, label="Actual")
-        ax.plot(t, n_la, marker='o', alpha=alpha, label="Look-ahead")
+        ax.plot(t, n_act, marker='o', alpha=alpha, label='Actual')
+        ax.plot(t, n_la, marker='o', alpha=alpha, label='Look-ahead')
 
     # prettify plot
     ax.legend()
     ax.set_title(title)
-    ax.set_xlabel("Population index")
-    ax.set_ylabel("Evaluations")
+    ax.set_xlabel('Population index')
+    ax.set_ylabel('Evaluations')
     ax.set_ylim(bottom=0)
     # enforce integer ticks
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -731,13 +731,13 @@ def plot_lookahead_evaluations(
 
 
 def plot_lookahead_final_acceptance_fractions(
-    sampler_df: Union[pd.DataFrame, str],
-    population_sizes: Union[np.ndarray, History],
+    sampler_df: pd.DataFrame | str,
+    population_sizes: np.ndarray | History,
     relative: bool = False,
     fill: bool = False,
     alpha: float = None,
     t_min: int = 0,
-    title: str = "Composition of final acceptances",
+    title: str = 'Composition of final acceptances',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
 ):
@@ -818,9 +818,9 @@ def plot_lookahead_final_acceptance_fractions(
     # plot
     if fill:
         ax.fill_between(
-            t, n_la_acc, population_sizes, alpha=alpha, label="Actual"
+            t, n_la_acc, population_sizes, alpha=alpha, label='Actual'
         )
-        ax.fill_between(t, 0, n_la_acc, alpha=alpha, label="Look-ahead")
+        ax.fill_between(t, 0, n_la_acc, alpha=alpha, label='Look-ahead')
     else:
         ax.plot(
             t,
@@ -829,16 +829,16 @@ def plot_lookahead_final_acceptance_fractions(
             marker='o',
             color='black',
             alpha=alpha,
-            label="Population size",
+            label='Population size',
         )
-        ax.plot(t, n_act_acc, marker='o', alpha=alpha, label="Actual")
-        ax.plot(t, n_la_acc, marker='o', alpha=alpha, label="Look-ahead")
+        ax.plot(t, n_act_acc, marker='o', alpha=alpha, label='Actual')
+        ax.plot(t, n_la_acc, marker='o', alpha=alpha, label='Look-ahead')
 
     # prettify plot
     ax.legend()
     ax.set_title(title)
-    ax.set_xlabel("Population index")
-    ax.set_ylabel("Final acceptances")
+    ax.set_xlabel('Population index')
+    ax.set_ylabel('Final acceptances')
     ax.set_ylim(bottom=0)
     # enforce integer ticks
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -849,9 +849,9 @@ def plot_lookahead_final_acceptance_fractions(
 
 
 def plot_lookahead_acceptance_rates(
-    sampler_df: Union[pd.DataFrame, str],
+    sampler_df: pd.DataFrame | str,
     t_min: int = 0,
-    title: str = "Acceptance rates",
+    title: str = 'Acceptance rates',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
 ):
@@ -915,16 +915,16 @@ def plot_lookahead_acceptance_rates(
         linestyle='--',
         marker='o',
         color='black',
-        label="Combined",
+        label='Combined',
     )
-    ax.plot(t, n_act_acc / n_act, marker='o', label="Actual")
-    ax.plot(t, n_la_acc / n_la, marker='o', label="Look-ahead")
+    ax.plot(t, n_act_acc / n_act, marker='o', label='Actual')
+    ax.plot(t, n_la_acc / n_la, marker='o', label='Look-ahead')
 
     # prettify plot
     ax.legend()
     ax.set_title(title)
-    ax.set_xlabel("Population index")
-    ax.set_ylabel("Acceptance rate")
+    ax.set_xlabel('Population index')
+    ax.set_ylabel('Acceptance rate')
     ax.set_ylim(bottom=0)
     # enforce integer ticks
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))

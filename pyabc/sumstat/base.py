@@ -1,7 +1,7 @@
 """Basic summary statistics."""
 
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Tuple, Union
+from collections.abc import Callable
 
 import numpy as np
 
@@ -25,19 +25,19 @@ class Sumstat(ABC):
         pre: Previously applied summary statistics, enables chaining.
         """
         # data keys (for correct order)
-        self.x_keys: Union[List[str], None] = None
+        self.x_keys: list[str] | None = None
         # observed data
-        self.x_0: Union[dict, None] = None
+        self.x_0: dict | None = None
         # previous chained statistics
-        self.pre: Union['Sumstat', None] = pre
+        self.pre: Sumstat | None = pre
         # ids
-        self.ids: Union[List[str], None] = None
+        self.ids: list[str] | None = None
 
     @abstractmethod
     def __call__(
         self,
-        data: Union[dict, np.ndarray],
-    ) -> Union[np.ndarray, Dict[str, float]]:
+        data: dict | np.ndarray,
+    ) -> np.ndarray | dict[str, float]:
         """Calculate summary statistics.
 
         Parameters
@@ -73,7 +73,7 @@ class Sumstat(ABC):
             The total number of simulations so far.
         """
         # record data keys
-        self.x_keys: List[str] = list(x_0.keys())
+        self.x_keys: list[str] = list(x_0.keys())
         # record observed data
         self.x_0: dict = x_0
         # initialize previous statistics
@@ -149,16 +149,16 @@ class Sumstat(ABC):
             return self.pre.is_adaptive()
         return False
 
-    def get_ids(self) -> List[str]:
+    def get_ids(self) -> list[str]:
         """Get ids/labels for the summary statistics.
 
         Defaults to indexing the statistics as `S_{ix}`.
         """
         s_0 = self(self.x_0)
-        return [f"s_{ix}" for ix in range(s_0.size)]
+        return [f's_{ix}' for ix in range(s_0.size)]
 
     def __str__(self) -> str:
-        return f"<{self.__class__.__name__} pre={self.pre.__str__()}>"
+        return f'<{self.__class__.__name__} pre={self.pre.__str__()}>'
 
 
 class IdentitySumstat(Sumstat):
@@ -166,9 +166,9 @@ class IdentitySumstat(Sumstat):
 
     def __init__(
         self,
-        trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
+        trafos: list[Callable[[np.ndarray], np.ndarray]] = None,
         pre: Sumstat = None,
-        shape_out: Tuple[int, ...] = (-1,),
+        shape_out: tuple[int, ...] = (-1,),
     ):
         """
         Parameters
@@ -188,11 +188,11 @@ class IdentitySumstat(Sumstat):
             deriving from Sumstat or IdentitySumstat.
         """
         super().__init__(pre=pre)
-        self.trafos: List[Callable[[np.ndarray], np.ndarray]] = trafos
-        self.shape_out: Tuple[int, ...] = shape_out
+        self.trafos: list[Callable[[np.ndarray], np.ndarray]] = trafos
+        self.shape_out: tuple[int, ...] = shape_out
 
     @io_dict2arr
-    def __call__(self, data: Union[dict, np.ndarray]) -> np.ndarray:
+    def __call__(self, data: dict | np.ndarray) -> np.ndarray:
         """
         Returns
         -------
@@ -225,6 +225,6 @@ class IdentitySumstat(Sumstat):
 
     def __str__(self) -> str:
         return (
-            f"<{self.__class__.__name__} pre={self.pre}, "
-            f"trafos={self.trafos}>"
+            f'<{self.__class__.__name__} pre={self.pre}, '
+            f'trafos={self.trafos}>'
         )

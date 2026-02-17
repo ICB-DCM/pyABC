@@ -1,7 +1,5 @@
 """Bayesian credible interval plots"""
 
-from typing import List, Union
-
 import matplotlib.axes
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,9 +14,9 @@ from .util import get_labels, to_lists
 def _prepare_credible_intervals(
     history: History,
     m: int,
-    ts: Union[List[int], int],
-    par_names: List,
-    levels: List,
+    ts: list[int] | int,
+    par_names: list,
+    levels: list,
     show_mean: bool,
     show_kde_max: bool,
     show_kde_max_1d: bool,
@@ -100,10 +98,10 @@ def _prepare_credible_intervals(
 def plot_credible_intervals(
     history: History,
     m: int = 0,
-    ts: Union[List[int], int] = None,
-    par_names: List = None,
-    levels: List = None,
-    colors: List = None,
+    ts: list[int] | int = None,
+    par_names: list = None,
+    levels: list = None,
+    colors: list = None,
     color_median: str = None,
     show_mean: bool = False,
     color_mean: str = None,
@@ -116,7 +114,7 @@ def plot_credible_intervals(
     refval_color: str = 'C1',
     kde: Transition = None,
     kde_1d: Transition = None,
-    arr_ax: List[matplotlib.axes.Axes] = None,
+    arr_ax: list[matplotlib.axes.Axes] = None,
 ):
     """Plot credible intervals over time.
 
@@ -208,7 +206,7 @@ def plot_credible_intervals(
         _, arr_ax = plt.subplots(
             nrows=n_par, ncols=1, sharex=False, sharey=False, figsize=size
         )
-    if not isinstance(arr_ax, (list, np.ndarray)):
+    if not isinstance(arr_ax, list | np.ndarray):
         arr_ax = [arr_ax]
     fig = arr_ax[0].get_figure()
 
@@ -225,13 +223,13 @@ def plot_credible_intervals(
                 color=color_median,
                 ecolor=colors[i_c],
                 capsize=(5.0 / n_confidence) * (i_c + 1),
-                label="{:.2f}".format(confidence),
+                label=f'{confidence:.2f}',
             )
-        ax.set_title(f"Parameter {par}")
+        ax.set_title(f'Parameter {par}')
         # mean
         if show_mean:
             ax.plot(
-                range(n_pop), mean[i_par], 'x-', label="Mean", color=color_mean
+                range(n_pop), mean[i_par], 'x-', label='Mean', color=color_mean
             )
         # kde max
         if show_kde_max:
@@ -239,7 +237,7 @@ def plot_credible_intervals(
                 range(n_pop),
                 kde_max[i_par],
                 'x-',
-                label="Max KDE",
+                label='Max KDE',
                 color=color_kde_max,
             )
         if show_kde_max_1d:
@@ -247,7 +245,7 @@ def plot_credible_intervals(
                 range(n_pop),
                 kde_max_1d[i_par],
                 'x-',
-                label="Max KDE 1d",
+                label='Max KDE 1d',
                 color=color_kde_max_1d,
             )
         # reference value
@@ -257,7 +255,7 @@ def plot_credible_intervals(
                 xmin=0,
                 xmax=n_pop - 1,
                 color=refval_color,
-                label="Reference value",
+                label='Reference value',
             )
         ax.set_xticks(range(n_pop))
         ax.set_xticklabels(ts)
@@ -265,7 +263,7 @@ def plot_credible_intervals(
         ax.legend()
 
     # format
-    arr_ax[-1].set_xlabel("Population t")
+    arr_ax[-1].set_xlabel('Population t')
     if size is not None:
         fig.set_size_inches(size)
     fig.tight_layout()
@@ -276,9 +274,9 @@ def plot_credible_intervals(
 def plot_credible_intervals_plotly(
     history: History,
     m: int = 0,
-    ts: Union[List[int], int] = None,
-    par_names: List = None,
-    levels: List = None,
+    ts: list[int] | int = None,
+    par_names: list = None,
+    levels: list = None,
     colors=None,
     size: tuple = None,
     refval: dict = None,
@@ -345,7 +343,7 @@ def plot_credible_intervals_plotly(
                     mode='lines+markers',
                     marker={'color': colors[i_c]},
                     opacity=opacities[i_c],
-                    name="{:.2f}".format(confidence),
+                    name=f'{confidence:.2f}',
                     showlegend=showlegend,
                 ),
                 row=i_par + 1,
@@ -359,7 +357,7 @@ def plot_credible_intervals_plotly(
                     y=[refval[par]] * n_pop,
                     mode='lines',
                     marker={'color': refval_color},
-                    name="Reference value",
+                    name='Reference value',
                     showlegend=showlegend,
                 ),
                 row=i_par + 1,
@@ -376,18 +374,18 @@ def plot_credible_intervals_plotly(
 
 
 def plot_credible_intervals_for_time(
-    histories: Union[List[History], History],
-    labels: Union[List[str], str] = None,
-    ms: Union[List[int], int] = None,
-    ts: Union[List[int], int] = None,
-    par_names: List[str] = None,
-    levels: List[float] = None,
+    histories: list[History] | History,
+    labels: list[str] | str = None,
+    ms: list[int] | int = None,
+    ts: list[int] | int = None,
+    par_names: list[str] = None,
+    levels: list[float] = None,
     show_mean: bool = False,
     show_kde_max: bool = False,
     show_kde_max_1d: bool = False,
     size: tuple = None,
     rotation: int = 0,
-    refvals: Union[List[dict], dict] = None,
+    refvals: list[dict] | dict = None,
     kde: Transition = None,
     kde_1d: Transition = None,
 ):
@@ -516,7 +514,7 @@ def plot_credible_intervals_for_time(
             # reference value
             if refvals[i_run] is not None:
                 ax.plot([i_run], [refvals[i_run][par]], 'x', color='black')
-        ax.set_title(f"Parameter {par}")
+        ax.set_title(f'Parameter {par}')
         # mean
         if show_mean:
             ax.plot(range(n_run), mean[i_par], 'x', color=f'C{n_confidence}')
@@ -535,27 +533,27 @@ def plot_credible_intervals_for_time(
         ax.set_xticks(range(n_run))
         ax.set_xticklabels(labels, rotation=rotation)
         leg_colors = [f'C{i_c}' for i_c in reversed(range(n_confidence))]
-        leg_labels = ['{:.2f}'.format(c) for c in reversed(levels)]
+        leg_labels = [f'{c:.2f}' for c in reversed(levels)]
         if show_mean:
             leg_colors.append(f'C{n_confidence}')
-            leg_labels.append("Mean")
+            leg_labels.append('Mean')
         if show_kde_max:
             leg_colors.append(f'C{n_confidence + 1}')
-            leg_labels.append("Max KDE")
+            leg_labels.append('Max KDE')
         if show_kde_max_1d:
             leg_colors.append(f'C{n_confidence + 2}')
-            leg_labels.append("Max KDE 1d")
+            leg_labels.append('Max KDE 1d')
         if refvals is not None:
             leg_colors.append('black')
-            leg_labels.append("Reference value")
+            leg_labels.append('Reference value')
         handles = [
-            Line2D([0], [0], color=c, label=l)
-            for c, l in zip(leg_colors, leg_labels)
+            Line2D([0], [0], color=c, label=label)
+            for c, label in zip(leg_colors, leg_labels)
         ]
-        ax.legend(handles=handles, bbox_to_anchor=(1.04, 1), loc="upper left")
+        ax.legend(handles=handles, bbox_to_anchor=(1.04, 1), loc='upper left')
 
     # format
-    arr_ax[-1].set_xlabel("Population t")
+    arr_ax[-1].set_xlabel('Population t')
     if size is not None:
         fig.set_size_inches(size)
     fig.tight_layout()
@@ -575,7 +573,7 @@ def compute_credible_interval(vals, weights, confidence: float = 0.95):
     """
     if confidence <= 0.0 or confidence >= 1.0:
         raise ValueError(
-            f"Confidence {confidence} must be in the interval (0.0, 1.0)."
+            f'Confidence {confidence} must be in the interval (0.0, 1.0).'
         )
     alpha_lb = 0.5 * (1.0 - confidence)
     alpha_ub = confidence + alpha_lb

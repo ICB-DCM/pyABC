@@ -1,6 +1,6 @@
 """Visualization of distance functions."""
 
-from typing import Any, List, Tuple, Union
+from typing import Any
 
 import matplotlib as mpl
 import matplotlib.axes
@@ -13,18 +13,18 @@ from .util import get_labels, to_lists
 
 
 def plot_distance_weights(
-    log_files: Union[List[str], str],
-    ts: Union[List[int], List[str], int, str] = "last",
-    labels: Union[List[str], str] = None,
-    colors: Union[List[Any], Any] = None,
-    linestyles: Union[List[str], str] = None,
+    log_files: list[str] | str,
+    ts: list[int] | list[str] | int | str = 'last',
+    labels: list[str] | str = None,
+    colors: list[Any] | Any = None,
+    linestyles: list[str] | str = None,
     keys_as_labels: bool = True,
-    keys: List[str] = None,
+    keys: list[str] = None,
     xticklabel_rotation: float = 0,
     normalize: bool = True,
-    size: Tuple[float, float] = None,
-    xlabel: str = "Summary statistic",
-    ylabel: str = "Weight",
+    size: tuple[float, float] = None,
+    xlabel: str = 'Summary statistic',
+    ylabel: str = 'Weight',
     title: str = None,
     ax: mpl.axes.Axes = None,
     **kwargs,
@@ -79,8 +79,8 @@ def plot_distance_weights(
     labels = get_labels(labels, len(log_files))
 
     # default keyword arguments
-    if "marker" not in kwargs:
-        kwargs["marker"] = "x"
+    if 'marker' not in kwargs:
+        kwargs['marker'] = 'x'
 
     n_run = len(log_files)
 
@@ -95,7 +95,7 @@ def plot_distance_weights(
         log_files, ts, labels, colors, linestyles
     ):
         weights = load_dict_from_json(log_file)
-        if t == "last":
+        if t == 'last':
             t = max(weights.keys())
         weights = weights[t]
         if keys is None:

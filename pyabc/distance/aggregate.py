@@ -1,7 +1,7 @@
 """Aggregated distances."""
 
 import logging
-from typing import Callable, List, Union
+from collections.abc import Callable
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from ..storage import save_dict_to_json
 from .base import Distance, FunctionDistance
 from .scale import span
 
-logger = logging.getLogger("ABC.Distance")
+logger = logging.getLogger('ABC.Distance')
 
 
 class AggregatedDistance(Distance):
@@ -25,9 +25,9 @@ class AggregatedDistance(Distance):
 
     def __init__(
         self,
-        distances: List[Union[Distance, Callable]],
-        weights: Union[List, dict] = None,
-        factors: Union[List, dict] = None,
+        distances: list[Distance | Callable],
+        weights: list | dict = None,
+        factors: list | dict = None,
     ):
         """
         Parameters
@@ -52,9 +52,9 @@ class AggregatedDistance(Distance):
         """
         super().__init__()
 
-        if isinstance(distances, (Distance, Callable)):
+        if isinstance(distances, Distance | Callable):
             distances = [distances]
-        self.distances: List[Distance] = [
+        self.distances: list[Distance] = [
             FunctionDistance.to_distance(distance) for distance in distances
         ]
 
@@ -220,18 +220,18 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
 
     def __init__(
         self,
-        distances: List[Distance],
-        initial_weights: List = None,
-        factors: Union[List, dict] = None,
+        distances: list[Distance],
+        initial_weights: list = None,
+        factors: list | dict = None,
         adaptive: bool = True,
         scale_function: Callable = None,
         log_file: str = None,
     ):
         super().__init__(distances=distances)
-        self.initial_weights: List = initial_weights
-        self.factors: Union[List, dict] = factors
+        self.initial_weights: list = initial_weights
+        self.factors: list | dict = factors
         self.adaptive: bool = adaptive
-        self.x_0: Union[dict, None] = None
+        self.x_0: dict | None = None
         if scale_function is None:
             scale_function = span
         self.scale_function: Callable = scale_function
@@ -327,8 +327,8 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
         w = np.array(w)
         if w.size != len(self.distances):
             raise AssertionError(
-                f"weights.size={w.size} != "
-                f"len(distances)={len(self.distances)}"
+                f'weights.size={w.size} != '
+                f'len(distances)={len(self.distances)}'
             )
 
         # add to w attribute, at time t
@@ -354,7 +354,7 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
             sampler.sample_factory.record_rejected()
 
     def log(self, t: int) -> None:
-        logger.debug(f"Weights[{t}] = {self.weights[t]}")
+        logger.debug(f'Weights[{t}] = {self.weights[t]}')
 
         if self.log_file:
             save_dict_to_json(self.weights, self.log_file)

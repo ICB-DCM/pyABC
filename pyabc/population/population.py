@@ -1,12 +1,12 @@
 import logging
-from typing import Callable, Dict, List, Tuple
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
 
 from ..parameters import Parameter
 
-logger = logging.getLogger("ABC.Population")
+logger = logging.getLogger('ABC.Population')
 
 
 class Particle:
@@ -84,19 +84,19 @@ class Population:
         Particles that constitute the accepted population.
     """
 
-    def __init__(self, particles: List[Particle]):
+    def __init__(self, particles: list[Particle]):
         self.particles = particles
         self._model_probabilities = None
 
         # checks
         if any(not p.accepted for p in particles):
             raise AssertionError(
-                "A population should only consist of accepted particles"
+                'A population should only consist of accepted particles'
             )
 
         if not np.isclose(total_weight := sum(p.weight for p in particles), 1):
             raise AssertionError(
-                f"The population total weight {total_weight} is not normalized."
+                f'The population total weight {total_weight} is not normalized.'
             )
 
         self.calculate_model_probabilities()
@@ -161,18 +161,18 @@ class Population:
             The model probabilities.
         """
         # _model_probabilities are cached at the beginning
-        vars = [(key, val) for key, val in self._model_probabilities.items()]
+        vars = list(self._model_probabilities.items())
         ms = [var[0] for var in vars]
         ps = [var[1] for var in vars]
         return pd.DataFrame({'m': ms, 'p': ps}).set_index('m')
 
-    def get_alive_models(self) -> List:
+    def get_alive_models(self) -> list:
         return self._model_probabilities.keys()
 
     def nr_of_models_alive(self) -> int:
         return len(self.get_alive_models())
 
-    def get_distribution(self, m: int) -> Tuple[pd.DataFrame, np.ndarray]:
+    def get_distribution(self, m: int) -> tuple[pd.DataFrame, np.ndarray]:
         particles = self.get_particles_by_model()[m]
         parameters = pd.DataFrame([p.parameter for p in particles])
         weights = np.array([p.weight for p in particles])
@@ -210,7 +210,7 @@ class Population:
             sum_stats.append(particle.sum_stat)
         return weights, sum_stats
 
-    def get_accepted_sum_stats(self) -> List[dict]:
+    def get_accepted_sum_stats(self) -> list[dict]:
         """Return a list of all accepted summary statistics."""
         return [particle.sum_stat for particle in self.particles]
 
@@ -229,7 +229,7 @@ class Population:
         allowed_keys = ['weight', 'distance', 'parameter', 'sum_stat']
         for key in keys:
             if key not in allowed_keys:
-                raise ValueError(f"Key {key} not in {allowed_keys}.")
+                raise ValueError(f'Key {key} not in {allowed_keys}.')
 
         ret = {key: [] for key in keys}
         for particle in self.particles:
@@ -244,7 +244,7 @@ class Population:
 
         return ret
 
-    def get_particles_by_model(self) -> Dict[int, List[Particle]]:
+    def get_particles_by_model(self) -> dict[int, list[Particle]]:
         """Get particles by model.
 
         Returns
@@ -261,7 +261,7 @@ class Population:
                 # if key not yet existent
                 particlees_by_model.setdefault(particle.m, []).append(particle)
             else:
-                logger.warning("Empty particle.")
+                logger.warning('Empty particle.')
 
         return particlees_by_model
 
@@ -293,8 +293,8 @@ class Sample:
         is_look_ahead: bool = False,
         ok: bool = True,
     ):
-        self.accepted_particles: List[Particle] = []
-        self.rejected_particles: List[Particle] = []
+        self.accepted_particles: list[Particle] = []
+        self.rejected_particles: list[Particle] = []
         self.record_rejected: bool = record_rejected
         self.max_nr_rejected: int = max_nr_rejected
         self.is_look_ahead: bool = is_look_ahead
@@ -318,7 +318,7 @@ class Sample:
         for particle in population.particles:
             if not particle.accepted:
                 raise AssertionError(
-                    "A population should only consist of accepted particles"
+                    'A population should only consist of accepted particles'
                 )
             sample.append(particle)
         return sample
@@ -356,7 +356,7 @@ class Sample:
         ):
             self.rejected_particles.append(particle)
 
-    def __add__(self, other: "Sample"):
+    def __add__(self, other: 'Sample'):
         sample = Sample(
             record_rejected=self.record_rejected,
             max_nr_rejected=self.max_nr_rejected,
@@ -406,11 +406,11 @@ class Sample:
 
         if np.isclose(total_weight_accepted, 0.0):
             logger.warning(
-                f"The total population weight {total_weight_accepted} is "
-                "close to zero, which can be numerically problematic"
+                f'The total population weight {total_weight_accepted} is '
+                'close to zero, which can be numerically problematic'
             )
         if total_weight_accepted == 0.0:
-            raise AssertionError("The total population weight is zero")
+            raise AssertionError('The total population weight is zero')
         for p in self.all_particles:
             p.weight /= total_weight_accepted
 
@@ -437,7 +437,7 @@ class SampleFactory:
 
     def record_rejected(self, record: bool = True):
         """Switch whether to record rejected particles."""
-        logger.info(f"Recording also rejected particles: {record}")
+        logger.info(f'Recording also rejected particles: {record}')
         self._record_rejected = record
 
     def __call__(self, is_look_ahead: bool = False):

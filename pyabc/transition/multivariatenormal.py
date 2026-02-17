@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -67,9 +67,9 @@ class MultivariateNormalTransition(Transition):
         self.scaling: float = scaling
         self.bandwidth_selector: BandwidthSelector = bandwidth_selector
         # base population as an array
-        self._X_arr: Union[np.ndarray, None] = None
+        self._X_arr: np.ndarray | None = None
         # perturbation covariance matrix
-        self.cov: Union[np.ndarray, None] = None
+        self.cov: np.ndarray | None = None
         # normal perturbation distribution
         self.normal = None
         # cache a range array
@@ -77,7 +77,7 @@ class MultivariateNormalTransition(Transition):
 
     def fit(self, X: pd.DataFrame, w: np.ndarray) -> None:
         if len(X) == 0:
-            raise NotEnoughParticles("Fitting not possible.")
+            raise NotEnoughParticles('Fitting not possible.')
         self._X_arr = X.values
 
         sample_cov = smart_cov(self._X_arr, w)
@@ -91,7 +91,7 @@ class MultivariateNormalTransition(Transition):
         # cache range array
         self._range = np.arange(len(self.X))
 
-    def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
+    def rvs(self, size: int = None) -> Parameter | pd.DataFrame:
         if size is None:
             return self.rvs_single()
         sample_ind = np.random.choice(
@@ -113,10 +113,10 @@ class MultivariateNormalTransition(Transition):
 
     def pdf(
         self,
-        x: Union[Parameter, pd.Series, pd.DataFrame],
-    ) -> Union[float, np.ndarray]:
+        x: Parameter | pd.Series | pd.DataFrame,
+    ) -> float | np.ndarray:
         # convert to numpy array in correct order
-        if isinstance(x, (Parameter, pd.Series)):
+        if isinstance(x, Parameter | pd.Series):
             x = np.array([x[key] for key in self.X.columns])
         else:
             x = x[self.X.columns].to_numpy()

@@ -1,7 +1,7 @@
 """Parameter transformations."""
 
 from abc import ABC, abstractmethod
-from typing import Callable, List, Union
+from collections.abc import Callable
 
 import numpy as np
 
@@ -17,7 +17,8 @@ class ParTrafoBase(ABC):
     In particular, this can help overcome non-identifiabilities.
     """
 
-    def initialize(self, keys: List[str]):
+    @abstractmethod
+    def initialize(self, keys: list[str]):
         """Initialize. Called once per analysis."""
 
     @abstractmethod
@@ -29,7 +30,7 @@ class ParTrafoBase(ABC):
         """Length of expected parameter transformation."""
 
     @abstractmethod
-    def get_ids(self) -> List[str]:
+    def get_ids(self) -> list[str]:
         """Identifiers for the parameter transformations."""
 
 
@@ -45,19 +46,19 @@ class ParTrafo(ParTrafoBase):
 
     def __init__(
         self,
-        trafos: List[Callable[[np.ndarray], np.ndarray]] = None,
-        trafo_ids: Union[str, List[str]] = "{par_id}_{trafo_ix}",
+        trafos: list[Callable[[np.ndarray], np.ndarray]] = None,
+        trafo_ids: str | list[str] = '{par_id}_{trafo_ix}',
     ):
         self.trafos = trafos
 
         if not isinstance(trafo_ids, str) and len(trafos) != len(trafo_ids):
-            raise AssertionError("Lengths of trafos and trafo_ids must match")
+            raise AssertionError('Lengths of trafos and trafo_ids must match')
         self.trafo_ids = trafo_ids
 
         # to maintain key order
-        self.keys: Union[List[str], None] = None
+        self.keys: list[str] | None = None
 
-    def initialize(self, keys: List[str]):
+    def initialize(self, keys: list[str]):
         # remember key order
         self.keys = keys
 
@@ -83,13 +84,13 @@ class ParTrafo(ParTrafoBase):
             return len(self.keys)
         return len(self.keys) * len(self.trafos)
 
-    def get_ids(self) -> List[str]:
+    def get_ids(self) -> list[str]:
         """
         Calculate keys as:
         {par_id_1}_{trafo_1}, ..., {par_id_n}_{trafo_1}, ...,
         {par_id_1}_{trafo_m}, ..., {par_id_n}_{trafo_m}
         """
-        par_ids = [f"{key}" for key in self.keys]
+        par_ids = [f'{key}' for key in self.keys]
         if self.trafos is None:
             return par_ids
 

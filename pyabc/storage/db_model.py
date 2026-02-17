@@ -45,10 +45,10 @@ class BytesStorage(types.TypeDecorator):
     # (guaranteed to produce the same bind/result behavior every time)
     cache_ok = True
 
-    def process_bind_param(self, value, dialect):  # pylint: disable=R0201
+    def process_bind_param(self, value, dialect):  # noqa: ARG002
         return to_bytes(value)
 
-    def process_result_value(self, value, dialect):  # pylint: disable=R0201
+    def process_result_value(self, value, dialect):  # noqa: ARG002
         return from_bytes(value)
 
 
@@ -69,26 +69,26 @@ class ABCSMC(Base):
     epsilon_function = Column(String(5000))
     population_strategy = Column(String(5000))
     git_hash = Column(String(120))
-    populations = relationship("Population")
+    populations = relationship('Population')
 
     def __repr__(self):
         return (
-            f"<ABCSMC id={self.id}, "
-            f"start_time={datetime2str(self.start_time)}, "
-            f"end_time={datetime2str(self.end_time)}>"
+            f'<ABCSMC id={self.id}, '
+            f'start_time={datetime2str(self.start_time)}, '
+            f'end_time={datetime2str(self.end_time)}>'
         )
 
     def start_info(self):
         return (
-            f"<ABCSMC id={self.id}, "
-            f"start_time={datetime2str(self.start_time)}>"
+            f'<ABCSMC id={self.id}, '
+            f'start_time={datetime2str(self.start_time)}>'
         )
 
     def end_info(self):
         duration = self.end_time - self.start_time
         return (
-            f"<ABCSMC id={self.id}, duration={duration}, "
-            f"end_time={datetime2str(self.end_time)}>"
+            f'<ABCSMC id={self.id}, duration={duration}, '
+            f'end_time={datetime2str(self.end_time)}>'
         )
 
 
@@ -100,18 +100,18 @@ class Population(Base):
     population_end_time = Column(DateTime)
     nr_samples = Column(Integer)
     epsilon = Column(Float)
-    models = relationship("Model")
+    models = relationship('Model')
 
-    def __init__(self, *args, **kwargs):
-        super(Population, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):  # noqa ARG002
+        super().__init__(**kwargs)
         self.population_end_time = datetime.datetime.now()
 
     def __repr__(self):
         return (
-            f"<Population id={self.id}, abc_smc_id={self.abc_smc_id}, "
-            f"t={self.t}, nr_samples={self.nr_samples}, "
-            f"eps={self.epsilon}, "
-            f"population_end_time={self.population_end_time}>"
+            f'<Population id={self.id}, abc_smc_id={self.abc_smc_id}, '
+            f't={self.t}, nr_samples={self.nr_samples}, '
+            f'eps={self.epsilon}, '
+            f'population_end_time={self.population_end_time}>'
         )
 
 
@@ -122,12 +122,12 @@ class Model(Base):
     m = Column(Integer)
     name = Column(String(200))
     p_model = Column(Float)
-    particles = relationship("Particle")
+    particles = relationship('Particle')
 
     def __repr__(self):
         return (
-            f"<Model id={self.id}, population_id={self.population_id}, "
-            f"m={self.m}, name={self.name}, p_model={self.p_model}>"
+            f'<Model id={self.id}, population_id={self.population_id}, '
+            f'm={self.m}, name={self.name}, p_model={self.p_model}>'
         )
 
 
@@ -136,8 +136,8 @@ class Particle(Base):
     id = Column(Integer, primary_key=True)
     model_id = Column(Integer, ForeignKey('models.id'))
     w = Column(Float)
-    parameters = relationship("Parameter")
-    samples = relationship("Sample")
+    parameters = relationship('Parameter')
+    samples = relationship('Sample')
     proposal_id = Column(Integer, default=0)
 
 
@@ -149,7 +149,7 @@ class Parameter(Base):
     value = Column(Float)
 
     def __repr__(self):
-        return f"<Parameter {self.name}={self.value}>"
+        return f'<Parameter {self.name}={self.value}>'
 
 
 class Sample(Base):
@@ -157,7 +157,7 @@ class Sample(Base):
     id = Column(Integer, primary_key=True)
     particle_id = Column(Integer, ForeignKey('particles.id'))
     distance = Column(Float)
-    summary_statistics = relationship("SummaryStatistic")
+    summary_statistics = relationship('SummaryStatistic')
 
 
 class SummaryStatistic(Base):
@@ -170,4 +170,4 @@ class SummaryStatistic(Base):
 
 def datetime2str(datetime: datetime.datetime) -> str:
     """Format print datetime."""
-    return datetime.strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.strftime('%Y-%m-%d %H:%M:%S')
