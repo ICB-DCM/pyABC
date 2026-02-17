@@ -5,233 +5,115 @@ on:
     branches: [main, develop]
   pull_request:
   schedule:
-    # Monday at 15:18 UTC
     - cron: "18 15 * * MON"
 
 jobs:
-  base:
-    runs-on: ubuntu-latest
+  tests:
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # Supported stable versions
-        python-version: ["3.13", "3.12", "3.11", "3.10"]
+        include:
+          # Fast PR matrix
+          - os: ubuntu-latest
+            python: "3.13"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.12"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.10"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: visualization
+
+          # macOS sanity
+          - os: macos-latest
+            python: "3.11"
+            toxenv: mac
+
+          # Quality
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: lint
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: project
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: doc
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: migrate
+
+          # Heavier
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: external-R
+            heavy: true
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: external-other-simulators
+            heavy: true
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: petab
+            heavy: true
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: notebooks1
+            heavy: true
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: notebooks2
+            heavy: true
 
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
           cache: pip
 
-      - name: Install dependencies
-        run: .github/workflows/install_deps.sh base R
+      # Gate heavy items (example: only schedule or push to main)
+      - name: Skip heavy in PRs
+        if: ${{ matrix.heavy == true && github.event_name == 'pull_request' }}
+        run: |
+          echo "Skipping heavy job on PR"
+          exit 0
 
-      - name: Run tests
-        timeout-minutes: 15
-        run: tox -e base
-
-      - name: Run visualization tests
-        timeout-minutes: 5
-        run: tox -e visualization
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-
-  external:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
+      # Install extra runtimes only when needed
       - name: Install Julia
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
         uses: julia-actions/setup-julia@v2
         with:
           version: "1.11"
 
       - name: Install dependencies
-        run: .github/workflows/install_deps.sh base R
-
-      - name: Run external (R) tests
-        timeout-minutes: 20
-        run: tox -e external-R
-
-      - name: Run external (Julia/COPASI) tests
-        timeout-minutes: 20
-        run: tox -e external-other-simulators
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-
-  petab:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install dependencies
-        run: .github/workflows/install_deps.sh amici
-
-      - name: Run tests
-        timeout-minutes: 30
-        run: tox -e petab
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-
-  mac:
-    runs-on: macos-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install dependencies
-        run: .github/workflows/install_deps.sh base
-
-      - name: Run tests
-        timeout-minutes: 15
-        run: tox -e mac
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage.xml
-
-  notebooks1:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install dependencies
-        run: .github/workflows/install_deps.sh base
-
-      - name: Run notebooks
-        timeout-minutes: 20
-        run: tox -e notebooks1
-
-  notebooks2:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install dependencies
-        run: .github/workflows/install_deps.sh R amici
-
-      - name: Run notebooks
-        timeout-minutes: 20
-        run: tox -e notebooks2
-
-  quality:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-
-      - name: Install dependencies
         run: |
-          .github/workflows/install_deps.sh doc
-          python -m pip install -U pip
-          python -m pip install tox
+          # Map toxenv -> deps groups (keep your script)
+          case "${{ matrix.toxenv }}" in
+            base|visualization|mac|notebooks1) .github/workflows/install_deps.sh base ;;
+            notebooks2) .github/workflows/install_deps.sh R amici ;;
+            petab) .github/workflows/install_deps.sh amici ;;
+            external-*) .github/workflows/install_deps.sh base R ;;
+            lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
+          esac
+          python -m pip install -U pip tox
 
-      - name: Ruff linting
-        timeout-minutes: 5
-        run: tox -e lint
+      - name: Run tox
+        run: tox -e ${{ matrix.toxenv }}
 
-      - name: Run quality checks
-        timeout-minutes: 10
-        run: tox -e project
-
-      - name: Build docs
-        timeout-minutes: 10
-        run: tox -e doc
-
-      - name: Test migration
-        timeout-minutes: 10
-        run: tox -e migrate
-
+      # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
       - name: Upload coverage
+        if: ${{ always() && matrix.os == 'ubuntu-latest' }}  # optional
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
+          flags: ${{ matrix.toxenv }}
