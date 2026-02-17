@@ -18,7 +18,9 @@ def test_db_import(script_runner):
         pyabc.History('sqlite:///' + db_file)
 
     # call the migration script
-    ret = script_runner.run('abc-migrate', '--src', db_file, '--dst', db_file)
+    ret = script_runner.run(
+        ['abc-migrate', '--src', db_file, '--dst', db_file]
+    )
     assert ret.success
 
     # now it should work
