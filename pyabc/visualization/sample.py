@@ -92,7 +92,7 @@ def plot_sample_numbers(
             x=np.arange(n_run),
             height=matrix[i_pop, :],
             bottom=np.sum(matrix[:i_pop, :], axis=0),
-            label=f'Generation {i_pop-1}',
+            label=f'Generation {i_pop - 1}',
         )
 
     # add labels
@@ -140,7 +140,7 @@ def plot_sample_numbers_plotly(
             go.Bar(
                 x=np.arange(n_run),
                 y=matrix[i_pop, :],
-                name=f'Generation {i_pop-1}',
+                name=f'Generation {i_pop - 1}',
                 offsetgroup=0,
                 base=np.sum(matrix[:i_pop, :], axis=0),
             )

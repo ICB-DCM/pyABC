@@ -181,8 +181,7 @@ def plot_data_default(
             ax.set_ylabel('Simulation')
         else:
             logger.info(
-                f'Data type {type(obs)} for key {obs_key} is '
-                f'not supported.'
+                f'Data type {type(obs)} for key {obs_key} is not supported.'
             )
             # remove not needed axis
             ax.axis('off')

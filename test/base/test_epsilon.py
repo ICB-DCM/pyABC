@@ -204,16 +204,16 @@ def test_silk_optimal_eps(db_path):
     """Test an analysis with"""
 
     def model(p):
-        theta = p["theta"]
-        return {"y": (theta - 10) ** 2 - 100 * np.exp(-100 * (theta - 3) ** 2)}
+        theta = p['theta']
+        return {'y': (theta - 10) ** 2 - 100 * np.exp(-100 * (theta - 3) ** 2)}
 
-    p_true = {"theta": 3}
+    p_true = {'theta': 3}
     y_obs = model(p_true)
 
-    bounds = {"theta": (0, 20)}
+    bounds = {'theta': (0, 20)}
     prior = pyabc.Distribution(
         **{
-            key: pyabc.RV("uniform", lb, ub - lb)
+            key: pyabc.RV('uniform', lb, ub - lb)
             for key, (lb, ub) in bounds.items()
         }
     )

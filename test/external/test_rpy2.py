@@ -39,15 +39,15 @@ def sampler(request):
 def test_rpy2_pipeline(sampler):
     """Test that a pipeline with rpy2 calls runs through."""
     # run the notebook example
-    r_file = "doc/examples/myRModel.R"
+    r_file = 'doc/examples/myRModel.R'
     r = pyabc.external.r.R(r_file)
     r.display_source_ipython()
-    model = r.model("myModel")
-    distance = r.distance("myDistance")
-    sum_stat = r.summary_statistics("mySummaryStatistics")
-    data = r.observation("mySumStatData")
+    model = r.model('myModel')
+    distance = r.distance('myDistance')
+    sum_stat = r.summary_statistics('mySummaryStatistics')
+    data = r.observation('mySumStatData')
     prior = pyabc.Distribution(
-        meanX=pyabc.RV("uniform", 0, 10), meanY=pyabc.RV("uniform", 0, 10)
+        meanX=pyabc.RV('uniform', 0, 10), meanY=pyabc.RV('uniform', 0, 10)
     )
     abc = pyabc.ABCSMC(
         model,
@@ -57,10 +57,10 @@ def test_rpy2_pipeline(sampler):
         sampler=sampler,
         population_size=5,
     )
-    db = pyabc.create_sqlite_db_id(file_="test_external.db")
+    db = pyabc.create_sqlite_db_id(file_='test_external.db')
     abc.new(db, data)
     history = abc.run(minimum_epsilon=0.9, max_nr_populations=2)
-    history.get_weighted_sum_stats_for_model(m=0, t=1)[1][0]["cars"].head()
+    history.get_weighted_sum_stats_for_model(m=0, t=1)[1][0]['cars'].head()
 
     # try load
     id_ = history.id
@@ -87,6 +87,6 @@ def test_rpy2_details():
         df.to_csv(file_)
         return {'loc': file_}
 
-    r = pyabc.external.r.R("doc/examples/model_r/sumstat_py.r")
-    sumstat = r.summary_statistics("sumstat", is_py_model=True)
+    r = pyabc.external.r.R('doc/examples/model_r/sumstat_py.r')
+    sumstat = r.summary_statistics('sumstat', is_py_model=True)
     sumstat(model({'p0': 42}))

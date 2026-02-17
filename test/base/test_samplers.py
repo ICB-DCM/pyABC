@@ -167,7 +167,7 @@ def basic_testcase():
     """A simple test model."""
 
     def model(p):
-        return {"y": p['p0'] + 0.1 * np.random.randn(10)}
+        return {'y': p['p0'] + 0.1 * np.random.randn(10)}
 
     prior = pyabc.Distribution(
         p0=pyabc.RV('uniform', -5, 10), p1=pyabc.RV('uniform', -2, 2)
@@ -189,7 +189,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler):
     sigma = 0.5
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma).rvs()}
+        return {'y': st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
     models = [model, model]
@@ -198,8 +198,8 @@ def two_competing_gaussians_multiple_population(db_path, sampler):
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
-        pyabc.Distribution(x=pyabc.RV("norm", mu_x_1, sigma)),
-        pyabc.Distribution(x=pyabc.RV("norm", mu_x_2, sigma)),
+        pyabc.Distribution(x=pyabc.RV('norm', mu_x_1, sigma)),
+        pyabc.Distribution(x=pyabc.RV('norm', mu_x_2, sigma)),
     ]
 
     # We plug all the ABC setups together
@@ -208,7 +208,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler):
     abc = pyabc.ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        pyabc.PercentileDistance(measures_to_use=["y"]),
+        pyabc.PercentileDistance(measures_to_use=['y']),
         pop_size,
         eps=pyabc.MedianEpsilon(),
         sampler=sampler,
@@ -218,7 +218,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler):
     # define where to store the results
     # y_observed is the important piece here: our actual observation.
     y_observed = 1
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = 0.05
@@ -228,9 +228,7 @@ def two_competing_gaussians_multiple_population(db_path, sampler):
     mp = history.get_model_probabilities(history.max_t)
 
     def p_y_given_model(mu_x_model):
-        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(
-            y_observed
-        )
+        res = st.norm(mu_x_model, np.sqrt(sigma**2 + sigma**2)).pdf(y_observed)
         return res
 
     p1_expected_unnormalized = p_y_given_model(mu_x_1)
@@ -270,9 +268,9 @@ def two_competing_gaussians_multiple_population(db_path, sampler):
         # for low-runtime models, this should not be a problem. Thus, only
         # print a warning here.
         logger.warning(
-            f"Had {pre_evals} simulations in the calibration iteration, "
-            f"but a maximum of {max_expected} would have been sufficient for "
-            f"the population size of {pop_size.nr_particles}."
+            f'Had {pre_evals} simulations in the calibration iteration, '
+            f'but a maximum of {max_expected} would have been sufficient for '
+            f'the population size of {pop_size.nr_particles}.'
         )
 
 
@@ -288,7 +286,7 @@ def test_progressbar(sampler):
 
 
 def test_in_memory(redis_starter_sampler):
-    db_path = "sqlite://"
+    db_path = 'sqlite://'
     two_competing_gaussians_multiple_population(db_path, redis_starter_sampler)
 
 
@@ -320,7 +318,7 @@ def test_redis_multiprocess():
     )
     try:
         # id needs to be set
-        sampler.set_analysis_id("ana_id")
+        sampler.set_analysis_id('ana_id')
 
         sample = sampler.sample_until_n_accepted(10, simulate_one, 0)
         assert 10 == len(sample.get_accepted_population())
@@ -331,13 +329,13 @@ def test_redis_multiprocess():
 def test_redis_catch_error():
     def model(pars):
         if np.random.uniform() < 0.1:
-            raise ValueError("error")
+            raise ValueError('error')
         return {'s0': pars['p0'] + 0.2 * np.random.uniform()}
 
     def distance(s0, s1):
         return abs(s0['s0'] - s1['s0'])
 
-    prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 10))
+    prior = pyabc.Distribution(p0=pyabc.RV('uniform', 0, 10))
     sampler = RedisEvalParallelSamplerServerStarter(
         batch_size=3, workers=1, processes_per_worker=1
     )
@@ -346,7 +344,7 @@ def test_redis_catch_error():
             model, prior, distance, sampler=sampler, population_size=10
         )
 
-        db_file = "sqlite:///" + os.path.join(tempfile.gettempdir(), "test.db")
+        db_file = 'sqlite:///' + os.path.join(tempfile.gettempdir(), 'test.db')
         data = {'s0': 2.8}
         abc.new(db_file, data)
         abc.run(minimum_epsilon=0.1, max_nr_populations=3)
@@ -360,11 +358,11 @@ def test_redis_pw_protection():
         return pyabc.Particle(0, {}, 0.1, {}, 0, accepted)
 
     sampler = RedisEvalParallelSamplerServerStarter(  # noqa: S106
-        password="daenerys"
+        password='daenerys'
     )
     try:
         # needs to be always set
-        sampler.set_analysis_id("ana_id")
+        sampler.set_analysis_id('ana_id')
         sample = sampler.sample_until_n_accepted(10, simulate_one, 0)
         assert 10 == len(sample.get_accepted_population())
     finally:
@@ -375,14 +373,14 @@ def test_redis_continuous_analyses():
     """Test correct behavior of the redis server with multiple analyses."""
     sampler = RedisEvalParallelSamplerServerStarter()
     try:
-        sampler.set_analysis_id("id1")
+        sampler.set_analysis_id('id1')
         # try "starting a new run while the old one has not finished yet"
         with pytest.raises(AssertionError) as e:
-            sampler.set_analysis_id("id2")
-        assert "busy with an analysis " in str(e.value)
+            sampler.set_analysis_id('id2')
+        assert 'busy with an analysis ' in str(e.value)
         # after stopping it should work
         sampler.stop()
-        sampler.set_analysis_id("id2")
+        sampler.set_analysis_id('id2')
     finally:
         sampler.shutdown()
 
@@ -390,11 +388,11 @@ def test_redis_continuous_analyses():
 def test_redis_subprocess():
     """Test whether the instructed redis sampler allows worker subprocesses."""
     # print worker output
-    logging.getLogger("Redis-Worker").addHandler(logging.StreamHandler())
+    logging.getLogger('Redis-Worker').addHandler(logging.StreamHandler())
 
     def model_process(p, pipe):
         """The actual model."""
-        pipe.send({"y": p['p0'] + 0.1 * np.random.randn(10)})
+        pipe.send({'y': p['p0'] + 0.1 * np.random.randn(10)})
 
     def model(p):
         """Model calling a subprocess."""
@@ -428,7 +426,7 @@ def test_redis_subprocess():
         sampler.shutdown()
 
 
-@pytest.mark.parametrize("adapt_proposal", [False, True])
+@pytest.mark.parametrize('adapt_proposal', [False, True])
 def test_redis_look_ahead(adapt_proposal: bool):
     """Test the redis sampler in look-ahead mode."""
     model, prior, distance, obs = basic_testcase()
@@ -509,12 +507,12 @@ def test_redis_look_ahead_error():
                     )
                     abc.new(pyabc.create_sqlite_db_id(), obs)
                     abc.run(max_nr_populations=3)
-                assert "cannot be used in look-ahead mode" in str(e.value)
+                assert 'cannot be used in look-ahead mode' in str(e.value)
             finally:
                 sampler.shutdown()
 
 
-@pytest.mark.parametrize("adapt_proposal", [False, True])
+@pytest.mark.parametrize('adapt_proposal', [False, True])
 def test_redis_look_ahead_delayed(adapt_proposal: bool):
     """Test the look-ahead sampler with delayed evaluation in an adaptive
     setup."""
@@ -576,9 +574,9 @@ def test_normalize_within_subpopulations():
             proposal_id = np.random.choice(proposal_ids, p=[0.3, 0.2, 0.5])
             particle = pyabc.Particle(
                 m=0,
-                parameter={"theta": np.random.normal()},
+                parameter={'theta': np.random.normal()},
                 weight=np.random.lognormal(sigma=abs(proposal_id) + 1),
-                sum_stat={"y": np.random.normal(size=2)},
+                sum_stat={'y': np.random.normal(size=2)},
                 distance=np.random.lognormal(),
                 accepted=accepted,
                 proposal_id=proposal_id,

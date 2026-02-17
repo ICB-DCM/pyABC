@@ -8,8 +8,8 @@ REMOVE_DB = True
 
 @pytest.fixture
 def db_path():
-    db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest.db")
-    db = "sqlite:///" + db_file_location
+    db_file_location = os.path.join(tempfile.gettempdir(), 'abc_unittest.db')
+    db = 'sqlite:///' + db_file_location
     yield db
     if REMOVE_DB:
         try:

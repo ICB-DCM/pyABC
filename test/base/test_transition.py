@@ -68,13 +68,13 @@ def transition_single(request):
 
 
 def data(n):
-    df = pd.DataFrame({"a": np.random.rand(n), "b": np.random.rand(n)})
+    df = pd.DataFrame({'a': np.random.rand(n), 'b': np.random.rand(n)})
     w = np.ones(len(df)) / len(df)
     return df, w
 
 
 def data_single(n):
-    df = pd.DataFrame({"a": np.random.rand(n)})
+    df = pd.DataFrame({'a': np.random.rand(n)})
     w = np.ones(len(df)) / len(df)
     return df, w
 
@@ -84,7 +84,7 @@ def test_rvs_return_type(transition: Transition):
     transition.fit(df, w)
     sample = transition.rvs()
     sample = pd.Series(sample)
-    assert (sample.index == pd.Index(["a", "b"])).all()
+    assert (sample.index == pd.Index(['a', 'b'])).all()
 
 
 def test_pdf_return_types(transition: Transition):
@@ -217,7 +217,7 @@ def test_score(transition: Transition):
 
 def test_grid_search_multivariate_normal():
     m = MultivariateNormalTransition()
-    m_grid = GridSearchCV(m, {"scaling": np.logspace(-5, 1.5, 5)}, n_jobs=1)
+    m_grid = GridSearchCV(m, {'scaling': np.logspace(-5, 1.5, 5)}, n_jobs=1)
     df, w = data(20)
     m_grid.fit(df, w)
 
@@ -229,7 +229,7 @@ def test_grid_search_two_samples_multivariate_normal():
     cv = 5
     m = MultivariateNormalTransition()
     m_grid = GridSearchCV(
-        m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv, n_jobs=1
+        m, {'scaling': np.logspace(-5, 1.5, 5)}, cv=cv, n_jobs=1
     )
     df, w = data(2)
     m_grid.fit(df, w)
@@ -243,7 +243,7 @@ def test_grid_search_single_sample_multivariate_normal():
     cv = 5
     m = MultivariateNormalTransition()
     m_grid = GridSearchCV(
-        m, {"scaling": np.logspace(-5, 1.5, 5)}, cv=cv, n_jobs=1
+        m, {'scaling': np.logspace(-5, 1.5, 5)}, cv=cv, n_jobs=1
     )
     df, w = data(1)
     m_grid.fit(df, w)
@@ -257,7 +257,7 @@ def test_mean_coefficient_of_variation_sample_not_full_rank(
     This is a test created after I encountered this kind of bug
     """
     n = 13
-    df = pd.DataFrame({"a": np.ones(n) * 2, "b": np.ones(n)})
+    df = pd.DataFrame({'a': np.ones(n) * 2, 'b': np.ones(n)})
     w = np.ones(len(df)) / len(df)
     transition.fit(df, w)
     transition.mean_cv()

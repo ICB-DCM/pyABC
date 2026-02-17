@@ -538,13 +538,12 @@ class ExpDecayFixedRatioScheme(TemperatureScheme):
         # check if acceptance rate criterion violated
         if acceptance_rate > self.max_rate and t > 1:
             logger.debug(
-                'ExpDecayFixedRatioScheme: '
-                'Reacting to high acceptance rate.'
+                'ExpDecayFixedRatioScheme: Reacting to high acceptance rate.'
             )
             alpha = max(alpha / 2, alpha - (1 - alpha) * 2)
         if acceptance_rate < self.min_rate:
             logger.debug(
-                'ExpDecayFixedRatioScheme: ' 'Reacting to low acceptance rate.'
+                'ExpDecayFixedRatioScheme: Reacting to low acceptance rate.'
             )
             # increase alpha
             alpha = alpha + (1 - alpha) / 2
@@ -620,7 +619,7 @@ class PolynomialDecayFixedIterScheme(TemperatureScheme):
         )
 
         logger.debug(
-            f'Temperatures proposed by polynomial decay method: ' f'{temps}.'
+            f'Temperatures proposed by polynomial decay method: {temps}.'
         )
 
         # pre-last step is the next step

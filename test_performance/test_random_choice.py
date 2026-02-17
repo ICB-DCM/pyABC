@@ -19,14 +19,14 @@ def test_fast_random_choice():
     for w in ws:
         np.random.choice(len(w), p=w)
     time_numpy = time() - start
-    print(f"Time numpy: {time_numpy}")
+    print(f'Time numpy: {time_numpy}')
 
     np.random.seed(0)
     start = time()
     for w in ws:
         fast_random_choice(w)
     time_fast = time() - start
-    print(f"Time fast_random_choice: {time_fast}")
+    print(f'Time fast_random_choice: {time_fast}')
 
     assert time_fast < time_numpy
 

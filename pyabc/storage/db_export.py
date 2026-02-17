@@ -22,9 +22,7 @@ from .history import History
 @click.option(
     '--generation',
     default='last',
-    help='The generation to dump. Can be '
-    '"all" or "last" or an integer '
-    'number',
+    help='The generation to dump. Can be "all" or "last" or an integer number',
 )
 @click.option(
     '--model',
@@ -39,7 +37,7 @@ from .history import History
     '--id',
     default=1,
     type=int,
-    help='The ABC-SMC run id which to dump. ' 'Defaults to 1',
+    help='The ABC-SMC run id which to dump. Defaults to 1',
 )
 @click.option(
     '--tidy',

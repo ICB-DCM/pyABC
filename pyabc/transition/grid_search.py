@@ -5,7 +5,7 @@ from sklearn.model_selection import GridSearchCV as GridSearchCVSKL
 
 from .multivariatenormal import MultivariateNormalTransition
 
-logger = logging.getLogger("ABC.Transition")
+logger = logging.getLogger('ABC.Transition')
 
 
 class GridSearchCV(GridSearchCVSKL):
@@ -68,8 +68,8 @@ class GridSearchCV(GridSearchCVSKL):
             res = self.estimator.fit(X, y)
             self.best_estimator_ = self.estimator
             logger.debug(
-                "Single sample Gridsearch. "
-                f"Params: {self.estimator.get_params()}"
+                'Single sample Gridsearch. '
+                f'Params: {self.estimator.get_params()}'
             )
             return res
 
@@ -79,16 +79,16 @@ class GridSearchCV(GridSearchCVSKL):
             res = super().fit(X, y, groups=groups)
             self.cv = old_cv
             logger.info(
-                f"Reduced CV Gridsearch {self.cv} -> {len(X)}. "
-                f"Best params: {self.best_params_}"
+                f'Reduced CV Gridsearch {self.cv} -> {len(X)}. '
+                f'Best params: {self.best_params_}'
             )
             return res
 
         res = super().fit(X, y, groups=groups)
-        logger.info(f"Best params: {self.best_params_}")
+        logger.info(f'Best params: {self.best_params_}')
         return res
 
     def __getattr__(self, item):
-        if item == "best_estimator_":
+        if item == 'best_estimator_':
             raise AttributeError
         return getattr(self.best_estimator_, item)
