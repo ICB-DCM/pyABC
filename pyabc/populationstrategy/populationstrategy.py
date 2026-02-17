@@ -41,8 +41,7 @@ class PopulationStrategy(ABC):
     def __init__(self, nr_calibration_particles: int = None):
         self.nr_calibration_particles = nr_calibration_particles
 
-    @abstractmethod
-    def update(
+    def update(  # noqa: B027
         self,
         transitions: list[Transition],
         model_weights: np.ndarray,
@@ -60,6 +59,7 @@ class PopulationStrategy(ABC):
         t:
             Time to adapt for.
         """
+        pass
 
     @abstractmethod
     def __call__(self, t: int = None) -> int:
