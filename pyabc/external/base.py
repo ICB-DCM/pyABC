@@ -314,7 +314,7 @@ class ExternalModel(Model):
                     lower_bound = self.sample_timing(
                         {key_col: val_col[0], key_row: val_row[0]}
                     )
-                    lower_bound = self.sample_timing(
+                    upper_bound = self.sample_timing(
                         {key_col: val_col[1], key_row: val_row[1]}
                     )
                 time_eval_mat_df_lower.loc[[key_col], [key_row]] = lower_bound
