@@ -1,5 +1,3 @@
-from typing import Union
-
 from ..random_variables import RV
 
 
@@ -16,7 +14,7 @@ class ModelPerturbationKernel:
     """
 
     def __init__(
-        self, nr_of_models: int, probability_to_stay: Union[float, None] = None
+        self, nr_of_models: int, probability_to_stay: float | None = None
     ):
         self.nr_of_models = nr_of_models
         if nr_of_models == 1:

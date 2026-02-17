@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import Callable, List
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -14,11 +14,11 @@ class Epsilon(ABC):
     each new population.
     """
 
-    def initialize(
+    def initialize(  # noqa: B027
         self,
         t: int,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        get_all_records: Callable[[], List[dict]],
+        get_all_records: Callable[[], list[dict]],
         max_nr_populations: int,
         acceptor_config: dict,
     ):
@@ -45,7 +45,7 @@ class Epsilon(ABC):
         """
         pass
 
-    def configure_sampler(self, sampler):
+    def configure_sampler(self, sampler):  # noqa: B027
         """
         This is called by the ABCSMC class and gives the epsilon
         the opportunity to configure the sampler.
@@ -64,11 +64,11 @@ class Epsilon(ABC):
             The sampler used in ABCSMC.
         """
 
-    def update(
+    def update(  # noqa: B027
         self,
         t: int,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        get_all_records: Callable[[], List[dict]],
+        get_all_records: Callable[[], list[dict]],
         acceptance_rate: float,
         acceptor_config: dict,
     ):
@@ -137,7 +137,7 @@ class Epsilon(ABC):
         config: dict
             Dictionary describing the distance function.
         """
-        return {"name": self.__class__.__name__}
+        return {'name': self.__class__.__name__}
 
     def to_json(self):
         """
@@ -162,5 +162,5 @@ class NoEpsilon(Epsilon):
     acceptance threshold.
     """
 
-    def __call__(self, t: int) -> float:
+    def __call__(self, t: int) -> float:  # noqa: ARG002
         return np.nan

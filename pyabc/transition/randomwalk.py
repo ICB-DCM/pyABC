@@ -1,5 +1,3 @@
-from typing import Union
-
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
@@ -58,21 +56,21 @@ class DiscreteRandomWalkTransition(DiscreteTransition):
         return Parameter(perturbed_point)
 
     def pdf(
-        self, x: Union[Parameter, pd.Series, pd.DataFrame]
-    ) -> Union[float, np.ndarray]:
+        self, x: Parameter | pd.Series | pd.DataFrame
+    ) -> float | np.ndarray:
         """
         Evaluate the probability mass function (PMF) at `x`.
         """
         # convert to numpy array in correct order
-        if isinstance(x, (Parameter, pd.Series)):
+        if isinstance(x, Parameter | pd.Series):
             x = np.array([x[key] for key in self.X.columns])
         else:
             x = x[self.X.columns].to_numpy()
 
         if not np.all(np.isclose(x, x.astype(int))):
             raise ValueError(
-                f"Transition can only handle integer values, not fulfilled "
-                f"by x={x}."
+                f'Transition can only handle integer values, not fulfilled '
+                f'by x={x}.'
             )
 
         if len(x.shape) == 1:

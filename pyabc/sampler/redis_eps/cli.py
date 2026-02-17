@@ -28,9 +28,9 @@ from .util import KillHandler
 from .work import work_on_population_dynamic
 from .work_static import work_on_population_static
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
-TIMES = {"s": 1, "m": 60, "h": 3600, "d": 24 * 3600}
+TIMES = {'s': 1, 'm': 60, 'h': 3600, 'd': 24 * 3600}
 
 
 def runtime_parse(s):
@@ -39,12 +39,12 @@ def runtime_parse(s):
     return unit * nr
 
 
-@click.command(help="Evaluation parallel redis sampler for pyABC.")
-@click.option('--host', default="localhost", help='Redis host.')
+@click.command(help='Evaluation parallel redis sampler for pyABC.')
+@click.option('--host', default='localhost', help='Redis host.')
 @click.option('--port', default=6379, type=int, help='Redis port.')
 @click.option(
     '--runtime',
-    default="2h",
+    default='2h',
     type=str,
     help='Max worker runtime if the form <NR><UNIT>, '
     'where <NR> is any number and <UNIT> can be s, '
@@ -63,19 +63,19 @@ def runtime_parse(s):
     '--processes',
     default=1,
     type=int,
-    help="The number of worker processes to start",
+    help='The number of worker processes to start',
 )
 @click.option(
     '--daemon',
     default=True,
     type=bool,
-    help="Create subprocesses in daemon mode.",
+    help='Create subprocesses in daemon mode.',
 )
-@click.option('--catch', default=True, type=bool, help="Catch errors.")
+@click.option('--catch', default=True, type=bool, help='Catch errors.')
 def work(
-    host="localhost",
+    host='localhost',
     port=6379,
-    runtime="2h",
+    runtime='2h',
     password=None,
     processes=1,
     daemon=True,
@@ -104,7 +104,7 @@ def work(
 
     # log
     for proc in procs:
-        logger.info(f"Started subprocess with pid {proc.pid}")
+        logger.info(f'Started subprocess with pid {proc.pid}')
 
     # wait for them to return
     for proc in procs:
@@ -112,7 +112,7 @@ def work(
 
 
 def _work(
-    host="localhost", port=6379, runtime="2h", password=None, catch=True
+    host='localhost', port=6379, runtime='2h', password=None, catch=True
 ):
     np.random.seed()
     random.seed()
@@ -122,8 +122,8 @@ def _work(
     start_time = time()
     max_runtime_s = runtime_parse(runtime)
     logger.info(
-        f"Start redis worker. Max run time {max_runtime_s}s, "
-        f"HOST={socket.gethostname()}, PID={os.getpid()}"
+        f'Start redis worker. Max run time {max_runtime_s}s, '
+        f'HOST={socket.gethostname()}, PID={os.getpid()}'
     )
 
     # connect to the redis server
@@ -133,7 +133,7 @@ def _work(
     p = redis.pubsub()
     p.subscribe(MSG)
 
-    logger.info(f"Subscribed to host {host} port {port}")
+    logger.info(f'Subscribed to host {host} port {port}')
 
     # Block-wait for publications. Every message on the channel that has not
     #  been overridden yet is processed by all workers exactly once via
@@ -141,9 +141,9 @@ def _work(
     #  When the server is stopped, an error makes the workers stop too.
     for msg in p.listen():
         try:
-            data = msg["data"].decode()
+            data = msg['data'].decode()
         except AttributeError:
-            data = msg["data"]
+            data = msg['data']
 
         if data == START or isinstance(data, int):
             # Sometimes, redis weirdly only publishes an int (1) at the
@@ -192,10 +192,10 @@ def _work(
                 )
             else:
                 # this should never happen
-                raise ValueError(f"Did not recognize mode {mode}")
+                raise ValueError(f'Did not recognize mode {mode}')
 
         elif data == STOP:
-            logger.info("Received stop signal. Shutdown redis worker.")
+            logger.info('Received stop signal. Shutdown redis worker.')
             return
 
         # TODO other messages (some integers?) are ignored
@@ -204,52 +204,50 @@ def _work(
         elapsed_time = time() - start_time
         if elapsed_time > max_runtime_s:
             logger.info(
-                "Shutdown redis worker. Max runtime {}s reached".format(
-                    max_runtime_s
-                )
+                f'Shutdown redis worker. Max runtime {max_runtime_s}s reached'
             )
             return
 
 
 @click.command(
-    help="ABC Redis cluster manager. "
+    help='ABC Redis cluster manager. '
     "The command can be 'info' or 'stop'. "
     "For 'stop' the workers are shut down cleanly "
-    "after the current population. "
+    'after the current population. '
     "For 'info' you'll see how many workers are connected, "
-    "how many evaluations the current population has, and "
-    "how many particles are still missing. "
+    'how many evaluations the current population has, and '
+    'how many particles are still missing. '
     "For 'reset-workers', the worker count will be resetted to"
-    "zero. This does not cancel the sampling. This is useful "
-    "if workers were unexpectedly killed."
+    'zero. This does not cancel the sampling. This is useful '
+    'if workers were unexpectedly killed.'
 )
-@click.option('--host', default="localhost", help="Redis host.")
-@click.option('--port', default=6379, type=int, help="Redis port.")
-@click.option('--password', default=None, type=str, help="Redis password.")
+@click.option('--host', default='localhost', help='Redis host.')
+@click.option('--port', default=6379, type=int, help='Redis port.')
+@click.option('--password', default=None, type=str, help='Redis password.')
 @click.option(
-    '--time', '-t', 't', default=None, type=int, help="Generation t."
+    '--time', '-t', 't', default=None, type=int, help='Generation t.'
 )
 @click.argument('command', type=str)
-def manage(command, host="localhost", port=6379, password=None, t=None):
+def manage(command, host='localhost', port=6379, password=None, t=None):
     """Manage workers.
     Corresponds to the entry point abc-redis-manager.
     """
     return _manage(command, host=host, port=port, password=password, t=t)
 
 
-def _manage(command, host="localhost", port=6379, password=None, t=None):
-    if command not in ["info", "stop", "reset-workers"]:
-        print("Unknown command: ", command)
+def _manage(command, host='localhost', port=6379, password=None, t=None):
+    if command not in ['info', 'stop', 'reset-workers']:
+        print('Unknown command: ', command)
         return
 
     redis = StrictRedis(host=host, port=port, password=password)
-    if command == "stop":
+    if command == 'stop':
         redis.publish(MSG, STOP)
         return
 
     # check whether an analysis is running
     if not is_server_used(redis):
-        print("No active generation")
+        print('No active generation')
         return
 
     # id of the current analysis
@@ -259,7 +257,7 @@ def _manage(command, host="localhost", port=6379, password=None, t=None):
     if t is None:
         t = int(redis.get(idfy(GENERATION, ana_id)).decode())
 
-    if command == "info":
+    if command == 'info':
         pipeline = redis.pipeline()
         res = (
             pipeline.get(idfy(N_WORKER, ana_id, t))
@@ -270,17 +268,15 @@ def _manage(command, host="localhost", port=6379, password=None, t=None):
         )
         res = [r.decode() if r is not None else r for r in res]
         print(
-            "Workers={} Evaluations={} Acceptances={}/{} (generation {})".format(
+            'Workers={} Evaluations={} Acceptances={}/{} (generation {})'.format(
                 *res, t
             )
         )
-    elif command == "reset-workers":
+    elif command == 'reset-workers':
         redis.set(idfy(N_WORKER, ana_id, t), 0)
 
 
 def is_server_used(redis: StrictRedis):
     """Check whether the server is currently in use."""
     analysis_id = redis.get(ANALYSIS_ID)
-    if analysis_id is None:
-        return False
-    return True
+    return analysis_id is not None

@@ -1,12 +1,12 @@
 import logging
 import os
-from typing import Callable, Dict, List, Sequence
+from collections.abc import Callable, Sequence
 
 import numpy as np
 
 from ..storage import load_dict_from_json, save_dict_to_json
 
-logger = logging.getLogger("ABC.Distance")
+logger = logging.getLogger('ABC.Distance')
 
 
 def bound_weights(
@@ -44,8 +44,8 @@ def bound_weights(
 
 def log_weights(
     t: int,
-    weights: Dict[int, np.ndarray],
-    keys: List[str],
+    weights: dict[int, np.ndarray],
+    keys: list[str],
     label: str,
     log_file: str,
 ) -> None:
@@ -73,8 +73,8 @@ def log_weights(
         # add column
         if t in dct:
             logger.warning(
-                f"Time {t} already in log file {log_file}. "
-                "Overwriting, but this looks suspicious.",
+                f'Time {t} already in log file {log_file}. '
+                'Overwriting, but this looks suspicious.',
             )
         dct[t] = weights
         # save to file
@@ -158,7 +158,7 @@ def fd_nabla1_multi_delta(
     delta_opt = np.array([test_deltas[ix] for ix in min_ixs])
 
     # log
-    logger.debug(f"Optimal FD delta: {delta_opt}")
+    logger.debug(f'Optimal FD delta: {delta_opt}')
 
     return fd_nabla_1(x=x, fun=fun, delta_vec=delta_opt)
 

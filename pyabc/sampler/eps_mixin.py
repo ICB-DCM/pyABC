@@ -3,7 +3,6 @@
 import random
 from abc import ABC, abstractmethod
 from time import sleep
-from typing import Union
 
 import cloudpickle
 import numpy as np
@@ -78,7 +77,7 @@ class EPSMixin(ABC):
         self.default_pickle: bool = default_pickle
         self.batch_size: int = batch_size
 
-        self._simulate_accept_one: Union[bytes, None] = None
+        self._simulate_accept_one: bytes | None = None
 
     @abstractmethod
     def client_cores(self) -> int:
@@ -88,11 +87,11 @@ class EPSMixin(ABC):
         self,
         n,
         simulate_one,
-        t,
+        t,  # noqa: ARG002
         *,
-        max_eval=np.inf,
-        all_accepted=False,
-        ana_vars=None,
+        max_eval=np.inf,  # noqa: ARG002
+        all_accepted=False,  # noqa: ARG002
+        ana_vars=None,  # noqa: ARG002
     ):
         # For default pickling
         if self.default_pickle:
@@ -189,7 +188,7 @@ class EPSMixin(ABC):
 
         if sample.n_accepted != n:
             raise AssertionError(
-                f"Got {sample.n_accepted} accepted particles but expected {n}"
+                f'Got {sample.n_accepted} accepted particles but expected {n}'
             )
 
         self.nr_evaluations_ = next_job_id

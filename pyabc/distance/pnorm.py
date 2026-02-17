@@ -1,8 +1,8 @@
 """p-norm based (adaptive) distances."""
 
 import logging
+from collections.abc import Callable, Collection
 from numbers import Number
-from typing import Callable, Collection, Dict, List, Union
 
 import numpy as np
 
@@ -21,7 +21,7 @@ from .base import Distance
 from .scale import mad
 from .util import bound_weights, fd_nabla1_multi_delta, log_weights
 
-logger = logging.getLogger("ABC.Distance")
+logger = logging.getLogger('ABC.Distance')
 
 
 class PNormDistance(Distance):
@@ -60,9 +60,7 @@ class PNormDistance(Distance):
     def __init__(
         self,
         p: float = 1,
-        fixed_weights: Union[
-            Dict[str, float], Dict[int, Dict[str, float]]
-        ] = None,
+        fixed_weights: dict[str, float] | dict[int, dict[str, float]] = None,
         sumstat: Sumstat = None,
     ):
         super().__init__()
@@ -72,15 +70,15 @@ class PNormDistance(Distance):
         self.sumstat: Sumstat = sumstat
 
         if p < 1:
-            raise ValueError("It must be p >= 1")
+            raise ValueError('It must be p >= 1')
         self.p: float = p
 
         self._arg_fixed_weights = fixed_weights
-        self.fixed_weights: Union[Dict[int, np.ndarray], None] = None
+        self.fixed_weights: dict[int, np.ndarray] | None = None
 
         # to cache the observed data and summary statistics
-        self.x_0: Union[dict, None] = None
-        self.s_0: Union[np.ndarray, None] = None
+        self.x_0: dict | None = None
+        self.s_0: np.ndarray | None = None
 
     def initialize(
         self,
@@ -148,10 +146,10 @@ class PNormDistance(Distance):
 
     @staticmethod
     def format_dict(
-        vals: Union[Dict[str, float], Dict[int, Dict[str, float]]],
+        vals: dict[str, float] | dict[int, dict[str, float]],
         t: int,
-        s_ids: List[str],
-    ) -> Dict[int, Union[float, np.ndarray]]:
+        s_ids: list[str],
+    ) -> dict[int, float | np.ndarray]:
         """Normalize weight dictionary to the employed format.
 
         Parameters
@@ -178,7 +176,7 @@ class PNormDistance(Distance):
         return vals
 
     @staticmethod
-    def for_t_or_latest(w: Dict[int, np.ndarray], t: int) -> np.ndarray:
+    def for_t_or_latest(w: dict[int, np.ndarray], t: int) -> np.ndarray:
         """Extract values from dict for given time point.
 
         Parameters
@@ -192,7 +190,7 @@ class PNormDistance(Distance):
         """
         # take last time point for which values exist
         if t not in w:
-            smaller_ts = [t_ for t_ in w.keys() if t_ <= t]
+            smaller_ts = [t_ for t_ in w if t_ <= t]
             if len(smaller_ts) == 0:
                 return np.asarray(1.0)
             t = max(smaller_ts)
@@ -204,7 +202,7 @@ class PNormDistance(Distance):
         x: dict,
         x_0: dict,
         t: int = None,
-        par: dict = None,
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         # extract weights for given time point
         weights = self.get_weights(t=t)
@@ -215,8 +213,8 @@ class PNormDistance(Distance):
         # assert shapes match
         if s.shape != weights.shape and weights.shape or s.shape != s0.shape:
             raise AssertionError(
-                f"Shapes do not match: s={s.shape}, s0={s0.shape}, "
-                f"weights={weights.shape}"
+                f'Shapes do not match: s={s.shape}, s0={s0.shape}, '
+                f'weights={weights.shape}'
             )
 
         # component-wise distances
@@ -229,16 +227,16 @@ class PNormDistance(Distance):
 
     def get_config(self) -> dict:
         return {
-            "name": self.__class__.__name__,
-            "p": self.p,
-            "fixed_weights": self.fixed_weights,
-            "sumstat": self.sumstat.__str__(),
+            'name': self.__class__.__name__,
+            'p': self.p,
+            'fixed_weights': self.fixed_weights,
+            'sumstat': self.sumstat.__str__(),
         }
 
     def weights2dict(
         self,
-        weights: Dict[int, np.ndarray],
-    ) -> Dict[int, Dict[str, float]]:
+        weights: dict[int, np.ndarray],
+    ) -> dict[int, dict[str, float]]:
         """Create labeled weights dictionary.
 
         Parameters
@@ -310,9 +308,9 @@ class AdaptivePNormDistance(PNormDistance):
     def __init__(
         self,
         p: float = 1,
-        initial_scale_weights: Dict[str, float] = None,
-        fixed_weights: Dict[str, float] = None,
-        fit_scale_ixs: Union[EventIxs, Collection[int], int] = np.inf,
+        initial_scale_weights: dict[str, float] = None,
+        fixed_weights: dict[str, float] = None,
+        fit_scale_ixs: EventIxs | Collection[int] | int = np.inf,
         scale_function: Callable = None,
         max_scale_weight_ratio: float = None,
         scale_log_file: str = None,
@@ -322,15 +320,15 @@ class AdaptivePNormDistance(PNormDistance):
         # call p-norm constructor
         super().__init__(p=p, fixed_weights=fixed_weights, sumstat=sumstat)
 
-        self.initial_scale_weights: Dict[str, float] = initial_scale_weights
+        self.initial_scale_weights: dict[str, float] = initial_scale_weights
 
-        self.scale_weights: Dict[int, np.ndarray] = {}
+        self.scale_weights: dict[int, np.ndarray] = {}
 
         # extract indices when to fit scales from input
         if fit_scale_ixs is None:
             fit_scale_ixs = {np.inf}
         self.fit_scale_ixs: EventIxs = EventIxs.to_instance(fit_scale_ixs)
-        logger.debug(f"Fit scale ixs: {self.fit_scale_ixs}")
+        logger.debug(f'Fit scale ixs: {self.fit_scale_ixs}')
 
         if scale_function is None:
             scale_function = mad
@@ -382,7 +380,7 @@ class AdaptivePNormDistance(PNormDistance):
 
         if not self.fit_scale_ixs.act(t=t, total_sims=total_sims):
             raise ValueError(
-                f"Initial scale weights (t={t}) must be fitted or provided."
+                f'Initial scale weights (t={t}) must be fitted or provided.'
             )
 
         # execute cached function
@@ -408,7 +406,7 @@ class AdaptivePNormDistance(PNormDistance):
         if not self.fit_scale_ixs.act(t=t, total_sims=total_sims):
             if updated:
                 logger.warning(
-                    f"t={t}: Updated sumstat but not scale weights."
+                    f't={t}: Updated sumstat but not scale weights.'
                 )
             return updated
 
@@ -461,7 +459,7 @@ class AdaptivePNormDistance(PNormDistance):
             t=t,
             weights=self.scale_weights,
             keys=self.sumstat.get_ids(),
-            label="Scale",
+            label='Scale',
             log_file=self.scale_log_file,
         )
 
@@ -485,10 +483,10 @@ class AdaptivePNormDistance(PNormDistance):
         config = super().get_config()
         config.update(
             {
-                "fit_scale_ixs": self.fit_scale_ixs.__repr__(),
-                "scale_function": self.scale_function.__name__,
-                "max_scale_weight_ratio": self.max_scale_weight_ratio,
-                "all_particles_for_scale": self.all_particles_for_scale,
+                'fit_scale_ixs': self.fit_scale_ixs.__repr__(),
+                'scale_function': self.scale_function.__name__,
+                'max_scale_weight_ratio': self.max_scale_weight_ratio,
+                'all_particles_for_scale': self.all_particles_for_scale,
             }
         )
         return config
@@ -497,21 +495,21 @@ class AdaptivePNormDistance(PNormDistance):
 class InfoWeightedPNormDistance(AdaptivePNormDistance):
     """Weight summary statistics by sensitivity of a predictor `y -> theta`."""
 
-    WEIGHTS = "weights"
-    STD = "std"
-    MAD = "mad"
-    NONE = "none"
+    WEIGHTS = 'weights'
+    STD = 'std'
+    MAD = 'mad'
+    NONE = 'none'
     FEATURE_NORMALIZATIONS = [WEIGHTS, STD, MAD, NONE]
 
     def __init__(
         self,
         predictor: Predictor,
         p: float = 1,
-        initial_scale_weights: Dict[str, float] = None,
-        initial_info_weights: Dict[str, float] = None,
-        fixed_weights: Dict[str, float] = None,
-        fit_scale_ixs: Union[EventIxs, Collection, int] = np.inf,
-        fit_info_ixs: Union[EventIxs, Collection, int] = None,
+        initial_scale_weights: dict[str, float] = None,
+        initial_info_weights: dict[str, float] = None,
+        fixed_weights: dict[str, float] = None,
+        fit_scale_ixs: EventIxs | Collection | int = np.inf,
+        fit_info_ixs: EventIxs | Collection | int = None,
         normalize_by_par: bool = True,
         scale_function: Callable = None,
         max_scale_weight_ratio: float = None,
@@ -520,7 +518,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         info_log_file: str = None,
         info_sample_log_file: str = None,
         sumstat: Sumstat = None,
-        fd_deltas: Union[List[float], float] = None,
+        fd_deltas: list[float] | float = None,
         subsetter: Subsetter = None,
         all_particles_for_scale: bool = True,
         all_particles_for_prediction: bool = True,
@@ -597,19 +595,19 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
 
         self.predictor = predictor
 
-        self.initial_info_weights: Dict[str, float] = initial_info_weights
-        self.info_weights: Dict[int, np.ndarray] = {}
+        self.initial_info_weights: dict[str, float] = initial_info_weights
+        self.info_weights: dict[int, np.ndarray] = {}
 
         if fit_info_ixs is None:
             fit_info_ixs = {9, 15}
         self.fit_info_ixs: EventIxs = EventIxs.to_instance(fit_info_ixs)
-        logger.debug(f"Fit info ixs: {self.fit_info_ixs}")
+        logger.debug(f'Fit info ixs: {self.fit_info_ixs}')
 
         self.normalize_by_par: bool = normalize_by_par
         self.max_info_weight_ratio: float = max_info_weight_ratio
         self.info_log_file: str = info_log_file
         self.info_sample_log_file: str = info_sample_log_file
-        self.fd_deltas: Union[List[float], float] = fd_deltas
+        self.fd_deltas: list[float] | float = fd_deltas
 
         if subsetter is None:
             subsetter = IdSubsetter()
@@ -622,8 +620,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             not in InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS
         ):
             raise ValueError(
-                f"Feature normalization {feature_normalization} must be in "
-                f"{InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
+                f'Feature normalization {feature_normalization} must be in '
+                f'{InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}',
             )
         self.feature_normalization: str = feature_normalization
 
@@ -746,7 +744,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             scale_weights=self.scale_weights,
         )
         x, y, weights, use_ixs, x0 = (
-            ret[key] for key in ("x", "y", "weights", "use_ixs", "x0")
+            ret[key] for key in ('x', 'y', 'weights', 'use_ixs', 'x0')
         )
 
         # learn predictor model
@@ -769,7 +767,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
 
         if np.allclose(info_weights_red, 0):
             info_weights_red = 1 * np.ones_like(info_weights_red)
-            logger.info("All info weights zeros, thus resetting to ones.")
+            logger.info('All info weights zeros, thus resetting to ones.')
         else:
             # in order to make each sumstat count a little, avoid zero values
             zero_info = np.isclose(info_weights_red, 0)
@@ -796,7 +794,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             t=t,
             weights=self.info_weights,
             keys=self.sumstat.get_ids(),
-            label="Info",
+            label='Info',
             log_file=self.info_log_file,
         )
 
@@ -809,8 +807,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         t: int,
         subsetter: Subsetter,
         feature_normalization: str,
-        scale_weights: Dict[int, np.ndarray],
-    ) -> Dict:
+        scale_weights: dict[int, np.ndarray],
+    ) -> dict:
         """Normalize samples prior to regression model training.
 
         Parameters
@@ -844,7 +842,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         # define feature scaling
         if feature_normalization == InfoWeightedPNormDistance.WEIGHTS:
             if scale_weights is None:
-                raise ValueError("Requiested scale weights but None passed")
+                raise ValueError('Requiested scale weights but None passed')
             scale_weights = scale_weights[t]
             offset_x = np.zeros_like(scale_weights)
             scale_x = np.zeros_like(scale_weights)
@@ -862,8 +860,8 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             scale_x = np.ones(shape=x.shape[1])
         else:
             raise ValueError(
-                f"Feature normalization {feature_normalization} must be "
-                f"in {InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}",
+                f'Feature normalization {feature_normalization} must be '
+                f'in {InfoWeightedPNormDistance.FEATURE_NORMALIZATIONS}',
             )
 
         # remove trivial features
@@ -887,17 +885,17 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         y = (y - mean_y) / std_y
 
         return {
-            "x": x,
-            "y": y,
-            "weights": weights,
-            "use_ixs": use_ixs,
-            "x0": x0,
+            'x': x,
+            'y': y,
+            'weights': weights,
+            'use_ixs': use_ixs,
+            'x0': x0,
         }
 
     @staticmethod
     def calculate_sensis(
         predictor: Predictor,
-        fd_deltas: Union[List[float], float],
+        fd_deltas: list[float] | float,
         x0: np.ndarray,
         n_x: int,
         n_y: int,
@@ -929,7 +927,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         #  shape (n_x, n_y)
         sensis = fd_nabla1_multi_delta(x=x0, fun=fun, test_deltas=fd_deltas)
         if sensis.shape != (n_x, n_y):
-            raise AssertionError("Sensitivity shape did not match.")
+            raise AssertionError('Sensitivity shape did not match.')
 
         # we are only interested in absolute values
         sensis = np.abs(sensis)
@@ -947,7 +945,7 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
             insensi_par_keys = [
                 par_trafo_ids[ix] for ix in np.flatnonzero(~y_has_sensi)
             ]
-            logger.info(f"Zero info for parameters {insensi_par_keys}")
+            logger.info(f'Zero info for parameters {insensi_par_keys}')
 
         if normalize_by_par:
             # normalize sums over sumstats to 1
@@ -975,10 +973,10 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         config = super().get_config()
         config.update(
             {
-                "predictor": self.predictor.__str__(),
-                "fit_info_ixs": self.fit_info_ixs.__repr__(),
-                "scale_function": self.scale_function.__name__,
-                "max_info_weight_ratio": self.max_info_weight_ratio,
+                'predictor': self.predictor.__str__(),
+                'fit_info_ixs': self.fit_info_ixs.__repr__(),
+                'scale_function': self.scale_function.__name__,
+                'max_info_weight_ratio': self.max_info_weight_ratio,
             }
         )
         return config

@@ -2,16 +2,15 @@
 
 import abc
 import logging
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from numbers import Number
-from typing import Callable, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
 import pyabc
 
-logger = logging.getLogger("ABC.PEtab")
+logger = logging.getLogger('ABC.PEtab')
 
 try:
     import petab.v1 as petab
@@ -19,8 +18,8 @@ try:
 except ImportError:
     petab = C = None
     logger.error(
-        "Install PEtab (see https://github.com/icb-dcm/petab) to use "
-        "the petab functionality, e.g. via `pip install pyabc[petab]`"
+        'Install PEtab (see https://github.com/icb-dcm/petab) to use '
+        'the petab functionality, e.g. via `pip install pyabc[petab]`'
     )
 
 
@@ -76,7 +75,7 @@ class PetabImporter(abc.ABC):
     @abc.abstractmethod
     def create_model(
         self,
-    ) -> Callable[[Union[Sequence, Mapping]], Mapping]:
+    ) -> Callable[[Sequence | Mapping], Mapping]:
         """Create model.
 
         The model takes parameters and simulates data
@@ -166,13 +165,13 @@ class PetabImporter(abc.ABC):
 
         # scale
         if target_scale == C.LIN:
-            target_scales = {key: C.LIN for key in self.prior_scales}
+            target_scales = dict.fromkeys(self.prior_scales, C.LIN)
         elif target_scale == 'prior':
             target_scales = self.prior_scales
         elif target_scale == 'scaled':
             target_scales = self.scaled_scales
         else:
-            raise ValueError(f"Did not recognize target scale {target_scale}")
+            raise ValueError(f'Did not recognize target scale {target_scale}')
 
         names = {}
         for _, row in parameter_df.reset_index().iterrows():
@@ -180,15 +179,15 @@ class PetabImporter(abc.ABC):
                 continue
             key = row[C.PARAMETER_ID]
             name = str(key)
-            if C.PARAMETER_NAME in parameter_df:
-                if not petab.is_empty(row[C.PARAMETER_NAME]):
-                    name = str(row[C.PARAMETER_NAME])
+            if C.PARAMETER_NAME in parameter_df and not petab.is_empty(
+                row[C.PARAMETER_NAME]
+            ):
+                name = str(row[C.PARAMETER_NAME])
 
             target_scale = target_scales[key]
-            if target_scale != C.LIN:
+            if target_scale != C.LIN and not name.startswith('log'):
                 # mini check whether the name might indicate the scale already
-                if not name.startswith("log"):
-                    name = target_scale + "(" + name + ")"
+                name = target_scale + '(' + name + ')'
             names[key] = name
         return names
 
@@ -200,9 +199,9 @@ class PetabImporter(abc.ABC):
             for key in self.prior_scales
         ):
             logger.warning(
-                "Found parameters with prior scale lin, parameter scale not "
-                "lin. Note that pyABC currently ignores the parameter scale "
-                "in this case and just performs sampling on the prior scale."
+                'Found parameters with prior scale lin, parameter scale not '
+                'lin. Note that pyABC currently ignores the parameter scale '
+                'in this case and just performs sampling on the prior scale.'
             )
 
 
@@ -266,7 +265,7 @@ def create_prior(parameter_df: pd.DataFrame) -> pyabc.Distribution:
             #  as a simple calculation shows
             rv = pyabc.RV('loglaplace', c=1 / b, scale=np.exp(mean))
         else:
-            raise ValueError(f"Cannot handle prior type {prior_type}.")
+            raise ValueError(f'Cannot handle prior type {prior_type}.')
 
         prior_dct[row[C.PARAMETER_ID]] = rv
 
@@ -276,7 +275,7 @@ def create_prior(parameter_df: pd.DataFrame) -> pyabc.Distribution:
     return prior
 
 
-def get_scales(parameter_df: pd.DataFrame) -> Tuple[dict, dict]:
+def get_scales(parameter_df: pd.DataFrame) -> tuple[dict, dict]:
     """Unravel whether the priors and evaluations are on or off scale.
 
     Only the `parameterScale...` priors are on-scale, the other priors are on
@@ -350,10 +349,7 @@ def get_nominal_parameters(
     """
     # unscaled parameters
     par = pyabc.Parameter(
-        {
-            key: parameter_df.loc[key, C.NOMINAL_VALUE]
-            for key in prior_scales.keys()
-        }
+        {key: parameter_df.loc[key, C.NOMINAL_VALUE] for key in prior_scales}
     )
 
     # scale
@@ -365,7 +361,7 @@ def get_nominal_parameters(
     elif target_scale == 'scaled':
         target_scales = scaled_scales
     else:
-        raise ValueError(f"Did not recognize target scale {target_scale}")
+        raise ValueError(f'Did not recognize target scale {target_scale}')
     # map linear to target scales component-wise
     return map_rescale(par, origin_scales=C.LIN, target_scales=target_scales)
 
@@ -397,13 +393,13 @@ def get_bounds(
 
     # scale
     if target_scale == C.LIN:
-        target_scales = {key: C.LIN for key in prior_scales}
+        target_scales = dict.fromkeys(prior_scales, C.LIN)
     elif target_scale == 'prior':
         target_scales = prior_scales
     elif target_scale == 'scaled':
         target_scales = scaled_scales
     else:
-        raise ValueError(f"Did not recognize target scale {target_scale}")
+        raise ValueError(f'Did not recognize target scale {target_scale}')
 
     # extract bounds
     bounds = {}
@@ -439,8 +435,8 @@ def get_bounds(
 
 def map_rescale(
     par: pyabc.Parameter,
-    origin_scales: Union[dict, str],
-    target_scales: Union[dict, str],
+    origin_scales: dict | str,
+    target_scales: dict | str,
 ) -> pyabc.Parameter:
     """Rescale parameter dictionary.
 
@@ -456,9 +452,9 @@ def map_rescale(
     """
     # handle convenience input
     if isinstance(origin_scales, str):
-        origin_scales = {key: origin_scales for key in par.keys()}
+        origin_scales = dict.fromkeys(par.keys(), origin_scales)
     if isinstance(target_scales, str):
-        target_scales = {key: target_scales for key in par.keys()}
+        target_scales = dict.fromkeys(par.keys(), target_scales)
 
     # rescale each component
     for key, val in par.items():

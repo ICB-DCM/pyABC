@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Network Analysis documentation build configuration file, created by
 # sphinx-quickstart on Wed Mar 23 08:55:36 2016.
@@ -71,7 +70,7 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/pandas-docs/dev', None),
     'petab': ('https://petab.readthedocs.io/en/stable/', None),
     'amici': ('https://amici.readthedocs.io/en/latest/', None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
+    'sklearn': ('https://scikit-learn.org/stable/', None),
 }
 
 
@@ -100,7 +99,7 @@ author = 'The pyABC developers'
 #
 # The short X.Y version.
 
-import pyabc
+import pyabc  # noqa: E402
 
 version = pyabc.__version__
 # The full version, including alpha/beta/rc tags.
@@ -111,7 +110,7 @@ release = version
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = "en"
+language = 'en'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -142,7 +141,7 @@ exclude_patterns = ['_build', '**.ipynb_checkpoints', 'examples/tmp']
 pygments_style = 'sphinx'
 
 # added by emmanuel
-highlight_language = "python3"
+highlight_language = 'python3'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -183,10 +182,10 @@ html_theme = 'sphinx_rtd_theme'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-html_title = "pyABC documentation"
+html_title = 'pyABC documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = "pyABC"
+html_short_title = 'pyABC'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.

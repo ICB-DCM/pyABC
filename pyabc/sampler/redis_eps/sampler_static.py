@@ -2,8 +2,8 @@
 
 import logging
 import pickle
+from collections.abc import Callable
 from time import sleep
-from typing import Callable, List
 
 import cloudpickle
 import numpy as np
@@ -29,7 +29,7 @@ from .cmd import (
 )
 from .sampler import RedisSamplerBase
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
 
 class RedisStaticSampler(RedisSamplerBase):
@@ -39,11 +39,11 @@ class RedisStaticSampler(RedisSamplerBase):
         self,
         n,
         simulate_one,
-        t,
+        t,  # noqa: ARG002
         *,
-        max_eval=np.inf,
-        all_accepted=False,
-        ana_vars=None,
+        max_eval=np.inf,  # noqa: ARG002
+        all_accepted=False,  # noqa: ARG002
+        ana_vars=None,  # noqa: ARG002
     ):
         # get the analysis id
         ana_id = self.analysis_id
@@ -60,7 +60,7 @@ class RedisStaticSampler(RedisSamplerBase):
                 if len(sample.accepted_particles) != 1:
                     # this should never happen
                     raise AssertionError(
-                        "Expected exactly one accepted particle in sample."
+                        'Expected exactly one accepted particle in sample.'
                     )
                 samples.append(sample)
                 bar.inc()
@@ -137,13 +137,13 @@ class RedisStaticSampler(RedisSamplerBase):
             .execute()
         )
 
-    def create_sample(self, samples: List[Sample], n: int) -> Sample:
+    def create_sample(self, samples: list[Sample], n: int) -> Sample:
         """Create a single sample result.
         Order the results by starting point to avoid a bias towards
         short-running simulations (dynamic scheduling).
         """
         if len(samples) != n:
-            raise AssertionError(f"Expected {n} samples, got {len(samples)}.")
+            raise AssertionError(f'Expected {n} samples, got {len(samples)}.')
 
         # create 1 to-be-returned sample from results
         sample = self._create_empty_sample()

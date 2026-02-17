@@ -2,7 +2,6 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Tuple
 
 import numpy as np
 
@@ -14,7 +13,7 @@ except ImportError:
     skl_mx = None
 
 
-logger = logging.getLogger("ABC.Sumstat")
+logger = logging.getLogger('ABC.Sumstat')
 
 
 class Subsetter(ABC):
@@ -37,7 +36,7 @@ class Subsetter(ABC):
         x: np.ndarray,
         y: np.ndarray,
         w: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Select samples for model training. This is the main method.
 
         Parameters
@@ -61,7 +60,7 @@ class IdSubsetter(Subsetter):
         x: np.ndarray,
         y: np.ndarray,
         w: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Just return x, y, w unchanged."""
         return x, y, w
 
@@ -107,8 +106,8 @@ class GMMSubsetter(Subsetter):
     ):
         if skl_mx is None:
             raise ImportError(
-                "This class requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`"
+                'This class requires an installation of scikit-learn. '
+                'Install e.g. via `pip install pyabc[scikit-learn]`'
             )
 
         self.n_components_min: int = n_components_min
@@ -132,7 +131,7 @@ class GMMSubsetter(Subsetter):
         x: np.ndarray,
         y: np.ndarray,
         w: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Select based on GMM clusters."""
         # normalize
         if self.normalize_labels:
@@ -166,9 +165,9 @@ class GMMSubsetter(Subsetter):
         x_new, y_new, w_new = x[selected], y[selected], w[selected]
 
         logger.info(
-            f"Subsetting: #clusters: {n_components}, "
-            f"target cluster points: {sum(in_cluster)}, using {len(y_new)} "
-            f"(BICs: {bics})",
+            f'Subsetting: #clusters: {n_components}, '
+            f'target cluster points: {sum(in_cluster)}, using {len(y_new)} '
+            f'(BICs: {bics})',
         )
 
         return x_new, y_new, w_new
@@ -250,6 +249,6 @@ def get_augmented_subset(
     in_cluster[ixs_not_in_cluster[ixs_nearest]] = True
 
     if sum(in_cluster) != desired:
-        raise AssertionError("Unexpected number of entries.")
+        raise AssertionError('Unexpected number of entries.')
 
     return in_cluster

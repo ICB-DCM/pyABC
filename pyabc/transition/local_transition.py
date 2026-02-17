@@ -1,5 +1,4 @@
 import logging
-from typing import Union
 
 import numpy as np
 import numpy.linalg as la
@@ -11,7 +10,7 @@ from .base import Transition
 from .exceptions import NotEnoughParticles
 from .util import smart_cov
 
-logger = logging.getLogger("ABC.Transition")
+logger = logging.getLogger('ABC.Transition')
 
 
 class LocalTransition(Transition):
@@ -65,10 +64,7 @@ class LocalTransition(Transition):
     @property
     def k(self):
         if self.k_fraction is not None:
-            if self.w is None:
-                k_ = 0
-            else:
-                k_ = int(self.k_fraction * len(self.w))
+            k_ = 0 if self.w is None else int(self.k_fraction * len(self.w))
         else:
             k_ = self._k
 
@@ -79,9 +75,9 @@ class LocalTransition(Transition):
 
         return max([k_, self.MIN_K, dim])
 
-    def fit(self, X, w):
+    def fit(self, X, w=None):  # noqa ARG002
         if len(X) == 0:
-            raise NotEnoughParticles("Fitting not possible.")
+            raise NotEnoughParticles('Fitting not possible.')
         self.X_arr = X.values
 
         ctree = cKDTree(self.X_arr)
@@ -99,12 +95,12 @@ class LocalTransition(Transition):
         )
 
         if not np.isreal(self.normalization).all():
-            raise Exception("Normalization not real")
+            raise Exception('Normalization not real')
         self.normalization = np.real(self.normalization)
 
-    def pdf(self, x: Union[Parameter, pd.Series, pd.DataFrame]):
+    def pdf(self, x: Parameter | pd.Series | pd.DataFrame):
         # convert to numpy array in correct order
-        if isinstance(x, (Parameter, pd.Series)):
+        if isinstance(x, Parameter | pd.Series):
             x = np.array([x[key] for key in self.X.columns])
         else:
             x = x[self.X.columns].to_numpy()
@@ -117,7 +113,7 @@ class LocalTransition(Transition):
     def _pdf_single(self, x: np.ndarray):
         distance = self.X_arr - x
         cov_distance = np.einsum(
-            "ij,ijk,ik->i", distance, self.inv_covs, distance
+            'ij,ijk,ik->i', distance, self.inv_covs, distance
         )
         return float(
             np.average(
