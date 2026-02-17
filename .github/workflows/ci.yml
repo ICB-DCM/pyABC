@@ -9,7 +9,7 @@ on:
 
 jobs:
   tests:
-    name: ${{ matrix.toxenv }} (py${{ matrix.python }} • ${{ matrix.os }})
+    name: ${{ matrix.toxenv }} (${{ matrix.python }} • ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -86,7 +86,7 @@ jobs:
       - name: Install dependencies
         run: |
           case "${{ matrix.toxenv }}" in
-            base|visualization|mac|notebooks1) .github/workflows/install_deps.sh base ;;
+            base|visualization|mac|notebooks1) .github/workflows/install_deps.sh base R ;;
             notebooks2) .github/workflows/install_deps.sh R amici ;;
             petab) .github/workflows/install_deps.sh amici ;;
             external-*) .github/workflows/install_deps.sh base R ;;
