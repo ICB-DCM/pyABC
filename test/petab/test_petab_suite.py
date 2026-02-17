@@ -3,7 +3,6 @@
 import logging
 import sys
 
-import petabtests
 import pytest
 from _pytest.outcomes import Skipped
 
@@ -17,6 +16,15 @@ try:
     import pyabc.petab
 except ImportError:
     pass
+
+try:
+    import petabtests
+except ImportError:
+    pytest.skip(
+        'PEtab test suite not available. Please install petabtests to run this '
+        'test.',
+        allow_module_level=True,
+    )
 
 
 logging.basicConfig(level=logging.INFO)
