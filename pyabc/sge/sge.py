@@ -16,7 +16,7 @@ from .db import job_db_factory
 from .execution_contexts import DefaultContext
 from .util import sge_available
 
-logger = logging.getLogger("ABC.SGE")
+logger = logging.getLogger('ABC.SGE')
 
 
 class SGESignatureMismatchException(Exception):
@@ -126,7 +126,7 @@ class SGE:
         sge_error_file: str = None,
         sge_output_file: str = None,
         parallel_environment=None,
-        name="map",
+        name='map',
         queue=None,
         priority=None,
         num_threads: int = 1,
@@ -140,25 +140,25 @@ class SGE:
         self.config = get_config()
 
         if parallel_environment is not None:
-            self.config["SGE"]["PARALLEL_ENVIRONMENT"] = parallel_environment
+            self.config['SGE']['PARALLEL_ENVIRONMENT'] = parallel_environment
         if queue is not None:
-            self.config["SGE"]["QUEUE"] = queue
+            self.config['SGE']['QUEUE'] = queue
         if tmp_directory is not None:
-            self.config["DIRECTORIES"]["TMP"] = tmp_directory
+            self.config['DIRECTORIES']['TMP'] = tmp_directory
         if priority is not None:
-            self.config["SGE"]["PRIORITY"] = str(priority)
+            self.config['SGE']['PRIORITY'] = str(priority)
 
         try:
-            os.makedirs(self.config["DIRECTORIES"]["TMP"])
+            os.makedirs(self.config['DIRECTORIES']['TMP'])
         except FileExistsError:
             pass
 
-        self.time = str(time_h) + ":00:00"
+        self.time = str(time_h) + ':00:00'
 
         self.job_name = name
-        if self.config["SGE"]["PRIORITY"] == "0":
+        if self.config['SGE']['PRIORITY'] == '0':
             warnings.warn(
-                "Priority set to 0. " "This enables the reservation flag.",
+                'Priority set to 0. ' 'This enables the reservation flag.',
                 stacklevel=2,
             )
         self.num_threads = num_threads
@@ -167,13 +167,13 @@ class SGE:
 
         if chunk_size != 1:
             warnings.warn(
-                "Chunk size != 1. "
-                "This can potentially have bad side effect.",
+                'Chunk size != 1. '
+                'This can potentially have bad side effect.',
                 stacklevel=2,
             )
 
         if not sge_available():
-            logger.error("Could not find SGE installation.")
+            logger.error('Could not find SGE installation.')
 
         # python interpreter which executes the jobs
         if not isinstance(time_h, int):
@@ -187,7 +187,7 @@ class SGE:
             self.sge_error_file = sge_error_file
         else:
             self.sge_error_file = os.path.join(
-                self.config["DIRECTORIES"]["TMP"], "sge_errors.txt"
+                self.config['DIRECTORIES']['TMP'], 'sge_errors.txt'
             )
 
         # sge stdout
@@ -195,7 +195,7 @@ class SGE:
             self.sge_output_file = sge_output_file
         else:
             self.sge_output_file = os.path.join(
-                self.config["DIRECTORIES"]["TMP"], "sge_output.txt"
+                self.config['DIRECTORIES']['TMP'], 'sge_output.txt'
             )
 
     def __repr__(self):
@@ -227,8 +227,8 @@ class SGE:
                 signature.bind(argument)
         except TypeError as err:
             raise SGESignatureMismatchException(
-                "Your jobs were not submitted as the function could not be "
-                "applied to the arguments."
+                'Your jobs were not submitted as the function could not be '
+                'applied to the arguments.'
             ) from err
 
     def map(self, function, array):
@@ -256,7 +256,7 @@ class SGE:
 
         self._validate_function_arguments(function, array)
         tmp_dir = tempfile.mkdtemp(
-            prefix="", suffix='_SGE_job', dir=self.config["DIRECTORIES"]["TMP"]
+            prefix='', suffix='_SGE_job', dir=self.config['DIRECTORIES']['TMP']
         )
 
         # jobs directory
@@ -324,15 +324,14 @@ class SGE:
         had_exception = False
         for task_nr in range(nr_tasks):
             try:
-                my_file = open(
+                with open(
                     os.path.join(
                         tmp_dir, 'results', str(task_nr + 1) + '.result'
                     ),
                     'rb',
-                )
-                single_result = pickle.load(my_file)
+                ) as my_file:
+                    single_result = pickle.load(my_file)
                 results += single_result
-                my_file.close()
             except Exception as e:
                 results.append(
                     Exception(
@@ -359,7 +358,7 @@ class SGE:
         try:
             pythonpath = os.environ['PYTHONPATH']
         except KeyError:
-            pythonpath = ""
+            pythonpath = ''
 
         batch_file = """#!/bin/bash
 #$ -N {job_name}-{map_name}
@@ -390,12 +389,12 @@ export PYTHONPATH={pythonpath}
             executable=self.python_executable_path,
             sge_error_file=self.sge_error_file,
             sge_output_file=self.sge_output_file,
-            priority=self.config["SGE"]["PRIORITY"],
-            parallel_environment=self.config["SGE"]["PARALLEL_ENVIRONMENT"],
-            queue=self.config["SGE"]["QUEUE"],
+            priority=self.config['SGE']['PRIORITY'],
+            parallel_environment=self.config['SGE']['PARALLEL_ENVIRONMENT'],
+            queue=self.config['SGE']['QUEUE'],
             map_name=os.path.split(tmp_dir)[-1],
             num_threads=self.num_threads,
             pythonpath=pythonpath,
-            reservation="y" if self.config["SGE"]["PRIORITY"] == "0" else "n",
+            reservation='y' if self.config['SGE']['PRIORITY'] == '0' else 'n',
         )
         return batch_file

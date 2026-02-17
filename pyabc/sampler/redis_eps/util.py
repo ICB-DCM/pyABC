@@ -11,7 +11,7 @@ class KillHandler:
         signal.signal(signal.SIGTERM, self.handle)
         signal.signal(signal.SIGINT, self.handle)
 
-    def handle(self, *args):
+    def handle(self, *args):  # noqa: ARG002
         self.killed = True
         if self.exit:
             sys.exit(0)
