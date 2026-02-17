@@ -18,7 +18,7 @@ nbs_1=(
   "chemical_reaction"
   "informative"
   "look_ahead"
-  "sde_ion_channels"
+  #"sde_ion_channels"  # url error
 )
 nbs_2=(
   "external_simulators"
@@ -29,8 +29,8 @@ nbs_2=(
   "optimal_threshold"
   "custom_priors"
   "petab_application"
-  "petab_yaml2sbml"
-  "multiscale_agent_based"
+  # "petab_yaml2sbml"  # yaml2sbml does not work with current petab version
+  # "multiscale_agent_based"  # too slow
   "using_copasi"
   "using_julia"
 )
