@@ -6,12 +6,13 @@ from .numpy_bytes_storage import np_from_bytes, np_to_bytes
 try:
     import rpy2.robjects as robjects
     from rpy2.robjects import pandas2ri
-    from rpy2.robjects.conversion import localconverter
+    from rpy2.robjects.conversion import get_conversion, localconverter
 
     def r_to_py(object_):
         if isinstance(object_, robjects.DataFrame):
-            with localconverter(pandas2ri.converter):
-                py_object_ = robjects.conversion.rpy2py(object_)
+            conv = get_conversion()
+            with localconverter(conv + pandas2ri.converter):
+                py_object_ = conv.rpy2py(object_)
             return py_object_
         return object_
 

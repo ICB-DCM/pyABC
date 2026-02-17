@@ -19,6 +19,8 @@ try:
         pandas2ri,
         r,
     )
+    from rpy2.robjects.conversion import get_conversion, localconverter
+
 except ImportError:
     ListVector = conversion = r = None
     default_converter = numpy2ri = pandas2ri = None
@@ -27,15 +29,19 @@ except ImportError:
 def _dict_to_named_list(dct):
     if isinstance(dct, dict | Parameter | pd.core.series.Series):
         dct = dict(dct.items())
-        # convert numbers, numpy arrays and pandas dataframes to builtin
-        # types before conversion (see rpy2 #548)
-        with conversion.localconverter(
-            default_converter + pandas2ri.converter + numpy2ri.converter
-        ):
+
+        # Build converter using the current conversion object
+        conv = get_conversion()
+        conv = (
+            conv + default_converter + pandas2ri.converter + numpy2ri.converter
+        )
+
+        with localconverter(conv):
             for key, val in dct.items():
                 dct[key] = conversion.py2rpy(val)
-        r_list = ListVector(dct)
-        return r_list
+
+        return ListVector(dct)
+
     return dct
 
 

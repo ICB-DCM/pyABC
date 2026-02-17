@@ -79,10 +79,12 @@ r = [
   "cffi>=1.14.5",
   "ipython>=7.18.1",
   "pygments>=2.6.1",
+  "pyarrow>=22.0.0",
 ]
 julia = [
   "julia>=0.5.7",
   "pygments>=2.6.1",
+  "ipython>=7.18.1",
 ]
 copasi = ["copasi-basico>=0.8"]
 ot = [
