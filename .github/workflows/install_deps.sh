@@ -154,22 +154,6 @@ install_doc_tools() {
   fi
 }
 
-# Julia installation
-install_julia() {
-  log_info "Installing Julia..."
-
-  if is_macos; then
-    brew install julia
-  else
-    # Install Julia via juliaup (recommended approach)
-    curl -fsSL https://install.julialang.org | sh -s -- -y
-    export PATH="$HOME/.juliaup/bin:$PATH"
-  fi
-
-  # Initialize PyJulia
-  python -c "import julia; julia.install()" || log_warn "PyJulia initialization failed (non-critical)"
-}
-
 # Development tools
 install_dev_tools() {
   log_info "Installing development tools..."
@@ -191,7 +175,6 @@ install_all() {
   install_r
   install_amici
   install_doc_tools
-  install_julia
   install_dev_tools
 }
 
@@ -233,7 +216,6 @@ main() {
       R)     install_r ;;
       amici) install_amici ;;
       doc)   install_doc_tools ;;
-      julia) install_julia ;;
       dev)   install_dev_tools ;;
       all)   install_all ;;
       help|--help|-h)
