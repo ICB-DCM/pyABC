@@ -39,6 +39,6 @@ def to_bytes(object_):
 
 
 def from_bytes(bytes_):
-    if bytes_[:6] == b"\x93NUMPY":
+    if bytes_[:6] == b'\x93NUMPY':
         return np_from_bytes(bytes_)
     return df_from_bytes(bytes_)

@@ -30,7 +30,7 @@ prior = pyabc.Distribution(
     }
 )
 
-db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
+db_path = 'sqlite:///' + tempfile.mkstemp(suffix='.db')[1]
 sampler_file = tempfile.mkstemp(suffix='.csv')[1]
 
 distance = pyabc.PNormDistance(p=2)
@@ -49,7 +49,7 @@ sampler_df = pd.read_csv(sampler_file, sep=',')
 
 def teardown_module():
     """Tear down module. Called after all tests here."""
-    os.remove(db_path[len("sqlite:///") :])
+    os.remove(db_path[len('sqlite:///') :])
     os.remove(sampler_file)
 
 

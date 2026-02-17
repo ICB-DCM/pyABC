@@ -9,7 +9,7 @@ import pytest
 
 import pyabc
 
-db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
+db_path = 'sqlite:///' + tempfile.mkstemp(suffix='.db')[1]
 log_files = []
 histories = []
 labels = []
@@ -44,7 +44,7 @@ def setup_module():
     sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
 
     for _ in range(n_history):
-        log_file = tempfile.mkstemp(suffix=".json")[1]
+        log_file = tempfile.mkstemp(suffix='.json')[1]
         log_files.append(log_file)
         distance = pyabc.AdaptivePNormDistance(p=2, scale_log_file=log_file)
 
@@ -58,12 +58,12 @@ def setup_module():
         history = pyabc.History(db_path)
         history.id = j + 1
         histories.append(history)
-        labels.append("Some run " + str(j))
+        labels.append('Some run ' + str(j))
 
 
 def teardown_module():
     """Tear down module. Called after all tests here."""
-    os.remove(db_path[len("sqlite:///") :])
+    os.remove(db_path[len('sqlite:///') :])
     for log_file in log_files:
         os.remove(log_file)
 

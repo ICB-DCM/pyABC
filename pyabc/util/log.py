@@ -27,11 +27,11 @@ def log_samples(
         return
 
     # uniquely define log file
-    log_file += f"_{t}"
+    log_file += f'_{t}'
 
     for key, var in [
-        ("sumstats", sumstats),
-        ("parameters", parameters),
-        ("weights", weights),
+        ('sumstats', sumstats),
+        ('parameters', parameters),
+        ('weights', weights),
     ]:
-        np.save(log_file + f"_{key}", var, allow_pickle=False)
+        np.save(log_file + f'_{key}', var, allow_pickle=False)

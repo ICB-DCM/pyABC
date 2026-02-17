@@ -411,8 +411,7 @@ class BinomialKernel(StochasticKernel):
 
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
-                f'The success probability p={p} must be in the interval'
-                f'[0, 1].'
+                f'The success probability p={p} must be in the interval[0, 1].'
             )
         self.p = p
 
@@ -538,8 +537,7 @@ class NegativeBinomialKernel(StochasticKernel):
 
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
-                f'The success probability p={p} must be in the interval'
-                f'[0, 1].'
+                f'The success probability p={p} must be in the interval[0, 1].'
             )
         self.p = p
 

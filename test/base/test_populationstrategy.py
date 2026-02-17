@@ -129,8 +129,7 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
         for k1, k2 in zip(test_weights, after_adaptation_weights)
     )
     err_msg = (
-        f'Population strategy {population_strategy}'
-        ' modified the transitions'
+        f'Population strategy {population_strategy} modified the transitions'
     )
 
     assert same, err_msg

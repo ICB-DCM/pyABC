@@ -22,8 +22,8 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-MODEL_TYPE = "sbml"
-PETAB_VERSION = "v1.0.0"
+MODEL_TYPE = 'sbml'
+PETAB_VERSION = 'v1.0.0'
 
 
 @pytest.fixture(params=petabtests.get_cases(MODEL_TYPE, version=PETAB_VERSION))
@@ -36,11 +36,11 @@ def test_petab_suite(case):
     """Execute a given case from the PEtab test suite."""
     try:
         execute_case(case)
-        logger.info(f"Case {case} passed")
+        logger.info(f'Case {case} passed')
     except Skipped:
-        logger.info(f"Case {case} skipped")
+        logger.info(f'Case {case} skipped')
     except Exception as e:
-        logger.error(f"Case {case} failed")
+        logger.error(f'Case {case} failed')
         raise e
 
 
@@ -49,12 +49,12 @@ def execute_case(case):
     try:
         _execute_case(case)
     except Exception as e:
-        if isinstance(e, NotImplementedError) or "timepoint specific" in str(
+        if isinstance(e, NotImplementedError) or 'timepoint specific' in str(
             e
         ):
             logger.info(
-                f"Case {case} expectedly failed. Required functionality is "
-                f"not implemented: {e}"
+                f'Case {case} expectedly failed. Required functionality is '
+                f'not implemented: {e}'
             )
             pytest.skip(str(e))
         else:
@@ -64,7 +64,7 @@ def execute_case(case):
 def _execute_case(case):
     """Run a single PEtab test suite case"""
     case = petabtests.test_id_str(case)
-    logger.info(f"Case {case}")
+    logger.info(f'Case {case}')
 
     # load solution
     solution = petabtests.load_solution(
@@ -93,7 +93,7 @@ def _execute_case(case):
 
     # use distinct model IDs for each test case since we cannot import different
     # models with the same name in a single python session
-    model_name = f"petab_{MODEL_TYPE}_test_case_{case}_{PETAB_VERSION.replace('.', '_')}"
+    model_name = f'petab_{MODEL_TYPE}_test_case_{case}_{PETAB_VERSION.replace(".", "_")}'
 
     amici_model = amici.petab.petab_import.import_petab_problem(
         petab_problem=petab_problem,
@@ -139,22 +139,21 @@ def _execute_case(case):
     # log matches
     logger.log(
         logging.INFO if chi2s_match else logging.ERROR,
-        f"CHI2: simulated: {chi2}, expected: {gt_chi2},"
-        f" match = {chi2s_match}",
+        f'CHI2: simulated: {chi2}, expected: {gt_chi2}, match = {chi2s_match}',
     )
     logger.log(
         logging.INFO if simulations_match else logging.ERROR,
-        f"LLH: simulated: {llh}, expected: {gt_llh}, " f"match = {llhs_match}",
+        f'LLH: simulated: {llh}, expected: {gt_llh}, match = {llhs_match}',
     )
     logger.log(
         logging.INFO if simulations_match else logging.ERROR,
-        f"Simulations: match = {simulations_match}",
+        f'Simulations: match = {simulations_match}',
     )
 
     if not all([llhs_match, chi2s_match, simulations_match]):
-        logger.error(f"Case {case} failed.")
+        logger.error(f'Case {case} failed.')
         raise AssertionError(
-            f"Case {case}: Test results do not match " "expectations"
+            f'Case {case}: Test results do not match expectations'
         )
 
-    logger.info(f"Case {case} passed.")
+    logger.info(f'Case {case} passed.')

@@ -533,7 +533,7 @@ def update_DB_details(btn_click, db_path_new):
                         [
                             html.H4('Error!', className='alert-heading'),
                             html.P(
-                                f'Please upload a database. ' f'{str(e)}.',
+                                f'Please upload a database. {str(e)}.',
                             ),
                         ],
                         id='user_update_alert',

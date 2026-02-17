@@ -140,7 +140,7 @@ try:
 except KeyError:
     loglevel = 'INFO'
 
-logger = logging.getLogger("ABC")
+logger = logging.getLogger('ABC')
 logger.setLevel(loglevel)
 sh = logging.StreamHandler()
 sh.setFormatter(logging.Formatter('%(name)s %(levelname)s: %(message)s'))

@@ -225,6 +225,5 @@ class IdentitySumstat(Sumstat):
 
     def __str__(self) -> str:
         return (
-            f'<{self.__class__.__name__} pre={self.pre}, '
-            f'trafos={self.trafos}>'
+            f'<{self.__class__.__name__} pre={self.pre}, trafos={self.trafos}>'
         )

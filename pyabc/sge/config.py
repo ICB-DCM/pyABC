@@ -23,7 +23,7 @@ def get_config():
     config = configparser.ConfigParser()
     config.read_string(DEFAULT_CONFIG)
 
-    config_file = os.path.join(os.getenv("HOME"), ".parallel")
+    config_file = os.path.join(os.getenv('HOME'), '.parallel')
     if os.path.isfile(config_file):
         config.read(config_file)
 

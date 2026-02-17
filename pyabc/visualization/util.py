@@ -29,14 +29,14 @@ def to_lists(*args):
 
     # check length consistency
     if any(len(arg) != length for arg in args):
-        raise AssertionError(f"The argument lengths are inconsistent: {args}")
+        raise AssertionError(f'The argument lengths are inconsistent: {args}')
 
     if len(args) == 1:
         return args[0]
     return args
 
 
-def get_labels(labels, n: int, default_label: str = "Run"):
+def get_labels(labels, n: int, default_label: str = 'Run'):
     """Create list of length `n` labels, using `default_label` if the only
     `label is None`."""
     # entry to array
@@ -48,11 +48,11 @@ def get_labels(labels, n: int, default_label: str = "Run"):
         label = labels[0]
         if label is None:
             label = default_label
-        labels = [f"{label} {ix}" for ix in range(n)]
+        labels = [f'{label} {ix}' for ix in range(n)]
 
     # check length consistency
     if len(labels) != n:
-        raise AssertionError("The number of labels does not fit")
+        raise AssertionError('The number of labels does not fit')
 
     return labels
 
@@ -74,8 +74,8 @@ def format_plot_matrix(arr_ax: np.ndarray, par_names: Sequence):
     for i in range(0, n_par):
         for j in range(0, n_par):
             # clear labels
-            arr_ax[i, j].set_xlabel("")
-            arr_ax[i, j].set_ylabel("")
+            arr_ax[i, j].set_xlabel('')
+            arr_ax[i, j].set_ylabel('')
 
             # clear legends
             arr_ax[i, j].legend = None
@@ -91,7 +91,7 @@ def format_plot_matrix(arr_ax: np.ndarray, par_names: Sequence):
         ax.set_ylabel(label)
 
 
-def format_plot_matrix_plotly(fig: "go.Figure", par_names: Sequence):
+def format_plot_matrix_plotly(fig: 'go.Figure', par_names: Sequence):
     """Clear all labels and legends, and set the left-most and bottom-most
     labels to the parameter names.
     """
@@ -100,8 +100,8 @@ def format_plot_matrix_plotly(fig: "go.Figure", par_names: Sequence):
     for i in range(0, n_par):
         for j in range(0, n_par):
             # clear labels
-            fig.update_xaxes(title_text="", row=i + 1, col=j + 1)
-            fig.update_yaxes(title_text="", row=i + 1, col=j + 1)
+            fig.update_xaxes(title_text='', row=i + 1, col=j + 1)
+            fig.update_yaxes(title_text='', row=i + 1, col=j + 1)
 
     # set left-most and bottom-most labels to parameter names
     for i, label in enumerate(par_names):

@@ -63,7 +63,7 @@ def log_weights(
     weights = dict(zip(keys, weights[t]))
 
     vals = [f"'{key}': {val:.4e}" for key, val in weights.items()]
-    logger.debug(f"{label} weights[{t}] = {{{', '.join(vals)}}}")
+    logger.debug(f'{label} weights[{t}] = {{{", ".join(vals)}}}')
 
     if log_file:
         # read in file

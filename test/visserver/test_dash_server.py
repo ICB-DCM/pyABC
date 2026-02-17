@@ -13,7 +13,7 @@ def call_dash_server(ret_value):
 
 
 def test_dash_server():
-    ret_value = multiprocessing.Value("i", 1, lock=False)
+    ret_value = multiprocessing.Value('i', 1, lock=False)
     t1 = multiprocessing.Process(target=call_dash_server, args=[ret_value])
     t1.start()
     time.sleep(3)

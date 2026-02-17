@@ -35,14 +35,14 @@ def sampler(request):
 
 
 def test_external():
-    folder = "doc/examples/model_r/"
-    executable = "Rscript"
+    folder = 'doc/examples/model_r/'
+    executable = 'Rscript'
 
     # initialize
-    model = pyabc.external.ExternalModel(executable, folder + "model.r")
-    sum_stat = pyabc.external.ExternalSumStat(executable, folder + "sumstat.r")
+    model = pyabc.external.ExternalModel(executable, folder + 'model.r')
+    sum_stat = pyabc.external.ExternalSumStat(executable, folder + 'sumstat.r')
     distance = pyabc.external.ExternalDistance(
-        executable, folder + "distance.r"
+        executable, folder + 'distance.r'
     )
 
     # call representation function
@@ -63,11 +63,11 @@ def test_external():
 
 def test_external_handler():
     eh = pyabc.external.ExternalHandler(
-        executable="bash",
-        file="",
+        executable='bash',
+        file='',
         create_folder=False,
-        suffix="sufftest",
-        prefix="preftest",
+        suffix='sufftest',
+        prefix='preftest',
     )
     loc = eh.create_loc()
     assert os.path.exists(loc) and os.path.isfile(loc)
@@ -77,9 +77,9 @@ def test_external_handler():
 
 
 def test_eval_param_limits():
-    folder = "doc/examples/rmodel/"
-    executable = "Rscript"
-    model = pyabc.external.ExternalModel(executable, folder + "model.r")
-    limits = {"meanX": (1, 5), "meanY": (1, 5.5)}
+    folder = 'doc/examples/rmodel/'
+    executable = 'Rscript'
+    model = pyabc.external.ExternalModel(executable, folder + 'model.r')
+    limits = {'meanX': (1, 5), 'meanY': (1, 5.5)}
     evaluation = pyabc.external.ExternalModel.eval_param_limits(model, limits)
     assert type(evaluation) is dict

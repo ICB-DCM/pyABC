@@ -158,7 +158,7 @@ class SGE:
         self.job_name = name
         if self.config['SGE']['PRIORITY'] == '0':
             warnings.warn(
-                'Priority set to 0. ' 'This enables the reservation flag.',
+                'Priority set to 0. This enables the reservation flag.',
                 stacklevel=2,
             )
         self.num_threads = num_threads
@@ -167,8 +167,7 @@ class SGE:
 
         if chunk_size != 1:
             warnings.warn(
-                'Chunk size != 1. '
-                'This can potentially have bad side effect.',
+                'Chunk size != 1. This can potentially have bad side effect.',
                 stacklevel=2,
             )
 
@@ -200,12 +199,12 @@ class SGE:
 
     def __repr__(self):
         return (
-            f"<SGE memory={self.memory}, time={self.time}, "
-            f"priority={self.config['SGE']['PRIORITY']}, "
-            f"num_threads={self.num_threads}, "
-            f"chunk_size={self.chunk_size}, "
-            f"tmp_dir={self.config['DIRECTORIES']['TMP']}, "
-            f"python_executable={self.python_executable_path}>"
+            f'<SGE memory={self.memory}, time={self.time}, '
+            f'priority={self.config["SGE"]["PRIORITY"]}, '
+            f'num_threads={self.num_threads}, '
+            f'chunk_size={self.chunk_size}, '
+            f'tmp_dir={self.config["DIRECTORIES"]["TMP"]}, '
+            f'python_executable={self.python_executable_path}>'
         )
 
     @staticmethod
@@ -334,9 +333,7 @@ class SGE:
                 results += single_result
             except Exception as e:
                 results.append(
-                    Exception(
-                        'Could not load temporary ' 'result file:' + str(e)
-                    )
+                    Exception('Could not load temporary result file:' + str(e))
                 )
                 had_exception = True
 

@@ -11,25 +11,25 @@ try:
 except ImportError:
     Config = command = None
 
-SQLITE_STR = "sqlite:///"
+SQLITE_STR = 'sqlite:///'
 
 
 @click.command(
-    help="**Migrate pyABC database**\n\n"
+    help='**Migrate pyABC database**\n\n'
     "Sometimes, changes to pyABC's storage format are unavoidable. "
-    "In such cases, this tool is intended to allow migrating databases "
-    "between versions. "
-    "To avoid data loss in the unlikely case that migration does not "
-    "work properly, we recommend keeping the original file by specifying "
-    "a different destination.\n\n"
-    "Note: Migration currently only supports sqlite databases."
+    'In such cases, this tool is intended to allow migrating databases '
+    'between versions. '
+    'To avoid data loss in the unlikely case that migration does not '
+    'work properly, we recommend keeping the original file by specifying '
+    'a different destination.\n\n'
+    'Note: Migration currently only supports sqlite databases.'
 )
 @click.option(
-    '--src', required=True, type=str, help="Database to convert (filename)"
+    '--src', required=True, type=str, help='Database to convert (filename)'
 )
-@click.option('--dst', required=True, type=str, help="Destination (filename)")
+@click.option('--dst', required=True, type=str, help='Destination (filename)')
 @click.option(
-    '--version', default='head', type=str, help="Target database version"
+    '--version', default='head', type=str, help='Target database version'
 )
 def migrate(src: str, dst: str, version: str) -> None:
     """Migrate database.
@@ -42,8 +42,8 @@ def migrate(src: str, dst: str, version: str) -> None:
     """
     if Config is None or command is None:
         print(
-            "Error: migration tools not installed. Please run "
-            "`pip install pyabc[migrate]`"
+            'Error: migration tools not installed. Please run '
+            '`pip install pyabc[migrate]`'
         )
         return
 
@@ -56,7 +56,7 @@ def migrate(src: str, dst: str, version: str) -> None:
     # copy file
     if src != dst:
         if os.path.exists(dst):
-            print(f"Error: Destination file {dst} exists already.")
+            print(f'Error: Destination file {dst} exists already.')
             return
         # copy source to destination
         shutil.copyfile(src=src, dst=dst)

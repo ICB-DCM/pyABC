@@ -131,7 +131,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: .github/workflows/install_deps.sh
+        run: .github/workflows/install_deps.sh base
 
       - name: Run tests
         timeout-minutes: 15
@@ -161,7 +161,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: .github/workflows/install_deps.sh
+        run: .github/workflows/install_deps.sh base
 
       - name: Run notebooks
         timeout-minutes: 20

@@ -9,7 +9,7 @@ import pytest
 import pyabc
 import pyabc.visserver.server_flask as server
 
-db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
+db_path = 'sqlite:///' + tempfile.mkstemp(suffix='.db')[1]
 
 
 def setup_module():
@@ -47,14 +47,14 @@ def teardown_module():
 
     Called once after all tests.
     """
-    os.remove(db_path[len("sqlite:///") :])
+    os.remove(db_path[len('sqlite:///') :])
 
 
 @pytest.fixture
 def client():
     """A fake server client."""
     history = pyabc.History(db_path)
-    server.app.config["HISTORY"] = history
+    server.app.config['HISTORY'] = history
     with server.app.test_client() as client:
         yield client
 
