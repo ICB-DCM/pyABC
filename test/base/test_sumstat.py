@@ -187,7 +187,7 @@ def test_subsetter():
     ss = rng.normal(size=(n_sample, n_y))
     n_sample_half = int(n_sample / 2)
     # parameter set with two modes
-    par = np.row_stack(
+    par = np.vstack(
         (
             np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_half, n_p)),
             np.array([-10, 0]) + 0.2 * rng.normal(size=(n_sample_half, n_p)),
@@ -212,7 +212,7 @@ def test_subsetter():
 
     # 3 components
     n_sample_third = int(n_sample / 3)
-    par = np.row_stack(
+    par = np.vstack(
         (
             np.array([10, 10]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),
             np.array([10, 0]) + 0.1 * rng.normal(size=(n_sample_third, n_p)),

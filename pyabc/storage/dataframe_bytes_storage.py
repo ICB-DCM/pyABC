@@ -65,7 +65,7 @@ def df_to_bytes_json(df: pd.DataFrame) -> bytes:
 
 def df_from_bytes_json(bytes_: bytes) -> pd.DataFrame:
     """Pandas DataFrame from json."""
-    return pd.read_json(bytes_.decode())
+    return pd.read_json(StringIO(bytes_.decode()))
 
 
 def df_to_bytes_parquet(df: pd.DataFrame) -> bytes:
