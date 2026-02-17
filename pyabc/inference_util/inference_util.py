@@ -4,20 +4,21 @@ import logging
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from ..acceptor import Acceptor
-from ..distance import Distance
-from ..epsilon import Epsilon
-from ..model import Model
-from ..parameters import Parameter
-from ..population import Particle
-from ..random_choice import fast_random_choice
-from ..random_variables import RV, Distribution
-from ..storage.history import History
-from ..transition import ModelPerturbationKernel, Transition
+if TYPE_CHECKING:
+    from ..acceptor import Acceptor
+    from ..distance import Distance
+    from ..epsilon import Epsilon
+    from ..model import Model
+    from ..parameters import Parameter
+    from ..population import Particle
+    from ..random_variables import RV, Distribution
+    from ..storage.history import History
+    from ..transition import ModelPerturbationKernel, Transition
 
 logger = logging.getLogger('ABC')
 
@@ -97,6 +98,7 @@ def create_simulate_from_prior_function(
         A function that returns a sampled particle.
     """
     # simulation function, simplifying some parts compared to later
+    from ..population import Particle
 
     def simulate_one():
         # sample model
@@ -154,6 +156,8 @@ def generate_valid_proposal(
     -------
     (m_ss, theta_ss): Model, parameter.
     """
+    from ..random_choice import fast_random_choice
+
     # first generation
     if t == 0:
         # sample from prior
@@ -229,6 +233,8 @@ def evaluate_proposal(
     Data for the given parameters theta_ss are simulated, summary statistics
     computed and evaluated.
     """
+    from ..population import Particle
+
     # simulate, compute distance, check acceptance
     model_result = models[m_ss].accept(
         t, theta_ss, summary_statistics, distance_function, eps, acceptor, x_0
@@ -477,6 +483,7 @@ def only_simulate_data_for_proposal(
     Similar to `evaluate_proposal`, however here for the passed parameters
     only data are simulated, but no distances calculated or acceptance
     checked. That needs to be done post-hoc then, not checked here."""
+    from ..population import Particle
 
     # simulate
     model_result = models[m_ss].summary_statistics(
@@ -516,6 +523,8 @@ def evaluate_preliminary_particle(
     -------
     evaluated_particle: The evaluated particle
     """
+    from ..population import Particle
+
     if not particle.preliminary:
         raise AssertionError('Particle is not preliminary')
 
