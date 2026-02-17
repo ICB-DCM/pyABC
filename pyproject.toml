@@ -82,7 +82,7 @@ r = [
   "pygments>=2.6.1",
 ]
 julia = [
-  "julia>=0.5.7",
+  "julia>=0.6.2",
   "pygments>=2.6.1",
   "ipython>=7.18.1",
 ]
