@@ -115,7 +115,7 @@ def object_(request):
 def test_storage(object_):
     import rpy2.robjects as robjects
     from rpy2.robjects import pandas2ri
-    from rpy2.robjects.conversion import localconverter
+    from rpy2.robjects.conversion import get_conversion, localconverter
 
     serial = to_bytes(object_)
     assert isinstance(serial, bytes)
@@ -139,7 +139,8 @@ def test_storage(object_):
     elif isinstance(object_, pd.Series):
         assert (object_.to_frame() == rebuilt).all().all()
     elif isinstance(object_, robjects.DataFrame):
-        with localconverter(pandas2ri.converter):
+        conv = get_conversion()
+        with localconverter(conv + pandas2ri.converter):
             assert (robjects.conversion.rpy2py(object_) == rebuilt).all().all()
     else:
         raise Exception('Could not compare')
