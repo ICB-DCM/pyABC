@@ -181,6 +181,9 @@ def basic_testcase():
 
 
 def test_two_competing_gaussians_multiple_population(db_path, sampler):
+    logging.info(
+        f'Testing sampler {sampler.__class__.__name__} with 2 competing gaussians'
+    )
     two_competing_gaussians_multiple_population(db_path, sampler)
 
 
