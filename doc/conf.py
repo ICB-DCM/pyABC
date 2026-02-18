@@ -346,3 +346,9 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+# -- Options for Notebooks output -------------------------------------------
+nbsphinx_execute_arguments = [
+    '--ExecutePreprocessor.kernel_name=python3',
+    '--ExecutePreprocessor.timeout=-1',
+]
