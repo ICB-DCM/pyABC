@@ -70,8 +70,10 @@ run_notebook () {
   # Run a notebook and raise upon failure
   tempfile=$(mktemp)
   echo $@
-  python -m jupyter nbconvert --ExecutePreprocessor.timeout=-1 --debug \
-    --stdout --execute --to markdown $@ &> $tempfile
+  python -m jupyter nbconvert \
+  --ExecutePreprocessor.timeout=-1 \
+  --ExecutePreprocessor.kernel_name=python3 \
+  --debug --stdout --execute --to markdown "$@" &> "$tempfile"
   ret=$?
   if [[ $ret != 0 ]]; then
       cat $tempfile

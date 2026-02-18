@@ -13,7 +13,7 @@ description = "Distributed, likelihood-free ABC-SMC inference"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 
-authors = [{ name = "The pyABC developers", email = "jonas.arruda@uni-bonn.de" }]
+authors = [{ name = "The pyABC developers", email = "jan.hasenauer@uni-bonn.de" }]
 maintainers = [{ name = "Jonas Arruda", email = "jonas.arruda@uni-bonn.de" }]
 
 license = "BSD-3-Clause"
@@ -115,13 +115,6 @@ test = [
   "pytest-xdist>=3.5.0",
   "coverage[toml]>=7.0.0",
 ]
-dev = [
-  "pre-commit>=4.0.0",
-  "tox>=4.0.0",
-  "ruff>=0.8.0",
-  "build>=1.0.0",
-  "twine>=4.0.0",
-]
 
 [project.scripts]
 abc-server-flask = "pyabc.visserver.server_flask:run_app"
@@ -215,7 +208,7 @@ source = [
 [dependency-groups]
 dev = [
   "pre-commit>=4.5.1",
-  "tox>=4.36.0",
+  "tox>=4.38.0",
   "ruff>=0.8.0",
   "build>=1.0.0",
   "twine>=4.0.0",
