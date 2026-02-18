@@ -93,6 +93,8 @@ jobs:
 
       - name: Run tox
         run: tox -e ${{ matrix.toxenv }}
+        env:
+          pythonLocation: ${{ env.pythonLocation }}
 
       # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
       - name: Upload coverage
