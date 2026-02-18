@@ -94,9 +94,11 @@ def get_if_worker_healthy(workers: list[Process], queue: Queue):
     item: An item from the queue
     """
     while True:
+        # Check health first before potentially blocking
+        if not healthy(workers):
+            raise ProcessError('At least one worker is dead.') from None
         try:
-            item = queue.get(True, 5)
+            item = queue.get(timeout=0.1)
             return item
         except Empty:
-            if not healthy(workers):
-                raise ProcessError('At least one worker is dead.') from None
+            pass
