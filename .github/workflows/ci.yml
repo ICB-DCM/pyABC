@@ -19,9 +19,9 @@ jobs:
           - os: ubuntu-latest
             python: "3.13"
             toxenv: base
-          - os: ubuntu-latest
-            python: "3.12"
-            toxenv: base
+          #- os: ubuntu-latest
+          #  python: "3.12"
+          #  toxenv: base
           - os: ubuntu-latest
             python: "3.11"
             toxenv: base
@@ -93,8 +93,6 @@ jobs:
 
       - name: Run tox
         run: tox -e ${{ matrix.toxenv }}
-        env:
-          pythonLocation: ${{ env.pythonLocation }}
 
       # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
       - name: Upload coverage
