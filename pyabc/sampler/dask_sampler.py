@@ -43,7 +43,7 @@ class DaskDistributedSampler(EPSMixin, Sampler):
         self,
         dask_client: Client = None,
         client_max_jobs: int = np.inf,
-        default_pickle: bool = True,
+        default_pickle: bool = False,
         batch_size: int = 1,
     ):
         # Assign Client
