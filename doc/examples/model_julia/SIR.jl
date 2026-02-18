@@ -3,12 +3,14 @@
 module SIR
 
 # Install dependencies
-using Pkg
-Pkg.add("Catalyst")
-Pkg.add("JumpProcesses")
+#using Pkg
+#Pkg.add("Catalyst")
+#Pkg.add("JumpProcesses")
+
+using Catalyst
+using JumpProcesses
 
 # Define reaction network
-using Catalyst
 sir_model = @reaction_network begin
     r1, S + I --> 2I
     r2, I --> R
@@ -26,7 +28,6 @@ tspan = (0.0, 250.0)
 prob  = DiscreteProblem(sir_model, u0, tspan, p)
 
 # formulate as Markov jump process
-using JumpProcesses
 jump_prob = JumpProblem(
     sir_model, prob, Direct(), save_positions=(false, false),
 )
