@@ -63,3 +63,4 @@ class TransitionMeta(ABCMeta):  # noqa: B024
         cls.pdf = wrap_pdf(cls.pdf)
         cls.rvs = wrap_rvs(cls.rvs)
         cls.rvs_single = wrap_rvs_single(cls.rvs_single)
+        cls.no_parameters = False
