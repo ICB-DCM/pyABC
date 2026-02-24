@@ -1,7 +1,7 @@
 """Data and summary statistics plots"""
 
 import logging
-from typing import Callable, List, Union
+from collections.abc import Callable
 
 import matplotlib.axes
 import matplotlib.pyplot as plt
@@ -10,7 +10,7 @@ import pandas as pd
 
 from ..storage import History
 
-logger = logging.getLogger("ABC.Visualization")
+logger = logging.getLogger('ABC.Visualization')
 
 
 def plot_data_callback(
@@ -63,8 +63,8 @@ def plot_data_callback(
 
 
 def plot_data_callback_lowlevel(
-    sum_stats: List,
-    weights: List,
+    sum_stats: list,
+    weights: list,
     f_plot: Callable,
     f_plot_aggregated: Callable = None,
     n_sample: int = None,
@@ -100,7 +100,7 @@ def plot_data_callback_lowlevel(
 
 
 def plot_data_default(
-    obs_data: dict, sim_data: dict, keys: Union[List[str], str] = None
+    obs_data: dict, sim_data: dict, keys: list[str] | str = None
 ):
     """
     Plot summary statistic data.
@@ -149,43 +149,39 @@ def plot_data_default(
     for plot_index, ((obs_key, obs), (_, sim)) in enumerate(
         zip(obs_data.items(), sim_data.items())
     ):
-        if nrows == ncols == 1:
-            ax = arr_ax
-        else:
-            ax = arr_ax.flatten()[plot_index]
+        ax = arr_ax if nrows == ncols == 1 else arr_ax.flatten()[plot_index]
 
         # data frame
         if isinstance(obs, pd.DataFrame):
             if len(obs.columns) == 1:
                 # 1d: plot
-                ax.plot(sim.values.flatten(), '-x', label="Simulation")
-                ax.plot(obs.values.flatten(), '-x', label="Data")
-                ax.set_xlabel("Index")
+                ax.plot(sim.values.flatten(), '-x', label='Simulation')
+                ax.plot(obs.values.flatten(), '-x', label='Data')
+                ax.set_xlabel('Index')
                 ax.set_ylabel(obs.columns[0])
             else:
                 # nd: scatter
                 for key in obs.columns:
                     ax.scatter(obs[key].values, sim[key].values, label=key)
-                ax.set_xlabel("Data")
-                ax.set_ylabel("Simulation")
+                ax.set_xlabel('Data')
+                ax.set_ylabel('Simulation')
         elif isinstance(obs, np.ndarray) and obs.ndim == 1:
             # 1d: plot
             obs_value = obs
             sim_value = sim
-            ax.plot(sim_value, '-x', color="C0", label='Simulation')
-            ax.plot(obs_value, '-x', color="C1", label='Data')
-            ax.set_xlabel("Index")
+            ax.plot(sim_value, '-x', color='C0', label='Simulation')
+            ax.plot(obs_value, '-x', color='C1', label='Data')
+            ax.set_xlabel('Index')
             ax.set_ylabel(str(obs_key))
         elif isinstance(obs, np.ndarray):
             # nd: scatter
             for j, (obs_val, sim_val) in enumerate(zip(obs, sim)):
-                ax.scatter(obs_val, sim_val, label=f"Coordinate {j}")
-            ax.set_xlabel("Data")
-            ax.set_ylabel("Simulation")
+                ax.scatter(obs_val, sim_val, label=f'Coordinate {j}')
+            ax.set_xlabel('Data')
+            ax.set_ylabel('Simulation')
         else:
             logger.info(
-                f"Data type {type(obs)} for key {obs_key} is "
-                f"not supported."
+                f'Data type {type(obs)} for key {obs_key} is not supported.'
             )
             # remove not needed axis
             ax.axis('off')

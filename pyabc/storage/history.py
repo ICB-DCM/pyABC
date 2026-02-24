@@ -4,7 +4,6 @@ import logging
 import os
 import tempfile
 from functools import wraps
-from typing import List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -27,15 +26,15 @@ from .db_model import (
 )
 from .version import __db_version__
 
-logger = logging.getLogger("ABC.History")
+logger = logging.getLogger('ABC.History')
 
-SQLITE_STR = "sqlite:///"
+SQLITE_STR = 'sqlite:///'
 
 
 def with_session(f):
     @wraps(f)
-    def f_wrapper(self: "History", *args, **kwargs):
-        logger.debug(f"Database access through {f.__name__}")
+    def f_wrapper(self: 'History', *args, **kwargs):
+        logger.debug(f'Database access through {f.__name__}')
         no_session = self._session is None and self._engine is None
         if no_session:
             self._make_session()
@@ -48,16 +47,16 @@ def with_session(f):
 
 
 def internal_docstring_warning(f):
-    first_line = f.__doc__.split("\n")[1]
+    first_line = f.__doc__.split('\n')[1]
     indent_level = len(first_line) - len(first_line.lstrip())
-    indent = " " * indent_level
+    indent = ' ' * indent_level
     warning = (
-        "\n\n"
+        '\n\n'
         + indent
-        + "**Note.** This function is called by the :class:`pyabc.ABCSMC` "
-        "class internally. "
-        "You should most likely not find it necessary to call "
-        "this method under normal circumstances."
+        + '**Note.** This function is called by the :class:`pyabc.ABCSMC` '
+        'class internally. '
+        'You should most likely not find it necessary to call '
+        'this method under normal circumstances.'
     )
 
     f.__doc__ += warning
@@ -81,9 +80,9 @@ def git_hash():
     return hash_
 
 
-def create_sqlite_db_id(dir_: str = None, file_: str = "pyabc_test.db"):
+def create_sqlite_db_id(dir_: str = None, file_: str = 'pyabc_test.db'):
     """
-    Convenience function to create an sqlite database identifier which
+    Convenience function to create a sqlite database identifier which
     can be understood by sqlalchemy.
 
     Parameters
@@ -98,13 +97,13 @@ def create_sqlite_db_id(dir_: str = None, file_: str = "pyabc_test.db"):
     """
     if dir_ is None:
         dir_ = tempfile.gettempdir()
-    return "sqlite:///" + os.path.join(dir_, file_)
+    return 'sqlite:///' + os.path.join(dir_, file_)
 
 
 def database_exists(db: str) -> bool:
     """Does the database file exist already?"""
     return (
-        db != "sqlite://"
+        db != 'sqlite://'
         and os.path.exists(db[len(SQLITE_STR) :])
         and os.path.getsize(db[len(SQLITE_STR) :]) > 0
     )
@@ -157,7 +156,7 @@ class History:
         """
         db_exists = database_exists(db)
         if not create and not db_exists:
-            raise ValueError(f"Database file {db} does not exist.")
+            raise ValueError(f'Database file {db} does not exist.')
 
         self.db = db
         self.stores_sum_stats = stores_sum_stats
@@ -179,17 +178,17 @@ class History:
         self._id = _id
 
     def db_file(self):
-        f = self.db.split(":")[-1][3:]
+        f = self.db.split(':')[-1][3:]
         return f
 
     @property
     def in_memory(self):
         return (
-            self._engine is not None and str(self._engine.url) == "sqlite://"
+            self._engine is not None and str(self._engine.url) == 'sqlite://'
         )
 
     @property
-    def db_size(self) -> Union[int, str]:
+    def db_size(self) -> int | str:
         """
         Size of the database.
 
@@ -204,7 +203,7 @@ class History:
         try:
             return os.path.getsize(self.db_file()) / 10**6
         except FileNotFoundError:
-            return "Cannot calculate size"
+            return 'Cannot calculate size'
 
     @with_session
     def all_runs(self):
@@ -233,11 +232,11 @@ class History:
         # compare to current version
         if version != __db_version__:
             raise AssertionError(
-                f"Database has version {version}, latest format version is "
-                f"{__db_version__}. Thus, not all queries may work correctly. "
-                "Consider migrating the database to the latest version via "
-                "`abc-migrate`. Check `abc-migrate --help` and the "
-                "documentation for further information."
+                f'Database has version {version}, latest format version is '
+                f'{__db_version__}. Thus, not all queries may work correctly. '
+                'Consider migrating the database to the latest version via '
+                '`abc-migrate`. Check `abc-migrate --help` and the '
+                'documentation for further information.'
             )
 
     @with_session
@@ -270,11 +269,11 @@ class History:
         if val is None:
             val = self._find_latest_id()
         elif val not in [obj.id for obj in self._session.query(ABCSMC).all()]:
-            raise ValueError(f"Specified id {val} does not exist in database.")
+            raise ValueError(f'Specified id {val} does not exist in database.')
         self._id = val
 
     @with_session
-    def alive_models(self, t: int = None) -> List:
+    def alive_models(self, t: int = None) -> list:
         """
         Get the models which are still alive at time `t`.
 
@@ -290,10 +289,7 @@ class History:
             models which are still alive.
 
         """
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         alive = (
             self._session.query(Model.m)
@@ -308,7 +304,7 @@ class History:
     @with_session
     def get_distribution(
         self, m: int = 0, t: int = None
-    ) -> Tuple[pd.DataFrame, np.ndarray]:
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         Returns the weighted population sample for model m and timepoint t
         as a tuple.
@@ -328,10 +324,7 @@ class History:
             * w: are the weights associated with each parameter
         """
         m = int(m)
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         query = (
             self._session.query(
@@ -347,13 +340,13 @@ class History:
         )
         df = pd.read_sql_query(query.statement, self._engine)
         pars = df.pivot(
-            index="id", columns="name", values="value"
+            index='id', columns='name', values='value'
         ).sort_index()
-        w = df[["id", "w"]].drop_duplicates().set_index("id").sort_index()
+        w = df[['id', 'w']].drop_duplicates().set_index('id').sort_index()
         w_arr = w.w.values
         if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
             raise AssertionError(
-                "Weight not close to 1, w.sum()={}".format(w_arr.sum())
+                f'Weight not close to 1, w.sum()={w_arr.sum()}'
             )
         return pars, w_arr
 
@@ -414,8 +407,8 @@ class History:
         df = pd.read_sql_query(query.statement, self._engine)
         particles = self.get_nr_particles_per_population()
         particles.index += 1
-        df["particles"] = particles
-        df = df.rename(columns={"nr_samples": "samples"})
+        df['particles'] = particles
+        df = df.rename(columns={'nr_samples': 'samples'})
         return df
 
     @with_session
@@ -426,7 +419,7 @@ class History:
         options: dict,
         observed_summary_statistics: dict,
         ground_truth_parameter: dict,
-        model_names: List[str],
+        model_names: list[str],
         distance_function_json_str: str,
         eps_function_json_str: str,
         population_strategy_json_str: str,
@@ -485,7 +478,7 @@ class History:
         )
 
         # log
-        logger.info(f"Start {abcsmc.start_info()}")
+        logger.info(f'Start {abcsmc.start_info()}')
 
     @with_session
     @internal_docstring_warning
@@ -494,7 +487,7 @@ class History:
         ground_truth_model: int,
         observed_summary_statistics: dict,
         ground_truth_parameter: dict,
-        model_names: List[str],
+        model_names: list[str],
     ):
         """
         Store a dummy pre-population containing some configuration data
@@ -653,7 +646,7 @@ class History:
         """
         # check if version exists already
         if len(self._session.query(Version).all()) > 0:
-            raise AssertionError("Cannot set version as already exists.")
+            raise AssertionError('Cannot set version as already exists.')
 
         # set version to latest
         self._session.add(Version(version_num=__db_version__))
@@ -672,8 +665,8 @@ class History:
     def __getstate__(self):
         dct = self.__dict__.copy()
         if self.in_memory:
-            dct["_engine"] = None
-            dct["_session"] = None
+            dct['_engine'] = None
+            dct['_session'] = None
         return dct
 
     @with_session
@@ -693,7 +686,7 @@ class History:
         abcsmc = self._session.query(ABCSMC).filter(ABCSMC.id == self.id).one()
         abcsmc.end_time = end_time
         self._session.commit()
-        logger.info(f"Done {abcsmc.end_info()}")
+        logger.info(f'Done {abcsmc.end_info()}')
 
     @with_session
     def _save_to_population_db(
@@ -754,7 +747,7 @@ class History:
                             # append nested dimension to parameter
                             particle.parameters.append(
                                 Parameter(
-                                    name=key + "_" + key_dict, value=value_dict
+                                    name=key + '_' + key_dict, value=value_dict
                                 )
                             )
                     else:
@@ -771,7 +764,7 @@ class History:
                 if self.stores_sum_stats:
                     for name, value in py_particle.sum_stat.items():
                         if name is None:
-                            raise Exception("Summary statistics need names.")
+                            raise Exception('Summary statistics need names.')
                         sample.summary_statistics.append(
                             SummaryStatistic(name=name, value=value)
                         )
@@ -780,7 +773,7 @@ class History:
         self._session.commit()
 
         # log
-        logger.debug("Appended population")
+        logger.debug('Appended population')
 
     @internal_docstring_warning
     def append_population(
@@ -820,9 +813,7 @@ class History:
         )
 
     @with_session
-    def get_model_probabilities(
-        self, t: Union[int, None] = None
-    ) -> pd.DataFrame:
+    def get_model_probabilities(self, t: int | None = None) -> pd.DataFrame:
         """
         Model probabilities.
 
@@ -853,16 +844,16 @@ class History:
         # TODO this is a mess
         if t is not None:
             p_models_df = pd.DataFrame(
-                [p[:2] for p in p_models], columns=["p", "m"]
-            ).set_index("m")
+                [p[:2] for p in p_models], columns=['p', 'm']
+            ).set_index('m')
             # TODO the following line is redundant
             # only models with no-zero weight are stored for each population
             p_models_df = p_models_df[p_models_df.p >= 0]
             return p_models_df
         else:
             p_models_df = (
-                pd.DataFrame(p_models, columns=["p", "m", "t"])
-                .pivot(index="t", columns="m", values="p")
+                pd.DataFrame(p_models, columns=['p', 'm', 't'])
+                .pivot(index='t', columns='m', values='p')
                 .fillna(0)
             )
             return p_models_df
@@ -882,10 +873,7 @@ class History:
             Number of models still alive.
             None is for the last population
         """
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         model_probs = self.get_model_probabilities(t)
 
@@ -910,10 +898,7 @@ class History:
             The dataframe has column "w" for the weights
             and column "distance" for the distances.
         """
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         models = (
             self._session.query(Model)
@@ -997,7 +982,7 @@ class History:
     @with_session
     def get_weighted_sum_stats_for_model(
         self, m: int = 0, t: int = None
-    ) -> Tuple[np.ndarray, List]:
+    ) -> tuple[np.ndarray, list]:
         """
         Summary statistics for model `m`. The weights sum to 1, unless
         there were multiple acceptances per particle.
@@ -1016,10 +1001,7 @@ class History:
             * sum_stats: list of summary statistics
         """
         m = int(m)
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         particles = (
             self._session.query(Particle)
@@ -1046,7 +1028,7 @@ class History:
     @with_session
     def get_weighted_sum_stats(
         self, t: int = None
-    ) -> Tuple[List[float], List[dict]]:
+    ) -> tuple[list[float], list[dict]]:
         """
         Population's weighted summary statistics.
         These weights do not necessarily sum up to 1.
@@ -1065,10 +1047,7 @@ class History:
             statistics.
         """
 
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         models = (
             self._session.query(Model)
@@ -1112,10 +1091,7 @@ class History:
         t: int, optional (default = self.max_t)
             The population index.
         """
-        if t is None:
-            t = self.max_t
-        else:
-            t = int(t)
+        t = self.max_t if t is None else int(t)
 
         models = (
             self._session.query(Model)
@@ -1153,7 +1129,7 @@ class History:
                 # simulations
                 # TODO this is legacy from when there were multiple
                 if len(particle.samples) != 1:
-                    raise AssertionError("There should be exactly one sample.")
+                    raise AssertionError('There should be exactly one sample.')
                 sample = particle.samples[0]
                 # summary statistics
                 py_sum_stat = {}
@@ -1193,8 +1169,8 @@ class History:
     def get_population_extended(
         self,
         *,
-        m: Union[int, None] = None,
-        t: Union[int, str] = "last",
+        m: int | None = None,
+        t: int | str = 'last',
         tidy: bool = True,
     ) -> pd.DataFrame:
         """
@@ -1224,17 +1200,17 @@ class History:
             self._session.query(
                 Population.t,
                 Population.epsilon,
-                Population.nr_samples.label("samples"),
+                Population.nr_samples.label('samples'),
                 Model.m,
-                Model.name.label("model_name"),
+                Model.name.label('model_name'),
                 Model.p_model,
                 Particle.w,
-                Particle.id.label("particle_id"),
+                Particle.id.label('particle_id'),
                 Sample.distance,
-                Parameter.name.label("par_name"),
-                Parameter.value.label("par_val"),
-                SummaryStatistic.name.label("sumstat_name"),
-                SummaryStatistic.value.label("sumstat_val"),
+                Parameter.name.label('par_name'),
+                Parameter.value.label('par_val'),
+                SummaryStatistic.name.label('sumstat_name'),
+                SummaryStatistic.value.label('sumstat_val'),
             )
             .join(ABCSMC)
             .join(Model)
@@ -1248,58 +1224,55 @@ class History:
         if m is not None:
             query = query.filter(Model.m == m)
 
-        if t == "last":
+        if t == 'last':
             t = self.max_t
 
         # if t is not "all", filter for time point t
-        if t != "all":
+        if t != 'all':
             query = query.filter(Population.t == t)
 
         df = pd.read_sql_query(query.statement, self._engine)
 
         if len(df.m.unique()) == 1:
-            del df["m"]
-            del df["model_name"]
-            del df["p_model"]
+            del df['m']
+            del df['model_name']
+            del df['p_model']
 
         if isinstance(t, int):
-            del df["t"]
+            del df['t']
 
-        if tidy:
-            if isinstance(t, int) and "m" not in df:
-                df = df.set_index("particle_id")
-                df_unique = df[["distance", "w"]].drop_duplicates()
+        if tidy and isinstance(t, int) and 'm' not in df:
+            df = df.set_index('particle_id')
+            df_unique = df[['distance', 'w']].drop_duplicates()
 
-                df_par = (
-                    df[["par_name", "par_val"]]
-                    .reset_index()
-                    .drop_duplicates(subset=["particle_id", "par_name"])
-                    .pivot(
-                        index="particle_id",
-                        columns="par_name",
-                        values="par_val",
-                    )
+            df_par = (
+                df[['par_name', 'par_val']]
+                .reset_index()
+                .drop_duplicates(subset=['particle_id', 'par_name'])
+                .pivot(
+                    index='particle_id',
+                    columns='par_name',
+                    values='par_val',
                 )
-                df_par.columns = ["par_" + c for c in df_par.columns]
+            )
+            df_par.columns = ['par_' + c for c in df_par.columns]
 
-                df_sumstat = (
-                    df[["sumstat_name", "sumstat_val"]]
-                    .reset_index()
-                    .drop_duplicates(subset=["particle_id", "sumstat_name"])
-                    .pivot(
-                        index="particle_id",
-                        columns="sumstat_name",
-                        values="sumstat_val",
-                    )
+            df_sumstat = (
+                df[['sumstat_name', 'sumstat_val']]
+                .reset_index()
+                .drop_duplicates(subset=['particle_id', 'sumstat_name'])
+                .pivot(
+                    index='particle_id',
+                    columns='sumstat_name',
+                    values='sumstat_val',
                 )
-                df_sumstat.columns = [
-                    "sumstat_" + c for c in df_sumstat.columns
-                ]
+            )
+            df_sumstat.columns = ['sumstat_' + c for c in df_sumstat.columns]
 
-                df_tidy = df_unique.merge(
-                    df_par, left_index=True, right_index=True
-                ).merge(df_sumstat, left_index=True, right_index=True)
-                df = df_tidy
+            df_tidy = df_unique.merge(
+                df_par, left_index=True, right_index=True
+            ).merge(df_sumstat, left_index=True, right_index=True)
+            df = df_tidy
 
         return df
 

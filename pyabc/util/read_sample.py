@@ -1,7 +1,5 @@
 """Read sample to array."""
 
-from typing import Tuple
-
 import numpy as np
 
 from ..population import Sample
@@ -40,7 +38,7 @@ def read_sample(
     sumstat,
     all_particles: bool,
     par_trafo: ParTrafoBase,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Read in sample.
 
     Parameters

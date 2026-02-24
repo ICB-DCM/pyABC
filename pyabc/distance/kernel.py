@@ -1,5 +1,6 @@
 """Stochastic kernels."""
-from typing import Callable, List, Sequence, Union
+
+from collections.abc import Callable, Sequence
 
 import numpy as np
 from scipy import stats
@@ -7,8 +8,8 @@ from scipy import stats
 from ..population import Sample
 from .base import Distance
 
-SCALE_LIN = "SCALE_LIN"
-SCALE_LOG = "SCALE_LOG"
+SCALE_LIN = 'SCALE_LIN'
+SCALE_LOG = 'SCALE_LOG'
 SCALES = [SCALE_LIN, SCALE_LOG]
 
 
@@ -44,7 +45,7 @@ class StochasticKernel(Distance):
     def __init__(
         self,
         ret_scale: str = SCALE_LIN,
-        keys: List[str] = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         StochasticKernel.check_ret_scale(ret_scale)
@@ -54,10 +55,10 @@ class StochasticKernel(Distance):
 
     def initialize(
         self,
-        t: int,
-        get_sample: Callable[[], Sample],
+        t: int,  # noqa: ARG002
+        get_sample: Callable[[], Sample],  # noqa: ARG002
         x_0: dict,
-        total_sims: int,
+        total_sims: int,  # noqa: ARG002
     ):
         """
         Remember the summary statistic keys in sorted order,
@@ -71,7 +72,7 @@ class StochasticKernel(Distance):
     def check_ret_scale(ret_scale):
         if ret_scale not in SCALES:
             raise ValueError(
-                f"The ret_scale {ret_scale} must be one of {SCALES}."
+                f'The ret_scale {ret_scale} must be one of {SCALES}.'
             )
 
     def initialize_keys(self, x):
@@ -95,7 +96,7 @@ class FunctionKernel(StochasticKernel):
         self,
         fun: Callable,
         ret_scale: str = SCALE_LIN,
-        keys: List[str] = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
@@ -134,7 +135,7 @@ class NormalKernel(StochasticKernel):
         self,
         cov: np.ndarray = None,
         ret_scale: str = SCALE_LOG,
-        keys: List[str] = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
@@ -181,8 +182,8 @@ class NormalKernel(StochasticKernel):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         """
         Return the value of the normal distribution at x - x_0, or its
@@ -228,8 +229,8 @@ class IndependentNormalKernel(StochasticKernel):
 
     def __init__(
         self,
-        var: Union[Callable, Sequence[float], float] = None,
-        keys: List[str] = None,
+        var: Callable | Sequence[float] | float = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
@@ -268,7 +269,7 @@ class IndependentNormalKernel(StochasticKernel):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
+        t: int = None,  # noqa: ARG002
         par: dict = None,
     ):
         # safety check
@@ -319,8 +320,8 @@ class IndependentLaplaceKernel(StochasticKernel):
 
     def __init__(
         self,
-        scale: Union[Callable, Sequence[float], float] = None,
-        keys: List[str] = None,
+        scale: Callable | Sequence[float] | float = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=SCALE_LOG, keys=keys, pdf_max=pdf_max)
@@ -360,7 +361,7 @@ class IndependentLaplaceKernel(StochasticKernel):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
+        t: int = None,  # noqa: ARG002
         par: dict = None,
     ):
         # safety check
@@ -401,17 +402,16 @@ class BinomialKernel(StochasticKernel):
 
     def __init__(
         self,
-        p: Union[float, Callable],
+        p: float | Callable,
         ret_scale: str = SCALE_LOG,
-        keys: List[str] = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
-                f"The success probability p={p} must be in the interval"
-                f"[0, 1]."
+                f'The success probability p={p} must be in the interval[0, 1].'
             )
         self.p = p
 
@@ -441,7 +441,7 @@ class BinomialKernel(StochasticKernel):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
+        t: int = None,  # noqa: ARG002
         par: dict = None,
     ) -> float:
         x = np.asarray(_arr(x, self.keys), dtype=int)
@@ -470,7 +470,7 @@ class PoissonKernel(StochasticKernel):
     def __init__(
         self,
         ret_scale: str = SCALE_LOG,
-        keys: List[str] = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
@@ -500,8 +500,8 @@ class PoissonKernel(StochasticKernel):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         x = np.asarray(_arr(x, self.keys), dtype=int)
         x_0 = np.asarray(_arr(x_0, self.keys), dtype=int)
@@ -530,15 +530,14 @@ class NegativeBinomialKernel(StochasticKernel):
         self,
         p: float,
         ret_scale: str = SCALE_LOG,
-        keys: List[str] = None,
+        keys: list[str] = None,
         pdf_max: float = None,
     ):
         super().__init__(ret_scale=ret_scale, keys=keys, pdf_max=pdf_max)
 
         if not callable(p) and (p > 1 or p < 0):
             raise ValueError(
-                f"The success probability p={p} must be in the interval"
-                f"[0, 1]."
+                f'The success probability p={p} must be in the interval[0, 1].'
             )
         self.p = p
 
@@ -563,7 +562,7 @@ class NegativeBinomialKernel(StochasticKernel):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
+        t: int = None,  # noqa: ARG002
         par: dict = None,
     ) -> float:
         x = np.asarray(_arr(x, self.keys), dtype=int)

@@ -10,14 +10,14 @@ class ParameterStructure(dict):
             if isinstance(value, dict):
                 flattened = ParameterStructure.flatten_dict(value)
                 for key_flat, value_flat in flattened.items():
-                    new_dict.update({str(key) + "." + key_flat: value_flat})
+                    new_dict.update({str(key) + '.' + key_flat: value_flat})
             else:
                 new_dict.update({key: value})
         return new_dict
 
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and len(kwargs) > 0:
-            raise Exception("Only keyword or dictionary allowed")
+            raise Exception('Only keyword or dictionary allowed')
         if len(args) > 0:
             flattened = ParameterStructure.flatten_dict(args[0])
         elif len(kwargs) > 0:
@@ -54,14 +54,14 @@ class Parameter(ParameterStructure):
 
     """
 
-    def __add__(self, other: "Parameter") -> "Parameter":
+    def __add__(self, other: 'Parameter') -> 'Parameter':
         return Parameter(**{key: self[key] + other[key] for key in self})
 
-    def __sub__(self, other: "Parameter") -> "Parameter":
+    def __sub__(self, other: 'Parameter') -> 'Parameter':
         return Parameter(**{key: self[key] - other[key] for key in self})
 
     def __repr__(self):
-        return "<Parameter " + super().__repr__()[1:-1] + ">"
+        return '<Parameter ' + super().__repr__()[1:-1] + '>'
 
     def __getattr__(self, item):
         """
@@ -70,7 +70,7 @@ class Parameter(ParameterStructure):
         try:
             return self[item]
         except KeyError:
-            raise AttributeError
+            raise AttributeError from None
 
     def __getstate__(self):
         return dict(self)
@@ -78,7 +78,7 @@ class Parameter(ParameterStructure):
     def __setstate__(self, state):
         self.data = state
 
-    def copy(self) -> "Parameter":
+    def copy(self) -> 'Parameter':
         """
         Copy the parameter.
         """

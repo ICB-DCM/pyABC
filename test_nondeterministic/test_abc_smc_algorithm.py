@@ -53,8 +53,8 @@ def sampler(request):
 
 @pytest.fixture
 def db_path():
-    db_file_location = os.path.join(tempfile.gettempdir(), "abc_unittest.db")
-    db = "sqlite:///" + db_file_location
+    db_file_location = os.path.join(tempfile.gettempdir(), 'abc_unittest.db')
+    db = 'sqlite:///' + db_file_location
     yield db
     if REMOVE_DB:
         try:
@@ -65,8 +65,8 @@ def db_path():
 
 def test_cookie_jar(db_path, sampler):
     def make_model(theta):
-        def model(args):
-            return {"result": 1 if random.random() > theta else 0}
+        def model(**kwargs):  # noqa: ARG001
+            return {'result': 1 if random.random() > theta else 0}
 
         return model
 
@@ -82,28 +82,29 @@ def test_cookie_jar(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0.1),
         sampler=sampler,
     )
 
-    abc.new(db_path, {"result": 0})
+    abc.new(db_path, {'result': 0})
 
     minimum_epsilon = 0.2
     history = abc.run(minimum_epsilon, max_nr_populations=1)
 
     mp = history.get_model_probabilities(history.max_t)
-    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (
-        theta1 + theta2
+    expected_p1, expected_p2 = (
+        theta1 / (theta1 + theta2),
+        theta2 / (theta1 + theta2),
     )
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < 0.05
 
 
 def test_empty_population(db_path, sampler):
     def make_model(theta):
-        def model(args):
-            return {"result": 1 if random.random() > theta else 0}
+        def model(**kwargs):  # noqa: ARG001
+            return {'result': 1 if random.random() > theta else 0}
 
         return model
 
@@ -118,19 +119,20 @@ def test_empty_population(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0),
         sampler=sampler,
     )
-    abc.new(db_path, {"result": 0})
+    abc.new(db_path, {'result': 0})
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon, max_nr_populations=3)
 
     mp = history.get_model_probabilities(history.max_t)
-    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (
-        theta1 + theta2
+    expected_p1, expected_p2 = (
+        theta1 / (theta1 + theta2),
+        theta2 / (theta1 + theta2),
     )
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < 0.05
 
@@ -139,7 +141,7 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
     binomial_n = 5
 
     def model_fun(args):
-        return {"result": st.binom(binomial_n, args.theta).rvs()}
+        return {'result': st.binom(binomial_n, args.theta).rvs()}
 
     models = [model_fun for _ in range(2)]
     models = list(map(FunctionModel, models))
@@ -150,12 +152,12 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0.1),
         sampler=sampler,
     )
-    abc.new(db_path, {"result": 2})
+    abc.new(db_path, {'result': 2})
 
     minimum_epsilon = 0.2
     history = abc.run(minimum_epsilon, max_nr_populations=3)
@@ -164,19 +166,10 @@ def test_beta_binomial_two_identical_models(db_path, sampler):
 
 
 class AllInOneModel(Model):
-    def summary_statistics(self, t, pars, sum_stat_calculator) -> ModelResult:
-        return ModelResult(sum_stat={"result": 1})
+    def summary_statistics(self, t, pars, sum_stat_calculator) -> ModelResult:  # noqa: ARG002
+        return ModelResult(sum_stat={'result': 1})
 
-    def accept(
-        self,
-        t,
-        pars,
-        sum_stat_calculator,
-        distance_calculator,
-        eps_calculator,
-        acceptor,
-        x_0,
-    ) -> ModelResult:
+    def accept(self, **kwargs) -> ModelResult:  # noqa: ARG002
         return ModelResult(accepted=True)
 
 
@@ -184,17 +177,17 @@ def test_all_in_one_model(db_path, sampler):
     models = [AllInOneModel() for _ in range(2)]
     population_size = ConstantPopulationSize(800)
     parameter_given_model_prior_distribution = [
-        Distribution(theta=RV("beta", 1, 1)) for _ in range(2)
+        Distribution(theta=RV('beta', 1, 1)) for _ in range(2)
     ]
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0.1),
         sampler=sampler,
     )
-    abc.new(db_path, {"result": 2})
+    abc.new(db_path, {'result': 2})
 
     minimum_epsilon = 0.2
     history = abc.run(minimum_epsilon, max_nr_populations=3)
@@ -206,7 +199,7 @@ def test_beta_binomial_different_priors(db_path, sampler):
     binomial_n = 5
 
     def model(args):
-        return {"result": st.binom(binomial_n, args['theta']).rvs()}
+        return {'result': st.binom(binomial_n, args['theta']).rvs()}
 
     models = [model for _ in range(2)]
     models = list(map(FunctionModel, models))
@@ -214,19 +207,19 @@ def test_beta_binomial_different_priors(db_path, sampler):
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [
-        Distribution(theta=RV("beta", a1, b1)),
-        Distribution(theta=RV("beta", a2, b2)),
+        Distribution(theta=RV('beta', a1, b1)),
+        Distribution(theta=RV('beta', a2, b2)),
     ]
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0.1),
         sampler=sampler,
     )
     n1 = 2
-    abc.new(db_path, {"result": n1})
+    abc.new(db_path, {'result': n1})
 
     minimum_epsilon = 0.2
     history = abc.run(minimum_epsilon, max_nr_populations=3)
@@ -255,7 +248,7 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(
     binomial_n = 5
 
     def model(args):
-        return {"result": st.binom(binomial_n, args.theta).rvs()}
+        return {'result': st.binom(binomial_n, args.theta).rvs()}
 
     models = [model for _ in range(2)]
     models = list(map(FunctionModel, models))
@@ -263,19 +256,19 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(
     a1, b1 = 1, 1
     a2, b2 = 10, 1
     parameter_given_model_prior_distribution = [
-        Distribution(theta=RV("beta", a1, b1)),
-        Distribution(theta=RV("beta", a2, b2)),
+        Distribution(theta=RV('beta', a1, b1)),
+        Distribution(theta=RV('beta', a2, b2)),
     ]
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(median_multiplier=0.9),
         sampler=sampler,
     )
     n1 = 2
-    abc.new(db_path, {"result": n1})
+    abc.new(db_path, {'result': n1})
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon, max_nr_populations=5)
@@ -301,30 +294,30 @@ def test_beta_binomial_different_priors_initial_epsilon_from_sample(
 
 def test_continuous_non_gaussian(db_path, sampler):
     def model(args):
-        return {"result": np.random.rand() * args['u']}
+        return {'result': np.random.rand() * args['u']}
 
     models = [model]
     models = list(map(FunctionModel, models))
     population_size = ConstantPopulationSize(250)
     parameter_given_model_prior_distribution = [
-        Distribution(u=RV("uniform", 0, 1))
+        Distribution(u=RV('uniform', 0, 1))
     ]
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0.2),
         sampler=sampler,
     )
     d_observed = 0.5
-    abc.new(db_path, {"result": d_observed})
+    abc.new(db_path, {'result': d_observed})
     abc.do_not_stop_when_only_single_model_alive()
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon, max_nr_populations=2)
     posterior_x, posterior_weight = history.get_distribution(0, None)
-    posterior_x = posterior_x["u"].values
+    posterior_x = posterior_x['u'].values
     sort_indices = np.argsort(posterior_x)
     f_empirical = np.interpolate.interp1d(
         np.hstack((-200, posterior_x[sort_indices], 200)),
@@ -358,31 +351,31 @@ def test_gaussian_single_population(db_path, sampler):
     observed_data = 1
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma_ground_truth).rvs()}
+        return {'y': st.norm(args['x'], sigma_ground_truth).rvs()}
 
     models = [model]
     models = list(map(FunctionModel, models))
     nr_populations = 1
     population_size = ConstantPopulationSize(600)
     parameter_given_model_prior_distribution = [
-        Distribution(x=RV("norm", 0, sigma_prior))
+        Distribution(x=RV('norm', 0, sigma_prior))
     ]
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["y"]),
+        MinMaxDistance(measures_to_use=['y']),
         population_size,
         eps=MedianEpsilon(0.1),
         sampler=sampler,
     )
-    abc.new(db_path, {"y": observed_data})
+    abc.new(db_path, {'y': observed_data})
 
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
-    posterior_x = posterior_x["x"].values
+    posterior_x = posterior_x['x'].values
     sort_indices = np.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(
         np.hstack((-200, posterior_x[sort_indices], 200)),
@@ -392,9 +385,7 @@ def test_gaussian_single_population(db_path, sampler):
     sigma_x_given_y = 1 / np.sqrt(
         1 / sigma_prior**2 + 1 / sigma_ground_truth**2
     )
-    mu_x_given_y = (
-        sigma_x_given_y**2 * observed_data / sigma_ground_truth**2
-    )
+    mu_x_given_y = sigma_x_given_y**2 * observed_data / sigma_ground_truth**2
     expected_posterior_x = st.norm(mu_x_given_y, sigma_x_given_y)
     x = np.linspace(-8, 8)
     max_distribution_difference = np.absolute(
@@ -413,7 +404,7 @@ def test_gaussian_multiple_populations(db_path, sampler):
     y_observed = 2
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma_y).rvs()}
+        return {'y': st.norm(args['x'], sigma_y).rvs()}
 
     models = [model]
     models = list(map(FunctionModel, models))
@@ -425,20 +416,20 @@ def test_gaussian_multiple_populations(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["y"]),
+        MinMaxDistance(measures_to_use=['y']),
         population_size,
         eps=MedianEpsilon(0.2),
         sampler=sampler,
     )
 
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
-    posterior_x = posterior_x["x"].values
+    posterior_x = posterior_x['x'].values
     sort_indices = np.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(
         np.hstack((-200, posterior_x[sort_indices], 200)),
@@ -465,7 +456,7 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     y_observed = 2
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma_y).rvs()}
+        return {'y': st.norm(args['x'], sigma_y).rvs()}
 
     models = [model]
     models = list(map(FunctionModel, models))
@@ -477,26 +468,26 @@ def test_gaussian_multiple_populations_crossval_kde(db_path, sampler):
     parameter_perturbation_kernels = [
         GridSearchCV(
             MultivariateNormalTransition(),
-            {"scaling": np.logspace(-1, 1.5, 5)},
+            {'scaling': np.logspace(-1, 1.5, 5)},
         )
     ]
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["y"]),
+        MinMaxDistance(measures_to_use=['y']),
         population_size,
         transitions=parameter_perturbation_kernels,
         eps=MedianEpsilon(0.2),
         sampler=sampler,
     )
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
-    posterior_x = posterior_x["x"].values
+    posterior_x = posterior_x['x'].values
     sort_indices = np.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(
         np.hstack((-200, posterior_x[sort_indices], 200)),
@@ -525,7 +516,7 @@ def test_two_competing_gaussians_single_population(
     y_observed = 1
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma_y).rvs()}
+        return {'y': st.norm(args['x'], sigma_y).rvs()}
 
     models = [model, model]
     models = list(map(FunctionModel, models))
@@ -538,13 +529,13 @@ def test_two_competing_gaussians_single_population(
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["y"]),
+        MinMaxDistance(measures_to_use=['y']),
         population_size,
         transitions=[transition(), transition()],
         eps=MedianEpsilon(0.02),
         sampler=sampler,
     )
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     minimum_epsilon = -1
     nr_populations = 1
@@ -576,7 +567,7 @@ def test_two_competing_gaussians_multiple_population(
     sigma = 0.5
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma).rvs()}
+        return {'y': st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
     models = [model, model]
@@ -596,7 +587,7 @@ def test_two_competing_gaussians_multiple_population(
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        PercentileDistance(measures_to_use=["y"]),
+        PercentileDistance(measures_to_use=['y']),
         population_size,
         eps=MedianEpsilon(0.2),
         transitions=[transition(), transition()],
@@ -606,7 +597,7 @@ def test_two_competing_gaussians_multiple_population(
     # Finally we add meta data such as model names and define where to store the results
     # y_observed is the important piece here: our actual observation.
     y_observed = 1
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = 0.05
@@ -634,8 +625,8 @@ def test_two_competing_gaussians_multiple_population(
 
 def test_empty_population_adaptive(db_path, sampler):
     def make_model(theta):
-        def model(args):
-            return {"result": 1 if random.random() > theta else 0}
+        def model(**kwargs):  # noqa: ARG001
+            return {'result': 1 if random.random() > theta else 0}
 
         return model
 
@@ -650,19 +641,20 @@ def test_empty_population_adaptive(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0),
         sampler=sampler,
     )
 
-    abc.new(db_path, {"result": 0})
+    abc.new(db_path, {'result': 0})
 
     minimum_epsilon = -1
     history = abc.run(minimum_epsilon, max_nr_populations=3)
     mp = history.get_model_probabilities(history.max_t)
-    expected_p1, expected_p2 = theta1 / (theta1 + theta2), theta2 / (
-        theta1 + theta2
+    expected_p1, expected_p2 = (
+        theta1 / (theta1 + theta2),
+        theta2 / (theta1 + theta2),
     )
     assert abs(mp.p[0] - expected_p1) + abs(mp.p[1] - expected_p2) < 0.1
 
@@ -671,7 +663,7 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
     binomial_n = 5
 
     def model_fun(args):
-        return {"result": st.binom(binomial_n, args.theta).rvs()}
+        return {'result': st.binom(binomial_n, args.theta).rvs()}
 
     models = [model_fun for _ in range(2)]
     models = list(map(FunctionModel, models))
@@ -682,12 +674,12 @@ def test_beta_binomial_two_identical_models_adaptive(db_path, sampler):
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["result"]),
+        MinMaxDistance(measures_to_use=['result']),
         population_size,
         eps=MedianEpsilon(0.1),
         sampler=sampler,
     )
-    abc.new(db_path, {"result": 2})
+    abc.new(db_path, {'result': 2})
 
     minimum_epsilon = 0.2
     history = abc.run(minimum_epsilon, max_nr_populations=3)
@@ -703,7 +695,7 @@ def test_gaussian_multiple_populations_adpative_population_size(
     y_observed = 2
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma_y).rvs()}
+        return {'y': st.norm(args['x'], sigma_y).rvs()}
 
     models = [model]
     models = list(map(FunctionModel, models))
@@ -715,19 +707,19 @@ def test_gaussian_multiple_populations_adpative_population_size(
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["y"]),
+        MinMaxDistance(measures_to_use=['y']),
         population_size,
         eps=MedianEpsilon(0.2),
         sampler=sampler,
     )
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     minimum_epsilon = -1
 
     abc.do_not_stop_when_only_single_model_alive()
     history = abc.run(minimum_epsilon, max_nr_populations=nr_populations)
     posterior_x, posterior_weight = history.get_distribution(0, None)
-    posterior_x = posterior_x["x"].values
+    posterior_x = posterior_x['x'].values
     sort_indices = np.argsort(posterior_x)
     f_empirical = sp.interpolate.interp1d(
         np.hstack((-200, posterior_x[sort_indices], 200)),
@@ -755,25 +747,20 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(
     sigma = 0.5
 
     def model(args):
-        return {"y": st.norm(args['x'], sigma).rvs()}
+        return {'y': st.norm(args['x'], sigma).rvs()}
 
     # We define two models, but they are identical so far
     models = [model, model]
     models = list(map(FunctionModel, models))
 
     # The prior over the model classes is uniform
-    model_prior = RV("randint", 0, 2)
+    model_prior = RV('randint', 0, 2)
 
     # However, our models' priors are not the same. Their mean differs.
     mu_x_1, mu_x_2 = 0, 1
     parameter_given_model_prior_distribution = [
         Distribution(x=st.norm(mu_x_1, sigma)),
         Distribution(x=st.norm(mu_x_2, sigma)),
-    ]
-
-    # Particles are perturbed in a Gaussian fashion
-    parameter_perturbation_kernels = [
-        MultivariateNormalTransition() for _ in range(2)
     ]
 
     # We plug all the ABC setup together
@@ -784,7 +771,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(
     abc = ABCSMC(
         models,
         parameter_given_model_prior_distribution,
-        MinMaxDistance(measures_to_use=["y"]),
+        MinMaxDistance(measures_to_use=['y']),
         population_size,
         model_prior=model_prior,
         eps=MedianEpsilon(0.2),
@@ -794,7 +781,7 @@ def test_two_competing_gaussians_multiple_population_adaptive_populatin_size(
     # Finally we add meta data such as model names and define where to store the results
     # y_observed is the important piece here: our actual observation.
     y_observed = 1
-    abc.new(db_path, {"y": y_observed})
+    abc.new(db_path, {'y': y_observed})
 
     # We run the ABC with 3 populations max
     minimum_epsilon = 0.05

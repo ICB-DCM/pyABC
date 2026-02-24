@@ -174,7 +174,7 @@ def plot_kde_1d_highlevel_plotly(
     xmin=None,
     xmax=None,
     numx: int = 50,
-    fig: "go.Figure" = None,
+    fig: 'go.Figure' = None,
     row: int = 1,
     col: int = 1,
     size=None,
@@ -250,7 +250,7 @@ def plot_kde_1d(
     # TODO This fixes the upper bound inadequately
     # ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
     ax.set_xlabel(xname)
-    ax.set_ylabel("Posterior")
+    ax.set_ylabel('Posterior')
     ax.set_xlim(xmin, xmax)
     if title is not None:
         ax.set_title(title)
@@ -271,7 +271,7 @@ def plot_kde_1d_plotly(
     xmin=None,
     xmax=None,
     numx=50,
-    fig: "go.Figure" = None,
+    fig: 'go.Figure' = None,
     row: int = 1,
     col: int = 1,
     size=None,
@@ -282,7 +282,7 @@ def plot_kde_1d_plotly(
     kde=None,
     xname: str = None,
     **kwargs,
-) -> "go.Figure":
+) -> 'go.Figure':
     """Plot 1d kde using plotly."""
     import plotly.graph_objects as go
     from plotly.colors import DEFAULT_PLOTLY_COLORS
@@ -320,7 +320,7 @@ def plot_kde_1d_plotly(
     if refval is not None:
         fig.add_vline(
             x=refval[x],
-            line_dash="dash",
+            line_dash='dash',
             line_color=refval_color,
             row=row,
             col=col,
@@ -546,7 +546,7 @@ def plot_kde_2d_highlevel_plotly(
     ymax: float = None,
     numx: int = 50,
     numy: int = 50,
-    fig: "go.Figure" = None,
+    fig: 'go.Figure' = None,
     row: int = 1,
     col: int = 1,
     size=None,
@@ -559,7 +559,7 @@ def plot_kde_2d_highlevel_plotly(
     xname: str = None,
     yname: str = None,
     **kwargs,
-) -> "go.Figure":
+) -> 'go.Figure':
     """
     Plot 2d kernel density estimate of parameter samples using plotly.
     """
@@ -679,7 +679,7 @@ def plot_kde_2d_plotly(
     ymax=None,
     numx=50,
     numy=50,
-    fig: "go.Figure" = None,
+    fig: 'go.Figure' = None,
     row: int = 1,
     col: int = 1,
     size=None,
@@ -726,7 +726,7 @@ def plot_kde_2d_plotly(
             z=PDF,
             showscale=showscale,
             showlegend=showlegend,
-            name="Posterior",
+            name='Posterior',
             **kwargs,
         ),
         row=row,
@@ -838,16 +838,15 @@ def plot_kde_matrix_highlevel_plotly(
     m: int = 0,
     t: int = None,
     limits=None,
-    height: float = 30,
+    height: int = 30,
     numx: int = 50,
     numy: int = 50,
     refval=None,
     refval_color='gray',
-    marker_color=None,
     kde=None,
     names: dict = None,
-    title: str = "Univariate and bivariate distributions using KDE",
-) -> "go.Figure":
+    title: str = 'Univariate and bivariate distributions using KDE',
+) -> 'go.Figure':
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples,
     using plotly.
@@ -947,7 +946,7 @@ def plot_kde_matrix(
         alpha = w / w.max()
         colors = np.zeros((alpha.size, 4))
         colors[:, 3] = alpha
-        ax.scatter(x, y, color="k")
+        ax.scatter(x, y, color='k')
         if refval is not None:
             ax.scatter([refval[x.name]], [refval[y.name]], color=refval_color)
         ax.set_xlim(*limits.get(x.name, default))
@@ -1011,8 +1010,8 @@ def plot_kde_matrix_plotly(
     marker_color=None,
     kde=None,
     names: dict = None,
-    title: str = "Univariate and bivariate distributions using KDE",
-) -> "go.Figure":
+    title: str = 'Univariate and bivariate distributions using KDE',
+) -> 'go.Figure':
     """
     Plot a KDE matrix for 1- and 2-dim marginals of the parameter samples,
     using plotly.
@@ -1077,8 +1076,8 @@ def plot_kde_matrix_plotly(
             go.Scatter(
                 x=x,
                 y=y,
-                mode="markers",
-                marker={'color': "black"},
+                mode='markers',
+                marker={'color': 'black'},
             ),
             row=row,
             col=col,
@@ -1088,7 +1087,7 @@ def plot_kde_matrix_plotly(
                 go.Scatter(
                     x=[refval[x.name]],
                     y=[refval[y.name]],
-                    mode="markers",
+                    mode='markers',
                     marker={'color': refval_color},
                 ),
                 row=row,

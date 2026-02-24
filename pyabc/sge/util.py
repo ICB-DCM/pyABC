@@ -16,7 +16,7 @@ def sge_available():
         Whether SGE is available or not.
     """
     try:
-        subprocess.run("qstat", stdout=subprocess.PIPE)  # noqa: S607,S603
+        subprocess.run('qstat', stdout=subprocess.PIPE)  # noqa: S607,S603
         return True
     except FileNotFoundError:
         return False

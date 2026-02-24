@@ -4,9 +4,9 @@ import logging
 import os
 
 # maximum population size environment variable
-PYABC_MAX_POP_SIZE = "PYABC_MAX_POP_SIZE"
+PYABC_MAX_POP_SIZE = 'PYABC_MAX_POP_SIZE'
 
-logger = logging.getLogger("ABC.Util")
+logger = logging.getLogger('ABC.Util')
 
 
 def bound_pop_size_from_env(pop_size: int):
@@ -26,8 +26,8 @@ def bound_pop_size_from_env(pop_size: int):
     pop_size = min(pop_size, int(os.environ[PYABC_MAX_POP_SIZE]))
 
     logger.warning(
-        f"Bounding population size to {pop_size} via environment variable "
-        f"{PYABC_MAX_POP_SIZE}"
+        f'Bounding population size to {pop_size} via environment variable '
+        f'{PYABC_MAX_POP_SIZE}'
     )
 
     return pop_size

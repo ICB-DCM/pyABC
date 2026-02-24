@@ -6,7 +6,7 @@ from io import BytesIO, StringIO
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger("ABC.History")
+logger = logging.getLogger('ABC.History')
 
 try:
     import pyarrow
@@ -35,11 +35,11 @@ def df_from_bytes_csv(bytes_: bytes) -> pd.DataFrame:
             s,
             index_col=0,
             header=0,
-            float_precision="round_trip",
+            float_precision='round_trip',
             quotechar='"',
         )
     except UnicodeDecodeError:
-        raise DataFrameLoadException("Not a csv DataFrame")
+        raise DataFrameLoadException('Not a csv DataFrame') from None
 
 
 def df_to_bytes_msgpack(df: pd.DataFrame) -> bytes:
@@ -52,9 +52,9 @@ def df_from_bytes_msgpack(bytes_: bytes) -> pd.DataFrame:
     try:
         df = pd.read_msgpack(BytesIO(bytes_))
     except UnicodeDecodeError:
-        raise DataFrameLoadException("Not a msgpack DataFrame")
+        raise DataFrameLoadException('Not a msgpack DataFrame') from None
     if not isinstance(df, pd.DataFrame):
-        raise DataFrameLoadException("Not a msgpack DataFrame")
+        raise DataFrameLoadException('Not a msgpack DataFrame')
     return df
 
 
@@ -65,7 +65,7 @@ def df_to_bytes_json(df: pd.DataFrame) -> bytes:
 
 def df_from_bytes_json(bytes_: bytes) -> pd.DataFrame:
     """Pandas DataFrame from json."""
-    return pd.read_json(bytes_.decode())
+    return pd.read_json(StringIO(bytes_.decode()))
 
 
 def df_to_bytes_parquet(df: pd.DataFrame) -> bytes:
@@ -115,7 +115,7 @@ def df_from_bytes_np_records(bytes_: bytes) -> pd.DataFrame:
     """Pandas DataFrame from numpy.recarray."""
     b = BytesIO(bytes_)
     rec = np.load(b)
-    df = pd.DataFrame.from_records(rec, index="index")
+    df = pd.DataFrame.from_records(rec, index='index')
     return df
 
 
@@ -127,8 +127,8 @@ def df_to_bytes(df: pd.DataFrame) -> bytes:
     if pyarrow is None:
         warnings.warn(
             "Can't find pyarrow, falling back to less efficient csv "
-            "to store pandas DataFrames.\n"
-            "Install e.g. via `pip install pyabc[pyarrow]`",
+            'to store pandas DataFrames.\n'
+            'Install e.g. via `pip install pyabc[pyarrow]`',
             stacklevel=2,
         )
         return df_to_bytes_csv(df)
@@ -145,7 +145,7 @@ def df_from_bytes(bytes_: bytes) -> pd.DataFrame:
             return df_from_bytes_csv(bytes_)
         except DataFrameLoadException:
             raise DataFrameLoadException(
-                "Not a csv DataFrame. An installation of pyarrow "
-                "may be required, e.g. via `pip install pyabc[pyarrow]`"
-            )
+                'Not a csv DataFrame. An installation of pyarrow '
+                'may be required, e.g. via `pip install pyabc[pyarrow]`'
+            ) from None
     return df_from_bytes_parquet(bytes_)

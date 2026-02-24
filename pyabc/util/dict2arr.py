@@ -1,13 +1,12 @@
 """Transform dictionaries to arrays."""
 
 from numbers import Number
-from typing import List, Union
 
 import numpy as np
 import pandas as pd
 
 
-def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
+def dict2arr(dct: dict | np.ndarray, keys: list) -> np.ndarray:
     """Convert dictionary to 1d array, in specified key order.
 
     Parameters
@@ -26,7 +25,7 @@ def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
     arr = []
     for key in keys:
         val = dct[key]
-        if isinstance(val, (pd.DataFrame, pd.Series)):
+        if isinstance(val, pd.DataFrame | pd.Series):
             arr.append(val.to_numpy().flatten())
         elif isinstance(val, np.ndarray):
             arr.append(val.flatten())
@@ -34,8 +33,8 @@ def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
             arr.append([val])
         else:
             raise TypeError(
-                f"Cannot parse variable {key}={val} of type {type(val)} "
-                "to numeric."
+                f'Cannot parse variable {key}={val} of type {type(val)} '
+                'to numeric.'
             )
 
     # for efficiency, directly parse single entries
@@ -46,7 +45,7 @@ def dict2arr(dct: Union[dict, np.ndarray], keys: List) -> np.ndarray:
     return np.asarray(arr)
 
 
-def dict2arrlabels(dct: dict, keys: List) -> List[str]:
+def dict2arrlabels(dct: dict, keys: list) -> list[str]:
     """Get label array consistent with the output of `dict2arr`.
 
     Can be called e.g. once on the observed data and used for logging.
@@ -63,21 +62,21 @@ def dict2arrlabels(dct: dict, keys: List) -> List[str]:
     labels = []
     for key in keys:
         val = dct[key]
-        if isinstance(val, (pd.DataFrame, pd.Series)):
+        if isinstance(val, pd.DataFrame | pd.Series):
             # default flattening mode is 'C', i.e. row-major, i.e. row-by-row
             for row in range(len(val.index)):
                 for col in val.columns:
-                    labels.append(f"{key}:{col}:{row}")
+                    labels.append(f'{key}:{col}:{row}')
         elif isinstance(val, np.ndarray):
             # array can have any dimension, thus just flat indices
             for ix in range(val.size):
-                labels.append(f"{key}:{ix}")
+                labels.append(f'{key}:{ix}')
         elif isinstance(val, Number):
             labels.append(key)
         else:
             raise TypeError(
-                f"Cannot parse variable {key}={val} of type {type(val)} "
-                "to numeric."
+                f'Cannot parse variable {key}={val} of type {type(val)} '
+                'to numeric.'
             )
     return labels
 
@@ -89,7 +88,7 @@ def io_dict2arr(fun):
     variable.
     """
 
-    def wrapped_fun(self, data: Union[dict, np.ndarray], *args, **kwargs):
+    def wrapped_fun(self, data: dict | np.ndarray, *args, **kwargs):
         # convert input to array
         data = dict2arr(data, self.x_keys)
         # call the actual function

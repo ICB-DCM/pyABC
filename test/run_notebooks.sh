@@ -15,15 +15,24 @@ nbs_1=(
   "noise"
   "parameter_inference"
   "resuming"
+  "chemical_reaction"
+  "informative"
+  "look_ahead"
+  "data_plots"
+  "discrete_parameters"
+  "custom_priors"
+  "aggregated_distances"
+  #"sde_ion_channels"  # url error
 )
 nbs_2=(
   "external_simulators"
   "using_R"
-  "aggregated_distances"
-  "data_plots"
-  "discrete_parameters"
   "optimal_threshold"
-  "custom_priors"
+  "petab_application"
+  # "petab_yaml2sbml"  # yaml2sbml does not work with current petab version
+  # "multiscale_agent_based"  # too slow
+  "using_copasi"
+  "using_julia"
 )
 
 # All notebooks
@@ -59,10 +68,12 @@ done
 
 run_notebook () {
   # Run a notebook and raise upon failure
-  tempfile=$(tempfile)
+  tempfile=$(mktemp)
   echo $@
-  jupyter nbconvert --ExecutePreprocessor.timeout=-1 --debug \
-    --stdout --execute --to markdown $@ &> $tempfile
+  python -m jupyter nbconvert \
+  --ExecutePreprocessor.timeout=-1 \
+  --ExecutePreprocessor.kernel_name=python3 \
+  --debug --stdout --execute --to markdown "$@" &> "$tempfile"
   ret=$?
   if [[ $ret != 0 ]]; then
       cat $tempfile

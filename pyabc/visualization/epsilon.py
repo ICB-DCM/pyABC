@@ -1,6 +1,6 @@
 """Epsilon threshold plots"""
 
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 
 
 def _prepare(
-    histories: Union[List, History],
-    labels: Union[List, str],
-    colors: List,
+    histories: list | History,
+    labels: list | str,
+    colors: list,
 ):
     # preprocess input
     histories = to_lists(histories)
@@ -36,11 +36,11 @@ def _prepare(
 
 
 def plot_epsilons(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
-    colors: List = None,
+    histories: list | History,
+    labels: list | str = None,
+    colors: list = None,
     yscale: str = 'log',
-    title: str = "Epsilon values",
+    title: str = 'Epsilon values',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
 ) -> mpl.axes.Axes:
@@ -85,8 +85,8 @@ def plot_epsilons(
         ax.plot(ep, 'x-', label=label, color=color)
 
     # format
-    ax.set_xlabel("Population index")
-    ax.set_ylabel("Epsilon")
+    ax.set_xlabel('Population index')
+    ax.set_ylabel('Epsilon')
     if any(lab is not None for lab in labels):
         ax.legend()
     ax.set_title(title)
@@ -102,14 +102,14 @@ def plot_epsilons(
 
 
 def plot_epsilons_plotly(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
-    colors: List = None,
+    histories: list | History,
+    labels: list | str = None,
+    colors: list = None,
     yscale: str = 'log',
-    title: str = "Epsilon values",
+    title: str = 'Epsilon values',
     size: tuple = None,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot epsilon trajectory using plotly."""
     import plotly.graph_objects as go
 
@@ -134,8 +134,8 @@ def plot_epsilons_plotly(
 
     # format
     fig.update_layout(
-        xaxis_title="Population index",
-        yaxis_title="Epsilon",
+        xaxis_title='Population index',
+        yaxis_title='Epsilon',
         title=title,
         yaxis_type=yscale,
     )

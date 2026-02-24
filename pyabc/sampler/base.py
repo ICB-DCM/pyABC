@@ -1,6 +1,6 @@
 from abc import ABC, ABCMeta, abstractmethod
+from collections.abc import Callable
 from numbers import Real
-from typing import Callable, Union
 
 import numpy as np
 
@@ -22,11 +22,11 @@ def wrap_sample(f):
         if sample.n_accepted != n and sample.ok:
             # this should not happen if the sampler is configured correctly
             raise AssertionError(
-                f"Expected {n} but got {sample.n_accepted} acceptances."
+                f'Expected {n} but got {sample.n_accepted} acceptances.'
             )
 
         if any(particle.preliminary for particle in sample.all_particles):
-            raise AssertionError("There cannot be non-evaluated particles.")
+            raise AssertionError('There cannot be non-evaluated particles.')
 
         return sample
 
@@ -74,7 +74,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
             record_rejected=False
         )
         self.show_progress: bool = False
-        self.analysis_id: Union[str, None] = None
+        self.analysis_id: str | None = None
 
     def _create_empty_sample(self) -> Sample:
         return self.sample_factory()

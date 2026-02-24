@@ -3,11 +3,10 @@ import os
 import platform
 from multiprocessing import Process, ProcessError, Queue
 from queue import Empty
-from typing import List
 
 from .base import Sampler
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
 
 class MultiCoreSampler(Sampler):
@@ -42,13 +41,13 @@ class MultiCoreSampler(Sampler):
         self.daemon = daemon
         if pickle is None:
             pickle = False
-            if platform.system() == "Darwin":  # macos
+            if platform.system() == 'Darwin':  # macos
                 pickle = True
         self.pickle = pickle
         self.check_max_eval = check_max_eval
 
         # inform user about number of cores used
-        logger.info(f"Parallelize sampling on {self.n_procs} processes.")
+        logger.info(f'Parallelize sampling on {self.n_procs} processes.')
 
     @property
     def n_procs(self):
@@ -78,7 +77,7 @@ def healthy(worker):
     return all(worker.exitcode in [0, None] for worker in worker)
 
 
-def get_if_worker_healthy(workers: List[Process], queue: Queue):
+def get_if_worker_healthy(workers: list[Process], queue: Queue):
     """
 
     Parameters
@@ -95,9 +94,11 @@ def get_if_worker_healthy(workers: List[Process], queue: Queue):
     item: An item from the queue
     """
     while True:
+        # Check health first before potentially blocking
+        if not healthy(workers):
+            raise ProcessError('At least one worker is dead.') from None
         try:
-            item = queue.get(True, 5)
+            item = queue.get(timeout=0.1)
             return item
         except Empty:
-            if not healthy(workers):
-                raise ProcessError("At least one worker is dead.")
+            pass

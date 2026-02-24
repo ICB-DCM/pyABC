@@ -1,6 +1,6 @@
 """Effective sample size plots"""
 
-from typing import TYPE_CHECKING, List, Union
+from typing import TYPE_CHECKING
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -15,9 +15,9 @@ if TYPE_CHECKING:
 
 
 def _prepare_plot_effective_sample_sizes(
-    histories: Union[List, History],
-    labels: Union[List, str],
-    colors: List,
+    histories: list | History,
+    labels: list | str,
+    colors: list,
     relative: bool,
 ):
     # preprocess input
@@ -43,12 +43,12 @@ def _prepare_plot_effective_sample_sizes(
 
 
 def plot_effective_sample_sizes(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
+    histories: list | History,
+    labels: list | str = None,
     rotation: int = 0,
-    title: str = "Effective sample size",
+    title: str = 'Effective sample size',
     relative: bool = False,
-    colors: List = None,
+    colors: list = None,
     size: tuple = None,
     ax: mpl.axes.Axes = None,
 ) -> mpl.axes.Axes:
@@ -100,8 +100,8 @@ def plot_effective_sample_sizes(
         ax.plot(range(0, len(esss)), esss, 'x-', label=label, color=color)
 
     # format
-    ax.set_xlabel("Population index")
-    ax.set_ylabel("ESS")
+    ax.set_xlabel('Population index')
+    ax.set_ylabel('ESS')
     if any(lab is not None for lab in labels):
         ax.legend()
     ax.set_title(title)
@@ -120,15 +120,15 @@ def plot_effective_sample_sizes(
 
 
 def plot_effective_sample_sizes_plotly(
-    histories: Union[List, History],
-    labels: Union[List, str] = None,
+    histories: list | History,
+    labels: list | str = None,
     rotation: int = 0,
-    title: str = "Effective sample size",
+    title: str = 'Effective sample size',
     relative: bool = False,
-    colors: List = None,
+    colors: list = None,
     size: tuple = None,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot effective sample sizes using plotly."""
     import plotly.graph_objects as go
 
@@ -147,7 +147,7 @@ def plot_effective_sample_sizes_plotly(
             go.Scatter(
                 x=list(range(0, len(esss))),
                 y=esss,
-                mode="lines+markers",
+                mode='lines+markers',
                 name=label,
                 marker={'color': color},
             )
@@ -155,10 +155,10 @@ def plot_effective_sample_sizes_plotly(
 
     # format
     fig.update_layout(
-        xaxis_title="Population index",
-        yaxis_title="ESS",
+        xaxis_title='Population index',
+        yaxis_title='ESS',
         title=title,
-        xaxis={'tickmode': "linear"},
+        xaxis={'tickmode': 'linear'},
     )
     # rotate x tick labels
     fig.update_xaxes(tickangle=rotation)

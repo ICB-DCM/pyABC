@@ -40,7 +40,7 @@ def load_dict_from_json(file_: str, key_type: type = int):
     -------
     dct: The json file contents.
     """
-    with open(file_, 'r') as f:
+    with open(file_) as f:
         _dct = json.load(f)
     dct = {}
     for key, val in _dct.items():

@@ -36,7 +36,7 @@ def test_basic(sampler: pyabc.sampler.Sampler):
         return np.sum(x['s0'] - y['s0'])
 
     x0 = model({'p0': 2})
-    prior = pyabc.Distribution(p0=pyabc.RV("uniform", 0, 10))
+    prior = pyabc.Distribution(p0=pyabc.RV('uniform', 0, 10))
 
     abc = pyabc.ABCSMC(
         model, prior, distance, sampler=sampler, population_size=50

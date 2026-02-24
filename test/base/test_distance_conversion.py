@@ -15,4 +15,4 @@ def distance(request):
 def test_distance_none(distance):
     dist_func = FunctionDistance.to_distance(distance)
     config = dist_func.get_config()
-    assert "name" in config
+    assert 'name' in config

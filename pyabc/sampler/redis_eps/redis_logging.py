@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
 
 class RedisSamplerLogger:
@@ -14,11 +14,11 @@ class RedisSamplerLogger:
         if log_file:
             if os.path.exists(log_file) and os.stat(log_file).st_size > 0:
                 raise ValueError(
-                    f"Sampler log file {log_file} exists and is not empty."
+                    f'Sampler log file {log_file} exists and is not empty.'
                 )
             if not log_file.endswith('.csv'):
                 raise ValueError(
-                    f"Sampler log  file {log_file} must be a .csv file"
+                    f'Sampler log  file {log_file} must be a .csv file'
                 )
 
         # data is a list that can be translated to pandas
@@ -54,7 +54,7 @@ class RedisSamplerLogger:
     def write(self):
         """Write data to output."""
         # write to screen
-        logger.debug(f"Sampling for time t: {self.data[-1]}")
+        logger.debug(f'Sampling for time t: {self.data[-1]}')
         # write to file
         if self.log_file:
             df = pd.DataFrame(self.data)

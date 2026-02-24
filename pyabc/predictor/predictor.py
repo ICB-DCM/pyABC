@@ -3,8 +3,8 @@
 import copy
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from time import time
-from typing import Callable, List, Tuple, Union
 
 import numpy as np
 from scipy.stats import pearsonr
@@ -18,7 +18,7 @@ except ImportError:
     skl_lm = skl_gp = skl_nn = skl_ms = None
 
 
-logger = logging.getLogger("ABC.Predictor")
+logger = logging.getLogger('ABC.Predictor')
 
 
 class Predictor(ABC):
@@ -73,7 +73,7 @@ def wrap_fit_log(fit):
         # actual fitting
         ret = fit(self, x, y, w)
 
-        logger.info(f"Fitted {self} in {time() - start_time:.2f}s")
+        logger.info(f'Fitted {self} in {time() - start_time:.2f}s')
         if self.log_pearson:
             # shape: n_sample, n_out
             y_pred = self.predict(x)
@@ -82,10 +82,10 @@ def wrap_fit_log(fit):
                 for i in range(y_pred.shape[1])
             ]
             logger.info(
-                " ".join(
+                ' '.join(
                     [
-                        "Pearson correlations:",
-                        *[f"{coeff:.3f}" for coeff in coeffs],
+                        'Pearson correlations:',
+                        *[f'{coeff:.3f}' for coeff in coeffs],
                     ]
                 ),
             )
@@ -127,7 +127,7 @@ class SimplePredictor(Predictor):
         """
         self.predictor = predictor
         # only used if not joint
-        self.single_predictors: Union[List, None] = None
+        self.single_predictors: list | None = None
 
         self.normalize_features: bool = normalize_features
         self.normalize_labels: bool = normalize_labels
@@ -138,13 +138,13 @@ class SimplePredictor(Predictor):
         self.log_pearson: bool = log_pearson
 
         # indices to use
-        self.use_ixs: Union[np.ndarray, None] = None
+        self.use_ixs: np.ndarray | None = None
 
         # z-score normalization coefficients
-        self.mean_x: Union[np.ndarray, None] = None
-        self.std_x: Union[np.ndarray, None] = None
-        self.mean_y: Union[np.ndarray, None] = None
-        self.std_y: Union[np.ndarray, None] = None
+        self.mean_x: np.ndarray | None = None
+        self.std_x: np.ndarray | None = None
+        self.mean_y: np.ndarray | None = None
+        self.std_y: np.ndarray | None = None
 
     @wrap_fit_log
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
@@ -182,7 +182,7 @@ class SimplePredictor(Predictor):
             # set up predictors
             if self.single_predictors is None:
                 n_par = y.shape[1]
-                self.single_predictors: List = [
+                self.single_predictors: list = [
                     copy.deepcopy(self.predictor) for _ in range(n_par)
                 ]
             # fit a model for each parameter separately
@@ -249,22 +249,22 @@ class SimplePredictor(Predictor):
         # log omitted indices
         if log and not self.use_ixs.all():
             logger.info(
-                "Ignore trivial features "
-                f"{list(np.flatnonzero(~self.use_ixs))}"
+                'Ignore trivial features '
+                f'{list(np.flatnonzero(~self.use_ixs))}'
             )
 
     def __repr__(self) -> str:
-        rep = f"<{self.__class__.__name__} predictor={self.predictor}"
+        rep = f'<{self.__class__.__name__} predictor={self.predictor}'
         # print everything that is customized
         if not self.normalize_features:
-            rep += f" normalize_features={self.normalize_features}"
+            rep += f' normalize_features={self.normalize_features}'
         if not self.normalize_labels:
-            rep += f" normalize_labels={self.normalize_labels}"
+            rep += f' normalize_labels={self.normalize_labels}'
         if not self.joint:
-            rep += f" joint={self.joint}"
+            rep += f' joint={self.joint}'
         if self.weight_samples:
-            rep += f" weight_samples={self.weight_samples}"
-        return rep + ">"
+            rep += f' weight_samples={self.weight_samples}'
+        return rep + '>'
 
 
 class LinearPredictor(SimplePredictor):
@@ -292,8 +292,8 @@ class LinearPredictor(SimplePredictor):
         # check installation
         if skl_lm is None:
             raise ImportError(
-                "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`"
+                'This predictor requires an installation of scikit-learn. '
+                'Install e.g. via `pip install pyabc[scikit-learn]`'
             )
 
         predictor = skl_lm.LinearRegression(**kwargs)
@@ -312,14 +312,14 @@ class LinearPredictor(SimplePredictor):
         # log
         if self.joint:
             logger.debug(
-                "Linear regression coefficients (n_target, n_feature):\n"
-                f"{self.predictor.coef_}"
+                'Linear regression coefficients (n_target, n_feature):\n'
+                f'{self.predictor.coef_}'
             )
         else:
             for i_pred, predictor in enumerate(self.single_predictors):
                 logger.debug(
-                    "Linear regression coefficients (n_target, n_feature):\n"
-                    f"for predictor {i_pred}: {predictor.coef_}"
+                    'Linear regression coefficients (n_target, n_feature):\n'
+                    f'for predictor {i_pred}: {predictor.coef_}'
                 )
 
 
@@ -341,8 +341,8 @@ class LassoPredictor(SimplePredictor):
         # check installation
         if skl_lm is None:
             raise ImportError(
-                "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`"
+                'This predictor requires an installation of scikit-learn. '
+                'Install e.g. via `pip install pyabc[scikit-learn]`'
             )
 
         predictor = skl_lm.Lasso(**kwargs)
@@ -372,7 +372,7 @@ class GPPredictor(SimplePredictor):
 
     def __init__(
         self,
-        kernel: Union[Callable, skl_gp.kernels.Kernel] = None,
+        kernel: Callable | skl_gp.kernels.Kernel = None,
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
@@ -388,14 +388,14 @@ class GPPredictor(SimplePredictor):
         # check installation
         if skl_gp is None:
             raise ImportError(
-                "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`"
+                'This predictor requires an installation of scikit-learn. '
+                'Install e.g. via `pip install pyabc[scikit-learn]`'
             )
 
         # default kernel
         if kernel is None:
             kernel = GPKernelHandle()
-        self.kernel: Union[Callable, skl_gp.kernels.Kernel] = kernel
+        self.kernel: Callable | skl_gp.kernels.Kernel = kernel
 
         self.kwargs = kwargs
 
@@ -434,12 +434,12 @@ class GPKernelHandle:
     """
 
     # kernels supporting features specific length scales
-    ARD_KERNELS = ["RBF", "Matern"]
+    ARD_KERNELS = ['RBF', 'Matern']
 
     def __init__(
         self,
-        kernels: List[str] = None,
-        kernel_kwargs: List[dict] = None,
+        kernels: list[str] = None,
+        kernel_kwargs: list[dict] = None,
         ard: bool = True,
     ):
         """
@@ -461,8 +461,8 @@ class GPKernelHandle:
             list needs to be updated.
         """
         if kernels is None:
-            kernels = ["RBF", "WhiteKernel"]
-        self.kernels: List[str] = kernels
+            kernels = ['RBF', 'WhiteKernel']
+        self.kernels: list[str] = kernels
 
         if kernel_kwargs is None:
             kernel_kwargs = [{} for _ in self.kernels]
@@ -470,7 +470,7 @@ class GPKernelHandle:
 
         self.ard: bool = ard
 
-    def __call__(self, n_in: int) -> "skl_gp.kernels.Kernel":
+    def __call__(self, n_in: int) -> 'skl_gp.kernels.Kernel':
         """
         Parameters
         ----------
@@ -508,7 +508,7 @@ class MLPPredictor(SimplePredictor):
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
-        hidden_layer_sizes: Union[Tuple[int, ...], Callable] = None,
+        hidden_layer_sizes: tuple[int, ...] | Callable = None,
         log_pearson: bool = True,
         **kwargs,
     ):
@@ -525,8 +525,8 @@ class MLPPredictor(SimplePredictor):
         # check installation
         if skl_nn is None:
             raise ImportError(
-                "This predictor requires an installation of scikit-learn. "
-                "Install e.g. via `pip install pyabc[scikit-learn]`"
+                'This predictor requires an installation of scikit-learn. '
+                'Install e.g. via `pip install pyabc[scikit-learn]`'
             )
 
         if hidden_layer_sizes is None:
@@ -574,14 +574,14 @@ class HiddenLayerHandle:
     Allows to define sizes depending on problem dimensions.
     """
 
-    HEURISTIC = "heuristic"
-    MEAN = "mean"
-    MAX = "max"
+    HEURISTIC = 'heuristic'
+    MEAN = 'mean'
+    MAX = 'max'
     METHODS = [HEURISTIC, MEAN, MAX]
 
     def __init__(
         self,
-        method: Union[str, List[str]] = MEAN,
+        method: str | list[str] = MEAN,
         n_layer: int = 1,
         max_size: int = np.inf,
         alpha: float = 1.0,
@@ -613,7 +613,7 @@ class HiddenLayerHandle:
         for m in method:
             if m not in HiddenLayerHandle.METHODS:
                 raise ValueError(
-                    f"Method {m} must be in {HiddenLayerHandle.METHODS}"
+                    f'Method {m} must be in {HiddenLayerHandle.METHODS}'
                 )
         self.method = method
         self.n_layer = n_layer
@@ -625,7 +625,7 @@ class HiddenLayerHandle:
         n_in: int,
         n_out: int,
         n_sample: int,
-    ) -> Tuple[int, ...]:
+    ) -> tuple[int, ...]:
         """
         Parameters
         ----------
@@ -649,7 +649,7 @@ class HiddenLayerHandle:
             elif method == HiddenLayerHandle.MAX:
                 neurons = max(n_in, n_out)
             else:
-                raise ValueError(f"Did not recognize method {self.method}.")
+                raise ValueError(f'Did not recognize method {self.method}.')
             neurons_arr.append(neurons)
 
         # take minimum over proposed values
@@ -662,7 +662,7 @@ class HiddenLayerHandle:
         neurons_per_layer = int(max(2.0, neurons_per_layer))
 
         layer_sizes = tuple(neurons_per_layer for _ in range(self.n_layer))
-        logger.info(f"Layer sizes: {layer_sizes}")
+        logger.info(f'Layer sizes: {layer_sizes}')
 
         return layer_sizes
 
@@ -674,13 +674,13 @@ class ModelSelectionPredictor(Predictor):
     full data set.
     """
 
-    CROSS_VALIDATION = "cross_validation"
-    TRAIN_TEST_SPLIT = "train_test_split"
+    CROSS_VALIDATION = 'cross_validation'
+    TRAIN_TEST_SPLIT = 'train_test_split'
     SPLIT_METHODS = [CROSS_VALIDATION, TRAIN_TEST_SPLIT]
 
     def __init__(
         self,
-        predictors: List[Predictor],
+        predictors: list[Predictor],
         split_method: str = TRAIN_TEST_SPLIT,
         n_splits: int = 5,
         test_size: float = 0.2,
@@ -708,12 +708,12 @@ class ModelSelectionPredictor(Predictor):
             standard variation, and returns the score as a float.
         """
         super().__init__()
-        self.predictors: List[Predictor] = predictors
+        self.predictors: list[Predictor] = predictors
 
         if split_method not in ModelSelectionPredictor.SPLIT_METHODS:
             raise ValueError(
-                f"Split method {split_method} must be in "
-                f"{ModelSelectionPredictor.SPLIT_METHODS}",
+                f'Split method {split_method} must be in '
+                f'{ModelSelectionPredictor.SPLIT_METHODS}',
             )
         self.split_method: str = split_method
 
@@ -724,7 +724,7 @@ class ModelSelectionPredictor(Predictor):
             self.f_score = root_mean_square_error
 
         # holds the chosen predictor model
-        self.chosen_one: Union[Predictor, None] = None
+        self.chosen_one: Predictor | None = None
 
     def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
         # output normalization
@@ -789,8 +789,8 @@ class ModelSelectionPredictor(Predictor):
             self.predictors, scores_train, scores_test
         ):
             logger.info(
-                f"Test score {score_test:.3e} (train {score_train:.3e}) for "
-                f"{predictor}"
+                f'Test score {score_test:.3e} (train {score_train:.3e}) for '
+                f'{predictor}'
             )
 
         # best predictor has minimum score
@@ -807,7 +807,7 @@ class ModelSelectionPredictor(Predictor):
 def root_mean_square_error(
     y1: np.ndarray,
     y2: np.ndarray,
-    sigma: Union[np.ndarray, float],
+    sigma: np.ndarray | float,
 ) -> float:
     """Root mean square error of `y1 - y2 / sigma`.
 

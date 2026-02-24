@@ -210,7 +210,7 @@ def plot_contour_2d_lowlevel(
 
     # show legend
     if show_legend:
-        handles, labels = contour.legend_elements("pdf")
+        handles, labels = contour.legend_elements('pdf')
         ax.legend(handles, labels)
 
     # show title
@@ -404,7 +404,7 @@ def plot_contour_matrix_lowlevel(
         alpha = w / w.max()
         colors = np.zeros((alpha.size, 4))
         colors[:, 3] = alpha
-        ax.scatter(x, y, color="k")
+        ax.scatter(x, y, color='k')
         if refval is not None:
             ax.scatter([refval[x.name]], [refval[y.name]], color=refval_color)
         ax.set_xlim(*limits.get(x.name, default))

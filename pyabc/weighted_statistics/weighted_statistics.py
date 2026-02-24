@@ -11,7 +11,7 @@ def weight_checked(function):
     @wraps(function)
     def function_with_checking(points, weights=None, **kwargs):
         if weights is not None and not np.isclose(weights.sum(), 1):
-            raise AssertionError(f"Weights not normalized: {weights.sum()}.")
+            raise AssertionError(f'Weights not normalized: {weights.sum()}.')
         return function(points, weights, **kwargs)
 
     return function_with_checking

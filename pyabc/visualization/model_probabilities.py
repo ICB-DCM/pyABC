@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 def plot_model_probabilities(
     history: History,
     rotation: int = 0,
-    title: str = "Model probabilities",
+    title: str = 'Model probabilities',
     size: tuple = None,
     ax: mpl.axes.Axes = None,
 ) -> mpl.axes.Axes:
@@ -48,14 +48,14 @@ def plot_model_probabilities(
     model_probabilities = history.get_model_probabilities()
 
     # displayed in plot legend
-    model_probabilities.columns.name = "Model"
+    model_probabilities.columns.name = 'Model'
 
     # plot
     ax = model_probabilities.plot.bar(rot=rotation, legend=True, ax=ax)
 
     # format plot
-    ax.set_ylabel("Probability")
-    ax.set_xlabel("Population index")
+    ax.set_ylabel('Probability')
+    ax.set_xlabel('Population index')
     ax.set_title(title)
 
     if size is not None:
@@ -67,10 +67,10 @@ def plot_model_probabilities(
 def plot_model_probabilities_plotly(
     history: History,
     rotation: int = 0,
-    title: str = "Model probabilities",
+    title: str = 'Model probabilities',
     size: tuple = None,
-    fig: "go.Figure" = None,
-) -> "go.Figure":
+    fig: 'go.Figure' = None,
+) -> 'go.Figure':
     """Plot model probabilities using plotly."""
     import plotly.graph_objects as go
 
@@ -78,7 +78,7 @@ def plot_model_probabilities_plotly(
     model_probabilities = history.get_model_probabilities()
 
     # displayed in plot legend
-    model_probabilities.columns.name = "Model"
+    model_probabilities.columns.name = 'Model'
 
     # plot
     if fig is None:
@@ -95,8 +95,8 @@ def plot_model_probabilities_plotly(
     # format plot
     fig.update_layout(
         title=title,
-        xaxis_title="Population index",
-        yaxis_title="Probability",
+        xaxis_title='Population index',
+        yaxis_title='Probability',
         xaxis_tickangle=rotation,
     )
 

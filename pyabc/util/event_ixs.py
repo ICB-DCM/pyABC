@@ -1,5 +1,6 @@
 import collections.abc
-from typing import Collection, List, Union
+from collections.abc import Collection
+from typing import Union
 
 import numpy as np
 
@@ -12,8 +13,8 @@ class EventIxs:
 
     def __init__(
         self,
-        ts: Union[Collection[int], int] = None,
-        sims: Union[Collection[int], int] = None,
+        ts: Collection[int] | int = None,
+        sims: Collection[int] | int = None,
         from_t: int = None,
         from_sims: int = None,
     ):
@@ -43,7 +44,7 @@ class EventIxs:
         for ix in ts:
             if ix != np.inf and int(ix) != ix:
                 raise AssertionError(
-                    f"Index {ix} must be either inf or an int"
+                    f'Index {ix} must be either inf or an int'
                 )
         self.ts: Collection[int] = set(ts)
 
@@ -55,11 +56,11 @@ class EventIxs:
         # check conversion to index
         for sim in sims:
             if int(sim) != sim:
-                raise AssertionError(f"Simulation number {sim} must be an int")
-        self.sims: List[int] = list(sims)
+                raise AssertionError(f'Simulation number {sim} must be an int')
+        self.sims: list[int] = list(sims)
 
         # track which simulation numbers have been hit
-        self.sims_hit: List[bool] = [False] * len(self.sims)
+        self.sims_hit: list[bool] = [False] * len(self.sims)
 
         self.from_t: int = from_t
         self.from_sims: int = from_sims
@@ -146,22 +147,22 @@ class EventIxs:
         )
 
     def __repr__(self) -> str:
-        repr = f"<{self.__class__.__name__}"
+        repr = f'<{self.__class__.__name__}'
         if self.ts:
-            repr += f", ts={self.ts}"
+            repr += f', ts={self.ts}'
         if self.sims:
-            repr += f", sims={self.sims}"
+            repr += f', sims={self.sims}'
         if self.from_t is not None:
-            repr += f", from_t={self.from_t}"
+            repr += f', from_t={self.from_t}'
         if self.from_sims is not None:
-            repr += f", from_sims={self.from_sims}"
-        repr += ">"
+            repr += f', from_sims={self.from_sims}'
+        repr += '>'
         return repr
 
     @staticmethod
     def to_instance(
-        maybe_event_ixs: Union["EventIxs", Collection[int], int],
-    ) -> "EventIxs":
+        maybe_event_ixs: Union['EventIxs', Collection[int], int],
+    ) -> 'EventIxs':
         """Create instance from instance or collection of time points.
 
         Parameters

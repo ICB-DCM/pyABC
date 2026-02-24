@@ -1,4 +1,5 @@
-from typing import Any, Callable, Union
+from collections.abc import Callable
+from typing import Any
 
 from ..acceptor import Acceptor
 from ..distance import Distance
@@ -57,11 +58,11 @@ class Model:
         analysis for the user as it is stored in the database.
     """
 
-    def __init__(self, name: str = "Model"):
+    def __init__(self, name: str = 'Model'):
         self.name = name
 
     def __repr__(self):
-        return "<{} {}>".format(self.__class__.__name__, self.name)
+        return f'<{self.__class__.__name__} {self.name}>'
 
     def sample(self, pars: Parameter):
         """
@@ -83,7 +84,10 @@ class Model:
         raise NotImplementedError()
 
     def summary_statistics(
-        self, t: int, pars: Parameter, sum_stat_calculator: Callable
+        self,
+        t: int,  # noqa: ARG002
+        pars: Parameter,
+        sum_stat_calculator: Callable,  # noqa: ARG002
     ) -> ModelResult:
         """
         Sample, and then calculate the summary statistics.
@@ -244,7 +248,7 @@ class FunctionModel(Model):
         return self.sample_function(pars)
 
     @staticmethod
-    def to_model(maybe_model: Union[Callable, Model]) -> Model:
+    def to_model(maybe_model: Callable | Model) -> Model:
         """
         Alternative constructor. Accepts either a Model instance or a
         function and returns always a Model instance.
@@ -315,10 +319,10 @@ class IntegratedModel(Model):
         self,
         t: int,
         pars: Parameter,
-        sum_stat_calculator: Callable,
-        distance_calculator: Distance,
+        sum_stat_calculator: Callable,  # noqa: ARG002
+        distance_calculator: Distance,  # noqa: ARG002
         eps_calculator: Epsilon,
-        acceptor: Acceptor,
-        x_0: dict,
+        acceptor: Acceptor,  # noqa: ARG002
+        x_0: dict,  # noqa: ARG002
     ):
         return self.integrated_simulate(pars, eps_calculator(t))

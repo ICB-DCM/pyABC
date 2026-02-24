@@ -4,14 +4,13 @@ import copy
 import logging
 import os
 import tempfile
-from collections.abc import Mapping, Sequence
-from typing import Callable, Dict, Union
+from collections.abc import Callable, Mapping, Sequence
 
 import pyabc
 
 from .base import PetabImporter, rescale
 
-logger = logging.getLogger("ABC.PEtab")
+logger = logging.getLogger('ABC.PEtab')
 
 try:
     import petab.v1 as petab
@@ -19,8 +18,8 @@ try:
 except ImportError:
     petab = C = None
     logger.error(
-        "Install PEtab (see https://github.com/icb-dcm/petab) to use "
-        "the petab functionality, e.g. via `pip install pyabc[petab]`"
+        'Install PEtab (see https://github.com/icb-dcm/petab) to use '
+        'the petab functionality, e.g. via `pip install pyabc[petab]`'
     )
 
 try:
@@ -30,8 +29,8 @@ try:
 except ImportError:
     amici = amici_petab_import = simulate_petab = LLH = RDATAS = None
     logger.error(
-        "Install amici (see https://github.com/icb-dcm/amici) to use "
-        "the amici functionality, e.g. via `pip install pyabc[amici]`"
+        'Install amici (see https://github.com/icb-dcm/amici) to use '
+        'the amici functionality, e.g. via `pip install pyabc[amici]`'
     )
 
 
@@ -62,7 +61,7 @@ class AmiciModel:
         self.return_simulations = return_simulations
         self.return_rdatas = return_rdatas
 
-    def __call__(self, par: Union[Sequence, Mapping]) -> Mapping:
+    def __call__(self, par: Sequence | Mapping) -> Mapping:
         """The model function.
 
         Note: The parameters are assumed to be passed on prior scale.
@@ -79,7 +78,7 @@ class AmiciModel:
             par[key] = val
 
         # scale parameters whose priors are not on scale
-        for key in self.prior_scales.keys():
+        for key in self.prior_scales:
             par[key] = rescale(
                 val=par[key],
                 origin_scale=self.prior_scales[key],
@@ -105,7 +104,7 @@ class AmiciModel:
 
         return ret
 
-    def __getstate__(self) -> Dict:
+    def __getstate__(self) -> dict:
         state = {}
         for key in set(self.__dict__.keys()) - {'amici_model', 'amici_solver'}:
             state[key] = self.__dict__[key]
@@ -117,8 +116,8 @@ class AmiciModel:
                 amici.writeSolverSettingsToHDF5(self.amici_solver, _file)
             except AttributeError as e:
                 e.args += (
-                    "Pickling the AmiciObjective requires an AMICI "
-                    "installation with HDF5 support.",
+                    'Pickling the AmiciObjective requires an AMICI '
+                    'installation with HDF5 support.',
                 )
                 raise
             # read in byte stream
@@ -131,7 +130,7 @@ class AmiciModel:
 
         return state
 
-    def __setstate__(self, state: Dict):
+    def __setstate__(self, state: dict):
         self.__dict__.update(state)
 
         model = amici_petab_import.import_petab_problem(self.petab_problem)
@@ -149,8 +148,8 @@ class AmiciModel:
                 if not err.args:
                     err.args = ('',)
                 err.args += (
-                    "Unpickling an AmiciObjective requires an AMICI "
-                    "installation with HDF5 support.",
+                    'Unpickling an AmiciObjective requires an AMICI '
+                    'installation with HDF5 support.',
                 )
                 raise
         finally:
@@ -183,8 +182,8 @@ class AmiciPetabImporter(PetabImporter):
     def __init__(
         self,
         petab_problem: petab.Problem,
-        amici_model: "amici.Model" = None,
-        amici_solver: "amici.Solver" = None,
+        amici_model: 'amici.Model' = None,
+        amici_solver: 'amici.Solver' = None,
     ):
         super().__init__(petab_problem=petab_problem)
 
@@ -202,7 +201,7 @@ class AmiciPetabImporter(PetabImporter):
         self,
         return_simulations: bool = False,
         return_rdatas: bool = False,
-    ) -> Callable[[Union[Sequence, Mapping]], Mapping]:
+    ) -> Callable[[Sequence | Mapping], Mapping]:
         """Create model.
 
         Note that since AMICI uses deterministic ODE simulations,
@@ -235,7 +234,7 @@ class AmiciPetabImporter(PetabImporter):
 
         if set(self.prior_scales.keys()) != set(x_free_ids):
             # this should not happen
-            raise AssertionError("Parameter id mismatch")
+            raise AssertionError('Parameter id mismatch')
 
         # no gradients for pyabc
         self.amici_solver.setSensitivityOrder(0)
@@ -267,7 +266,7 @@ class AmiciPetabImporter(PetabImporter):
             A pyabc distribution encoding the kernel function.
         """
 
-        def kernel_fun(x, x_0, t, par) -> float:
+        def kernel_fun(x, x_0, t, par) -> float:  # noqa: ARG001
             """The kernel function."""
             # the kernel value is computed by amici already
             return x['llh']

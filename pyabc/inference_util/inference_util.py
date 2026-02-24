@@ -1,25 +1,26 @@
-# Note: Due to cyclic imports, these need to be separated from other modules
+from __future__ import annotations
 
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Callable, List
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
-from ..acceptor import Acceptor
-from ..distance import Distance
-from ..epsilon import Epsilon
-from ..model import Model
-from ..parameters import Parameter
-from ..population import Particle
-from ..random_choice import fast_random_choice
-from ..random_variables import RV, Distribution
-from ..storage.history import History
-from ..transition import ModelPerturbationKernel, Transition
+if TYPE_CHECKING:  # to avoid circular imports
+    from ..acceptor import Acceptor
+    from ..distance import Distance
+    from ..epsilon import Epsilon
+    from ..model import Model
+    from ..parameters import Parameter
+    from ..population import Particle
+    from ..random_variables import RV, Distribution
+    from ..storage.history import History
+    from ..transition import ModelPerturbationKernel, Transition
 
-logger = logging.getLogger("ABC")
+logger = logging.getLogger('ABC')
 
 
 class AnalysisVars:
@@ -31,10 +32,10 @@ class AnalysisVars:
     def __init__(
         self,
         model_prior: RV,
-        parameter_priors: List[Distribution],
+        parameter_priors: list[Distribution],
         model_perturbation_kernel: ModelPerturbationKernel,
-        transitions: List[Transition],
-        models: List[Model],
+        transitions: list[Transition],
+        models: list[Model],
         summary_statistics: Callable,
         x_0: dict,
         distance_function: Distance,
@@ -75,8 +76,8 @@ class AnalysisVars:
 
 def create_simulate_from_prior_function(
     model_prior: RV,
-    parameter_priors: List[Distribution],
-    models: List[Model],
+    parameter_priors: list[Distribution],
+    models: list[Model],
     summary_statistics: Callable,
 ) -> Callable:
     """Create a function that simulates from the prior.
@@ -97,6 +98,7 @@ def create_simulate_from_prior_function(
         A function that returns a sampled particle.
     """
     # simulation function, simplifying some parts compared to later
+    from ..population import Particle
 
     def simulate_one():
         # sample model
@@ -134,9 +136,9 @@ def generate_valid_proposal(
     m: np.ndarray,
     p: np.ndarray,
     model_prior: RV,
-    parameter_priors: List[Distribution],
+    parameter_priors: list[Distribution],
     model_perturbation_kernel: ModelPerturbationKernel,
-    transitions: List[Transition],
+    transitions: list[Transition],
 ):
     """Sample a parameter for a model.
 
@@ -154,6 +156,8 @@ def generate_valid_proposal(
     -------
     (m_ss, theta_ss): Model, parameter.
     """
+    from ..random_choice import fast_random_choice
+
     # first generation
     if t == 0:
         # sample from prior
@@ -188,8 +192,8 @@ def generate_valid_proposal(
         n_sample += 1
         if n_sample == n_sample_soft_limit:
             logger.warning(
-                "Unusually many (model, parameter) samples have prior "
-                "density zero. The transition might be inappropriate."
+                'Unusually many (model, parameter) samples have prior '
+                'density zero. The transition might be inappropriate.'
             )
 
 
@@ -197,7 +201,7 @@ def evaluate_proposal(
     m_ss: int,
     theta_ss: Parameter,
     t: int,
-    models: List[Model],
+    models: list[Model],
     summary_statistics: Callable,
     distance_function: Distance,
     eps: Epsilon,
@@ -229,6 +233,8 @@ def evaluate_proposal(
     Data for the given parameters theta_ss are simulated, summary statistics
     computed and evaluated.
     """
+    from ..population import Particle
+
     # simulate, compute distance, check acceptance
     model_result = models[m_ss].accept(
         t, theta_ss, summary_statistics, distance_function, eps, acceptor, x_0
@@ -253,7 +259,7 @@ def evaluate_proposal(
 
 
 def create_prior_pdf(
-    model_prior: RV, parameter_priors: List[Distribution]
+    model_prior: RV, parameter_priors: list[Distribution]
 ) -> Callable:
     """Create a function that calculates a sample's prior density.
 
@@ -275,7 +281,7 @@ def create_prior_pdf(
 
 
 def create_transition_pdf(
-    transitions: List[Transition],
+    transitions: list[Transition],
     model_probabilities: pd.DataFrame,
     model_perturbation_kernel: ModelPerturbationKernel,
 ) -> Callable:
@@ -302,7 +308,7 @@ def create_transition_pdf(
         transition_pd = model_factor * particle_factor
 
         if transition_pd == 0:
-            logger.debug("Transition density is zero!")
+            logger.debug('Transition density is zero!')
         return transition_pd
 
     return transition_pdf
@@ -353,10 +359,10 @@ def create_simulate_function(
     t: int,
     model_probabilities: pd.DataFrame,
     model_perturbation_kernel: ModelPerturbationKernel,
-    transitions: List[Transition],
+    transitions: list[Transition],
     model_prior: RV,
-    parameter_priors: List[Distribution],
-    models: List[Model],
+    parameter_priors: list[Distribution],
+    models: list[Model],
     summary_statistics: Callable,
     x_0: dict,
     distance_function: Distance,
@@ -467,7 +473,7 @@ def only_simulate_data_for_proposal(
     m_ss: int,
     theta_ss: Parameter,
     t: int,
-    models: List[Model],
+    models: list[Model],
     summary_statistics: Callable,
     weight_function: Callable,
     proposal_id: int,
@@ -477,6 +483,7 @@ def only_simulate_data_for_proposal(
     Similar to `evaluate_proposal`, however here for the passed parameters
     only data are simulated, but no distances calculated or acceptance
     checked. That needs to be done post-hoc then, not checked here."""
+    from ..population import Particle
 
     # simulate
     model_result = models[m_ss].summary_statistics(
@@ -516,8 +523,10 @@ def evaluate_preliminary_particle(
     -------
     evaluated_particle: The evaluated particle
     """
+    from ..population import Particle
+
     if not particle.preliminary:
-        raise AssertionError("Particle is not preliminary")
+        raise AssertionError('Particle is not preliminary')
 
     acc_res = ana_vars.acceptor(
         distance_function=ana_vars.distance_function,
@@ -531,10 +540,7 @@ def evaluate_preliminary_particle(
     # reconstruct weighting function from `weight_function`
     sampling_weight = particle.weight
     # the weight is the sampling weight times the acceptance weight(s)
-    if acc_res.accept:
-        weight = sampling_weight * acc_res.weight
-    else:
-        weight = 0.0
+    weight = sampling_weight * acc_res.weight if acc_res.accept else 0.0
 
     # return the evaluated particle
     return Particle(
@@ -587,25 +593,25 @@ def termination_criteria_fulfilled(
     True if any criterion is met, otherwise False.
     """
     if t >= max_t:
-        logger.info("Stop: Maximum number of generations.")
+        logger.info('Stop: Maximum number of generations.')
         return True
     if current_eps <= min_eps:
-        logger.info("Stop: Minimum epsilon.")
+        logger.info('Stop: Minimum epsilon.')
         return True
     if prev_eps is not None and abs(current_eps - prev_eps) < min_eps_diff:
-        logger.info("Stop: Minimum epsilon difference")
+        logger.info('Stop: Minimum epsilon difference')
         return True
     elif stop_if_single_model_alive and nr_of_models_alive <= 1:
-        logger.info("Stop: Single model alive.")
+        logger.info('Stop: Single model alive.')
         return True
     elif acceptance_rate < min_acceptance_rate:
-        logger.info("Stop: Minimum acceptance rate.")
+        logger.info('Stop: Minimum acceptance rate.')
         return True
     elif total_nr_simulations >= max_total_nr_simulations:
-        logger.info("Stop: Total simulations budget.")
+        logger.info('Stop: Total simulations budget.')
         return True
     elif max_walltime is not None and walltime > max_walltime:
-        logger.info("Stop: Maximum walltime.")
+        logger.info('Stop: Maximum walltime.')
         return True
     return False
 
@@ -624,4 +630,4 @@ def eps_from_hist(history: History, t: int = None) -> float:
         return None
     if t is None:
         return pops.epsilon.to_numpy()[-1]
-    return pops.set_index("t").loc[t].epsilon
+    return pops.set_index('t').loc[t].epsilon

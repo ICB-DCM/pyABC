@@ -19,7 +19,7 @@ def maybe_to_json(x):
 
     """
     try:
-        return x.to_json(orient="records")
+        return x.to_json(orient='records')
     except AttributeError:
         pass
     try:
@@ -36,12 +36,12 @@ def maybe_to_json(x):
 def sumstat_to_json(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     for c in df:
-        if c.startswith("sumstat"):
+        if c.startswith('sumstat'):
             df[c] = df[c].map(maybe_to_json)
     return df
 
 
-def to_file(df: pd.DataFrame, file: str, file_format="feather"):
+def to_file(df: pd.DataFrame, file: str, file_format='feather'):
     df_json = sumstat_to_json(df)
     df_json_no_index = df_json.reset_index()
-    getattr(df_json_no_index, "to_" + file_format)(file)
+    getattr(df_json_no_index, 'to_' + file_format)(file)
