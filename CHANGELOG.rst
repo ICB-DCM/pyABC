@@ -7,6 +7,15 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.17 (2026-02-24)
+--------------------
+
+General:
+
+* Updated to pyproject.toml format for package metadata and build configuration.
+* Updated to ruff for code quality checks and formatting, replacing flake8 and black.
+
+
 0.12.16 (2025-05-23)
 --------------------
 
