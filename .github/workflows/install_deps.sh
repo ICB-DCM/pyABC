@@ -1,101 +1,140 @@
-#!/bin/sh
+#!/usr/bin/env bash
+set -euo pipefail
 
-# pip
-python -m pip install --upgrade pip
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m'
 
-# wheel
-pip install wheel
+log_info() { echo -e "${GREEN}[INFO]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
 
-# tox
-pip install tox
+is_macos() { [[ "$(uname -s)" == "Darwin" ]]; }
 
-# update apt package lists
-sudo apt-get update
+_APT_UPDATED=0
+apt_update_once() {
+  if [[ "${_APT_UPDATED}" == "0" ]]; then
+    _APT_UPDATED=1
+    log_info "Updating apt package lists..."
+    sudo apt-get update -y
+  fi
+}
+apt_install() {
+  apt_update_once
+  log_info "Installing apt packages: $*"
+  sudo apt-get install -y --no-install-recommends "$@"
+}
 
-# optional dependencies
-for par in "$@"
-do
-  case $par in
-    base)
-      # basic setup
-      if [ "$(uname)" == "Darwin" ]; then
-        # MacOS
-        brew install redis
-      else
-        # Linux
-        sudo apt-get install redis-server
-      fi
-    ;;
+export_env_var() {
+  local key="$1"
+  local value="$2"
+  export "${key}=${value}"
+  if [[ -n "${GITHUB_ENV:-}" ]]; then
+    echo "${key}=${value}" >> "$GITHUB_ENV"
+  fi
+}
 
-    R)
-      # R environment
-      if [ "$(uname)" == "Darwin" ]; then
-        # MacOS
-        brew install r
-      else
-         # Linux (Not compatible with Ubuntu 24: no CRAN repository currently available)
-        #wget -qO- https://cloud.r-project.org/bin/linux/ubuntu/marutter_pubkey.asc | sudo gpg --dearmor -o /usr/share/keyrings/r-project.gpg
-        #echo "deb [signed-by=/usr/share/keyrings/r-project.gpg] https://cloud.r-project.org/bin/linux/ubuntu jammy-cran40/" | sudo tee -a /etc/apt/sources.list.d/r-project.list
-        #sudo apt-get update
-        #sudo apt-get install libtiff5 r-base
-        sudo apt update
-        sudo apt install -y build-essential libreadline-dev libx11-dev libxt-dev libpng-dev libjpeg-dev libcairo2-dev libssl-dev libcurl4-openssl-dev libxml2-dev texinfo texlive texlive-fonts-extra screen wget
-        sudo apt install -y liblzma-dev
+log_info "Updating pip, wheel, tox..."
+python -m pip install --upgrade pip wheel tox
 
-sudo apt install -y \
-build-essential \
-libreadline-dev \
-libx11-dev \
-libxt-dev \
-libpng-dev \
-libjpeg-dev \
-libcairo2-dev \
-libtiff-dev \
-libglib2.0-dev \
-liblzma-dev \
-libbz2-dev \
-libzstd-dev \
-libcurl4-openssl-dev \
-libssl-dev \
-libxml2-dev \
-texinfo \
-texlive \
-texlive-fonts-extra \
-texlive-latex-extra \
-zlib1g-dev \
-gfortran \
-libpcre2-dev \
-libicu-dev \
-libboost-all-dev
+install_base() {
+  log_info "Installing base dependencies..."
+  if is_macos; then
+    brew install redis
+  else
+    apt_install redis-server
+    sudo service redis-server start || true
+  fi
+}
 
-     cd /tmp
-        wget https://cran.r-project.org/src/base/R-4/R-4.4.0.tar.gz
-        tar -xvzf R-4.4.0.tar.gz
-        cd R-4.4.0
-        ./configure --enable-R-shlib --with-blas --with-lapack
-        make -j$(nproc)
-        sudo make install
-      fi
-    ;;
+install_r() {
+  log_info "Installing R..."
+  if is_macos; then
+    brew install r
+  else
+    # Prefer distro packages in CI
+    apt_install libtirpc-dev r-base r-base-dev
+    # Make R shared libs discoverable for the rest of the job
+    export_env_var LD_LIBRARY_PATH "${LD_LIBRARY_PATH:-/usr/lib}:/usr/lib/R/lib:/usr/local/lib/R/lib"
+  fi
 
-    amici)
-      # AMICI dependencies
-      sudo apt-get install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+  if command -v R >/dev/null 2>&1; then
+    log_info "R installed: $(R --version | head -n1)"
+  else
+    log_error "R installation failed (R not on PATH)"
+    exit 1
+  fi
+}
 
-      # pip install amici
-      pip uninstall amici pyabc
-      pip install 'pyabc[amici]'
-    ;;
+install_amici() {
+  log_info "Installing AMICI dependencies..."
+  if ! is_macos; then
+    apt_install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+  fi
+  log_info "Installing AMICI Python package..."
+  python -m pip uninstall -y amici pyabc || true
+  python -m pip install --upgrade "pyabc[amici]"
+}
 
-    doc)
-      # documentation
-      sudo apt-get install pandoc
-    ;;
+install_doc_tools() {
+  log_info "Installing documentation tools..."
+  if is_macos; then
+    brew install pandoc || true
+  else
+    apt_install pandoc
+  fi
+}
 
-    *)
-      echo "Unknown argument" >&2
-	  exit 1
-    ;;
+install_dev_tools() {
+  log_info "Installing development tools..."
+  python -m pip install --upgrade pre-commit ruff build twine pytest pytest-cov pytest-xdist
+}
 
-  esac
-done
+install_all() {
+  install_base
+  install_r
+  install_amici
+  install_doc_tools
+  install_dev_tools
+}
+
+usage() {
+  cat <<EOF
+Usage: $0 [OPTION]...
+
+Options:
+  base        Install base dependencies (Redis)
+  R           Install R (Ubuntu: apt; macOS: brew)
+  amici       Install AMICI dependencies
+  doc         Install documentation tools (Pandoc)
+  dev         Install development tools
+  all         Install all dependencies
+  help        Display this help message
+EOF
+}
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    log_error "No arguments provided"
+    usage
+    exit 1
+  fi
+
+  for arg in "$@"; do
+    case "$arg" in
+      base)  install_base ;;
+      R)     install_r ;;
+      amici) install_amici ;;
+      doc)   install_doc_tools ;;
+      dev)   install_dev_tools ;;
+      all)   install_all ;;
+      help|--help|-h) usage; exit 0 ;;
+      *) log_error "Unknown argument: ${arg}"; usage; exit 1 ;;
+    esac
+  done
+
+  log_info "Installation completed"
+}
+
+main "$@"

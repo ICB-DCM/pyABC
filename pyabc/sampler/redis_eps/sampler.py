@@ -2,9 +2,9 @@
 
 import copy
 import logging
+from collections.abc import Callable
 from datetime import datetime
 from time import sleep
-from typing import Callable, Dict, List, Tuple
 
 import cloudpickle as pickle
 import numpy as np
@@ -48,7 +48,7 @@ from .cmd import (
 )
 from .redis_logging import RedisSamplerLogger
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
 
 class RedisSamplerBase(Sampler):
@@ -72,13 +72,13 @@ class RedisSamplerBase(Sampler):
 
     def __init__(
         self,
-        host: str = "localhost",
+        host: str = 'localhost',
         port: int = 6379,
         password: str = None,
         log_file: str = None,
     ):
         super().__init__()
-        logger.debug(f"Redis sampler: host={host} port={port}")
+        logger.debug(f'Redis sampler: host={host} port={port}')
         # handles the connection to the redis-server
         self.redis: StrictRedis = StrictRedis(
             host=host, port=port, password=password
@@ -101,7 +101,7 @@ class RedisSamplerBase(Sampler):
         super().set_analysis_id(analysis_id)
         if self.redis.get(ANALYSIS_ID):
             raise AssertionError(
-                "The server seems busy with an analysis already"
+                'The server seems busy with an analysis already'
             )
         self.redis.set(ANALYSIS_ID, analysis_id)
 
@@ -217,7 +217,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
 
     def __init__(
         self,
-        host: str = "localhost",
+        host: str = 'localhost',
         port: int = 6379,
         password: str = None,
         batch_size: int = 1,
@@ -244,7 +244,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         simulate_one,
         t,
         *,
-        max_eval=np.inf,
+        max_eval=np.inf,  # noqa: ARG002
         all_accepted=False,
         ana_vars=None,
     ) -> Sample:
@@ -488,7 +488,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         self,
         t: int,
         n: int,
-        id_results: List,
+        id_results: list,
         all_accepted: bool,
         ana_vars: AnalysisVars,
     ) -> None:
@@ -591,7 +591,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             max_n_eval_look_ahead=max_n_eval_look_ahead,
         )
 
-    def create_sample(self, id_results: List[Tuple], n: int) -> Sample:
+    def create_sample(self, id_results: list[tuple], n: int) -> Sample:
         """Create a single sample result.
         Order the results by starting point to avoid a bias towards
         short-running simulations (dynamic scheduling).
@@ -612,7 +612,7 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         # check number of acceptances
         if (n_accepted := sample.n_accepted) != n:
             raise AssertionError(
-                f"Expected {n} accepted particles but got {n_accepted}"
+                f'Expected {n} accepted particles but got {n_accepted}'
             )
 
         return sample
@@ -634,8 +634,8 @@ class RedisEvalParallelSampler(RedisSamplerBase):
             #  iteration we do not look ahead
             if var.is_adaptive():
                 raise AssertionError(
-                    f"{var.__class__.__name__} cannot be used in look-ahead "
-                    "mode without delayed acceptance. Consider setting the "
+                    f'{var.__class__.__name__} cannot be used in look-ahead '
+                    'mode without delayed acceptance. Consider setting the '
                     "sampler's `look_ahead_delay_evaluation` flag."
                 )
 
@@ -717,7 +717,7 @@ def post_check_acceptance(
     redis,
     ana_vars,
     logger: RedisSamplerLogger,
-) -> Tuple:
+) -> tuple:
     """Check whether the sample is really acceptable.
 
     This is where evaluation of preliminary samples happens, using the analysis
@@ -740,7 +740,7 @@ def post_check_acceptance(
         if n_accepted != 1:
             # this should never happen
             raise AssertionError(
-                "Expected exactly one accepted particle in sample."
+                'Expected exactly one accepted particle in sample.'
             )
 
         # increase general acceptance counter
@@ -757,8 +757,8 @@ def post_check_acceptance(
     if len(sample.all_particles) != 1:
         # this should never happen
         raise AssertionError(
-            "Expected number of particles in sample: 1. "
-            f"Got: {len(sample.all_particles)}"
+            'Expected number of particles in sample: 1. '
+            f'Got: {len(sample.all_particles)}'
         )
 
     # from here on, we may assume that all particles (#=1) are yet to be judged
@@ -815,7 +815,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 
     if len(sample.accepted_particles) != n:
         # this should not happen
-        raise AssertionError("Unexpected number of acceptances")
+        raise AssertionError('Unexpected number of acceptances')
 
     # get particles per proposal
     particles_per_prop = {
@@ -829,7 +829,7 @@ def self_normalize_within_subpopulations(sample: Sample, n: int) -> Sample:
 
     # normalize weights by $ESS_l / sum_{i<=N_l} w^l_i$ for proposal id l
     # this is s.t. $sum_{i<=N_l} w^l_i \propto ESS_l$
-    normalizations: Dict[int, float] = {}
+    normalizations: dict[int, float] = {}
     for prop_id, particles_for_prop in particles_per_prop.items():
         weights = np.array(
             [particle.weight for particle in particles_for_prop]

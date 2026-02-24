@@ -32,11 +32,11 @@ class RedisServerStarter:
         if password is not None:
             fname = tempfile.mkstemp()[1]
             with open(fname, 'w') as f:
-                f.write(f"requirepass {password}\n")
+                f.write(f'requirepass {password}\n')
             maybe_redis_conf = [fname]
 
         self.redis_server = Popen(  # noqa: S607,S603
-            ["redis-server", *maybe_redis_conf, "--port", str(port)]
+            ['redis-server', *maybe_redis_conf, '--port', str(port)]
         )
 
         # give redis-server time to start
@@ -45,22 +45,22 @@ class RedisServerStarter:
         sleep(1)
 
         # initiate worker processes
-        maybe_password = [] if password is None else ["--password", password]
-        maybe_daemon = [] if daemon is None else ["--daemon", str(daemon)]
+        maybe_password = [] if password is None else ['--password', password]
+        maybe_daemon = [] if daemon is None else ['--daemon', str(daemon)]
         self.workers = [
             Process(
                 target=work,
                 args=(
                     [
-                        "--host",
-                        "localhost",
-                        "--port",
+                        '--host',
+                        'localhost',
+                        '--port',
                         str(port),
                         *maybe_password,
-                        "--processes",
+                        '--processes',
                         str(processes_per_worker),
                         *maybe_daemon,
-                        "--catch",
+                        '--catch',
                         str(catch),
                     ],
                 ),
@@ -83,7 +83,7 @@ class RedisServerStarter:
             return
 
         # send stop signal to workers
-        _manage("stop", port=self.port, password=self.password)
+        _manage('stop', port=self.port, password=self.password)
         for p in self.workers:
             # wait for workers to join
             p.join()
@@ -127,7 +127,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         )
 
         super().__init__(
-            host="localhost",
+            host='localhost',
             port=self.server_starter.port,
             password=self.server_starter.password,
             batch_size=batch_size,
@@ -167,7 +167,7 @@ class RedisStaticSamplerServerStarter(RedisStaticSampler):
         )
 
         super().__init__(
-            host="localhost",
+            host='localhost',
             port=self.server_starter.port,
             password=self.server_starter.password,
             log_file=log_file,

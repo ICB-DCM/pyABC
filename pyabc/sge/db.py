@@ -22,25 +22,25 @@ class SQLiteJobDB:
     def clean_up(self):
         pass
 
-    def create(self, nr_jobs):
+    def create(self, nr_jobs):  # noqa: ARG002
         # create database for job information
         with self.connection:
             self.connection.execute(
-                "CREATE TABLE IF NOT EXISTS "
-                "status(ID INTEGER, status TEXT, time REAL)"
+                'CREATE TABLE IF NOT EXISTS '
+                'status(ID INTEGER, status TEXT, time REAL)'
             )
 
     def start(self, ID):
         with self.connection:
             self.connection.execute(
-                "INSERT INTO status VALUES(?,?,?)",
+                'INSERT INTO status VALUES(?,?,?)',
                 (ID, 'started', time.time()),
             )
 
     def finish(self, ID):
         with self.connection:
             self.connection.execute(
-                "INSERT INTO status VALUES(?,?,?)",
+                'INSERT INTO status VALUES(?,?,?)',
                 (ID, 'finished', time.time()),
             )
 
@@ -53,8 +53,7 @@ class SQLiteJobDB:
         #  pre-calculated expressions
         with self.connection:
             results = self.connection.execute(
-                "SELECT status, time from status WHERE ID="  # noqa: S608, B608
-                + str(ID)
+                'SELECT status, time from status WHERE ID=' + str(ID)
             ).fetchall()
             nr_rows = len(results)
 
@@ -71,12 +70,12 @@ class SQLiteJobDB:
         if nr_rows == 2:  # job finished
             return False
         # something not catched here
-        raise Exception('Something went wrong. nr_rows={}'.format(nr_rows))
+        raise Exception(f'Something went wrong. nr_rows={nr_rows}')
 
 
 class RedisJobDB:
-    FINISHED_STATE = "finished"
-    STARTED_STATE = "started"
+    FINISHED_STATE = 'finished'
+    STARTED_STATE = 'started'
 
     @staticmethod
     def server_online(cls):
@@ -89,12 +88,12 @@ class RedisJobDB:
 
     def __init__(self, tmp_dir):
         config = get_config()
-        self.HOST = config["REDIS"]["HOST"]
+        self.HOST = config['REDIS']['HOST']
         self.job_name = os.path.basename(tmp_dir)
         self.connection = redis.Redis(host=self.HOST, decode_responses=True)
 
     def key(self, ID):
-        return self.job_name + ":" + str(ID)
+        return self.job_name + ':' + str(ID)
 
     def clean_up(self):
         IDs = map(int, self.connection.lrange(self.job_name, 0, -1))
@@ -112,12 +111,12 @@ class RedisJobDB:
 
     def start(self, ID):
         self.connection.hmset(
-            self.key(ID), {"status": self.STARTED_STATE, "time": time.time()}
+            self.key(ID), {'status': self.STARTED_STATE, 'time': time.time()}
         )
 
     def finish(self, ID):
         self.connection.hmset(
-            self.key(ID), {"status": self.FINISHED_STATE, "time": time.time()}
+            self.key(ID), {'status': self.FINISHED_STATE, 'time': time.time()}
         )
 
     def wait_for_job(self, ID, max_run_time_h):
@@ -125,16 +124,14 @@ class RedisJobDB:
         if len(values) == 0:  # not yet set, job not yet started
             return True
 
-        status = values["status"]
-        time_stamp = float(values["time"])
+        status = values['status']
+        time_stamp = float(values['time'])
 
         if status == self.FINISHED_STATE:
             return False
 
         if status == self.STARTED_STATE:
-            if within_time(time_stamp, max_run_time_h):
-                return True
-            return False
+            return within_time(time_stamp, max_run_time_h)
 
         raise Exception('Something went wrong.')
 
@@ -147,8 +144,8 @@ def job_db_factory(tmp_path):
     SQLite or redis db depending on availability
     """
     config = get_config()
-    if config["BROKER"]["TYPE"] == "REDIS":
+    if config['BROKER']['TYPE'] == 'REDIS':
         return RedisJobDB(tmp_path)
-    if config["BROKER"]["TYPE"] == "SQLITE":
+    if config['BROKER']['TYPE'] == 'SQLITE':
         return SQLiteJobDB(tmp_path)
-    raise Exception("Unknown broker: {}".format(config["BROKER"]["TYPE"]))
+    raise Exception('Unknown broker: {}'.format(config['BROKER']['TYPE']))

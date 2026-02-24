@@ -24,7 +24,7 @@ class MyStochasticProcess(pyabc.IntegratedModel):
         trajectory = np.zeros(self.n_steps)
         for t in range(1, self.n_steps):
             xi = np.random.uniform()
-            next_val = trajectory[t - 1] + xi * pars["step_size"]
+            next_val = trajectory[t - 1] + xi * pars['step_size']
             cumsum += abs(next_val - self.gt_trajectory[t])
             trajectory[t] = next_val
             if cumsum > eps:
@@ -32,7 +32,7 @@ class MyStochasticProcess(pyabc.IntegratedModel):
                 return pyabc.ModelResult(accepted=False)
 
         return pyabc.ModelResult(
-            accepted=True, distance=cumsum, sum_stat={"trajectory": trajectory}
+            accepted=True, distance=cumsum, sum_stat={'trajectory': trajectory}
         )
 
 
@@ -40,7 +40,7 @@ def test_early_stopping():
     """Basic test whether an early stopping pipeline works.
     Heavily inspired by the `early_stopping` notebook.
     """
-    prior = pyabc.Distribution(step_size=pyabc.RV("uniform", 0, 10))
+    prior = pyabc.Distribution(step_size=pyabc.RV('uniform', 0, 10))
 
     n_steps = 30
     gt_step_size = 5

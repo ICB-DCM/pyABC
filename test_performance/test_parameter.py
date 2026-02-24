@@ -29,25 +29,25 @@ def test_parameter_dict_numpy_conversion():
     for _ in range(n):
         pars.append(dict(zip(keys, np.random.randn(nkey))))
     time_create_dict = time() - start
-    print(f"Time to create dict: {time_create_dict}")
+    print(f'Time to create dict: {time_create_dict}')
 
     # convert to pandas
     start = time()
     pars_pd = [pd.Series(par) for par in pars]
     time_convert_pd = time() - start
-    print(f"Time to convert to pd.Series: {time_convert_pd}")
+    print(f'Time to convert to pd.Series: {time_convert_pd}')
 
     # mode 1: extract keys in pandas
     start = time()
     pars_np_1 = [np.array(par[keys]) for par in pars_pd]
     time_np_1 = time() - start
-    print(f"Time to extract to numpy via pandas keys: {time_np_1}")
+    print(f'Time to extract to numpy via pandas keys: {time_np_1}')
 
     # mode 2: use cached indices
     start = time()
     pars_np_2 = [np.array(par)[ixs] for par in pars_pd]
     time_np_2 = time() - start
-    print(f"Time to extract to numpy via cached indices: {time_np_2}")
+    print(f'Time to extract to numpy via cached indices: {time_np_2}')
     # This is a lot faster than mode 1
 
     # mode 3: use cached indices and pandas to_numpy
@@ -55,8 +55,8 @@ def test_parameter_dict_numpy_conversion():
     pars_np_3 = [par.to_numpy()[ixs] for par in pars_pd]
     time_np_3 = time() - start
     print(
-        f"Time to extract to numpy via cached indices and to_numpy(): "
-        f"{time_np_3}"
+        f'Time to extract to numpy via cached indices and to_numpy(): '
+        f'{time_np_3}'
     )
     # This is a little faster than mode 2 (probably just by avoiding copying)
 
@@ -64,7 +64,7 @@ def test_parameter_dict_numpy_conversion():
     start = time()
     pars_np_4 = [np.array([par[key] for key in keys]) for par in pars]
     time_np_4 = time() - start
-    print(f"Time to extract directly from dict: {time_np_4}")
+    print(f'Time to extract directly from dict: {time_np_4}')
     # Taking into account the time to convert to pd, this is faster, however
     # this may change if the values need to be extracted as an array multiple
     # times.
@@ -118,7 +118,7 @@ def test_sample_selection():
     for _ in range(nsample):
         _ = df.sample(weights=w).iloc[0]
     time_pandas = time() - start
-    print(f"Time using pandas sample: {time_pandas}")
+    print(f'Time using pandas sample: {time_pandas}')
 
     # using numpy
     start = time()
@@ -127,7 +127,7 @@ def test_sample_selection():
         sample_ind = np.random.choice(arr, p=w, replace=True)
         _ = df.iloc[sample_ind]
     time_numpy = time() - start
-    print(f"Time using numpy choice: {time_numpy}")
+    print(f'Time using numpy choice: {time_numpy}')
 
     # using numpy with caching
     start = time()
@@ -136,7 +136,7 @@ def test_sample_selection():
         sample_ind = np.random.choice(arr, p=w, replace=True)
         _ = df.iloc[sample_ind]
     time_numpy_cached = time() - start
-    print(f"Time using numpy choice cache: {time_numpy_cached}")
+    print(f'Time using numpy choice cache: {time_numpy_cached}')
 
     # check times as expected
     tol = 0.9

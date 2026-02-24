@@ -1,10 +1,10 @@
-from typing import Callable, Union
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
 
 
-def pdf_norm_from_kernel(kernel_val: float, **kwargs):
+def pdf_norm_from_kernel(kernel_val: float, **kwargs):  # noqa: ARG001
     """
     Just use the pdf_max value passed, usually originating from the distance
     function.
@@ -13,9 +13,9 @@ def pdf_norm_from_kernel(kernel_val: float, **kwargs):
 
 
 def pdf_norm_max_found(
-    prev_pdf_norm: Union[float, None],
+    prev_pdf_norm: float | None,
     get_weighted_distances: Callable[[], pd.DataFrame],
-    **kwargs,
+    **kwargs,  # noqa: ARG001
 ):
     """
     Take as pdf_max the maximum over the values found so far in the history,
@@ -68,18 +68,18 @@ class ScaledPDFNorm:
         alpha: float = 0.5,
         min_acceptance_rate: bool = 0.1,
     ):
-        self.factor = 10
+        self.factor = factor
         self.alpha = alpha
         self.min_acceptance_rate = min_acceptance_rate
         self._hit = False
 
     def __call__(
         self,
-        prev_pdf_norm: Union[float, None],
+        prev_pdf_norm: float | None,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        prev_temp: Union[float, None],
+        prev_temp: float | None,
         acceptance_rate: float,
-        **kwargs,
+        **kwargs,  # noqa: ARG002
     ):
         # base: the maximum found temperature
         pdf_norm = pdf_norm_max_found(
@@ -97,7 +97,7 @@ class ScaledPDFNorm:
         # from now on rescale
         self._hit = True
 
-        if prev_temp is None:
+        if prev_temp is None:  # noqa SIM108
             # can't take temperature into account, thus effectively assume T=1
             next_temp = 1
         else:

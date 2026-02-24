@@ -3,7 +3,6 @@ import logging
 import os
 import subprocess  # noqa: S404
 import tempfile
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -12,14 +11,14 @@ from ..model import Model
 from ..parameters import Parameter
 from .utils import timethis
 
-logger = logging.getLogger("ABC.External")
+logger = logging.getLogger('ABC.External')
 
 # timeout error code
 TIMEOUT: int = -15
 # location key
-LOC: str = "loc"
+LOC: str = 'loc'
 # returncode key
-RETURNCODE: str = "returncode"
+RETURNCODE: str = 'returncode'
 
 
 class ExternalHandler:
@@ -33,7 +32,7 @@ class ExternalHandler:
         self,
         executable: str,
         file: str = None,
-        fixed_args: List = None,
+        fixed_args: list = None,
         create_folder: bool = False,
         suffix: str = None,
         prefix: str = None,
@@ -108,10 +107,10 @@ class ExternalHandler:
 
         Replaces instances of {loc} by the location `loc`.
         """
-        executable = self.executable.replace("{loc}", loc)
+        executable = self.executable.replace('{loc}', loc)
         return executable
 
-    def run(self, args: List[str] = None, cmd: str = None, loc: str = None):
+    def run(self, args: list[str] = None, cmd: str = None, loc: str = None):
         """Run the script for the given arguments.
 
         Parameters
@@ -130,12 +129,8 @@ class ExternalHandler:
             loc = self.create_loc()
 
         # redirect output
-        devnull = open(os.devnull, 'w')
-        stdout = stderr = {}
-        if not self.show_stdout:
-            stdout = {'stdout': devnull}
-        if not self.show_stderr:
-            stderr = {'stderr': devnull}
+        stdout = {} if self.show_stdout else {'stdout': subprocess.DEVNULL}
+        stderr = {} if self.show_stderr else {'stderr': subprocess.DEVNULL}
 
         # call
         try:
@@ -161,13 +156,13 @@ class ExternalHandler:
                     **stderr,
                     timeout=self.timeout,
                 )
-            returncode, msg = status.returncode, ""
+            returncode, msg = status.returncode, ''
         except subprocess.TimeoutExpired as e:
             returncode, msg = TIMEOUT, str(e)
         if returncode:
             msg = (
-                f"Simulation error for arguments {args}: "
-                f"returncode {returncode}, msg={msg}."
+                f'Simulation error for arguments {args}: '
+                f'returncode {returncode}, msg={msg}.'
             )
             if self.raise_on_error:
                 raise ValueError(msg)
@@ -201,16 +196,16 @@ class ExternalModel(Model):
         self,
         executable: str,
         file: str,
-        fixed_args: List = None,
+        fixed_args: list = None,
         create_folder: bool = False,
         suffix: str = None,
-        prefix: str = "modelsim_",
+        prefix: str = 'modelsim_',
         dir: str = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
         timeout: float = None,
-        name: str = "ExternalModel",
+        name: str = 'ExternalModel',
     ):
         """Initialize the model.
 
@@ -239,7 +234,7 @@ class ExternalModel(Model):
     def __call__(self, pars: Parameter):
         args = []
         for key, val in pars.items():
-            args.append(f"{key}={val} ")
+            args.append(f'{key}={val} ')
         return self.eh.run(args)
 
     def sample(self, pars):
@@ -315,7 +310,7 @@ class ExternalModel(Model):
                     lower_bound = self.sample_timing(
                         {key_col: val_col[0], key_row: val_row[0]}
                     )
-                    lower_bound = self.sample_timing(
+                    upper_bound = self.sample_timing(
                         {key_col: val_col[1], key_row: val_row[1]}
                     )
                 time_eval_mat_df_lower.loc[[key_col], [key_row]] = lower_bound
@@ -341,10 +336,10 @@ class ExternalSumStat:
         self,
         executable: str,
         file: str,
-        fixed_args: List = None,
+        fixed_args: list = None,
         create_folder: bool = False,
         suffix: str = None,
-        prefix: str = "sumstat_",
+        prefix: str = 'sumstat_',
         dir: str = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
@@ -370,7 +365,7 @@ class ExternalSumStat:
         Create summary statistics from the `model_output` generated
         by the model.
         """
-        args = [f"model_output={model_output[LOC]}"]
+        args = [f'model_output={model_output[LOC]}']
         return self.eh.run(args=args)
 
 
@@ -390,9 +385,9 @@ class ExternalDistance:
         self,
         executable: str,
         file: str,
-        fixed_args: List = None,
+        fixed_args: list = None,
         suffix: str = None,
-        prefix: str = "dist_",
+        prefix: str = 'dist_',
         dir: str = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
@@ -418,8 +413,8 @@ class ExternalDistance:
         if sumstat_0[RETURNCODE] or sumstat_1[RETURNCODE]:
             return np.nan
         args = [
-            f"sumstat_0={sumstat_0[LOC]}",
-            f"sumstat_1={sumstat_1[LOC]}",
+            f'sumstat_0={sumstat_0[LOC]}',
+            f'sumstat_1={sumstat_1[LOC]}',
         ]
         ret = self.eh.run(args)
         # read in distance

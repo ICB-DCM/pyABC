@@ -25,11 +25,13 @@ matplotlib.use('Agg')
 static = str(pathlib.Path(__file__).parent.absolute()) + '/assets/'
 DOWNLOAD_DIR = tempfile.mkdtemp() + '/'
 db_path = DOWNLOAD_DIR
-parameter = ""
+parameter = ''
 square_png = static + 'square_v2.png'
-square_base64 = base64.b64encode(open(square_png, 'rb').read()).decode('ascii')
+with open(square_png, 'rb') as f:
+    square_base64 = base64.b64encode(f).decode('ascii')
 pyABC_png = str(static) + '/pyABC_logo.png'
-pyABC_base64 = base64.b64encode(open(pyABC_png, 'rb').read()).decode('ascii')
+with open(pyABC_png, 'rb') as f:
+    pyABC_base64 = base64.b64encode(f).decode('ascii')
 para_list = []
 colors = {
     'div': '#595959',
@@ -56,20 +58,18 @@ app.layout = html.Div(
                         ),
                         html.Img(
                             id='pyABC_logo',
-                            src='data:image/png;base64,{}'.format(
-                                pyABC_base64
-                            ),
-                            width="300",
+                            src=f'data:image/png;base64,{pyABC_base64}',
+                            width='300',
                         ),
                         html.Br(),
                         html.H3('Visualization web server'),
                         html.Hr(),
                         html.Div(
                             [
-                                "A copy of the generated files will be"
-                                " save in: ",
+                                'A copy of the generated files will be'
+                                ' save in: ',
                                 dcc.Input(
-                                    id="download_path",
+                                    id='download_path',
                                     placeholder=DOWNLOAD_DIR,
                                     type='text',
                                     value=DOWNLOAD_DIR,
@@ -77,7 +77,7 @@ app.layout = html.Div(
                             ],
                             style={'display': 'none'},
                         ),
-                        html.Div(id="hidden-div", style={"display": "none"}),
+                        html.Div(id='hidden-div', style={'display': 'none'}),
                         dcc.Input(
                             id='upload-data',
                             type='text',
@@ -116,7 +116,7 @@ app.layout = html.Div(
                                     [
                                         html.Div(
                                             [
-                                                "ABC runs: ",
+                                                'ABC runs: ',
                                                 dcc.Dropdown(id='ABC_runs'),
                                             ]
                                         ),
@@ -144,7 +144,7 @@ def parse_contents(filename):
         if 'db' in filename:
             # Assume that the user uploaded a db file
             global db_path
-            history = h.History("sqlite:///" + db_path)
+            history = h.History('sqlite:///' + db_path)
             all_runs = h.History.all_runs(history)
             list_run_ids = [x.id for x in all_runs]
             # get file name form full path
@@ -152,7 +152,7 @@ def parse_contents(filename):
             path = Path(filename)
             last_modified = datetime.fromtimestamp(path.stat().st_mtime)
             # show the date in the format: 2020-01-01 00:00:00
-            last_modified = last_modified.strftime("%Y-%m-%d %H:%M:%S")
+            last_modified = last_modified.strftime('%Y-%m-%d %H:%M:%S')
             # get the file size in MB
             size = path.stat().st_size
             size_mb = size / 1000000
@@ -168,26 +168,26 @@ def parse_contents(filename):
         return (
             'There was an error processing this file.',
             [],
-            "",
+            '',
             dbc.Alert(
                 [
-                    html.H4("Error!", className="alert-heading"),
+                    html.H4('Error!', className='alert-heading'),
                     html.P(
-                        f"There was an error while loading the database. "
-                        f"{str(e)}.",
+                        f'There was an error while loading the database. '
+                        f'{str(e)}.',
                     ),
                 ],
-                id="user_update_alert",
+                id='user_update_alert',
                 is_open=True,
                 fade=True,
-                color="danger",
+                color='danger',
                 dismissable=True,
             ),
         )
     return html.Div(
         [
             html.Button(
-                "Name: " + name,
+                'Name: ' + name,
                 id='btn-nclicks-1',
             ),
             # html.Button(
@@ -242,13 +242,13 @@ def prepare_run_detailes(history):
                 'nr_calibration_particles'
             ]
         else:
-            pop_str_calib = "None"
+            pop_str_calib = 'None'
         if 'nr_samples_per_parameter' in history.get_population_strategy():
             pop_str_sample_per_par = history.get_population_strategy()[
                 'nr_samples_per_parameter'
             ]
         else:
-            pop_str_sample_per_par = "None"
+            pop_str_sample_per_par = 'None'
 
         pop_str_nr_particles = history.get_population_strategy()[
             'nr_particles'
@@ -281,12 +281,12 @@ def prepare_run_detailes(history):
                 [
                     html.Div(
                         [
-                            html.H5("General info:"),
-                            html.Label("Start time: " + str(start_time)),
-                            html.Label("End time: " + str(end_time)),
+                            html.H5('General info:'),
+                            html.Label('Start time: ' + str(start_time)),
+                            html.Label('End time: ' + str(end_time)),
                             html.Label("Run's ID: " + str(id)),
                             html.Label(
-                                "Number of parameters: " + str(len(para_list))
+                                'Number of parameters: ' + str(len(para_list))
                             ),
                         ],
                         style={
@@ -305,8 +305,8 @@ def prepare_run_detailes(history):
                     ),
                     html.Div(
                         [
-                            html.H5("Distance function:"),
-                            html.Label("Name: " + str(dist_name)),
+                            html.H5('Distance function:'),
+                            html.Label('Name: ' + str(dist_name)),
                         ],
                         style={
                             'display': 'inline-block',
@@ -323,18 +323,18 @@ def prepare_run_detailes(history):
                     ),
                     html.Div(
                         [
-                            html.H5("Population strategy:"),
-                            html.Label("Name: " + str(pop_str_name)),
+                            html.H5('Population strategy:'),
+                            html.Label('Name: ' + str(pop_str_name)),
                             html.Label(
-                                "Number of calibration particles: "
+                                'Number of calibration particles: '
                                 + str(pop_str_calib)
                             ),
                             html.Label(
-                                "Number of samples per parameter: "
+                                'Number of samples per parameter: '
                                 + str(pop_str_sample_per_par)
                             ),
                             html.Label(
-                                "Number of particles: "
+                                'Number of particles: '
                                 + str(pop_str_nr_particles)
                             ),
                         ],
@@ -353,16 +353,16 @@ def prepare_run_detailes(history):
                     ),
                     html.Div(
                         [
-                            html.H5("Epsilon function:"),
-                            html.Label("Name: " + str(eps_name)),
+                            html.H5('Epsilon function:'),
+                            html.Label('Name: ' + str(eps_name)),
                             html.Label(
-                                "Initial epsilon: " + str(eps_init_spe)
+                                'Initial epsilon: ' + str(eps_init_spe)
                             ),
-                            html.Label("Alpha: " + str(eps_alpha)),
+                            html.Label('Alpha: ' + str(eps_alpha)),
                             html.Label(
-                                "Quantile multiplier: " + str(eps_quant)
+                                'Quantile multiplier: ' + str(eps_quant)
                             ),
-                            html.Label("Weighted: " + str(eps_weited)),
+                            html.Label('Weighted: ' + str(eps_weited)),
                         ],
                         style={
                             'display': 'inline-block',
@@ -382,48 +382,48 @@ def prepare_run_detailes(history):
             html.Div(
                 children=[
                     dcc.Tabs(
-                        id="tabs",
+                        id='tabs',
                         value='tab-1',
                         parent_className='custom-tabs',
                         className='custom-tabs-container',
                         children=[
                             dcc.Tab(
-                                id="tab-1",
+                                id='tab-1',
                                 label='Probability density functions',
                                 value='tab-pdf',
                                 className='custom-tab',
                                 selected_className='custom-tab--selected',
                             ),
                             dcc.Tab(
-                                id="tab-2",
+                                id='tab-2',
                                 label='Samples',
                                 value='tab-samples',
                                 className='custom-tab',
                                 selected_className='custom-tab--selected',
                             ),
                             dcc.Tab(
-                                id="tab-3",
+                                id='tab-3',
                                 label='Particles',
                                 value='tab-particles',
                                 className='custom-tab',
                                 selected_className='custom-tab--selected',
                             ),
                             dcc.Tab(
-                                id="tab-4",
+                                id='tab-4',
                                 label='Epsilons',
                                 value='tab-epsilons',
                                 className='custom-tab',
                                 selected_className='custom-tab--selected',
                             ),
                             dcc.Tab(
-                                id="tab-5",
+                                id='tab-5',
                                 label='Credible intervals',
                                 value='tab-credible',
                                 className='custom-tab',
                                 selected_className='custom-tab--selected',
                             ),
                             dcc.Tab(
-                                id="tab-6",
+                                id='tab-6',
                                 label='Effective sample sizes',
                                 value='tab-effective',
                                 className='custom-tab',
@@ -449,15 +449,15 @@ def prepare_run_detailes(history):
 
 
 @app.callback(
-    dash.dependencies.Output("information_grid", "children"),
+    dash.dependencies.Output('information_grid', 'children'),
     [dash.dependencies.Input('ABC_runs', 'value')],
 )
 def display_info(smc_id):
     global db_path
     try:
-        history = h.History("sqlite:///" + db_path, _id=smc_id)
+        history = h.History('sqlite:///' + db_path, _id=smc_id)
     except Exception:
-        return " "
+        return ' '
     global para_list
     dist_df = history.get_distribution()
     para_list.clear()
@@ -467,7 +467,7 @@ def display_info(smc_id):
 
 
 @app.callback(
-    dash.dependencies.Output("hidden-div", "children"),
+    dash.dependencies.Output('hidden-div', 'children'),
     [dash.dependencies.Input('download_path', 'value')],
 )
 def update_download_path(new_download_path):
@@ -488,7 +488,7 @@ def update_download_path(new_download_path):
         Output('output-data-upload', 'children'),
         Output('ABC_runs', 'options'),
         Output('ABC_runs', 'value'),
-        dash.dependencies.Output("alert_div", "children"),
+        dash.dependencies.Output('alert_div', 'children'),
     ],
     [
         Input('upload_file', 'n_clicks'),
@@ -502,44 +502,44 @@ def update_DB_details(btn_click, db_path_new):
             # save_file(file_name, list_of_contents[0])
             global db_path
             db_path = db_path_new
-            history = h.History("sqlite:///" + db_path_new)
+            history = h.History('sqlite:///' + db_path_new)
         except Exception as e:
-            if e.__class__.__name__ == "TypeError":
+            if e.__class__.__name__ == 'TypeError':
                 return (
-                    "",
+                    '',
                     [],
-                    "",
+                    '',
                     dbc.Alert(
                         [
                             html.H4(
-                                "There was an error while loading the "
-                                "database!",
-                                className="alert-heading",
+                                'There was an error while loading the '
+                                'database!',
+                                className='alert-heading',
                             ),
                         ],
-                        id="user_update_alert",
+                        id='user_update_alert',
                         is_open=True,
                         fade=True,
-                        color="danger",
+                        color='danger',
                         dismissable=True,
                     ),
                 )
             else:
                 return (
-                    "",
+                    '',
                     [],
-                    "",
+                    '',
                     dbc.Alert(
                         [
-                            html.H4("Error!", className="alert-heading"),
+                            html.H4('Error!', className='alert-heading'),
                             html.P(
-                                f"Please upload a database. " f"{str(e)}.",
+                                f'Please upload a database. {str(e)}.',
                             ),
                         ],
-                        id="user_update_alert",
+                        id='user_update_alert',
                         is_open=True,
                         fade=True,
-                        color="danger",
+                        color='danger',
                         dismissable=True,
                     ),
                 )
@@ -553,33 +553,33 @@ def update_DB_details(btn_click, db_path_new):
                 list_run_ids[-1],
                 dbc.Alert(
                     [
-                        html.H4("Great!", className="alert-heading"),
+                        html.H4('Great!', className='alert-heading'),
                         html.P(
-                            "The database was loaded successfully.",
+                            'The database was loaded successfully.',
                         ),
                     ],
-                    id="user_update_alert",
+                    id='user_update_alert',
                     is_open=True,
-                    color="success",
+                    color='success',
                     dismissable=True,
                 ),
             )
     else:
         return (
-            "",
+            '',
             [],
-            "",
+            '',
             dbc.Alert(
                 [
-                    html.H4("Tip!", className="alert-heading"),
+                    html.H4('Tip!', className='alert-heading'),
                     html.P(
-                        "Please upload a database!.",
+                        'Please upload a database!.',
                     ),
                 ],
-                id="user_update_alert",
+                id='user_update_alert',
                 is_open=True,
                 fade=True,
-                color="info",
+                color='info',
                 duration=5000,
             ),
         )
@@ -587,7 +587,7 @@ def update_DB_details(btn_click, db_path_new):
 
 def prepare_fig_tab(smc_id):
     global db_path
-    history = h.History("sqlite:///" + db_path, _id=smc_id)
+    history = h.History('sqlite:///' + db_path, _id=smc_id)
     dist_df = history.get_distribution()
     para_list = []
     for col in dist_df[0].columns:
@@ -598,7 +598,7 @@ def prepare_fig_tab(smc_id):
                 [
                     html.Label('Select parameter: '),
                     dcc.Dropdown(
-                        id="parameters",
+                        id='parameters',
                         options=[
                             {'label': name, 'value': name}
                             for name in para_list
@@ -612,7 +612,7 @@ def prepare_fig_tab(smc_id):
                 [
                     html.Label('Select parameter: '),
                     dcc.Dropdown(
-                        id="figure_type",
+                        id='figure_type',
                         options=[
                             {'label': 'pdf_1d', 'value': 'pdf_1d'},
                             {'label': 'pdf_2d', 'value': 'pdf_2d'},
@@ -641,7 +641,7 @@ def prepare_fig_tab(smc_id):
                     # html.Br(),
                     html.Img(
                         id='abc_run_plot',
-                        src='data:image/png;base64,{}'.format(square_base64),
+                        src=f'data:image/png;base64,{square_base64}',
                     ),  # img element,
                 ]
             ),
@@ -659,14 +659,14 @@ def prepare_fig_tab(smc_id):
     dash.dependencies.Output('tabs-content', 'children'),  # src attribute
     [
         dash.dependencies.Input('ABC_runs', 'value'),
-        dash.dependencies.Input("tabs", "value"),
+        dash.dependencies.Input('tabs', 'value'),
     ],
 )
 def update_figure_ABC_run(smc_id, f_type):
     # create some matplotlib graph
-    history = h.History("sqlite:///" + db_path, _id=smc_id)
+    history = h.History('sqlite:///' + db_path, _id=smc_id)
     global para_list
-    if f_type == "tab-pdf":
+    if f_type == 'tab-pdf':
         parameters = para_list.copy()
         fig, ax = plt.subplots()
         for t in range(history.max_t + 1):
@@ -681,19 +681,19 @@ def update_figure_ABC_run(smc_id, f_type):
                 xmax=xmax,
                 x=parameters[0],
                 ax=ax,
-                label="PDF t={}".format(t),
+                label=f'PDF t={t}',
             )
         ax.legend()
         buf = io.BytesIO()  # in-memory files
-        plt.savefig(buf, format="png")  # save to the above file object
+        plt.savefig(buf, format='png')  # save to the above file object
         data = base64.b64encode(buf.getbuffer()).decode(
-            "utf8"
+            'utf8'
         )  # encode to html elements
 
         return [
             html.Label('Select parameter: '),
             dcc.Dropdown(
-                id="parameters",
+                id='parameters',
                 options=[{'label': name, 'value': name} for name in para_list],
                 multi=True,
                 value=[para_list[0]],
@@ -703,7 +703,7 @@ def update_figure_ABC_run(smc_id, f_type):
                     # "ABC run plots: ",
                     html.Img(
                         id='abc_run_plot',
-                        src='data:image/png;base64,{}'.format(square_base64),
+                        src=f'data:image/png;base64,{square_base64}',
                     ),  # img element,
                 ],
                 style={'textAlign': 'center'},
@@ -711,36 +711,36 @@ def update_figure_ABC_run(smc_id, f_type):
             html.Div(
                 dbc.Card(
                     [
-                        dbc.CardHeader("Plot configration"),
+                        dbc.CardHeader('Plot configration'),
                         dbc.CardBody(
                             [
-                                "x limits: ",
+                                'x limits: ',
                                 html.Br(),
                                 html.Br(),
                                 html.Div(
                                     children=[
-                                        "min: ",
+                                        'min: ',
                                         dcc.Input(
-                                            id="bar_min",
+                                            id='bar_min',
                                             placeholder='min',
                                             type='number',
                                             value='0',
                                         ),
-                                        "max: ",
+                                        'max: ',
                                         dcc.Input(
-                                            id="bar_max",
+                                            id='bar_max',
                                             placeholder='max',
                                             type='number',
                                             value='20',
                                         ),
-                                        "  Copy code to clipboard:  ",
+                                        '  Copy code to clipboard:  ',
                                         # html.Button('Generate', id='copy', n_clicks=0),
                                         dcc.Clipboard(
-                                            id="code_copy",
+                                            id='code_copy',
                                             style={
-                                                "fontSize": 25,
-                                                "display": "inline-block",
-                                                "verticalAlign": "middle",
+                                                'fontSize': 25,
+                                                'display': 'inline-block',
+                                                'verticalAlign': 'middle',
                                             },
                                         ),
                                         html.Hr(),
@@ -751,8 +751,8 @@ def update_figure_ABC_run(smc_id, f_type):
                                             marks=None,
                                             value=[xmin, xmax],
                                             tooltip={
-                                                "placement": "bottom",
-                                                "always_visible": True,
+                                                'placement': 'bottom',
+                                                'always_visible': True,
                                             },
                                         ),
                                     ]
@@ -766,8 +766,8 @@ def update_figure_ABC_run(smc_id, f_type):
             html.Div(
                 [
                     dcc.Dropdown(
-                        options=["linear", "log", "symlog", "logit"],
-                        id="y_scale",
+                        options=['linear', 'log', 'symlog', 'logit'],
+                        id='y_scale',
                         style={
                             'display': 'none',
                         },
@@ -779,12 +779,12 @@ def update_figure_ABC_run(smc_id, f_type):
                         marks=None,
                         value=[0.50, 0.95],
                         tooltip={
-                            "placement": "bottom",
-                            "always_visible": True,
+                            'placement': 'bottom',
+                            'always_visible': True,
                         },
                     ),
                     dbc.Checklist(
-                        id="switches-mean",
+                        id='switches-mean',
                         options=['Show mean'],
                         switch=True,
                     ),
@@ -794,26 +794,26 @@ def update_figure_ABC_run(smc_id, f_type):
                 },
             ),
         ]
-    elif f_type == "tab-samples":
+    elif f_type == 'tab-samples':
         pyabc.visualization.plot_sample_numbers(history)
-    elif f_type == "tab-particles":
+    elif f_type == 'tab-particles':
         _, ax2 = plt.subplots()
         particles = (
             history.get_nr_particles_per_population()
             .reset_index()
-            .rename(columns={"count": "particles"})
-            .query("t >= 0")
+            .rename(columns={'count': 'particles'})
+            .query('t >= 0')
         )
         ax2.set_xlabel('population index')
         ax2.set_ylabel('Particles')
-        ax2.plot(particles["t"], particles["particles"], "x-")
+        ax2.plot(particles['t'], particles['particles'], 'x-')
 
-    elif f_type == "tab-epsilons":
+    elif f_type == 'tab-epsilons':
         pyabc.visualization.plot_epsilons(history)
         buf = io.BytesIO()  # in-memory files
-        plt.savefig(buf, format="png")  # save to the above file object
+        plt.savefig(buf, format='png')  # save to the above file object
         data = base64.b64encode(buf.getbuffer()).decode(
-            "utf8"
+            'utf8'
         )  # encode to html elements
 
         return [
@@ -821,7 +821,7 @@ def update_figure_ABC_run(smc_id, f_type):
                 [
                     html.Img(
                         id='abc_run_plot',
-                        src="data:image/png;base64,{}".format(data),
+                        src=f'data:image/png;base64,{data}',
                     ),
                     # img element,
                 ],
@@ -829,28 +829,28 @@ def update_figure_ABC_run(smc_id, f_type):
             ),
             dbc.Card(
                 [
-                    dbc.CardHeader("Plot configration"),
+                    dbc.CardHeader('Plot configration'),
                     dbc.CardBody(
                         [
-                            "Y scale: ",
+                            'Y scale: ',
                             dcc.Dropdown(
-                                options=["linear", "log", "symlog", "logit"],
-                                id="y_scale",
-                                value="log",
+                                options=['linear', 'log', 'symlog', 'logit'],
+                                id='y_scale',
+                                value='log',
                                 style={
-                                    "display": "inline-block",
-                                    "verticalAlign": "middle",
-                                    "width": "100px",
+                                    'display': 'inline-block',
+                                    'verticalAlign': 'middle',
+                                    'width': '100px',
                                 },
                             ),
-                            "  Copy code to clipboard:  ",
+                            '  Copy code to clipboard:  ',
                             # html.Button('Generate', id='copy', n_clicks=0),
                             dcc.Clipboard(
-                                id="code_copy",
+                                id='code_copy',
                                 style={
-                                    "fontSize": 25,
-                                    "display": "inline-block",
-                                    "verticalAlign": "middle",
+                                    'fontSize': 25,
+                                    'display': 'inline-block',
+                                    'verticalAlign': 'middle',
                                 },
                             ),
                         ]
@@ -859,16 +859,16 @@ def update_figure_ABC_run(smc_id, f_type):
             ),
             html.Div(
                 children=[
-                    "min: ",
+                    'min: ',
                     dcc.Input(
-                        id="bar_min",
+                        id='bar_min',
                         placeholder='min',
                         type='number',
                         value='0',
                     ),
-                    "max: ",
+                    'max: ',
                     dcc.Input(
-                        id="bar_max",
+                        id='bar_max',
                         placeholder='max',
                         type='number',
                         value='20',
@@ -887,7 +887,7 @@ def update_figure_ABC_run(smc_id, f_type):
             html.Div(
                 [
                     dcc.Dropdown(
-                        id="parameters",
+                        id='parameters',
                         options=[
                             {'label': name, 'value': name}
                             for name in para_list
@@ -902,12 +902,12 @@ def update_figure_ABC_run(smc_id, f_type):
                         marks=None,
                         value=[0.50, 0.95],
                         tooltip={
-                            "placement": "bottom",
-                            "always_visible": True,
+                            'placement': 'bottom',
+                            'always_visible': True,
                         },
                     ),
                     dbc.Checklist(
-                        id="switches-mean",
+                        id='switches-mean',
                         options=['Show mean'],
                         switch=True,
                     ),
@@ -917,7 +917,7 @@ def update_figure_ABC_run(smc_id, f_type):
                 },
             ),
         ]
-    elif f_type == "tab-credible":
+    elif f_type == 'tab-credible':
         # buf = io.BytesIO()  # in-memory files
         #
         # plt.savefig(buf, format="png")  # save to the above file object
@@ -934,7 +934,7 @@ def update_figure_ABC_run(smc_id, f_type):
         return [
             html.Label('Select parameter: '),
             dcc.Dropdown(
-                id="parameters",
+                id='parameters',
                 options=[{'label': name, 'value': name} for name in para_list],
                 style={'color': 'red'},
                 multi=True,
@@ -947,17 +947,17 @@ def update_figure_ABC_run(smc_id, f_type):
                     # html.Br(),
                     html.Img(
                         id='abc_run_plot',
-                        src='data:image/png;base64,{}'.format(square_base64),
+                        src=f'data:image/png;base64,{square_base64}',
                     ),
                 ],
                 style={'textAlign': 'center'},
             ),
             dbc.Card(
                 [
-                    dbc.CardHeader("Plot configration"),
+                    dbc.CardHeader('Plot configration'),
                     dbc.CardBody(
                         [
-                            "confidence levels: ",
+                            'confidence levels: ',
                             html.Br(),
                             dcc.RangeSlider(
                                 id='levels_slider',
@@ -966,33 +966,33 @@ def update_figure_ABC_run(smc_id, f_type):
                                 value=[0.50, 0.95],
                             ),
                             dbc.Checklist(
-                                id="switches-mean",
+                                id='switches-mean',
                                 options=['Show mean', 'Show KDE max'],
                                 value=['Show mean'],
                                 switch=True,
                             ),
-                            "  Copy code to clipboard:  ",
+                            '  Copy code to clipboard:  ',
                             # html.Button('Generate', id='copy', n_clicks=0),
                             dcc.Clipboard(
-                                id="code_copy",
+                                id='code_copy',
                                 style={
-                                    "fontSize": 25,
-                                    "display": "inline-block",
-                                    "verticalAlign": "middle",
+                                    'fontSize': 25,
+                                    'display': 'inline-block',
+                                    'verticalAlign': 'middle',
                                 },
                             ),
                             html.Div(
                                 children=[
-                                    "min: ",
+                                    'min: ',
                                     dcc.Input(
-                                        id="bar_min",
+                                        id='bar_min',
                                         placeholder='min',
                                         type='number',
                                         value='0',
                                     ),
-                                    "max: ",
+                                    'max: ',
                                     dcc.Input(
-                                        id="bar_max",
+                                        id='bar_max',
                                         placeholder='max',
                                         type='number',
                                         value='20',
@@ -1009,11 +1009,11 @@ def update_figure_ABC_run(smc_id, f_type):
                                 style={'display': 'none'},
                             ),
                             dcc.Dropdown(
-                                options=["linear", "log", "symlog", "logit"],
-                                id="y_scale",
+                                options=['linear', 'log', 'symlog', 'logit'],
+                                id='y_scale',
                                 style={
-                                    "verticalAlign": "middle",
-                                    "width": "100px",
+                                    'verticalAlign': 'middle',
+                                    'width': '100px',
                                     'display': 'none',
                                 },
                             ),
@@ -1022,12 +1022,12 @@ def update_figure_ABC_run(smc_id, f_type):
                 ]
             ),
         ]
-    elif f_type == "tab-effective":
+    elif f_type == 'tab-effective':
         pyabc.visualization.plot_effective_sample_sizes(history)
     buf = io.BytesIO()  # in-memory files
-    plt.savefig(buf, format="png")  # save to the above file object
+    plt.savefig(buf, format='png')  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
-        "utf8"
+        'utf8'
     )  # encode to html elements
     # plt.close()
     return [
@@ -1039,7 +1039,7 @@ def update_figure_ABC_run(smc_id, f_type):
             [
                 html.Img(
                     id='abc_run_plot',
-                    src="data:image/png;base64,{}".format(data),
+                    src=f'data:image/png;base64,{data}',
                 ),
                 # img element,
             ],
@@ -1047,17 +1047,17 @@ def update_figure_ABC_run(smc_id, f_type):
         ),
         dbc.Card(
             [
-                dbc.CardHeader("Plot configration"),
+                dbc.CardHeader('Plot configration'),
                 dbc.CardBody(
                     [
-                        "  Copy code to clipboard:  ",
+                        '  Copy code to clipboard:  ',
                         # html.Button('Generate', id='copy', n_clicks=0),
                         dcc.Clipboard(
-                            id="code_copy",
+                            id='code_copy',
                             style={
-                                "fontSize": 25,
-                                "display": "inline-block",
-                                "verticalAlign": "middle",
+                                'fontSize': 25,
+                                'display': 'inline-block',
+                                'verticalAlign': 'middle',
                             },
                         ),
                     ]
@@ -1076,7 +1076,7 @@ def update_figure_ABC_run(smc_id, f_type):
     [
         dash.dependencies.Input('ABC_runs', 'value'),
         dash.dependencies.Input('parameters', 'value'),
-        dash.dependencies.Input("tabs", "value"),
+        dash.dependencies.Input('tabs', 'value'),
         dash.dependencies.Input('my-range-slider', 'value'),
         Input('y_scale', 'value'),
         dash.dependencies.Input('levels_slider', 'value'),
@@ -1087,13 +1087,13 @@ def update_figure_ABC_run_parameters(
     smc_id, parameters, f_type, bar_val, scale_val, levels_val, mean_val
 ):
     # create some matplotlib graph
-    history = h.History("sqlite:///" + db_path, _id=smc_id)
+    history = h.History('sqlite:///' + db_path, _id=smc_id)
     xmin = 0
     xmax = 0
     mean_flag = True
     kde_flag = True
     global para_list
-    if f_type == "tab-pdf":
+    if f_type == 'tab-pdf':
         fig, ax = plt.subplots()
         if len(parameters) == 1:
             for t in range(history.max_t + 1):
@@ -1112,7 +1112,7 @@ def update_figure_ABC_run_parameters(
                     xmax=xmax,
                     x=parameters[0],
                     ax=ax,
-                    label="PDF t={}".format(t),
+                    label=f'PDF t={t}',
                 )
             ax.legend()
         elif len(parameters) == 2:
@@ -1140,7 +1140,7 @@ def update_figure_ABC_run_parameters(
                 xmin = bar_val[0]
                 xmax = bar_val[1]
 
-    elif f_type == "tab-credible":
+    elif f_type == 'tab-credible':
         df, w = history.get_distribution()
         if bar_val == [0, 0]:
             xmin = df[parameters[0]].min()
@@ -1155,9 +1155,9 @@ def update_figure_ABC_run_parameters(
             mean_flag = False
             kde_flag = False
 
-        elif "Show mean" not in mean_val:
+        elif 'Show mean' not in mean_val:
             mean_flag = False
-        elif "Show KDE max" not in mean_val:
+        elif 'Show KDE max' not in mean_val:
             kde_flag = False
         pyabc.visualization.plot_credible_intervals(
             history,
@@ -1166,21 +1166,21 @@ def update_figure_ABC_run_parameters(
             show_kde_max_1d=kde_flag,
             par_names=parameters,
         )
-    elif f_type == "tab-epsilons":
+    elif f_type == 'tab-epsilons':
         if scale_val is None:
-            scale_val = "log"
+            scale_val = 'log'
         pyabc.visualization.plot_epsilons(history, yscale=scale_val)
 
     buf = io.BytesIO()  # in-memory files
     plt.gcf().set_size_inches(7, 5)
     plt.tight_layout()
-    plt.savefig(buf, format="png")  # save to the above file object
+    plt.savefig(buf, format='png')  # save to the above file object
     data = base64.b64encode(buf.getbuffer()).decode(
-        "utf8"
+        'utf8'
     )  # encode to html elements
     # plt.close()
     return (
-        "data:image/png;base64,{}".format(data),
+        f'data:image/png;base64,{data}',
         math.floor(xmin),
         math.ceil(xmax),
     )
@@ -1206,12 +1206,12 @@ def update_figure_ABC_run_parameters(
 
 @app.callback(
     [
-        dash.dependencies.Output("my-range-slider", "min"),
-        dash.dependencies.Output("my-range-slider", "max"),
+        dash.dependencies.Output('my-range-slider', 'min'),
+        dash.dependencies.Output('my-range-slider', 'max'),
     ],
     [
-        dash.dependencies.Input("bar_min", "value"),
-        dash.dependencies.Input("bar_max", "value"),
+        dash.dependencies.Input('bar_min', 'value'),
+        dash.dependencies.Input('bar_max', 'value'),
     ],
 )
 def number_render(min, max):
@@ -1220,10 +1220,10 @@ def number_render(min, max):
 
 def save_file(name, content):
     """Decode and store a file uploaded with Dash."""
-    data = content.encode("utf8").split(b";base64,")[1]
+    data = content.encode('utf8').split(b';base64,')[1]
     if not os.path.exists(DOWNLOAD_DIR):
         os.makedirs(DOWNLOAD_DIR)
-    with open(os.path.join(DOWNLOAD_DIR, name), "wb") as fp:
+    with open(os.path.join(DOWNLOAD_DIR, name), 'wb') as fp:
         fp.write(base64.decodebytes(data))
 
 
@@ -1241,15 +1241,15 @@ def save_file(name, content):
 
 
 @app.callback(
-    Output("code_copy", "content"),
-    Input("code_copy", "n_clicks"),
-    Input("tabs", "value"),
+    Output('code_copy', 'content'),
+    Input('code_copy', 'n_clicks'),
+    Input('tabs', 'value'),
 )
 def displayClick(btn_click, tab_type):
     if btn_click is None:
-        return ""
+        return ''
     if btn_click > 0:
-        code_pt2 = ""
+        code_pt2 = ''
         if tab_type == 'tab-pdf':
             code_pt2 = dedent(
                 """
@@ -1325,22 +1325,22 @@ def displayClick(btn_click, tab_type):
 
 @click.command()
 @click.option(
-    "--debug",
+    '--debug',
     default=False,
     type=bool,
-    help="Whether to run the server in debug mode",
+    help='Whether to run the server in debug mode',
 )
 @click.option(
-    "--port",
+    '--port',
     default=8050,
     type=int,
-    help="The port on which the server runs (default: 8050)",
+    help='The port on which the server runs (default: 8050)',
 )
 @click.option(
-    "--host",
-    default="localhost",
+    '--host',
+    default='localhost',
     type=str,
-    help="Host name (default: 127.0.0.1 / localhost)",
+    help='Host name (default: 127.0.0.1 / localhost)',
 )
 def run_app(host, port, debug):
     app.run(host=host, port=port, debug=debug)

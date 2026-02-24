@@ -9,7 +9,7 @@ from jabbar import jabbar
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 from .singlecore import SingleCoreSampler
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
 SENTINEL = None
 
@@ -76,19 +76,17 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         self,
         n,
         simulate_one,
-        t,
+        t,  # noqa: ARG002
         *,
         max_eval=np.inf,
-        all_accepted=False,
-        ana_vars=None,
+        all_accepted=False,  # noqa: ARG002
+        ana_vars=None,  # noqa: ARG002
     ):
         # starting more than n jobs
         # does not help in this parallelization scheme
         n_procs = min(n, self.n_procs)
         logger.debug(
-            "Start sampling on {} cores ({} requested)".format(
-                n_procs, self.n_procs
-            )
+            f'Start sampling on {n_procs} cores ({self.n_procs} requested)'
         )
         feed_q = Queue()
         result_q = Queue()

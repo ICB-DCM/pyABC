@@ -36,8 +36,8 @@ def test_no_pickle(sampler):
 
 def raise_exception(*args):
     raise Exception(
-        "Deliberate exception to be raised in the worker "
-        "processes and to be propagated to the parent process."
+        'Deliberate exception to be raised in the worker '
+        'processes and to be propagated to the parent process.'
     )
 
 

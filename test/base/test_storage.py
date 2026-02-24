@@ -7,8 +7,6 @@ import numpy as np
 import pandas as pd
 import pyarrow
 import pytest
-from rpy2.robjects import pandas2ri, r
-from rpy2.robjects.conversion import localconverter
 
 import pyabc
 from pyabc import History
@@ -30,31 +28,31 @@ from pyabc.storage.df_to_file import sumstat_to_json
 
 def example_df():
     return pd.DataFrame(
-        {"col_a": [1, 2], "col_b": [1.1, 2.2], "col_c": ["foo", "bar"]},
-        index=["ind_first", "ind_second"],
+        {'col_a': [1, 2], 'col_b': [1.1, 2.2], 'col_c': ['foo', 'bar']},
+        index=['ind_first', 'ind_second'],
     )
 
 
 def path():
-    return os.path.join(tempfile.gettempdir(), "history_test.db")
+    return os.path.join(tempfile.gettempdir(), 'history_test.db')
 
 
-@pytest.fixture(params=["file", "memory"])
+@pytest.fixture(params=['file', 'memory'])
 def history(request):
     # Test in-memory and filesystem based database
-    if request.param == "file":
-        this_path = "/" + path()
-    elif request.param == "memory":
-        this_path = ""
+    if request.param == 'file':
+        this_path = '/' + path()
+    elif request.param == 'memory':
+        this_path = ''
     else:
-        raise Exception(f"Bad database type for testing: {request.param}")
-    model_names = ["fake_name_{}".format(k) for k in range(50)]
-    h = History("sqlite://" + this_path)
+        raise Exception(f'Bad database type for testing: {request.param}')
+    model_names = [f'fake_name_{k}' for k in range(50)]
+    h = History('sqlite://' + this_path)
     h.store_initial_data(
-        0, {}, {}, {}, model_names, "", "", '{"name": "pop_strategy_str_test"}'
+        0, {}, {}, {}, model_names, '', '', '{"name": "pop_strategy_str_test"}'
     )
     yield h
-    if request.param == "file":
+    if request.param == 'file':
         try:
             os.remove(this_path)
         except FileNotFoundError:
@@ -66,7 +64,7 @@ def history_uninitialized():
     # Don't use memory database for testing.
     # A real file with disconnect and reconnect is closer to the real scenario
     this_path = path()
-    h = History("sqlite:///" + this_path)
+    h = History('sqlite:///' + this_path)
     yield h
     try:
         os.remove(this_path)
@@ -94,15 +92,15 @@ def rand_pop_list(m: int = 0, normalized: bool = True, n_sample: int = None):
         Particle(
             m=m,
             parameter=Parameter(
-                {"a": np.random.randint(10), "b": np.random.randn()}
+                {'a': np.random.randint(10), 'b': np.random.randn()}
             ),
             weight=np.random.rand() * 42,
             sum_stat={
-                "ss_float": 0.1,
-                "ss_int": 42,
-                "ss_str": "foo bar string",
-                "ss_np": np.random.rand(13, 42),
-                "ss_df": example_df(),
+                'ss_float': 0.1,
+                'ss_int': 42,
+                'ss_str': 'foo bar string',
+                'ss_np': np.random.rand(13, 42),
+                'ss_df': example_df(),
             },
             accepted=True,
             distance=np.random.rand(),
@@ -122,13 +120,13 @@ def test_single_particle_save_load(history: History):
     particle_list = [
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=1.0,
-            sum_stat={"ss": 0.1},
+            sum_stat={'ss': 0.1},
             distance=0.1,
         ),
     ]
-    history.append_population(0, 42, Population(particle_list), 2, [""])
+    history.append_population(0, 42, Population(particle_list), 2, [''])
 
     df, w = history.get_distribution(0, 0)
     assert w[0] == 1
@@ -145,9 +143,9 @@ def test_save_no_sum_stats(history: History):
     for _ in range(0, 6):
         particle = Particle(
             m=0,
-            parameter=Parameter({"th0": np.random.random()}),
+            parameter=Parameter({'th0': np.random.random()}),
             weight=1.0 / 6,
-            sum_stat={"ss0": np.random.random(), "ss1": np.random.random()},
+            sum_stat={'ss0': np.random.random(), 'ss1': np.random.random()},
             distance=np.random.random(),
         )
         particle_list.append(particle)
@@ -165,7 +163,7 @@ def test_save_no_sum_stats(history: History):
         current_epsilon=42.97,
         population=population,
         nr_simulations=10,
-        model_names=[""],
+        model_names=[''],
     )
 
     # just call
@@ -197,7 +195,7 @@ def test_get_population(history: History):
         current_epsilon=7.0,
         population=population,
         nr_simulations=200,
-        model_names=["m0"],
+        model_names=['m0'],
     )
     population_h = history.get_population(t=0)
 
@@ -225,13 +223,13 @@ def test_single_particle_save_load_np_int64(history: History):
     particle_list = [
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=1.0,
-            sum_stat={"ss": 0.1},
+            sum_stat={'ss': 0.1},
             distance=0.1,
         )
     ]
-    history.append_population(0, 42, Population(particle_list), 2, [""])
+    history.append_population(0, 42, Population(particle_list), 2, [''])
 
     for m in m_list:
         for t in t_list:
@@ -242,65 +240,69 @@ def test_single_particle_save_load_np_int64(history: History):
 
 
 def test_sum_stats_save_load(history: History):
+    from rpy2.robjects import pandas2ri, r
+    from rpy2.robjects.conversion import get_conversion, localconverter
+
     arr = np.random.rand(10)
     arr2 = np.random.rand(10, 2)
     particle_list = [
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=0.2,
             sum_stat={
-                "ss1": 0.1,
-                "ss2": arr2,
-                "ss3": example_df(),
-                "rdf0": r["iris"],
+                'ss1': 0.1,
+                'ss2': arr2,
+                'ss3': example_df(),
+                'rdf0': r['iris'],
             },
             distance=0.1,
         ),
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=0.8,
             sum_stat={
-                "ss12": 0.11,
-                "ss22": arr,
-                "ss33": example_df(),
-                "rdf": r["mtcars"],
+                'ss12': 0.11,
+                'ss22': arr,
+                'ss33': example_df(),
+                'rdf': r['mtcars'],
             },
             distance=0.1,
         ),
     ]
 
     history.append_population(
-        0, 42, Population(particle_list), 2, ["m1", "m2"]
+        0, 42, Population(particle_list), 2, ['m1', 'm2']
     )
     weights, sum_stats = history.get_weighted_sum_stats_for_model(0, 0)
     assert (weights == np.array([0.2, 0.8])).all()
-    assert sum_stats[0]["ss1"] == 0.1
-    assert (sum_stats[0]["ss2"] == arr2).all()
-    assert (sum_stats[0]["ss3"] == example_df()).all().all()
-    with localconverter(pandas2ri.converter):
-        assert (sum_stats[0]["rdf0"] == r["iris"]).all().all()
-    assert sum_stats[1]["ss12"] == 0.11
-    assert (sum_stats[1]["ss22"] == arr).all()
-    assert (sum_stats[1]["ss33"] == example_df()).all().all()
-    with localconverter(pandas2ri.converter):
-        assert (sum_stats[1]["rdf"] == r["mtcars"]).all().all()
+    assert sum_stats[0]['ss1'] == 0.1
+    assert (sum_stats[0]['ss2'] == arr2).all()
+    assert (sum_stats[0]['ss3'] == example_df()).all().all()
+    conv = get_conversion()
+    with localconverter(conv + pandas2ri.converter):
+        assert (sum_stats[0]['rdf0'] == r['iris']).all().all()
+    assert sum_stats[1]['ss12'] == 0.11
+    assert (sum_stats[1]['ss22'] == arr).all()
+    assert (sum_stats[1]['ss33'] == example_df()).all().all()
+    with localconverter(conv + pandas2ri.converter):
+        assert (sum_stats[1]['rdf'] == r['mtcars']).all().all()
 
 
 def test_total_nr_samples(history: History):
     particle_list = [
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=1.0,
-            sum_stat={"ss": 0.1},
+            sum_stat={'ss': 0.1},
             distance=0.1,
         )
     ]
     population = Population(particle_list)
-    history.append_population(0, 42, population, 4234, ["m1"])
-    history.append_population(0, 42, population, 3, ["m1"])
+    history.append_population(0, 42, population, 4234, ['m1'])
+    history.append_population(0, 42, population, 3, ['m1'])
 
     assert 4237 == history.total_nr_simulations
 
@@ -309,24 +311,24 @@ def test_t_count(history: History):
     particle_list = [
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=1.0,
-            sum_stat={"ss": 0.1},
+            sum_stat={'ss': 0.1},
             distance=0.1,
         )
     ]
     for t in range(1, 10):
-        history.append_population(t, 42, Population(particle_list), 2, ["m1"])
+        history.append_population(t, 42, Population(particle_list), 2, ['m1'])
         assert t == history.max_t
 
 
 def test_dataframe_storage_readout():
-    path = os.path.join(tempfile.gettempdir(), "history_test.db")
-    model_names = ["fake_name"] * 5
+    path = os.path.join(tempfile.gettempdir(), 'history_test.db')
+    model_names = ['fake_name'] * 5
 
     def make_hist():
-        h = History("sqlite:///" + path)
-        h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+        h = History('sqlite:///' + path)
+        h.store_initial_data(0, {}, {}, {}, model_names, '', '', '')
         return h
 
     pops = {}
@@ -367,16 +369,16 @@ def test_dataframe_storage_readout():
 
 def test_population_retrieval(history: History):
     history.append_population(
-        1, 0.23, Population(rand_pop_list(0)), 234, ["m1"]
+        1, 0.23, Population(rand_pop_list(0)), 234, ['m1']
     )
     history.append_population(
-        2, 0.123, Population(rand_pop_list(0)), 345, ["m1"]
+        2, 0.123, Population(rand_pop_list(0)), 345, ['m1']
     )
     history.append_population(
-        2, 0.1235, Population(rand_pop_list(5)), 20345, ["m1"] * 6
+        2, 0.1235, Population(rand_pop_list(5)), 20345, ['m1'] * 6
     )
     history.append_population(
-        3, 0.12330, Population(rand_pop_list(30)), 30345, ["m1"] * 31
+        3, 0.12330, Population(rand_pop_list(30)), 30345, ['m1'] * 31
     )
     df = history.get_all_populations()
 
@@ -397,12 +399,12 @@ def test_population_retrieval(history: History):
 
 def test_population_strategy_storage(history):
     res = history.get_population_strategy()
-    assert res["name"] == "pop_strategy_str_test"
+    assert res['name'] == 'pop_strategy_str_test'
 
 
 def test_model_probabilities(history):
     history.append_population(
-        1, 0.23, Population(rand_pop_list(3)), 234, ["m0", "m1", "m2", "m3"]
+        1, 0.23, Population(rand_pop_list(3)), 234, ['m0', 'm1', 'm2', 'm3']
     )
     probs = history.get_model_probabilities(1)
     assert probs.p[3] == 1
@@ -411,13 +413,13 @@ def test_model_probabilities(history):
 
 def test_model_probabilities_all(history):
     history.append_population(
-        1, 0.23, Population(rand_pop_list(3)), 234, ["m0", "m1", "m2", "m3"]
+        1, 0.23, Population(rand_pop_list(3)), 234, ['m0', 'm1', 'm2', 'm3']
     )
     probs = history.get_model_probabilities()
     assert (probs[3].values == np.array([1])).all()
 
 
-@pytest.fixture(params=[0, None], ids=["GT=0", "GT=None"])
+@pytest.fixture(params=[0, None], ids=['GT=0', 'GT=None'])
 def gt_model(request):
     return request.param
 
@@ -425,30 +427,30 @@ def gt_model(request):
 def test_observed_sum_stats(history_uninitialized: History, gt_model):
     h = history_uninitialized
     obs_sum_stats = {
-        "s1": 1,
-        "s2": 1.1,
-        "s3": np.array(0.1),
-        "s4": np.random.rand(10),
+        's1': 1,
+        's2': 1.1,
+        's3': np.array(0.1),
+        's4': np.random.rand(10),
     }
-    h.store_initial_data(gt_model, {}, obs_sum_stats, {}, [""], "", "", "")
+    h.store_initial_data(gt_model, {}, obs_sum_stats, {}, [''], '', '', '')
 
     h2 = History(h.db)
     loaded_sum_stats = h2.observed_sum_stat()
 
-    for k in ["s1", "s2", "s3"]:
+    for k in ['s1', 's2', 's3']:
         assert loaded_sum_stats[k] == obs_sum_stats[k]
 
-    assert (loaded_sum_stats["s4"] == obs_sum_stats["s4"]).all()
-    assert loaded_sum_stats["s1"] == obs_sum_stats["s1"]
-    assert loaded_sum_stats["s2"] == obs_sum_stats["s2"]
-    assert loaded_sum_stats["s3"] == obs_sum_stats["s3"]
-    assert loaded_sum_stats["s4"] is not obs_sum_stats["s4"]
+    assert (loaded_sum_stats['s4'] == obs_sum_stats['s4']).all()
+    assert loaded_sum_stats['s1'] == obs_sum_stats['s1']
+    assert loaded_sum_stats['s2'] == obs_sum_stats['s2']
+    assert loaded_sum_stats['s3'] == obs_sum_stats['s3']
+    assert loaded_sum_stats['s4'] is not obs_sum_stats['s4']
 
 
 def test_model_name_load(history_uninitialized: History):
     h = history_uninitialized
-    model_names = ["m1", "m2", "m3"]
-    h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+    model_names = ['m1', 'm2', 'm3']
+    h.store_initial_data(0, {}, {}, {}, model_names, '', '', '')
 
     h2 = History(h.db)
     model_names_loaded = h2.model_names()
@@ -457,8 +459,8 @@ def test_model_name_load(history_uninitialized: History):
 
 def test_model_name_load_no_gt_model(history_uninitialized: History):
     h = history_uninitialized
-    model_names = ["m1", "m2", "m3"]
-    h.store_initial_data(None, {}, {}, {}, model_names, "", "", "")
+    model_names = ['m1', 'm2', 'm3']
+    h.store_initial_data(None, {}, {}, {}, model_names, '', '', '')
 
     h2 = History(h.db)
     model_names_loaded = h2.model_names()
@@ -467,14 +469,14 @@ def test_model_name_load_no_gt_model(history_uninitialized: History):
 
 def test_model_name_load_single_with_pop(history_uninitialized: History):
     h = history_uninitialized
-    model_names = ["m1"]
-    h.store_initial_data(0, {}, {}, {}, model_names, "", "", "")
+    model_names = ['m1']
+    h.store_initial_data(0, {}, {}, {}, model_names, '', '', '')
     particle_list = [
         Particle(
             m=0,
-            parameter=Parameter({"a": 23, "b": 12}),
+            parameter=Parameter({'a': 23, 'b': 12}),
             weight=1.0,
-            sum_stat={"ss": 0.1},
+            sum_stat={'ss': 0.1},
             distance=0.1,
         )
     ]
@@ -494,7 +496,7 @@ def test_population_to_df(history: History):
                 0.23,
                 Population(rand_pop_list(m)),
                 234,
-                ["m0", "m1", "m2", "m3"],
+                ['m0', 'm1', 'm2', 'm3'],
             )
     df = history.get_population_extended(m=0)
     df_js = sumstat_to_json(df)
@@ -502,7 +504,7 @@ def test_population_to_df(history: History):
 
 
 def test_update_after_calibration(history: History):
-    history.store_initial_data(None, {}, {}, {}, ["m0"], "", "", "")
+    history.store_initial_data(None, {}, {}, {}, ['m0'], '', '', '')
     pops = history.get_all_populations()
     assert 0 == pops[pops['t'] == History.PRE_TIME]['samples'].values
     time = datetime.datetime.now()
@@ -526,18 +528,18 @@ def test_dict_from_and_to_json():
 
 def test_create_db():
     # temporary file name
-    file_ = tempfile.mkstemp(suffix=".db")[1]
+    file_ = tempfile.mkstemp(suffix='.db')[1]
 
     # set up history
-    pyabc.History("sqlite:///" + file_)
+    pyabc.History('sqlite:///' + file_)
 
     # should work just fine though file mostly empty
-    pyabc.History("sqlite:///" + file_, create=False)
+    pyabc.History('sqlite:///' + file_, create=False)
 
     # delete file and check we cannot create a History object
     os.remove(file_)
     with pytest.raises(ValueError):
-        pyabc.History("sqlite:///" + file_, create=False)
+        pyabc.History('sqlite:///' + file_, create=False)
 
 
 def test_dataframe_formats():
@@ -575,20 +577,20 @@ def test_export():
 
     # simple problem
     def model(p):
-        return {"y": p["p"] + 0.1 * np.random.normal()}
+        return {'y': p['p'] + 0.1 * np.random.normal()}
 
-    prior = pyabc.Distribution(p=pyabc.RV("uniform", -1, 2))
+    prior = pyabc.Distribution(p=pyabc.RV('uniform', -1, 2))
     distance = pyabc.PNormDistance()
 
     try:
         # run
-        db_file = tempfile.mkstemp(suffix=".db")[1]
+        db_file = tempfile.mkstemp(suffix='.db')[1]
         abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
-        abc.new("sqlite:///" + db_file, model({"p": 0}))
+        abc.new('sqlite:///' + db_file, model({'p': 0}))
         abc.run(max_nr_populations=3)
 
         # export history
-        for fmt in ["csv", "json", "html", "stata"]:
+        for fmt in ['csv', 'json', 'html', 'stata']:
             out_file = tempfile.mkstemp()[1]
             try:
                 pyabc.storage.export(db_file, out=out_file, out_format=fmt)

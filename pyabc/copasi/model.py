@@ -2,20 +2,19 @@
 
 import logging
 import os
-from typing import Dict, List
 
 from .. import Parameter
 from ..model import Model
 
-logger = logging.getLogger("ABC.Copasi")
+logger = logging.getLogger('ABC.Copasi')
 
 try:
     import basico
 except ImportError:
     basico = None
     logger.error(
-        "Install BasiCO (see https://basico.rtfd.io) to use the BasiCO model, "
-        "e.g. via `pip install pyabc[copasi]`"
+        'Install BasiCO (see https://basico.rtfd.io) to use the BasiCO model, '
+        'e.g. via `pip install pyabc[copasi]`'
     )
 
 
@@ -35,15 +34,15 @@ class BasicoModel(Model):
     def __init__(
         self,
         sbml_file: str,
-        changes: Dict[str, float] = None,
+        changes: dict[str, float] = None,
         change_unit: bool = True,
-        method: str = "stochastic",
+        method: str = 'stochastic',
         t0: float = None,
         duration: float = None,
         num_steps: int = None,
         automatic: bool = True,
         use_numbers: bool = False,
-        output: List[str] = None,
+        output: list[str] = None,
         model_name: str = None,
     ):
         """
@@ -84,7 +83,7 @@ class BasicoModel(Model):
         self.model_name = model_name
 
         super().__init__(
-            name=f"BasicoModel_{model_name}",
+            name=f'BasicoModel_{model_name}',
         )
 
         self.sbml_file = sbml_file
@@ -110,7 +109,7 @@ class BasicoModel(Model):
         self.output = output
         self.method = method
 
-    def __call__(self, pars: Dict[str, float], return_raw: bool = False):
+    def __call__(self, pars: dict[str, float], return_raw: bool = False):
         """Simulate data for given parameters.
 
         Calls the time course and returns the selected result.
@@ -141,11 +140,11 @@ class BasicoModel(Model):
 
         # cache output columns
         if self.output is None:
-            self.output = list(set(tc.columns) - {"Time"})
+            self.output = list(set(tc.columns) - {'Time'})
 
         return {
-            "t": tc.Time.to_numpy(),
-            "X": tc[self.output].to_numpy(),
+            't': tc.Time.to_numpy(),
+            'X': tc[self.output].to_numpy(),
         }
 
     def sample(self, pars: Parameter):
@@ -156,7 +155,7 @@ class BasicoModel(Model):
         """
         return self(pars, return_raw=False)
 
-    def apply_parameters(self, pars: Dict[str, float]):
+    def apply_parameters(self, pars: dict[str, float]):
         """Set the parameters of the model.
 
         Parameters
@@ -179,17 +178,17 @@ class BasicoModel(Model):
     def __getstate__(self):
         # all arguments
         state = {
-            "sbml_file": self.sbml_file,
-            "changes": self.changes,
-            "change_unit": self.change_unit,
-            "method": self.method,
-            "t0": self.t0,
-            "duration": self.duration,
-            "num_steps": self.num_steps,
-            "automatic": self.automatic,
-            "use_numbers": self.use_numbers,
-            "output": self.output,
-            "model_name": self.model_name,
+            'sbml_file': self.sbml_file,
+            'changes': self.changes,
+            'change_unit': self.change_unit,
+            'method': self.method,
+            't0': self.t0,
+            'duration': self.duration,
+            'num_steps': self.num_steps,
+            'automatic': self.automatic,
+            'use_numbers': self.use_numbers,
+            'output': self.output,
+            'model_name': self.model_name,
         }
         return state
 

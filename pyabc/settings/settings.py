@@ -1,5 +1,3 @@
-from typing import List
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
@@ -9,7 +7,7 @@ def set_figure_params(
     theme: str = 'pyabc',
     style: str = None,
     color_map: str = 'plasma',
-    color_cycle: List[str] = None,
+    color_cycle: list[str] = None,
 ) -> None:
     """Set global figure parameters for a consistent, beautified design.
 
@@ -42,13 +40,13 @@ def set_figure_params(
     elif theme == 'default':
         _set_figure_params_default()
     else:
-        raise ValueError(f"Theme not recognized: {theme}")
+        raise ValueError(f'Theme not recognized: {theme}')
 
 
 def _set_figure_params_pyabc(
     style: str,
     color_map: str,
-    color_cycle: List[str],
+    color_cycle: list[str],
 ) -> None:
     """Set layout parameters for style 'pyabc'"""
     # overall style

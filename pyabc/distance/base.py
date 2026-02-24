@@ -2,7 +2,7 @@
 
 import json
 from abc import ABC, abstractmethod
-from typing import Callable, Union
+from collections.abc import Callable
 
 from ..population import Sample
 
@@ -15,7 +15,7 @@ class Distance(ABC):
     should inherit from this class.
     """
 
-    def initialize(
+    def initialize(  # noqa: B027
         self,
         t: int,
         get_sample: Callable[[], Sample],
@@ -40,7 +40,7 @@ class Distance(ABC):
             The total number of simulations so far.
         """
 
-    def configure_sampler(self, sampler):
+    def configure_sampler(self, sampler):  # noqa: B027
         """Configure the sampler.
 
         This method is called by the inference routine at the beginning.
@@ -56,9 +56,9 @@ class Distance(ABC):
 
     def update(
         self,
-        t: int,
-        get_sample: Callable[[], Sample],
-        total_sims: int,
+        t: int,  # noqa: ARG002
+        get_sample: Callable[[], Sample],  # noqa: ARG002
+        total_sims: int,  # noqa: ARG002
     ) -> bool:
         """Update for the upcoming generation t.
 
@@ -146,7 +146,7 @@ class Distance(ABC):
         config: dict
             Dictionary describing the distance.
         """
-        return {"name": self.__class__.__name__}
+        return {'name': self.__class__.__name__}
 
     def to_json(self) -> str:
         """
@@ -181,13 +181,13 @@ class NoDistance(Distance):
 
     def __call__(
         self,
-        x: dict,
-        x_0: dict,
-        t: int = None,
-        par: dict = None,
+        x: dict,  # noqa: ARG002
+        x_0: dict,  # noqa: ARG002
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         raise AssertionError(
-            f"Distance {self.__class__.__name__} should not be called."
+            f'Distance {self.__class__.__name__} should not be called.'
         )
 
 
@@ -201,10 +201,10 @@ class AcceptAllDistance(Distance):
 
     def __call__(
         self,
-        x: dict,
-        x_0: dict,
-        t: int = None,
-        par: dict = None,
+        x: dict,  # noqa: ARG002
+        x_0: dict,  # noqa: ARG002
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         return -1
 
@@ -232,8 +232,8 @@ class FunctionDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         return self.fun(x, x_0)
 
@@ -241,16 +241,16 @@ class FunctionDistance(Distance):
         conf = super().get_config()
         # try to get the function name
         try:
-            conf["name"] = self.fun.__name__
+            conf['name'] = self.fun.__name__
         except AttributeError:
             try:
-                conf["name"] = self.fun.__class__.__name__
+                conf['name'] = self.fun.__class__.__name__
             except AttributeError:
                 pass
         return conf
 
     @staticmethod
-    def to_distance(maybe_distance: Union[Callable, Distance]) -> Distance:
+    def to_distance(maybe_distance: Callable | Distance) -> Distance:
         """
         Parameters
         ----------

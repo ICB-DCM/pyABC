@@ -34,7 +34,7 @@ def prior_specs(request):
                 C.LOWER_BOUND: [np.nan],
                 C.UPPER_BOUND: [np.nan],
                 C.OBJECTIVE_PRIOR_TYPE: [prior_type],
-                C.OBJECTIVE_PRIOR_PARAMETERS: [f"{var1};{var2}"],
+                C.OBJECTIVE_PRIOR_PARAMETERS: [f'{var1};{var2}'],
             }
         )
     else:
@@ -115,7 +115,7 @@ def test_petab_prior(prior_specs):
         mean_th = var1
         var_th = 2 * var2**2
     else:
-        raise ValueError(f"Unexpected prior type: {prior_type}")
+        raise ValueError(f'Unexpected prior type: {prior_type}')
 
     # multiplicative tolerance of sample vs ground truth variables
     tol = 0.8
@@ -138,7 +138,7 @@ def test_petab_prior(prior_specs):
     elif prior_type == C.LOG_LAPLACE:
         distr = scipy.stats.loglaplace(c=1 / var2, scale=np.exp(var1))
     else:
-        raise ValueError(f"Unexpected prior type: {prior_type}")
+        raise ValueError(f'Unexpected prior type: {prior_type}')
 
     # perform KS test
     _, p_value = scipy.stats.kstest(samples, distr.cdf)
@@ -191,7 +191,7 @@ def test_get_nominal_parameters():
                 C.PARAMETER_SCALE_UNIFORM,
                 C.UNIFORM,
             ],
-            C.OBJECTIVE_PRIOR_PARAMETERS: ["1;4", "1;3", "0;0.7"],
+            C.OBJECTIVE_PRIOR_PARAMETERS: ['1;4', '1;3', '0;0.7'],
         }
     ).set_index(C.PARAMETER_ID)
 
@@ -236,7 +236,7 @@ def test_get_bounds():
                 C.PARAMETER_SCALE_UNIFORM,
                 C.LAPLACE,
             ],
-            C.OBJECTIVE_PRIOR_PARAMETERS: ["1;4", "1;3", "0;0.7", "1;4"],
+            C.OBJECTIVE_PRIOR_PARAMETERS: ['1;4', '1;3', '0;0.7', '1;4'],
         }
     ).set_index(C.PARAMETER_ID)
 
@@ -285,15 +285,15 @@ def test_get_bounds():
         )
 
 
-benchmark_dir = "doc/examples/tmp/benchmark-models-petab"
+benchmark_dir = 'doc/examples/tmp/benchmark-models-petab'
 
 
 def download_benchmark_repo():
     # download archive
     if not os.path.exists(benchmark_dir):
         git.Repo.clone_from(
-            "https://github.com/benchmarking-initiative"
-            "/benchmark-models-petab.git",
+            'https://github.com/benchmarking-initiative'
+            '/benchmark-models-petab.git',
             benchmark_dir,
             depth=1,
         )
@@ -343,7 +343,7 @@ def test_pickling():
     model_re = pickle.loads(pickle.dumps(model))
 
     p = importer.get_nominal_parameters()
-    assert np.isclose(model(p)["llh"], model_re(p)["llh"])
+    assert np.isclose(model(p)['llh'], model_re(p)['llh'])
 
 
 def test_pipeline():

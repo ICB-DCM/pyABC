@@ -1,7 +1,7 @@
 """Summary statistics learning."""
 
 import logging
-from typing import Callable, Collection, List, Union
+from collections.abc import Callable, Collection
 
 import numpy as np
 
@@ -24,7 +24,7 @@ from ..util import (
 from .base import IdentitySumstat, Sumstat
 from .subset import IdSubsetter, Subsetter
 
-logger = logging.getLogger("ABC.Sumstat")
+logger = logging.getLogger('ABC.Sumstat')
 
 
 class PredictorSumstat(Sumstat):
@@ -47,8 +47,8 @@ class PredictorSumstat(Sumstat):
 
     def __init__(
         self,
-        predictor: Union[Predictor, Callable],
-        fit_ixs: Union[EventIxs, Collection[int], int] = None,
+        predictor: Predictor | Callable,
+        fit_ixs: EventIxs | Collection[int] | int = None,
         all_particles: bool = True,
         normalize_labels: bool = True,
         fitted: bool = False,
@@ -107,7 +107,7 @@ class PredictorSumstat(Sumstat):
         if fit_ixs is None:
             fit_ixs = {9, 15}
         self.fit_ixs: EventIxs = EventIxs.to_instance(fit_ixs)
-        logger.debug(f"Fit model ixs: {self.fit_ixs}")
+        logger.debug(f'Fit model ixs: {self.fit_ixs}')
 
         self.all_particles: bool = all_particles
         self.normalize_labels: bool = normalize_labels
@@ -228,7 +228,7 @@ class PredictorSumstat(Sumstat):
         )
 
     @io_dict2arr
-    def __call__(self, data: Union[dict, np.ndarray]):
+    def __call__(self, data: dict | np.ndarray):
         # check whether to return data directly
         if not self.fitted and not self.pre_before_fit:
             return data
@@ -245,20 +245,20 @@ class PredictorSumstat(Sumstat):
         ).flatten()
 
         if sumstat.size != len(self.par_trafo):
-            raise AssertionError("Predictor should return #parameters values")
+            raise AssertionError('Predictor should return #parameters values')
 
         return sumstat
 
     def __str__(self) -> str:
         return (
-            f"<{self.__class__.__name__} pre={self.pre}, "
-            f"predictor={self.predictor}>"
+            f'<{self.__class__.__name__} pre={self.pre}, '
+            f'predictor={self.predictor}>'
         )
 
-    def get_ids(self) -> List[str]:
+    def get_ids(self) -> list[str]:
         # label by parameter keys
         if self.fitted:
-            return [f"s_{key}" for key in self.par_trafo.get_ids()]
+            return [f's_{key}' for key in self.par_trafo.get_ids()]
         if not self.pre_before_fit:
             return dict2arrlabels(self.x_0, keys=self.x_keys)
         return self.pre.get_ids()

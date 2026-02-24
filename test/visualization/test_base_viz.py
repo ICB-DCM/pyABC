@@ -8,7 +8,7 @@ import pytest
 
 import pyabc
 
-db_path = "sqlite:///" + tempfile.mkstemp(suffix='.db')[1]
+db_path = 'sqlite:///' + tempfile.mkstemp(suffix='.db')[1]
 log_files = []
 histories = []
 labels = []
@@ -43,7 +43,7 @@ def setup_module():
     sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=2)
 
     for _ in range(n_history):
-        log_file = tempfile.mkstemp(suffix=".json")[1]
+        log_file = tempfile.mkstemp(suffix='.json')[1]
         log_files.append(log_file)
         distance = pyabc.AdaptivePNormDistance(p=2, scale_log_file=log_file)
 
@@ -57,12 +57,12 @@ def setup_module():
         history = pyabc.History(db_path)
         history.id = j + 1
         histories.append(history)
-        labels.append("Some run " + str(j))
+        labels.append('Some run ' + str(j))
 
 
 def teardown_module():
     """Tear down module. Called after all tests here."""
-    os.remove(db_path[len("sqlite:///") :])
+    os.remove(db_path[len('sqlite:///') :])
     for log_file in log_files:
         os.remove(log_file)
 
@@ -195,7 +195,7 @@ def test_kdes():
     history = histories[0]
     df, w = history.get_distribution(m=0, t=None)
     pyabc.visualization.plot_kde_1d(
-        df, w, x='p0', xmin=limits['p0'][0], xmax=limits['p0'][1], label="PDF"
+        df, w, x='p0', xmin=limits['p0'][0], xmax=limits['p0'][1], label='PDF'
     )
     pyabc.visualization.plot_kde_2d(df, w, x='p0', y='p1')
     pyabc.visualization.plot_kde_matrix(df, w)
@@ -220,9 +220,9 @@ def test_contours():
     for kwargs in [
         {},
         {
-            "show_clabel": True,
-            "show_legend": True,
-            "clabel_kwargs": {"inline": False},
+            'show_clabel': True,
+            'show_legend': True,
+            'clabel_kwargs': {'inline': False},
         },
     ]:
         # lowlevel interfaces
@@ -237,7 +237,7 @@ def test_contours():
             history, size=(7, 5), refval=p_true, **kwargs
         )
 
-    plt.close()
+        plt.close()
 
 
 def test_credible_intervals():
@@ -353,27 +353,28 @@ def test_distance_weights():
         pyabc.visualization.plot_distance_weights(
             log_files, keys_as_labels=keys_as_labels
         )
+    plt.close()
 
 
 def test_sensitivity_sankey():
     """Test pyabc.visualization.plot_sensitivity_sankey`"""
-    sigmas = {"p1": 0.1}
+    sigmas = {'p1': 0.1}
 
     def model(p):
         return {
-            "y1": p["p1"] + 1 + sigmas["p1"] * np.random.normal(),
-            "y2": 2 + 0.1 * np.random.normal(size=3),
+            'y1': p['p1'] + 1 + sigmas['p1'] * np.random.normal(),
+            'y2': 2 + 0.1 * np.random.normal(size=3),
         }
 
-    gt_par = {"p1": 3}
+    gt_par = {'p1': 3}
 
-    data = {"y1": gt_par["p1"] + 1, "y2": 2 * np.ones(shape=3)}
+    data = {'y1': gt_par['p1'] + 1, 'y2': 2 * np.ones(shape=3)}
 
-    prior_bounds = {"p1": (0, 10)}
+    prior_bounds = {'p1': (0, 10)}
 
     prior = pyabc.Distribution(
         **{
-            key: pyabc.RV("uniform", lb, ub - lb)
+            key: pyabc.RV('uniform', lb, ub - lb)
             for key, (lb, ub) in prior_bounds.items()
         },
     )
@@ -381,9 +382,9 @@ def test_sensitivity_sankey():
     total_sims = 1000
 
     # tmp files
-    db_file = tempfile.mkstemp(suffix=".db")[1]
-    scale_log_file = tempfile.mkstemp(suffix=".json")[1]
-    info_log_file = tempfile.mkstemp(suffix=".json")[1]
+    db_file = tempfile.mkstemp(suffix='.db')[1]
+    scale_log_file = tempfile.mkstemp(suffix='.json')[1]
+    info_log_file = tempfile.mkstemp(suffix='.json')[1]
     info_sample_log_file = tempfile.mkstemp()[1]
 
     distance = pyabc.InfoWeightedPNormDistance(
@@ -397,7 +398,7 @@ def test_sensitivity_sankey():
     )
 
     abc = pyabc.ABCSMC(model, prior, distance, population_size=100)
-    h = abc.new(db="sqlite:///" + db_file, observed_sum_stat=data)
+    h = abc.new(db='sqlite:///' + db_file, observed_sum_stat=data)
     abc.run(max_total_nr_simulations=total_sims)
 
     pyabc.visualization.plot_sensitivity_sankey(
@@ -406,13 +407,15 @@ def test_sensitivity_sankey():
         h=h,
         predictor=pyabc.predictor.LinearPredictor(),
     )
+    plt.close()
 
 
 def test_colors():
     """Some basic tests regarding color codes."""
     for basecolor in pyabc.visualization.colors.BASECOLORS:
         for level in pyabc.visualization.colors.LEVELS:
-            color = getattr(pyabc.visualization.colors, f"{basecolor}{level}")
+            color = getattr(pyabc.visualization.colors, f'{basecolor}{level}')
             assert len(color) == 7
-            assert color[0] == "#"
+            assert color[0] == '#'
             assert int(color[1:], 16)
+    plt.close()

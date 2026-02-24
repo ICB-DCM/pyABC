@@ -46,7 +46,7 @@ def population_strategy_calibration(request):
 
 def test_adapt_single_model(population_strategy: PopulationStrategy):
     n = 10
-    df = pd.DataFrame([{"s": np.random.rand()} for _ in range(n)])
+    df = pd.DataFrame([{'s': np.random.rand()} for _ in range(n)])
     w = np.ones(n) / n
     kernel = MultivariateNormalTransition()
     kernel.fit(df, w)
@@ -59,7 +59,7 @@ def test_adapt_two_models(population_strategy: PopulationStrategy):
     n = 10
     kernels = []
     for _ in range(2):
-        df = pd.DataFrame([{"s": np.random.rand()} for _ in range(n)])
+        df = pd.DataFrame([{'s': np.random.rand()} for _ in range(n)])
         w = np.ones(n) / n
         kernel = MultivariateNormalTransition()
         kernel.fit(df, w)
@@ -96,7 +96,7 @@ def test_one_with_one_without_parameters(
     kernel_without.fit(df_without, w_without)
     kernels.append(kernel_without)
 
-    df_with = pd.DataFrame([{"s": np.random.rand()} for _ in range(n)])
+    df_with = pd.DataFrame([{'s': np.random.rand()} for _ in range(n)])
     w_with = np.ones(n) / n
     kernel_with = MultivariateNormalTransition()
     kernel_with.fit(df_with, w_with)
@@ -109,10 +109,10 @@ def test_one_with_one_without_parameters(
 def test_transitions_not_modified(population_strategy: PopulationStrategy):
     n = 10
     kernels = []
-    test_points = pd.DataFrame([{"s": np.random.rand()} for _ in range(n)])
+    test_points = pd.DataFrame([{'s': np.random.rand()} for _ in range(n)])
 
     for _ in range(2):
-        df = pd.DataFrame([{"s": np.random.rand()} for _ in range(n)])
+        df = pd.DataFrame([{'s': np.random.rand()} for _ in range(n)])
         w = np.ones(n) / n
         kernel = MultivariateNormalTransition()
         kernel.fit(df, w)
@@ -128,8 +128,8 @@ def test_transitions_not_modified(population_strategy: PopulationStrategy):
         (k1 == k2).all()
         for k1, k2 in zip(test_weights, after_adaptation_weights)
     )
-    err_msg = "Population strategy {}" " modified the transitions".format(
-        population_strategy
+    err_msg = (
+        f'Population strategy {population_strategy} modified the transitions'
     )
 
     assert same, err_msg

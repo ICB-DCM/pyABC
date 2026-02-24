@@ -1,6 +1,7 @@
 """Interface to Julia via PyJulia."""
 
-from typing import Any, Callable, Dict, Union
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,8 +13,8 @@ except ImportError:
 
 
 def _dict_vars2py(
-    dct: Dict[str, Any]
-) -> Dict[str, Union[np.ndarray, pd.Series, pd.DataFrame]]:
+    dct: dict[str, Any],
+) -> dict[str, np.ndarray | pd.Series | pd.DataFrame]:
     """Convert non-pandas dictionary entries to numpy arrays.
 
     Parameters
@@ -25,7 +26,7 @@ def _dict_vars2py(
     dct: The same dictionary with modified values.
     """
     for key, val in dct.items():
-        if not isinstance(val, (pd.DataFrame, pd.Series)):
+        if not isinstance(val, pd.DataFrame | pd.Series):
             dct[key] = np.asarray(val)
     return dct
 
@@ -42,7 +43,7 @@ def _read_source(module_name: str, source_file: str) -> None:
         Main.include(source_file)
 
 
-class _JlWrap(object):
+class _JlWrap:
     """Wrapper around Julia object.
 
     This in particular makes the objects pickleable, by reconstruction from
@@ -63,9 +64,9 @@ class _JlWrap(object):
 
     def __getstate__(self):
         return {
-            "module_name": self.module_name,
-            "source_file": self.source_file,
-            "function_name": self.function_name,
+            'module_name': self.module_name,
+            'source_file': self.source_file,
+            'function_name': self.function_name,
         }
 
     def __setstate__(self, d):
@@ -77,8 +78,8 @@ class _JlWrap(object):
     @property
     def __name__(self):
         return (
-            f"{self.__class__.__name__}_{self.function_name}_"
-            f"{self.module_name}_{self.source_file}"
+            f'{self.__class__.__name__}_{self.function_name}_'
+            f'{self.module_name}_{self.source_file}'
         )
 
 
@@ -157,16 +158,16 @@ class Julia:
     def __init__(self, module_name: str, source_file: str = None):
         if Main is None:
             raise ImportError(
-                "Install PyJulia, e.g. via `pip install pyabc[julia]`, "
-                "and see the class documentation",
+                'Install PyJulia, e.g. via `pip install pyabc[julia]`, '
+                'and see the class documentation',
             )
         self.module_name: str = module_name
         if source_file is None:
-            source_file = module_name + ".jl"
+            source_file = module_name + '.jl'
         self.source_file: str = source_file
         _read_source(self.module_name, self.source_file)
 
-    def model(self, name: str = "model"):
+    def model(self, name: str = 'model'):
         """Get a wrapped Julia model callable.
 
         Parameters
@@ -179,7 +180,7 @@ class Julia:
             function_name=name,
         )
 
-    def observation(self, name: str = "observation"):
+    def observation(self, name: str = 'observation'):
         """Get the observed data from Julia.
 
         Parameters
@@ -190,7 +191,7 @@ class Julia:
         observation = _dict_vars2py(observation)
         return observation
 
-    def distance(self, name: str = "distance") -> Callable:
+    def distance(self, name: str = 'distance') -> Callable:
         """Get the distance function from Julia.
 
         Parameters

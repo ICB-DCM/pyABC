@@ -28,7 +28,7 @@ from .cmd import (
     idfy,
 )
 
-logger = logging.getLogger("ABC.Sampler")
+logger = logging.getLogger('ABC.Sampler')
 
 
 def work_on_population_dynamic(
@@ -78,7 +78,7 @@ def work_on_population_dynamic(
         return
     # notify sign up as worker
     n_worker = redis.incr(idfy(N_WORKER, ana_id, t))
-    logger.info(f"Begin generation {t}, I am worker {n_worker}")
+    logger.info(f'Begin generation {t}, I am worker {n_worker}')
 
     # only allow stopping the worker at particular points
     kill_handler.exit = False
@@ -105,9 +105,9 @@ def work_on_population_dynamic(
         # check whether the process was externally asked to stop
         if kill_handler.killed:
             logger.info(
-                f"Worker {n_worker} received stop signal. "
-                "Terminating in the middle of a population "
-                f"after {internal_counter} samples."
+                f'Worker {n_worker} received stop signal. '
+                'Terminating in the middle of a population '
+                f'after {internal_counter} samples.'
             )
             # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
@@ -117,9 +117,9 @@ def work_on_population_dynamic(
         current_runtime = time() - start_time
         if current_runtime > max_runtime_s:
             logger.info(
-                f"Worker {n_worker} stops during population because "
-                f"runtime {current_runtime} exceeds "
-                f"max runtime {max_runtime_s}"
+                f'Worker {n_worker} stops during population because '
+                f'runtime {current_runtime} exceeds '
+                f'max runtime {max_runtime_s}'
             )
             # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
@@ -130,8 +130,8 @@ def work_on_population_dynamic(
         ana_id_new_b = redis.get(ANALYSIS_ID)
         if ana_id_new_b is None or str(ana_id_new_b.decode()) != ana_id:
             logger.info(
-                f"Worker {n_worker} stops during population because "
-                "the analysis seems to have been stopped."
+                f'Worker {n_worker} stops during population because '
+                'the analysis seems to have been stopped.'
             )
             # notify quit
             redis.decr(idfy(N_WORKER, ana_id, t))
@@ -179,8 +179,8 @@ def work_on_population_dynamic(
                 new_sim = simulate_one()
             except Exception as e:
                 logger.warning(
-                    f"Redis worker number {n_worker} failed. "
-                    f"Error message is: {e}"
+                    f'Redis worker number {n_worker} failed. '
+                    f'Error message is: {e}'
                 )
                 # increment the failure counter
                 redis.incr(idfy(N_FAIL, ana_id, t), 1)
@@ -232,7 +232,7 @@ def work_on_population_dynamic(
     kill_handler.exit = True
     population_total_time = time() - population_start_time
     logger.info(
-        f"Finished generation {t}, did {internal_counter} samples. "
-        f"Simulation time: {cumulative_simulation_time:.2f}s, "
-        f"total time {population_total_time:.2f}."
+        f'Finished generation {t}, did {internal_counter} samples. '
+        f'Simulation time: {cumulative_simulation_time:.2f}s, '
+        f'total time {population_total_time:.2f}.'
     )

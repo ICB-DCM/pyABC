@@ -73,6 +73,21 @@ from .epsilon import (
     TemperatureScheme,
 )
 from .inference import ABCSMC
+from .inference_util import (
+    AnalysisVars,
+    create_analysis_id,
+    create_prior_pdf,
+    create_simulate_from_prior_function,
+    create_simulate_function,
+    create_transition_pdf,
+    create_weight_function,
+    eps_from_hist,
+    evaluate_preliminary_particle,
+    evaluate_proposal,
+    generate_valid_proposal,
+    only_simulate_data_for_proposal,
+    termination_criteria_fulfilled,
+)
 from .model import FunctionModel, IntegratedModel, Model, ModelResult
 from .parameters import Parameter
 from .population import Particle, Population, Sample
@@ -140,7 +155,7 @@ try:
 except KeyError:
     loglevel = 'INFO'
 
-logger = logging.getLogger("ABC")
+logger = logging.getLogger('ABC')
 logger.setLevel(loglevel)
 sh = logging.StreamHandler()
 sh.setFormatter(logging.Formatter('%(name)s %(levelname)s: %(message)s'))

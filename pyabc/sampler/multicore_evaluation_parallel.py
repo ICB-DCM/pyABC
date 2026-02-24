@@ -8,7 +8,7 @@ from jabbar import jabbar
 
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 
-DONE = "Done"
+DONE = 'Done'
 
 
 def work(
@@ -94,11 +94,11 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         self,
         n,
         simulate_one,
-        t,
+        t,  # noqa: ARG002
         *,
         max_eval=np.inf,
         all_accepted=False,
-        ana_vars=None,
+        ana_vars=None,  # noqa: ARG002
     ):
         n_eval = Value(c_longlong)
         n_eval.value = 0

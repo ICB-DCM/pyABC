@@ -1,6 +1,5 @@
 import logging
 from abc import abstractmethod
-from typing import Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,7 @@ from .exceptions import NotEnoughParticles
 from .predict_population_size import predict_population_size
 from .transitionmeta import TransitionMeta
 
-logger = logging.getLogger("ABC.Transition")
+logger = logging.getLogger('ABC.Transition')
 
 
 class Transition(BaseEstimator, metaclass=TransitionMeta):
@@ -64,7 +63,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             A sample from the fitted model.
         """
 
-    def rvs(self, size: int = None) -> Union[Parameter, pd.DataFrame]:
+    def rvs(self, size: int = None) -> Parameter | pd.DataFrame:
         """
         Sample from the density.
 
@@ -92,8 +91,8 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
 
     @abstractmethod
     def pdf(
-        self, x: Union[Parameter, pd.Series, pd.DataFrame]
-    ) -> Union[float, np.ndarray]:
+        self, x: Parameter | pd.Series | pd.DataFrame
+    ) -> float | np.ndarray:
         """
         Evaluate the probability density function (PDF) at `x`.
 
@@ -120,7 +119,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
     def no_meaningful_particles(self) -> bool:
         return len(self.X) == 0 or self.no_parameters
 
-    def mean_cv(self, n_samples: Union[None, int] = None) -> float:
+    def mean_cv(self, n_samples: None | int = None) -> float:
         """
         Estimate the uncertainty on the KDE.
 
@@ -204,7 +203,7 @@ class AggregatedTransition(Transition):
         transition kernel to be used for those parameters.
     """
 
-    def __init__(self, mapping: Dict[Union[str, Tuple[str, ...]], Transition]):
+    def __init__(self, mapping: dict[str | tuple[str, ...], Transition]):
         # normalize input
         tidy_mapping = {}
         for keys, transition in mapping.items():
@@ -222,7 +221,7 @@ class AggregatedTransition(Transition):
             transition.fit(X_for_keys, w)
 
     def rvs_single(self) -> Parameter:
-        sample = Parameter({key: np.nan for key in self.X.columns})
+        sample = Parameter(dict.fromkeys(self.X.columns, np.nan))
         for transition in self.mapping.values():
             sample_for_keys = transition.rvs_single()
             # in-place update
@@ -230,8 +229,8 @@ class AggregatedTransition(Transition):
         return sample
 
     def pdf(
-        self, x: Union[Parameter, pd.Series, pd.DataFrame]
-    ) -> Union[float, np.ndarray]:
+        self, x: Parameter | pd.Series | pd.DataFrame
+    ) -> float | np.ndarray:
         # density
         pd = 1.0
         for keys, transition in self.mapping.items():

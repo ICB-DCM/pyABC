@@ -1,6 +1,5 @@
 import functools
 from abc import ABCMeta
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -15,9 +14,8 @@ def wrap_fit(f):
             self.no_parameters = True
             return
         self.no_parameters = False
-        if w.size > 0:
-            if not np.isclose(w.sum(), 1):
-                w /= w.sum()
+        if w.size > 0 and not np.isclose(w.sum(), 1):
+            w /= w.sum()
         f(self, X, w)
 
     return fit
@@ -25,7 +23,7 @@ def wrap_fit(f):
 
 def wrap_pdf(f):
     @functools.wraps(f)
-    def pdf(self, x: Union[pd.Series, pd.DataFrame]):
+    def pdf(self, x: pd.Series | pd.DataFrame):
         if self.no_parameters:
             return 1
         return f(self, x)
@@ -65,3 +63,4 @@ class TransitionMeta(ABCMeta):  # noqa: B024
         cls.pdf = wrap_pdf(cls.pdf)
         cls.rvs = wrap_rvs(cls.rvs)
         cls.rvs_single = wrap_rvs_single(cls.rvs_single)
+        cls.no_parameters = False

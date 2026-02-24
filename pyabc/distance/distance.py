@@ -1,7 +1,7 @@
 """Various basic distances."""
 
 import logging
-from typing import Callable, List, Union
+from collections.abc import Callable
 
 import numpy as np
 from scipy import linalg as la
@@ -9,7 +9,7 @@ from scipy import linalg as la
 from ..population import Sample
 from .base import Distance
 
-logger = logging.getLogger("ABC.Distance")
+logger = logging.getLogger('ABC.Distance')
 
 
 class DistanceWithMeasureList(Distance):
@@ -35,17 +35,17 @@ class DistanceWithMeasureList(Distance):
 
     def initialize(
         self,
-        t: int,
-        get_sample: Callable[[], Sample],
+        t: int,  # noqa: ARG002
+        get_sample: Callable[[], Sample],  # noqa: ARG002
         x_0: dict,
-        total_sims: int,
+        total_sims: int,  # noqa: ARG002
     ):
         if self.measures_to_use == 'all':
             self.measures_to_use = x_0.keys()
 
     def get_config(self):
         config = super().get_config()
-        config["measures_to_use"] = self.measures_to_use
+        config['measures_to_use'] = self.measures_to_use
         return config
 
 
@@ -65,8 +65,8 @@ class ZScoreDistance(DistanceWithMeasureList):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         return sum(
             abs((x[key] - x_0[key]) / x_0[key])
@@ -98,7 +98,7 @@ class PCADistance(DistanceWithMeasureList):
     def __init__(self, measures_to_use='all', p: float = 2):
         super().__init__(measures_to_use)
         self.p: float = p
-        self.trafo: Union[np.ndarray, None] = None
+        self.trafo: np.ndarray | None = None
 
     def _dict_to_vect(self, x):
         return np.asarray([x[key] for key in self.measures_to_use])
@@ -142,8 +142,8 @@ class PCADistance(DistanceWithMeasureList):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
@@ -172,7 +172,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
     """
 
     @staticmethod
-    def lower(parameter_list: List[float]):
+    def lower(parameter_list: list[float]):
         """
         Calculate the lower margin form a list of parameter values.
 
@@ -188,7 +188,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         """
 
     @staticmethod
-    def upper(parameter_list: List[float]):
+    def upper(parameter_list: list[float]):
         """
         Calculate the upper margin form a list of parameter values.
 
@@ -209,7 +209,7 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
 
     def get_config(self):
         config = super().get_config()
-        config["normalization"] = self.normalization
+        config['normalization'] = self.normalization
         return config
 
     def _calculate_normalization(self, sum_stats):
@@ -249,8 +249,8 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int = None,  # noqa: ARG002
+        par: dict = None,  # noqa: ARG002
     ) -> float:
         distance = sum(
             abs((x[key] - x_0[key]) / self.normalization[key])
@@ -294,5 +294,5 @@ class PercentileDistance(RangeEstimatorDistance):
 
     def get_config(self):
         config = super().get_config()
-        config["PERCENTILE"] = self.PERCENTILE
+        config['PERCENTILE'] = self.PERCENTILE
         return config

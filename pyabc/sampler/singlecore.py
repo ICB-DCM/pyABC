@@ -22,11 +22,11 @@ class SingleCoreSampler(Sampler):
         self,
         n,
         simulate_one,
-        t,
+        t,  # noqa: ARG002
         *,
         max_eval=np.inf,
-        all_accepted=False,
-        ana_vars=None,
+        all_accepted=False,  # noqa: ARG002
+        ana_vars=None,  # noqa: ARG002
     ):
         nr_simulations = 0
         sample = self._create_empty_sample()

@@ -81,7 +81,7 @@ def test_uniform_acceptor():
 def test_stochastic_acceptor():
     """Test the stochastic acceptor's features."""
     # store pnorms
-    pnorm_file = tempfile.mkstemp(suffix=".json")[1]
+    pnorm_file = tempfile.mkstemp(suffix='.json')[1]
     acceptor = pyabc.StochasticAcceptor(
         pdf_norm_method=pyabc.pdf_norm_max_found, log_file=pnorm_file
     )

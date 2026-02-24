@@ -1,7 +1,6 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, List, Union
 
 import numpy as np
 
@@ -11,7 +10,7 @@ from ..transition import Transition
 from ..transition.predict_population_size import predict_population_size
 from ..util import bound_pop_size_from_env
 
-logger = logging.getLogger("ABC.Adaptation")
+logger = logging.getLogger('ABC.Adaptation')
 
 
 def dec_bound_pop_size_from_env(fun):
@@ -42,9 +41,9 @@ class PopulationStrategy(ABC):
     def __init__(self, nr_calibration_particles: int = None):
         self.nr_calibration_particles = nr_calibration_particles
 
-    def update(
+    def update(  # noqa: B027
         self,
-        transitions: List[Transition],
+        transitions: list[Transition],
         model_weights: np.ndarray,
         t: int = None,
     ):
@@ -60,6 +59,7 @@ class PopulationStrategy(ABC):
         t:
             Time to adapt for.
         """
+        pass
 
     @abstractmethod
     def __call__(self, t: int = None) -> int:
@@ -75,8 +75,8 @@ class PopulationStrategy(ABC):
             Configuration of the class as dictionary
         """
         return {
-            "name": self.__class__.__name__,
-            "nr_calibration_particles": self.nr_calibration_particles,
+            'name': self.__class__.__name__,
+            'nr_calibration_particles': self.nr_calibration_particles,
         }
 
     def to_json(self) -> str:
@@ -121,7 +121,7 @@ class ConstantPopulationSize(PopulationStrategy):
 
     def get_config(self) -> dict:
         config = super().get_config()
-        config["nr_particles"] = self.nr_particles
+        config['nr_particles'] = self.nr_particles
         return config
 
 
@@ -189,18 +189,18 @@ class AdaptivePopulationSize(PopulationStrategy):
 
     def get_config(self) -> dict:
         config = super().get_config()
-        config["start_nr_particles"] = self.start_nr_particles
-        config["max_population_size"] = self.max_population_size
-        config["min_population_size"] = self.min_population_size
-        config["mean_cv"] = self.mean_cv
-        config["n_bootstrap"] = self.n_bootstrap
+        config['start_nr_particles'] = self.start_nr_particles
+        config['max_population_size'] = self.max_population_size
+        config['min_population_size'] = self.min_population_size
+        config['mean_cv'] = self.mean_cv
+        config['n_bootstrap'] = self.n_bootstrap
         return config
 
     def update(
         self,
-        transitions: List[Transition],
+        transitions: list[Transition],
         model_weights: np.ndarray,
-        t: int = None,
+        t: int = None,  # noqa: ARG002
     ):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
@@ -227,9 +227,7 @@ class AdaptivePopulationSize(PopulationStrategy):
             )
 
         logger.info(
-            "Change nr particles {} -> {}".format(
-                reference_nr_part, self.nr_particles
-            )
+            f'Change nr particles {reference_nr_part} -> {self.nr_particles}'
         )
 
     @dec_bound_pop_size_from_env
@@ -255,7 +253,7 @@ class ListPopulationSize(PopulationStrategy):
 
     def __init__(
         self,
-        values: Union[List[int], Dict[int, int]],
+        values: list[int] | dict[int, int],
         nr_calibration_particles: int = None,
     ):
         super().__init__(nr_calibration_particles=nr_calibration_particles)
@@ -263,7 +261,7 @@ class ListPopulationSize(PopulationStrategy):
 
     def get_config(self) -> dict:
         config = super().get_config()
-        config["values"] = self.values
+        config['values'] = self.values
         return config
 
     @dec_bound_pop_size_from_env

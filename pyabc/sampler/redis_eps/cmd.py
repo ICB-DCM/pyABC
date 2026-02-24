@@ -3,53 +3,53 @@
 # mostly communication keys
 
 # id of the current analysis
-ANALYSIS_ID = "analysis_id"
+ANALYSIS_ID = 'analysis_id'
 # generation index
-GENERATION = "generation"
+GENERATION = 'generation'
 # dynamic or static
-MODE = "mode"
-STATIC = "static"
-DYNAMIC = "dynamic"
+MODE = 'mode'
+STATIC = 'static'
+DYNAMIC = 'dynamic'
 # the queue to return results through
-QUEUE = "queue"
+QUEUE = 'queue'
 # list of done indices
-DONE_IXS = "done_ixs"
+DONE_IXS = 'done_ixs'
 
 # default sleep time
 SLEEP_TIME = 0.1
 
 # message channel
-MSG = "abc_msg_pubsub"
+MSG = 'abc_msg_pubsub'
 # start and stop messages
-START = "start"
-STOP = "stop"
+START = 'start'
+STOP = 'stop'
 
 # whether all particles will be accepted
-ALL_ACCEPTED = "all_accepted"
+ALL_ACCEPTED = 'all_accepted'
 # wrap of the main inference routine
-SSA = "sample_simulate_accept"
+SSA = 'sample_simulate_accept'
 # whether look-ahead mode is to be employed
-IS_LOOK_AHEAD = "is_look_ahead"
+IS_LOOK_AHEAD = 'is_look_ahead'
 # maximum number of evaluations in look-ahead mode
-MAX_N_EVAL_LOOK_AHEAD = "max_n_eval_look_ahead"
+MAX_N_EVAL_LOOK_AHEAD = 'max_n_eval_look_ahead'
 # batch size to use
-BATCH_SIZE = "batch_size"
+BATCH_SIZE = 'batch_size'
 
 # counters
 #  evaluations
-N_EVAL = "n_eval"
+N_EVAL = 'n_eval'
 #  acceptances
-N_ACC = "n_acc"
+N_ACC = 'n_acc'
 #  required particles (population size)
-N_REQ = "n_req"
+N_REQ = 'n_req'
 #  failures
-N_FAIL = "n_fail"
+N_FAIL = 'n_fail'
 #  active workers
-N_WORKER = "n_worker"
+N_WORKER = 'n_worker'
 #  lookahead evaluations
-N_LOOKAHEAD_EVAL = "n_lookahead_eval"
+N_LOOKAHEAD_EVAL = 'n_lookahead_eval'
 #  jobs (static only)
-N_JOB = "n_job"
+N_JOB = 'n_job'
 
 
 def idfy(var: str, *args):

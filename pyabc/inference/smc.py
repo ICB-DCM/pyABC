@@ -2,8 +2,9 @@
 
 import copy
 import logging
+from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Callable, List, Tuple, TypeVar, Union
+from typing import TypeVar
 
 import numpy as np
 
@@ -44,9 +45,9 @@ from ..transition import (
 )
 from ..weighted_statistics import effective_sample_size
 
-logger = logging.getLogger("ABC")
+logger = logging.getLogger('ABC')
 
-model_output = TypeVar("model_output")
+model_output = TypeVar('model_output')
 
 
 def identity(x):
@@ -56,7 +57,7 @@ def identity(x):
 def run_cleanup(run):
     """Wrapper: Run and in any case clean up afterwards."""
 
-    def wrapped_run(self: "ABCSMC", *args, **kwargs):
+    def wrapped_run(self: 'ABCSMC', *args, **kwargs):
         try:
             # the actual run
             ret = run(self, *args, **kwargs)
@@ -170,14 +171,14 @@ class ABCSMC:
 
     def __init__(
         self,
-        models: Union[List[Model], Model, Callable],
-        parameter_priors: Union[List[Distribution], Distribution, Callable],
-        distance_function: Union[Distance, Callable] = None,
-        population_size: Union[PopulationStrategy, int] = 100,
+        models: list[Model] | Model | Callable,
+        parameter_priors: list[Distribution] | Distribution | Callable,
+        distance_function: Distance | Callable = None,
+        population_size: PopulationStrategy | int = 100,
         summary_statistics: Callable[[model_output], dict] = identity,
         model_prior: RV = None,
         model_perturbation_kernel: ModelPerturbationKernel = None,
-        transitions: Union[List[Transition], Transition] = None,
+        transitions: list[Transition] | Transition = None,
         eps: Epsilon = None,
         sampler: Sampler = None,
         acceptor: Acceptor = None,
@@ -196,7 +197,7 @@ class ABCSMC:
         # sanity checks
         if len(self.models) != len(self.parameter_priors):
             raise AssertionError(
-                "Number models and number parameter priors have to agree."
+                'Number models and number parameter priors have to agree.'
             )
 
         if distance_function is None:
@@ -208,7 +209,7 @@ class ABCSMC:
         self.summary_statistics = summary_statistics
 
         if model_prior is None:
-            model_prior = RV("randint", 0, len(self.models))
+            model_prior = RV('randint', 0, len(self.models))
         self.model_prior = model_prior
 
         if model_perturbation_kernel is None:
@@ -221,7 +222,7 @@ class ABCSMC:
             transitions = [MultivariateNormalTransition() for _ in self.models]
         if not isinstance(transitions, list):
             transitions = [transitions]
-        self.transitions: List[Transition] = transitions
+        self.transitions: list[Transition] = transitions
 
         if eps is None:
             eps = MedianEpsilon(median_multiplier=1)
@@ -269,9 +270,9 @@ class ABCSMC:
         # check if usage is consistent
         if not all(stochastics) and any(stochastics):
             raise ValueError(
-                "Please only use acceptor.StochasticAcceptor, "
-                "epsilon.TemperatureBase and distance.StochasticKernel "
-                "together."
+                'Please only use acceptor.StochasticAcceptor, '
+                'epsilon.TemperatureBase and distance.StochasticKernel '
+                'together.'
             )
 
         # check sampler
@@ -499,7 +500,7 @@ class ABCSMC:
 
     def _get_initial_population(
         self, t: int
-    ) -> Tuple[List[float], List[dict]]:
+    ) -> tuple[list[float], list[dict]]:
         """
         Get initial samples, either from the last population stored in history,
         or via sampling sum stats from the prior. This can be used to calibrate
@@ -547,7 +548,7 @@ class ABCSMC:
         # create simulate function
         simulate_one = self._create_simulate_from_prior_function()
 
-        logger.info(f"Calibration sample t = {t}.")
+        logger.info(f'Calibration sample t = {t}.')
 
         # call sampler
         sample = self.sampler.sample_until_n_accepted(
@@ -700,9 +701,9 @@ class ABCSMC:
             ret = self.run_generation(t=t)
 
             # check whether to discontinue
-            if not ret["successful"] or self.check_terminate(
+            if not ret['successful'] or self.check_terminate(
                 t=t,
-                acceptance_rate=ret["acceptance_rate"],
+                acceptance_rate=ret['acceptance_rate'],
             ):
                 break
 
@@ -795,9 +796,9 @@ class ABCSMC:
         current_eps = self.eps(t)
         if current_eps is None or np.isnan(current_eps):
             raise ValueError(
-                f"The epsilon threshold {current_eps} is invalid."
+                f'The epsilon threshold {current_eps} is invalid.'
             )
-        logger.info(f"t: {t}, eps: {current_eps:.8e}.")
+        logger.info(f't: {t}, eps: {current_eps:.8e}.')
 
         # create simulate function
         simulate_one = self._create_simulate_function(t)
@@ -811,7 +812,7 @@ class ABCSMC:
         )
 
         # perform the sampling
-        logger.debug(f"Submitting population {t}.")
+        logger.debug(f'Submitting population {t}.')
         sample = self.sampler.sample_until_n_accepted(
             n=pop_size,
             simulate_one=simulate_one,
@@ -822,9 +823,9 @@ class ABCSMC:
 
         # check sample health
         if not sample.ok:
-            logger.info("Stopping: sample not ok.")
+            logger.info('Stopping: sample not ok.')
             return {
-                "successful": False,
+                'successful': False,
             }
 
         # normalize accepted population weight to 1
@@ -832,7 +833,7 @@ class ABCSMC:
 
         # retrieve accepted population
         population = sample.get_accepted_population()
-        logger.debug(f"Population {t} done.")
+        logger.debug(f'Population {t} done.')
 
         # save to database
         n_sim = self.sampler.nr_evaluations_
@@ -841,8 +842,8 @@ class ABCSMC:
             t, current_eps, population, n_sim, model_names
         )
         logger.debug(
-            f"Total samples up to t = {t}: "
-            f"{self.history.total_nr_simulations}."
+            f'Total samples up to t = {t}: '
+            f'{self.history.total_nr_simulations}.'
         )
 
         # acceptance rate and ess
@@ -850,8 +851,8 @@ class ABCSMC:
         acceptance_rate = pop_size / n_sim
         ess = effective_sample_size(population.get_weighted_distances()['w'])
         logger.info(
-            f"Accepted: {pop_size} / {n_sim} = "
-            f"{acceptance_rate:.4e}, ESS: {ess:.4e}."
+            f'Accepted: {pop_size} / {n_sim} = '
+            f'{acceptance_rate:.4e}, ESS: {ess:.4e}.'
         )
 
         # prepare next iteration
@@ -863,8 +864,8 @@ class ABCSMC:
         )
 
         return {
-            "successful": True,
-            "acceptance_rate": acceptance_rate,
+            'successful': True,
+            'acceptance_rate': acceptance_rate,
         }
 
     def check_terminate(
@@ -884,7 +885,7 @@ class ABCSMC:
         terminate: Whether to terminate (True) or not (False).
         """
         # check termination criteria
-        if termination_criteria_fulfilled(
+        return termination_criteria_fulfilled(
             current_eps=self.eps(t=t),
             min_eps=self.minimum_epsilon,
             prev_eps=eps_from_hist(history=self.history, t=t - 1),
@@ -900,9 +901,7 @@ class ABCSMC:
             max_walltime=self.max_walltime,
             t=t,
             max_t=self.max_t,
-        ):
-            return True
-        return False
+        )
 
     def _prepare_next_iteration(
         self,
@@ -1014,7 +1013,7 @@ class ABCSMC:
 
         # model probabilities
         w = self.history.get_model_probabilities(self.history.max_t)[
-            "p"
+            'p'
         ].values
 
         # make a copy in case the population strategy messes with

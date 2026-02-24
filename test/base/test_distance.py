@@ -77,34 +77,34 @@ class MockABC:
 
 
 def test_single_parameter():
-    dist_f = MinMaxDistance(measures_to_use=["a"])
-    abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}])
+    dist_f = MinMaxDistance(measures_to_use=['a'])
+    abc = MockABC([{'a': -3}, {'a': 3}, {'a': 10}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
-    d = dist_f({"a": 1}, {"a": 2})
+    d = dist_f({'a': 1}, {'a': 2})
     assert 1.0 / 13 == d
 
 
 def test_two_parameters_but_only_one_used():
-    dist_f = MinMaxDistance(measures_to_use=["a"])
-    abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
+    dist_f = MinMaxDistance(measures_to_use=['a'])
+    abc = MockABC([{'a': -3, 'b': 2}, {'a': 3, 'b': 3}, {'a': 10, 'b': 4}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
-    d = dist_f({"a": 1, "b": 10}, {"a": 2, "b": 12})
+    d = dist_f({'a': 1, 'b': 10}, {'a': 2, 'b': 12})
     assert 1.0 / 13 == d
 
 
 def test_two_parameters_and_two_used():
-    dist_f = MinMaxDistance(measures_to_use=["a", "b"])
-    abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
+    dist_f = MinMaxDistance(measures_to_use=['a', 'b'])
+    abc = MockABC([{'a': -3, 'b': 2}, {'a': 3, 'b': 3}, {'a': 10, 'b': 4}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
-    d = dist_f({"a": 1, "b": 10}, {"a": 2, "b": 12})
+    d = dist_f({'a': 1, 'b': 10}, {'a': 2, 'b': 12})
     assert 1.0 / 13 + 2 / 2 == d
 
 
 def test_single_parameter_percentile():
-    dist_f = PercentileDistance(measures_to_use=["a"])
-    abc = MockABC([{"a": -3}, {"a": 3}, {"a": 10}])
+    dist_f = PercentileDistance(measures_to_use=['a'])
+    abc = MockABC([{'a': -3}, {'a': 3}, {'a': 10}])
     dist_f.initialize(0, abc.sample_from_prior, {}, 0)
-    d = dist_f({"a": 1}, {"a": 2})
+    d = dist_f({'a': 1}, {'a': 2})
     expected = 1 / (
         np.percentile([-3, 3, 10], 80) - np.percentile([-3, 3, 10], 20)
     )
@@ -114,19 +114,19 @@ def test_single_parameter_percentile():
 def test_zscore_distance():
     """Test ZScoreDistance."""
     dist_f = ZScoreDistance()
-    abc = MockABC([{"a": -3, "b": 2}, {"a": 3, "b": 3}, {"a": 10, "b": 4}])
-    x0 = {"a": 7, "b": 3}
+    abc = MockABC([{'a': -3, 'b': 2}, {'a': 3, 'b': 3}, {'a': 10, 'b': 4}])
+    x0 = {'a': 7, 'b': 3}
     n_y = len(x0)
     dist_f.initialize(0, abc.sample_from_prior, x0, 0)
 
-    d = dist_f({"a": 4, "b": 2}, {"a": -5, "b": 10})
+    d = dist_f({'a': 4, 'b': 2}, {'a': -5, 'b': 10})
     expected = (abs((-5 - 4) / 5) + abs((10 - 2) / 10)) / n_y
     assert expected == d
 
-    d = dist_f({"a": 4, "b": 2}, {"a": -5, "b": 0})
+    d = dist_f({'a': 4, 'b': 2}, {'a': -5, 'b': 0})
     assert np.inf == d
 
-    d = dist_f({"a": 4, "b": 0}, {"a": -5, "b": 0})
+    d = dist_f({'a': 4, 'b': 0}, {'a': -5, 'b': 0})
     expected = (abs((-5 - 4) / 5)) / n_y
     assert expected == d
 
@@ -137,9 +137,9 @@ def test_pca_distance():
     assert dist_f.requires_calibration()
 
     abc = MockABC(
-        [{"a": -3.0, "b": 2.0}, {"a": 3.0, "b": 3.0}, {"a": 10.0, "b": 4.0}]
+        [{'a': -3.0, 'b': 2.0}, {'a': 3.0, 'b': 3.0}, {'a': 10.0, 'b': 4.0}]
     )
-    x0 = {"a": 7.0, "b": 3.0}
+    x0 = {'a': 7.0, 'b': 3.0}
     dist_f.initialize(0, abc.sample_from_prior, x0, 0)
     assert dist_f.trafo.shape == (2, 2)
 
@@ -276,7 +276,7 @@ def test_scales():
 
     samples = np.random.normal(size=(n_sample, n_y))
     s0 = np.random.normal(size=(n_y,))
-    s_ids = [f"s{ix}" for ix in range(n_y)]
+    s_ids = [f's{ix}' for ix in range(n_y)]
     for scale in scale_functions:
         assert np.isfinite(scale(samples=samples, s0=s0, s_ids=s_ids)).all()
 
@@ -289,7 +289,7 @@ def test_scales():
         with pytest.raises(AssertionError):
             scale(samples=samples, s0=s0_bad, s_ids=s_ids)
 
-    s_ids_bad = [f"s{ix}" for ix in range(n_y + 1)]
+    s_ids_bad = [f's{ix}' for ix in range(n_y + 1)]
     for scale in scale_functions:
         with pytest.raises(AssertionError):
             scale(samples=samples, s0=s0, s_ids=s_ids_bad)
@@ -319,7 +319,7 @@ def test_adaptivepnormdistance_initial_weights():
 
 def test_info_weighted_pnorm_distance():
     """Just test the info weighted distance pipeline."""
-    db_file = create_sqlite_db_id()[len("sqlite:///") :]
+    db_file = create_sqlite_db_id()[len('sqlite:///') :]
     scale_log_file = tempfile.mkstemp()[1]
     info_log_file = tempfile.mkstemp()[1]
     info_sample_log_file = tempfile.mkstemp()[1]
@@ -328,14 +328,14 @@ def test_info_weighted_pnorm_distance():
 
         def model(p):
             return {
-                "s0": p["p0"] + np.random.normal(),
-                "s1": p["p1"] + np.random.normal(size=2),
+                's0': p['p0'] + np.random.normal(),
+                's1': p['p1'] + np.random.normal(size=2),
             }
 
-        prior = Distribution(p0=RV("uniform", 0, 1), p1=RV("uniform", 0, 10))
-        data = {"s0": 0.5, "s1": np.array([5, 5])}
+        prior = Distribution(p0=RV('uniform', 0, 1), p1=RV('uniform', 0, 10))
+        data = {'s0': 0.5, 's1': np.array([5, 5])}
 
-        for feature_normalization in ["mad", "std", "weights", "none"]:
+        for feature_normalization in ['mad', 'std', 'weights', 'none']:
             distance = InfoWeightedPNormDistance(
                 predictor=LinearPredictor(),
                 fit_info_ixs={1, 3},
@@ -345,7 +345,7 @@ def test_info_weighted_pnorm_distance():
                 info_sample_log_file=info_sample_log_file,
             )
             abc = ABCSMC(model, prior, distance, population_size=100)
-            abc.new("sqlite:///" + db_file, data)
+            abc.new('sqlite:///' + db_file, data)
             abc.run(max_nr_populations=3)
     finally:
         if os.path.exists(db_file):
@@ -639,7 +639,7 @@ def test_store_weights():
     )
     x_0 = {'s1': 0, 's2': 0, 's3': 1}
 
-    weights_file = tempfile.mkstemp(suffix=".json")[1]
+    weights_file = tempfile.mkstemp(suffix='.json')[1]
     print(weights_file)
 
     def distance0(x_, x_0_):
@@ -682,15 +682,15 @@ def test_wasserstein_distance():
     n_sample = 11
 
     def model_1d(p):
-        return {"y": np.random.normal(p["p0"], 1.0, size=n_sample)}
+        return {'y': np.random.normal(p['p0'], 1.0, size=n_sample)}
 
-    p_true = {"p0": -0.5}
+    p_true = {'p0': -0.5}
     y0 = model_1d(p_true)
 
-    p1 = {"p0": -0.55}
+    p1 = {'p0': -0.55}
     y1 = model_1d(p1)
 
-    p2 = {"p0": 3.55}
+    p2 = {'p0': 3.55}
     y2 = model_1d(p2)
 
     class IdSumstat(Sumstat):
@@ -698,7 +698,7 @@ def test_wasserstein_distance():
 
         def __call__(self, data: dict) -> np.ndarray:
             # shape (n, dim)
-            return data["y"].reshape((-1, 1))
+            return data['y'].reshape((-1, 1))
 
     for p in [1, 2]:
         for distance in [
@@ -729,8 +729,8 @@ def test_wasserstein_distance():
             w = np.ones(shape=n_sample) / n_sample
 
             dist_exp = sp_dist.minkowski(
-                np.sort(y1["y"].flatten()),
-                np.sort(y0["y"]).flatten(),
+                np.sort(y1['y'].flatten()),
+                np.sort(y0['y']).flatten(),
                 w=w,
                 p=p,
             )
@@ -741,8 +741,8 @@ def test_wasserstein_distance():
         WassersteinDistance(sumstat=IdSumstat(), p=3)
 
     # test integrated
-    prior = Distribution(p0=RV("norm", 0, 2))
-    db_file = tempfile.mkstemp(suffix=".db")[1]
+    prior = Distribution(p0=RV('norm', 0, 2))
+    db_file = tempfile.mkstemp(suffix='.db')[1]
     try:
         for distance in [
             WassersteinDistance(
@@ -753,7 +753,7 @@ def test_wasserstein_distance():
             ),
         ]:
             abc = ABCSMC(model_1d, prior, distance, population_size=10)
-            abc.new("sqlite:///" + db_file, y0)
+            abc.new('sqlite:///' + db_file, y0)
             abc.run(max_nr_populations=3)
     finally:
         os.remove(db_file)

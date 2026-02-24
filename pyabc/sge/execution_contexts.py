@@ -22,9 +22,7 @@ class NamedPrinter(ExecutionContextMixin):
 
         self.original_stdout_write = sys.stdout.write
         self.original_stderr_write = sys.stderr.write
-        self.name_tag = "[{}:{}]".format(
-            os.path.basename(self.tmp_path), self.job_nr
-        )
+        self.name_tag = f'[{os.path.basename(self.tmp_path)}:{self.job_nr}]'
 
     def __enter__(self):
         import sys
@@ -39,7 +37,7 @@ class NamedPrinter(ExecutionContextMixin):
         sys.stderr.write = self.original_stderr_write
 
     def process_text(self, text):
-        return text.replace("\n", self.name_tag + "\n")
+        return text.replace('\n', self.name_tag + '\n')
 
     def named_write_stdout(self, text):
         self.original_stdout_write(self.process_text(text))
@@ -69,7 +67,7 @@ class ProfilingContext(ExecutionContextMixin):
     Useful for debugging. Do not use in production.
     """
 
-    RELATIVE_OUTPUT_FOLDER = "profiling"
+    RELATIVE_OUTPUT_FOLDER = 'profiling'
     keep_output_directory = True
 
     def __init__(self, tmp_path, job_nr):
@@ -89,7 +87,7 @@ class ProfilingContext(ExecutionContextMixin):
         )
         self._make_output_directory(output_directory)
         output_file = os.path.join(
-            output_directory, str(self.job_nr) + ".pstats"
+            output_directory, str(self.job_nr) + '.pstats'
         )
         self._profile.dump_stats(output_file)
 

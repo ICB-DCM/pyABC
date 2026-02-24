@@ -1,263 +1,104 @@
 name: CI
 
-# trigger
 on:
   push:
-    branches:
-    - main
-    - develop
+    branches: [main, develop]
   pull_request:
   schedule:
-    # run Monday at 03:18 UTC
-    - cron: '18 15 * * MON'
+    - cron: "18 15 * * MON"
 
 jobs:
-
-  base:
-    runs-on: ubuntu-latest
+  tests:
+    name: ${{ matrix.toxenv }} (${{ matrix.python }} • ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.12', '3.11', '3.10']
+        include:
+          # Fast PR matrix
+          - os: ubuntu-latest
+            python: "3.13"
+            toxenv: base
+          #- os: ubuntu-latest
+          #  python: "3.12"
+          #  toxenv: base
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.10"
+            toxenv: base
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: visualization
+
+          # macOS sanity
+          - os: macos-latest
+            python: "3.11"
+            toxenv: mac
+
+          # Quality
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: quality
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: project
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: doc
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: migrate
+
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: external-R
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: external-other-simulators
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: petab
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: base-notebooks
+          - os: ubuntu-latest
+            python: "3.11"
+            toxenv: external-notebooks
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-base
-
-    - name: Install dependencies
-      run: .github/workflows/install_deps.sh base R
-
-    - name: Run tests
-      timeout-minutes: 15
-      run: tox -e base
-
-    - name: Run visualization tests
-      timeout-minutes: 3
-      run: tox -e visualization
-
-    - name: Coverage
-      uses: codecov/codecov-action@v2
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-
-  external:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-
-    - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install julia
-      uses: julia-actions/setup-julia@v1
-      with:
-        version: 1.7
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-external
-
-    - name: Install dependencies
-      run: .github/workflows/install_deps.sh base R
-
-    - name: Run tests
-      timeout-minutes: 15
-      run: tox -e external
-
-    - name: Coverage
-      uses: codecov/codecov-action@v2
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-
-  petab:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-
-    - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-petab
-
-    - name: Install dependencies
-      run: .github/workflows/install_deps.sh amici
-
-    - name: Run tests
-      timeout-minutes: 20
-      run: |
-         tox -e petab
-
-    - name: Coverage
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-
-  mac:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Prepare python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
+          cache: pip
 
-      - name: Cache
-        uses: actions/cache@v4
+      - name: Install Julia
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
+        uses: julia-actions/setup-julia@v2
         with:
-          path: ~/Library/Caches/pip
-          key: ci-${{ runner.os }}-${{ matrix.python-version }}-mac
+          version: "1.11"
 
       - name: Install dependencies
-        run: .github/workflows/install_deps.sh
+        run: |
+          case "${{ matrix.toxenv }}" in
+            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base R ;;
+            petab) .github/workflows/install_deps.sh amici ;;
+            external-*) .github/workflows/install_deps.sh base R amici ;;
+            lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
+          esac
+          python -m pip install -U pip tox
 
-      - name: Run tests
-        timeout-minutes: 10
-        run: tox -e mac
+      - name: Run tox
+        run: tox -e ${{ matrix.toxenv }}
 
-      - name: Coverage
-        uses: codecov/codecov-action@v2
+      # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
+      - name: Upload coverage
+        if: ${{ always() && matrix.os == 'ubuntu-latest' }}  # optional
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
-
-  notebooks1:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-
-    - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks1
-
-    - name: Install dependencies
-      run: .github/workflows/install_deps.sh
-
-    - name: Run notebooks
-      timeout-minutes: 15
-      run: tox -e notebooks1
-
-  notebooks2:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-
-    - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-notebooks2
-
-    - name: Install dependencies
-      run: .github/workflows/install_deps.sh R amici
-
-    - name: Run notebooks
-      timeout-minutes: 15
-      run: tox -e notebooks2
-
-  quality:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.11']
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
-
-    - name: Prepare python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache
-        key: ci-${{ runner.os }}-${{ matrix.python-version }}-quality
-
-    - name: Install dependencies
-      run: |
-        .github/workflows/install_deps.sh doc
-        pip install tox
-        pip install pypandoc
-        python .github/workflows/generate_readme_rst.py
-
-
-    - name: Run quality checks
-      timeout-minutes: 5
-      run: tox -e project,flake8
-
-    - name: Build docs
-      timeout-minutes: 5
-      run: tox -e doc
-
-    - name: Test migration
-      timeout-minutes: 5
-      run: tox -e migrate
-
-    - name: Coverage
-      uses: codecov/codecov-action@v2
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
+          files: ./coverage.xml
+          flags: ${{ matrix.toxenv }}
