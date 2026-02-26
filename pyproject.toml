@@ -93,7 +93,7 @@ ot = [
 ]
 petab = ["petab>=0.2.0"]
 #petab-test = ["petabtests>=0.0.1"]  # problem with pysb
-amici = ["amici>=0.32.0"]
+amici = ["amici>=0.32.0,<1.0.0"]
 yaml2sbml = ["yaml2sbml>=0.2.1"]
 migrate = ["alembic>=1.5.4"]
 plotly = ["plotly>=5.3.1", "kaleido>=0.2.1"]
