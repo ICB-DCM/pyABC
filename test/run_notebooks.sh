@@ -32,7 +32,7 @@ nbs_2=(
   # "petab_yaml2sbml"  # yaml2sbml does not work with current petab version
   # "multiscale_agent_based"  # too slow
   "using_copasi"
-  "using_julia"
+  #"using_julia"  # julia changes too often, hence we cannot test it in CI
 )
 
 # All notebooks
