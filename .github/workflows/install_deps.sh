@@ -70,7 +70,7 @@ install_r() {
 install_amici() {
   log_info "Installing AMICI dependencies..."
   if ! is_macos; then
-    apt_install swig libatlas-base-dev libhdf5-serial-dev libboost-all-dev
+    apt_install libhdf5-serial-dev libboost-all-dev
   fi
   log_info "Installing AMICI Python package..."
   python -m pip uninstall -y amici pyabc || true
