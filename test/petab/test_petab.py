@@ -2,7 +2,6 @@ import itertools
 import os
 import sys
 
-import amici.petab.petab_import
 import cloudpickle as pickle
 import git
 import matplotlib.pyplot as plt
@@ -12,6 +11,7 @@ import petab.v1 as petab
 import petab.v1.C as C
 import pytest
 import scipy.stats
+from amici.importers.petab.v1 import import_petab_problem
 
 import pyabc.petab
 import pyabc.petab.base
@@ -322,12 +322,12 @@ def boehm_model_importer():
     output_folder = f'amici_models/{model_name}'
     if output_folder not in sys.path:
         sys.path.insert(0, output_folder)
-    model = amici.petab.petab_import.import_petab_problem(
+    model = import_petab_problem(
         petab_problem,
-        model_output_dir=output_folder,
+        output_dir=output_folder,
         generate_sensitivity_code=False,
     )
-    solver = model.getSolver()
+    solver = model.create_solver()
 
     # import to pyabc
     importer = pyabc.petab.AmiciPetabImporter(petab_problem, model, solver)

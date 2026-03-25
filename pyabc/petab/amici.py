@@ -1,5 +1,7 @@
 """PEtab import with AMICI simulator."""
 
+from __future__ import annotations
+
 import copy
 import logging
 import os
@@ -18,18 +20,20 @@ try:
 except ImportError:
     petab = C = None
     logger.error(
-        'Install PEtab (see https://github.com/icb-dcm/petab) to use '
+        'Install the PEtab library '
+        '(see https://github.com/PEtab-dev/libpetab-python/) to use '
         'the petab functionality, e.g. via `pip install pyabc[petab]`'
     )
 
 try:
     import amici
-    from amici.petab import petab_import as amici_petab_import
-    from amici.petab.simulations import LLH, RDATAS, simulate_petab
+    import amici.sim.sundials as asd
+    from amici.importers.petab.v1 import import_petab_problem
+    from amici.sim.sundials.petab.v1 import LLH, RDATAS, simulate_petab
 except ImportError:
-    amici = amici_petab_import = simulate_petab = LLH = RDATAS = None
+    amici = import_petab_problem = simulate_petab = LLH = RDATAS = None
     logger.error(
-        'Install amici (see https://github.com/icb-dcm/amici) to use '
+        'Install amici (see https://github.com/AMICI-dev/AMICI/) to use '
         'the amici functionality, e.g. via `pip install pyabc[amici]`'
     )
 
@@ -113,7 +117,7 @@ class AmiciModel:
         try:
             # write amici solver settings to file
             try:
-                amici.writeSolverSettingsToHDF5(self.amici_solver, _file)
+                asd.write_solver_settings_to_hdf5(self.amici_solver, _file)
             except AttributeError as e:
                 e.args += (
                     'Pickling the AmiciObjective requires an AMICI '
@@ -133,8 +137,8 @@ class AmiciModel:
     def __setstate__(self, state: dict):
         self.__dict__.update(state)
 
-        model = amici_petab_import.import_petab_problem(self.petab_problem)
-        solver = model.getSolver()
+        model = import_petab_problem(self.petab_problem)
+        solver = model.create_solver()
 
         _fd, _file = tempfile.mkstemp()
         try:
@@ -143,7 +147,7 @@ class AmiciModel:
                 f.write(state['amici_solver_settings'])
             # read in solver settings
             try:
-                amici.readSolverSettingsFromHDF5(_file, solver)
+                asd.read_solver_settings_from_hdf5(_file, solver)
             except AttributeError as err:
                 if not err.args:
                     err.args = ('',)
@@ -173,28 +177,26 @@ class AmiciPetabImporter(PetabImporter):
     amici_model:
         A corresponding compiled AMICI model that allows simulating data for
         parameters. If not provided, one is created using
-        `amici.petab_import.import_petab_problem`.
+        `amici.importers.petab.v1.import_petab_problem`.
     amici_solver:
         An AMICI solver to simulate the model. If not provided, one is created
-        using `amici_model.getSolver()`.
+        using `amici_model.create_solver()`.
     """
 
     def __init__(
         self,
         petab_problem: petab.Problem,
-        amici_model: 'amici.Model' = None,
-        amici_solver: 'amici.Solver' = None,
+        amici_model: amici.sim.sundials.Model = None,
+        amici_solver: amici.sim.sundials.Solver = None,
     ):
         super().__init__(petab_problem=petab_problem)
 
         if amici_model is None:
-            amici_model = amici_petab_import.import_petab_problem(
-                petab_problem
-            )
+            amici_model = import_petab_problem(petab_problem)
         self.amici_model = amici_model
 
         if amici_solver is None:
-            amici_solver = self.amici_model.getSolver()
+            amici_solver = self.amici_model.create_solver()
         self.amici_solver = amici_solver
 
     def create_model(
@@ -214,8 +216,8 @@ class AmiciPetabImporter(PetabImporter):
             Whether to return the simulations also (large, can be stored
             in database).
         return_rdatas:
-            Whether to return the full `List[amici.ExpData]` objects (large,
-            cannot be stored in database).
+            Whether to return the full `list[amici.sim.sundials.ExpData]`
+            objects (large, cannot be stored in database).
 
         Returns
         -------
@@ -237,7 +239,7 @@ class AmiciPetabImporter(PetabImporter):
             raise AssertionError('Parameter id mismatch')
 
         # no gradients for pyabc
-        self.amici_solver.setSensitivityOrder(0)
+        self.amici_solver.set_sensitivity_order(asd.SensitivityOrder.none)
 
         model = AmiciModel(
             petab_problem=self.petab_problem,
