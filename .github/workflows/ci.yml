@@ -81,6 +81,10 @@ jobs:
         with:
           version: "1.11"
 
+      - name: Install Julia dependencies
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
+        run: julia -e 'using Pkg; Pkg.add("PyCall")'
+
       - name: Install dependencies
         run: |
           case "${{ matrix.toxenv }}" in
