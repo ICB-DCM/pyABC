@@ -19,14 +19,11 @@ jobs:
           - os: ubuntu-latest
             python: "3.13"
             toxenv: base
-          #- os: ubuntu-latest
-          #  python: "3.12"
-          #  toxenv: base
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.12"
             toxenv: base
           - os: ubuntu-latest
-            python: "3.10"
+            python: "3.11"
             toxenv: base
           - os: ubuntu-latest
             python: "3.11"
