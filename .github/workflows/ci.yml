@@ -84,7 +84,7 @@ jobs:
           # make Julia/PyCall bind to the same Python used by the job
           PYTHON: ${{ env.pythonLocation }}/bin/python
         run: |
-          julia -e 'using Pkg; Pkg.add("PyCall"); ENV["PYTHON"]=get(ENV,"PYTHON",""); Pkg.build("PyCall")'
+          julia -e 'using Pkg; Pkg.add("PyCall")'
 
       - name: Install R
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
