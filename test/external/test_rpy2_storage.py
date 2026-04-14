@@ -44,8 +44,8 @@ def history(request):
 
 
 def test_sum_stats_save_load(history: History):
+    import rpy2.robjects as robjects
     from rpy2.robjects import pandas2ri, r
-    from rpy2.robjects.conversion import get_conversion, localconverter
 
     arr = np.random.rand(10)
     arr2 = np.random.rand(10, 2)
@@ -84,11 +84,15 @@ def test_sum_stats_save_load(history: History):
     assert sum_stats[0]['ss1'] == 0.1
     assert (sum_stats[0]['ss2'] == arr2).all()
     assert (sum_stats[0]['ss3'] == example_df()).all().all()
-    conv = get_conversion()
-    with localconverter(conv + pandas2ri.converter):
-        assert (sum_stats[0]['rdf0'] == r['iris']).all().all()
+
+    with (robjects.default_converter + pandas2ri.converter).context():
+        iris_pd = robjects.conversion.get_conversion().rpy2py(r['iris'])
+    assert (sum_stats[0]['rdf0'] == iris_pd).all().all()
+
     assert sum_stats[1]['ss12'] == 0.11
     assert (sum_stats[1]['ss22'] == arr).all()
     assert (sum_stats[1]['ss33'] == example_df()).all().all()
-    with localconverter(conv + pandas2ri.converter):
-        assert (sum_stats[1]['rdf'] == r['mtcars']).all().all()
+
+    with (robjects.default_converter + pandas2ri.converter).context():
+        mtcars_pd = robjects.conversion.get_conversion().rpy2py(r['mtcars'])
+    assert (sum_stats[1]['rdf'] == mtcars_pd).all().all()
