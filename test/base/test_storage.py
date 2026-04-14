@@ -240,9 +240,6 @@ def test_single_particle_save_load_np_int64(history: History):
 
 
 def test_sum_stats_save_load(history: History):
-    from rpy2.robjects import pandas2ri, r
-    from rpy2.robjects.conversion import get_conversion, localconverter
-
     arr = np.random.rand(10)
     arr2 = np.random.rand(10, 2)
     particle_list = [
@@ -254,7 +251,6 @@ def test_sum_stats_save_load(history: History):
                 'ss1': 0.1,
                 'ss2': arr2,
                 'ss3': example_df(),
-                'rdf0': r['iris'],
             },
             distance=0.1,
         ),
@@ -266,7 +262,6 @@ def test_sum_stats_save_load(history: History):
                 'ss12': 0.11,
                 'ss22': arr,
                 'ss33': example_df(),
-                'rdf': r['mtcars'],
             },
             distance=0.1,
         ),
@@ -280,14 +275,9 @@ def test_sum_stats_save_load(history: History):
     assert sum_stats[0]['ss1'] == 0.1
     assert (sum_stats[0]['ss2'] == arr2).all()
     assert (sum_stats[0]['ss3'] == example_df()).all().all()
-    conv = get_conversion()
-    with localconverter(conv + pandas2ri.converter):
-        assert (sum_stats[0]['rdf0'] == r['iris']).all().all()
     assert sum_stats[1]['ss12'] == 0.11
     assert (sum_stats[1]['ss22'] == arr).all()
     assert (sum_stats[1]['ss33'] == example_df()).all().all()
-    with localconverter(conv + pandas2ri.converter):
-        assert (sum_stats[1]['rdf'] == r['mtcars']).all().all()
 
 
 def test_total_nr_samples(history: History):

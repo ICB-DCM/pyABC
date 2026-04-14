@@ -60,7 +60,7 @@ def test_early_stopping():
     )
     # initializing eps manually is necessary as we only have an integrated
     #  model
-    # TODO automatically iniitalizing would be possible, e.g. using eps = inf
+    # TODO automatically initalizing would be possible, e.g. using eps = inf
 
     abc.new(pyabc.create_sqlite_db_id())
     abc.run(max_nr_populations=3)
