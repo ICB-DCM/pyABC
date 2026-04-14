@@ -1,11 +1,7 @@
-import os
-import tempfile
-
 import numpy as np
 import pandas as pd
 import pytest
 
-import pyabc
 from pyabc.storage.bytes_storage import from_bytes, to_bytes
 from pyabc.storage.numpy_bytes_storage import _primitive_types
 
@@ -13,27 +9,14 @@ from pyabc.storage.numpy_bytes_storage import _primitive_types
 @pytest.fixture(
     params=[
         'empty',
-        'df-int',
-        'df-float',
-        'df-non_numeric_str',
-        'df-numeric_str',
-        'df-int-float-numeric_str',
-        'df-int-float-non_numeric_str-str_ind',
-        'df-int-float-numeric_str-str_ind',
-        'series',
-        'series-no_ind',
-        'py-int',
-        'py-float',
-        'py-str',
-        'np-int',
-        'np-float',
-        'np-str',
-        'np-single-int',
-        'np-single-float',
-        'np-single-str',
+        'r-df-cars',
+        'r-df-faithful',
+        'r-df-iris',
     ]
 )
 def object_(request):
+    from rpy2.robjects import r
+
     par = request.param
     if par == 'empty':
         return pd.DataFrame()
@@ -98,10 +81,20 @@ def object_(request):
         return np.array(4.1)
     if par == 'np-single-str':
         return np.array('foo bar')
+    if par == 'r-df-cars':
+        return r['mtcars']
+    if par == 'r-df-iris':
+        return r['iris']
+    if par == 'r-df-faithful':
+        return r['faithful']
     raise Exception('Invalid Test DataFrame Type')
 
 
 def test_storage(object_):
+    import rpy2.robjects as robjects
+    from rpy2.robjects import pandas2ri
+    from rpy2.robjects.conversion import get_conversion, localconverter
+
     serial = to_bytes(object_)
     assert isinstance(serial, bytes)
 
@@ -123,13 +116,23 @@ def test_storage(object_):
         assert (object_ == rebuilt).all().all()
     elif isinstance(object_, pd.Series):
         assert (object_.to_frame() == rebuilt).all().all()
+    elif isinstance(object_, robjects.DataFrame):
+        conv = get_conversion()
+        conv = conv + pandas2ri.converter
+        with localconverter(conv):
+            assert (conv.rpy2py(object_) == rebuilt).all().all()
     else:
         raise Exception('Could not compare')
 
 
 def _check_type(object_, rebuilt):
+    import rpy2.robjects as robjects
+
+    # r objects are converted to pd.DataFrame
+    if isinstance(object_, robjects.DataFrame):
+        assert isinstance(rebuilt, pd.DataFrame)
     # pd.Series are converted to pd.DataFrame
-    if isinstance(object_, pd.Series):
+    elif isinstance(object_, pd.Series):
         assert isinstance(rebuilt, pd.DataFrame)
     # <= 1 dim numpy arrays are converted to primitive type
     elif isinstance(object_, np.ndarray) and object_.size <= 1:
@@ -144,24 +147,3 @@ def _check_type(object_, rebuilt):
     # all others keep their type
     else:
         assert isinstance(rebuilt, type(object_))
-
-
-def test_reference_parameter():
-    def model(parameter):
-        return {'data': parameter['mean'] + 0.5 * np.random.randn()}
-
-    prior = pyabc.Distribution(
-        p0=pyabc.RV('uniform', 0, 5), p1=pyabc.RV('uniform', 0, 1)
-    )
-
-    def distance(x, y):
-        return abs(x['data'] - y['data'])
-
-    abc = pyabc.ABCSMC(model, prior, distance, population_size=2)
-    db_path = 'sqlite:///' + os.path.join(tempfile.gettempdir(), 'test.db')
-    observation = 2.5
-    gt_par = {'p0': 1, 'p1': 0.25}
-    abc.new(db_path, {'data': observation}, gt_par=gt_par)
-    history = abc.history
-    par_from_history = history.get_ground_truth_parameter()
-    assert par_from_history == gt_par
