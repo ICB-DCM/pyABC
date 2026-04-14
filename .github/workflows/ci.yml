@@ -76,11 +76,15 @@ jobs:
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
         uses: julia-actions/setup-julia@v2
         with:
-          version: "1.12"
+          version: "1"  # Use the latest stable Julia version
 
       - name: Install Julia dependencies
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
-        run: julia -e 'using Pkg; Pkg.add("PyCall")'
+        env:
+          # make Julia/PyCall bind to the same Python used by the job
+          PYTHON: ${{ env.pythonLocation }}/bin/python
+        run: |
+          julia -e 'using Pkg; Pkg.add("PyCall"); ENV["PYTHON"]=get(ENV,"PYTHON",""); Pkg.build("PyCall")'
 
       - name: Install R
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
@@ -91,7 +95,7 @@ jobs:
       - name: Install dependencies
         run: |
           case "${{ matrix.toxenv }}" in
-            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base;;
+            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base ;;
             petab) .github/workflows/install_deps.sh amici ;;
             external-*) .github/workflows/install_deps.sh base amici ;;
             lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
