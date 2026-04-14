@@ -1,8 +1,17 @@
-from julia.api import Julia
+import pytest
 
-# one way of making pyjulia work, see
-#  https://pyjulia.readthedocs.io/en/latest/troubleshooting.html
-Julia(compiled_modules=False)
+try:
+    from julia.api import Julia
+
+    # one way of making pyjulia work, see
+    #  https://pyjulia.readthedocs.io/en/latest/troubleshooting.html
+    Julia(compiled_modules=False)
+
+except Exception as e:
+    pytest.skip(
+        f'PyJulia/PyCall not available in this environment: {e}',
+        allow_module_level=True,
+    )
 
 import os  # noqa: E402
 import tempfile  # noqa: E402

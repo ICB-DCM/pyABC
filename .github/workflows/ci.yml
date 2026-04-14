@@ -107,8 +107,9 @@ jobs:
 
       # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
       - name: Upload coverage
-        if: ${{ always() && matrix.os == 'ubuntu-latest' }}  # optional
+        if: ${{ always() && matrix.os == 'ubuntu-latest' }}
         uses: codecov/codecov-action@v6
+        continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
