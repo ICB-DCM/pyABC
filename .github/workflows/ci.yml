@@ -19,14 +19,11 @@ jobs:
           - os: ubuntu-latest
             python: "3.13"
             toxenv: base
-          #- os: ubuntu-latest
-          #  python: "3.12"
-          #  toxenv: base
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.12"
             toxenv: base
           - os: ubuntu-latest
-            python: "3.10"
+            python: "3.11"
             toxenv: base
           - os: ubuntu-latest
             python: "3.11"
@@ -68,9 +65,9 @@ jobs:
             toxenv: external-notebooks
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -79,18 +76,28 @@ jobs:
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
         uses: julia-actions/setup-julia@v2
         with:
-          version: "1.11"
+          version: "1"  # Use the latest stable Julia version
 
       - name: Install Julia dependencies
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
-        run: julia -e 'using Pkg; Pkg.add("PyCall")'
+        env:
+          # make Julia/PyCall bind to the same Python used by the job
+          PYTHON: ${{ env.pythonLocation }}/bin/python
+        run: |
+          julia -e 'using Pkg; Pkg.add("PyCall")'
+
+      - name: Install R
+        if: ${{ startsWith(matrix.toxenv, 'external-') }}
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
 
       - name: Install dependencies
         run: |
           case "${{ matrix.toxenv }}" in
-            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base R ;;
+            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base ;;
             petab) .github/workflows/install_deps.sh amici ;;
-            external-*) .github/workflows/install_deps.sh base R amici ;;
+            external-*) .github/workflows/install_deps.sh base amici ;;
             lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
           esac
           python -m pip install -U pip tox
@@ -100,8 +107,9 @@ jobs:
 
       # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
       - name: Upload coverage
-        if: ${{ always() && matrix.os == 'ubuntu-latest' }}  # optional
-        uses: codecov/codecov-action@v4
+        if: ${{ always() && matrix.os == 'ubuntu-latest' }}
+        uses: codecov/codecov-action@v6
+        continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

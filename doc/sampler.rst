@@ -410,7 +410,7 @@ submission of many individual, yet related or similar, jobs.
    sbatch --array=0-99 script_redis_worker script_redis_worker.sh ${SLURM_ARRAY_TASK_ID}
 
 Using ``--array`` one specifies the number of jobs (here ``n_jobs`` is manually set to 99, resulting in 100 tasks)
-and note that depending on the variable ``${SLURM_ARRAY_TASK_ID}`` the script ``script_redis_worker.sh`` could 
+and note that depending on the variable ``${SLURM_ARRAY_TASK_ID}`` the script ``script_redis_worker.sh`` could
 handle for instance different input parameters or input files as identified by a unique index.
 
 

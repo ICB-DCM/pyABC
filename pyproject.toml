@@ -11,7 +11,7 @@ dynamic = ["version"]
 
 description = "Distributed, likelihood-free ABC-SMC inference"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 authors = [{ name = "The pyABC developers", email = "jan.hasenauer@uni-bonn.de" }]
 maintainers = [{ name = "Jonas Arruda", email = "jonas.arruda@uni-bonn.de" }]
@@ -33,7 +33,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -45,11 +44,11 @@ dependencies = [
   "pandas>=2.0.1",
   "cloudpickle>=1.5.0",
   "scikit-learn>=0.23.1",
-  "click>=7.1.2",
+  "click>=8.3.2",
   "redis>=2.10.6",
   "distributed>=2024.2.0",
   "matplotlib>=3.3.0",
-  "sqlalchemy>=2.0.0",
+  "sqlalchemy>=2.0.49",
   "jabbar>=0.0.10",
   "gitpython>=3.1.7",
   "ipykernel>=7.2.0",
@@ -78,13 +77,13 @@ pyarrow = ["pyarrow>=22.0.0"]
 r = [
   "rpy2>=3.4.4",
   "cffi>=1.14.5",
-  "ipython>=7.18.1",
-  "pygments>=2.6.1",
+  "ipython>=9.10.0",
+  "pygments>=2.20.0",
 ]
 julia = [
   "julia>=0.6.2",
-  "pygments>=2.6.1",
-  "ipython>=7.18.1",
+  "pygments>=2.20.0",
+  "ipython>=9.10.0",
 ]
 copasi = ["copasi-basico>=0.8"]
 ot = [
@@ -93,7 +92,7 @@ ot = [
 ]
 petab = ["petab>=0.2.0"]
 #petab-test = ["petabtests>=0.0.1"]  # problem with pysb
-amici = ["amici>=0.32.0,<1.0.0"]
+amici = ["amici>=1.0.0"]
 yaml2sbml = ["yaml2sbml>=0.2.1"]
 migrate = ["alembic>=1.5.4"]
 plotly = ["plotly>=5.3.1", "kaleido>=0.2.1"]
@@ -105,15 +104,15 @@ doc = [
   "nbconvert>=7.16.4",
   "sphinx-rtd-theme>=2.0.0",
   "sphinx-autodoc-typehints>=2.0.0",
-  "ipython>=8.4.0",
+  "ipython>=9.10.0",
   "sphinx-autobuild>=2021.3.14",
 ]
 test = [
-  "pytest>=8.0.0",
-  "pytest-cov>=6.0.0",
+  "pytest>=9.0.3",
+  "pytest-cov>=7.1.0",
   "pytest-rerunfailures>=14.0.0",
   "pytest-xdist>=3.5.0",
-  "coverage[toml]>=7.0.0",
+  "coverage[toml]>=7.13.5",
 ]
 
 [project.scripts]
@@ -137,7 +136,7 @@ version = { attr = "pyabc.version.__version__" }
 
 [tool.ruff]
 line-length = 79
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [
@@ -208,11 +207,11 @@ source = [
 [dependency-groups]
 dev = [
   "pre-commit>=4.5.1",
-  "tox>=4.38.0",
-  "ruff>=0.8.0",
-  "build>=1.0.0",
+  "tox>=4.52.1",
+  "ruff>=0.15.10",
+  "build>=1.4.3",
   "twine>=4.0.0",
-  "pytest>=8.0.0",
+  "pytest>=9.0.3",
   "pytest-cov>=6.0.0",
   "pytest-xdist>=3.5.0",
 ]
