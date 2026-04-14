@@ -85,7 +85,7 @@ jobs:
       - name: Install dependencies
         run: |
           case "${{ matrix.toxenv }}" in
-            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base R ;;
+            base|visualization|mac|base-notebooks) .github/workflows/install_deps.sh base;;
             petab) .github/workflows/install_deps.sh amici ;;
             external-*) .github/workflows/install_deps.sh base R amici ;;
             lint|project|doc|migrate) .github/workflows/install_deps.sh doc ;;
