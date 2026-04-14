@@ -65,9 +65,9 @@ jobs:
             toxenv: external-notebooks
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -76,7 +76,7 @@ jobs:
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
         uses: julia-actions/setup-julia@v2
         with:
-          version: "1.11"
+          version: "1.12"
 
       - name: Install Julia dependencies
         if: ${{ startsWith(matrix.toxenv, 'external-') }}
@@ -98,7 +98,7 @@ jobs:
       # If each tox env generates coverage.xml, include flags; otherwise combine explicitly
       - name: Upload coverage
         if: ${{ always() && matrix.os == 'ubuntu-latest' }}  # optional
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml

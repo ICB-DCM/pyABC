@@ -7,6 +7,14 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.18 (2026-04-14)
+--------------------
+
+General:
+
+* Support of amici 1.0.0
+* Remove support for python 3.10
+
 0.12.17 (2026-02-24)
 --------------------
 
