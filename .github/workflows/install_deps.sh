@@ -48,25 +48,6 @@ install_base() {
   fi
 }
 
-install_r() {
-  log_info "Installing R..."
-  if is_macos; then
-    brew install r
-  else
-    # Prefer distro packages in CI
-    apt_install libtirpc-dev r-base r-base-dev
-    # Make R shared libs discoverable for the rest of the job
-    export_env_var LD_LIBRARY_PATH "${LD_LIBRARY_PATH:-/usr/lib}:/usr/lib/R/lib:/usr/local/lib/R/lib"
-  fi
-
-  if command -v R >/dev/null 2>&1; then
-    log_info "R installed: $(R --version | head -n1)"
-  else
-    log_error "R installation failed (R not on PATH)"
-    exit 1
-  fi
-}
-
 install_amici() {
   log_info "Installing AMICI dependencies..."
   if ! is_macos; then
@@ -93,7 +74,6 @@ install_dev_tools() {
 
 install_all() {
   install_base
-  install_r
   install_amici
   install_doc_tools
   install_dev_tools
@@ -105,7 +85,6 @@ Usage: $0 [OPTION]...
 
 Options:
   base        Install base dependencies (Redis)
-  R           Install R (Ubuntu: apt; macOS: brew)
   amici       Install AMICI dependencies
   doc         Install documentation tools (Pandoc)
   dev         Install development tools
@@ -124,7 +103,6 @@ main() {
   for arg in "$@"; do
     case "$arg" in
       base)  install_base ;;
-      R)     install_r ;;
       amici) install_amici ;;
       doc)   install_doc_tools ;;
       dev)   install_dev_tools ;;
