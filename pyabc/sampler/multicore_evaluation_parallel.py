@@ -1,12 +1,13 @@
 import random
 from ctypes import c_longlong
-from multiprocessing import Process, Queue, Value
+from multiprocessing import Queue, Value
 
 import cloudpickle as pickle
 import numpy as np
 from jabbar import jabbar
 
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
+from .util import get_mp_process
 
 DONE = 'Done'
 
@@ -123,8 +124,9 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
             self._create_empty_sample,
         )
 
+        process_cls = get_mp_process()
         processes = [
-            Process(target=work, args=args, daemon=self.daemon)
+            process_cls(target=work, args=args, daemon=self.daemon)
             for _ in range(self.n_procs)
         ]
 
