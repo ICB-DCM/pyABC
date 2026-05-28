@@ -6,7 +6,7 @@ from time import sleep
 
 import psutil
 
-from .cli import _manage, work
+from .cli import _manage, _work
 from .sampler import RedisEvalParallelSampler
 from .sampler_static import RedisStaticSampler
 
@@ -17,7 +17,6 @@ class RedisServerStarter:
         password: str = None,
         workers: int = 2,
         processes_per_worker: int = 1,
-        daemon: bool = True,
         catch: bool = True,
     ):
         # start server
@@ -44,29 +43,14 @@ class RedisServerStarter:
         #  respective processes are in their expected states
         sleep(1)
 
-        # initiate worker processes
-        maybe_password = [] if password is None else ['--password', password]
-        maybe_daemon = [] if daemon is None else ['--daemon', str(daemon)]
+        # initiate worker processes with a module-level function target
         self.workers = [
             Process(
-                target=work,
-                args=(
-                    [
-                        '--host',
-                        'localhost',
-                        '--port',
-                        str(port),
-                        *maybe_password,
-                        '--processes',
-                        str(processes_per_worker),
-                        *maybe_daemon,
-                        '--catch',
-                        str(catch),
-                    ],
-                ),
+                target=_work,
+                args=('localhost', port, '2h', password, catch),
                 daemon=False,
             )
-            for _ in range(workers)
+            for _ in range(workers * processes_per_worker)
         ]
 
         # start workers
