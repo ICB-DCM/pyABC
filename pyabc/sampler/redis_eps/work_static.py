@@ -8,7 +8,6 @@ from time import time
 import cloudpickle
 from redis import StrictRedis
 
-from .cli import KillHandler
 from .cmd import (
     ANALYSIS_ID,
     N_ACC,
@@ -20,6 +19,7 @@ from .cmd import (
     SSA,
     idfy,
 )
+from .util import KillHandler
 
 logger = logging.getLogger('ABC.Sampler')
 
