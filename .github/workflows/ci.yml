@@ -17,6 +17,9 @@ jobs:
         include:
           # Fast PR matrix
           - os: ubuntu-latest
+            python: "3.14"
+            toxenv: base
+          - os: ubuntu-latest
             python: "3.13"
             toxenv: base
           - os: ubuntu-latest
@@ -25,6 +28,9 @@ jobs:
           - os: ubuntu-latest
             python: "3.11"
             toxenv: base
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: visualization
           - os: ubuntu-latest
             python: "3.11"
             toxenv: visualization
@@ -35,6 +41,9 @@ jobs:
             toxenv: mac
 
           # Quality
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: quality
           - os: ubuntu-latest
             python: "3.11"
             toxenv: quality
@@ -58,8 +67,14 @@ jobs:
             python: "3.11"
             toxenv: petab
           - os: ubuntu-latest
+            python: "3.14"
+            toxenv: base-notebooks
+          - os: ubuntu-latest
             python: "3.11"
             toxenv: base-notebooks
+          - os: ubuntu-latest
+            python: "3.14"
+            toxenv: external-notebooks
           - os: ubuntu-latest
             python: "3.11"
             toxenv: external-notebooks
