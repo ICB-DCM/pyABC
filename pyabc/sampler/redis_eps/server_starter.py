@@ -6,7 +6,7 @@ from time import sleep
 
 import psutil
 
-from .cli import _manage, _work
+from .cli import _manage, work
 from .sampler import RedisEvalParallelSampler
 from .sampler_static import RedisStaticSampler
 
@@ -49,7 +49,7 @@ class RedisServerStarter:
         maybe_daemon = [] if daemon is None else ['--daemon', str(daemon)]
         self.workers = [
             Process(
-                target=_work,
+                target=work,
                 args=(
                     [
                         '--host',
