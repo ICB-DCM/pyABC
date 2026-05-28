@@ -2,13 +2,13 @@ import logging
 import os
 import random
 import socket
-from multiprocessing import Process
 from time import time
 
 import click
 import numpy as np
 from redis import StrictRedis
 
+from ..util import get_mp_process
 from .cmd import (
     ANALYSIS_ID,
     DYNAMIC,
@@ -89,8 +89,9 @@ def work(
         return _work(host, port, runtime, password, catch)
 
     # define parallel processes
+    process_cls = get_mp_process()
     procs = [
-        Process(
+        process_cls(
             target=_work,
             args=(host, port, runtime, password, catch),
             daemon=daemon,
