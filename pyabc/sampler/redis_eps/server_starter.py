@@ -1,11 +1,11 @@
 import tempfile
 import time
-from multiprocessing import Process
 from subprocess import Popen  # noqa: S404
 from time import sleep
 
 import psutil
 
+from ..util import get_mp_process
 from .cli import _manage, work
 from .sampler import RedisEvalParallelSampler
 from .sampler_static import RedisStaticSampler
@@ -47,8 +47,9 @@ class RedisServerStarter:
         # initiate worker processes
         maybe_password = [] if password is None else ['--password', password]
         maybe_daemon = [] if daemon is None else ['--daemon', str(daemon)]
+        process_cls = get_mp_process()
         self.workers = [
-            Process(
+            process_cls(
                 target=work,
                 args=(
                     [
