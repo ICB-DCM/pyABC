@@ -17,6 +17,9 @@ jobs:
         include:
           # Fast PR matrix
           - os: ubuntu-latest
+            python: "3.14"
+            toxenv: base
+          - os: ubuntu-latest
             python: "3.13"
             toxenv: base
           - os: ubuntu-latest
@@ -26,42 +29,42 @@ jobs:
             python: "3.11"
             toxenv: base
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: visualization
 
           # macOS sanity
           - os: macos-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: mac
 
           # Quality
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: quality
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: project
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: doc
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: migrate
 
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: external-R
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: external-other-simulators
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: petab
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: base-notebooks
           - os: ubuntu-latest
-            python: "3.11"
+            python: "3.13"
             toxenv: external-notebooks
 
     steps:
