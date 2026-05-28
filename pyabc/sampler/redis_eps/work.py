@@ -8,6 +8,7 @@ import cloudpickle as pickle
 from redis import StrictRedis
 
 from ..util import any_particle_preliminary
+from .cli import KillHandler
 from .cmd import (
     ALL_ACCEPTED,
     ANALYSIS_ID,
@@ -26,7 +27,6 @@ from .cmd import (
     SSA,
     idfy,
 )
-from .util import KillHandler
 
 logger = logging.getLogger('ABC.Sampler')
 
