@@ -1,4 +1,5 @@
 import logging
+import multiprocessing as mp
 import os
 import platform
 from multiprocessing import Process, ProcessError, Queue
@@ -41,7 +42,9 @@ class MultiCoreSampler(Sampler):
         self.daemon = daemon
         if pickle is None:
             pickle = False
-            if platform.system() == 'Darwin':  # macos
+            # Non-fork start methods require picklable payloads.
+            start_method = mp.get_start_method(allow_none=True)
+            if platform.system() == 'Darwin' or start_method != 'fork':
                 pickle = True
         self.pickle = pickle
         self.check_max_eval = check_max_eval

@@ -48,7 +48,7 @@ jobs:
             python: "3.13"
             toxenv: doc
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.11"
             toxenv: migrate
 
           - os: ubuntu-latest
