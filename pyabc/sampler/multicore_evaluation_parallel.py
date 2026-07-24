@@ -1,6 +1,5 @@
 import random
 from ctypes import c_longlong
-from multiprocessing import Value
 
 import cloudpickle as pickle
 import numpy as np
@@ -15,8 +14,8 @@ DONE = 'Done'
 def work(
     simulate_one,
     queue,
-    n_eval: Value,
-    n_acc: Value,
+    n_eval,
+    n_acc,
     n: int,
     check_max_eval: bool,
     max_eval: int,
