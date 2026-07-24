@@ -199,7 +199,8 @@ def _work(
             logger.info('Received stop signal. Shutdown redis worker.')
             return
 
-        # TODO other messages (some integers?) are ignored
+        # Any other messages on the channel (e.g. redis subscription-count
+        # notifications) are ignored.
 
         # check total time condition
         elapsed_time = time() - start_time

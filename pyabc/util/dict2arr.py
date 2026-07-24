@@ -41,8 +41,7 @@ def dict2arr(dct: dict | np.ndarray, keys: list) -> np.ndarray:
     if len(arr) == 1:
         return np.asarray(arr[0])
     # flatten
-    arr = [val for sub_arr in arr for val in sub_arr]
-    return np.asarray(arr)
+    return np.concatenate([np.asarray(sub_arr) for sub_arr in arr])
 
 
 def dict2arrlabels(dct: dict, keys: list) -> list[str]:

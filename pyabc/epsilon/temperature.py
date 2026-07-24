@@ -80,12 +80,15 @@ class Temperature(TemperatureBase):
 
     def __init__(
         self,
-        schemes: Callable | list[Callable] = None,
-        aggregate_fun: Callable[[list[float]], float] = None,
-        initial_temperature: float = None,
+        schemes: Callable | list[Callable] | None = None,
+        aggregate_fun: Callable[[list[float]], float] | None = None,
+        initial_temperature: float | None = None,
         enforce_exact_final_temperature: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
+        # normalize a single callable to a list, as all consumers iterate
+        if schemes is not None and callable(schemes):
+            schemes = [schemes]
         self.schemes = schemes
 
         if aggregate_fun is None:

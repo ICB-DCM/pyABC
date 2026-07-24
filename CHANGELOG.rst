@@ -16,6 +16,7 @@ General:
 * Add execution time profiling to the ABC-SMC run, reporting pure simulation time, parallel-pipeline setup, in-between-iterations
   time, and within it the population size calculation and distance function
   adaptation. The timings are also returned by ``run_generation``.
+* Minor bug fixes and improved type setting.
 
 Visualization:
 
@@ -29,6 +30,10 @@ Storage:
   database version 2). Databases created with older pyABC versions must be
   migrated via ``abc-migrate`` before they can be resumed; for such databases
   the walltime plots fall back to the previous, end-time-based behavior.
+* Particle weights are now stored using the global normalization (weights sum
+  to 1 across all particles of all models, matching the in-memory
+  ``Population`` representation). This is bundled into database version 2 and
+  handled by ``abc-migrate`` for existing databases. Resolves #47.
 
 0.12.18 (2026-04-14)
 --------------------

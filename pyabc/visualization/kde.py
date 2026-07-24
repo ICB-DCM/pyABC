@@ -247,8 +247,6 @@ def plot_kde_1d(
     if ax is None:
         _, ax = plt.subplots()
     ax.plot(x_vals, pdf, **kwargs)
-    # TODO This fixes the upper bound inadequately
-    # ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
     ax.set_xlabel(xname)
     ax.set_ylabel('Posterior')
     ax.set_xlim(xmin, xmax)

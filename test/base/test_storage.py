@@ -280,6 +280,86 @@ def test_sum_stats_save_load(history: History):
     assert (sum_stats[1]['ss33'] == example_df()).all().all()
 
 
+def test_global_particle_weight_convention(history: History):
+    """Regression: particle weights are stored with the global convention
+    (summing to 1 across all particles of all models, matching the in-memory
+    ``Population``), while within-model read paths renormalize via the model
+    probability. Previously the DB stored per-model-normalized weights.
+    """
+    # two models: p_model(0)=0.4, p_model(1)=0.6; global weights sum to 1
+    particle_list = [
+        Particle(
+            m=0,
+            parameter=Parameter({'a': 1.0}),
+            weight=0.3,
+            sum_stat={'ss': 1.0},
+            distance=0.1,
+        ),
+        Particle(
+            m=0,
+            parameter=Parameter({'a': 2.0}),
+            weight=0.1,
+            sum_stat={'ss': 2.0},
+            distance=0.2,
+        ),
+        Particle(
+            m=1,
+            parameter=Parameter({'a': 3.0}),
+            weight=0.2,
+            sum_stat={'ss': 3.0},
+            distance=0.3,
+        ),
+        Particle(
+            m=1,
+            parameter=Parameter({'a': 4.0}),
+            weight=0.4,
+            sum_stat={'ss': 4.0},
+            distance=0.4,
+        ),
+    ]
+    history.append_population(
+        0, 0.5, Population(particle_list), 4, ['m0', 'm1']
+    )
+
+    # model probabilities are the per-model sums of the global weights
+    mp = history.get_model_probabilities(t=0)
+    assert np.isclose(mp.loc[0, 'p'], 0.4)
+    assert np.isclose(mp.loc[1, 'p'], 0.6)
+
+    # the RAW stored weights are global and sum to 1 (per-model storage would
+    # have summed to the number of models, i.e. 2)
+    ext = history.get_population_extended(t=0, tidy=False)
+    raw_w = ext[['particle_id', 'w']].drop_duplicates().w.values
+    assert np.isclose(raw_w.sum(), 1.0)
+    assert np.allclose(sorted(raw_w), [0.1, 0.2, 0.3, 0.4])
+
+    # within-model posterior weights sum to 1 (= g_i / p_model)
+    _, w0 = history.get_distribution(m=0, t=0)
+    _, w1 = history.get_distribution(m=1, t=0)
+    assert np.isclose(w0.sum(), 1.0) and np.isclose(w1.sum(), 1.0)
+    assert np.allclose(sorted(w0), sorted([0.3 / 0.4, 0.1 / 0.4]))
+    assert np.allclose(sorted(w1), sorted([0.2 / 0.6, 0.4 / 0.6]))
+
+    # global weighted distances / summary statistics sum to 1
+    wd = history.get_weighted_distances(t=0)
+    assert np.isclose(wd.w.sum(), 1.0)
+    assert np.allclose(sorted(wd.w.values), [0.1, 0.2, 0.3, 0.4])
+    w_ss, _ = history.get_weighted_sum_stats(t=0)
+    assert np.isclose(sum(w_ss), 1.0)
+
+    # within-model summary statistics for a single model sum to 1
+    w_m0, _ = history.get_weighted_sum_stats_for_model(m=0, t=0)
+    assert np.isclose(w_m0.sum(), 1.0)
+    assert np.allclose(sorted(w_m0), sorted([0.3 / 0.4, 0.1 / 0.4]))
+
+    # get_population reconstructs the global weights, summing to 1
+    pop = history.get_population(t=0)
+    assert np.isclose(sum(p.weight for p in pop.particles), 1.0)
+    assert np.allclose(
+        sorted(p.weight for p in pop.particles), [0.1, 0.2, 0.3, 0.4]
+    )
+
+
 def test_total_nr_samples(history: History):
     particle_list = [
         Particle(
@@ -593,3 +673,35 @@ def test_export():
     finally:
         if os.path.exists(db_file):
             os.remove(db_file)
+
+
+def test_save_dict_to_json_numpy_arrays():
+    """Regression: `save_dict_to_json` handles integer and multi-dimensional
+    numpy arrays."""
+    from pyabc.storage.json import load_dict_from_json, save_dict_to_json
+
+    f = tempfile.mkstemp(suffix='.json')[1]
+    try:
+        save_dict_to_json(
+            {1: np.array([1, 2, 3]), 2: np.array([[1.0, 2.0], [3.0, 4.0]])}, f
+        )
+        got = load_dict_from_json(f)
+    finally:
+        if os.path.exists(f):
+            os.remove(f)
+    assert got[1] == [1, 2, 3]
+    assert got[2] == [[1.0, 2.0], [3.0, 4.0]]
+
+
+def test_abcsmc_repr_with_unfinished_run():
+    """Regression: `ABCSMC.__repr__` must not crash for a run that has been
+    started but not finished (`end_time is None`)."""
+    from pyabc.storage.db_model import ABCSMC, datetime2str
+
+    row = ABCSMC(
+        id=1,
+        start_time=datetime.datetime(2024, 1, 1, 12, 0, 0),
+        end_time=None,
+    )
+    assert 'end_time=None' in repr(row)
+    assert datetime2str(None) == 'None'

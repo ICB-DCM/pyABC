@@ -19,7 +19,7 @@ def save_dict_to_json(dct: dict, file_: str):
     for key, val in dct.items():
         # cannot handle ndarrays
         if isinstance(val, np.ndarray):
-            dct[key] = list(val)
+            dct[key] = val.tolist()
     with open(file_, 'w') as f:
         json.dump(dct, f)
 
