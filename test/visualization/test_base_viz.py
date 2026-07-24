@@ -350,6 +350,9 @@ def test_walltime_ignores_resume_gap():
     ]
     # actually measured per-generation walltimes in seconds
     wall_times = [[10.0, 20.0, 15.0]]
+    # generation-1 end-time diff spans the one-day resume gap:
+    # (1 day + 45 s) - 30 s = 86415 s
+    gap_seconds = datetime.timedelta(days=1, seconds=45).total_seconds() - 30
 
     # without recorded walltimes, the resume gap leaks into generation 1
     matrix_gap, _, _ = _prepare_plot_walltime_lowlevel(
@@ -358,7 +361,7 @@ def test_walltime_ignores_resume_gap():
         show_calibration=True,
         unit='s',
     )
-    assert matrix_gap[2, 0] > 60 * 60
+    np.testing.assert_allclose(matrix_gap[:, 0], [10.0, 20.0, gap_seconds])
 
     # with recorded walltimes, the actual per-generation walltimes are used
     matrix, _, _ = _prepare_plot_walltime_lowlevel(
@@ -379,9 +382,7 @@ def test_walltime_ignores_resume_gap():
         unit='s',
         wall_times=wall_times_partial,
     )
-    assert matrix_partial[0, 0] == 10.0
-    assert matrix_partial[1, 0] == 20.0
-    assert matrix_partial[2, 0] > 60 * 60
+    np.testing.assert_allclose(matrix_partial[:, 0], [10.0, 20.0, gap_seconds])
 
 
 def test_eps_walltime():
