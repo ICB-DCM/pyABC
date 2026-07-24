@@ -434,7 +434,6 @@ class ExpDecayFixedIterScheme(TemperatureScheme):
 
     Parameters
     ----------
-
     alpha: float
         Factor by which to reduce the temperature, if `max_nr_populations`
         is infinite.
