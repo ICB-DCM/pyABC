@@ -11,6 +11,7 @@ Release Notes
 --------------------
 
 General:
+
 * Add execution time profiling to the ABC-SMC run, reporting pure simulation
   time, parallel-pipeline setup time, and in-between-iteration time,
   including population-size calculation and distance-function adaptation.
