@@ -11,10 +11,11 @@ Release Notes
 --------------------
 
 General:
-* Add execution time profiling to the ABC-SMC run, reporting pure simulation time, parallel-pipeline setup, in-between-iterations
-  time, and within it the population size calculation and distance function ´
-  adaptation. The timings are also returned by ``run_generation``. Resolves #325.
-* Minor bug fixes and improved type setting.
+* Add execution time profiling to the ABC-SMC run, reporting pure simulation
+  time, parallel-pipeline setup time, and in-between-iteration time,
+  including population-size calculation and distance-function adaptation.
+  The timings are also returned by ``run_generation``. Resolves #325.
+* Minor bug fixes and improved typesetting.
 
 Visualization:
 
