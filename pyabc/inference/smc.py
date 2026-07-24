@@ -818,8 +818,6 @@ class ABCSMC:
             generation terminated successfully,
             and potentially "acceptance_rate".
         """
-        # record start time
-        generation_start_time = datetime.now()
         # start execution time profiling for this generation
         generation_perf_start = perf_counter()
 
@@ -872,7 +870,7 @@ class ABCSMC:
         # save to database
         n_sim = self.sampler.nr_evaluations_
         model_names = [model.name for model in self.models]
-        wall_time = (datetime.now() - generation_start_time).total_seconds()
+        wall_time = perf_counter() - generation_perf_start
         self.history.append_population(
             t, current_eps, population, n_sim, model_names, wall_time=wall_time
         )
@@ -891,8 +889,8 @@ class ABCSMC:
         )
 
         # prepare next iteration
-        with _Timer() as in_between_timer:
-            in_between_timings = self._prepare_next_iteration(
+        with _Timer() as prepare_next_timer:
+            prepare_next_timings = self._prepare_next_iteration(
                 t=t + 1,
                 sample=sample,
                 population=population,
@@ -910,17 +908,17 @@ class ABCSMC:
             'total': total_time,
             'simulation': simulation_timer.elapsed,
             'pipeline_setup': setup_timer.elapsed,
-            'in_between': in_between_timer.elapsed,
-            **in_between_timings,
+            'prepare_next': prepare_next_timer.elapsed,
+            **prepare_next_timings,
         }
         logger.info(
             f'Timing t={t} [s]: total={total_time:.3g}, '
             f'simulation={simulation_timer.elapsed:.3g} '
             f'({sim_fraction:.0f}%), '
             f'pipeline-setup={setup_timer.elapsed:.3g}, '
-            f'in-between={in_between_timer.elapsed:.3g} '
-            f'(population-size={in_between_timings["population_size"]:.3g}, '
-            f'distance={in_between_timings["distance"]:.3g}).'
+            f'prepare-next={prepare_next_timer.elapsed:.3g} '
+            f'(population-size={prepare_next_timings["population_size"]:.3g}, '
+            f'distance={prepare_next_timings["distance"]:.3g}).'
         )
 
         return {

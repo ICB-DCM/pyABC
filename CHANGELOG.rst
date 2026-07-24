@@ -11,18 +11,16 @@ Release Notes
 --------------------
 
 General:
-
-* Add support for python 3.14
 * Add execution time profiling to the ABC-SMC run, reporting pure simulation time, parallel-pipeline setup, in-between-iterations
-  time, and within it the population size calculation and distance function
-  adaptation. The timings are also returned by ``run_generation``.
+  time, and within it the population size calculation and distance function ´
+  adaptation. The timings are also returned by ``run_generation``. Resolves #325.
 * Minor bug fixes and improved type setting.
 
 Visualization:
 
 * ``plot_walltime`` and ``plot_total_walltime`` now report the actual
   per-generation walltimes and no longer include the idle time that passed
-  between a stored analysis and a later resumed run.
+  between a stored analysis and a later resumed run. Resolves #667.
 
 Storage:
 
