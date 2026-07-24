@@ -1,3 +1,4 @@
+import datetime
 import os
 import tempfile
 
@@ -7,6 +8,7 @@ import pandas as pd
 import pytest
 
 import pyabc
+from pyabc.visualization.walltime import _prepare_plot_walltime_lowlevel
 
 db_path = 'sqlite:///' + tempfile.mkstemp(suffix='.db')[1]
 log_files = []
@@ -329,6 +331,57 @@ def test_walltime():
     with pytest.raises(AssertionError):
         pyabc.visualization.plot_walltime(histories, unit='min')
     plt.close()
+
+
+def test_walltime_ignores_resume_gap():
+    """`plot_walltime` uses the recorded per-generation walltimes instead of
+    differences of population end times, so that idle time between a stored
+    and a later resumed run is not attributed to any iteration."""
+    base = datetime.datetime(2020, 1, 1, 0, 0, 0)
+    start_times = [base]
+    # calibration + 2 generations, with a one-day pause (resume) between
+    # generation 0 and generation 1
+    end_times = [
+        [
+            base + datetime.timedelta(seconds=10),  # calibration end
+            base + datetime.timedelta(seconds=30),  # generation 0 end
+            base + datetime.timedelta(days=1, seconds=45),  # gen 1 (resumed)
+        ]
+    ]
+    # actually measured per-generation walltimes in seconds
+    wall_times = [[10.0, 20.0, 15.0]]
+
+    # without recorded walltimes, the resume gap leaks into generation 1
+    matrix_gap, _, _ = _prepare_plot_walltime_lowlevel(
+        end_times=end_times,
+        start_times=start_times,
+        show_calibration=True,
+        unit='s',
+    )
+    assert matrix_gap[2, 0] > 60 * 60
+
+    # with recorded walltimes, the actual per-generation walltimes are used
+    matrix, _, _ = _prepare_plot_walltime_lowlevel(
+        end_times=end_times,
+        start_times=start_times,
+        show_calibration=True,
+        unit='s',
+        wall_times=wall_times,
+    )
+    np.testing.assert_allclose(matrix[:, 0], [10.0, 20.0, 15.0])
+
+    # missing (NaN) per-generation walltimes fall back to end-time diffs
+    wall_times_partial = [[10.0, 20.0, float('nan')]]
+    matrix_partial, _, _ = _prepare_plot_walltime_lowlevel(
+        end_times=end_times,
+        start_times=start_times,
+        show_calibration=True,
+        unit='s',
+        wall_times=wall_times_partial,
+    )
+    assert matrix_partial[0, 0] == 10.0
+    assert matrix_partial[1, 0] == 20.0
+    assert matrix_partial[2, 0] > 60 * 60
 
 
 def test_eps_walltime():

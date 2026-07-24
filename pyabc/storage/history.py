@@ -80,7 +80,7 @@ def git_hash():
     return hash_
 
 
-def create_sqlite_db_id(dir_: str = None, file_: str = 'pyabc_test.db'):
+def create_sqlite_db_id(dir_: str | None = None, file_: str = 'pyabc_test.db'):
     """
     Convenience function to create a sqlite database identifier which
     can be understood by sqlalchemy.
@@ -144,7 +144,7 @@ class History:
         self,
         db: str,
         stores_sum_stats: bool = True,
-        _id: int = None,
+        _id: int | None = None,
         create: bool = True,
     ):
         """Initialize history object.
@@ -273,7 +273,7 @@ class History:
         self._id = val
 
     @with_session
-    def alive_models(self, t: int = None) -> list:
+    def alive_models(self, t: int | None = None) -> list:
         """
         Get the models which are still alive at time `t`.
 
@@ -303,7 +303,7 @@ class History:
 
     @with_session
     def get_distribution(
-        self, m: int = 0, t: int = None
+        self, m: int = 0, t: int | None = None
     ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         Returns the weighted population sample for model m and timepoint t
@@ -389,6 +389,8 @@ class History:
 
         * `t`: Population number
         * `population_end_time`: The end time of the population
+        * `wall_time`: The wall time in seconds spent on the population,
+           excluding idle time between resumed runs.
         * `samples`: The number of sample attempts performed
            for a population
         * `epsilon`: The acceptance threshold for the population.
@@ -401,6 +403,7 @@ class History:
         query = self._session.query(
             Population.t,
             Population.population_end_time,
+            Population.wall_time,
             Population.nr_samples,
             Population.epsilon,
         ).filter(Population.abc_smc_id == self.id)
@@ -415,7 +418,7 @@ class History:
     @internal_docstring_warning
     def store_initial_data(
         self,
-        ground_truth_model: int,
+        ground_truth_model: int | None,
         options: dict,
         observed_summary_statistics: dict,
         ground_truth_parameter: dict,
@@ -423,7 +426,7 @@ class History:
         distance_function_json_str: str,
         eps_function_json_str: str,
         population_strategy_json_str: str,
-        start_time: datetime.datetime = None,
+        start_time: datetime.datetime | None = None,
     ) -> None:
         """
         Store the initial configuration data.
@@ -484,7 +487,7 @@ class History:
     @internal_docstring_warning
     def store_pre_population(
         self,
-        ground_truth_model: int,
+        ground_truth_model: int | None,
         observed_summary_statistics: dict,
         ground_truth_parameter: dict,
         model_names: list[str],
@@ -547,7 +550,10 @@ class History:
     @with_session
     @internal_docstring_warning
     def update_after_calibration(
-        self, nr_samples: int, end_time: datetime.datetime
+        self,
+        nr_samples: int,
+        end_time: datetime.datetime,
+        wall_time: float | None = None,
     ):
         """Update after the calibration iteration.
         In particular set time and number of samples.
@@ -559,6 +565,8 @@ class History:
             Number of samples reported.
         end_time:
             End time of the calibration iteration.
+        wall_time:
+            Wall time in seconds spent on the calibration iteration.
         """
         # extract population
         population = (
@@ -572,6 +580,7 @@ class History:
         # update samples number
         population.nr_samples = nr_samples
         population.population_end_time = end_time
+        population.wall_time = wall_time
 
         # commit changes
         self._session.commit()
@@ -671,7 +680,7 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def done(self, end_time: datetime.datetime = None):
+    def done(self, end_time: datetime.datetime | None = None):
         """
         Close database sessions and store end time of the analysis.
 
@@ -697,6 +706,7 @@ class History:
         particles_by_model: dict,
         model_probabilities: pd.DataFrame,
         model_names,
+        wall_time: float | None = None,
     ):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
@@ -706,7 +716,10 @@ class History:
 
         # store the population
         population = Population(
-            t=t, nr_samples=nr_simulations, epsilon=current_epsilon
+            t=t,
+            nr_samples=nr_simulations,
+            epsilon=current_epsilon,
+            wall_time=wall_time,
         )
 
         abcsmc.populations.append(population)
@@ -783,6 +796,7 @@ class History:
         population: PyPopulation,
         nr_simulations: int,
         model_names,
+        wall_time: float | None = None,
     ):
         """
         Append population to database.
@@ -799,6 +813,8 @@ class History:
             The number of model evaluations for this population.
         model_names: list
             The model names.
+        wall_time: float
+            Wall time in seconds spent on sampling this population.
         """
         particles_by_model = population.get_particles_by_model()
         model_probabilities = population.get_model_probabilities()
@@ -810,6 +826,7 @@ class History:
             particles_by_model,
             model_probabilities,
             model_names,
+            wall_time=wall_time,
         )
 
     @with_session
@@ -921,16 +938,6 @@ class History:
                     weights.append(weight)
                     distances.append(sample.distance)
 
-        # query = (self._session.query(Sample.distance, Particle.w, Model.m)
-        #         .join(Particle)
-        #         .join(Model).join(Population).join(ABCSMC)
-        #         .filter(ABCSMC.id == self.id)
-        #         .filter(Population.t == t))
-        # df = pd.read_sql_query(query.statement, self._engine)
-        # model_probabilities = self.get_model_probabilities(t).reset_index()
-        # df_weighted = df.merge(model_probabilities)
-        # df_weighted["w"] *= df_weighted["p"]
-
         return pd.DataFrame({'distance': distances, 'w': weights})
 
     @with_session
@@ -981,7 +988,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats_for_model(
-        self, m: int = 0, t: int = None
+        self, m: int = 0, t: int | None = None
     ) -> tuple[np.ndarray, list]:
         """
         Summary statistics for model `m`. The weights sum to 1, unless
@@ -1027,7 +1034,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats(
-        self, t: int = None
+        self, t: int | None = None
     ) -> tuple[list[float], list[dict]]:
         """
         Population's weighted summary statistics.
@@ -1080,7 +1087,7 @@ class History:
         return all_weights, all_sum_stats
 
     @with_session
-    def get_population(self, t: int = None):
+    def get_population(self, t: int | None = None):
         """
         Create a pyabc.Population object containing all particles,
         as far as those can be recreated from the database. In particular,

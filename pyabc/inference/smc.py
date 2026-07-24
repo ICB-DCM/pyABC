@@ -4,6 +4,7 @@ import copy
 import logging
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from time import perf_counter
 from typing import TypeVar
 
 import numpy as np
@@ -52,6 +53,23 @@ model_output = TypeVar('model_output')
 
 def identity(x):
     return x
+
+
+class _Timer:
+    """Context manager measuring wall-clock execution time in seconds.
+
+    The elapsed time is available via the ``elapsed`` attribute after the
+    ``with`` block has finished, and is used for execution time profiling.
+    """
+
+    def __enter__(self) -> '_Timer':
+        self.elapsed = 0.0
+        self._start = perf_counter()
+        return self
+
+    def __exit__(self, *exc_info) -> bool:
+        self.elapsed = perf_counter() - self._start
+        return False
 
 
 def run_cleanup(run):
@@ -172,16 +190,16 @@ class ABCSMC:
     def __init__(
         self,
         models: list[Model] | Model | Callable,
-        parameter_priors: list[Distribution] | Distribution | Callable,
-        distance_function: Distance | Callable = None,
+        parameter_priors: list[Distribution] | Distribution,
+        distance_function: Distance | Callable | None = None,
         population_size: PopulationStrategy | int = 100,
         summary_statistics: Callable[[model_output], dict] = identity,
-        model_prior: RV = None,
-        model_perturbation_kernel: ModelPerturbationKernel = None,
-        transitions: list[Transition] | Transition = None,
-        eps: Epsilon = None,
-        sampler: Sampler = None,
-        acceptor: Acceptor = None,
+        model_prior: RV | None = None,
+        model_perturbation_kernel: ModelPerturbationKernel | None = None,
+        transitions: list[Transition] | Transition | None = None,
+        eps: Epsilon | None = None,
+        sampler: Sampler | None = None,
+        acceptor: Acceptor | None = None,
         stop_if_only_single_model_alive: bool = False,
         max_nr_recorded_particles: int = np.inf,
     ):
@@ -290,10 +308,10 @@ class ABCSMC:
     def new(
         self,
         db: str,
-        observed_sum_stat: dict = None,
+        observed_sum_stat: dict | None = None,
         *,
-        gt_model: int = None,
-        gt_par: dict = None,
+        gt_model: int | None = None,
+        gt_par: dict | None = None,
         meta_info=None,
     ) -> History:
         """
@@ -392,7 +410,7 @@ class ABCSMC:
         self,
         db: str,
         abc_id: int = 1,
-        observed_sum_stat: dict = None,
+        observed_sum_stat: dict | None = None,
     ) -> History:
         """
         Load an ABC-SMC run for continuation.
@@ -545,6 +563,9 @@ class ABCSMC:
         Only sample from prior and return results without changing
         the history of the distance function or the epsilon.
         """
+        # record start time
+        calibration_start_time = datetime.now()
+
         # create simulate function
         simulate_one = self._create_simulate_from_prior_function()
 
@@ -567,8 +588,13 @@ class ABCSMC:
         population = sample.get_accepted_population()
 
         # update information saved in history about calibration
+        calibration_end_time = datetime.now()
         self.history.update_after_calibration(
-            nr_samples=self.sampler.nr_evaluations_, end_time=datetime.now()
+            nr_samples=self.sampler.nr_evaluations_,
+            end_time=calibration_end_time,
+            wall_time=(
+                calibration_end_time - calibration_start_time
+            ).total_seconds(),
         )
 
         return population
@@ -628,11 +654,11 @@ class ABCSMC:
     @run_cleanup
     def run(
         self,
-        minimum_epsilon: float = None,
+        minimum_epsilon: float | None = None,
         max_nr_populations: int = np.inf,
         min_acceptance_rate: float = 0.0,
         max_total_nr_simulations: int = np.inf,
-        max_walltime: timedelta = None,
+        max_walltime: timedelta | None = None,
         min_eps_diff: float = 0.0,
     ) -> History:
         """
@@ -715,12 +741,12 @@ class ABCSMC:
 
     def initialize_components_before_run(
         self,
-        minimum_epsilon: float,
-        max_nr_populations: int,
-        min_acceptance_rate: float,
-        max_total_nr_simulations: int,
-        max_walltime: timedelta,
-        min_eps_diff: float,
+        minimum_epsilon: float | None,
+        max_nr_populations: int | None,
+        min_acceptance_rate: float | None,
+        max_total_nr_simulations: int | None,
+        max_walltime: timedelta | None,
+        min_eps_diff: float | None,
     ) -> int:
         """Initialize everything before starting a run.
 
@@ -792,6 +818,11 @@ class ABCSMC:
             generation terminated successfully,
             and potentially "acceptance_rate".
         """
+        # record start time
+        generation_start_time = datetime.now()
+        # start execution time profiling for this generation
+        generation_perf_start = perf_counter()
+
         # get epsilon for generation t
         current_eps = self.eps(t)
         if current_eps is None or np.isnan(current_eps):
@@ -800,26 +831,29 @@ class ABCSMC:
             )
         logger.info(f't: {t}, eps: {current_eps:.8e}.')
 
-        # create simulate function
-        simulate_one = self._create_simulate_function(t)
+        # set up the simulation pipeline for this generation
+        with _Timer() as setup_timer:
+            # create simulate function
+            simulate_one = self._create_simulate_function(t)
 
-        # population size and maximum number of evaluations
-        pop_size = self.population_size(t)
-        max_eval = (
-            np.inf
-            if self.min_acceptance_rate == 0.0
-            else pop_size / self.min_acceptance_rate
-        )
+            # population size and maximum number of evaluations
+            pop_size = self.population_size(t)
+            max_eval = (
+                np.inf
+                if self.min_acceptance_rate == 0.0
+                else pop_size / self.min_acceptance_rate
+            )
 
         # perform the sampling
         logger.debug(f'Submitting population {t}.')
-        sample = self.sampler.sample_until_n_accepted(
-            n=pop_size,
-            simulate_one=simulate_one,
-            t=t,
-            max_eval=max_eval,
-            ana_vars=self._vars(t=t),
-        )
+        with _Timer() as simulation_timer:
+            sample = self.sampler.sample_until_n_accepted(
+                n=pop_size,
+                simulate_one=simulate_one,
+                t=t,
+                max_eval=max_eval,
+                ana_vars=self._vars(t=t),
+            )
 
         # check sample health
         if not sample.ok:
@@ -838,8 +872,9 @@ class ABCSMC:
         # save to database
         n_sim = self.sampler.nr_evaluations_
         model_names = [model.name for model in self.models]
+        wall_time = (datetime.now() - generation_start_time).total_seconds()
         self.history.append_population(
-            t, current_eps, population, n_sim, model_names
+            t, current_eps, population, n_sim, model_names, wall_time=wall_time
         )
         logger.debug(
             f'Total samples up to t = {t}: '
@@ -856,16 +891,42 @@ class ABCSMC:
         )
 
         # prepare next iteration
-        self._prepare_next_iteration(
-            t=t + 1,
-            sample=sample,
-            population=population,
-            acceptance_rate=acceptance_rate,
+        with _Timer() as in_between_timer:
+            in_between_timings = self._prepare_next_iteration(
+                t=t + 1,
+                sample=sample,
+                population=population,
+                acceptance_rate=acceptance_rate,
+            )
+
+        # execution time profiling
+        total_time = perf_counter() - generation_perf_start
+        sim_fraction = (
+            100 * simulation_timer.elapsed / total_time
+            if total_time > 0
+            else 0.0
+        )
+        timings = {
+            'total': total_time,
+            'simulation': simulation_timer.elapsed,
+            'pipeline_setup': setup_timer.elapsed,
+            'in_between': in_between_timer.elapsed,
+            **in_between_timings,
+        }
+        logger.info(
+            f'Timing t={t} [s]: total={total_time:.3g}, '
+            f'simulation={simulation_timer.elapsed:.3g} '
+            f'({sim_fraction:.0f}%), '
+            f'pipeline-setup={setup_timer.elapsed:.3g}, '
+            f'in-between={in_between_timer.elapsed:.3g} '
+            f'(population-size={in_between_timings["population_size"]:.3g}, '
+            f'distance={in_between_timings["distance"]:.3g}).'
         )
 
         return {
             'successful': True,
             'acceptance_rate': acceptance_rate,
+            'timings': timings,
         }
 
     def check_terminate(
@@ -909,7 +970,7 @@ class ABCSMC:
         sample: Sample,
         population: Population,
         acceptance_rate: float,
-    ):
+    ) -> dict:
         """Update actors for the upcoming iteration.
 
         Be aware: The current (finished) iteration is t-1, the next t.
@@ -924,6 +985,12 @@ class ABCSMC:
             The current iteration's population object.
         acceptance_rate: float
             The current iteration's acceptance rate.
+
+        Returns
+        -------
+        timings:
+            Execution times in seconds of the profiled sub-steps, with keys
+            ``"population_size"`` and ``"distance"``.
         """
         # make a copy
         prev_transitions = copy.deepcopy(self.transitions)
@@ -932,17 +999,19 @@ class ABCSMC:
         self._fit_transitions(t)
 
         # update population size
-        self._adapt_population_size(t)
+        with _Timer() as population_size_timer:
+            self._adapt_population_size(t)
 
         def get_sample():
             return sample
 
         # update distance
-        df_updated = self.distance_function.update(
-            t=t,
-            get_sample=get_sample,
-            total_sims=self.history.total_nr_simulations,
-        )
+        with _Timer() as distance_timer:
+            df_updated = self.distance_function.update(
+                t=t,
+                get_sample=get_sample,
+                total_sims=self.history.total_nr_simulations,
+            )
 
         # compute distances with the new distance measure
         def get_weighted_distances():
@@ -998,6 +1067,11 @@ class ABCSMC:
             acceptance_rate=acceptance_rate,
             acceptor_config=self.acceptor.get_epsilon_config(t),
         )
+
+        return {
+            'population_size': population_size_timer.elapsed,
+            'distance': distance_timer.elapsed,
+        }
 
     def _adapt_population_size(self, t):
         """

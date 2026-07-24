@@ -38,8 +38,16 @@ def _prepare_plot_total_walltime(
     # extract total walltimes
     walltimes = []
     for h in histories:
-        abc = h.get_abc()
-        walltimes.append((abc.end_time - abc.start_time).total_seconds())
+        wall_time = h.get_all_populations().wall_time
+        if len(wall_time) > 0 and wall_time.notna().all():
+            # sum of the actual per-generation walltimes, excluding idle time
+            # between resumed runs
+            walltimes.append(float(wall_time.sum()))
+        else:
+            # fall back to the wall-clock duration for runs stored by pyABC
+            # versions that did not record per-generation walltimes
+            abc = h.get_abc()
+            walltimes.append((abc.end_time - abc.start_time).total_seconds())
     walltimes = np.asarray(walltimes)
 
     # apply time unit
@@ -55,12 +63,12 @@ def _prepare_plot_total_walltime(
 
 def plot_total_walltime(
     histories: list[History] | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Total walltimes',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Plot total walltimes, for each history one single-color bar.
 
@@ -114,11 +122,11 @@ def plot_total_walltime(
 
 def plot_total_walltime_plotly(
     histories: list[History] | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Total walltimes',
-    size: tuple = None,
+    size: tuple | None = None,
     fig: 'go.Figure' = None,
 ) -> 'go.Figure':
     """Plot total walltimes using plotly."""
@@ -156,7 +164,7 @@ def plot_total_walltime_plotly(
 
 def _prepare_walltime(
     histories: list[History] | History,
-    show_calibration: bool,
+    show_calibration: bool | None,
 ):
     # preprocess input
     histories = to_lists(histories)
@@ -167,27 +175,30 @@ def _prepare_walltime(
             h.get_all_populations().samples[0] > 0 for h in histories
         )
 
-    # extract start times and end times
+    # extract start times, end times and per-generation walltimes
     start_times = []
     end_times = []
+    wall_times = []
     for h in histories:
         # start time
         start_times.append(h.get_abc().start_time)
-        # end times
-        end_times.append(h.get_all_populations().population_end_time)
+        # end times and walltimes per population
+        pops = h.get_all_populations()
+        end_times.append(pops.population_end_time)
+        wall_times.append(pops.wall_time)
 
-    return start_times, end_times, show_calibration
+    return start_times, end_times, wall_times, show_calibration
 
 
 def plot_walltime(
     histories: list[History] | History,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Plot walltimes, with different colors indicating different iterations.
 
@@ -219,7 +230,7 @@ def plot_walltime(
         A reference to the axis of the generated plot.
     """
     # preprocess input
-    start_times, end_times, show_calibration = _prepare_walltime(
+    start_times, end_times, wall_times, show_calibration = _prepare_walltime(
         histories=histories, show_calibration=show_calibration
     )
 
@@ -233,22 +244,23 @@ def plot_walltime(
         title=title,
         size=size,
         ax=ax,
+        wall_times=wall_times,
     )
 
 
 def plot_walltime_plotly(
     histories: list[History] | History,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
+    size: tuple | None = None,
     fig: 'go.Figure' = None,
 ) -> 'go.Figure':
     """Plot walltimes using plotly."""
     # preprocess input
-    start_times, end_times, show_calibration = _prepare_walltime(
+    start_times, end_times, wall_times, show_calibration = _prepare_walltime(
         histories=histories, show_calibration=show_calibration
     )
 
@@ -262,15 +274,17 @@ def plot_walltime_plotly(
         title=title,
         size=size,
         fig=fig,
+        wall_times=wall_times,
     )
 
 
 def _prepare_plot_walltime_lowlevel(
     end_times: list,
     start_times: list | None = None,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
+    wall_times: list | None = None,
 ):
     # preprocess input
     end_times = to_lists(end_times)
@@ -290,14 +304,28 @@ def _prepare_plot_walltime_lowlevel(
     if unit not in TIME_UNITS:
         raise AssertionError(f'`unit` must be in {TIME_UNITS}')
 
+    # per-generation walltimes may be unavailable (e.g. for old databases)
+    if wall_times is None:
+        wall_times = [None] * n_run
+
     # extract relative walltimes
     walltimes = []
-    for start_t, end_ts in zip(start_times, end_times):
+    for start_t, end_ts, wall_t in zip(start_times, end_times, wall_times):
         times = [start_t, *end_ts]
-        # compute stacked differences
-        diffs = [end - start for start, end in zip(times[:-1], times[1:])]
-        # as seconds
-        diffs = [diff.total_seconds() for diff in diffs]
+        # compute stacked differences of the population end times, as seconds
+        diffs = [
+            (end - start).total_seconds()
+            for start, end in zip(times[:-1], times[1:])
+        ]
+        # prefer the actually measured per-generation walltime where
+        # available. This excludes idle time between resumed runs
+        if wall_t is not None:
+            wall_t = list(wall_t)
+            for i in range(min(len(diffs), len(wall_t))):
+                w = wall_t[i]
+                # skip missing values (NaN) stored by older pyABC versions
+                if w is not None and not np.isnan(w):
+                    diffs[i] = float(w)
         # append
         walltimes.append(diffs)
     walltimes = np.asarray(walltimes)
@@ -325,13 +353,14 @@ def _prepare_plot_walltime_lowlevel(
 def plot_walltime_lowlevel(
     end_times: list,
     start_times: list | None = None,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
+    wall_times: list | None = None,
 ) -> mpl.axes.Axes:
     """Low-level access to `plot_walltime`.
 
@@ -344,6 +373,7 @@ def plot_walltime_lowlevel(
         labels=labels,
         show_calibration=show_calibration,
         unit=unit,
+        wall_times=wall_times,
     )
 
     # create figure
@@ -381,13 +411,14 @@ def plot_walltime_lowlevel(
 def plot_walltime_lowlevel_plotly(
     end_times: list,
     start_times: list | None = None,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
+    size: tuple | None = None,
     fig: 'go.Figure' = None,
+    wall_times: list | None = None,
 ) -> 'go.Figure':
     """Low-level access to `plot_walltime_plotly`."""
     import plotly.graph_objects as go
@@ -399,6 +430,7 @@ def plot_walltime_lowlevel_plotly(
         labels=labels,
         show_calibration=show_calibration,
         unit=unit,
+        wall_times=wall_times,
     )
 
     # create figure
@@ -456,16 +488,16 @@ def _prepare_plot_eps_walltime(
 
 def plot_eps_walltime(
     histories: list[History] | History,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Plot epsilon values (y-axis) over the walltime (x-axis), iterating over
     the generations.
@@ -522,15 +554,15 @@ def plot_eps_walltime(
 
 def plot_eps_walltime_plotly(
     histories: list[History] | History,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
+    size: tuple | None = None,
     fig: 'go.Figure' = None,
 ) -> 'go.Figure':
     """Plot epsilon values over walltime using plotly."""
@@ -557,7 +589,7 @@ def _prepare_plot_eps_walltime_lowlevel(
     end_times: list,
     eps: list,
     labels: list | str,
-    colors: list[Any],
+    colors: list[Any] | None,
     group_by_label: bool,
     unit: str,
 ):
@@ -604,16 +636,16 @@ def _prepare_plot_eps_walltime_lowlevel(
 def plot_eps_walltime_lowlevel(
     end_times: list,
     eps: list,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Low-level access to `plot_eps_walltime`.
     Directly define `end_times` and `eps`. Note that both should be arrays of
@@ -679,15 +711,15 @@ def plot_eps_walltime_lowlevel(
 def plot_eps_walltime_lowlevel_plotly(
     end_times: list,
     eps: list,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
+    size: tuple | None = None,
     fig: 'go.Figure' = None,
 ) -> 'go.Figure':
     """Plot epsilon values over walltime using plotly."""

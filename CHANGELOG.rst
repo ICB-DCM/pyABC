@@ -7,6 +7,29 @@ Release Notes
 0.12 Series
 ...........
 
+0.12.19 (2026-07-24)
+--------------------
+
+General:
+
+* Add support for python 3.14
+* Add execution time profiling to the ABC-SMC run, reporting pure simulation time, parallel-pipeline setup, in-between-iterations
+  time, and within it the population size calculation and distance function
+  adaptation. The timings are also returned by ``run_generation``.
+
+Visualization:
+
+* ``plot_walltime`` and ``plot_total_walltime`` now report the actual
+  per-generation walltimes and no longer include the idle time that passed
+  between a stored analysis and a later resumed run.
+
+Storage:
+
+* Store the per-generation walltime in the database (new ``wall_time`` column,
+  database version 2). Databases created with older pyABC versions must be
+  migrated via ``abc-migrate`` before they can be resumed; for such databases
+  the walltime plots fall back to the previous, end-time-based behavior.
+
 0.12.18 (2026-04-14)
 --------------------
 
