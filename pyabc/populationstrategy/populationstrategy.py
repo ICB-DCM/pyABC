@@ -170,7 +170,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         self,
         start_nr_particles,
         mean_cv: float = 0.05,
-        max_population_size: int | np.inf = np.inf,
+        max_population_size: int = np.inf,
         min_population_size: int = 10,
         n_bootstrap: int = 10,
         nr_calibration_particles: int | None = None,

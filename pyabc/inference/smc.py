@@ -629,9 +629,9 @@ class ABCSMC:
     def run(
         self,
         minimum_epsilon: float | None = None,
-        max_nr_populations: int | np.inf = np.inf,
+        max_nr_populations: int = np.inf,
         min_acceptance_rate: float = 0.0,
-        max_total_nr_simulations: int | np.inf = np.inf,
+        max_total_nr_simulations: int = np.inf,
         max_walltime: timedelta | None = None,
         min_eps_diff: float = 0.0,
     ) -> History:
@@ -718,7 +718,7 @@ class ABCSMC:
         minimum_epsilon: float | None,
         max_nr_populations: int,
         min_acceptance_rate: float,
-        max_total_nr_simulations: int | np.inf,
+        max_total_nr_simulations: int,
         max_walltime: timedelta | None,
         min_eps_diff: float,
     ) -> int:
