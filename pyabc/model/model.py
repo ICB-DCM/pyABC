@@ -16,9 +16,9 @@ class ModelResult:
 
     def __init__(
         self,
-        sum_stat: dict = None,
-        distance: float = None,
-        accepted: bool = None,
+        sum_stat: dict | None = None,
+        distance: float | None = None,
+        accepted: bool | None = None,
         weight: float = 1.0,
     ):
         self.sum_stat = sum_stat if sum_stat is not None else {}
@@ -233,7 +233,9 @@ class FunctionModel(Model):
     """
 
     def __init__(
-        self, sample_function: Callable[[Parameter], Any], name: str = None
+        self,
+        sample_function: Callable[[Parameter], Any],
+        name: str | None = None,
     ):
         if name is None:
             # try to get the model name

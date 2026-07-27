@@ -26,8 +26,8 @@ class AggregatedDistance(Distance):
     def __init__(
         self,
         distances: list[Distance | Callable],
-        weights: list | dict = None,
-        factors: list | dict = None,
+        weights: list | dict | None = None,
+        factors: list | dict | None = None,
     ):
         """
         Parameters
@@ -126,8 +126,8 @@ class AggregatedDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int | None = None,
+        par: dict | None = None,
     ) -> float:
         """
         Applies all distance functions and computes the weighted sum of all
@@ -221,21 +221,21 @@ class AdaptiveAggregatedDistance(AggregatedDistance):
     def __init__(
         self,
         distances: list[Distance],
-        initial_weights: list = None,
-        factors: list | dict = None,
+        initial_weights: list | None = None,
+        factors: list | dict | None = None,
         adaptive: bool = True,
-        scale_function: Callable = None,
-        log_file: str = None,
+        scale_function: Callable | None = None,
+        log_file: str | None = None,
     ):
         super().__init__(distances=distances)
-        self.initial_weights: list = initial_weights
-        self.factors: list | dict = factors
+        self.initial_weights: list | None = initial_weights
+        self.factors: list | dict | None = factors
         self.adaptive: bool = adaptive
         self.x_0: dict | None = None
         if scale_function is None:
             scale_function = span
         self.scale_function: Callable = scale_function
-        self.log_file: str = log_file
+        self.log_file: str | None = log_file
 
     def requires_calibration(self) -> bool:
         return self.initial_weights is None or any(

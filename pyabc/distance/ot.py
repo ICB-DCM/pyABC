@@ -68,8 +68,8 @@ class WassersteinDistance(Distance):
         self,
         sumstat: Sumstat,
         p: float = 2.0,
-        dist: str | Callable = None,
-        emd_args: dict = None,
+        dist: str | Callable | None = None,
+        emd_args: dict | None = None,
     ):
         """
         Parameters
@@ -121,9 +121,9 @@ class WassersteinDistance(Distance):
     def initialize(
         self,
         x_0: dict,
-        t: int = None,
-        get_sample: Callable[[], Sample] = None,
-        total_sims: int = None,
+        t: int | None = None,
+        get_sample: Callable[[], Sample] | None = None,
+        total_sims: int | None = None,
     ) -> None:
         # initialize summary statistics
         self.sumstat.initialize(
@@ -157,8 +157,8 @@ class WassersteinDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         # compute summary statistics, shape (n, dim), (n0, dim)
         s, s0 = self.sumstat(x), self.sumstat(x_0)
@@ -225,8 +225,8 @@ class SlicedWassersteinDistance(Distance):
         metric: str = 'sqeuclidean',
         p: float = 2.0,
         n_proj: int = 50,
-        seed: int | np.random.RandomState = None,
-        emd_1d_args: dict = None,
+        seed: int | np.random.RandomState | None = None,
+        emd_1d_args: dict | None = None,
     ):
         """
         Parameters
@@ -270,9 +270,9 @@ class SlicedWassersteinDistance(Distance):
     def initialize(
         self,
         x_0: dict,
-        t: int = None,
-        get_sample: Callable[[], Sample] = None,
-        total_sims: int = None,
+        t: int | None = None,
+        get_sample: Callable[[], Sample] | None = None,
+        total_sims: int | None = None,
     ) -> None:
         # initialize summary statistics
         self.sumstat.initialize(
@@ -302,8 +302,8 @@ class SlicedWassersteinDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         # compute summary statistics, shape (n, dim), (n0, dim)
         s, s0 = self.sumstat(x), self.sumstat(x_0)
@@ -355,7 +355,7 @@ class SlicedWassersteinDistance(Distance):
 def uniform_unit_sphere_samples(
     n_proj: int,
     dim: int,
-    seed: int | np.random.RandomState = None,
+    seed: int | np.random.RandomState | None = None,
 ) -> np.ndarray:
     r"""
     Generate uniformly distributed samples from the :math:`d-1`-dim.

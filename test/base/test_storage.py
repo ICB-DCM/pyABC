@@ -72,7 +72,9 @@ def history_uninitialized():
         pass
 
 
-def rand_pop_list(m: int = 0, normalized: bool = True, n_sample: int = None):
+def rand_pop_list(
+    m: int = 0, normalized: bool = True, n_sample: int | None = None
+):
     """
     Create a population for model m, of random size >= 3.
 

@@ -347,9 +347,9 @@ class StochasticAcceptor(Acceptor):
 
     def __init__(
         self,
-        pdf_norm_method: Callable = None,
+        pdf_norm_method: Callable | None = None,
         apply_importance_weighting: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         """
         Parameters
@@ -429,7 +429,7 @@ class StochasticAcceptor(Acceptor):
         self,
         t: int,
         get_weighted_distances: Callable[[], pd.DataFrame],
-        prev_temp: float = None,
+        prev_temp: float | None = None,
         acceptance_rate: float = 1.0,
     ):
         """

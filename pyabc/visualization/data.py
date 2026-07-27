@@ -15,11 +15,11 @@ logger = logging.getLogger('ABC.Visualization')
 
 def plot_data_callback(
     history: History,
-    f_plot: Callable = None,
-    f_plot_aggregated: Callable = None,
-    t: int = None,
-    n_sample: int = None,
-    ax: matplotlib.axes.Axes = None,
+    f_plot: Callable | None = None,
+    f_plot_aggregated: Callable | None = None,
+    t: int | None = None,
+    n_sample: int | None = None,
+    ax: matplotlib.axes.Axes | None = None,
     **kwargs,
 ):
     """
@@ -66,8 +66,8 @@ def plot_data_callback_lowlevel(
     sum_stats: list,
     weights: list,
     f_plot: Callable,
-    f_plot_aggregated: Callable = None,
-    n_sample: int = None,
+    f_plot_aggregated: Callable | None = None,
+    n_sample: int | None = None,
     ax=None,
     **kwargs,
 ):
@@ -100,7 +100,7 @@ def plot_data_callback_lowlevel(
 
 
 def plot_data_default(
-    obs_data: dict, sim_data: dict, keys: list[str] | str = None
+    obs_data: dict, sim_data: dict, keys: list[str] | str | None = None
 ):
     """
     Plot summary statistic data.

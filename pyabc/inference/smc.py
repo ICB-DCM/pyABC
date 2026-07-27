@@ -173,15 +173,15 @@ class ABCSMC:
         self,
         models: list[Model] | Model | Callable,
         parameter_priors: list[Distribution] | Distribution | Callable,
-        distance_function: Distance | Callable = None,
+        distance_function: Distance | Callable | None = None,
         population_size: PopulationStrategy | int = 100,
         summary_statistics: Callable[[model_output], dict] = identity,
-        model_prior: RV = None,
-        model_perturbation_kernel: ModelPerturbationKernel = None,
-        transitions: list[Transition] | Transition = None,
-        eps: Epsilon = None,
-        sampler: Sampler = None,
-        acceptor: Acceptor = None,
+        model_prior: RV | None = None,
+        model_perturbation_kernel: ModelPerturbationKernel | None = None,
+        transitions: list[Transition] | Transition | None = None,
+        eps: Epsilon | None = None,
+        sampler: Sampler | None = None,
+        acceptor: Acceptor | None = None,
         stop_if_only_single_model_alive: bool = False,
         max_nr_recorded_particles: int = np.inf,
     ):
@@ -290,10 +290,10 @@ class ABCSMC:
     def new(
         self,
         db: str,
-        observed_sum_stat: dict = None,
+        observed_sum_stat: dict | None = None,
         *,
-        gt_model: int = None,
-        gt_par: dict = None,
+        gt_model: int | None = None,
+        gt_par: dict | None = None,
         meta_info=None,
     ) -> History:
         """
@@ -392,7 +392,7 @@ class ABCSMC:
         self,
         db: str,
         abc_id: int = 1,
-        observed_sum_stat: dict = None,
+        observed_sum_stat: dict | None = None,
     ) -> History:
         """
         Load an ABC-SMC run for continuation.
@@ -628,11 +628,11 @@ class ABCSMC:
     @run_cleanup
     def run(
         self,
-        minimum_epsilon: float = None,
-        max_nr_populations: int = np.inf,
+        minimum_epsilon: float | None = None,
+        max_nr_populations: int | np.inf = np.inf,
         min_acceptance_rate: float = 0.0,
-        max_total_nr_simulations: int = np.inf,
-        max_walltime: timedelta = None,
+        max_total_nr_simulations: int | np.inf = np.inf,
+        max_walltime: timedelta | None = None,
         min_eps_diff: float = 0.0,
     ) -> History:
         """
@@ -715,11 +715,11 @@ class ABCSMC:
 
     def initialize_components_before_run(
         self,
-        minimum_epsilon: float,
+        minimum_epsilon: float | None,
         max_nr_populations: int,
         min_acceptance_rate: float,
-        max_total_nr_simulations: int,
-        max_walltime: timedelta,
+        max_total_nr_simulations: int | np.inf,
+        max_walltime: timedelta | None,
         min_eps_diff: float,
     ) -> int:
         """Initialize everything before starting a run.

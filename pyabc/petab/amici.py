@@ -186,8 +186,8 @@ class AmiciPetabImporter(PetabImporter):
     def __init__(
         self,
         petab_problem: petab.Problem,
-        amici_model: amici.sim.sundials.Model = None,
-        amici_solver: amici.sim.sundials.Solver = None,
+        amici_model: amici.sim.sundials.Model | None = None,
+        amici_solver: amici.sim.sundials.Solver | None = None,
     ):
         super().__init__(petab_problem=petab_problem)
 
