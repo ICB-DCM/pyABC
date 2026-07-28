@@ -220,7 +220,7 @@ class AdaptivePopulationSize(PopulationStrategy):
             )[0],
         )
 
-        if not np.isnan(cv_estimate.n_estimated):
+        if np.isfinite(cv_estimate.n_estimated):
             self.nr_particles = max(
                 min(int(cv_estimate.n_estimated), self.max_population_size),
                 self.min_population_size,
