@@ -84,7 +84,7 @@ def log_weights(
 def fd_nabla1_multi_delta(
     x: np.ndarray,
     fun: Callable,
-    test_deltas: Sequence[float] = None,
+    test_deltas: Sequence[float] | None = None,
 ) -> np.ndarray:
     """Calculate FD approximation to 1st order derivative (Jacobian/gradient)
     with automatic step size selection.

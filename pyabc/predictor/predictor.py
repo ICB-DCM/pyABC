@@ -37,7 +37,9 @@ class Predictor(ABC):
     """
 
     @abstractmethod
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         """Fit the predictor to labeled data.
 
         Parameters
@@ -147,7 +149,9 @@ class SimplePredictor(Predictor):
         self.std_y: np.ndarray | None = None
 
     @wrap_fit_log
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         """Fit the predictor to labeled data.
 
         Parameters
@@ -307,7 +311,9 @@ class LinearPredictor(SimplePredictor):
             log_pearson=log_pearson,
         )
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         super().fit(x, y, w)
         # log
         if self.joint:
@@ -408,7 +414,9 @@ class GPPredictor(SimplePredictor):
             log_pearson=log_pearson,
         )
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         # need to recreate the model
 
         # set indices to keep
@@ -549,7 +557,9 @@ class MLPPredictor(SimplePredictor):
             log_pearson=log_pearson,
         )
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         # need to recreate the model
 
         # set indices to keep
@@ -728,7 +738,9 @@ class ModelSelectionPredictor(Predictor):
         # holds the chosen predictor model
         self.chosen_one: Predictor | None = None
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         # output normalization
         std_y = np.std(y, axis=0)
 
@@ -846,7 +858,7 @@ def root_mean_square_relative_error(
 
     Returns
     -------
-    val: The normalized root mean square relative error value.
+    val: The normalized root mean squared relative error value.
     """
     return np.sqrt(
         np.sum(

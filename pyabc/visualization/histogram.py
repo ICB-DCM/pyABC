@@ -11,14 +11,14 @@ def plot_histogram_1d(
     history: History,
     x: str,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     xmin=None,
     xmax=None,
     ax=None,
     size=None,
     refval=None,
     refval_color='C1',
-    xname: str = None,
+    xname: str | None = None,
     **kwargs,
 ):
     """
@@ -80,7 +80,7 @@ def plot_histogram_1d_lowlevel(
     size=None,
     refval=None,
     refval_color='C1',
-    xname: str = None,
+    xname: str | None = None,
     **kwargs,
 ):
     """
@@ -121,7 +121,7 @@ def plot_histogram_2d(
     x: str,
     y: str,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     xmin=None,
     xmax=None,
     ymin=None,
@@ -130,8 +130,8 @@ def plot_histogram_2d(
     size=None,
     refval=None,
     refval_color='C1',
-    xname: str = None,
-    yname: str = None,
+    xname: str | None = None,
+    yname: str | None = None,
     **kwargs,
 ):
     """
@@ -202,8 +202,8 @@ def plot_histogram_2d_lowlevel(
     size=None,
     refval=None,
     refval_color='C1',
-    xname: str = None,
-    yname: str = None,
+    xname: str | None = None,
+    yname: str | None = None,
     **kwargs,
 ):
     """
@@ -251,11 +251,11 @@ def plot_histogram_2d_lowlevel(
 def plot_histogram_matrix(
     history: History,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     size=None,
     refval=None,
     refval_color='C1',
-    names: dict = None,
+    names: dict | None = None,
     **kwargs,
 ):
     """
@@ -298,7 +298,7 @@ def plot_histogram_matrix_lowlevel(
     size=None,
     refval=None,
     refval_color='C1',
-    names: dict = None,
+    names: dict | None = None,
     **kwargs,
 ):
     """

@@ -31,16 +31,16 @@ class ExternalHandler:
     def __init__(
         self,
         executable: str,
-        file: str = None,
-        fixed_args: list = None,
+        file: str | None = None,
+        fixed_args: list | None = None,
         create_folder: bool = False,
-        suffix: str = None,
-        prefix: str = None,
-        dir: str = None,
+        suffix: str | None = None,
+        prefix: str | None = None,
+        dir: str | None = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
-        timeout: float = None,
+        timeout: float | None = None,
     ):
         """
         Parameters
@@ -110,7 +110,12 @@ class ExternalHandler:
         executable = self.executable.replace('{loc}', loc)
         return executable
 
-    def run(self, args: list[str] = None, cmd: str = None, loc: str = None):
+    def run(
+        self,
+        args: list[str] | None = None,
+        cmd: str | None = None,
+        loc: str | None = None,
+    ):
         """Run the script for the given arguments.
 
         Parameters
@@ -196,15 +201,15 @@ class ExternalModel(Model):
         self,
         executable: str,
         file: str,
-        fixed_args: list = None,
+        fixed_args: list | None = None,
         create_folder: bool = False,
-        suffix: str = None,
+        suffix: str | None = None,
         prefix: str = 'modelsim_',
-        dir: str = None,
+        dir: str | None = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
-        timeout: float = None,
+        timeout: float | None = None,
         name: str = 'ExternalModel',
     ):
         """Initialize the model.
@@ -336,15 +341,15 @@ class ExternalSumStat:
         self,
         executable: str,
         file: str,
-        fixed_args: list = None,
+        fixed_args: list | None = None,
         create_folder: bool = False,
-        suffix: str = None,
+        suffix: str | None = None,
         prefix: str = 'sumstat_',
-        dir: str = None,
+        dir: str | None = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
-        timeout: float = None,
+        timeout: float | None = None,
     ):
         self.eh = ExternalHandler(
             executable=executable,
@@ -385,14 +390,14 @@ class ExternalDistance:
         self,
         executable: str,
         file: str,
-        fixed_args: list = None,
-        suffix: str = None,
+        fixed_args: list | None = None,
+        suffix: str | None = None,
         prefix: str = 'dist_',
-        dir: str = None,
+        dir: str | None = None,
         show_stdout: bool = False,
         show_stderr: bool = True,
         raise_on_error: bool = False,
-        timeout: float = None,
+        timeout: float | None = None,
     ):
         self.eh = ExternalHandler(
             executable=executable,

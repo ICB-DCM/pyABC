@@ -31,9 +31,9 @@ class MultiCoreSampler(Sampler):
 
     def __init__(
         self,
-        n_procs: int = None,
+        n_procs: int | None = None,
         daemon: bool = True,
-        pickle: bool = None,
+        pickle: bool | None = None,
         check_max_eval: bool = False,
     ):
         super().__init__()

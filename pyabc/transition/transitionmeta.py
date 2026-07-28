@@ -35,7 +35,7 @@ def wrap_pdf(f):
 
 def wrap_rvs(f):
     @functools.wraps(f)
-    def rvs(self, size: int = None):
+    def rvs(self, size: int | None = None):
         if self.no_parameters:
             return pd.DataFrame(dtype=float)
         return f(self, size)

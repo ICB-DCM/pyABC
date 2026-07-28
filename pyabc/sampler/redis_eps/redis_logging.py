@@ -9,7 +9,7 @@ logger = logging.getLogger('ABC.Sampler')
 class RedisSamplerLogger:
     """A logger for the redis sampler with enhanced interest-variables output."""
 
-    def __init__(self, log_file: str = None):
+    def __init__(self, log_file: str | None = None):
         self.log_file = log_file
         if log_file:
             if os.path.exists(log_file) and os.stat(log_file).st_size > 0:

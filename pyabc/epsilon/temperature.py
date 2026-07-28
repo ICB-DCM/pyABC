@@ -320,7 +320,9 @@ class AcceptanceRateScheme(TemperatureScheme):
         2) to avoid uneccessary computations.
     """
 
-    def __init__(self, target_rate: float = 0.3, min_rate: float = None):
+    def __init__(
+        self, target_rate: float = 0.3, min_rate: float | None = None
+    ):
         self.target_rate = target_rate
         self.min_rate = min_rate
 

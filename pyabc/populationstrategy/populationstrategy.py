@@ -38,14 +38,14 @@ class PopulationStrategy(ABC):
         Number of calibration particles.
     """
 
-    def __init__(self, nr_calibration_particles: int = None):
+    def __init__(self, nr_calibration_particles: int | None = None):
         self.nr_calibration_particles = nr_calibration_particles
 
     def update(  # noqa: B027
         self,
         transitions: list[Transition],
         model_weights: np.ndarray,
-        t: int = None,
+        t: int | None = None,
     ):
         """
         Select the population size for the next population.
@@ -62,7 +62,7 @@ class PopulationStrategy(ABC):
         pass
 
     @abstractmethod
-    def __call__(self, t: int = None) -> int:
+    def __call__(self, t: int | None = None) -> int:
         raise NotImplementedError()
 
     def get_config(self) -> dict:
@@ -108,13 +108,13 @@ class ConstantPopulationSize(PopulationStrategy):
     def __init__(
         self,
         nr_particles: int,
-        nr_calibration_particles: int = None,
+        nr_calibration_particles: int | None = None,
     ):
         super().__init__(nr_calibration_particles=nr_calibration_particles)
         self.nr_particles = nr_particles
 
     @dec_bound_pop_size_from_env
-    def __call__(self, t: int = None) -> int:
+    def __call__(self, t: int | None = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
             return self.nr_calibration_particles
         return self.nr_particles
@@ -173,7 +173,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         max_population_size: int = np.inf,
         min_population_size: int = 10,
         n_bootstrap: int = 10,
-        nr_calibration_particles: int = None,
+        nr_calibration_particles: int | None = None,
     ):
         super().__init__(
             nr_calibration_particles=nr_calibration_particles,
@@ -200,7 +200,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         self,
         transitions: list[Transition],
         model_weights: np.ndarray,
-        t: int = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
     ):
         test_X = [trans.X for trans in transitions]
         test_w = [trans.w for trans in transitions]
@@ -231,7 +231,7 @@ class AdaptivePopulationSize(PopulationStrategy):
         )
 
     @dec_bound_pop_size_from_env
-    def __call__(self, t: int = None) -> int:
+    def __call__(self, t: int | None = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
             return self.nr_calibration_particles
         return self.nr_particles
@@ -254,7 +254,7 @@ class ListPopulationSize(PopulationStrategy):
     def __init__(
         self,
         values: list[int] | dict[int, int],
-        nr_calibration_particles: int = None,
+        nr_calibration_particles: int | None = None,
     ):
         super().__init__(nr_calibration_particles=nr_calibration_particles)
         self.values = values
@@ -265,7 +265,7 @@ class ListPopulationSize(PopulationStrategy):
         return config
 
     @dec_bound_pop_size_from_env
-    def __call__(self, t: int = None) -> int:
+    def __call__(self, t: int | None = None) -> int:
         if t == -1 and self.nr_calibration_particles is not None:
             return self.nr_calibration_particles
         return self.values[t]

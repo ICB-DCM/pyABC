@@ -44,13 +44,13 @@ def _prepare_plot_effective_sample_sizes(
 
 def plot_effective_sample_sizes(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     rotation: int = 0,
     title: str = 'Effective sample size',
     relative: bool = False,
-    colors: list = None,
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    colors: list | None = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Plot effective sample sizes over all iterations.
@@ -121,13 +121,13 @@ def plot_effective_sample_sizes(
 
 def plot_effective_sample_sizes_plotly(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     rotation: int = 0,
     title: str = 'Effective sample size',
     relative: bool = False,
-    colors: list = None,
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    colors: list | None = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot effective sample sizes using plotly."""
     import plotly.graph_objects as go

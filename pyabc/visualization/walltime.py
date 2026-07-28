@@ -127,7 +127,7 @@ def plot_total_walltime_plotly(
     rotation: int = 0,
     title: str = 'Total walltimes',
     size: tuple | None = None,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot total walltimes using plotly."""
     import plotly.graph_objects as go
@@ -256,7 +256,7 @@ def plot_walltime_plotly(
     rotation: int = 0,
     title: str = 'Walltime by generation',
     size: tuple | None = None,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot walltimes using plotly."""
     # preprocess input
@@ -417,7 +417,7 @@ def plot_walltime_lowlevel_plotly(
     rotation: int = 0,
     title: str = 'Walltime by generation',
     size: tuple | None = None,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
     wall_times: list | None = None,
 ) -> 'go.Figure':
     """Low-level access to `plot_walltime_plotly`."""
@@ -563,7 +563,7 @@ def plot_eps_walltime_plotly(
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
     size: tuple | None = None,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot epsilon values over walltime using plotly."""
     # preprocess input
@@ -720,7 +720,7 @@ def plot_eps_walltime_lowlevel_plotly(
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
     size: tuple | None = None,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot epsilon values over walltime using plotly."""
     import plotly.graph_objects as go
