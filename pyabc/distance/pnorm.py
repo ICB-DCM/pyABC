@@ -597,7 +597,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
 
         self.predictor = predictor
 
-        self.initial_info_weights: dict[str, float] = initial_info_weights
+        self.initial_info_weights: dict[str, float] | None = (
+            initial_info_weights
+        )
         self.info_weights: dict[int, np.ndarray] = {}
 
         if fit_info_ixs is None:

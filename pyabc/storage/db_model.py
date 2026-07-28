@@ -98,6 +98,7 @@ class Population(Base):
     abc_smc_id = Column(Integer, ForeignKey('abc_smc.id'))
     t = Column(Integer)
     population_end_time = Column(DateTime)
+    wall_time = Column(Float)
     nr_samples = Column(Integer)
     epsilon = Column(Float)
     models = relationship('Model')

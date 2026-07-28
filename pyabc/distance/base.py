@@ -224,7 +224,7 @@ class FunctionDistance(Distance):
         statistics x and x_0. Returns the distance between both.
     """
 
-    def __init__(self, fun):
+    def __init__(self, fun: Callable):
         super().__init__()
         self.fun = fun
 
@@ -250,7 +250,7 @@ class FunctionDistance(Distance):
         return conf
 
     @staticmethod
-    def to_distance(maybe_distance: Callable | Distance) -> Distance:
+    def to_distance(maybe_distance: Callable | Distance | None) -> Distance:
         """
         Parameters
         ----------
