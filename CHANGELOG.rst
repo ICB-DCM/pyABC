@@ -7,7 +7,7 @@ Release Notes
 0.12 Series
 ...........
 
-0.12.19 (2026-07-27)
+0.12.19 (2026-07-28)
 --------------------
 
 General:
@@ -24,7 +24,7 @@ Visualization:
   per-generation walltimes and no longer include the idle time that passed
   between a stored analysis and a later resumed run. Resolves #667.
 
-Storage:
+Storage (breaking):
 
 * Store the per-generation walltime in the database (new ``wall_time`` column,
   database version 2). Databases created with older pyABC versions must be
