@@ -1088,11 +1088,16 @@ class ABCSMC:
             'p'
         ].values
 
+        # restrict to models still alive: dead models are never fitted
+        alive = self.history.alive_models(self.history.max_t)
+
         # make a copy in case the population strategy messes with
         # the transitions
         # WARNING: the deepcopy also copies the random states of scipy.stats
         # distributions
-        copied_transitions = copy.deepcopy(self.transitions)
+        copied_transitions = copy.deepcopy(
+            [self.transitions[m] for m in alive]
+        )
 
         # update the population size
         self.population_size.update(
