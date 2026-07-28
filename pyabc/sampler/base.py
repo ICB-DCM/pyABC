@@ -96,7 +96,7 @@ class Sampler(ABC, metaclass=SamplerMeta):
         *,
         max_eval: Real = np.inf,
         all_accepted: bool = False,
-        ana_vars: AnalysisVars = None,
+        ana_vars: AnalysisVars | None = None,
     ) -> Sample:
         """
         Performs the sampling, i.e. creation of a new generation (i.e.

@@ -14,7 +14,7 @@ from .sampler_static import RedisStaticSampler
 class RedisServerStarter:
     def __init__(
         self,
-        password: str = None,
+        password: str | None = None,
         workers: int = 2,
         processes_per_worker: int = 1,
         daemon: bool = True,
@@ -106,7 +106,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
 
     def __init__(
         self,
-        password: str = None,
+        password: str | None = None,
         batch_size: int = 1,
         wait_for_all_samples: bool = False,
         look_ahead: bool = False,
@@ -117,7 +117,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         processes_per_worker: int = 1,
         daemon: bool = True,
         catch: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         self.server_starter = RedisServerStarter(
             password=password,
@@ -152,12 +152,12 @@ class RedisStaticSamplerServerStarter(RedisStaticSampler):
 
     def __init__(
         self,
-        password: str = None,
+        password: str | None = None,
         workers: int = 2,
         processes_per_worker: int = 1,
         daemon: bool = True,
         catch: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         self.server_starter = RedisServerStarter(
             password=password,

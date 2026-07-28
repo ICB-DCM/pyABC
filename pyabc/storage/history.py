@@ -875,7 +875,7 @@ class History:
             )
             return p_models_df
 
-    def nr_of_models_alive(self, t: int = None) -> int:
+    def nr_of_models_alive(self, t: int | None = None) -> int:
         """
         Number of models still alive.
 
@@ -897,7 +897,7 @@ class History:
         return int((model_probs.p > 0).sum())
 
     @with_session
-    def get_weighted_distances(self, t: int = None) -> pd.DataFrame:
+    def get_weighted_distances(self, t: int | None = None) -> pd.DataFrame:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.

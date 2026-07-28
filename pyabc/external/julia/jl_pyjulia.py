@@ -155,7 +155,7 @@ class Julia:
     lazy implementation.
     """
 
-    def __init__(self, module_name: str, source_file: str = None):
+    def __init__(self, module_name: str, source_file: str | None = None):
         if Main is None:
             raise ImportError(
                 'Install PyJulia, e.g. via `pip install pyabc[julia]`, '

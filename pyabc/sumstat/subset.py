@@ -102,7 +102,7 @@ class GMMSubsetter(Subsetter):
         n_components_max: int = 5,
         min_fraction: float = 0.3,
         normalize_labels: bool = True,
-        gmm_args: dict = None,
+        gmm_args: dict | None = None,
     ):
         if skl_mx is None:
             raise ImportError(

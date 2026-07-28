@@ -60,7 +60,9 @@ class PNormDistance(Distance):
     def __init__(
         self,
         p: float = 1,
-        fixed_weights: dict[str, float] | dict[int, dict[str, float]] = None,
+        fixed_weights: dict[str, float]
+        | dict[int, dict[str, float]]
+        | None = None,
         sumstat: Sumstat | None = None,
     ):
         super().__init__()

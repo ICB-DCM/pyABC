@@ -742,11 +742,11 @@ class ABCSMC:
     def initialize_components_before_run(
         self,
         minimum_epsilon: float | None,
-        max_nr_populations: int | None,
-        min_acceptance_rate: float | None,
-        max_total_nr_simulations: int | None,
+        max_nr_populations: int,
+        min_acceptance_rate: float,
+        max_total_nr_simulations: int,
         max_walltime: timedelta | None,
-        min_eps_diff: float | None,
+        min_eps_diff: float,
     ) -> int:
         """Initialize everything before starting a run.
 
