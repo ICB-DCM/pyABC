@@ -74,8 +74,8 @@ class RedisSamplerBase(Sampler):
         self,
         host: str = 'localhost',
         port: int = 6379,
-        password: str = None,
-        log_file: str = None,
+        password: str | None = None,
+        log_file: str | None = None,
     ):
         super().__init__()
         logger.debug(f'Redis sampler: host={host} port={port}')
@@ -113,7 +113,7 @@ class RedisSamplerBase(Sampler):
         *,
         max_eval: int = np.inf,
         all_accepted: bool = False,
-        ana_vars: AnalysisVars = None,
+        ana_vars: AnalysisVars | None = None,
     ) -> Sample:
         raise NotImplementedError()
 
@@ -219,14 +219,14 @@ class RedisEvalParallelSampler(RedisSamplerBase):
         self,
         host: str = 'localhost',
         port: int = 6379,
-        password: str = None,
+        password: str | None = None,
         batch_size: int = 1,
         look_ahead: bool = False,
         look_ahead_delay_evaluation: bool = True,
         max_n_eval_look_ahead_factor: float = 10.0,
         wait_for_all_samples: bool = False,
         adapt_look_ahead_proposal: bool = False,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         super().__init__(
             host=host, port=port, password=password, log_file=log_file

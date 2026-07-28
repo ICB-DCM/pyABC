@@ -80,11 +80,11 @@ class Temperature(TemperatureBase):
 
     def __init__(
         self,
-        schemes: Callable | list[Callable] = None,
-        aggregate_fun: Callable[[list[float]], float] = None,
-        initial_temperature: float = None,
+        schemes: Callable | list[Callable] | None = None,
+        aggregate_fun: Callable[[list[float]], float] | None = None,
+        initial_temperature: float | None = None,
         enforce_exact_final_temperature: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         self.schemes = schemes
 
@@ -317,7 +317,9 @@ class AcceptanceRateScheme(TemperatureScheme):
         2) to avoid uneccessary computations.
     """
 
-    def __init__(self, target_rate: float = 0.3, min_rate: float = None):
+    def __init__(
+        self, target_rate: float = 0.3, min_rate: float | None = None
+    ):
         self.target_rate = target_rate
         self.min_rate = min_rate
 

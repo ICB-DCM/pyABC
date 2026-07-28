@@ -34,16 +34,16 @@ class BasicoModel(Model):
     def __init__(
         self,
         sbml_file: str,
-        changes: dict[str, float] = None,
+        changes: dict[str, float] | None = None,
         change_unit: bool = True,
         method: str = 'stochastic',
-        t0: float = None,
-        duration: float = None,
-        num_steps: int = None,
+        t0: float | None = None,
+        duration: float | None = None,
+        num_steps: int | None = None,
         automatic: bool = True,
         use_numbers: bool = False,
-        output: list[str] = None,
-        model_name: str = None,
+        output: list[str] | None = None,
+        model_name: str | None = None,
     ):
         """
         Parameters

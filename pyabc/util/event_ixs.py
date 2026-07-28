@@ -13,10 +13,10 @@ class EventIxs:
 
     def __init__(
         self,
-        ts: Collection[int] | int = None,
-        sims: Collection[int] | int = None,
-        from_t: int = None,
-        from_sims: int = None,
+        ts: Collection[int] | int | None = None,
+        sims: Collection[int] | int | None = None,
+        from_t: int | None = None,
+        from_sims: int | None = None,
     ):
         """
         Parameters

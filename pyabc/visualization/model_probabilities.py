@@ -15,8 +15,8 @@ def plot_model_probabilities(
     history: History,
     rotation: int = 0,
     title: str = 'Model probabilities',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Plot the probabilities of models over time.
@@ -68,8 +68,8 @@ def plot_model_probabilities_plotly(
     history: History,
     rotation: int = 0,
     title: str = 'Model probabilities',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot model probabilities using plotly."""
     import plotly.graph_objects as go

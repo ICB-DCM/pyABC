@@ -5,9 +5,9 @@ from matplotlib import rcParams
 
 def set_figure_params(
     theme: str = 'pyabc',
-    style: str = None,
+    style: str | None = None,
     color_map: str = 'plasma',
-    color_cycle: list[str] = None,
+    color_cycle: list[str] | None = None,
 ) -> None:
     """Set global figure parameters for a consistent, beautified design.
 

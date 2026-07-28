@@ -80,7 +80,7 @@ def git_hash():
     return hash_
 
 
-def create_sqlite_db_id(dir_: str = None, file_: str = 'pyabc_test.db'):
+def create_sqlite_db_id(dir_: str | None = None, file_: str = 'pyabc_test.db'):
     """
     Convenience function to create a sqlite database identifier which
     can be understood by sqlalchemy.
@@ -144,7 +144,7 @@ class History:
         self,
         db: str,
         stores_sum_stats: bool = True,
-        _id: int = None,
+        _id: int | None = None,
         create: bool = True,
     ):
         """Initialize history object.
@@ -273,7 +273,7 @@ class History:
         self._id = val
 
     @with_session
-    def alive_models(self, t: int = None) -> list:
+    def alive_models(self, t: int | None = None) -> list:
         """
         Get the models which are still alive at time `t`.
 
@@ -303,7 +303,7 @@ class History:
 
     @with_session
     def get_distribution(
-        self, m: int = 0, t: int = None
+        self, m: int = 0, t: int | None = None
     ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         Returns the weighted population sample for model m and timepoint t
@@ -423,7 +423,7 @@ class History:
         distance_function_json_str: str,
         eps_function_json_str: str,
         population_strategy_json_str: str,
-        start_time: datetime.datetime = None,
+        start_time: datetime.datetime | None = None,
     ) -> None:
         """
         Store the initial configuration data.
@@ -671,7 +671,7 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def done(self, end_time: datetime.datetime = None):
+    def done(self, end_time: datetime.datetime | None = None):
         """
         Close database sessions and store end time of the analysis.
 
@@ -858,7 +858,7 @@ class History:
             )
             return p_models_df
 
-    def nr_of_models_alive(self, t: int = None) -> int:
+    def nr_of_models_alive(self, t: int | None = None) -> int:
         """
         Number of models still alive.
 
@@ -880,7 +880,7 @@ class History:
         return int((model_probs.p > 0).sum())
 
     @with_session
-    def get_weighted_distances(self, t: int = None) -> pd.DataFrame:
+    def get_weighted_distances(self, t: int | None = None) -> pd.DataFrame:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
@@ -981,7 +981,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats_for_model(
-        self, m: int = 0, t: int = None
+        self, m: int = 0, t: int | None = None
     ) -> tuple[np.ndarray, list]:
         """
         Summary statistics for model `m`. The weights sum to 1, unless
@@ -1027,7 +1027,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats(
-        self, t: int = None
+        self, t: int | None = None
     ) -> tuple[list[float], list[dict]]:
         """
         Population's weighted summary statistics.
@@ -1080,7 +1080,7 @@ class History:
         return all_weights, all_sum_stats
 
     @with_session
-    def get_population(self, t: int = None):
+    def get_population(self, t: int | None = None):
         """
         Create a pyabc.Population object containing all particles,
         as far as those can be recreated from the database. In particular,

@@ -41,7 +41,7 @@ class DaskDistributedSampler(EPSMixin, Sampler):
 
     def __init__(
         self,
-        dask_client: Client = None,
+        dask_client: Client | None = None,
         client_max_jobs: int = np.inf,
         default_pickle: bool = True,
         batch_size: int = 1,

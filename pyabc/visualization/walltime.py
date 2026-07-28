@@ -55,12 +55,12 @@ def _prepare_plot_total_walltime(
 
 def plot_total_walltime(
     histories: list[History] | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Total walltimes',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Plot total walltimes, for each history one single-color bar.
 
@@ -114,12 +114,12 @@ def plot_total_walltime(
 
 def plot_total_walltime_plotly(
     histories: list[History] | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Total walltimes',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot total walltimes using plotly."""
     import plotly.graph_objects as go
@@ -181,13 +181,13 @@ def _prepare_walltime(
 
 def plot_walltime(
     histories: list[History] | History,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Plot walltimes, with different colors indicating different iterations.
 
@@ -238,13 +238,13 @@ def plot_walltime(
 
 def plot_walltime_plotly(
     histories: list[History] | History,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot walltimes using plotly."""
     # preprocess input
@@ -268,8 +268,8 @@ def plot_walltime_plotly(
 def _prepare_plot_walltime_lowlevel(
     end_times: list,
     start_times: list | None = None,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
 ):
     # preprocess input
@@ -325,13 +325,13 @@ def _prepare_plot_walltime_lowlevel(
 def plot_walltime_lowlevel(
     end_times: list,
     start_times: list | None = None,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Low-level access to `plot_walltime`.
 
@@ -381,13 +381,13 @@ def plot_walltime_lowlevel(
 def plot_walltime_lowlevel_plotly(
     end_times: list,
     start_times: list | None = None,
-    labels: list | str = None,
-    show_calibration: bool = None,
+    labels: list | str | None = None,
+    show_calibration: bool | None = None,
     unit: str = 's',
     rotation: int = 0,
     title: str = 'Walltime by generation',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Low-level access to `plot_walltime_plotly`."""
     import plotly.graph_objects as go
@@ -456,16 +456,16 @@ def _prepare_plot_eps_walltime(
 
 def plot_eps_walltime(
     histories: list[History] | History,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Plot epsilon values (y-axis) over the walltime (x-axis), iterating over
     the generations.
@@ -522,16 +522,16 @@ def plot_eps_walltime(
 
 def plot_eps_walltime_plotly(
     histories: list[History] | History,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot epsilon values over walltime using plotly."""
     # preprocess input
@@ -604,16 +604,16 @@ def _prepare_plot_eps_walltime_lowlevel(
 def plot_eps_walltime_lowlevel(
     end_times: list,
     eps: list,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """Low-level access to `plot_eps_walltime`.
     Directly define `end_times` and `eps`. Note that both should be arrays of
@@ -679,16 +679,16 @@ def plot_eps_walltime_lowlevel(
 def plot_eps_walltime_lowlevel_plotly(
     end_times: list,
     eps: list,
-    labels: list | str = None,
-    colors: list[Any] = None,
+    labels: list | str | None = None,
+    colors: list[Any] | None = None,
     group_by_label: bool = True,
     indicate_end: bool = True,
     unit: str = 's',
     xscale: str = 'linear',
     yscale: str = 'log',
     title: str = 'Epsilon over walltime',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot epsilon values over walltime using plotly."""
     import plotly.graph_objects as go

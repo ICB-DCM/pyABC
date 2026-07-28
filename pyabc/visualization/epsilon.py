@@ -37,12 +37,12 @@ def _prepare(
 
 def plot_epsilons(
     histories: list | History,
-    labels: list | str = None,
-    colors: list = None,
+    labels: list | str | None = None,
+    colors: list | None = None,
     yscale: str = 'log',
     title: str = 'Epsilon values',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Plot epsilon trajectory.
@@ -103,12 +103,12 @@ def plot_epsilons(
 
 def plot_epsilons_plotly(
     histories: list | History,
-    labels: list | str = None,
-    colors: list = None,
+    labels: list | str | None = None,
+    colors: list | None = None,
     yscale: str = 'log',
     title: str = 'Epsilon values',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot epsilon trajectory using plotly."""
     import plotly.graph_objects as go

@@ -89,8 +89,8 @@ class Distance(ABC):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,
+        t: int | None = None,
+        par: dict | None = None,
     ) -> float:
         """
         Evaluate at time point t the distance of the summary statistics of
@@ -183,8 +183,8 @@ class NoDistance(Distance):
         self,
         x: dict,  # noqa: ARG002
         x_0: dict,  # noqa: ARG002
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         raise AssertionError(
             f'Distance {self.__class__.__name__} should not be called.'
@@ -203,8 +203,8 @@ class AcceptAllDistance(Distance):
         self,
         x: dict,  # noqa: ARG002
         x_0: dict,  # noqa: ARG002
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         return -1
 
@@ -232,8 +232,8 @@ class FunctionDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         return self.fun(x, x_0)
 
