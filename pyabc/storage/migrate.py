@@ -14,6 +14,30 @@ except ImportError:
 SQLITE_STR = 'sqlite:///'
 
 
+def _alembic_config(db_file: str) -> 'Config':
+    """Create the alembic configuration operating on a database file.
+
+    Parameters
+    ----------
+    db_file: Database file (not URL) the migrations are applied to.
+
+    Returns
+    -------
+    cfg: The alembic configuration.
+    """
+    # config base path
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    # read configuration file
+    cfg = Config(os.path.join(base_path, 'alembic.ini'))
+    # set absolute script location path
+    cfg.set_main_option(
+        'script_location', os.path.join(base_path, 'migrations')
+    )
+    # set target database file
+    cfg.set_main_option('sqlalchemy.url', SQLITE_STR + db_file)
+    return cfg
+
+
 @click.command(
     help='**Migrate pyABC database**\n\n'
     "Sometimes, changes to pyABC's storage format are unavoidable. "
@@ -61,16 +85,5 @@ def migrate(src: str, dst: str, version: str) -> None:
         # copy source to destination
         shutil.copyfile(src=src, dst=dst)
 
-    # config base path
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    # read configuration file
-    cfg = Config(os.path.join(base_path, 'alembic.ini'))
-    # set absolute script location path
-    cfg.set_main_option(
-        'script_location', os.path.join(base_path, 'migrations')
-    )
-    # set target database file
-    cfg.set_main_option('sqlalchemy.url', SQLITE_STR + dst)
-
     # run the actual upgrade
-    command.upgrade(cfg, version)
+    command.upgrade(_alembic_config(dst), version)

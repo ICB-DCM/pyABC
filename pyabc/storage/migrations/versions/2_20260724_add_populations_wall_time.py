@@ -25,10 +25,14 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column(
-        table_name='populations',
-        column=sa.Column('wall_time', sa.FLOAT, nullable=True),
-    )
+    # the column may exist already, as the downgrade does not remove it
+    inspector = sa.inspect(op.get_bind())
+    columns = [col['name'] for col in inspector.get_columns('populations')]
+    if 'wall_time' not in columns:
+        op.add_column(
+            table_name='populations',
+            column=sa.Column('wall_time', sa.FLOAT, nullable=True),
+        )
     # per-model-normalized weights -> global weights (w := w * p_model)
     op.execute(
         'UPDATE particles SET w = w * ('
