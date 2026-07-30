@@ -4,14 +4,15 @@ Release Notes
 =============
 
 
-0.12 Series
+0.13 Series
 ...........
 
-0.12.19 (2026-07-28)
---------------------
+0.13.0 (2026-07-30)
+-------------------
 
 General:
 
+* Add support for python3.14
 * Add execution time profiling to the ABC-SMC run, reporting pure simulation
   time, parallel-pipeline setup time, and in-between-iteration time,
   including population-size calculation and distance-function adaptation.
@@ -34,6 +35,10 @@ Storage (breaking):
   to 1 across all particles of all models, matching the in-memory
   ``Population`` representation). This is bundled into database version 2 and
   handled by ``abc-migrate`` for existing databases. Resolves #47.
+
+
+0.12 Series
+...........
 
 0.12.18 (2026-04-14)
 --------------------

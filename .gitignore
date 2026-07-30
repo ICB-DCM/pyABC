@@ -69,3 +69,6 @@ dask-worker-space
 *.lock
 *tmp*
 *amici_models*
+
+# macOS
+.DS_Store
