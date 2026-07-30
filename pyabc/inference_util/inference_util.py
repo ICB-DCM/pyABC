@@ -690,10 +690,10 @@ def create_analysis_id():
     return str(uuid.uuid4())
 
 
-def eps_from_hist(history: History, t: int | None = None) -> float:
+def eps_from_hist(history: History, t: int | None = None) -> float | None:
     """Read epsilon value for time `t` from `history`. Defaults to latest."""
     pops = history.get_all_populations()
-    if len(pops) == 0 or (t is not None and t not in pops.t):
+    if len(pops) == 0 or (t is not None and t not in pops.t.values):
         return None
     if t is None:
         return pops.epsilon.to_numpy()[-1]

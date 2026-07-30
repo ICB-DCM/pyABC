@@ -732,6 +732,8 @@ class ModelSelectionPredictor(Predictor):
 
         if f_score is None:
             self.f_score = root_mean_square_error
+        else:
+            self.f_score = f_score
 
         # holds the chosen predictor model
         self.chosen_one: Predictor | None = None

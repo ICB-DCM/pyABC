@@ -36,7 +36,10 @@ def work(feed_q, result_q, simulate_one, max_eval, single_core_sampler):
             break
 
         res = single_core_sampler.sample_until_n_accepted(
-            1, simulate_one, max_eval
+            1,
+            simulate_one,
+            t=0,  # t is not used in this sampler
+            max_eval=max_eval,
         )
         result_q.put((res, single_core_sampler.nr_evaluations_))
 

@@ -9,13 +9,15 @@ def wrap_fit(f):
     @functools.wraps(f)
     def fit(self, X: pd.DataFrame, w: np.ndarray):
         self.X = X
-        self.w = w
         if len(X.columns) == 0:
+            self.w = w
             self.no_parameters = True
             return
         self.no_parameters = False
         if w.size > 0 and not np.isclose(w.sum(), 1):
-            w /= w.sum()
+            # normalize out-of-place so the caller's array is not mutated
+            w = w / w.sum()
+        self.w = w
         f(self, X, w)
 
     return fit

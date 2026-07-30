@@ -49,11 +49,9 @@ class SQLiteJobDB:
         Return true if we should still wait for the job.
         Return false otherwise
         """
-        # TODO Possible SQL injection error should be fixed, e.g. via
-        #  pre-calculated expressions
         with self.connection:
             results = self.connection.execute(
-                'SELECT status, time from status WHERE ID=' + str(ID)
+                'SELECT status, time from status WHERE ID=?', (ID,)
             ).fetchall()
             nr_rows = len(results)
 

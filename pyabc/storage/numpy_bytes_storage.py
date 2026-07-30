@@ -52,6 +52,12 @@ def np_from_bytes(arr_bytes):
 
         # try to convert to primitive types
         for type_ in _primitive_types:
+            if (
+                type_ is int
+                and not np.issubdtype(arr.dtype, np.integer)
+                and arr.dtype != np.bool_
+            ):
+                continue
             try:
                 if type_(arr) == arr:
                     return type_(arr)

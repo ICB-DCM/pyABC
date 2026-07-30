@@ -14,6 +14,57 @@ except ImportError:
 SQLITE_STR = 'sqlite:///'
 
 
+def _to_db_file(db: str) -> str:
+    """Normalize a database identifier to a file name.
+
+    Parameters
+    ----------
+    db: Database file name, or sqlite URL ``sqlite:///<file>``.
+
+    Returns
+    -------
+    db_file: The database file name.
+
+    Raises
+    ------
+    ValueError: If a URL of a dialect other than sqlite is passed.
+    """
+    if db.startswith(SQLITE_STR):
+        return db[len(SQLITE_STR) :]
+    if '://' in db:
+        raise ValueError(
+            f'Cannot handle database identifier {db}: migration currently '
+            f'only supports sqlite databases, i.e. either a file name, or a '
+            f'URL of the form {SQLITE_STR}<file>.'
+        )
+    return db
+
+
+def _alembic_config(db: str) -> 'Config':
+    """Create the alembic configuration operating on a database.
+
+    Parameters
+    ----------
+    db: Database the migrations are applied to, either as a file name or as a
+        sqlite URL ``sqlite:///<file>``.
+
+    Returns
+    -------
+    cfg: The alembic configuration.
+    """
+    # config base path
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    # read configuration file
+    cfg = Config(os.path.join(base_path, 'alembic.ini'))
+    # set absolute script location path
+    cfg.set_main_option(
+        'script_location', os.path.join(base_path, 'migrations')
+    )
+    # set target database file
+    cfg.set_main_option('sqlalchemy.url', SQLITE_STR + _to_db_file(db))
+    return cfg
+
+
 @click.command(
     help='**Migrate pyABC database**\n\n'
     "Sometimes, changes to pyABC's storage format are unavoidable. "
@@ -36,8 +87,8 @@ def migrate(src: str, dst: str, version: str) -> None:
 
     Parameters
     ----------
-    src: Source
-    dst: Destination
+    src: Source, either a file name or a sqlite URL
+    dst: Destination, either a file name or a sqlite URL
     version: Version to migrate to
     """
     if Config is None or command is None:
@@ -48,10 +99,11 @@ def migrate(src: str, dst: str, version: str) -> None:
         return
 
     # to file paths if URLs
-    if src.startswith(SQLITE_STR):
-        src = src[len(SQLITE_STR) :]
-    if dst.startswith(SQLITE_STR):
-        dst = dst[len(SQLITE_STR) :]
+    try:
+        src, dst = _to_db_file(src), _to_db_file(dst)
+    except ValueError as e:
+        print(f'Error: {e}')
+        return
 
     # copy file
     if src != dst:
@@ -61,16 +113,5 @@ def migrate(src: str, dst: str, version: str) -> None:
         # copy source to destination
         shutil.copyfile(src=src, dst=dst)
 
-    # config base path
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    # read configuration file
-    cfg = Config(os.path.join(base_path, 'alembic.ini'))
-    # set absolute script location path
-    cfg.set_main_option(
-        'script_location', os.path.join(base_path, 'migrations')
-    )
-    # set target database file
-    cfg.set_main_option('sqlalchemy.url', SQLITE_STR + dst)
-
     # run the actual upgrade
-    command.upgrade(cfg, version)
+    command.upgrade(_alembic_config(dst), version)

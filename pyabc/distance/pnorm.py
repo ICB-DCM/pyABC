@@ -148,7 +148,7 @@ class PNormDistance(Distance):
 
     @staticmethod
     def format_dict(
-        vals: dict[str, float] | dict[int, dict[str, float]],
+        vals: dict[str, float] | dict[int, dict[str, float]] | None,
         t: int,
         s_ids: list[str],
     ) -> dict[int, float | np.ndarray]:
@@ -172,8 +172,7 @@ class PNormDistance(Distance):
             vals = {t: vals}
 
         # convert dicts to arrays
-        for _t, dct in vals.items():
-            vals[_t] = dict2arr(dct, keys=s_ids)
+        vals = {_t: dict2arr(dct, keys=s_ids) for _t, dct in vals.items()}
 
         return vals
 
@@ -322,7 +321,9 @@ class AdaptivePNormDistance(PNormDistance):
         # call p-norm constructor
         super().__init__(p=p, fixed_weights=fixed_weights, sumstat=sumstat)
 
-        self.initial_scale_weights: dict[str, float] = initial_scale_weights
+        self.initial_scale_weights: dict[str, float] | None = (
+            initial_scale_weights
+        )
 
         self.scale_weights: dict[int, np.ndarray] = {}
 

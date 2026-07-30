@@ -105,7 +105,9 @@ class PCADistance(DistanceWithMeasureList):
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
         # create data matrix, shape (n_sample, n_y)
-        x = np.asarray([self._dict_to_vect(x) for x in sum_stats])
+        # force float dtype so in-place centering below works also for
+        # integer-valued summary statistics (e.g. counts)
+        x = np.asarray([self._dict_to_vect(x) for x in sum_stats], dtype=float)
         # center
         mean = np.mean(x, axis=0)
         x -= mean

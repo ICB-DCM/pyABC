@@ -344,10 +344,10 @@ class History:
         ).sort_index()
         w = df[['id', 'w']].drop_duplicates().set_index('id').sort_index()
         w_arr = w.w.values
-        if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
-            raise AssertionError(
-                f'Weight not close to 1, w.sum()={w_arr.sum()}'
-            )
+        # Stored weights are global (summing to 1 across all models); within a
+        # single model they sum to the model probability.
+        if w_arr.size > 0:
+            w_arr = w_arr / w_arr.sum()
         return pars, w_arr
 
     @with_session
@@ -735,18 +735,16 @@ class History:
             # append model
             population.models.append(model)
 
-            # TODO This normalization is different than in the in-memory
-            #  population. It would be cleaner to update the db too.
-            total_model_weight = sum(p.weight for p in model_population)
-
             # iterate over model population of particles
             for py_particle in model_population:
                 # a store_item is a Particle
                 py_parameter = py_particle.parameter
 
-                # create new particle
+                # create new particle. The stored weight is the global
+                # particle weight (normalized across all particles of all
+                # models so that they sum to 1)
                 particle = Particle(
-                    w=py_particle.weight / total_model_weight,
+                    w=py_particle.weight,
                     proposal_id=py_particle.proposal_id,
                 )
                 # append particle to model
@@ -858,14 +856,13 @@ class History:
             .order_by(Model.m)
             .all()
         )
-        # TODO this is a mess
+        # Two return shapes: for a single t, a frame indexed by model id `m`
+        # with a `p` column; for t=None, a t-by-model pivot table (below).
         if t is not None:
             p_models_df = pd.DataFrame(
                 [p[:2] for p in p_models], columns=['p', 'm']
             ).set_index('m')
-            # TODO the following line is redundant
-            # only models with no-zero weight are stored for each population
-            p_models_df = p_models_df[p_models_df.p >= 0]
+            # Only models with non-zero weight are stored per population
             return p_models_df
         else:
             p_models_df = (
@@ -933,7 +930,7 @@ class History:
         distances = []
         for model in models:
             for particle in model.particles:
-                weight = particle.w * model.p_model
+                weight = particle.w
                 for sample in particle.samples:
                     weights.append(weight)
                     distances.append(sample.distance)
@@ -1018,14 +1015,31 @@ class History:
             .filter(ABCSMC.id == self.id)
             .filter(Population.t == t)
             .filter(Model.m == m)
+            .options(
+                subqueryload(Particle.samples).subqueryload(
+                    Sample.summary_statistics
+                )
+            )
             .all()
+        )
+
+        # model probability, used to renormalize the stored global weights
+        # back to the within-model posterior (weights summing to 1)
+        p_model = (
+            self._session.query(Model.p_model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .filter(Model.m == m)
+            .scalar()
         )
 
         results = []
         weights = []
         for particle in particles:
             for sample in particle.samples:
-                weights.append(particle.w)
+                weights.append(particle.w / p_model if p_model else particle.w)
                 sum_stats = {}
                 for ss in sample.summary_statistics:
                     sum_stats[ss.name] = ss.value
@@ -1075,7 +1089,7 @@ class History:
 
         for model in models:
             for particle in model.particles:
-                weight = particle.w * model.p_model
+                weight = particle.w
                 for sample in particle.samples:
                     # extract sum stats
                     sum_stats = {}
@@ -1125,7 +1139,7 @@ class History:
             py_m = model.m
             for particle in model.particles:
                 # weight
-                py_weight = particle.w * model.p_model
+                py_weight = particle.w
 
                 # parameter
                 py_parameter = {}
@@ -1134,7 +1148,9 @@ class History:
                 py_parameter = PyParameter(**py_parameter)
 
                 # simulations
-                # TODO this is legacy from when there were multiple
+                # NOTE: samples is a one-to-many relationship for legacy
+                # reasons (a particle could once store multiple samples);
+                # today exactly one is expected.
                 if len(particle.samples) != 1:
                     raise AssertionError('There should be exactly one sample.')
                 sample = particle.samples[0]

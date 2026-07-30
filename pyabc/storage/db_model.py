@@ -169,6 +169,8 @@ class SummaryStatistic(Base):
     value = Column(BytesStorage)
 
 
-def datetime2str(datetime: datetime.datetime) -> str:
+def datetime2str(datetime: datetime.datetime | None) -> str:
     """Format print datetime."""
+    if datetime is None:
+        return 'None'
     return datetime.strftime('%Y-%m-%d %H:%M:%S')

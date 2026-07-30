@@ -26,4 +26,5 @@
 - 📄 **Cite**: [https://pyabc.rtfd.io/en/latest/cite.html](https://pyabc.rtfd.io/en/latest/cite.html)
 
 #### Related Projects
-- 🧠 **Neural Posterior Estimation**: [BayesFlow](https://bayesflow.org/main/_examples/From_ABC_to_BayesFlow.html)
+- **Parameter Estimation with Likelihoods**: [pyPESTO](https://github.com/ICB-DCM/pyPESTO)
+- **Neural Posterior Estimation**: [BayesFlow](https://bayesflow.org/main/_examples/From_ABC_to_BayesFlow.html)

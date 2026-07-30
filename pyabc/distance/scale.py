@@ -141,7 +141,7 @@ def root_mean_square_deviation(
     rmse = np.sqrt(mse)
 
     # debugging
-    warn_obs_off(off_ixs=np.flatnonzero(bs > 2 * std), s_ids=s_ids)
+    warn_obs_off(off_ixs=np.flatnonzero(np.abs(bs) > 2 * std), s_ids=s_ids)
 
     return rmse
 
@@ -161,7 +161,7 @@ def std_or_rmsd(
     bs = bias(samples=samples, s0=s0)
     std = standard_deviation(samples=samples)
 
-    if sum(bs > 2 * std) > 1 / 3 * len(std):
+    if sum(np.abs(bs) > 2 * std) > 1 / 3 * len(std):
         logger.info('Too many high-bias values, correcting only for scale.')
         return std
 
@@ -169,7 +169,7 @@ def std_or_rmsd(
     rmse = np.sqrt(mse)
 
     # debugging
-    warn_obs_off(off_ixs=np.flatnonzero(bs > 2 * std), s_ids=s_ids)
+    warn_obs_off(off_ixs=np.flatnonzero(np.abs(bs) > 2 * std), s_ids=s_ids)
 
     return rmse
 

@@ -135,7 +135,9 @@ class GMMSubsetter(Subsetter):
         """Select based on GMM clusters."""
         # normalize
         if self.normalize_labels:
-            y_norm = (y - np.mean(y, axis=0)) / np.std(y, axis=0)
+            std = np.std(y, axis=0)
+            # avoid division by zero for constant (zero-variance) columns
+            y_norm = (y - np.mean(y, axis=0)) / np.where(std == 0, 1.0, std)
         else:
             y_norm = y
 
@@ -242,13 +244,18 @@ def get_augmented_subset(
     # sort remaining values by distance to reference point
     y_left = y[~in_cluster]
     distances: np.ndarray = np.linalg.norm(y_left - ref, ord=2, axis=1)
-    # indices of the required closest parameters
-    ixs_nearest: np.ndarray = np.argpartition(distances, required)[:required]
+    # indices of the required closest parameters (np.argpartition requires
+    # kth < len, so select all remaining when we need at least all of them)
+    n_left = len(distances)
+    if required >= n_left:
+        ixs_nearest = np.arange(n_left)
+    else:
+        ixs_nearest = np.argpartition(distances, required)[:required]
 
     ixs_not_in_cluster: np.ndarray = np.flatnonzero(~in_cluster)
     in_cluster[ixs_not_in_cluster[ixs_nearest]] = True
 
-    if sum(in_cluster) != desired:
+    if sum(in_cluster) != min(desired, len(y)):
         raise AssertionError('Unexpected number of entries.')
 
     return in_cluster

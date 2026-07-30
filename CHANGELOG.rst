@@ -7,7 +7,7 @@ Release Notes
 0.12 Series
 ...........
 
-0.12.19 (2026-07-27)
+0.12.19 (2026-07-28)
 --------------------
 
 General:
@@ -24,12 +24,16 @@ Visualization:
   per-generation walltimes and no longer include the idle time that passed
   between a stored analysis and a later resumed run. Resolves #667.
 
-Storage:
+Storage (breaking):
 
 * Store the per-generation walltime in the database (new ``wall_time`` column,
   database version 2). Databases created with older pyABC versions must be
   migrated via ``abc-migrate`` before they can be resumed; for such databases
   the walltime plots fall back to the previous, end-time-based behavior.
+* Particle weights are now stored using the global normalization (weights sum
+  to 1 across all particles of all models, matching the in-memory
+  ``Population`` representation). This is bundled into database version 2 and
+  handled by ``abc-migrate`` for existing databases. Resolves #47.
 
 0.12.18 (2026-04-14)
 --------------------

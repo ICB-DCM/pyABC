@@ -246,9 +246,11 @@ def plot_kde_1d(
         xname = x
     if ax is None:
         _, ax = plt.subplots()
-    ax.plot(x_vals, pdf, **kwargs)
-    # TODO This fixes the upper bound inadequately
-    # ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
+    (line,) = ax.plot(x_vals, pdf, **kwargs)
+    # a density is non-negative, but `set_ylim` would switch off autoscaling
+    line.sticky_edges.y.append(0.0)
+    ax.update_datalim([(x_vals[0], 0.0)])
+    ax.autoscale_view()
     ax.set_xlabel(xname)
     ax.set_ylabel('Posterior')
     ax.set_xlim(xmin, xmax)
@@ -307,14 +309,11 @@ def plot_kde_1d_plotly(
         row=row,
         col=col,
     )
-    # set trace color to blue
-    # fig.update_traces(marker_color="blue", row=row, col=col)
-    # fig.add_trace(
-    #     go.Scatter(x=x_vals, y=pdf, name=xname, **kwargs),
-    #     row=row,
-    #     col=col,
-    # )
     fig.update_xaxes(title_text=xname, range=[xmin, xmax], row=row, col=col)
+    # a density is non-negative, plotly's default rangemode ignores zero
+    fig.update_yaxes(
+        title_text='Posterior', rangemode='tozero', row=row, col=col
+    )
 
     # add vertical line for reference value
     if refval is not None:

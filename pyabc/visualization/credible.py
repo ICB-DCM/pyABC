@@ -14,14 +14,14 @@ from .util import get_labels, to_lists
 def _prepare_credible_intervals(
     history: History,
     m: int,
-    ts: list[int] | int,
-    par_names: list,
-    levels: list,
+    ts: list[int] | int | None,
+    par_names: list | None,
+    levels: list | None,
     show_mean: bool,
     show_kde_max: bool,
     show_kde_max_1d: bool,
-    kde: Transition,
-    kde_1d: Transition,
+    kde: Transition | None,
+    kde_1d: Transition | None,
 ):
     if levels is None:
         levels = [0.95]
@@ -337,8 +337,8 @@ def plot_credible_intervals_plotly(
                     error_y={
                         'type': 'data',
                         'symmetric': False,
-                        'array': cis[i_par, :, i_c] - median[i_par],
-                        'arrayminus': median[i_par] - cis[i_par, :, -1 - i_c],
+                        'array': cis[i_par, :, -1 - i_c] - median[i_par],
+                        'arrayminus': median[i_par] - cis[i_par, :, i_c],
                     },
                     mode='lines+markers',
                     marker={'color': colors[i_c]},
@@ -427,7 +427,8 @@ def plot_credible_intervals_for_time(
     if ms is None:
         ms = [0] * n_run
     elif not isinstance(ms, list) or len(ms) == 1:
-        ms = [ms] * n_run
+        # broadcast a single model id (int, or length-1 list) across runs
+        ms = [ms[0] if isinstance(ms, list) else ms] * n_run
     if levels is None:
         levels = [0.95]
     levels = sorted(levels)
@@ -512,7 +513,7 @@ def plot_credible_intervals_for_time(
                     color=f'C{i_c}',
                 )
             # reference value
-            if refvals[i_run] is not None:
+            if refvals is not None and refvals[i_run] is not None:
                 ax.plot([i_run], [refvals[i_run][par]], 'x', color='black')
         ax.set_title(f'Parameter {par}')
         # mean

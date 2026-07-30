@@ -86,6 +86,9 @@ class Temperature(TemperatureBase):
         enforce_exact_final_temperature: bool = True,
         log_file: str | None = None,
     ):
+        # normalize a single callable to a list, as all consumers iterate
+        if schemes is not None and callable(schemes):
+            schemes = [schemes]
         self.schemes = schemes
 
         if aggregate_fun is None:

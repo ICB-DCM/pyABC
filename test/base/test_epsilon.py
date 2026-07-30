@@ -253,3 +253,23 @@ def test_silk_optimal_eps(db_path):
         < 3
         < pyabc.weighted_quantile(df.theta.to_numpy(), w, alpha=0.75)
     )
+
+
+def test_temperature_single_scheme_normalized():
+    """Regression: a single callable ``schemes`` argument is normalized to a
+    list, so all consumers (which iterate over ``self.schemes``) work. A bare
+    callable previously broke iteration (e.g. in ``is_adaptive``)."""
+    from pyabc.epsilon.temperature import PolynomialDecayFixedIterScheme
+
+    scheme = PolynomialDecayFixedIterScheme()
+    temp = pyabc.Temperature(schemes=scheme)
+    assert temp.schemes == [scheme]
+    # iterating over the schemes must not raise on a scalar callable
+    temp.is_adaptive()
+
+    # a list of schemes is preserved unchanged
+    schemes = [
+        PolynomialDecayFixedIterScheme(),
+        PolynomialDecayFixedIterScheme(),
+    ]
+    assert pyabc.Temperature(schemes=schemes).schemes == schemes
