@@ -148,21 +148,28 @@ def assert_weights_close(actual: dict, expected: dict) -> None:
             assert np.allclose(actual[t][m], ws)
 
 
+def alembic_config(db: str):
+    """Alembic configuration, skipping the test if alembic is missing."""
+    pytest.importorskip('alembic')
+    from pyabc.storage.migrate import _alembic_config
+
+    return _alembic_config(db)
+
+
 def to_v1(db_file: str) -> None:
     """Turn a current-format database into a version 1 database.
 
-    This is the inverse of what the version 2 revision does, formulated
-    independently of it: the wall time column did not exist, and weights
-    were normalized within each model (``w = g_i / p_model``).
+    Applies the version 2 downgrade, which reverts the weight normalization
+    (from global back to within-model, ``w = g_i / p_model``), and in addition
+    drops the wall time column, which did not exist in version 1 but is kept
+    by the downgrade.
     """
+    command = pytest.importorskip('alembic.command')
+    command.downgrade(alembic_config(db_file), '1')
+
     con = sqlite3.connect(db_file)
     with con:
-        con.execute(
-            'UPDATE particles SET w = w / ('
-            'SELECT p_model FROM models WHERE models.id = particles.model_id)'
-        )
         con.execute('ALTER TABLE populations DROP COLUMN wall_time')
-        con.execute("UPDATE version SET version_num = '1'")
     con.close()
 
 
@@ -247,14 +254,11 @@ def test_migrate_v2_downgrade(tmp_path):
     The downgrade inverts the weight conversion, but keeps the wall time
     column, so that the upgrade must tolerate an existing column.
     """
-    pytest.importorskip('alembic')
-    from alembic import command
-
-    from pyabc.storage.migrate import _alembic_config
+    command = pytest.importorskip('alembic.command')
 
     db_file = str(tmp_path / 'db.db')
     create_current_db(db_file)
-    cfg = _alembic_config(db_file)
+    cfg = alembic_config(db_file)
 
     # revert to version 1
     command.downgrade(cfg, '1')
@@ -267,3 +271,37 @@ def test_migrate_v2_downgrade(tmp_path):
     assert db_version(db_file) == __db_version__
     assert 'wall_time' in columns(db_file, 'populations')
     assert_weights_close(stored_weights(db_file), global_weights())
+
+
+def test_db_identifier(tmp_path):
+    """Databases can be specified as file names or as sqlite URLs."""
+    pytest.importorskip('alembic')
+    from pyabc.storage.migrate import _alembic_config, _to_db_file
+
+    db_file = str(tmp_path / 'db.db')
+
+    # file names and URLs are equivalent
+    assert _to_db_file(db_file) == _to_db_file('sqlite:///' + db_file)
+    assert _alembic_config(db_file).get_main_option(
+        'sqlalchemy.url'
+    ) == _alembic_config('sqlite:///' + db_file).get_main_option(
+        'sqlalchemy.url'
+    )
+
+    # other dialects are not supported
+    with pytest.raises(ValueError, match='only supports sqlite'):
+        _to_db_file('postgresql://user@localhost/db')
+
+
+def test_migrate_unsupported_dialect(script_runner, tmp_path):
+    """Migrating a non-sqlite database gives an error message."""
+    ret = script_runner.run(
+        [
+            'abc-migrate',
+            '--src',
+            'postgresql://user@localhost/db',
+            '--dst',
+            str(tmp_path / 'db.db'),
+        ]
+    )
+    assert 'only supports sqlite' in ret.stdout
