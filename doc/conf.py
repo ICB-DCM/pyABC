@@ -14,6 +14,7 @@
 
 import os
 import sys
+import subprocess
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -32,24 +33,31 @@ extensions = [
     'sphinx.ext.autodoc',
     # generate autodoc summaries
     'sphinx.ext.autosummary',
-    # use mathjax for latex formulas
-    'sphinx.ext.mathjax',
-    # link to code
-    'sphinx.ext.viewcode',
+    # test snippets in the documentation
+    'sphinx.ext.doctest',
+    # link to external urls
+    'sphinx.ext.extlinks',
     # link to other projects' docs
     'sphinx.ext.intersphinx',
+    # use mathjax for latex formulas
+    'sphinx.ext.mathjax',
     # support numpy and google style docstrings
     'sphinx.ext.napoleon',
     # support todo items
     'sphinx.ext.todo',
-    # test snippets in the documentation
-    'sphinx.ext.doctest',
+    # link to code
+    'sphinx.ext.viewcode',
     # source parser for jupyter notebook files
     'nbsphinx',
     # code highlighting in jupyter cells
     'IPython.sphinxext.ipython_console_highlighting',
     # ensure that jQuery is installed
     'sphinxcontrib.jquery',
+]
+
+autodoc_mock_imports = [
+    "PEtab",
+    "BasiCO"
 ]
 
 # default autodoc options
@@ -68,7 +76,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/devdocs/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/dev', None),
-    'petab': ('https://petab.readthedocs.io/en/stable/', None),
+    'petab': ('https://petab.readthedocs.io/en/latest/', None),
     'amici': ('https://amici.readthedocs.io/en/latest/', None),
     'sklearn': ('https://scikit-learn.org/stable/', None),
 }
@@ -98,6 +106,27 @@ author = 'The pyABC developers'
 # built documents.
 #
 # The short X.Y version.
+
+# Resolve the current branch name
+def get_branch():
+    # Read the Docs sets this automatically ("latest", "stable", branch name...)
+    rtd_version = os.environ.get("READTHEDOCS_VERSION")
+    if rtd_version and rtd_version not in ("latest", "stable"):
+        return rtd_version
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            text=True
+        ).strip()
+    except Exception:
+        return "main"
+    return "main"
+
+# Set up links that resolve to the branch of the documentation
+branch = get_branch()
+extlinks = {
+    "repository": (f"https://github.com/ICB-DCM/pyABC/blob/{branch}/%s", "%s",),
+}
 
 import pyabc  # noqa: E402
 
