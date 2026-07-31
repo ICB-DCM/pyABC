@@ -16,6 +16,7 @@ python:
       path: .
       extra_requirements:
         - doc
+        - petab
 
 build:
   os: "ubuntu-22.04"
