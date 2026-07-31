@@ -77,20 +77,11 @@ home directory with
 
 .. _anacondaCluster:
 
-Installing Anaconda on a Cluster environment
---------------------------------------------
-
-To install `Anaconda <https://anaconda.com/products/distribution>`_, run::
-
-   wget https://repo.anaconda.com/archive/Anaconda3-2021.11-Linux-x86_64.sh
-   bash Anaconda3-2021.11-Linux-x86_64.sh
-
-and follow the installation guide.
-Replace the "2021.11" by the most recent version of Anaconda, see
-https://repo.anaconda.com/archive.
+Installing Miniconda on a Cluster environment
+---------------------------------------------
 
 `Miniconda <https://docs.conda.io/en/latest/miniconda.html>`_
-provides an alternative, minimal installer for conda, including
+provides a minimal installer for conda, including
 only conda, Python, and some core and useful packages. Install the latest
 version via::
 
@@ -102,7 +93,7 @@ version via::
 Optional dependencies
 ---------------------
 
-pyABC has various optional dependencies, see `setup.cfg`.
+pyABC has various optional dependencies, see :repository:`pyproject.toml`.
 
 In particular, pyABC has optional interfaces to the :ref:`R <api_external_r>`
 and :ref:`Julia <api_external_julia>` languages, see the API documentation
