@@ -68,7 +68,7 @@ intersphinx_mapping = {
     'numpy': ('https://numpy.org/devdocs/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/dev', None),
-    'petab': ('https://petab.readthedocs.io/en/stable/', None),
+    'petab': ('https://petab.readthedocs.io/en/latest/', None),
     'amici': ('https://amici.readthedocs.io/en/latest/', None),
     'sklearn': ('https://scikit-learn.org/stable/', None),
 }
