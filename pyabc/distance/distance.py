@@ -65,8 +65,8 @@ class ZScoreDistance(DistanceWithMeasureList):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         return sum(
             abs((x[key] - x_0[key]) / x_0[key])
@@ -105,7 +105,9 @@ class PCADistance(DistanceWithMeasureList):
 
     def _calculate_whitening_transformation_matrix(self, sum_stats):
         # create data matrix, shape (n_sample, n_y)
-        x = np.asarray([self._dict_to_vect(x) for x in sum_stats])
+        # force float dtype so in-place centering below works also for
+        # integer-valued summary statistics (e.g. counts)
+        x = np.asarray([self._dict_to_vect(x) for x in sum_stats], dtype=float)
         # center
         mean = np.mean(x, axis=0)
         x -= mean
@@ -142,8 +144,8 @@ class PCADistance(DistanceWithMeasureList):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         x_vec, x_0_vec = self._dict_to_vect(x), self._dict_to_vect(x_0)
         distance = la.norm(
@@ -249,8 +251,8 @@ class RangeEstimatorDistance(DistanceWithMeasureList):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,  # noqa: ARG002
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,  # noqa: ARG002
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         distance = sum(
             abs((x[key] - x_0[key]) / self.normalization[key])

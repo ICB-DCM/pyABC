@@ -30,7 +30,12 @@ class PerturbationKernel:
         if not 0 <= p_stay <= 1:
             raise ValueError('p_stay must be in [0, 1].')
         self.p_stay = p_stay
-        self.p_move = (1 - p_stay) / (len(self.domain) - 1)
+        # guard against a single-value domain (no other value to move to)
+        self.p_move = (
+            0.0
+            if len(self.domain) == 1
+            else (1 - p_stay) / (len(self.domain) - 1)
+        )
 
         # cache a random variable (later the start index and 0 must be swapped)
         indices = np.arange(len(domain))

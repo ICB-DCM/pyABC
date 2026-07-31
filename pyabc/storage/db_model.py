@@ -98,6 +98,7 @@ class Population(Base):
     abc_smc_id = Column(Integer, ForeignKey('abc_smc.id'))
     t = Column(Integer)
     population_end_time = Column(DateTime)
+    wall_time = Column(Float)
     nr_samples = Column(Integer)
     epsilon = Column(Float)
     models = relationship('Model')
@@ -168,6 +169,8 @@ class SummaryStatistic(Base):
     value = Column(BytesStorage)
 
 
-def datetime2str(datetime: datetime.datetime) -> str:
+def datetime2str(datetime: datetime.datetime | None) -> str:
     """Format print datetime."""
+    if datetime is None:
+        return 'None'
     return datetime.strftime('%Y-%m-%d %H:%M:%S')

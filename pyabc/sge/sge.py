@@ -119,12 +119,12 @@ class SGE:
 
     def __init__(
         self,
-        tmp_directory: str = None,
+        tmp_directory: str | None = None,
         memory: str = '3G',
         time_h: int = 100,
-        python_executable_path: str = None,
-        sge_error_file: str = None,
-        sge_output_file: str = None,
+        python_executable_path: str | None = None,
+        sge_error_file: str | None = None,
+        sge_output_file: str | None = None,
         parallel_environment=None,
         name='map',
         queue=None,

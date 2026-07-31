@@ -4,6 +4,7 @@ import logging
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from functools import partial
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -21,6 +22,138 @@ if TYPE_CHECKING:  # to avoid circular imports
     from ..transition import ModelPerturbationKernel, Transition
 
 logger = logging.getLogger('ABC')
+
+
+def _simulate_one_from_prior(
+    model_prior: RV,
+    parameter_priors: list[Distribution],
+    models: list[Model],
+    summary_statistics: Callable,
+):
+    """Sample one particle from the prior."""
+    from ..population import Particle
+
+    # sample model
+    m = int(model_prior.rvs())
+    # sample parameter
+    theta = parameter_priors[m].rvs()
+    # simulate summary statistics
+    model_result = models[m].summary_statistics(0, theta, summary_statistics)
+    # sampled from prior, so all have uniform weight
+    weight = 1.0
+    # distance will be computed after initialization of the
+    #  distance function
+    distance = np.inf
+    # all are happy and accepted
+    accepted = True
+
+    return Particle(
+        m=m,
+        parameter=theta,
+        weight=weight,
+        sum_stat=model_result.sum_stat,
+        distance=distance,
+        accepted=accepted,
+        proposal_id=0,
+        preliminary=False,
+    )
+
+
+def _simulate_one(
+    *,
+    t: int,
+    m: np.ndarray,
+    p: np.ndarray,
+    model_prior: RV,
+    parameter_priors: list[Distribution],
+    model_perturbation_kernel: ModelPerturbationKernel,
+    transitions: list[Transition],
+    models: list[Model],
+    summary_statistics: Callable,
+    x_0: dict,
+    distance_function: Distance,
+    eps: Epsilon,
+    acceptor: Acceptor,
+    weight_function: Callable,
+    evaluate: bool,
+    proposal_id: int,
+):
+    """Sample one parameter and evaluate/simulate one particle."""
+    parameter = generate_valid_proposal(
+        t=t,
+        m=m,
+        p=p,
+        model_prior=model_prior,
+        parameter_priors=parameter_priors,
+        model_perturbation_kernel=model_perturbation_kernel,
+        transitions=transitions,
+    )
+    if evaluate:
+        particle = evaluate_proposal(
+            *parameter,
+            t=t,
+            models=models,
+            summary_statistics=summary_statistics,
+            distance_function=distance_function,
+            eps=eps,
+            acceptor=acceptor,
+            x_0=x_0,
+            weight_function=weight_function,
+            proposal_id=proposal_id,
+        )
+    else:
+        particle = only_simulate_data_for_proposal(
+            *parameter,
+            t=t,
+            models=models,
+            summary_statistics=summary_statistics,
+            weight_function=weight_function,
+            proposal_id=proposal_id,
+        )
+    return particle
+
+
+def _prior_pdf(
+    m_ss: int,
+    theta_ss: Parameter,
+    model_prior: RV,
+    parameter_priors: list[Distribution],
+) -> float:
+    """Evaluate the prior density for a proposed sample."""
+    return model_prior.pmf(m_ss) * parameter_priors[m_ss].pdf(theta_ss)
+
+
+def _transition_pdf(
+    m_ss: int,
+    theta_ss: Parameter,
+    transitions: list[Transition],
+    model_probabilities: pd.DataFrame,
+    model_perturbation_kernel: ModelPerturbationKernel,
+) -> float:
+    """Evaluate the transition density for a proposed sample."""
+    model_factor = sum(
+        row.p * model_perturbation_kernel.pmf(m_ss, m)
+        for m, row in model_probabilities.iterrows()
+    )
+    particle_factor = transitions[m_ss].pdf(theta_ss)
+
+    transition_pd = model_factor * particle_factor
+    if transition_pd == 0:
+        logger.debug('Transition density is zero!')
+    return transition_pd
+
+
+def _weight_function(
+    m_ss: int,
+    theta_ss: Parameter,
+    acceptance_weight: float,
+    prior_pdf: Callable,
+    transition_pdf: Callable,
+) -> float:
+    """Calculate total weight from sampling and acceptance weight."""
+    prior_pd = prior_pdf(m_ss, theta_ss)
+    transition_pd = transition_pdf(m_ss, theta_ss)
+    return acceptance_weight * prior_pd / transition_pd
 
 
 class AnalysisVars:
@@ -97,38 +230,13 @@ def create_simulate_from_prior_function(
     simulate_one:
         A function that returns a sampled particle.
     """
-    # simulation function, simplifying some parts compared to later
-    from ..population import Particle
-
-    def simulate_one():
-        # sample model
-        m = int(model_prior.rvs())
-        # sample parameter
-        theta = parameter_priors[m].rvs()
-        # simulate summary statistics
-        model_result = models[m].summary_statistics(
-            0, theta, summary_statistics
-        )
-        # sampled from prior, so all have uniform weight
-        weight = 1.0
-        # distance will be computed after initialization of the
-        #  distance function
-        distance = np.inf
-        # all are happy and accepted
-        accepted = True
-
-        return Particle(
-            m=m,
-            parameter=theta,
-            weight=weight,
-            sum_stat=model_result.sum_stat,
-            distance=distance,
-            accepted=accepted,
-            proposal_id=0,
-            preliminary=False,
-        )
-
-    return simulate_one
+    return partial(
+        _simulate_one_from_prior,
+        model_prior=model_prior,
+        parameter_priors=parameter_priors,
+        models=models,
+        summary_statistics=summary_statistics,
+    )
 
 
 def generate_valid_proposal(
@@ -273,11 +381,11 @@ def create_prior_pdf(
     prior_pdf: The prior density function.
     """
 
-    def prior_pdf(m_ss, theta_ss):
-        prior_pd = model_prior.pmf(m_ss) * parameter_priors[m_ss].pdf(theta_ss)
-        return prior_pd
-
-    return prior_pdf
+    return partial(
+        _prior_pdf,
+        model_prior=model_prior,
+        parameter_priors=parameter_priors,
+    )
 
 
 def create_transition_pdf(
@@ -298,20 +406,12 @@ def create_transition_pdf(
     transition_pdf: The transition density function.
     """
 
-    def transition_pdf(m_ss, theta_ss):
-        model_factor = sum(
-            row.p * model_perturbation_kernel.pmf(m_ss, m)
-            for m, row in model_probabilities.iterrows()
-        )
-        particle_factor = transitions[m_ss].pdf(theta_ss)
-
-        transition_pd = model_factor * particle_factor
-
-        if transition_pd == 0:
-            logger.debug('Transition density is zero!')
-        return transition_pd
-
-    return transition_pdf
+    return partial(
+        _transition_pdf,
+        transitions=transitions,
+        model_probabilities=model_probabilities,
+        model_perturbation_kernel=model_perturbation_kernel,
+    )
 
 
 def create_weight_function(
@@ -332,27 +432,11 @@ def create_weight_function(
     weight_function: The importance sample weight function.
     """
 
-    def weight_function(m_ss, theta_ss, acceptance_weight: float):
-        """Calculate total weight, from sampling and acceptance weight.
-
-        Parameters
-        ----------
-        m_ss: The model sample.
-        theta_ss: The parameter sample.
-        acceptance_weight: The acceptance weight sample. In most cases 1.
-
-        Returns
-        -------
-        weight: The total weight.
-        """
-        # prior and transition density (can be equal)
-        prior_pd = prior_pdf(m_ss, theta_ss)
-        transition_pd = transition_pdf(m_ss, theta_ss)
-        # calculate weight
-        weight = acceptance_weight * prior_pd / transition_pd
-        return weight
-
-    return weight_function
+    return partial(
+        _weight_function,
+        prior_pdf=prior_pdf,
+        transition_pdf=transition_pdf,
+    )
 
 
 def create_simulate_function(
@@ -431,42 +515,25 @@ def create_simulate_function(
         prior_pdf=prior_pdf, transition_pdf=transition_pdf
     )
 
-    # simulation function
-    def simulate_one():
-        parameter = generate_valid_proposal(
-            t=t,
-            m=m,
-            p=p,
-            model_prior=model_prior,
-            parameter_priors=parameter_priors,
-            model_perturbation_kernel=model_perturbation_kernel,
-            transitions=transitions,
-        )
-        if evaluate:
-            particle = evaluate_proposal(
-                *parameter,
-                t=t,
-                models=models,
-                summary_statistics=summary_statistics,
-                distance_function=distance_function,
-                eps=eps,
-                acceptor=acceptor,
-                x_0=x_0,
-                weight_function=weight_function,
-                proposal_id=proposal_id,
-            )
-        else:
-            particle = only_simulate_data_for_proposal(
-                *parameter,
-                t=t,
-                models=models,
-                summary_statistics=summary_statistics,
-                weight_function=weight_function,
-                proposal_id=proposal_id,
-            )
-        return particle
-
-    return simulate_one
+    return partial(
+        _simulate_one,
+        t=t,
+        m=m,
+        p=p,
+        model_prior=model_prior,
+        parameter_priors=parameter_priors,
+        model_perturbation_kernel=model_perturbation_kernel,
+        transitions=transitions,
+        models=models,
+        summary_statistics=summary_statistics,
+        x_0=x_0,
+        distance_function=distance_function,
+        eps=eps,
+        acceptor=acceptor,
+        weight_function=weight_function,
+        evaluate=evaluate,
+        proposal_id=proposal_id,
+    )
 
 
 def only_simulate_data_for_proposal(
@@ -623,10 +690,10 @@ def create_analysis_id():
     return str(uuid.uuid4())
 
 
-def eps_from_hist(history: History, t: int = None) -> float:
+def eps_from_hist(history: History, t: int | None = None) -> float | None:
     """Read epsilon value for time `t` from `history`. Defaults to latest."""
     pops = history.get_all_populations()
-    if len(pops) == 0 or (t is not None and t not in pops.t):
+    if len(pops) == 0 or (t is not None and t not in pops.t.values):
         return None
     if t is None:
         return pops.epsilon.to_numpy()[-1]

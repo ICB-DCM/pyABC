@@ -32,7 +32,10 @@ def pdf_norm_max_found(
         prev_pdf_norm = -np.inf
 
     # take maximum over all normalizations
-    pdf_norm = max(prev_pdf_norm, *pdfs)
+    if len(pdfs) == 0:
+        pdf_norm = prev_pdf_norm
+    else:
+        pdf_norm = max(prev_pdf_norm, float(pdfs.max()))
 
     return pdf_norm
 

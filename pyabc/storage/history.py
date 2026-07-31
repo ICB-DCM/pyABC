@@ -80,7 +80,7 @@ def git_hash():
     return hash_
 
 
-def create_sqlite_db_id(dir_: str = None, file_: str = 'pyabc_test.db'):
+def create_sqlite_db_id(dir_: str | None = None, file_: str = 'pyabc_test.db'):
     """
     Convenience function to create a sqlite database identifier which
     can be understood by sqlalchemy.
@@ -144,7 +144,7 @@ class History:
         self,
         db: str,
         stores_sum_stats: bool = True,
-        _id: int = None,
+        _id: int | None = None,
         create: bool = True,
     ):
         """Initialize history object.
@@ -273,7 +273,7 @@ class History:
         self._id = val
 
     @with_session
-    def alive_models(self, t: int = None) -> list:
+    def alive_models(self, t: int | None = None) -> list:
         """
         Get the models which are still alive at time `t`.
 
@@ -303,7 +303,7 @@ class History:
 
     @with_session
     def get_distribution(
-        self, m: int = 0, t: int = None
+        self, m: int = 0, t: int | None = None
     ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         Returns the weighted population sample for model m and timepoint t
@@ -344,10 +344,10 @@ class History:
         ).sort_index()
         w = df[['id', 'w']].drop_duplicates().set_index('id').sort_index()
         w_arr = w.w.values
-        if w_arr.size > 0 and not np.isclose(w_arr.sum(), 1):
-            raise AssertionError(
-                f'Weight not close to 1, w.sum()={w_arr.sum()}'
-            )
+        # Stored weights are global (summing to 1 across all models); within a
+        # single model they sum to the model probability.
+        if w_arr.size > 0:
+            w_arr = w_arr / w_arr.sum()
         return pars, w_arr
 
     @with_session
@@ -389,6 +389,8 @@ class History:
 
         * `t`: Population number
         * `population_end_time`: The end time of the population
+        * `wall_time`: The wall time in seconds spent on the population,
+           excluding idle time between resumed runs.
         * `samples`: The number of sample attempts performed
            for a population
         * `epsilon`: The acceptance threshold for the population.
@@ -401,6 +403,7 @@ class History:
         query = self._session.query(
             Population.t,
             Population.population_end_time,
+            Population.wall_time,
             Population.nr_samples,
             Population.epsilon,
         ).filter(Population.abc_smc_id == self.id)
@@ -415,7 +418,7 @@ class History:
     @internal_docstring_warning
     def store_initial_data(
         self,
-        ground_truth_model: int,
+        ground_truth_model: int | None,
         options: dict,
         observed_summary_statistics: dict,
         ground_truth_parameter: dict,
@@ -423,7 +426,7 @@ class History:
         distance_function_json_str: str,
         eps_function_json_str: str,
         population_strategy_json_str: str,
-        start_time: datetime.datetime = None,
+        start_time: datetime.datetime | None = None,
     ) -> None:
         """
         Store the initial configuration data.
@@ -484,7 +487,7 @@ class History:
     @internal_docstring_warning
     def store_pre_population(
         self,
-        ground_truth_model: int,
+        ground_truth_model: int | None,
         observed_summary_statistics: dict,
         ground_truth_parameter: dict,
         model_names: list[str],
@@ -547,7 +550,10 @@ class History:
     @with_session
     @internal_docstring_warning
     def update_after_calibration(
-        self, nr_samples: int, end_time: datetime.datetime
+        self,
+        nr_samples: int,
+        end_time: datetime.datetime,
+        wall_time: float | None = None,
     ):
         """Update after the calibration iteration.
         In particular set time and number of samples.
@@ -559,6 +565,8 @@ class History:
             Number of samples reported.
         end_time:
             End time of the calibration iteration.
+        wall_time:
+            Wall time in seconds spent on the calibration iteration.
         """
         # extract population
         population = (
@@ -572,6 +580,7 @@ class History:
         # update samples number
         population.nr_samples = nr_samples
         population.population_end_time = end_time
+        population.wall_time = wall_time
 
         # commit changes
         self._session.commit()
@@ -671,7 +680,7 @@ class History:
 
     @with_session
     @internal_docstring_warning
-    def done(self, end_time: datetime.datetime = None):
+    def done(self, end_time: datetime.datetime | None = None):
         """
         Close database sessions and store end time of the analysis.
 
@@ -697,6 +706,7 @@ class History:
         particles_by_model: dict,
         model_probabilities: pd.DataFrame,
         model_names,
+        wall_time: float | None = None,
     ):
         # sqlalchemy experimental stuff and highly inefficient implementation
         # here but that is ok for testing purposes for the moment
@@ -706,7 +716,10 @@ class History:
 
         # store the population
         population = Population(
-            t=t, nr_samples=nr_simulations, epsilon=current_epsilon
+            t=t,
+            nr_samples=nr_simulations,
+            epsilon=current_epsilon,
+            wall_time=wall_time,
         )
 
         abcsmc.populations.append(population)
@@ -722,18 +735,16 @@ class History:
             # append model
             population.models.append(model)
 
-            # TODO This normalization is different than in the in-memory
-            #  population. It would be cleaner to update the db too.
-            total_model_weight = sum(p.weight for p in model_population)
-
             # iterate over model population of particles
             for py_particle in model_population:
                 # a store_item is a Particle
                 py_parameter = py_particle.parameter
 
-                # create new particle
+                # create new particle. The stored weight is the global
+                # particle weight (normalized across all particles of all
+                # models so that they sum to 1)
                 particle = Particle(
-                    w=py_particle.weight / total_model_weight,
+                    w=py_particle.weight,
                     proposal_id=py_particle.proposal_id,
                 )
                 # append particle to model
@@ -783,6 +794,7 @@ class History:
         population: PyPopulation,
         nr_simulations: int,
         model_names,
+        wall_time: float | None = None,
     ):
         """
         Append population to database.
@@ -799,6 +811,8 @@ class History:
             The number of model evaluations for this population.
         model_names: list
             The model names.
+        wall_time: float
+            Wall time in seconds spent on sampling this population.
         """
         particles_by_model = population.get_particles_by_model()
         model_probabilities = population.get_model_probabilities()
@@ -810,6 +824,7 @@ class History:
             particles_by_model,
             model_probabilities,
             model_names,
+            wall_time=wall_time,
         )
 
     @with_session
@@ -841,14 +856,13 @@ class History:
             .order_by(Model.m)
             .all()
         )
-        # TODO this is a mess
+        # Two return shapes: for a single t, a frame indexed by model id `m`
+        # with a `p` column; for t=None, a t-by-model pivot table (below).
         if t is not None:
             p_models_df = pd.DataFrame(
                 [p[:2] for p in p_models], columns=['p', 'm']
             ).set_index('m')
-            # TODO the following line is redundant
-            # only models with no-zero weight are stored for each population
-            p_models_df = p_models_df[p_models_df.p >= 0]
+            # Only models with non-zero weight are stored per population
             return p_models_df
         else:
             p_models_df = (
@@ -858,7 +872,7 @@ class History:
             )
             return p_models_df
 
-    def nr_of_models_alive(self, t: int = None) -> int:
+    def nr_of_models_alive(self, t: int | None = None) -> int:
         """
         Number of models still alive.
 
@@ -880,7 +894,7 @@ class History:
         return int((model_probs.p > 0).sum())
 
     @with_session
-    def get_weighted_distances(self, t: int = None) -> pd.DataFrame:
+    def get_weighted_distances(self, t: int | None = None) -> pd.DataFrame:
         """
         Population's weighted distances to the measured sample.
         These weights do not necessarily sum up to 1.
@@ -916,20 +930,10 @@ class History:
         distances = []
         for model in models:
             for particle in model.particles:
-                weight = particle.w * model.p_model
+                weight = particle.w
                 for sample in particle.samples:
                     weights.append(weight)
                     distances.append(sample.distance)
-
-        # query = (self._session.query(Sample.distance, Particle.w, Model.m)
-        #         .join(Particle)
-        #         .join(Model).join(Population).join(ABCSMC)
-        #         .filter(ABCSMC.id == self.id)
-        #         .filter(Population.t == t))
-        # df = pd.read_sql_query(query.statement, self._engine)
-        # model_probabilities = self.get_model_probabilities(t).reset_index()
-        # df_weighted = df.merge(model_probabilities)
-        # df_weighted["w"] *= df_weighted["p"]
 
         return pd.DataFrame({'distance': distances, 'w': weights})
 
@@ -981,7 +985,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats_for_model(
-        self, m: int = 0, t: int = None
+        self, m: int = 0, t: int | None = None
     ) -> tuple[np.ndarray, list]:
         """
         Summary statistics for model `m`. The weights sum to 1, unless
@@ -1011,14 +1015,31 @@ class History:
             .filter(ABCSMC.id == self.id)
             .filter(Population.t == t)
             .filter(Model.m == m)
+            .options(
+                subqueryload(Particle.samples).subqueryload(
+                    Sample.summary_statistics
+                )
+            )
             .all()
+        )
+
+        # model probability, used to renormalize the stored global weights
+        # back to the within-model posterior (weights summing to 1)
+        p_model = (
+            self._session.query(Model.p_model)
+            .join(Population)
+            .join(ABCSMC)
+            .filter(ABCSMC.id == self.id)
+            .filter(Population.t == t)
+            .filter(Model.m == m)
+            .scalar()
         )
 
         results = []
         weights = []
         for particle in particles:
             for sample in particle.samples:
-                weights.append(particle.w)
+                weights.append(particle.w / p_model if p_model else particle.w)
                 sum_stats = {}
                 for ss in sample.summary_statistics:
                     sum_stats[ss.name] = ss.value
@@ -1027,7 +1048,7 @@ class History:
 
     @with_session
     def get_weighted_sum_stats(
-        self, t: int = None
+        self, t: int | None = None
     ) -> tuple[list[float], list[dict]]:
         """
         Population's weighted summary statistics.
@@ -1068,7 +1089,7 @@ class History:
 
         for model in models:
             for particle in model.particles:
-                weight = particle.w * model.p_model
+                weight = particle.w
                 for sample in particle.samples:
                     # extract sum stats
                     sum_stats = {}
@@ -1080,7 +1101,7 @@ class History:
         return all_weights, all_sum_stats
 
     @with_session
-    def get_population(self, t: int = None):
+    def get_population(self, t: int | None = None):
         """
         Create a pyabc.Population object containing all particles,
         as far as those can be recreated from the database. In particular,
@@ -1118,7 +1139,7 @@ class History:
             py_m = model.m
             for particle in model.particles:
                 # weight
-                py_weight = particle.w * model.p_model
+                py_weight = particle.w
 
                 # parameter
                 py_parameter = {}
@@ -1127,7 +1148,9 @@ class History:
                 py_parameter = PyParameter(**py_parameter)
 
                 # simulations
-                # TODO this is legacy from when there were multiple
+                # NOTE: samples is a one-to-many relationship for legacy
+                # reasons (a particle could once store multiple samples);
+                # today exactly one is expected.
                 if len(particle.samples) != 1:
                     raise AssertionError('There should be exactly one sample.')
                 sample = particle.samples[0]

@@ -18,7 +18,7 @@ class Sumstat(ABC):
     concatenated/chained.
     """
 
-    def __init__(self, pre: 'Sumstat' = None):
+    def __init__(self, pre: 'Sumstat | None' = None):
         """
         Parameters
         ----------
@@ -166,8 +166,8 @@ class IdentitySumstat(Sumstat):
 
     def __init__(
         self,
-        trafos: list[Callable[[np.ndarray], np.ndarray]] = None,
-        pre: Sumstat = None,
+        trafos: list[Callable[[np.ndarray], np.ndarray]] | None = None,
+        pre: Sumstat | None = None,
         shape_out: tuple[int, ...] = (-1,),
     ):
         """
@@ -188,7 +188,7 @@ class IdentitySumstat(Sumstat):
             deriving from Sumstat or IdentitySumstat.
         """
         super().__init__(pre=pre)
-        self.trafos: list[Callable[[np.ndarray], np.ndarray]] = trafos
+        self.trafos: list[Callable[[np.ndarray], np.ndarray]] | None = trafos
         self.shape_out: tuple[int, ...] = shape_out
 
     @io_dict2arr

@@ -1,1 +1,1 @@
-__db_version__ = '1'
+__db_version__ = '2'

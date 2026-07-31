@@ -46,7 +46,7 @@ class ParTrafo(ParTrafoBase):
 
     def __init__(
         self,
-        trafos: list[Callable[[np.ndarray], np.ndarray]] = None,
+        trafos: list[Callable[[np.ndarray], np.ndarray]] | None = None,
         trafo_ids: str | list[str] = '{par_id}_{trafo_ix}',
     ):
         self.trafos = trafos

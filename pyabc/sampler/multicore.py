@@ -1,6 +1,5 @@
 import logging
 import random
-from multiprocessing import Process, Queue
 
 import cloudpickle as pickle
 import numpy as np
@@ -8,6 +7,7 @@ from jabbar import jabbar
 
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
 from .singlecore import SingleCoreSampler
+from .util import get_mp_context
 
 logger = logging.getLogger('ABC.Sampler')
 
@@ -36,7 +36,10 @@ def work(feed_q, result_q, simulate_one, max_eval, single_core_sampler):
             break
 
         res = single_core_sampler.sample_until_n_accepted(
-            1, simulate_one, max_eval
+            1,
+            simulate_one,
+            t=0,  # t is not used in this sampler
+            max_eval=max_eval,
         )
         result_q.put((res, single_core_sampler.nr_evaluations_))
 
@@ -88,10 +91,12 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         logger.debug(
             f'Start sampling on {n_procs} cores ({self.n_procs} requested)'
         )
-        feed_q = Queue()
-        result_q = Queue()
+        # queues and processes must share one context
+        ctx = get_mp_context()
+        feed_q = ctx.Queue()
+        result_q = ctx.Queue()
 
-        feed_process = Process(target=feed, args=(feed_q, n, n_procs))
+        feed_process = ctx.Process(target=feed, args=(feed_q, n, n_procs))
 
         single_core_sampler = SingleCoreSampler(
             check_max_eval=self.check_max_eval
@@ -105,7 +110,7 @@ class MulticoreParticleParallelSampler(MultiCoreSampler):
         args = (feed_q, result_q, simulate_one, max_eval, single_core_sampler)
 
         worker_processes = [
-            Process(target=work, args=args) for _ in range(n_procs)
+            ctx.Process(target=work, args=args) for _ in range(n_procs)
         ]
 
         for proc in worker_processes:

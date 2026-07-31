@@ -44,11 +44,11 @@ def _prepare_plot_sample_numbers(
 
 def plot_sample_numbers(
     histories: list[History] | History,
-    labels: list[str] | str = None,
+    labels: list[str] | str | None = None,
     rotation: int = 0,
     title: str = 'Required samples',
-    size: tuple[float, float] = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple[float, float] | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Stacked bar plot of required numbers of samples over all iterations.
@@ -112,11 +112,11 @@ def plot_sample_numbers(
 
 def plot_sample_numbers_plotly(
     histories: list[History] | History,
-    labels: list[str] | str = None,
+    labels: list[str] | str | None = None,
     rotation: int = 0,
     title: str = 'Required samples',
-    size: tuple[float, float] = None,
-    fig: 'go.Figure' = None,
+    size: tuple[float, float] | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot sample numbers using plotly."""
     import plotly.graph_objects as go
@@ -199,12 +199,12 @@ def _prepare_plot_total_sample_numbers(
 
 def plot_total_sample_numbers(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     rotation: int = 0,
     title: str = 'Total required samples',
     yscale: str = 'lin',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Bar plot of total required sample number over all iterations, i.e.
@@ -266,12 +266,12 @@ def plot_total_sample_numbers(
 
 def plot_total_sample_numbers_plotly(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     rotation: int = 0,
     title: str = 'Total required samples',
     yscale: str = 'lin',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot total sample numbers using plotly."""
     import plotly.graph_objects as go
@@ -349,11 +349,11 @@ def _prepare_plot_sample_numbers_trajectory(
 
 def plot_sample_numbers_trajectory(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     title: str = 'Required samples',
     yscale: str = 'lin',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Plot of required sample number over all iterations, i.e. one trajectory
@@ -412,11 +412,11 @@ def plot_sample_numbers_trajectory(
 
 def plot_sample_numbers_trajectory_plotly(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     title: str = 'Required samples',
     yscale: str = 'lin',
-    size: tuple = None,
-    fig: 'go.Figure' = None,
+    size: tuple | None = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot sample number trajectories using plotly."""
     import plotly.graph_objects as go
@@ -506,13 +506,13 @@ def _prepare_plot_acceptance_rates_trajectory(
 
 def plot_acceptance_rates_trajectory(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     title: str = 'Acceptance rates',
     yscale: str = 'lin',
-    size: tuple = None,
-    colors: list[str] = None,
+    size: tuple | None = None,
+    colors: list[str] | None = None,
     normalize_by_ess: bool = False,
-    ax: mpl.axes.Axes = None,
+    ax: mpl.axes.Axes | None = None,
 ) -> mpl.axes.Axes:
     """
     Plot of acceptance rates over all iterations, i.e. one trajectory
@@ -583,13 +583,13 @@ def plot_acceptance_rates_trajectory(
 
 def plot_acceptance_rates_trajectory_plotly(
     histories: list | History,
-    labels: list | str = None,
+    labels: list | str | None = None,
     title: str = 'Acceptance rates',
     yscale: str = 'lin',
-    size: tuple = None,
-    colors: list[str] = None,
+    size: tuple | None = None,
+    colors: list[str] | None = None,
     normalize_by_ess: bool = False,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
 ) -> 'go.Figure':
     """Plot acceptance rates trajectories using plotly."""
     import plotly.graph_objects as go
@@ -638,11 +638,11 @@ def plot_lookahead_evaluations(
     sampler_df: pd.DataFrame | str,
     relative: bool = False,
     fill: bool = False,
-    alpha: float = None,
+    alpha: float | None = None,
     t_min: int = 0,
     title: str = 'Total evaluations',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ):
     """Plot total vs look-ahead evaluations over the generations.
 
@@ -735,11 +735,11 @@ def plot_lookahead_final_acceptance_fractions(
     population_sizes: np.ndarray | History,
     relative: bool = False,
     fill: bool = False,
-    alpha: float = None,
+    alpha: float | None = None,
     t_min: int = 0,
     title: str = 'Composition of final acceptances',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ):
     """Plot fraction of look-ahead samples in final acceptances,
     over generations.
@@ -852,8 +852,8 @@ def plot_lookahead_acceptance_rates(
     sampler_df: pd.DataFrame | str,
     t_min: int = 0,
     title: str = 'Acceptance rates',
-    size: tuple = None,
-    ax: mpl.axes.Axes = None,
+    size: tuple | None = None,
+    ax: mpl.axes.Axes | None = None,
 ):
     """Plot acceptance rates for look-ahead vs ordinary samples.
     The ratios are relative to all accepted particles, including eventually

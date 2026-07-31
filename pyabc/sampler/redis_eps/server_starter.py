@@ -1,11 +1,11 @@
 import tempfile
 import time
-from multiprocessing import Process
 from subprocess import Popen  # noqa: S404
 from time import sleep
 
 import psutil
 
+from ..util import get_mp_process
 from .cli import _manage, work
 from .sampler import RedisEvalParallelSampler
 from .sampler_static import RedisStaticSampler
@@ -14,7 +14,7 @@ from .sampler_static import RedisStaticSampler
 class RedisServerStarter:
     def __init__(
         self,
-        password: str = None,
+        password: str | None = None,
         workers: int = 2,
         processes_per_worker: int = 1,
         daemon: bool = True,
@@ -47,8 +47,9 @@ class RedisServerStarter:
         # initiate worker processes
         maybe_password = [] if password is None else ['--password', password]
         maybe_daemon = [] if daemon is None else ['--daemon', str(daemon)]
+        process_cls = get_mp_process()
         self.workers = [
-            Process(
+            process_cls(
                 target=work,
                 args=(
                     [
@@ -105,7 +106,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
 
     def __init__(
         self,
-        password: str = None,
+        password: str | None = None,
         batch_size: int = 1,
         wait_for_all_samples: bool = False,
         look_ahead: bool = False,
@@ -116,7 +117,7 @@ class RedisEvalParallelSamplerServerStarter(RedisEvalParallelSampler):
         processes_per_worker: int = 1,
         daemon: bool = True,
         catch: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         self.server_starter = RedisServerStarter(
             password=password,
@@ -151,12 +152,12 @@ class RedisStaticSamplerServerStarter(RedisStaticSampler):
 
     def __init__(
         self,
-        password: str = None,
+        password: str | None = None,
         workers: int = 2,
         processes_per_worker: int = 1,
         daemon: bool = True,
         catch: bool = True,
-        log_file: str = None,
+        log_file: str | None = None,
     ):
         self.server_starter = RedisServerStarter(
             password=password,

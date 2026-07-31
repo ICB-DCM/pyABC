@@ -11,7 +11,7 @@ from pyabc.populationstrategy import (
 from pyabc.transition import MultivariateNormalTransition
 
 
-def Adaptive(nr_calibration_particles: int = None):
+def Adaptive(nr_calibration_particles: int | None = None):
     # Only 4 bootstraps for faster testing
     ada = AdaptivePopulationSize(
         100,
@@ -22,13 +22,13 @@ def Adaptive(nr_calibration_particles: int = None):
     return ada
 
 
-def Constant(nr_calibration_particles: int = None):
+def Constant(nr_calibration_particles: int | None = None):
     return ConstantPopulationSize(
         100, nr_calibration_particles=nr_calibration_particles
     )
 
 
-def List(nr_calibration_particles: int = None):
+def List(nr_calibration_particles: int | None = None):
     return ListPopulationSize(
         [100] * 10, nr_calibration_particles=nr_calibration_particles
     )

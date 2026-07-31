@@ -91,7 +91,7 @@ class MultivariateNormalTransition(Transition):
         # cache range array
         self._range = np.arange(len(self.X))
 
-    def rvs(self, size: int = None) -> Parameter | pd.DataFrame:
+    def rvs(self, size: int | None = None) -> Parameter | pd.DataFrame:
         if size is None:
             return self.rvs_single()
         sample_ind = np.random.choice(

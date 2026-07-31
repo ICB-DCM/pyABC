@@ -1,12 +1,12 @@
 import random
 from ctypes import c_longlong
-from multiprocessing import Process, Queue, Value
 
 import cloudpickle as pickle
 import numpy as np
 from jabbar import jabbar
 
 from .multicorebase import MultiCoreSampler, get_if_worker_healthy
+from .util import get_mp_context
 
 DONE = 'Done'
 
@@ -14,8 +14,8 @@ DONE = 'Done'
 def work(
     simulate_one,
     queue,
-    n_eval: Value,
-    n_acc: Value,
+    n_eval,
+    n_acc,
     n: int,
     check_max_eval: bool,
     max_eval: int,
@@ -100,13 +100,16 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         all_accepted=False,
         ana_vars=None,  # noqa: ARG002
     ):
-        n_eval = Value(c_longlong)
+        # values, queue and processes must share one context
+        ctx = get_mp_context()
+
+        n_eval = ctx.Value(c_longlong)
         n_eval.value = 0
 
-        n_acc = Value(c_longlong)
+        n_acc = ctx.Value(c_longlong)
         n_acc.value = 0
 
-        queue = Queue()
+        queue = ctx.Queue()
 
         # wrap arguments
         if self.pickle:
@@ -124,7 +127,7 @@ class MulticoreEvalParallelSampler(MultiCoreSampler):
         )
 
         processes = [
-            Process(target=work, args=args, daemon=self.daemon)
+            ctx.Process(target=work, args=args, daemon=self.daemon)
             for _ in range(self.n_procs)
         ]
 
