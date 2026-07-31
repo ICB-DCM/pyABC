@@ -29,42 +29,42 @@ jobs:
             python: "3.11"
             toxenv: base
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: visualization
 
           # macOS sanity
           - os: macos-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: mac
 
           # Quality
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: quality
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: project
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: doc
           - os: ubuntu-latest
             python: "3.11"
             toxenv: migrate
 
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: external-R
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: external-other-simulators
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: petab
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: base-notebooks
           - os: ubuntu-latest
-            python: "3.13"
+            python: "3.14"
             toxenv: external-notebooks
 
     steps:
