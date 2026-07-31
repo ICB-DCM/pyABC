@@ -297,3 +297,53 @@ def test_pipeline(db_file):
     df_info, w_info = h.get_distribution()
     off_info = abs(pyabc.weighted_mean(df_info.p0, w_info) - 0.1)
     assert off_comp > off_info
+
+
+def test_dict2arr_multi_key_concatenation():
+    """Regression/efficiency: `dict2arr` concatenates the values of several
+    keys into a single flat 1d array."""
+    dct = {
+        'a': np.array([1.0, 2.0]),
+        'b': 3.0,
+        'c': np.array([4.0, 5.0, 6.0]),
+    }
+    out = dict2arr(dct, keys=['a', 'b', 'c'])
+    assert np.array_equal(out, np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]))
+
+
+def test_gmm_subsetter_zero_variance_labels():
+    """Regression: GMMSubsetter z-score normalization must guard against a
+    constant (zero-variance) label column instead of dividing by zero (which
+    produced NaNs that broke the subsequent GMM fit)."""
+    rng = np.random.RandomState(0)
+    n = 200
+    x = rng.normal(size=(n, 2))
+    # second label column is constant -> zero standard deviation
+    y = np.column_stack([rng.normal(size=n), np.full(n, 7.0)])
+    w = np.full(
+        (n, 1), 1.0 / n
+    )  # weights shaped (n_sample, 1), as read_sample
+    x_new, y_new, w_new = GMMSubsetter().select(x, y, w)
+    assert np.all(np.isfinite(x_new))
+    assert len(w_new) == len(x_new)
+
+
+def test_get_augmented_subset_full_fraction():
+    """Regression: `get_augmented_subset` must not pass an out-of-bounds `kth`
+    to `np.argpartition` when the required count equals the number of
+    remaining samples (`min_fraction=1.0`)."""
+    from pyabc.sumstat.subset import get_augmented_subset
+
+    y = np.arange(10, dtype=float).reshape(-1, 1)
+    ref = np.array([0.0])
+
+    in_cluster = np.zeros(10, dtype=bool)
+    in_cluster[:3] = True
+    res = get_augmented_subset(y, ref, in_cluster, min_fraction=1.0)
+    assert res.sum() == 10
+
+    # partial augmentation still selects exactly the desired count
+    ic2 = np.zeros(10, dtype=bool)
+    ic2[:2] = True
+    res2 = get_augmented_subset(y, ref, ic2, min_fraction=0.5)
+    assert res2.sum() == 5

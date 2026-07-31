@@ -85,17 +85,17 @@ def plot_kde_1d_highlevel(
     history: History,
     x: str,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     xmin=None,
     xmax=None,
     numx=50,
-    ax: mpl.axes.Axes = None,
+    ax: mpl.axes.Axes | None = None,
     size=None,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='C1',
     kde=None,
-    xname: str = None,
+    xname: str | None = None,
     **kwargs,
 ) -> mpl.axes.Axes:
     """
@@ -170,20 +170,20 @@ def plot_kde_1d_highlevel_plotly(
     history: History,
     x: str,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     xmin=None,
     xmax=None,
     numx: int = 50,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
     row: int = 1,
     col: int = 1,
     size=None,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='gray',
     marker_color=None,
     kde=None,
-    xname: str = None,
+    xname: str | None = None,
     **kwargs,
 ):
     df, w = history.get_distribution(m=m, t=t)
@@ -216,13 +216,13 @@ def plot_kde_1d(
     xmin=None,
     xmax=None,
     numx=50,
-    ax: mpl.axes.Axes = None,
+    ax: mpl.axes.Axes | None = None,
     size=None,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='C1',
     kde=None,
-    xname: str = None,
+    xname: str | None = None,
     **kwargs,
 ) -> mpl.axes.Axes:
     """
@@ -246,9 +246,11 @@ def plot_kde_1d(
         xname = x
     if ax is None:
         _, ax = plt.subplots()
-    ax.plot(x_vals, pdf, **kwargs)
-    # TODO This fixes the upper bound inadequately
-    # ax.set_ylim(bottom=min(ax.get_ylim()[0], 0))
+    (line,) = ax.plot(x_vals, pdf, **kwargs)
+    # a density is non-negative, but `set_ylim` would switch off autoscaling
+    line.sticky_edges.y.append(0.0)
+    ax.update_datalim([(x_vals[0], 0.0)])
+    ax.autoscale_view()
     ax.set_xlabel(xname)
     ax.set_ylabel('Posterior')
     ax.set_xlim(xmin, xmax)
@@ -271,16 +273,16 @@ def plot_kde_1d_plotly(
     xmin=None,
     xmax=None,
     numx=50,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
     row: int = 1,
     col: int = 1,
     size=None,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='gray',
     marker_color=None,
     kde=None,
-    xname: str = None,
+    xname: str | None = None,
     **kwargs,
 ) -> 'go.Figure':
     """Plot 1d kde using plotly."""
@@ -307,14 +309,11 @@ def plot_kde_1d_plotly(
         row=row,
         col=col,
     )
-    # set trace color to blue
-    # fig.update_traces(marker_color="blue", row=row, col=col)
-    # fig.add_trace(
-    #     go.Scatter(x=x_vals, y=pdf, name=xname, **kwargs),
-    #     row=row,
-    #     col=col,
-    # )
     fig.update_xaxes(title_text=xname, range=[xmin, xmax], row=row, col=col)
+    # a density is non-negative, plotly's default rangemode ignores zero
+    fig.update_yaxes(
+        title_text='Posterior', rangemode='tozero', row=row, col=col
+    )
 
     # add vertical line for reference value
     if refval is not None:
@@ -427,22 +426,22 @@ def plot_kde_2d_highlevel(
     x: str,
     y: str,
     m: int = 0,
-    t: int = None,
-    xmin: float = None,
-    xmax: float = None,
-    ymin: float = None,
-    ymax: float = None,
+    t: int | None = None,
+    xmin: float | None = None,
+    xmax: float | None = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     numx: int = 50,
     numy: int = 50,
-    ax: mpl.axes.Axes = None,
+    ax: mpl.axes.Axes | None = None,
     size=None,
     colorbar=True,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='C1',
     kde=None,
-    xname: str = None,
-    yname: str = None,
+    xname: str | None = None,
+    yname: str | None = None,
     **kwargs,
 ) -> mpl.axes.Axes:
     """
@@ -539,25 +538,25 @@ def plot_kde_2d_highlevel_plotly(
     x: str,
     y: str,
     m: int = 0,
-    t: int = None,
-    xmin: float = None,
-    xmax: float = None,
-    ymin: float = None,
-    ymax: float = None,
+    t: int | None = None,
+    xmin: float | None = None,
+    xmax: float | None = None,
+    ymin: float | None = None,
+    ymax: float | None = None,
     numx: int = 50,
     numy: int = 50,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
     row: int = 1,
     col: int = 1,
     size=None,
     showscale=True,
     showlegend=True,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='gray',
     kde=None,
-    xname: str = None,
-    yname: str = None,
+    xname: str | None = None,
+    yname: str | None = None,
     **kwargs,
 ) -> 'go.Figure':
     """
@@ -603,15 +602,15 @@ def plot_kde_2d(
     ymax=None,
     numx=50,
     numy=50,
-    ax: mpl.axes.Axes = None,
+    ax: mpl.axes.Axes | None = None,
     size=None,
     colorbar=True,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='C1',
     kde=None,
-    xname: str = None,
-    yname: str = None,
+    xname: str | None = None,
+    yname: str | None = None,
     **kwargs,
 ) -> mpl.axes.Axes:
     """
@@ -679,18 +678,18 @@ def plot_kde_2d_plotly(
     ymax=None,
     numx=50,
     numy=50,
-    fig: 'go.Figure' = None,
+    fig: 'go.Figure | None' = None,
     row: int = 1,
     col: int = 1,
     size=None,
     showscale=True,
     showlegend=True,
-    title: str = None,
+    title: str | None = None,
     refval=None,
     refval_color='gray',
     kde=None,
-    xname: str = None,
-    yname: str = None,
+    xname: str | None = None,
+    yname: str | None = None,
     **kwargs,
 ):
     """
@@ -760,7 +759,7 @@ def plot_kde_2d_plotly(
 def plot_kde_matrix_highlevel(
     history,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     limits=None,
     colorbar: bool = True,
     height: float = 2.5,
@@ -769,7 +768,7 @@ def plot_kde_matrix_highlevel(
     refval=None,
     refval_color='C1',
     kde=None,
-    names: dict = None,
+    names: dict | None = None,
     arr_ax=None,
 ):
     """
@@ -836,7 +835,7 @@ def plot_kde_matrix_highlevel(
 def plot_kde_matrix_highlevel_plotly(
     history,
     m: int = 0,
-    t: int = None,
+    t: int | None = None,
     limits=None,
     height: int = 30,
     numx: int = 50,
@@ -844,7 +843,7 @@ def plot_kde_matrix_highlevel_plotly(
     refval=None,
     refval_color='gray',
     kde=None,
-    names: dict = None,
+    names: dict | None = None,
     title: str = 'Univariate and bivariate distributions using KDE',
 ) -> 'go.Figure':
     """
@@ -879,7 +878,7 @@ def plot_kde_matrix(
     refval=None,
     refval_color='C1',
     kde=None,
-    names: dict = None,
+    names: dict | None = None,
     arr_ax=None,
 ):
     """
@@ -1009,7 +1008,7 @@ def plot_kde_matrix_plotly(
     refval_color='gray',
     marker_color=None,
     kde=None,
-    names: dict = None,
+    names: dict | None = None,
     title: str = 'Univariate and bivariate distributions using KDE',
 ) -> 'go.Figure':
     """

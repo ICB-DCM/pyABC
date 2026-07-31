@@ -37,7 +37,9 @@ class Predictor(ABC):
     """
 
     @abstractmethod
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         """Fit the predictor to labeled data.
 
         Parameters
@@ -147,7 +149,9 @@ class SimplePredictor(Predictor):
         self.std_y: np.ndarray | None = None
 
     @wrap_fit_log
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         """Fit the predictor to labeled data.
 
         Parameters
@@ -307,7 +311,9 @@ class LinearPredictor(SimplePredictor):
             log_pearson=log_pearson,
         )
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         super().fit(x, y, w)
         # log
         if self.joint:
@@ -372,7 +378,7 @@ class GPPredictor(SimplePredictor):
 
     def __init__(
         self,
-        kernel: Callable | skl_gp.kernels.Kernel = None,
+        kernel: Callable | skl_gp.kernels.Kernel | None = None,
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
@@ -408,7 +414,9 @@ class GPPredictor(SimplePredictor):
             log_pearson=log_pearson,
         )
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         # need to recreate the model
 
         # set indices to keep
@@ -438,8 +446,8 @@ class GPKernelHandle:
 
     def __init__(
         self,
-        kernels: list[str] = None,
-        kernel_kwargs: list[dict] = None,
+        kernels: list[str] | None = None,
+        kernel_kwargs: list[dict] | None = None,
         ard: bool = True,
     ):
         """
@@ -508,7 +516,7 @@ class MLPPredictor(SimplePredictor):
         normalize_features: bool = True,
         normalize_labels: bool = True,
         joint: bool = True,
-        hidden_layer_sizes: tuple[int, ...] | Callable = None,
+        hidden_layer_sizes: tuple[int, ...] | Callable | None = None,
         log_pearson: bool = True,
         **kwargs,
     ):
@@ -549,7 +557,9 @@ class MLPPredictor(SimplePredictor):
             log_pearson=log_pearson,
         )
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         # need to recreate the model
 
         # set indices to keep
@@ -684,7 +694,7 @@ class ModelSelectionPredictor(Predictor):
         split_method: str = TRAIN_TEST_SPLIT,
         n_splits: int = 5,
         test_size: float = 0.2,
-        f_score: Callable = None,
+        f_score: Callable | None = None,
     ):
         """
         Parameters
@@ -722,11 +732,15 @@ class ModelSelectionPredictor(Predictor):
 
         if f_score is None:
             self.f_score = root_mean_square_error
+        else:
+            self.f_score = f_score
 
         # holds the chosen predictor model
         self.chosen_one: Predictor | None = None
 
-    def fit(self, x: np.ndarray, y: np.ndarray, w: np.ndarray = None) -> None:
+    def fit(
+        self, x: np.ndarray, y: np.ndarray, w: np.ndarray | None = None
+    ) -> None:
         # output normalization
         std_y = np.std(y, axis=0)
 
@@ -844,7 +858,7 @@ def root_mean_square_relative_error(
 
     Returns
     -------
-    val: The normalized root mean square relative error value.
+    val: The normalized root mean squared relative error value.
     """
     return np.sqrt(
         np.sum(

@@ -6,7 +6,7 @@ Install
 Preparation
 -----------
 
-This package requires Python 3.8 or later.
+This package requires Python 3.11 or later.
 The package is continuously tested on Linux, and in parts on iOS,
 via GitHub Actions.
 

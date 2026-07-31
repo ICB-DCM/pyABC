@@ -63,7 +63,7 @@ class Transition(BaseEstimator, metaclass=TransitionMeta):
             A sample from the fitted model.
         """
 
-    def rvs(self, size: int = None) -> Parameter | pd.DataFrame:
+    def rvs(self, size: int | None = None) -> Parameter | pd.DataFrame:
         """
         Sample from the density.
 

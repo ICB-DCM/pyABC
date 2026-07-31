@@ -60,8 +60,10 @@ class PNormDistance(Distance):
     def __init__(
         self,
         p: float = 1,
-        fixed_weights: dict[str, float] | dict[int, dict[str, float]] = None,
-        sumstat: Sumstat = None,
+        fixed_weights: dict[str, float]
+        | dict[int, dict[str, float]]
+        | None = None,
+        sumstat: Sumstat | None = None,
     ):
         super().__init__()
 
@@ -146,7 +148,7 @@ class PNormDistance(Distance):
 
     @staticmethod
     def format_dict(
-        vals: dict[str, float] | dict[int, dict[str, float]],
+        vals: dict[str, float] | dict[int, dict[str, float]] | None,
         t: int,
         s_ids: list[str],
     ) -> dict[int, float | np.ndarray]:
@@ -170,8 +172,7 @@ class PNormDistance(Distance):
             vals = {t: vals}
 
         # convert dicts to arrays
-        for _t, dct in vals.items():
-            vals[_t] = dict2arr(dct, keys=s_ids)
+        vals = {_t: dict2arr(dct, keys=s_ids) for _t, dct in vals.items()}
 
         return vals
 
@@ -201,8 +202,8 @@ class PNormDistance(Distance):
         self,
         x: dict,
         x_0: dict,
-        t: int = None,
-        par: dict = None,  # noqa: ARG002
+        t: int | None = None,
+        par: dict | None = None,  # noqa: ARG002
     ) -> float:
         # extract weights for given time point
         weights = self.get_weights(t=t)
@@ -308,19 +309,21 @@ class AdaptivePNormDistance(PNormDistance):
     def __init__(
         self,
         p: float = 1,
-        initial_scale_weights: dict[str, float] = None,
-        fixed_weights: dict[str, float] = None,
+        initial_scale_weights: dict[str, float] | None = None,
+        fixed_weights: dict[str, float] | None = None,
         fit_scale_ixs: EventIxs | Collection[int] | int = np.inf,
-        scale_function: Callable = None,
-        max_scale_weight_ratio: float = None,
-        scale_log_file: str = None,
+        scale_function: Callable | None = None,
+        max_scale_weight_ratio: float | None = None,
+        scale_log_file: str | None = None,
         all_particles_for_scale: bool = True,
-        sumstat: Sumstat = None,
+        sumstat: Sumstat | None = None,
     ):
         # call p-norm constructor
         super().__init__(p=p, fixed_weights=fixed_weights, sumstat=sumstat)
 
-        self.initial_scale_weights: dict[str, float] = initial_scale_weights
+        self.initial_scale_weights: dict[str, float] | None = (
+            initial_scale_weights
+        )
 
         self.scale_weights: dict[int, np.ndarray] = {}
 
@@ -505,25 +508,25 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
         self,
         predictor: Predictor,
         p: float = 1,
-        initial_scale_weights: dict[str, float] = None,
-        initial_info_weights: dict[str, float] = None,
-        fixed_weights: dict[str, float] = None,
+        initial_scale_weights: dict[str, float] | None = None,
+        initial_info_weights: dict[str, float] | None = None,
+        fixed_weights: dict[str, float] | None = None,
         fit_scale_ixs: EventIxs | Collection | int = np.inf,
-        fit_info_ixs: EventIxs | Collection | int = None,
+        fit_info_ixs: EventIxs | Collection | int | None = None,
         normalize_by_par: bool = True,
-        scale_function: Callable = None,
-        max_scale_weight_ratio: float = None,
-        max_info_weight_ratio: float = None,
-        scale_log_file: str = None,
-        info_log_file: str = None,
-        info_sample_log_file: str = None,
-        sumstat: Sumstat = None,
-        fd_deltas: list[float] | float = None,
-        subsetter: Subsetter = None,
+        scale_function: Callable | None = None,
+        max_scale_weight_ratio: float | None = None,
+        max_info_weight_ratio: float | None = None,
+        scale_log_file: str | None = None,
+        info_log_file: str | None = None,
+        info_sample_log_file: str | None = None,
+        sumstat: Sumstat | None = None,
+        fd_deltas: list[float] | float | None = None,
+        subsetter: Subsetter | None = None,
         all_particles_for_scale: bool = True,
         all_particles_for_prediction: bool = True,
         feature_normalization: str = WEIGHTS,
-        par_trafo: ParTrafoBase = None,
+        par_trafo: ParTrafoBase | None = None,
     ):
         """
         Parameters
@@ -595,7 +598,9 @@ class InfoWeightedPNormDistance(AdaptivePNormDistance):
 
         self.predictor = predictor
 
-        self.initial_info_weights: dict[str, float] = initial_info_weights
+        self.initial_info_weights: dict[str, float] | None = (
+            initial_info_weights
+        )
         self.info_weights: dict[int, np.ndarray] = {}
 
         if fit_info_ixs is None:

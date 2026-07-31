@@ -127,8 +127,8 @@ def resample(points, weights, n):
         A total of `n` points sampled from `points` with putting back
         according to `weights`.
     """
-    weights = np.asarray(weights)
-    weights /= np.sum(weights)
+    weights = np.asarray(weights, dtype=float)
+    weights = weights / np.sum(weights)
     indices = np.random.choice(
         points.shape[0], size=n, p=weights
     )  # sample index from multi-dimensional sample

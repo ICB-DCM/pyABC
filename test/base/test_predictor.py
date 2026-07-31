@@ -174,3 +174,24 @@ def test_wrong_input():
     """Test all kinds of wrong inputs."""
     with pytest.raises(ValueError):
         HiddenLayerHandle(method='potato')(n_in=10, n_out=10, n_sample=100)
+
+
+def test_model_selection_custom_f_score():
+    """Regression: a custom ``f_score`` passed to ``ModelSelectionPredictor``
+    must be stored and used. Previously only the default branch set
+    ``self.f_score``, so a custom scorer was silently dropped and ``fit()``
+    raised ``AttributeError``."""
+
+    def my_score(y1, y2, sigma):
+        return float(np.mean(np.abs(y1 - y2)))
+
+    msp = ModelSelectionPredictor(
+        predictors=[LinearPredictor()], f_score=my_score
+    )
+    assert msp.f_score is my_score
+
+    rng = np.random.RandomState(0)
+    x = rng.normal(size=(40, 2))
+    y = x @ np.array([[1.0], [2.0]]) + 0.01 * rng.normal(size=(40, 1))
+    msp.fit(x, y)  # would previously raise AttributeError
+    assert msp.chosen_one is not None

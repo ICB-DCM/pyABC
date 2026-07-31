@@ -36,6 +36,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 
 dependencies = [
@@ -149,6 +150,7 @@ select = [
   "UP",  # pyupgrade
   "ARG", # flake8-unused-arguments
   "SIM", # flake8-simplify
+  "RUF013", # implicit-optional
 ]
 ignore = [
   "E501",  # line too long (handled by formatter)

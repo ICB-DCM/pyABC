@@ -48,14 +48,14 @@ class PredictorSumstat(Sumstat):
     def __init__(
         self,
         predictor: Predictor | Callable,
-        fit_ixs: EventIxs | Collection[int] | int = None,
+        fit_ixs: EventIxs | Collection[int] | int | None = None,
         all_particles: bool = True,
         normalize_labels: bool = True,
         fitted: bool = False,
-        subsetter: Subsetter = None,
-        pre: Sumstat = None,
+        subsetter: Subsetter | None = None,
+        pre: Sumstat | None = None,
         pre_before_fit: bool = False,
-        par_trafo: ParTrafoBase = None,
+        par_trafo: ParTrafoBase | None = None,
     ):
         """
         Parameters
