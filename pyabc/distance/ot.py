@@ -59,9 +59,9 @@ class WassersteinDistance(Distance):
 
     .. [#bernton2019]
         Bernton, E., Jacob, P.E., Gerber, M. and Robert, C.P.,
-        2019.
         Approximate Bayesian computation with the Wasserstein distance.
-        arXiv preprint arXiv:1905.03747.
+        Journal of the Royal Statistical Society Series B: Statistical Methodology, Volume 81, Issue 2, April 2019, Pages 235–269.
+        https://doi.org/10.1111/rssb.12312.
     """
 
     def __init__(
