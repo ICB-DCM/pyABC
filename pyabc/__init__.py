@@ -88,7 +88,13 @@ from .inference_util import (
     only_simulate_data_for_proposal,
     termination_criteria_fulfilled,
 )
-from .model import FunctionModel, IntegratedModel, Model, ModelResult
+from .model import (
+    CheckedSummaryStatistics,
+    FunctionModel,
+    IntegratedModel,
+    Model,
+    ModelResult,
+)
 from .parameters import Parameter
 from .population import Particle, Population, Sample
 from .populationstrategy import AdaptivePopulationSize, ConstantPopulationSize
