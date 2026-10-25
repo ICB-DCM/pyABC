@@ -45,6 +45,7 @@ It is easy to use and flexibly extensible.
    installation
    examples
    sampler
+   checked_summary_statistics
    datastore
    visualization
    api
