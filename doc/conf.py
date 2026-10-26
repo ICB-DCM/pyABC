@@ -15,7 +15,6 @@
 import os
 import subprocess
 import sys
-import subprocess
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -56,10 +55,7 @@ extensions = [
     'sphinxcontrib.jquery',
 ]
 
-autodoc_mock_imports = [
-    "PEtab",
-    "BasiCO"
-]
+autodoc_mock_imports = ['PEtab', 'BasiCO']
 
 # default autodoc options
 # list for special-members seems not to be possible before 1.8
