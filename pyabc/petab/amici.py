@@ -177,10 +177,10 @@ class AmiciPetabImporter(PetabImporter):
     amici_model:
         A corresponding compiled AMICI model that allows simulating data for
         parameters. If not provided, one is created using
-        `amici.importers.petab.v1.import_petab_problem`.
+        :func:`amici.importers.petab.v1.import_petab_problem`.
     amici_solver:
         An AMICI solver to simulate the model. If not provided, one is created
-        using `amici_model.create_solver()`.
+        using ``amici_model.create_solver()``.
     """
 
     def __init__(
@@ -216,7 +216,7 @@ class AmiciPetabImporter(PetabImporter):
             Whether to return the simulations also (large, can be stored
             in database).
         return_rdatas:
-            Whether to return the full `list[amici.sim.sundials.ExpData]`
+            Whether to return the full ``list[amici.sim.sundials.ExpData]``
             objects (large, cannot be stored in database).
 
         Returns

@@ -15,6 +15,7 @@
 import os
 import subprocess
 import sys
+import subprocess
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -53,6 +54,11 @@ extensions = [
     'IPython.sphinxext.ipython_console_highlighting',
     # ensure that jQuery is installed
     'sphinxcontrib.jquery',
+]
+
+autodoc_mock_imports = [
+    "PEtab",
+    "BasiCO"
 ]
 
 # default autodoc options
