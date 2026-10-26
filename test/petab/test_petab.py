@@ -1,13 +1,11 @@
 import itertools
-import os
 import sys
 
+import benchmark_models_petab
 import cloudpickle as pickle
-import git
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import petab.v1 as petab
 import petab.v1.C as C
 import pytest
 import scipy.stats
@@ -285,38 +283,11 @@ def test_get_bounds():
         )
 
 
-benchmark_dir = 'doc/examples/tmp/benchmark-models-petab'
-
-
-def download_benchmark_repo():
-    # download archive
-    if not os.path.exists(benchmark_dir):
-        git.Repo.clone_from(
-            'https://github.com/benchmarking-initiative'
-            '/benchmark-models-petab.git',
-            benchmark_dir,
-            depth=1,
-        )
-    g = git.Git(benchmark_dir)
-
-    # update repo if online
-    try:
-        g.pull()
-    except git.exc.GitCommandError:
-        pass
-
-
 def boehm_model_importer():
     """Import Boehm model."""
-    download_benchmark_repo()
-
     # create problem
     model_name = 'Boehm_JProteomeRes2014'
-    petab_problem = petab.Problem.from_yaml(
-        os.path.join(
-            benchmark_dir, 'Benchmark-Models', model_name, model_name + '.yaml'
-        )
-    )
+    petab_problem = benchmark_models_petab.get_problem(model_name)
 
     # compile amici
     output_folder = f'amici_models/{model_name}'
