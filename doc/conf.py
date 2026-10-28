@@ -55,6 +55,8 @@ extensions = [
     'sphinxcontrib.jquery',
 ]
 
+autodoc_mock_imports = ['PEtab', 'BasiCO']
+
 # default autodoc options
 # list for special-members seems not to be possible before 1.8
 autodoc_default_options = {

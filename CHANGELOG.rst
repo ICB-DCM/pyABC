@@ -7,6 +7,22 @@ Release Notes
 0.13 Series
 ...........
 
+0.13.1 (2026-10-26)
+-------------------
+
+Documentation:
+
+* Install the ``petab`` extra on Read the Docs and mock optional PEtab/BasiCO
+  imports in autodoc, so the PEtab API reference renders.
+* Minor documentation improvements.
+* Fix broken links and docstring formatting.
+
+Tests:
+
+* Load PEtab benchmark models via ``benchmark_models_petab`` instead of
+  cloning the benchmark repository.
+
+
 0.13.0 (2026-07-30)
 -------------------
 
